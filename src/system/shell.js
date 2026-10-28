@@ -1,0 +1,43 @@
+import {btn,esc,icon,timeLabel,demo} from './ui.js';
+import {registry,installed,homePages,dockApps} from './registry.js';
+import {taiPresence} from '../services/presence.js';
+import {reminders} from '../services/reminders.js';
+import {dateParts,dateLabel} from '../services/calendar.js';
+import {actors,isGroup} from '../editor/conversations/model.js';
+import {dynamicIsland} from './power/island.js';
+const signal='<svg width="44" height="15" viewBox="0 0 44 15" fill="none" aria-hidden="true"><path d="M2 11v2m5-5v5m5-8v8m5-11v11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 5c4-4 10-4 14 0m-11 3c2-2 6-2 8 0m-4 3h.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+export const batteryLevel=s=>Math.max(0,Math.min(100,Number.isFinite(Number(s.batteryPercent))?Math.round(Number(s.batteryPercent)):82));
+const battery=s=>`<button class="status-battery${batteryLevel(s)<=20?' is-low':''}${['charging','sleeping'].includes(s.powerMode)?' is-charging':''}" data-action="power-open" aria-label="电量 ${batteryLevel(s)}%，查看充电"><span>${batteryLevel(s)}</span></button>`;
+const notificationApp=(n)=>{
+  const id=n.link?.appId||({'微信':'wechat','短信':'messages','信息':'messages','电话':'phone','邮件':'kira','KIRA':'kira','天气':'weather','时钟':'clock','闹钟':'clock','MIRAGE':'mirage'}[n.title]);
+  return registry.get(id)?.manifest||registry.get('messages')?.manifest;
+};
+const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
+const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||m.unlockDay&&s.day<m.unlockDay)return '';return btn('open-app',`${icon(m,s)}<span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}"`);};
+export function reminderWidget(s){
+  const items=reminders(s),pending=items.filter(r=>!r.done);
+  return `<section class="reminder-widget widget" aria-label="提醒事项表"><button class="reminder-widget-title" data-action="open-app" data-app="reminders"><span>提醒事项</span><span>${pending.length}<small> ›</small></span></button><div class="reminder-widget-list">${pending.slice(0,3).map(r=>`<button class="reminder-widget-row" data-action="home-reminder-toggle" data-id="${esc(r.id)}" aria-label="标为完成：${esc(r.title)}"><i></i><span>${esc(r.title)}</span>${r.demo?demo():''}</button>`).join('')||`<span class="reminder-clear">${items.length?'今天的事项已完成':'暂无提醒事项'}</span>`}</div></section>`;
+}
+function homePage(s,page){const d=dateParts(s);return `<section class="home-page" data-key="page-${page}" ${page===(s.homePage||0)?'':'inert aria-hidden="true"'}>${page===0?`<div class="home-widgets"><button class="widget weather-widget" data-action="open-app" data-app="weather"><span class="widget-top">澳门 <span>☁</span></span><span class="widget-large">24°</span><span class="widget-foot">多云</span></button><button class="widget calendar-widget" data-action="open-app" data-app="calendar"><span class="widget-top">${d.weekday} <span>✧</span></span><span class="widget-large">${d.date}</span><span class="widget-foot">${d.year}年${d.month}月</span></button></div>`:page===1?reminderWidget(s):''}<div class="home-grid">${homePages[page].map(id=>entry(id,s)).join('')}</div><div class="home-spacer"></div></section>`;}
+export function home(s){const page=s.homePage||0;return `<div class="home-screen" data-view-key="home"><div class="home-top"><span class="eyebrow">距离 BIG DAY 还有 ${Math.max(0,90-s.day)} 天</span><span class="small-day">${timeLabel(s)}</span></div><div class="home-pager"><div class="home-track" style="transform:translate3d(${-page*100}%,0,0)">${homePages.map((_,i)=>homePage(s,i)).join('')}</div></div><div class="page-dots">${homePages.map((_,i)=>btn('page','<i></i>',i===page?'active':'',`data-page="${i}" aria-label="第${i+1}页"`)).join('')}</div><div class="home-dock">${dockApps.map(id=>entry(id,s)).join('')}</div></div>`;}
+export function lock(s,stage='cover',digits=''){
+  const keypad=stage!=='cover';
+  return `<div data-view-key="lock" class="lock-screen ${keypad?'lock-passcode':''} ${stage==='error'?'lock-error':''} ${stage==='unlocking'?'lock-unlocking':''}"><div class="lock-cover"><svg class="lock-mark" viewBox="0 0 24 28" fill="none" aria-hidden="true"><rect x="4" y="12" width="16" height="13" rx="4" fill="currentColor"/><path d="M7 12V8a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2.5"/></svg><div class="lock-date">${dateLabel(s,{weekday:true})}</div><div class="lock-clock">${esc(s.clock)}</div><div class="lock-weather">☁　24°　多云</div></div><div class="lock-space"></div>${keypad?`<div class="passcode-panel" role="group" aria-label="手机密码"><h2>输入密码</h2>${stage==='error'?'<span class="sr-only" role="alert">密码错误</span>':''}<div class="passcode-dots" aria-label="已输入 ${digits.length} 位密码">${Array.from({length:4},(_,i)=>`<i class="${i<digits.length?'filled':''}"></i>`).join('')}</div><div class="passcode-grid">${[1,2,3,4,5,6,7,8,9,'cancel',0,'erase'].map(n=>btn('passcode-key',n==='cancel'?'取消':n==='erase'?'⌫':String(n),'passcode-key',`data-key="${n}" aria-label="${n==='erase'?'删除一位':n==='cancel'?'取消':n}"`)).join('')}</div></div>`:s.notifications.slice(0,2).map(n=>btn('notification',notificationCard(n,s),'lock-notification',`data-id="${esc(n.id)}"`)).join('')}${keypad?'':btn('unlock','向上轻扫解锁　⌃','unlock-hint')}</div>`;
+}
+const wxBackIcon='<svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4.8-7.2 7.2 7.2 7.2"/></svg>';
+const wxMoreIcon='<svg viewBox="0 0 28 24" width="29" height="24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.85"/><circle cx="14" cy="12" r="1.85"/><circle cx="23" cy="12" r="1.85"/></svg>';
+export function appFrame(s,app,body){
+  const dark=['mirage','ghost','noapp','weather'].includes(app.manifest.id),loc=s.nav.current;
+  const id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
+  const c=id?s.content.conversations[app.manifest.id]?.find(c=>c.id===id):null;
+  const p=app.manifest.id==='noapp'&&id==='tai'?taiPresence(s):null;
+  const viewKey=(app.manifest.id==='wechat'&&['/','/contacts','/discover','/me'].includes(loc.route))?'wechat-tabs':(app.manifest.id==='photos'&&['/','/collections'].includes(loc.route))?'photos-tabs':(app.manifest.id==='mirage'&&['/','/contacts','/bounties','/bounties/completed','/market','/manage'].includes(loc.route))?'mirage-tabs':app.manifest.id+loc.route;
+  const wechatChat=app.manifest.id==='wechat'&&!!c,displayName=c?.name||app.manifest.name;
+  const nav=['aomi','browser'].includes(app.manifest.id)?'':wechatChat?
+    `<div class="app-nav wx-native-nav">${btn('back',wxBackIcon,'nav-back','aria-label="返回微信"')}<strong>${esc(displayName)}${isGroup(c)?' ('+actors(c).length+')':''}</strong>${btn('wx-chat-more',wxMoreIcon,'nav-home wx-native-more','aria-label="聊天详情"')}</div>`:
+    `<div class="app-nav">${btn('back','‹','nav-back','aria-label="返回"')}<div><strong>${esc(displayName)}</strong>${p?`<small class="nav-presence">${esc(p.reason)}</small>`:''}</div>${btn('home','⌂','nav-home','aria-label="主屏幕"')}</div>`;
+  return `<div data-view-key="${esc(viewKey)}" class="app-view ${dark?'app-dark':''} ${c?'has-chat':''} app-${app.manifest.id}">${nav}<div class="app-content" id="app-content">${body}</div></div>`;
+}
+export function status(s,{islandExpanded=false}={}){return `<div class="status-bar"><button data-action="notify" aria-label="通知中心">${esc(s.clock)}</button><div class="status-right">${signal}<span class="status-network">5G</span>${battery(s)}</div></div>${dynamicIsland(s,{expanded:islandExpanded})}`;}
+export function notifications(s){return `<div class="shade"><div class="shade-header"><span class="eyebrow">NOTIFICATIONS</span></div><h2>通知中心</h2>${s.notifications.length?s.notifications.map(n=>btn('notification',notificationCard(n,s),'shade-notification',`data-id="${esc(n.id)}" data-key="notification-${esc(n.id)}"`)).join(''):'<p class="muted">暂时没有新通知。</p>'}</div>`;}
+export function mountShell(){document.getElementById('root').innerHTML='<main id="phone"><div id="wallpaper"></div><div id="status-layer"></div><div id="screen-layer"></div><div id="transition-layer" aria-hidden="true"></div><div id="shade-layer" aria-hidden="true"></div><div id="task-layer" aria-hidden="true"></div><div id="day-transition-layer" aria-hidden="true"></div><div id="toast" role="status"></div><button id="homebar" data-action="home" aria-label="返回主屏幕；在桌面向上滑动打开后台"><span></span></button></main><input id="asset-picker" type="file" accept="image/png,image/jpeg,image/webp" hidden>';}

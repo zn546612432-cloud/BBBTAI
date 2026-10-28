@@ -1,0 +1,10 @@
+import {cp,mkdir,rm} from 'node:fs/promises';
+await rm('dist',{recursive:true,force:true});
+await mkdir('dist',{recursive:true});
+await cp('public','dist',{recursive:true});
+await cp('src','dist/src',{recursive:true});
+await rm('dist/src/legacy',{recursive:true,force:true});
+await cp('index.html','dist/index.html');
+await mkdir('dist/vendor',{recursive:true});
+await cp('node_modules/chess.js/dist/esm/chess.js','dist/vendor/chess.js');
+console.log('Built single-entry phone in dist/');

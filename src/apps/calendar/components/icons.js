@@ -1,0 +1,21 @@
+const paths={
+ back:'<path d="m15 4-8 8 8 8"/>',
+ close:'<path d="M5 5l14 14M19 5 5 19"/>',
+ plus:'<path d="M12 4v16M4 12h16"/>',
+ search:'<circle cx="10.6" cy="10.6" r="6.6"/><path d="m16 16 5 5"/>',
+ list:'<rect x="6.5" y="4" width="15" height="7" rx="1.6"/><rect x="6.5" y="14" width="15" height="7" rx="1.6"/><path d="M3 7.5h.1M3 17.5h.1"/>',
+ calendar:'<rect x="3" y="5" width="18" height="17" rx="2"/><path d="M3 10h18M8 3v4m8-4v4M7 14h2m3 0h2m3 0h.5M7 18h2m3 0h2"/>',
+ inbox:'<path d="M4 5h16l2 13H2L4 5Z"/><path d="M2.6 13h5l1.7 3h5.4l1.7-3h5"/>',
+ check:'<path d="m4 12 5 5L20 6"/>',
+ dots:'<circle cx="4" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="20" cy="12" r="1"/>',
+ chevron:'<path d="m9 5 7 7-7 7"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/>',
+ location:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+ people:'<circle cx="9" cy="8" r="3"/><path d="M2.5 20v-3c0-3 13-3 13 0v3M17 5a3 3 0 0 1 0 6m1 5c2 0 3.5 2 3.5 4"/>',
+ bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM9 21h6"/>',
+ link:'<path d="M10 13a5 5 0 0 0 8 0l2-2a5 5 0 0 0-7-7l-2 2m3 5a5 5 0 0 0-8 0l-2 2a5 5 0 0 0 7 7l2-2"/>',
+ note:'<path d="M4 6h16M4 12h16M4 18h10"/>',
+ car:'<path d="M4 10l2-5h12l2 5v9H4v-9ZM4 14h16M7 19v2m10-2v2"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/>',
+};
+export function ci(name,size=23){return `<svg class="cl-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.dots}</svg>`;}

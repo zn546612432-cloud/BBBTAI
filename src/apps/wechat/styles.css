@@ -1,0 +1,175 @@
+/* 微信一级 UI。独立样式，不继承系统桌面玻璃卡片设计。
+   视觉尺寸参考 iPhone 版微信：#ededed 分组底色、白色行、
+   绿色选中态、iOS 原生导航行高。 */
+.app-view.app-wechat:not(.has-chat){padding-top:45px;background:#ededed;color:#191919;backdrop-filter:none;-webkit-backdrop-filter:none}
+.app-view.app-wechat:not(.has-chat) .app-content{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.wx-screen{--wx-green:#07c160;--wx-gray:#ededed;--wx-divider:#e7e7e7;background:var(--wx-gray);height:100%;display:flex;flex-direction:column;min-height:0;position:relative;color:#191919;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif}
+.wx-page-body{position:relative;min-height:0;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.app-wechat:not(.has-chat) .app-nav{display:none}
+.wx-chat-row[hidden],.wx-contact-row[hidden]{display:none!important}
+.wx-screen button{border:0;box-shadow:none;border-radius:0;flex-shrink:0;letter-spacing:0}
+.wx-screen button:active{transform:none;background-color:#e9e9e9}
+.wx-screen .wx-svg{flex-shrink:0}
+.wx-header{height:46px;min-height:46px;position:relative;display:flex;align-items:center;justify-content:center;padding:0 16px;background:#ededed}
+.wx-header h1{font-size:18px;line-height:1.2;margin:0;font-weight:600;letter-spacing:0;color:#161616}
+.wx-head-actions{position:absolute;right:12px;top:0;height:100%;display:flex;align-items:center;gap:3px}
+.wx-head-button{width:44px;height:44px;display:grid;place-items:center;color:#202020}
+.wx-screen .wx-head-button:active{background:#dfe0e0;border-radius:9px}
+.wx-action-menu{position:absolute;right:14px;top:47px;width:170px;z-index:5;border-radius:7px;background:#393939;box-shadow:0 6px 24px #0003;color:white;overflow:hidden}
+.wx-action-menu[hidden]{display:none}
+.wx-action-menu button{width:100%;min-height:47px;color:inherit;text-align:left;padding:0 18px;font-size:14px;border-bottom:1px solid #ffffff20}
+.wx-screen .wx-action-menu button:active{background:#555}
+.wx-search-region{padding:7px 7px 7px;background:#ededed;flex-shrink:0}
+.wx-search{height:32px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0 12px;gap:7px;color:#b5b5b5}
+.wx-search>span{display:flex}
+.wx-search input,.wx-search input:focus{appearance:none;border:0;outline:0;min-width:0;border-radius:0;background:transparent;box-shadow:none;color:#222;font-size:15px;text-align:center;padding:0;height:100%;width:100%;line-height:32px}
+.wx-search input::placeholder{color:#b9b9b9;opacity:1}
+.wx-search:focus-within input{text-align:left}
+.wx-scroll{min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none}
+.wx-scroll::-webkit-scrollbar{display:none}
+.wx-chat-list{background:white}
+.wx-chat-row{width:100%;height:78px;display:flex;align-items:center;gap:12px;padding:0 15px;text-align:left;background:white;color:#171717}
+.wx-chat-main{min-height:78px;flex:1;min-width:0;border-bottom:1px solid #e8e8e8;padding:15px 0;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.wx-chat-row:last-child .wx-chat-main{border-bottom:1px solid #e8e8e8}
+.wx-chat-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.wx-chat-top strong{font-size:16px;line-height:1.2;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wx-chat-top time{font-size:11px;color:#b4b4b4;white-space:nowrap}
+.wx-chat-preview{font-size:13px;color:#9b9b9b;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.wx-screen .wx-chat-preview .demo-tag{font-size:8px;color:#929c9a;background:#e9f5ee;margin-left:4px}
+.wx-empty{font-size:13px;color:#a6a6a6;text-align:center;padding:38px 15px}
+.wx-avatar{width:49px;height:49px;min-width:49px;display:grid;place-items:center;border-radius:5px;overflow:hidden;background:linear-gradient(140deg,#6c889c,#293c55);color:#fff;font-size:20px;font-weight:550;text-shadow:0 1px 4px #0005}
+.wx-avatar img{width:100%;height:100%;object-fit:cover}
+.wx-avatar-1{background:linear-gradient(135deg,#aebdb4 0%,#657e62 100%)}
+.wx-avatar-2{background:linear-gradient(135deg,#d5aa8a,#746f9a)}
+.wx-avatar-3{background:linear-gradient(135deg,#79c0ad,#277e8b)}
+.wx-avatar-4{background:linear-gradient(135deg,#a2a4ca,#4c568d)}
+.wx-avatar-contact{width:42px;height:42px;min-width:42px;border-radius:5px;background:linear-gradient(150deg,#7caaab,#395975);font-size:17px}
+.wx-chat-avatar-wrap{position:relative;flex-shrink:0;display:block}
+.wx-chat-unread{position:absolute;top:-7px;right:-8px;min-width:17px;height:17px;line-height:17px;padding:0 4px;background:#f34d55;color:#fff;border-radius:12px;text-align:center;font-size:11px;box-shadow:0 0 0 1px #fff}
+.wx-tabs{height:82px;min-height:82px;padding:8px 1px 20px;background:#f8f8f8;border-top:1px solid #dadada;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;z-index:2}
+.wx-tab{height:54px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:flex-start;padding-top:2px;color:#242424;font-size:11px;font-weight:400;padding:0;position:relative}
+.wx-tab-icon{position:relative;height:29px;min-width:29px;display:grid;place-items:center}
+.wx-unread-badge{position:absolute;top:-6px;left:21px;min-width:18px;height:18px;padding:0 4px;line-height:18px;border-radius:10px;background:#f34d55;color:#fff;text-align:center;font-size:11px;font-weight:500;z-index:1;box-shadow:0 0 0 1.5px #f8f8f8;font-variant-numeric:tabular-nums}
+.wx-tab-title{line-height:16px}
+.wx-screen .wx-tab:active{background:none;opacity:.75}
+.wx-tab.selected{color:var(--wx-green)}
+.wx-tab .wx-svg{stroke-width:1.75}
+.wx-tab.selected .wx-svg{stroke-width:2}
+.wx-contacts-scroll{background:#fff;padding-bottom:20px}
+.wx-contact-shortcuts{background:#fff}
+.wx-entry{height:55px;display:flex;align-items:center;width:100%;gap:14px;text-align:left;background:#fff;color:#191919;padding:0 15px}
+.wx-contact-shortcuts .wx-entry{height:50px}
+.wx-feature-icon{width:36px;height:36px;min-width:36px;display:grid;place-items:center;border-radius:6px;background:var(--wx-feature-color);color:white}
+.wx-feature-icon .wx-svg{stroke-width:1.8}
+.wx-feature-moments{background:conic-gradient(#52c6f8 0 55deg,#835eef 55deg 110deg,#f46c82 110deg 165deg,#f9c04c 165deg 220deg,#41ba82 220deg 275deg,#35c7d8 275deg 330deg,#52c6f8 330deg)}
+.wx-entry-main{min-width:0;flex:1;height:100%;border-bottom:1px solid #efefef;display:flex;align-items:center;gap:10px}
+.wx-entry-name{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.wx-entry-detail{font-size:12px;color:#8b8b8b;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wx-entry>.wx-svg{color:#b6b6b6;stroke-width:1.8}
+.wx-entry:last-child .wx-entry-main{border-bottom:0}
+.wx-contact-section h2{margin:0;background:#ededed;color:#929292;font-size:12px;font-weight:450;line-height:25px;padding:0 15px}
+.wx-contact-row{height:59px;width:100%;background:#fff;display:flex;gap:14px;align-items:center;padding:0 18px;text-align:left;color:#171717}
+.wx-contact-row strong{height:100%;border-bottom:1px solid #efefef;display:flex;align-items:center;flex:1;font-size:15px;font-weight:450}
+.wx-contact-row:last-child strong{border:0}
+.wx-contacts .wx-scroll{padding-right:0}
+.wx-alpha-index{position:absolute;right:0;top:49%;transform:translateY(-50%);width:20px;display:flex;flex-direction:column;align-items:center;gap:0;z-index:1;color:#737373}
+.wx-alpha-index button{font-size:9px;font-weight:600;color:inherit;line-height:1.25;min-height:14px;width:20px;padding:0;text-align:center}
+.wx-screen .wx-alpha-index button:active{background:transparent;color:#07c160}
+.wx-settings-scroll{background:#ededed}
+.wx-settings-group{margin:17px 0;background:#fff}
+.wx-settings-group:first-child{margin-top:0}
+.wx-settings-group .wx-entry{height:61px}
+.wx-discover .wx-settings-group{margin:18px 0}
+.wx-discover .wx-settings-group:first-child{margin-top:0}
+.wx-discover .wx-feature-icon,.wx-me .wx-feature-icon{width:29px;height:29px;min-width:29px;background:transparent;color:var(--wx-feature-color)}
+.wx-discover .wx-feature-moments{color:#2bac9d}
+.wx-me .wx-feature-service{color:#07c160}
+.wx-me .wx-feature-stickers{color:#ffba00}
+.wx-me .wx-feature-shop{color:#ff6557}
+.wx-profile{background:white;height:186px;display:flex;align-items:center;gap:17px;padding:0 20px;width:100%;text-align:left;color:#191919}
+.wx-profile-avatar{width:77px;height:77px;border-radius:7px;object-fit:cover;background:#35505d}
+.wx-profile-copy{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.wx-profile-copy strong{font-size:23px;font-weight:600}
+.wx-profile-copy>span{font-size:14px;color:#888;white-space:nowrap}
+.wx-profile-copy small{font-size:12px;color:#8a8a8a}
+.wx-state{border:1px solid #ddd;border-radius:15px;padding:3px 10px;line-height:1.2}
+.wx-profile-qr{display:flex;align-items:center;gap:5px;color:#8c9aa9}
+.wx-me .wx-settings-group{margin:15px 0}
+.wx-me .wx-settings-group:first-of-type{margin-top:12px}
+.wx-me .wx-settings-group .wx-entry{height:61px}
+.wx-me .wx-settings-group .wx-entry-main{gap:4px}
+#phone:has(.app-wechat:not(.has-chat)) #homebar{opacity:0;pointer-events:none}
+#phone:has(.app-wechat:not(.has-chat)) #status-layer{background:#ededed;color:#171717}
+#phone:has(.app-wechat:has(.wx-me)) #status-layer{background:#fff}
+.app-view.app-wechat:has(.wx-me){background:#fff}
+@media(max-width:360px){.wx-header{height:52px;min-height:52px}.wx-chat-row{gap:9px;padding:0 11px}.wx-entry{padding:0 12px;gap:12px}.wx-alpha-index{width:14px}.wx-profile{padding:0 14px;gap:12px}}
+
+/* Real iPhone safe-area compensation: keep native status/dynamic-island clear. */
+@supports (padding: max(0px, 1px)){@media(max-width:600px){.app-view.app-wechat:not(.has-chat){padding-top:max(45px,env(safe-area-inset-top,0px))}}}
+
+/* 微信聊天二级页：原生灰白对话系统，与手机桌面玻璃效果彻底隔离。 */
+.app-view.app-wechat.has-chat{padding-top:60px;background:#ededed;color:#191919;backdrop-filter:none;-webkit-backdrop-filter:none}
+.app-view.app-wechat.has-chat .app-content{padding:0;overflow:hidden;background:#ededed}
+.app-wechat.has-chat .wx-native-nav{height:52px;min-height:52px;padding:0 12px;background:#ededed;border-bottom:1px solid #e3e3e3;color:#161616;position:relative}
+.app-wechat .wx-native-nav>strong{position:absolute;left:52px;right:52px;top:50%;transform:translateY(-50%);text-align:center;font-size:17px;font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;pointer-events:none;letter-spacing:0}
+.app-wechat .wx-native-nav .nav-back{color:#181818;width:40px;height:46px;display:grid;place-items:center;padding:0;transform:none}
+.app-wechat .wx-native-nav .wx-native-more{color:#191919;width:42px;min-width:42px;height:46px;padding:0;transform:none;align-self:center;display:grid;place-items:center}
+.app-wechat .wx-conversation{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;background:#ededed;color:#191919;min-height:0;height:100%;position:relative;display:flex;flex-direction:column}
+.app-wechat .wx-chat-messages{background:#ededed!important;padding:8px 13px 16px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;min-height:0;flex:1}
+.app-wechat .wx-chat-messages::-webkit-scrollbar{display:none}
+.app-wechat .wx-time-divider{color:#999;font-size:11px;line-height:1.4;margin:14px 0 23px;text-align:center;font-weight:400}
+.app-wechat .wx-message-row{display:flex;align-items:flex-start;gap:10px;margin:0 0 17px;min-height:40px}
+.app-wechat .wx-message-row.mine{flex-direction:row-reverse}
+.wx-message-avatar{width:40px;height:40px;flex:0 0 40px;border-radius:4px;overflow:hidden;background:#d8d8d8;display:block}
+.wx-message-avatar img{width:100%;height:100%;display:block;object-fit:cover}
+.wx-message-body{display:flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:calc(100% - 65px);min-width:0}
+.wx-message-row.mine .wx-message-body{align-items:flex-end}
+.wx-message-sender{font-size:11px;line-height:14px;color:#8c8c8c;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 1px 1px}
+.app-wechat .wx-bubble{position:relative;display:block;width:auto;max-width:100%;min-width:27px;text-align:left;background:#fff;border:1px solid #dfdfdf;border-radius:5px;padding:10px 12px;color:#191919;font-size:16px;line-height:1.48;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;box-shadow:none;transform:none;-webkit-touch-callout:none;user-select:text;letter-spacing:0}
+.app-wechat .wx-bubble::before{content:"";position:absolute;left:-5px;top:14px;width:8px;height:8px;background:#fff;border-left:1px solid #dfdfdf;border-bottom:1px solid #dfdfdf;transform:rotate(45deg)}
+.app-wechat .wx-message-row.mine .wx-bubble{background:#95ec69;border-color:#8ddb62;color:#191919}
+.app-wechat .wx-message-row.mine .wx-bubble::before{left:auto;right:-5px;transform:rotate(225deg);background:#95ec69;border-color:#8ddb62}
+.app-wechat .wx-bubble:active{background:#f6f6f6}
+.app-wechat .wx-message-row.mine .wx-bubble:active{background:#90e164}
+.app-wechat .wx-bubble-image{background:transparent;border:0;padding:0;max-width:225px}
+.app-wechat .wx-bubble-image::before{display:none}
+.wx-bubble-picture{max-width:220px;max-height:250px;display:block;border-radius:4px;object-fit:contain}
+.wx-invite{width:210px;display:flex;flex-direction:column;gap:7px;background:#fff;border-radius:4px;padding:5px;color:#222;font-size:13px}
+.wx-invite-title{font-size:16px;font-weight:600;padding-bottom:8px;border-bottom:1px solid #eee}
+.wx-invite button{background:#07c160;color:#fff;border-radius:4px;padding:7px}
+.wx-recall-notice{font-size:12px;color:#aaa;text-align:center;line-height:1.6;margin:17px 0 24px}
+.app-wechat .wx-composer{min-height:78px;display:flex;flex-shrink:0;align-items:center;gap:9px;padding:6px 10px 29px;background:#f7f7f7;border-top:1px solid #d9d9d9;backdrop-filter:none;-webkit-backdrop-filter:none;position:relative;color:#191919;box-shadow:none}
+.app-wechat .wx-composer-icon{width:30px;height:38px;flex:0 0 30px;padding:0;display:grid;place-items:center;color:#262626;border:0;background:transparent;transform:none;border-radius:0}
+.app-wechat .wx-composer-icon:active{opacity:.6;transform:none}
+.app-wechat .wx-composer input{flex:1;min-width:0;height:39px;min-height:39px;font-size:16px;line-height:39px;padding:0 8px;margin:0;background:#fff;border:1px solid #fff;color:#171717;border-radius:5px;box-shadow:none;outline:0}
+.app-wechat .wx-composer input:focus{border-color:#fff}
+.app-wechat .wx-composer-send{background:#07c160;color:white;border-radius:5px;min-width:40px;height:33px;padding:0 7px;font-size:13px;flex-shrink:0;transform:none}
+.app-wechat .wx-composer input:placeholder-shown~.wx-composer-send{display:none}
+.app-wechat .wx-composer:has(input:not(:placeholder-shown)) [data-action="attach-chat"]{display:none}
+.wx-emoji-panel{height:min(279px,37vh);min-height:204px;flex:0 0 auto;display:flex;flex-direction:column;background:#f3f3f5;border-top:1px solid #e0e0e0;overflow:hidden;user-select:none;-webkit-user-select:none}
+.wx-emoji-panel[hidden]{display:none}
+.wx-emoji-grid{min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:43px;gap:2px 0;padding:9px 6px 12px;align-content:start;scrollbar-width:none;overscroll-behavior:contain}
+.wx-emoji-grid::-webkit-scrollbar{display:none}
+.app-wechat .wx-emoji-item{height:41px;width:100%;min-width:0;padding:0;display:grid;place-items:center;border:0;border-radius:5px;background:none;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:29px;font-weight:400;line-height:1.2;color:#222;transform:none}
+.app-wechat .wx-emoji-item:active{background:#dedee1;transform:none}
+.wx-emoji-tabs{display:flex;align-items:center;gap:3px;height:73px;min-height:73px;background:#ededf0;border-top:1px solid #e5e5e8;padding:3px 8px 27px}
+.app-wechat .wx-emoji-category{height:40px;min-width:47px;border:0;border-radius:5px;background:transparent;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:22px;color:#aaa;display:grid;place-items:center;transform:none}
+.app-wechat .wx-emoji-category.selected{background:#fff;box-shadow:0 1px 2px #00000010}
+.app-wechat .wx-emoji-delete{min-width:46px;margin-left:auto;height:40px;padding:0 7px;color:#505050;font-size:27px;font-weight:300;display:grid;place-items:center;border-radius:5px;transform:none}
+.app-wechat .wx-emoji-delete:active{background:#dedee1}
+.wx-message-menu{position:absolute;z-index:10;display:flex;align-items:center;gap:1px;background:#343434;color:#fff;border-radius:7px;padding:0 4px;box-shadow:0 5px 18px #0003;white-space:nowrap;min-height:44px}
+.wx-message-menu[hidden]{display:none}
+.wx-message-menu:after{content:"";position:absolute;bottom:-5px;left:calc(50% - 5px);width:10px;height:10px;transform:rotate(45deg);background:#343434}
+.wx-message-menu button{color:#fff;font-size:13px;font-weight:500;padding:12px 18px;border-right:1px solid #ffffff29;transform:none}
+.wx-message-menu button:last-child{border-right:0}
+.wx-message-menu button:active{background:#484848}
+.wx-group-avatar{background:#e8e8e8!important;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:2px;padding:3px;border-radius:5px;text-shadow:none}
+.wx-group-cell{background:#fff;display:block;min-width:0;min-height:0;overflow:hidden;border-radius:1px}
+.wx-group-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.wx-group-cell>span{font-size:9px;color:#555;display:grid;place-items:center;height:100%}
+#phone:has(.app-wechat.has-chat) #status-layer{background:#ededed;color:#171717}
+#phone:has(.app-wechat.has-chat) #homebar span{background:#171717}
+.app-wechat .wx-conversation:has(.wx-emoji-panel:not([hidden])) .wx-composer{min-height:57px;padding-bottom:9px}
+#phone.keyboard-open .app-wechat .wx-composer{padding-bottom:6px}
+@media(max-width:370px){.app-wechat .wx-composer{gap:5px;padding-left:7px;padding-right:7px}.app-wechat .wx-composer-icon{width:28px;flex-basis:28px}.app-wechat .wx-bubble{font-size:15px}}
+

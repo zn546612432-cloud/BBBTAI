@@ -1,0 +1,2 @@
+import {btn,esc} from '../../../../system/ui.js';
+export const aomiLogin=phone=>`<div class="aomi-login">${btn('aomi-close','×','aomi-x')}<h1>歡迎登錄澳覓</h1><p>支持中國澳門、中國大陸及中國香港手機號碼登錄</p><label class="aomi-field"><span>+853 ▾</span><input name="aomi-phone" type="tel" inputmode="tel" placeholder="請輸入手機號" value="${esc(phone)}"></label><label class="aomi-field"><input placeholder="請輸入驗證碼" inputmode="numeric">${btn('aomi-code','獲取驗證碼')}</label>${btn('aomi-login-submit','登錄','aomi-disabled')}<small>登錄即代表您已同意 <em>《澳覓用戶協議》、《隱私政策》</em></small></div>`;

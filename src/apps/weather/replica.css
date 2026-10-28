@@ -1,0 +1,15 @@
+.ios-weather-list .weather-city-scroll{overflow-y:auto;overflow-x:hidden}
+.ios-weather-list .weather-swipe-row{position:relative;width:100%;height:123px;min-height:0;margin:0 0 12px;overflow:hidden;border-radius:23px;transition:height .29s cubic-bezier(.2,.7,.2,1),margin .29s ease,opacity .27s ease;touch-action:pan-y}
+.ios-weather-list .weather-delete-underlay{position:absolute;inset:0;background:#d94145;border-radius:23px;display:flex;justify-content:flex-end;align-items:stretch;padding:0}
+.ios-weather-list .weather-delete-button{width:95px;height:100%;font-size:17px;font-weight:650;color:white!important;background:linear-gradient(130deg,#ec555c,#cd343c)!important;border-radius:0!important}
+.ios-weather-list .weather-swipe-main{position:relative;z-index:1;width:100%;height:100%;transform:translate3d(0,0,0);transition:transform .3s cubic-bezier(.18,.86,.2,1);will-change:transform}
+.ios-weather-list .weather-swipe-row.weather-dragging .weather-swipe-main{transition:none}
+.ios-weather-list .weather-swipe-row.weather-removing .weather-swipe-main{transform:translate3d(-115%,0,0)!important;transition:transform .29s cubic-bezier(.4,0,1,1)!important}
+.ios-weather-list .weather-swipe-main .weather-card{margin:0!important;width:100%;height:100%;border-radius:23px!important}
+.ios-weather-list .weather-foot{font-size:11px;color:#8e92a8;line-height:1.6;padding:15px 0 22px}
+.ios-weather-list .weather-restore-button{font-size:11px;color:#9abffa;font-weight:650;vertical-align:baseline;padding:0 3px}
+.ios-weather-list .weather-none{min-height:230px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.8;color:#99a5be;font-size:14px}
+.ios-weather-list .weather-undo{position:absolute;left:22px;right:22px;bottom:calc(85px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:17px;background:#313b55;color:#f6f8ff;font-size:13px;box-shadow:0 10px 32px #0005;animation:weather-toast-in .25s ease-out}
+.ios-weather-list .weather-undo button{font-weight:650;color:#adceff;font-size:13px}
+@keyframes weather-toast-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ios-weather-list .weather-swipe-row,.ios-weather-list .weather-swipe-main{transition:none!important}}

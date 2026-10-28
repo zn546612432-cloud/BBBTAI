@@ -1,0 +1,2 @@
+import {btn,esc} from '../../../../system/ui.js';
+export const kiraInbox=s=>`<div class="kira-inbox"><div class="kira-top">邮箱 <span>编辑</span></div><h1>KIRA</h1><label class="kira-search">⌕ <input placeholder="搜索邮件" aria-label="搜索邮件"></label><div class="kira-mail-list">${s.content.mail.map(m=>btn('kira-mail',`<span class="kira-unread">${m.read?'':'●'}</span><span><strong>${esc(m.from)}</strong><b>${esc(m.subject)}</b><small>${esc(m.body)}</small></span><time>今天</time>`,'kira-mail-row',`data-id="${esc(m.id)}"`)).join('')}</div></div>`;

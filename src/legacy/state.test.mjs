@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {seed} from '../src/data.js';import {validate,restore,persist,clone,moveMessage,canOpen} from '../src/store.js';
+import {MiniMaxVoice,SupabaseSaveAdapter} from '../src/services.js';
+test('edited conversation survives save and reload with leading-zero time',()=>{const map=new Map(),storage={setItem:(k,v)=>map.set(k,v),getItem:k=>map.get(k)};const s=clone(seed);s.conversations[0].messages[0].text='已改好';s.clock='00:06';persist(storage,s);assert.equal(restore(storage).conversations[0].messages[0].text,'已改好');assert.equal(restore(storage).clock,'00:06');});
+test('corrupt backup falls back without modifying its source',()=>{const raw='{"schemaVersion":4}';assert.equal(restore({getItem:()=>raw}).day,20);assert.equal(raw,'{"schemaVersion":4}');});
+test('backup rejects hostile image URLs, invalid day, invalid app IDs and duplicate conversations',()=>{for(const mutate of [s=>s.wallpaper='javascript:alert(1)',s=>s.day=91,s=>s.pages[0].push('unknown'),s=>s.conversations.push(s.conversations[0])]){const s=clone(seed);mutate(s);assert.throws(()=>validate(s));}});
+test('reordering changes message order without deleting messages',()=>{const m=[{id:'a'},{id:'b'},{id:'c'}];moveMessage(m,'b',-1);assert.deepEqual(m.map(x=>x.id),['b','a','c']);moveMessage(m,'b',-1);assert.equal(m.length,3);});
+test('NoApp and IG are unavailable before day 56',()=>{assert.equal(canOpen('noapp',55),false);assert.equal(canOpen('ig',55),false);assert.equal(canOpen('noapp',56),true);});
+test('unconfigured voice fails explicitly and does not claim audio',async()=>{await assert.rejects(new MiniMaxVoice().synthesize('ui-sample'),/尚未連接/);});
+test('cloud adapter refuses saves without authentication',async()=>{const adapter=new SupabaseSaveAdapter({auth:{getUser:async()=>({data:{user:null},error:null})}});await assert.rejects(adapter.save('id',seed),/尚未登入/);});

@@ -1,0 +1,7 @@
+import {esc} from '../../../../system/ui.js';
+import {ci} from '../../components/icons.js';
+import {longDate,eventShade} from '../../data/model.js';
+export function renderEvent(event){
+ if(!event)return `<section class="cl-event-page"><header><button data-action="back" class="cl-round-control" aria-label="返回上一页">${ci('back')}</button><strong>日程</strong></header><div class="cl-no-events">日程不存在</div></section>`;
+ return `<section class="cl-event-page"><header><button data-action="back" class="cl-round-control" aria-label="返回上一页">${ci('back')}</button><strong>日程</strong><button class="cl-event-edit" data-action="cl-edit-event" data-id="${esc(event.id)}">编辑</button></header><div class="cl-event-content"><span class="cl-event-color-bar" style="background:${eventShade(event.color)}"></span><h1>${esc(event.title)}</h1><p>${longDate(event.startDate)} ${esc(event.startTime)}<br>${longDate(event.endDate)} ${esc(event.endTime)}</p>${event.location?`<div class="cl-event-extra">${ci('location',18)}${esc(event.location)}</div>`:''}${event.notes?`<div class="cl-event-extra">${ci('note',18)}${esc(event.notes)}</div>`:''}${event.url?`<div class="cl-event-extra">${ci('link',18)}${esc(event.url)}</div>`:''}<button class="cl-event-delete" data-action="cl-delete-event">${ci('trash',19)} 删除日程</button></div><div class="cl-delete-confirm" hidden><div><h2>删除此日程？</h2><p>此操作无法撤销。</p><button data-action="cl-confirm-delete" data-id="${esc(event.id)}">删除日程</button><button data-action="cl-cancel-delete">取消</button></div></div></section>`;
+}

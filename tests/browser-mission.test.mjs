@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {render,handle} from '../src/apps/browser/index.js';
+import {HACKER_BOUNTY_ID,HACKER_MAIL_ID} from '../src/apps/mirage/mission.js';
+import {initialState} from '../src/services/storage.js';
+function fixture(){let state=initialState(),nav=[];const store={get:()=>state,update(fn){let n=structuredClone(state);fn(n);state=n;}};return {store,router:{open(x){nav.push(x)},back(){}},refresh(){},nav};}
+test('target is gated; opening accepted mission records the visit and advances Kira',()=>{const c=fixture(),target={dataset:{page:'target'}},loc={route:'/search',params:{query:'xxx',orderId:HACKER_BOUNTY_ID}};assert.doesNotMatch(render(c,loc),/卓峰集团最新公告/);c.store.update(s=>{s.content.orders.push({id:HACKER_BOUNTY_ID,status:'ACCEPTED'});s.content.mail.push({id:HACKER_MAIL_ID,missionStep:1});});assert.match(render(c,loc),/卓峰集团最新公告/);handle('browser-open',target,c,loc);assert.equal(c.store.get().content.mail.find(x=>x.id===HACKER_MAIL_ID).missionStep,2);assert.equal(c.store.get().browserData.history[0].id,'target');assert.equal(c.nav.at(-1).params.orderId,HACKER_BOUNTY_ID);handle('browser-mission-done',{},c,{params:{}});assert.equal(c.nav.at(-1).route,'/mail/'+HACKER_MAIL_ID);});

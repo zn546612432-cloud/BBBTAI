@@ -1,0 +1,4 @@
+import {dateParts} from '../calendar.js';
+import {uid} from '../id.js';
+// Only actual user actions enter the event log. A demo message never becomes a story fact.
+export function sendMessage(store,{channel,conversationId,text,kind='text'}){if(!['wechat','noapp','mirage','messages'].includes(channel))throw Error('未知消息频道');if(!['text','image'].includes(kind)||typeof text!=='string'||!text.trim())throw Error('消息内容无效');const id=uid();store.update(s=>{const c=s.content.conversations[channel]?.find(c=>c.id===conversationId);if(!c)throw Error('会话不存在');c.messages.push({id,from:'me',text:text.trim(),time:s.clock,sentDate:dateParts(s).iso,kind,actual:true,day:s.day});delete s.drafts[conversationId];s.events.push({type:'message_sent',channel,conversationId,messageId:id,day:s.day,clock:s.clock});});return id;}

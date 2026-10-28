@@ -1,0 +1,3 @@
+/* Dividers belong to each row, so they move naturally with the scrolling list. */
+.settings-row{position:relative}
+.settings-row:not(:last-child)::after{left:50px;right:0;bottom:0;transform:none;border-bottom:1px solid #e9e9ee;pointer-events:none}
