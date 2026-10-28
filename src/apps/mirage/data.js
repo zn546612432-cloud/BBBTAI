@@ -16,9 +16,8 @@ export function initializeMirage(store){if(store.get().content.mirage?.version==
  const previousVersion=s.content.mirage?.version||0;
  s.content.mirage={...mirageData(s),version:2};
  if(previousVersion<2&&!s.content.orders.some(o=>o.id===HACKER_BOUNTY_ID))s.content.orders.push({...hackerBounty});
- if(previousVersion>=1)return;
- const list=s.content.conversations.mirage||=[];
- contactNames.forEach((name,i)=>{let c=list.find(c=>c.name.toLowerCase().replace(/[. ]/g,'')===name.toLowerCase().replace(/[. ]/g,''));if(!c){c={id:'mc-'+i,name,messages:[]};list.push(c);}c.online??=i===0;c.status??=i===0?'ONLINE':'NO MESSAGE';});
+ // Private contracts destroy their channels on completion. No sample identity
+ // may appear in a fresh player's contact list merely because they signed in.
  });}
 export const contacts=s=>{const list=[...(s.content.conversations.mirage||[])];return list.sort((a,b)=>(Number(b.lastOpened)||0)-(Number(a.lastOpened)||0)||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
 export const isCompletedBounty=order=>['COMPLETED','已完成'].includes(String(order.status||'').trim().toUpperCase());

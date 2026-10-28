@@ -16,9 +16,56 @@ function discardOldMorningNotices(s){
  s.notifications=s.notifications.filter(n=>!/^morning-\d+$/.test(n.id||''));
  return s.notifications.length!==before;
 }
+/** Replace only legacy fixture bubbles; retain all player and editor-authored records. */
+function removeObsoleteChatDemos(s){
+ let changed=false;
+ for(const channel of ['wechat','mirage','messages']){
+  const list=s.content.conversations[channel]||[];
+  for(const c of list){
+   const before=c.messages.length;
+   c.messages=c.messages.filter(m=>!m.demo);
+   if(c.messages.length!==before){changed=true;c.unread=0;}
+  }
+  const filtered=list.filter(c=>{
+   const oldFixture=channel==='messages'&&['sms-delivery','sms-offer','sms-promo'].includes(c.id)
+    ||channel==='mirage'&&(c.id==='rook'||/^mc-\d+$/.test(c.id));
+   return !oldFixture||c.messages.length||c.authored;
+  });
+  if(filtered.length!==list.length){s.content.conversations[channel]=filtered;changed=true;}
+ }
+ const count=s.notifications.length;
+ s.notifications=s.notifications.filter(n=>!n.demo);
+ if(count!==s.notifications.length)changed=true;
+ if(s.content.smsSeedVersion!==2){s.content.smsSeedVersion=2;changed=true;}
+ return changed;
+}
+function clearIncognitoHistory(s){
+ const browser=s.browserData;
+ if(!browser)return false;
+ let changed=false;
+ if(browser.history?.length){browser.history=[];changed=true;}
+ if(browser.privateSeedVersion!==1){
+  const old=['jack','chess','macau'];
+  browser.favorites=[...new Set(['github','chatgpt','tempmail','ticketing','network',...(browser.favorites||[]).filter(id=>!old.includes(id))])];
+  browser.privateSeedVersion=1;
+  changed=true;
+ }
+ return changed;
+}
+/** Old saves did not contain the separate empty WeChat DMs yet. */
+function ensureWeChatRoster(s){
+ if(s.content.wechatRosterVersion===1)return false;
+ const list=s.content.conversations.wechat||[];
+ for(const {id,name,avatar} of demoContent.conversations.wechat){
+  if(!list.some(c=>c.id===id||c.name===name))list.push({id,name,avatar,messages:[]});
+ }
+ s.content.conversations.wechat=list;
+ s.content.wechatRosterVersion=1;
+ return true;
+}
 function normalizeTimeline(s){
  if(s.timelineVersion!==1||!s.calendar)s.calendar=calendarAnchor(s.day);
  s.timelineVersion=1;s.storyChargeGates??=[];
  syncDeathNight(s);
 }
-export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));}catch{this.state=(!isPreview&&migrateLegacy(storage))||initialState();this.persist();}normalizeTimeline(this.state);this.persist();if(!this.state.content.smsSeedVersion){if(!this.state.content.conversations.messages?.length)this.state.content.conversations.messages=clone(demoContent.conversations.messages);this.state.content.smsSeedVersion=1;this.persist();}if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureBank(restored);ensurePhoneData(restored);discardOldMorningNotices(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}
+export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));}catch{this.state=(!isPreview&&migrateLegacy(storage))||initialState();this.persist();}normalizeTimeline(this.state);this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureBank(restored);ensurePhoneData(restored);removeObsoleteChatDemos(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);discardOldMorningNotices(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}

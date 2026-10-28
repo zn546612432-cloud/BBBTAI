@@ -1,6 +1,18 @@
 import {BUNDLE_FORMAT,DAY_FORMAT,parsePresetPayload} from './format.js';
 
-/** Only authored imported history is exported; never actual player chat logs. */
+const FIRST_GAME_DAY=Date.parse('2025-05-19T00:00:00Z');
+const validDay=n=>Number.isInteger(n)&&n>=1&&n<=90;
+function messageDay(message,state){
+ if(validDay(message.schedule?.day))return message.schedule.day;
+ if(message.storyImported&&validDay(message.day))return message.day;
+ if(message.sentDate&&/^\d{4}-\d{2}-\d{2}$/.test(message.sentDate)){
+  const timestamp=Date.parse(message.sentDate+'T00:00:00Z');
+  if(Number.isFinite(timestamp))return Math.max(1,Math.min(90,Math.round((timestamp-FIRST_GAME_DAY)/86400000)+1));
+ }
+ if(validDay(message.day))return message.day;
+ return validDay(state.day)?state.day:1;
+}
+/** Export manually edited and imported scripted text; never a player's live replies. */
 export function exportPresetPacks(state,{day=null}={}){
  const buckets=new Map();
  const bucket=(d,ch)=>{const key=`${String(d).padStart(3,'0')}:${ch}`;if(!buckets.has(key))buckets.set(key,{format:DAY_FORMAT,day:d,channel:ch,label:`D${String(d).padStart(3,'0')} · ${ch}`,rules:[],history:[]});return buckets.get(key);};
@@ -9,11 +21,12 @@ export function exportPresetPacks(state,{day=null}={}){
   for(const conversation of conversations){
    const perDay=new Map();
    for(const message of conversation.messages||[]){
-    if(!message.storyImported||message.actual||!Number.isInteger(message.day))continue;
-    if(day!==null&&message.day!==day)continue;
-    const rows=perDay.get(message.day)||[];
+    if((!message.storyImported&&!message.authored)||message.actual||message.kind&&message.kind!=='text'||typeof message.text!=='string'||!message.text.trim())continue;
+    const authoredDay=messageDay(message,state);
+    if(day!==null&&authoredDay!==day)continue;
+    const rows=perDay.get(authoredDay)||[];
     rows.push({id:message.id,from:message.from,text:message.text,time:message.time,...(message.sentDate?{sentDate:message.sentDate}:{}),...(message.schedule?.mode==='game-time'?{appearance:'game-time'}:{})});
-    perDay.set(message.day,rows);
+    perDay.set(authoredDay,rows);
    }
    for(const [d,messages] of perDay){bucket(d,channel).history.push({conversationId:conversation.id,conversationName:conversation.name,messages});}
   }

@@ -56,7 +56,7 @@ test('historical dialogue imports by stable ID without replacing live messages, 
  ]}];
  const chat=s.content.conversations.wechat[0];chat.messages.push({id:'player-untouchable',from:'me',text:'我的真消息',time:'12:10',actual:true});
  applyPresetImport(s,pack);applyPresetImport(s,pack,{mode:'replace-conflicts'});
- assert.equal(chat.messages.length,5,'two demo, one real and two imported history entries');
+ assert.equal(chat.messages.length,3,'one real and two imported history entries, no demo');
  const imported=s.content.conversations.wechat[0].messages.filter(m=>m.storyImported);
  assert.deepEqual(imported.map(m=>m.id),['story-h1','story-h2']);
  const result=serializePresetExport(s,{day:57});
@@ -76,11 +76,13 @@ test('editor deleted rule tombstone prevents fixture resurrection until explicit
 });
 
 test('builtin catalog fetch path and hydration are idempotent',async()=>{
- const fixtures=new Map([['manifest.json',fixture('manifest.json')],['D057/wechat.json',source()[0]],['D058/wechat.json',source()[1]]]);
+ const manifest=fixture('manifest.json');
+ const fixtures=new Map([['manifest.json',manifest],...manifest.files.map(filename=>[filename,fixture(filename)])]);
  const fetched=[];const fetcher=async url=>{const key=String(url).split('/days/')[1];fetched.push(key);return {ok:fixtures.has(key),json:async()=>fixtures.get(key)};};
- assert.equal((await loadBuiltInPresets(fetcher)).length,2);
+ assert.equal((await loadBuiltInPresets(fetcher)).length,manifest.files.length);
  const s=state(),store={get:()=>s,update:fn=>fn(s)};
  await hydrateBuiltInPresets(store,fetcher);await hydrateBuiltInPresets(store,fetcher);
  assert.equal(s.storyPresets.rules.length,7);assert.ok(fetched.includes('manifest.json'));
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.filter(m=>m.sentDate==='2024-03-10').length,22);
  assert.equal(exportPresetPacks(s,{day:57}).length,1);
 });

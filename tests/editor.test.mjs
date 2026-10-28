@@ -7,7 +7,8 @@ import {homePages,dockApps,registry,installed} from '../src/system/registry.js';
 import {normalizeAppLink} from '../src/services/deep-links/index.js';
 import {chatList,chatView} from '../src/components/chat.js';
 import {handle,change} from '../src/editor/index.js';
-function setup(){const data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},store=new PhoneStore(storage);return {store,storage};}
+import {addTestWeChat} from './fixture-chat.mjs';
+function setup(){const data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},store=new PhoneStore(storage);store.update(addTestWeChat);return {store,storage};}
 function schedule(store,id,schedule){store.update(s=>{const c=s.content.conversations.wechat[0],m=c.messages.find(m=>m.id===id);setSchedule(s,c,m,schedule);});}
 test('dock contains only phone and messages, desktop has neither and KIRA is the single mail app',()=>{
  assert.deepEqual(dockApps,['phone','messages']);assert.ok(!homePages.flat().some(id=>['phone','messages','mail'].includes(id)));

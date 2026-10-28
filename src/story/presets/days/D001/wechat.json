@@ -1,0 +1,196 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-03-10 · 新手机的第一天（待主理人核实）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-20240310-001",
+          "from": "me",
+          "text": "我换新手机了，之前的聊天记录都没了，你们没说什么重要的事情吧？",
+          "time": "08:14",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-002",
+          "from": "wang",
+          "text": "知道了。",
+          "time": "08:15",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-003",
+          "from": "胡枫",
+          "text": "旺旺哥问晚上吃什么而已。",
+          "time": "08:16",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-004",
+          "from": "wang",
+          "text": "阿蒙，弟弟们晚上想吃糖醋排骨，你呢？",
+          "time": "08:17",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-005",
+          "from": "me",
+          "text": "哦",
+          "time": "08:24",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-006",
+          "from": "me",
+          "text": "随便吧",
+          "time": "08:24",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-007",
+          "from": "me",
+          "text": "我晚点回来",
+          "time": "08:25",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-008",
+          "from": "阿威",
+          "text": "今天老头来吗？",
+          "time": "09:20",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-009",
+          "from": "阿威",
+          "text": "他是不是昨天说要回来？",
+          "time": "09:20",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-010",
+          "from": "小辛",
+          "text": "来吧",
+          "time": "09:21",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-011",
+          "from": "小辛",
+          "text": "我操，我还没练会匕首",
+          "time": "09:21",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-012",
+          "from": "小辛",
+          "text": "等一下我又要被老头骂了",
+          "time": "09:22",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-013",
+          "from": "阿威",
+          "text": "🕶️你来拳击场我教你",
+          "time": "09:23",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-014",
+          "from": "小辛",
+          "text": "ok呀哥",
+          "time": "09:24",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-015",
+          "from": "wang",
+          "text": "来。",
+          "time": "09:26",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-016",
+          "from": "me",
+          "text": "我找不到家里的钥匙了@熙旺",
+          "time": "21:05",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-017",
+          "from": "wang",
+          "text": "塞在地毯下面。",
+          "time": "21:09",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-018",
+          "from": "me",
+          "text": "回来了",
+          "time": "21:15",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-019",
+          "from": "小辛",
+          "text": "【小红书分享链接 · 待补】",
+          "time": "23:45",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-020",
+          "from": "小辛",
+          "text": "笑死了",
+          "time": "23:45",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-021",
+          "from": "胡枫",
+          "text": "我服了你又在看什么",
+          "time": "23:46",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-group-20240310-022",
+          "from": "仔仔",
+          "text": "哈哈哈哈，我也刷到过",
+          "time": "23:47",
+          "sentDate": "2024-03-10"
+        }
+      ]
+    },
+    {
+      "conversationId": "wang",
+      "conversationName": "熙旺",
+      "messages": [
+        {
+          "id": "wx-wang-20240310-001",
+          "from": "me",
+          "text": "我准备到家",
+          "time": "21:00",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-wang-20240310-002",
+          "from": "me",
+          "text": "钥匙呢？",
+          "time": "21:00",
+          "sentDate": "2024-03-10"
+        },
+        {
+          "id": "wx-wang-20240310-003",
+          "from": "wang",
+          "text": "地毯下面",
+          "time": "21:09",
+          "sentDate": "2024-03-10"
+        }
+      ]
+    }
+  ]
+}

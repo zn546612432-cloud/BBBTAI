@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PhoneStore} from '../src/services/storage.js';
 import {sendMessage} from '../src/services/messaging/index.js';
-import {dueProactiveRule,deliverRule,matchReplyRule,PresetConversationEngine} from '../src/story/presets/engine.js';
+import {dueProactiveRule,deliverRule,deliverMissedScheduled,matchReplyRule,PresetConversationEngine} from '../src/story/presets/engine.js';
 import {applyPresetImport} from '../src/story/presets/io/import.js';
 import {tickWorld,TYPING_MINUTES_PER_MS} from '../src/system/time/clock.js';
 import {presetEditor} from '../src/editor/presets/index.js';
@@ -28,6 +28,27 @@ test('03:00 schedule arrives once and disambiguates night versus morning',()=>{
  assert.equal(night?.messages[0],'你怎么还没睡？');
  store.update(s=>deliverRule(s,night));
  assert.equal(matchReplyRule(store.get(),{...context,clock:'08:30'}).rule,null);
+});
+
+test('developer jumping D01 → D90 backfills D57 without rewriting the current game date',()=>{
+ const store=sample(),start={day:1,clock:'08:00'};
+ store.update(s=>{s.day=90;s.clock='19:30';assert.deepEqual(deliverMissedScheduled(s,start),['wang-d57-0300']);});
+ const s=store.get(),messages=s.content.conversations.wechat.find(c=>c.id==='wang').messages;
+ assert.deepEqual(messages.slice(-2).map(m=>[m.day,m.time,m.sentDate]),[[57,'03:00','2025-07-14'],[57,'03:00','2025-07-14']]);
+ assert.deepEqual(s.events.filter(e=>e.ruleId==='wang-d57-0300').map(e=>[e.day,e.clock]),[[57,'03:00']]);
+ assert.equal(s.day,90);assert.equal(s.clock,'19:30');
+ assert.equal(s.storyPresets.usedIds.filter(id=>id==='wang-d57-0300').length,1);
+ assert.equal(s.storyPresets.usedIds.includes('wang-d58-afternoon'),false);
+ store.update(next=>assert.deepEqual(deliverMissedScheduled(next,start),[]));
+});
+
+test('the engine reconciles a skipped D57 window and preserves conditional D58 silence',()=>{
+ const store=sample(),engine=new PresetConversationEngine(store);
+ store.update(s=>{s.day=57;s.clock='08:40';});engine.tick();
+ assert.equal(store.get().events.filter(e=>e.ruleId==='wang-d57-0300').length,1);
+ store.update(s=>{s.day=90;s.clock='12:00';});engine.tick();engine.tick();
+ assert.equal(store.get().events.filter(e=>e.type==='story_proactive').length,1);
+ engine.dispose();
 });
 
 test('morning response and conditional afternoon reply match authored time and keywords',()=>{
@@ -60,6 +81,6 @@ test('typing speed stays two game minutes per real minute even while charging',(
 
 test('developer editor exposes day, rule, simulation and import/export controls',()=>{
  const s=sample().get();let html=presetEditor(s);
- for(const part of ['预设回复','主动消息','模拟发送','导入 JSON','导出全部剧情'])assert.ok(html.includes(part),part);
+ for(const part of ['预设回复','主动消息','模拟发送','导入 JSON','一键导出全部聊天预设'])assert.ok(html.includes(part),part);
  s.editor.presetId='wang-d57-night-answer';html=presetEditor(s);assert.ok(html.includes('data-preset-field="messages"'));
 });

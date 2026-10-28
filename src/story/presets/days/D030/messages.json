@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 30,
+  "channel": "messages",
+  "label": "D030 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388893663",
+      "conversationName": "+853 8889 3663",
+      "messages": [
+        {
+          "id": "sms-extra-005",
+          "from": "sms-85388893663",
+          "text": "【永利皇宮】您的餐廳訂座已收到，請於到店時提供訂座姓名。如需更改時間，請聯絡餐廳。",
+          "time": "19:11",
+          "sentDate": "2025-06-17",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

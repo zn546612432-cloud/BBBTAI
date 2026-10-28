@@ -4,7 +4,8 @@ import {sms} from './features/sms/index.js';
 import {assets} from './features/assets/index.js';
 import {messageCard,newConversationForm,conversations} from './features/conversations/index.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
-import {ensureGhost} from '../ghost/state.js';
+import {ensureGhost,authorize,begin} from '../ghost/state.js';
+import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {uid} from '../../services/id.js';
 import {datePreset,messageDate,messageClock,setMessageDate} from '../../services/messaging/timestamps.js';
 import {dateParts,dateLabel,setPreviewDate} from '../../services/calendar.js';
@@ -13,15 +14,17 @@ import {btn,card,demo,empty,esc} from '../../system/ui.js';
 import {conversations as allConversations,selectedConversation,actors,actorName,renameConversation,renameActor,setSchedule,newMessage,reorderMessage,moveMessageTo,clearDelivery,scheduleLabel,createConversation,chatApps,isGroup} from './features/conversations/model.js';
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[['ghost','GHOST'],['conversations','对话'],['presets','剧情预设'],['sms','短信编辑'],['phone','电话编辑'],['assets','图片'],['preview','预览']];
+const tabs=[[['conversations','聊天'],['presets','剧情预设']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['preview','时间与测试']]];
 const attr=v=>esc(v);
-function nav(route){return `<div class="editor-tabs">${tabs.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">内容编辑器</div>${nav(route)}${route==='ghost'?ghostEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='ghost'?ghostEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(a==='editor-bank-rate'){const el=document.getElementById('gh-rate'),rate=el.value===''?null:Number(el.value);if(rate!==null&&(!Number.isFinite(rate)||rate<=0)){el.reportValidity();return;}store.update(s=>{s.bankData??={balance:0,transactions:[],rate:null};s.bankData.rate=rate;});return;}
  if(a==='editor-ghost-save'){saveGhostConfig(t,ctx);return;}
  if(a==='editor-ghost-mission'){const type=document.getElementById('gh-mission-type').value,input=document.getElementById('gh-order-seconds'),seconds=input.value===''?null:Number(input.value);if(seconds!==null&&(!Number.isInteger(seconds)||seconds<10||seconds>600)){input.reportValidity();return;}store.update(s=>{const g=ensureGhost(s);g.missionTypes??={};g.orderConfigs??={};g.missionTypes['mirage-recruit-hacker']=type;g.orderConfigs['mirage-recruit-hacker']={seconds};});return;}
+ if(a==='editor-ghost-test'){const type=t.dataset.tool,id=`developer-ghost-${type}`;store.update(s=>{const g=ensureGhost(s);delete g.orders[id];authorize(s,{orderId:id,mailId:null,type});begin(s,id);});router.open({appId:'ghost',route:'/run',params:{orderId:id}});return;}
+ if(a==='editor-preview-replay'){let count=0;store.update(s=>{count=deliverMissedScheduled(s,{day:1,clock:'00:00'}).length;});if(!count)ctx.toast('已检查：暂无漏发的定时主动消息');return;}
  if(a==='editor-tab'){if(t.dataset.tab==='sms')store.update(s=>{s.editor.channel='messages';s.editor.conversation=s.content.conversations.messages?.[0]?.id||'';});router.open({appId:'editor',route:'/'+t.dataset.tab});return;}
  if(a.startsWith('preset-')&&handlePresetAction(a,t,ctx))return;
  if(a==='delete-phone-contact'){store.update(s=>{s.content.phone.contacts=s.content.phone.contacts.filter(p=>p.id!==id);});ctx.toast('联系人已删除');return;}
@@ -97,7 +100,7 @@ export function submit(f,ctx){const {store,toast}=ctx,data=new FormData(f),form=
  }
  if(form==='new-conversation'||form==='new-sms'){createConversation(store,{channel:form==='new-sms'?'messages':String(data.get('channel')),name:String(data.get('name')||''),type:form==='new-sms'?'direct':String(data.get('type')),members:String(data.get('members')||'')});const pane=document.querySelector('#app-content');if(pane)pane.scrollTop=0;toast('对话窗口已创建，可以添加消息');}
  if(form==='charge-gate'){const day=Number(data.get('day')),untilFlag=String(data.get('flag')||'').trim();if(!Number.isInteger(day)||day<1||day>89||!untilFlag)throw Error('请填写天数与完成标记');store.update(s=>{s.storyChargeGates=[...(s.storyChargeGates||[]).filter(g=>g.day!==day),{day,untilFlag}];});toast('已保存');return;}
- if(form==='preview'){store.update(s=>setPreviewDate(s,{day:Number(data.get('day')),clock:String(data.get('clock'))}));toast('预览日期已更新');}
+ if(form==='preview'){let count=0;store.update(s=>{const previous={day:s.day,clock:s.clock};setPreviewDate(s,{day:Number(data.get('day')),clock:String(data.get('clock'))});count=deliverMissedScheduled(s,previous).length;});if(!count)toast('时间已更新；没有新的定时主动消息');}
 }
 export function mountInteractions(root,ctx){
  root.addEventListener('input',e=>updateTimelinePreview(e.target));

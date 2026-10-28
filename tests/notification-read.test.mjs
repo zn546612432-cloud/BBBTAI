@@ -7,10 +7,11 @@ import {MessageDelivery} from '../src/services/messaging/delivery.js';
 import {readConversationInState,readNotification} from '../src/services/messaging/read.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
 import {lock,notifications} from '../src/system/shell.js';
+import {addTestSMS} from './fixture-chat.mjs';
 
 const setup=()=>{
  const data=new Map(),storage={getItem:key=>data.get(key)||null,setItem:(key,value)=>data.set(key,value)};
- return {store:new PhoneStore(storage),storage};
+ const store=new PhoneStore(storage);store.update(addTestSMS);return {store,storage};
 };
 const notice=(id,channel,conversationId)=>({id,title:channel==='wechat'?'微信':'短信',body:'收到消息',conversationId,link:{appId:channel,route:'/chat/'+conversationId,params:{}}});
 
@@ -18,6 +19,7 @@ test('opening one conversation clears its badge and all notices but leaves other
  const {store,storage}=setup();
  store.update(s=>{
   s.content.conversations.wechat.find(c=>c.id==='wang').unread=2;
+  s.content.conversations.wechat.find(c=>c.id==='group').unread=1;
   s.notifications=[notice('w1','wechat','wang'),notice('w2','wechat','wang'),notice('group','wechat','group'),notice('sms','messages','sms-delivery')];
  });
  assert.match(renderWeChatHome(store.get(),'/'),/wx-unread-badge/);

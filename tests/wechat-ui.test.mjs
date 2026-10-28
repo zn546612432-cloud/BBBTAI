@@ -77,8 +77,10 @@ test('native WeChat tab switch never triggers whole-screen navigation transition
 });
 
 test('red unread badge in WeChat tab bar is driven by conversation data and is consistent across tabs',()=>{
+ const withUnread=structuredClone(mock);
+ withUnread.content.conversations.wechat.find(c=>c.id==='group').unread=1;
  for(const route of ['/','/contacts','/discover','/me']){
-  const markup=renderWeChatHome(mock,route);
+  const markup=renderWeChatHome(withUnread,route);
   assert.match(markup,/wx-unread-badge/);
   assert.match(markup,/1条未读消息/);
  }

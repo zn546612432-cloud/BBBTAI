@@ -6,7 +6,8 @@ import {render as smsRender} from '../src/apps/messages/index.js';
 import {render as editorRender} from '../src/editor/index.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
 import {setSchedule} from '../src/editor/conversations/model.js';
-function setup(){const data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},store=new PhoneStore(storage);return {store,storage};}
+import {addTestSMS} from './fixture-chat.mjs';
+function setup(){const data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},store=new PhoneStore(storage);store.update(addTestSMS);return {store,storage};}
 test('weather edits are scoped to the selected game day and city',()=>{
  const {store}=setup();
  store.update(s=>{s.content.weather={57:{paris:{name:'巴黎',condition:'小雨',temp:12,high:16,low:8}}};});
@@ -29,11 +30,11 @@ test('seeded SMS can be edited, scheduled, delivered as a notification, and pers
  assert.match(editorRender({store},{route:'/sms'}),/短信编辑/);
  assert.equal(new PhoneStore(storage).get().content.conversations.messages[0].messages[0].text,'测试短信');
 });
-test('SMS migration only seeds an empty legacy inbox once',()=>{
+test('SMS migration never restores obsolete demo messages into an empty inbox',()=>{
  const {store,storage}=setup();
  const old=structuredClone(store.get());old.content.conversations.messages=[];delete old.content.smsSeedVersion;storage.setItem(KEY,JSON.stringify(old));
  const migrated=new PhoneStore(storage);
- assert.equal(migrated.get().content.conversations.messages.length,3);
+ assert.equal(migrated.get().content.conversations.messages.length,0);
  migrated.update(s=>s.content.conversations.messages=[]);
  assert.equal(new PhoneStore(storage).get().content.conversations.messages.length,0);
 });

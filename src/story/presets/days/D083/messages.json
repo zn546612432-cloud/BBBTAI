@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 83,
+  "channel": "messages",
+  "label": "D083 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85366011000",
+      "conversationName": "+853 6601 1000",
+      "messages": [
+        {
+          "id": "sms-extra-012",
+          "from": "sms-85366011000",
+          "text": "CTM提提您：如需查詢國際漫遊或本地通話收費，請使用官方渠道辦理，慎防陌生連結。",
+          "time": "09:18",
+          "sentDate": "2025-08-09",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

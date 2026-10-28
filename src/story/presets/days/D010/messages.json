@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 10,
+  "channel": "messages",
+  "label": "D010 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388970160",
+      "conversationName": "+853 8897 0160",
+      "messages": [
+        {
+          "id": "sms-extra-002",
+          "from": "sms-85388970160",
+          "text": "澳門氣象局提醒：本澳今日有驟雨及雷暴，外出請留意最新天氣消息，並避免在空曠地方逗留。",
+          "time": "17:35",
+          "sentDate": "2025-05-28",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

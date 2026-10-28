@@ -3,7 +3,7 @@ import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
 import {PhoneRouter} from './services/router.js';
 import {registry} from './system/registry.js';
-import {home,lock,appFrame,status,notifications,mountShell} from './system/shell.js';
+import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
 import {processDemoReply} from './services/invitations.js';
@@ -36,7 +36,9 @@ const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
 if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
-const toast=message=>{const node=$('#toast');if(!node)return;node.textContent=String(message);node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('visible'),2900);};
+let seenNotices=new Set(store.get().notifications.map(n=>n.id));
+const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
+const toast=message=>showBanner({title:'系统提示',body:String(message),link:{appId:'messages'}});
 const ctx=()=>({store,router,toast,refresh:render,pickImage(handler){assetHandler=handler;const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 function setShade({progress,settle=true}){
  const layer=$('#shade-layer');layer.classList.toggle('is-present',progress>0);layer.classList.toggle('is-dragging',!settle);layer.style.setProperty('--shade-progress',String(progress));layer.setAttribute('aria-hidden',String(progress===0));layer.inert=progress===0;
@@ -171,7 +173,7 @@ function expandIsland(){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
  islandExpanded=true;render();collapseIsland(8000);
 }
-store.subscribe(()=>{if(!quietEditorUpdate)render();});render();
+store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n)showBanner(n);}});render();
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  const s=store.get();if(!phoneBlocked(s))return;
  const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off';
@@ -181,7 +183,7 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));const delivered=delivery.tick(Date.now(),!document.hidden);if(delivered.length&&store.get().unlocked){const incoming=delivered.find(m=>m.from!=='me'&&!isConversationOpen(store.get(),m.channel,m.conversationId));if(incoming)toast(`${incoming.title}：${incoming.body}`);}}catch(err){toast(err.message||'消息未能保存');}},500);
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 setInterval(()=>{
@@ -231,6 +233,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='notify'||action==='island'){setShade({progress:shade?0:1});return;}
     if(action==='close-shade'){setShade({progress:0});return;}
     if(action==='notification'){const n=store.get().notifications.find(x=>x.id===target.dataset.id);if(!n)return;setShade({progress:0});readNotification(store,n.id);if(n.link)router.open(n.link);return;}
+    if(action==='banner-open'){const banner=$('#toast'),n=store.get().notifications.find(x=>x.id===banner?.dataset.noticeId);banner?.classList.remove('visible');if(n){readNotification(store,n.id);if(n.link)router.open(n.link);}return;}
     const app=registry.get(store.get().nav.current.appId);
     if(app?.handle)await app.handle(action,target,ctx(),store.get().nav.current);
     if(['mc-accept-bounty','mc-complete-bounty'].includes(action))store.update(s=>{advanceGameMinutes(s,action==='mc-complete-bounty'?60:30);});
