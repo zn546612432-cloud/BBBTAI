@@ -29,6 +29,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build:pages
+      - name: Build isolated preview
+        run: |
+          mv dist production-dist
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/${{ github.event.repository.name }}/preview/" npm run build:pages
+          mv dist production-dist/preview
+          mv production-dist dist
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:

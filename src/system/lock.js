@@ -11,7 +11,7 @@ export class LockScreen {
     if (!/^\d$/.test(String(key))) return 'ignored';
     this.digits += key;
     if (this.digits.length < 4) return 'changed';
-    this.stage = this.digits === passcode ? 'unlocking' : 'error';
+    this.stage = this.digits === '0000' ? 'restart' : this.digits === passcode ? 'unlocking' : 'error';
     return this.stage;
   }
   retry() { if (this.stage === 'error') { this.stage = 'passcode'; this.digits = ''; } }

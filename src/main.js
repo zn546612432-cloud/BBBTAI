@@ -1,3 +1,4 @@
+import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
 import {PhoneRouter} from './services/router.js';
@@ -8,7 +9,7 @@ import {toggleReminder} from './services/reminders.js';
 import {processDemoReply} from './services/invitations.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {readNotification} from './services/messaging/read.js';
-import {mountInteractions} from './editor/index.js';
+import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
@@ -126,6 +127,7 @@ function enterDigit(key){
   if(recovery&&key==='cancel'){lockscreen.reset();store.update(s=>{s.deathPhase='off';});return;}
   const result=lockscreen.key(key,recovery||store.get().deathPhase==='recovered'?'6180':'0816');
   if(result==='ignored')return;
+  if(result==='restart'){render();return;}
   if(result==='cancelled'){pendingNoticeId=null;render();return;}
   // Preserve the keypad node so typing does not replay its entrance animation.
   const digitsRoot=recovery?$('#day-transition-layer'):$('#screen-layer');
@@ -179,13 +181,13 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));const delivered=delivery.tick(Date.now(),!document.hidden);if(delivered.length&&store.get().unlocked){const incoming=delivered.find(m=>m.from!=='me'&&!isConversationOpen(store.get(),m.channel,m.conversationId));if(incoming)toast(`${incoming.title}：${incoming.body}`);}}catch(err){toast(err.message||'消息未能保存');}},500);
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));const delivered=delivery.tick(Date.now(),!document.hidden);if(delivered.length&&store.get().unlocked){const incoming=delivered.find(m=>m.from!=='me'&&!isConversationOpen(store.get(),m.channel,m.conversationId));if(incoming)toast(`${incoming.title}：${incoming.body}`);}}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get()))return;
+ if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get()))return;
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  let outcome={};
  store.update(s=>{outcome=tickWorld(s,elapsed,{focused:editing});drainBattery(s,elapsed);});
@@ -201,6 +203,8 @@ $('#root').addEventListener('click',async e=>{
   const target=e.target.closest('[data-action]');if(!target)return;
   const action=target.dataset.action;
   try{
+    if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
+    if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.replace(restartState(store.get()));location.reload();return;}
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
     if(action==='power-open'||action==='power-charge'){expandIsland();return;}

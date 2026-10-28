@@ -11,7 +11,7 @@ import {home} from '../src/system/shell.js';
 test('lock blocks partial and wrong passcodes, preserves link for retry, clears it on cancel',()=>{
  const lock=new LockScreen(),link={appId:'chess',route:'/'};
  assert.equal(lock.key('0'),'ignored');
- lock.open(link);'0000'.split('').forEach(x=>lock.key(x));assert.equal(lock.stage,'error');
+ lock.open(link);'9999'.split('').forEach(x=>lock.key(x));assert.equal(lock.stage,'error');
  assert.equal(lock.key('1'),'ignored');lock.retry();assert.deepEqual(lock.pendingLink,link);
  '081'.split('').forEach(x=>lock.key(x));assert.equal(lock.stage,'passcode');
  lock.key('erase');assert.equal(lock.digits,'08');lock.key('1');assert.equal(lock.key('6'),'unlocking');
