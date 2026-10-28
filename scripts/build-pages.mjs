@@ -39,7 +39,8 @@ async function rewriteTree(folder){
  }
 }
 await rewriteTree('dist');
-const index=await readFile('dist/index.html','utf8');
+let index=await readFile('dist/index.html','utf8');
+if(process.env.PHONE_PREVIEW==='true')index=index.replace('<head>','<head><meta name="phone-preview" content="true">').replace('<title>','<title>PREVIEW · ');
 await writeFile('dist/index.html',index.replace('<head>',`<head><meta name="ximeng-release" content="${version}">`));
 await writeFile('dist/release.json',JSON.stringify({version,source_commit:process.env.GITHUB_SHA||null,url:releaseBase})+'\n');
 await writeFile('dist/.nojekyll','');
