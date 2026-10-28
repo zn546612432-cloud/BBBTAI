@@ -1,0 +1,2 @@
+// One deterministic preview source for every App. The server will own presence later.
+export function taiPresence(s){if(s.day<56)return {status:'offline',contactable:false,reason:'尚未相认'};const hour=Number(s.clock.slice(0,2));let status='offline';if(hour>=21&&hour<24)status=s.day%5===2?'busy':'online';else if(hour>=18&&hour<21)status='busy';else if(hour>=13&&hour<18)status='away';return {status,contactable:true,reason:{online:'在线',busy:'忙碌',away:'离开',offline:'离线'}[status]};}

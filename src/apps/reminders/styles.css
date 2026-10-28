@@ -1,0 +1,15 @@
+/* Reminders owns its vertical gesture instead of the global notification shade. */
+.app-reminders .app-content{min-height:0;overflow:hidden}
+.app-reminders .reminders-app{height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:0}
+.app-reminders .reminders-app::-webkit-scrollbar{display:none}
+.app-reminders .reminder-items{padding-bottom:18px}
+.app-reminders .reminder-new{position:sticky;bottom:0;z-index:3;margin:0 -17px;min-height:64px;padding:10px 17px calc(10px + env(safe-area-inset-bottom,0px));background:#f8f8fbf5;border-top:1px solid #dddde5;box-shadow:0 -8px 20px #f2f2f7ad}
+.app-reminders .reminders-float{position:sticky;bottom:0;left:0;width:max-content;z-index:2;margin:26px 0 0}
+.app-reminders .reminders-float button{background:#f2f2f7e8;padding:13px 15px;border-radius:20px;backdrop-filter:blur(12px)}
+.app-reminders .reminder-item span{min-width:0;overflow-wrap:anywhere}
+
+/* The home widget is not the scroll viewport; the app owns a real touch-scroll container. */
+.app-reminders{min-height:0;overflow:hidden}
+.app-reminders .app-content{display:flex;flex-direction:column;min-height:0;height:auto!important;flex:1;overflow:hidden!important}
+.app-reminders .reminders-app{flex:1;min-height:0;height:auto!important;max-height:100%;overflow-y:scroll!important;touch-action:pan-y!important;-webkit-overflow-scrolling:touch;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))!important}
+.app-reminders .reminders-float{position:relative;bottom:auto;left:auto;margin:18px 0 12px}

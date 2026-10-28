@@ -1,0 +1,37 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 57,
+  "channel": "wechat",
+  "label": "凌晨的消息 · 演示",
+  "rules": [
+    {
+      "id": "wang-d57-0300", "title": "凌晨三点 · 熙旺出门前", "kind": "proactive", "mode": "scheduled", "day": 57,
+      "channel": "wechat", "conversationId": "wang", "from": "03:00", "to": "05:59", "priority": 100,
+      "enabled": true, "once": true, "condition": "any", "keywords": [], "minMessages": 0,
+      "requiresFlag": "", "setsFlag": "wang-overnight-await", "group": "",
+      "messages": ["我明天要出去一趟。", "你睡了吗？"]
+    },
+    {
+      "id": "wang-d57-night-answer", "title": "凌晨还没有睡", "kind": "reply", "mode": "", "day": 57,
+      "channel": "wechat", "conversationId": "wang", "from": "03:00", "to": "05:59", "priority": 110,
+      "enabled": true, "once": true, "condition": "any", "keywords": [], "minMessages": 0,
+      "requiresFlag": "wang-overnight-await", "setsFlag": "wang-overnight-answered", "group": "wang-overnight-answer",
+      "messages": ["你怎么还没睡？"]
+    },
+    {
+      "id": "wang-d57-morning-answer", "title": "早上醒来才回复", "kind": "reply", "mode": "", "day": 57,
+      "channel": "wechat", "conversationId": "wang", "from": "06:00", "to": "11:59", "priority": 110,
+      "enabled": true, "once": true, "condition": "any", "keywords": [], "minMessages": 0,
+      "requiresFlag": "wang-overnight-await", "setsFlag": "wang-overnight-answered", "group": "wang-overnight-answer",
+      "messages": ["你醒了呀。"]
+    },
+    {
+      "id": "wang-d57-later-answer", "title": "下午才看到", "kind": "reply", "mode": "", "day": 57,
+      "channel": "wechat", "conversationId": "wang", "from": "12:00", "to": "23:59", "priority": 90,
+      "enabled": true, "once": true, "condition": "any", "keywords": [], "minMessages": 0,
+      "requiresFlag": "wang-overnight-await", "setsFlag": "wang-overnight-answered", "group": "wang-overnight-answer",
+      "messages": ["刚看见你回的。"]
+    }
+  ],
+  "history": []
+}

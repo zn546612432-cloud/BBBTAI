@@ -1,0 +1,6 @@
+import {btn,esc} from '../../../../system/ui.js';
+const icon=name=>`<img src="/assets/lucide/${name}.svg" alt="">`;
+export function musicLibrary({playing,tab,query}){
+ const showTrack='夜航'.includes(query.trim())||!query.trim();
+ return `<div class="music-library"><header><h1>${tab==='search'?'搜索':tab==='listen'?'现在就听':'资料库'}</h1></header>${tab==='search'?`<label class="music-search">${icon('search')}<input name="music-search" placeholder="搜索资料库" value="${esc(query)}"></label>`:''}${tab==='listen'?`<div class="music-banner">熙蒙的音乐<span>本机正在播放的故事</span></div>`:''}${tab==='library'?'<h2>歌曲</h2>':''}<div class="music-tracks">${btn('music-open',`<span class="music-mini-art">${icon('music')}</span><span><strong>夜航</strong><small>原创氛围音 · 本机曲目</small></span><i>›</i>`,'music-track',showTrack?'':'hidden')}<p class="music-no-results" ${showTrack?'hidden':''}>没有匹配的曲目</p></div><div class="music-mini-player">${btn('music-open',`${icon('music')}<span>夜航</span>`)}${btn('music-toggle',icon(playing?'pause':'play'),'music-mini-toggle')}</div><nav class="music-tabs">${[['listen','house','现在就听'],['library','library','资料库'],['search','search','搜索']].map(([id,glyph,label])=>btn('music-tab',`${icon(glyph)}<span>${label}</span>`,tab===id?'active':'',`data-tab="${id}"`)).join('')}</nav></div>`;
+}

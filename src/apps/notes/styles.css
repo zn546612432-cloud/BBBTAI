@@ -1,0 +1,96 @@
+/* Independent iOS-style Notes surface. The shell owns the status-bar safe area. */
+.app-view.app-notes{padding-top:calc(60px + env(safe-area-inset-top,0px));min-height:0;background:#f2f1f6;color:#101012;backdrop-filter:none;-webkit-backdrop-filter:none}
+.app-notes .app-nav{display:none}
+.app-notes .app-content{padding:0;min-height:0;overflow:hidden;background:transparent}
+.nt-screen{--nt-gold:#e2b437;--nt-ink:#101013;position:relative;width:100%;height:100%;min-height:0;overflow:hidden;color:var(--nt-ink);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC',sans-serif;letter-spacing:-.02em}
+.nt-screen button{border:0;transform:none;box-shadow:none;letter-spacing:inherit}
+.nt-screen button:active{transform:none;opacity:.67}
+.nt-screen button:focus-visible{outline:2px solid #d9a82d;outline-offset:2px}
+.nt-icon{display:block;flex-shrink:0}
+.nt-screen-list,.nt-screen-folders{background:#f2f1f6}
+.nt-screen-editor{background:#fff}
+#phone:has(.nt-screen) #status-layer{background:#f2f1f6;color:#121214;text-shadow:none}
+#phone:has(.nt-screen-editor) #status-layer{background:#fff;color:#111}
+#phone:has(.nt-screen) #homebar span{background:#252529}
+.nt-round-button{width:43px;height:43px;border-radius:50%!important;background:linear-gradient(145deg,#fffefa,#f5f4f8)!important;color:#101114;display:grid;place-items:center;border:1px solid #d7d7dc!important;box-shadow:inset 0 1px 1px #fff,0 2px 6px #00000006!important;padding:0}
+.nt-list-page,.nt-folders-page{position:relative;height:100%;display:flex;flex-direction:column;min-height:0}
+.nt-list-header{min-height:74px;padding:8px 21px 7px;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;position:relative;z-index:4;flex-shrink:0}
+.nt-list-title{text-align:center;line-height:1.32;align-self:center;min-width:0}
+.nt-list-title h1{margin:0;font-size:18px;line-height:23px;font-weight:740;letter-spacing:-.055em}
+.nt-list-title>span{display:block;margin-top:2px;font-size:13px;line-height:18px;color:#929198;font-weight:470;letter-spacing:.005em}
+.nt-more-circle{justify-self:end}
+.nt-list-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 19px 145px}
+.nt-list-scroll::-webkit-scrollbar{display:none}
+.nt-note-group{margin:15px 0 24px}
+.nt-note-group[hidden]{display:none}
+.nt-note-group h2{font-size:21px;font-weight:750;line-height:28px;margin:0 0 14px 1px;letter-spacing:-.045em}
+.nt-note-card{background:#fff;border-radius:24px;overflow:hidden}
+.nt-note-row{width:100%;min-height:68px;display:flex;align-items:center;gap:12px;padding:11px 13px 11px 26px;text-align:left;background:#fff!important;color:#111;position:relative}
+.nt-note-row:not(:last-child):after{content:"";position:absolute;left:26px;right:17px;bottom:0;height:1px;background:#e7e7ea}
+.nt-note-row[hidden]{display:none}
+.nt-note-copy{min-width:0;display:block;flex:1}
+.nt-note-copy strong{display:flex;align-items:center;gap:5px;font-size:17px;font-weight:730;line-height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.028em}
+.nt-note-copy small{display:flex;align-items:baseline;gap:8px;color:#93939a;font-size:13px;font-weight:440;white-space:nowrap;overflow:hidden;line-height:20px;margin-top:2px;letter-spacing:-.006em}
+.nt-note-preview{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-note-thumb{width:45px;height:48px;object-fit:cover;border-radius:9px;border:1px solid #e3e3e3}
+.nt-list-empty,.nt-search-no-match{color:#8c8c94;font-size:14px;text-align:center;padding:45px 0}
+.nt-list-empty[hidden],.nt-search-no-match[hidden]{display:none}
+.nt-list-bottom{position:absolute;z-index:7;left:19px;right:19px;bottom:calc(31px + env(safe-area-inset-bottom,0px));height:53px;display:flex;align-items:center;gap:12px;pointer-events:none}
+.nt-search-pill{height:53px;min-width:0;flex:1;border-radius:31px;border:1px solid #d7d7de;box-shadow:inset 0 1px 2px #fff,0 2px 8px #00000009;background:#f8f8fae9;backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);display:flex;align-items:center;gap:10px;padding:0 14px;color:#161619;pointer-events:auto}
+.nt-search-pill input{height:100%;min-width:0;flex:1;background:transparent;border:0;box-shadow:none;outline:none;border-radius:0;font-size:16px;color:#1a1a1a;padding:0}
+.nt-search-pill input::placeholder{color:#aaaab2}
+.nt-search-pill>.nt-icon-microphone{margin-right:1px}
+.nt-compose-button{height:53px;width:53px;flex-shrink:0;pointer-events:auto;background:linear-gradient(145deg,#fff,#ededf0)!important}
+.nt-sort-menu,.nt-editor-menu{position:absolute;right:20px;top:67px;z-index:15;width:210px;border:1px solid #dcdce1;border-radius:16px;box-shadow:0 12px 40px #0002;background:#fafafbeb;backdrop-filter:blur(28px);overflow:hidden}
+.nt-sort-menu[hidden],.nt-editor-menu[hidden]{display:none}
+.nt-sort-menu button,.nt-editor-menu button{display:flex;align-items:center;gap:9px;height:45px;width:100%;padding:0 14px;border-bottom:1px solid #e4e4e7;font-size:14px;text-align:left}
+.nt-sort-menu button:last-child,.nt-editor-menu button:last-child{border-bottom:0}
+.nt-folders-page>header{padding:17px 22px 11px;flex-shrink:0}
+.nt-folders-page>header h1{font-size:33px;font-weight:770;margin:0;letter-spacing:-.055em}
+.nt-folders-label{font-size:15px;color:#8f8f95;margin:25px 23px 9px}
+.nt-folder-row{margin:0 18px;display:flex;align-items:center;gap:13px;padding:14px 17px;width:calc(100% - 36px);border-radius:18px!important;background:#fff!important;text-align:left;color:#d1a522;font-size:17px}
+.nt-folder-row strong{flex:1;color:#171719;font-weight:630}
+.nt-folder-row span{color:#a4a4aa;font-size:15px}
+.nt-folder-chevron{font-size:28px!important;line-height:20px}
+.nt-folder-bottom{margin-top:auto;display:flex;justify-content:flex-end;padding:0 20px calc(31px + env(safe-area-inset-bottom,0px))}
+.nt-editor-page{height:100%;min-height:0;display:flex;flex-direction:column;background:#fff;position:relative}
+.nt-editor-header{height:66px;min-height:66px;display:flex;align-items:center;justify-content:space-between;padding:6px 18px 9px;position:relative;z-index:3;gap:12px}
+.nt-editor-back{width:44px;height:44px;background:#fdfdfe!important}
+.nt-editor-head-actions{display:flex;align-items:center;gap:11px}
+.nt-editor-combo{height:44px;display:flex;align-items:stretch;border-radius:27px;border:1px solid #dadadd;background:linear-gradient(145deg,#fff,#f7f7f9);box-shadow:inset 0 1px 1px #fff;overflow:hidden}
+.nt-editor-combo button{width:49px;height:43px;display:grid;place-items:center;padding:0;color:#0c0d0f}
+.nt-editor-combo button:first-child{color:#a6a6ad}
+.nt-finish-button{display:grid;place-items:center;height:45px;width:45px;border-radius:50%!important;background:#e5b83d!important;border:1px solid #d6a42d!important;color:white;box-shadow:inset 0 1px 2px #fff7!important;padding:0}
+.nt-finish-button svg{stroke-width:2.7}
+.nt-editor-main{flex:1;min-height:0;padding:10px 25px 8px;overflow:auto;display:flex;flex-direction:column;scrollbar-width:none}
+.nt-editor-main::-webkit-scrollbar{display:none}
+.nt-title-input,.nt-body-input{width:100%;display:block;margin:0;border:0!important;border-radius:0!important;box-shadow:none!important;outline:none!important;background:transparent!important;padding:0!important;color:#161619;caret-color:#e2b337;font-family:inherit;letter-spacing:-.014em}
+.nt-title-input{height:41px;min-height:41px;line-height:40px;font-weight:720;font-size:23px;flex-shrink:0}
+.nt-body-input{flex:1;min-height:110px;resize:none;font-size:17px;line-height:1.52;font-weight:400;overflow:auto;overscroll-behavior:contain}
+.nt-editor-toolbar{height:52px;min-height:52px;margin:0 15px calc(30px + env(safe-area-inset-bottom,0px));border:1px solid #d6d6db;border-radius:29px;background:linear-gradient(175deg,#fafafaed,#f3f3f5e9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:inset 0 1px 1px #fff,0 5px 16px #00000008;display:flex;justify-content:space-around;align-items:center;overflow:hidden;flex-shrink:0}
+.nt-editor-toolbar button{flex:1;min-width:0;height:100%;display:grid;place-items:center;padding:0;font-size:19px;font-weight:570;color:#08090a}
+.nt-editor-toolbar .nt-format-button{min-width:65px;font-size:17px;font-weight:690}
+.nt-editor-toolbar svg{stroke-width:2}
+.nt-format-sheet{position:absolute;left:15px;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:9;display:flex;flex-direction:column;background:#f7f7f9f2;border:1px solid #dddde2;border-radius:16px;overflow:hidden;box-shadow:0 12px 40px #0002;backdrop-filter:blur(20px)}
+.nt-format-sheet[hidden]{display:none}
+.nt-format-sheet button{height:43px;padding:0 18px;text-align:left;font-size:14px;border-bottom:1px solid #e3e3e6}
+.nt-format-sheet button:last-child{border-bottom:0}
+.nt-attachments{display:flex;gap:9px;flex-wrap:wrap;padding:8px 0 15px;flex-shrink:0}
+.nt-attachment{width:87px;height:87px;position:relative;border-radius:10px;overflow:hidden;border:1px solid #ddd}
+.nt-attachment img{width:100%;height:100%;object-fit:cover}
+.nt-attachment button{position:absolute;right:4px;top:4px;height:21px;width:21px;border-radius:50%!important;display:grid;place-items:center;background:#0009!important;color:#fff;padding:0}
+.nt-delete-overlay,.nt-sketch-overlay{position:absolute;inset:0;z-index:20;background:#0006;display:grid;place-items:center;padding:23px}
+.nt-delete-dialog{width:min(100%,300px);border-radius:20px;overflow:hidden;background:#f7f7f9ef;backdrop-filter:blur(25px);text-align:center;box-shadow:0 12px 35px #0003}
+.nt-delete-dialog strong{display:block;font-size:17px;margin:25px 12px 5px}.nt-delete-dialog p{font-size:13px;color:#828289;margin:0 0 20px}
+.nt-delete-dialog button{width:100%;height:49px;border-top:1px solid #dedee3!important;color:#d92d39;font-size:15px;font-weight:650}
+.nt-delete-dialog button:last-child{color:#087ffa}
+.nt-sketch-sheet{width:min(100%,380px);background:#fff;border-radius:23px;padding:0 12px 16px;overflow:hidden;box-shadow:0 15px 45px #0004}
+.nt-sketch-sheet>header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 3px;color:#161619}
+.nt-sketch-sheet>header strong{font-size:17px}.nt-sketch-sheet>header button{font-size:15px;color:#cba026;padding:10px}
+.nt-sketch-sheet canvas{display:block;width:100%;height:min(50dvh,420px);background:#fff;border:1px solid #e4e4e8;border-radius:12px;touch-action:none}
+.nt-sketch-help{display:flex;align-items:center;justify-content:center;gap:9px;padding:10px 0 0;font-size:12px;color:#999}
+#phone.keyboard-open:has(.nt-screen) #homebar{opacity:0}
+.keyboard-open .nt-editor-toolbar{margin-bottom:7px}
+.keyboard-open .nt-list-bottom{bottom:10px}
+@media(max-width:365px){.nt-editor-header{padding-left:14px;padding-right:14px}.nt-list-header{padding-left:15px;padding-right:15px}.nt-list-scroll{padding-left:14px;padding-right:14px}.nt-note-row{padding-left:20px}.nt-note-row:not(:last-child):after{left:20px}.nt-editor-main{padding-left:20px;padding-right:20px}.nt-editor-toolbar{margin-left:10px;margin-right:10px}}
+@media(prefers-reduced-motion:reduce){.nt-screen button:active{opacity:1}}

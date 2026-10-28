@@ -1,0 +1,1 @@
+Chess pieces by Colin M. L. Burnett (Cburnett), via chessboard.js / Wikimedia Commons. Licensed under Creative Commons Attribution-ShareAlike 3.0 Unported: https://creativecommons.org/licenses/by-sa/3.0/. Source: https://github.com/oakmac/chessboardjs/tree/master/website/img/chesspieces/wikipedia

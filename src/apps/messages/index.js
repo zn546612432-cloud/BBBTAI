@@ -1,0 +1,11 @@
+import {chatView,sendChat} from '../../components/chat.js';
+import {visibleMessages} from '../../services/messaging/delivery.js';
+import {timestampLabel} from '../../services/messaging/timestamps.js';
+import {btn,esc} from '../../system/ui.js';
+export const manifest={id:'messages',name:'信息',glyph:'••',tone:'#5bbd82',defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
+let search='';
+const portrait='<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="16" r="8" fill="white"/><path d="M6 39c1-13 31-13 32 0" fill="white"/></svg>';
+export function render({store},loc){const s=store.get();if(loc.route.startsWith('/chat/'))return `<div class="sms-chat">${btn('sms-back','‹ 信息','sms-chat-back')}${chatView(s,'messages',loc.route.slice(6))}</div>`;const list=(s.content.conversations.messages||[]).filter(c=>`${c.name} ${visibleMessages(c).map(m=>m.text).join(' ')}`.toLowerCase().includes(search.toLowerCase()));return `<div class="sms-screen"><header>${btn('sms-edit','编辑','sms-pill')}${btn('sms-filter','☰','sms-pill')}</header><h1>信息</h1><div class="sms-list">${list.map(c=>{const m=visibleMessages(c).at(-1);return btn('open-chat',`<span class="sms-unread ${c.unread?'on':''}"></span><span class="sms-avatar">${portrait}</span><span class="sms-copy"><strong>${esc(c.name)}</strong><small>${esc(m?.text||'')}</small></span><time>${esc(m?.timeLabel||(m?timestampLabel(m,s).replace(/\s+\d\d:\d\d$/,''):''))}</time><span class="sms-chevron">›</span>`,'sms-row',`data-id="${esc(c.id)}"`);}).join('')||'<p class="sms-empty">没有信息</p>'}</div><div class="sms-search">⌕ <input name="sms-search" placeholder="搜索" value="${esc(search)}" aria-label="搜索短信">♩ ${btn('sms-compose','□','',`aria-label="新建短信"`)}</div></div>`;}
+export function handle(a,t,c){if(a==='open-chat')c.router.open({appId:'messages',route:'/chat/'+t.dataset.id});if(a==='sms-back')c.router.back();if(['sms-edit','sms-compose'].includes(a)){c.store.update(s=>{s.editor.channel='messages';s.editor.conversation=s.content.conversations.messages?.[0]?.id||'';});c.router.open({appId:'editor',route:'/sms'});}if(a==='sms-filter')c.toast('当前显示全部信息');}
+export const submit=(form,ctx)=>{if(form.dataset.form==='send-chat')sendChat(form,ctx);};
+export function input(el,ctx){if(el.name==='sms-search'){search=el.value;ctx.refresh();}}

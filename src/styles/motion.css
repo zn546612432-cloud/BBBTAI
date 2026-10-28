@@ -1,0 +1,83 @@
+/* A persistent phone surface: navigation animates; data updates never restart it. */
+#screen-layer{inset:0}
+#transition-layer{position:absolute;inset:0;z-index:22;pointer-events:none;overflow:hidden}
+#transition-layer>*{position:absolute;inset:0;width:100%;height:100%}
+.home-screen,.app-view{animation:none}
+.home-screen{--home-gutter:14px;padding:calc(78px + env(safe-area-inset-top,0px)) var(--home-gutter) calc(32px + env(safe-area-inset-bottom,0px));touch-action:none}
+.home-top{padding:0 8px;margin-top:0}
+/* The pager spans the full screen width and each page re-adds the gutter as padding: pages slide edge to edge
+   while the page next to the current one stays completely off-screen at rest. */
+.home-pager{flex:1;min-height:0;position:relative;overflow:hidden;margin:0 calc(var(--home-gutter) * -1)}
+.home-track{height:100%;display:flex;transform:translate3d(0,0,0);transition:transform .4s cubic-bezier(.22,.9,.3,1);will-change:transform}
+.home-page{flex:0 0 100%;min-width:0;padding:0 calc(var(--home-gutter) + 8px) 8px;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.home-page::-webkit-scrollbar{display:none}
+.home-dock,.page-dots{position:relative;z-index:2;flex-shrink:0}
+.page-dots i{transition:width .3s cubic-bezier(.22,.9,.3,1),background-color .3s}
+.home-dock{margin-bottom:0}
+.lock-screen{padding-top:calc(88px + env(safe-area-inset-top,0px));padding-bottom:calc(44px + env(safe-area-inset-bottom,0px))}
+.app-view{padding-top:calc(60px + env(safe-area-inset-top,0px));background:#e9f1f7dc;backdrop-filter:blur(32px) saturate(1.25);-webkit-backdrop-filter:blur(32px) saturate(1.25);min-height:0}
+.app-view.app-dark{background:#091d2bc9;color:#e4f1f7}
+.app-nav{height:55px;min-height:55px;background:#ecf5fa6b;border-color:#fff6;touch-action:none}
+.app-dark .app-nav{background:#102d3a57;border-color:#e8faff15}
+.app-nav strong{font-size:16px;font-weight:600}
+.app-nav .nav-kicker{display:none}
+.nav-presence{font-size:10px;font-weight:400;color:#8fb5c5}
+.app-content{min-height:0;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+.app-view.has-chat .app-content{overflow:hidden;display:flex;flex-direction:column;padding-bottom:0}
+.has-chat .chat-person{display:none}
+.chat-screen{height:100%;min-height:0;display:flex;flex:1;flex-direction:column;background:transparent}
+.chat-messages{min-height:0;background:transparent!important;overscroll-behavior:contain;overflow-anchor:auto}
+.chat-time-divider{text-align:center;margin:10px 0 20px;color:#7b919f;font-size:10px;line-height:1.5}
+.app-dark .chat-time-divider{color:#94b4c5}
+.message-row{flex-shrink:0}
+.composer{flex-shrink:0;background:#eaf3f8cf;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-color:#fff6;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.composer input{background:#fff9;border-color:#cbdde866;font-size:16px;min-height:40px}
+.app-dark .composer,.app-noapp .composer{background:#142e3ad9;color:#e5f4fb;border-color:#e5faff16}
+.app-dark .composer input,.app-noapp .composer input{background:#36556680;color:#f2fbff;border-color:#e5f5ff28}
+.app-dark .bubble{background:#e7f1f6e8;color:#203b4b;border-color:#ffffff40}
+.app-dark .mine .bubble{background:#aacee0df;color:#173849}
+.noapp-note{display:none}
+.app-dark .surface-list{background:#e8f7ff0c;border-color:#e8f7ff1c}
+.app-dark .list-row{color:#e0f0f8;border-color:#e9faff14}
+.app-dark .list-copy small{color:#93b1c0}
+.app-light-active #status-layer{color:#243f52}
+.app-light-active #homebar span{background:#456277}
+#status-layer{z-index:45;touch-action:none}
+.status-network{font-size:12px;font-weight:600;letter-spacing:-.3px;line-height:1}
+.status-battery{width:32px;height:16px;border-radius:5px;background:#171717;color:#fff;display:inline-grid;place-items:center;font-size:11px;font-weight:700;line-height:1;position:relative;margin-right:2px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.status-battery::after{content:"";position:absolute;right:-3px;top:5px;width:2px;height:6px;background:#8b8b8b;border-radius:0 2px 2px 0}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+#homebar{z-index:46;transition:opacity .18s;touch-action:none}
+#phone.notification-open #homebar span{background:#ffffffeb;box-shadow:0 1px 9px #0b213e7a}
+#phone.keyboard-open #homebar{opacity:0;pointer-events:none}
+.keyboard-open .composer,.keyboard-open .app-noapp .composer{padding-bottom:10px}
+#toast{bottom:calc(42px + env(safe-area-inset-bottom,0px));max-height:100px;overflow:hidden;background:#e6f3f7d9;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);pointer-events:none}
+.keyboard-open #toast{bottom:70px}
+#shade-layer,#shade-layer:not(:empty){position:absolute;inset:0;z-index:36;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none;overflow:hidden;--shade-progress:0}
+#shade-layer.is-present:not(:empty){pointer-events:auto;touch-action:none}
+.shade{height:100%;padding:calc(82px + env(safe-area-inset-top,0px)) 22px calc(36px + env(safe-area-inset-bottom,0px));color:#fff;
+ background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(205,228,248,.1) 42%,rgba(150,185,220,.07) 100%);
+ backdrop-filter:blur(32px) saturate(1.8) brightness(1.06);-webkit-backdrop-filter:blur(32px) saturate(1.8) brightness(1.06);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.14);text-shadow:0 1px 10px rgba(4,14,30,.38);
+ transform:translate3d(0,calc((var(--shade-progress) - 1)*100%),0);transition:transform .32s cubic-bezier(.2,.75,.25,1);overflow:auto;touch-action:none;will-change:transform}
+/* While closed the glass layer is hidden so the browser does not keep blurring an off-screen sheet. */
+#shade-layer:not(.is-present) .shade{visibility:hidden;transition:transform .32s cubic-bezier(.2,.75,.25,1),visibility 0s linear .32s}
+#shade-layer.is-dragging .shade{transition:none}
+.shade-notification{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 10px 28px rgba(3,10,24,.2)}
+.shade .eyebrow,.shade .muted{color:rgba(255,255,255,.78)}
+.shade .text-button{color:#fff}
+.shade .demo-tag,.lock-notification .demo-tag{background:rgba(255,255,255,.2);color:rgba(255,255,255,.9)}
+.shade-grip{background:rgba(255,255,255,.55)}
+.shade h2{font-weight:550}
+.viewport-mobile #root{position:fixed;left:0;right:0;top:var(--viewport-top,0px);height:var(--visual-height,100dvh)}
+.viewport-mobile #phone{height:100%;min-height:0;width:100%;border-radius:0}
+@media(max-height:760px){.home-screen{padding-top:calc(73px + env(safe-area-inset-top,0px))}.lock-screen{padding-top:calc(78px + env(safe-area-inset-top,0px))}.home-top{margin-bottom:17px}.widget{height:116px}.home-widgets{margin-bottom:20px}.lock-passcode .lock-space{min-height:0}.passcode-panel{padding-bottom:8px}}
+@media(prefers-reduced-motion:reduce){.home-track,.shade{transition:none!important}}
+.app-dark .mirage-page,.app-dark .terminal-page{background:transparent}
+.home-screen,#status-layer,.app-nav,.shade{user-select:none;-webkit-user-select:none}
+.notification-open #status-layer{color:#f0f8ff}
+.passcode-panel{animation:keypad-appear .2s ease both}
+@keyframes keypad-appear{from{opacity:0}to{opacity:1}}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:reduce){.lock-error .passcode-dots{animation:passcode-flash .5s ease!important}}
+@keyframes passcode-flash{0%,100%{opacity:1}30%,70%{opacity:.25}}

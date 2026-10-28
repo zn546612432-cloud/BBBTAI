@@ -1,0 +1,30 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 58,
+  "channel": "wechat",
+  "label": "下午回家 · 演示",
+  "rules": [
+    {
+      "id": "wang-d58-afternoon", "title": "下午回家 · 看到阿蒙的消息", "kind": "proactive", "mode": "conditional", "day": 58,
+      "channel": "wechat", "conversationId": "wang", "from": "16:30", "to": "20:30", "priority": 90,
+      "enabled": true, "once": true, "condition": "message-count", "keywords": [], "minMessages": 3,
+      "requiresFlag": "", "setsFlag": "wang-food-await", "group": "",
+      "messages": ["怎么今天发了那么多消息？", "我刚到家，想吃什么？一会儿给你带。"]
+    },
+    {
+      "id": "wang-d58-fish", "title": "指定食物 · 西湖醋鱼", "kind": "reply", "mode": "", "day": 58,
+      "channel": "wechat", "conversationId": "wang", "from": "16:30", "to": "23:59", "priority": 110,
+      "enabled": true, "once": true, "condition": "keywords-any", "keywords": ["西湖醋鱼"], "minMessages": 0,
+      "requiresFlag": "wang-food-await", "setsFlag": "wang-food-answered", "group": "wang-food-answer",
+      "messages": ["今天喜欢吃西湖醋鱼了？真难得。"]
+    },
+    {
+      "id": "wang-d58-food-general", "title": "其他食物 · 普通回答", "kind": "reply", "mode": "", "day": 58,
+      "channel": "wechat", "conversationId": "wang", "from": "16:30", "to": "23:59", "priority": 10,
+      "enabled": true, "once": true, "condition": "any", "keywords": [], "minMessages": 0,
+      "requiresFlag": "wang-food-await", "setsFlag": "wang-food-answered", "group": "wang-food-answer",
+      "messages": ["好。"]
+    }
+  ],
+  "history": []
+}

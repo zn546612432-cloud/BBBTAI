@@ -1,0 +1,50 @@
+/* Standalone AOMI phone surface. All app-specific refinements live with the app. */
+.app-aomi{background:#f7f7f8;backdrop-filter:none;-webkit-backdrop-filter:none}
+.app-aomi .app-content{padding-bottom:0;overflow:hidden;display:flex;flex-direction:column}
+.aomi-page{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#f7f7f8;color:#242424}
+.aomi-screen{flex:1;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;display:flex;flex-direction:column}
+.aomi-screen::-webkit-scrollbar{display:none}
+.aomi-home{background:#f6f6f7}
+.aomi-location{height:97px;min-height:97px;padding:16px 20px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#ff315e;color:#fff}
+.aomi-location>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.aomi-location small{display:block;font-size:11px;font-weight:400;opacity:.78;line-height:1}
+.aomi-location strong{display:block;font-size:19px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aomi-location strong span{font-size:18px;font-weight:500;margin-left:5px}
+.aomi-inbox-button{flex:0 0 auto;color:#fff;border:1px solid #fff6;border-radius:18px;padding:7px 12px;font-size:13px;font-weight:600}
+.aomi-body{flex:1;min-height:0;margin-top:-10px;border-radius:18px 18px 0 0;background:#f6f6f7;padding:18px 16px 30px;display:flex;flex-direction:column;gap:30px;position:relative;z-index:1}
+.aomi-search{display:flex;align-items:center;flex:0 0 47px;height:47px;min-width:0;border:1.5px solid #ff315e;border-radius:13px;padding-left:12px;background:#fff;overflow:hidden;gap:5px;color:#ff315e}
+.aomi-search>span{font-size:26px;line-height:1;width:25px;text-align:center}
+.aomi-search input{min-width:0;flex:1;width:0;padding:0;border:0;background:transparent;font-size:14px;color:#222}
+.aomi-search button{flex:0 0 auto;align-self:stretch;border:0;background:#ff315e;color:#fff;padding:0 16px;font-size:14px;font-weight:600;border-radius:0}
+.aomi-empty,.aomi-orders-empty{position:static;top:auto;left:auto;right:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;color:#8b8b92;line-height:1.5;font-size:14px}
+.aomi-empty{flex:1;min-height:240px;padding-bottom:15px}
+.aomi-empty img,.aomi-orders-empty img{width:80px;height:80px;border-radius:19px;object-fit:cover;margin-bottom:4px}
+.aomi-empty p,.aomi-orders-empty p{margin:9px 0 18px;font-size:14px;line-height:1.8}
+.aomi-empty small,.aomi-orders-empty small{font-size:12px;color:#b1b1b6}
+.aomi-empty button{font-size:14px;border:1px solid #ff315e;color:#ff315e;background:#fff;border-radius:22px;padding:9px 25px}
+.aomi-tabs{height:79px;min-height:79px;display:flex;align-items:center;justify-content:space-around;background:#fff;border-top:1px solid #e9e9ec;padding:2px 7px 20px;box-shadow:0 -4px 14px #16161604}
+.aomi-tabs button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:2px 0;border:0;background:transparent;color:#98989e;font-size:11px;line-height:1.15}
+.aomi-tabs button img{display:block;width:37px;height:37px;object-fit:contain;filter:grayscale(1);opacity:.66}
+.aomi-tabs button.active{color:#ff315e;font-weight:650}
+.aomi-tabs button.active img{filter:none;opacity:1}
+.aomi-section-heading{height:61px;min-height:61px;display:flex;align-items:center;justify-content:center;padding:0 17px;background:#fff;border-bottom:1px solid #eee;font-size:18px;font-weight:650;position:relative}
+.aomi-section-heading button{position:absolute;left:12px;top:10px;font-size:33px;line-height:1;color:#393939;padding:0 8px}
+.aomi-orders{background:#f7f7f8}
+.aomi-orders-empty{flex:1;min-height:255px;padding:20px}
+.aomi-orders-empty button{padding:10px 44px;border-radius:24px;background:#ff315e;color:#fff;font-size:15px}
+.aomi-profile{background:#f7f7f8;padding:0 14px 30px}
+.aomi-profile .aomi-section-heading{margin:0 -14px 24px}
+.aomi-profile-head{height:89px;min-height:89px;display:flex;align-items:center;gap:15px;width:100%;padding:13px 14px;border:0;background:#fff;border-radius:14px;text-align:left;font-size:18px}
+.aomi-profile-head img{width:58px;height:58px;object-fit:contain;border-radius:50%}
+.aomi-profile-head strong{font-size:18px;flex:1}
+.aomi-profile-head .aomi-chevron{font-size:26px;font-weight:300;color:#b8b8bc}
+.aomi-profile section{padding:18px 12px 15px;background:#fff;border-radius:14px;margin-top:19px}
+.aomi-profile section h2{font-size:15px;margin:0 0 19px;font-weight:650}
+.aomi-profile section div{display:flex;justify-content:space-around;gap:3px}
+.aomi-profile section button{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:5px 0;border:0;background:none}
+.aomi-profile section button img{width:31px;height:31px;object-fit:contain;display:block}
+.aomi-profile section button span{font-size:12px;color:#52525a}
+.aomi-inbox{background:#f7f7f8}
+.aomi-quiet-empty{flex:1;display:grid;place-items:center;color:#a1a1a7;font-size:13px}
+.aomi-login{height:100%;overflow-y:auto;padding:27px 24px 35px;background:#fff}
+@media(max-height:720px){.aomi-location{height:77px;min-height:77px;padding-top:11px;padding-bottom:17px}.aomi-body{gap:12px}.aomi-empty{min-height:190px}.aomi-empty img{width:60px;height:60px}}
