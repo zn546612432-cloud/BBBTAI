@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 23,
+  "channel": "messages",
+  "label": "D023 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85366011000",
+      "conversationName": "+853 6601 1000",
+      "messages": [
+        {
+          "id": "sms-extra-004",
+          "from": "sms-85366011000",
+          "text": "CTM提提您：漫遊前請確認手機已開啟相應服務，以免產生額外通訊費用。",
+          "time": "08:49",
+          "sentDate": "2025-06-10",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

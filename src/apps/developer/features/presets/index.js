@@ -60,9 +60,9 @@ function importExportPanel(s){
  const day=selectedDay(s),pending=pendingImport,report=pending?.report;
  return `<section class="preset-transfer">
  <div class="preset-section-heading"><strong>JSON 剧情文件</strong><span>可独立导入与导出</span></div>
- <p class="editor-help">每个游戏日可以按聊天软件分文件保存；支持单日文件或多日合集。选择文件后先核对冲突，不会立刻覆盖。</p>
+ <p class="editor-help">微信、短信、MIRAGE 的历史文本与定时预设都可以打包导出。编辑完点击下方按钮，下载 JSON 文件后直接发给我，我就能将它合入游戏代码；不会自动上传 GitHub。</p>
  <input id="preset-import-file" type="file" accept=".json,application/json" hidden aria-label="选择剧情 JSON 文件">
- <div class="preset-transfer-buttons"><button type="button" class="preset-primary" data-action="preset-import-choose">导入 JSON…</button><button type="button" class="preset-secondary" data-action="preset-export-day">导出第 ${day} 天</button><button type="button" class="preset-secondary" data-action="preset-export-all">导出全部剧情</button></div>
+ <div class="preset-transfer-buttons"><button type="button" class="preset-primary" data-action="preset-export-all">↓ 一键导出全部聊天预设</button><button type="button" class="preset-secondary" data-action="preset-export-day">导出第 ${day} 天</button><button type="button" class="preset-secondary" data-action="preset-import-choose">导入 JSON…</button></div>
  ${pending?`<div class="preset-import-preview"><div class="preset-section-heading"><strong>待导入：${esc(pending.name)}</strong><span>${report.packs} 份文件</span></div><p>第 ${report.days.join('、')} 天 · 新规则 ${report.rulesNew} 条 · 同编号规则 ${report.rulesConflict} 条</p><p>新增历史消息 ${report.historyNew} 条 · 重复历史 ${report.historyConflict} 条${report.newConversations?` · 新窗口 ${report.newConversations} 个`:''}</p>${report.conflicts.length?`<details><summary>查看 ${report.conflicts.length} 条规则冲突</summary><ul>${report.conflicts.slice(0,100).map(r=>`<li>${esc(r.id)} · ${esc(r.title)}</li>`).join('')}</ul></details>`:''}
  <p class="editor-help">导入不会删除已发送的消息，也不会重置一次性剧情记录或改变当前游戏日。</p>
  <div class="preset-transfer-buttons"><button type="button" class="preset-primary" data-action="preset-import-merge">合并 · 已有规则保留</button><button type="button" class="preset-secondary" data-action="preset-import-replace">仅覆盖同编号规则</button><button type="button" class="preset-danger" data-action="preset-import-cancel">取消</button></div></div>`:''}
@@ -80,7 +80,7 @@ export function presetEditor(s){
  ${selected?ruleEditor(selected,s):'<p class="preset-empty">选择上面的规则编辑，或添加一条新剧情。</p>'}
  ${previewTest(s)}
  ${importExportPanel(s)}
- <p class="editor-help">开发者在此修改的规则保存在本机；导出 JSON 后可放入项目的每日剧情文件夹，正式发布时由游戏自动加载。</p>
+ <p class="editor-help">这里修改的规则和手动编写的聊天记录先保存在浏览器中。请在修改后下载 JSON 并发给我保存到项目中，避免换设备或清除缓存后丢失。</p>
  </div>`;
 }
 

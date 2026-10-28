@@ -3,9 +3,9 @@ import {cp,mkdir,readdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 
-// The game runs at / in local development, but project Pages lives at /AAATAI/.
+// The game runs at / in local development, but project Pages lives at /BBBTAI/.
 // Rewrite absolute app asset URLs only in the generated site, never in sources or saves.
-const repo=(process.env.GITHUB_REPOSITORY||'zn546612432-cloud/AAATAI').split('/').at(-1);
+const repo=(process.env.GITHUB_REPOSITORY||'zn546612432-cloud/BBBTAI').split('/').at(-1);
 const projectPath=process.env.GITHUB_PAGES_BASE||`/${repo}/`;
 if(!/^\/[A-Za-z0-9._/-]*\/$/.test(projectPath)||projectPath.includes('..'))throw Error('Invalid GitHub Pages base path');
 const base=projectPath==='/'?'/':projectPath;

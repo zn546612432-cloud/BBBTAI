@@ -6,11 +6,12 @@ import * as phone from '../src/apps/phone/replica.js';
 import * as messages from '../src/apps/messages/replica.js';
 import * as weather from '../src/apps/weather/replica.js';
 import * as editor from '../src/editor/index.js';
+import {addTestSMS} from './fixture-chat.mjs';
 
 function setup(){
  const data=new Map();
  const storage={getItem:key=>data.get(key)||null,setItem:(key,value)=>data.set(key,value)};
- return {store:new PhoneStore(storage),storage};
+ const store=new PhoneStore(storage);store.update(addTestSMS);return {store,storage};
 }
 
 test('native phone replica has a functional 12-key dialer and reference-style contacts',()=>{
@@ -37,7 +38,7 @@ test('native Messages replica keeps conversations and real SMS form',()=>{
  let html=messages.render(ctx,{route:'/',params:{}});
  assert.match(html,/ios-msg-floating-search/);
  assert.match(html,/ios-msg-row/);
- assert.match(html,/106900000001/);
+ assert.match(html,/\+853 6601 1000/);
  const id=store.get().content.conversations.messages[0].id;
  html=messages.render(ctx,{route:'/chat/'+id,params:{}});
  assert.match(html,/ios-chat-name/);
@@ -141,5 +142,5 @@ test('SMS selected conversations show a real delete action with confirmation and
  messages.handle('sms-confirm-delete',{dataset:{}},ctx);
  assert.ok(!store.get().content.conversations.messages.some(c=>c.id===id));
  assert.equal(new PhoneStore(storage).get().content.conversations.messages.length,2);
- assert.doesNotMatch(messages.render({store},{route:'/',params:{}}),/106900000001/);
+ assert.doesNotMatch(messages.render({store},{route:'/',params:{}}),/\+853 6601 1000/);
 });

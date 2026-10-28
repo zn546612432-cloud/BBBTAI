@@ -2,6 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {routeSolution,rotate,connected,createBoard,swap,puzzleSolved,fingerprints} from '../src/apps/ghost/games/logic.js';
 import {authorize,begin,finish,submit,settle,advanceGhost} from '../src/apps/ghost/state.js';
+
+test('all five GHOST programs create a different board on every new attempt',()=>{
+ for(const type of ['cipher','route','extract','veil','strike']){
+  const s={ghost:{orders:{},history:[],balance:0,config:{[type]:{retries:3}}}};
+  authorize(s,{orderId:'sample',type});
+  assert.equal(begin(s,'sample',1000),true);const first=structuredClone(s.ghost.orders.sample.board);
+  finish(s,'sample',false,2000);assert.equal(begin(s,'sample',3000),true);
+  const second=s.ghost.orders.sample.board;
+  const signature=b=>JSON.stringify(type==='cipher'?b.tiles:type==='route'?b.masks:type==='extract'?b.target:type==='veil'?b.code:b.signature);
+  assert.notEqual(signature(first),signature(second),type);
+  assert.equal(begin(s,'sample',4000),false,'resuming a running attempt must not reroll');
+ }
+});
+
+test('GHOST order authorization follows the developer-selected program and per-order settings',()=>{
+ const s={ghost:{orders:{},config:{},missionTypes:{'mirage-recruit-hacker':'veil'},orderConfigs:{'mirage-recruit-hacker':{seconds:45}}}};
+ const o=authorize(s,{orderId:'mirage-recruit-hacker',mailId:'hacker-mail'});
+ assert.equal(o.type,'veil');assert.equal(o.settings.seconds,45);
+ assert.equal(begin(s,o.id,1000),true);assert.equal(o.board.code.length,4);
+});
 test('route ports agree and every shuffled board retains a solvable orientation',()=>{assert.equal(connected(routeSolution).size,9);for(let n=0;n<100;n++){const b=createBoard('route',{});assert.equal(connected(b.masks).has(8),false);for(let i=0;i<9;i++){let mask=b.masks[i];for(let k=0;k<4&&mask!==routeSolution[i];k++)mask=rotate(mask);assert.equal(mask,routeSolution[i]);}}assert.equal(connected([2,8,4,0,0,0,0,0,1]).has(8),false);});
 test('swap puzzle is scrambled, reversible, and solvable',()=>{for(let n=0;n<100;n++){let {tiles}=createBoard('cipher',{});assert.equal(puzzleSolved(tiles),false);for(let i=0;i<9;i++)tiles=swap(tiles,i,tiles.indexOf(i));assert.equal(puzzleSolved(tiles),true);}});
 test('fingerprint candidates contain exactly one correct match',()=>{for(let n=0;n<100;n++){const b=fingerprints();assert.equal(b.options.filter(x=>x===b.target).length,1);assert.equal(b.options[b.correct],b.target);}});

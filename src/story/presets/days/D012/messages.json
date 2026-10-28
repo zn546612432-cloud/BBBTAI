@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 12,
+  "channel": "messages",
+  "label": "D012 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-sfexpo",
+      "conversationName": "SFEXPO",
+      "messages": [
+        {
+          "id": "sms-user-008",
+          "from": "sms-sfexpo",
+          "text": "由於地址資料不完整/不正確，順豐速運不能完成派送。請於[24小時]內點擊以下連結檢查並添加正確資訊\nhttps://ln.run/kL7mp",
+          "time": "09:17",
+          "sentDate": "2025-05-30",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

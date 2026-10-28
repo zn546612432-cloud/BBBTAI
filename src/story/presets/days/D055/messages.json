@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 55,
+  "channel": "messages",
+  "label": "D055 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85366011000",
+      "conversationName": "+853 6601 1000",
+      "messages": [
+        {
+          "id": "sms-extra-008",
+          "from": "sms-85366011000",
+          "text": "CTM提提您：您的預付卡服務有效期即將更新，詳情可於官方App查閱。",
+          "time": "16:16",
+          "sentDate": "2025-07-12",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

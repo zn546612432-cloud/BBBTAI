@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 4,
+  "channel": "messages",
+  "label": "D004 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85366011000",
+      "conversationName": "+853 6601 1000",
+      "messages": [
+        {
+          "id": "sms-extra-001",
+          "from": "sms-85366011000",
+          "text": "CTM提提您：本月流動數據用量可於CTM App查閱，請留意剩餘用量及有效期。",
+          "time": "11:22",
+          "sentDate": "2025-05-22",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

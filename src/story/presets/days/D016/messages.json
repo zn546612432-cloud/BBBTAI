@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 16,
+  "channel": "messages",
+  "label": "D016 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388895566",
+      "conversationName": "+853 8889 5566",
+      "messages": [
+        {
+          "id": "sms-extra-003",
+          "from": "sms-85388895566",
+          "text": "【中國銀行(澳門)】尊敬的客戶：尾號1846賬戶的電子月結單已可查閱。如非本人操作，請聯絡本行。",
+          "time": "10:26",
+          "sentDate": "2025-06-03",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

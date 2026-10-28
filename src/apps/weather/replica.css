@@ -9,7 +9,7 @@
 .ios-weather-list .weather-foot{font-size:11px;color:#8e92a8;line-height:1.6;padding:15px 0 22px}
 .ios-weather-list .weather-restore-button{font-size:11px;color:#9abffa;font-weight:650;vertical-align:baseline;padding:0 3px}
 .ios-weather-list .weather-none{min-height:230px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.8;color:#99a5be;font-size:14px}
-.ios-weather-list .weather-undo{position:absolute;left:22px;right:22px;bottom:calc(85px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:17px;background:#313b55;color:#f6f8ff;font-size:13px;box-shadow:0 10px 32px #0005;animation:weather-toast-in .25s ease-out}
+.ios-weather-list .weather-undo{position:absolute;top:70px;left:15px;right:15px;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:17px;background:#313b55;color:#f6f8ff;font-size:13px;box-shadow:0 10px 32px #0005;animation:weather-toast-in .25s ease-out}
 .ios-weather-list .weather-undo button{font-weight:650;color:#adceff;font-size:13px}
-@keyframes weather-toast-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes weather-toast-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.ios-weather-list .weather-swipe-row,.ios-weather-list .weather-swipe-main{transition:none!important}}

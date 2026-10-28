@@ -6,6 +6,7 @@ import {classifyGesture} from '../src/system/gestures.js';
 import {viewportMetrics} from '../src/system/viewport.js';
 import {PhoneStore} from '../src/services/storage.js';
 import {chatView} from '../src/components/chat.js';
+import {addTestWeChat} from './fixture-chat.mjs';
 const s={day:56,clock:'11:27',calendar:calendarAnchor(56,'2026-10-26')};
 test('message dates render today, yesterday, day before and explicit calendar dates',()=>{
  const m={time:'16:04'};setMessageDate(m,s,{preset:'yesterday'});assert.equal(m.sentDate,'2026-10-25');assert.equal(timestampLabel(m,s),'昨天 16:04');assert.equal(datePreset(m,s),'yesterday');
@@ -31,6 +32,7 @@ test('visual viewport shrinks mobile app when the keyboard opens and restores it
 });
 test('chat has stable message keys and centered sent-date separators',()=>{
  const data=new Map(),store=new PhoneStore({getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)});
+ store.update(addTestWeChat);
  store.update(x=>{x.calendar=calendarAnchor(56,'2026-10-26');const c=x.content.conversations.wechat[0];c.messages[0].sentDate='2026-10-25';c.messages[0].time='16:04';c.messages[1].sentDate='2026-10-26';c.messages[1].time='11:27';});
  const html=chatView(store.get(),'wechat','wang');assert.match(html,/data-key="message-w1"/);assert.match(html,/class="chat-time-divider"[^>]*>昨天 16:04/);assert.match(html,/class="chat-time-divider"[^>]*>11:27/);
 });

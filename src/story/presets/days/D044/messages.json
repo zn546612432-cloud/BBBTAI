@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 44,
+  "channel": "messages",
+  "label": "D044 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388895566",
+      "conversationName": "+853 8889 5566",
+      "messages": [
+        {
+          "id": "sms-user-012",
+          "from": "sms-85388895566",
+          "text": "【中國銀行(澳門)】尊敬的客戶：您的智能櫃檯短訊驗證碼為687321，切勿將此短訊轉發他人。查詢請致電服務熱線+853 88895566。",
+          "time": "15:10",
+          "sentDate": "2025-07-01",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

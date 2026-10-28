@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 46,
+  "channel": "messages",
+  "label": "D046 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388895566",
+      "conversationName": "+853 8889 5566",
+      "messages": [
+        {
+          "id": "sms-extra-007",
+          "from": "sms-85388895566",
+          "text": "【中國銀行(澳門)】提提您：請定期更新流動銀行登入密碼，勿向任何人透露一次性驗證碼。",
+          "time": "09:41",
+          "sentDate": "2025-07-03",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

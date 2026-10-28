@@ -51,8 +51,7 @@
 #phone.notification-open #homebar span{background:#ffffffeb;box-shadow:0 1px 9px #0b213e7a}
 #phone.keyboard-open #homebar{opacity:0;pointer-events:none}
 .keyboard-open .composer,.keyboard-open .app-noapp .composer{padding-bottom:10px}
-#toast{bottom:calc(42px + env(safe-area-inset-bottom,0px));max-height:100px;overflow:hidden;background:#e6f3f7d9;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);pointer-events:none}
-.keyboard-open #toast{bottom:70px}
+#toast{max-height:132px;overflow:hidden}
 #shade-layer,#shade-layer:not(:empty){position:absolute;inset:0;z-index:36;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none;overflow:hidden;--shade-progress:0}
 #shade-layer.is-present:not(:empty){pointer-events:auto;touch-action:none}
 .shade{height:100%;padding:calc(82px + env(safe-area-inset-top,0px)) 22px calc(36px + env(safe-area-inset-bottom,0px));color:#fff;

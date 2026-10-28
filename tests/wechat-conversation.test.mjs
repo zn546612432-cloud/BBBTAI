@@ -9,6 +9,7 @@ import {appFrame} from '../src/system/shell.js';
 import {manifest as wechatManifest} from '../src/apps/wechat/index.js';
 import {initialState,PhoneStore} from '../src/services/storage.js';
 import {readFileSync} from 'node:fs';
+import {addTestWeChat} from './fixture-chat.mjs';
 
 const memoryStorage=()=>{
  const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};
@@ -24,7 +25,7 @@ test('wechat group portrait uses six actual member files, not a placeholder lett
 });
 
 test('native WeChat conversation has names, portraits, composer and per-message actions without DEMO',()=>{
- const s=initialState(),group=s.content.conversations.wechat.find(c=>c.id==='group');
+ const s=addTestWeChat(initialState()),group=s.content.conversations.wechat.find(c=>c.id==='group');
  group.messages.push({id:'mine-1',from:'me',kind:'text',text:'哥，我回来了',time:'21:19'});
  const html=renderWeChatChat(s,'group');
  for(const item of ['wx-message-sender','胡枫','小辛','wx-message-row mine','wx-composer','wx-speak-draft','wx-message-options','哥，我回来了'])assert.ok(html.includes(item),item);
@@ -41,6 +42,7 @@ test('native WeChat conversation has names, portraits, composer and per-message 
 
 test('player recall removes content and leaves stable notice; incoming messages cannot be revoked',()=>{
  const store=new PhoneStore(memoryStorage());
+ store.update(addTestWeChat);
  const conversation=store.get().content.conversations.wechat.find(c=>c.id==='wang');
  const oldText=conversation.messages[1].text;
  assert.throws(()=>recallWeChatMessage(store,'wang','w1'),/只能撤回自己/);

@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 53,
+  "channel": "messages",
+  "label": "D053 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388893663",
+      "conversationName": "+853 8889 3663",
+      "messages": [
+        {
+          "id": "sms-user-013",
+          "from": "sms-85388893663",
+          "text": "【WynnPalace】Dear Ms. CHEN, your reservation for 2 guests at WP Fontana on 2025-01-17 at 12:00 is confirmed. (Ref. 1778125). Dress code applies. Self-Parking Location: North Entrance. +853 8889 3663 Wynn Palace [永利皇宮]尊敬的CHEN 先生/小姐，閣下於2025-07-11 12:00在咖啡苑共2位客人的訂座已確認 (編號﹕1778125)。本餐廳設有穿著要求。自助停車場位置: 北門。+853 8889 3663永利皇宫",
+          "time": "10:52",
+          "sentDate": "2025-07-10",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

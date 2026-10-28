@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 38,
+  "channel": "messages",
+  "label": "D038 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388970160",
+      "conversationName": "+853 8897 0160",
+      "messages": [
+        {
+          "id": "sms-extra-006",
+          "from": "sms-85388970160",
+          "text": "澳門天氣消息：請持續留意風暴潮及降雨資訊，前往低窪地區前先確認交通及安全情況。",
+          "time": "12:04",
+          "sentDate": "2025-06-25",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

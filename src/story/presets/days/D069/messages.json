@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 69,
+  "channel": "messages",
+  "label": "D069 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388970160",
+      "conversationName": "+853 8897 0160",
+      "messages": [
+        {
+          "id": "sms-extra-010",
+          "from": "sms-85388970160",
+          "text": "澳門氣象局提醒：熱帶氣旋可能影響本澳，請留意最新熱帶氣旋警告及海面情況。",
+          "time": "20:08",
+          "sentDate": "2025-07-26",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

@@ -57,7 +57,7 @@ function menu(){
     '</div>';
 }
 function chats(s){
-  const conversations=s.content.conversations.wechat||[];
+  const conversations=(s.content.conversations.wechat||[]).filter(c=>visibleMessages(c).length||c.unread||c.authored||['wang','group'].includes(c.id));
   const title=header('微信',iconButton('wx-toggle-menu','plus','更多操作'))+menu();
   const rows=conversations.map((c,i)=>{
     const last=visibleMessages(c).at(-1);

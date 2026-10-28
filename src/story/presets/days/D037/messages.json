@@ -1,0 +1,39 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 37,
+  "channel": "messages",
+  "label": "D037 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388970160",
+      "conversationName": "+853 8897 0160",
+      "messages": [
+        {
+          "id": "sms-user-009",
+          "from": "sms-85388970160",
+          "text": "18:00  É emitido o aviso de “storm surge” de grau vermelho em Macau, prevendo graves inundações nas zonas baixas e costeiras (1,5 a 2,5 m acima do pavimento), pelo que os residentes e turistas das zonas baixas devem deslocar-se o mais rápido possível para locais altos ou centros de acolhimento.",
+          "time": "18:08",
+          "sentDate": "2025-06-24",
+          "appearance": "game-time"
+        },
+        {
+          "id": "sms-user-010",
+          "from": "sms-85388970160",
+          "text": "18:00 Red Storm Surge Warning is issued in Macao. Severe flooding (water levels expected to be from 1.5 m to 2.5 m above road level) is expected in low-lying and coastal areas. Residents and tourists in low-lying areas should evacuate immediately to higher ground or emergency shelters.",
+          "time": "18:08",
+          "sentDate": "2025-06-24",
+          "appearance": "game-time"
+        },
+        {
+          "id": "sms-user-011",
+          "from": "sms-85388970160",
+          "text": "18:00 澳門發出紅色風暴潮預警，低窪及沿岸地區將出現嚴重水浸(水位高於路面 1.5至2.5米)，低層居民及旅客應盡快撤離至高地或避險中心。",
+          "time": "18:08",
+          "sentDate": "2025-06-24",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

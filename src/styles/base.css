@@ -28,8 +28,10 @@ textarea{min-height:90px;resize:vertical;line-height:1.55}
 #shade-layer:not(:empty){position:absolute;inset:59px 0 24px;z-index:24;background:#0b1622a1;backdrop-filter:blur(25px)}
 #homebar{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:145px;height:20px;display:grid;place-items:center;z-index:40}
 #homebar span{width:126px;height:5px;border-radius:8px;background:#eef7ffe5}
-#toast{position:absolute;z-index:60;left:22px;right:22px;bottom:45px;border-radius:15px;background:#eff6fb;color:#19344a;padding:13px 16px;font-size:12px;box-shadow:0 10px 35px #0006;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
-#toast.visible{opacity:1;transform:none}
+#toast{position:absolute;z-index:60;top:63px;left:12px;right:12px;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #ffffffb8;border-radius:20px;background:#f5f7f9ed;color:#1b2533;padding:11px 13px;box-shadow:0 12px 35px #0005;opacity:0;transform:translateY(-115%);transition:opacity .24s,transform .32s cubic-bezier(.2,.8,.2,1);pointer-events:none;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px)}
+#toast.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#toast .notification-copy small{font-size:12px;font-weight:680;color:#1c2531}
+#toast .notification-copy strong{font-size:13px;font-weight:460;color:#27323f;line-height:1.45;overflow-wrap:anywhere}
 .eyebrow{font-size:10px;font-weight:700;letter-spacing:2.1px;color:#8394a7}
 .demo-tag{display:inline-block;vertical-align:middle;padding:2px 5px;border-radius:4px;background:#acd1e130;color:#8bb5c9;font-size:8px;font-weight:800;letter-spacing:1px;margin-left:4px}
 .muted{color:var(--muted)}
@@ -243,6 +245,19 @@ textarea{min-height:90px;resize:vertical;line-height:1.55}
 .editor-tabs{scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .editor-tabs::-webkit-scrollbar{display:none}
 .editor-tabs button{flex:0 0 auto;white-space:nowrap;min-width:66px;text-align:center}
+.editor-nav-grid{display:grid;gap:10px;margin:14px 0 18px}
+.editor-nav-group{border:1px solid #dce6ed;background:#f3f7fa;border-radius:15px;padding:9px 10px 2px}
+.editor-nav-group>small{display:block;font-size:10px;color:#6d8090;letter-spacing:1px;margin:0 3px 8px}
+.editor-nav-group .editor-tabs{flex-wrap:wrap;margin-bottom:6px}
+.editor-nav-group .editor-tabs button{flex:1 1 auto;min-width:0;padding:9px 11px}
+.editor-trigger-row{background:#f2f6f9;border:1px solid #dfebf1;border-radius:13px;padding:12px;margin:7px 0;display:grid;gap:5px;color:#1e3442}
+.editor-trigger-row b{font-size:12px}.editor-trigger-row small{font-size:11px;color:#738795}.editor-trigger-row span{font-size:11px;color:#287d76;font-weight:650}
+.editor-linkage{display:grid;gap:7px;padding:13px;background:#eaf3f6;border:1px solid #c8dfe6;border-radius:15px;color:#263d4e;margin:10px 0}
+.editor-linkage b{font-size:14px}.editor-linkage span{font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.editor-ghost-tests{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 18px}
+.editor-ghost-tests button{font-size:11px;min-width:0;padding:10px 7px}
+.gh-editor{border:1px solid #dce6ed;border-radius:13px;padding:12px;margin:8px 0;color:#243a4b}
+.gh-editor summary{cursor:pointer;font-weight:650;font-size:13px}.gh-editor label{display:block;margin-top:11px}
 .editor-panel label{display:block;margin:14px 0 8px;font-size:11px;color:#7b909f}
 .editor-panel select{margin-bottom:12px}
 .edit-message{background:#fff;border:1px solid #e0e8ee;border-radius:16px;padding:13px;margin:9px 0}

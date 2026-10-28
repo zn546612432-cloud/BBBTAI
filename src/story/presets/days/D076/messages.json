@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 76,
+  "channel": "messages",
+  "label": "D076 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85328337766",
+      "conversationName": "+853 2833 7766",
+      "messages": [
+        {
+          "id": "sms-extra-011",
+          "from": "sms-85328337766",
+          "text": "【澳門發展銀行】本月手機銀行優惠已更新，詳情請登入官方應用程式查閱。",
+          "time": "10:29",
+          "sentDate": "2025-08-02",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

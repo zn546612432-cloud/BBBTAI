@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 89,
+  "channel": "messages",
+  "label": "D089 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-85388895566",
+      "conversationName": "+853 8889 5566",
+      "messages": [
+        {
+          "id": "sms-extra-013",
+          "from": "sms-85388895566",
+          "text": "【中國銀行(澳門)】尊敬的客戶：如收到可疑短訊或登入通知，請勿點擊不明連結，並透過官方熱線核實。",
+          "time": "14:04",
+          "sentDate": "2025-08-15",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,26 @@
 {
   "format": "ximeng-preset-manifest-v1",
   "files": [
+    "D001/wechat.json",
+    "D001/messages.json",
+    "D004/messages.json",
+    "D010/messages.json",
+    "D012/messages.json",
+    "D016/messages.json",
+    "D023/messages.json",
+    "D030/messages.json",
+    "D037/messages.json",
+    "D038/messages.json",
+    "D044/messages.json",
+    "D046/messages.json",
+    "D053/messages.json",
+    "D055/messages.json",
+    "D062/messages.json",
+    "D069/messages.json",
+    "D075/messages.json",
+    "D076/messages.json",
+    "D083/messages.json",
+    "D089/messages.json",
     "D057/wechat.json",
     "D058/wechat.json"
   ]

@@ -1,0 +1,23 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 75,
+  "channel": "messages",
+  "label": "D075 · 生活短信与通知",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "sms-cainiao",
+      "conversationName": "CAINIAO",
+      "messages": [
+        {
+          "id": "sms-user-014",
+          "from": "sms-cainiao",
+          "text": "淘寶包裹送往澳門中！即領8月官方運費券，免合單直送澳門：https://p.tb.cn/_7sqQRFeyJcM",
+          "time": "09:32",
+          "sentDate": "2025-08-01",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}
