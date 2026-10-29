@@ -10,6 +10,12 @@ const historyMediaById=new Map(historyMedia.assets.map(asset=>[asset.id,asset]))
 
 export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
 
+// Local story stickers must work under both the Site root and versioned Pages paths.
+export function pictureSrc(source,moduleUrl=import.meta.url){
+ const match=String(source||'').match(/^\/apps\/wechat\/stickers\/([a-zA-Z0-9_-]+\.(?:png|webp|gif|svg))$/);
+ return match?new URL(`../../../../apps/wechat/stickers/${match[1]}`,moduleUrl).href:source;
+}
+
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
 const portrait=name=>'<span class="wx-message-avatar"><img src="'+esc(resolveWeChatAvatar(name))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
@@ -38,7 +44,9 @@ function messageRow(m,s,c){
   if(m.kind==='recalled')return '<div class="wx-recall-notice" data-key="message-'+esc(m.id)+'" role="status">'+(m.recalledBy==='me'?'你':'对方')+'撤回了一条消息</div>';
   const mine=m.from==='me',name=mine?'熙蒙':actorName(c,m.from);
   const media=m.assetId?historyMediaById.get(m.assetId):null;
-  const body=m.kind==='image'?'<img src="'+esc(m.text)+'" alt="聊天图片" class="wx-bubble-picture">':
+  const stickerSize=String(m.text).endsWith('/whitecat.webp')?' width="199" height="170"':
+    String(m.text).endsWith('/dog.svg')?' width="88" height="88"':'';
+  const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
     m.kind==='app_invitation'?invite(m,s,c):esc(m.text);
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+

@@ -21,11 +21,11 @@ export function exportPresetPacks(state,{day=null}={}){
   for(const conversation of conversations){
    const perDay=new Map();
    for(const message of conversation.messages||[]){
-    if((!message.storyImported&&!message.authored)||message.actual||message.kind&&message.kind!=='text'||typeof message.text!=='string'||!message.text.trim())continue;
+    if((!message.storyImported&&!message.authored)||message.actual||message.kind&&!['text','image'].includes(message.kind)||typeof message.text!=='string'||!message.text.trim())continue;
     const authoredDay=messageDay(message,state);
     if(day!==null&&authoredDay!==day)continue;
     const rows=perDay.get(authoredDay)||[];
-    rows.push({id:message.id,from:message.from,text:message.text,time:message.time,...(message.assetId?{assetId:message.assetId}:{}),...(message.sentDate?{sentDate:message.sentDate}:{}),...(message.schedule?.mode==='game-time'?{appearance:'game-time'}:{})});
+    rows.push({id:message.id,from:message.from,text:message.text,time:message.time,...(message.kind==='image'?{kind:'image'}:{}),...(message.assetId?{assetId:message.assetId}:{}),...(message.sentDate?{sentDate:message.sentDate}:{}),...(message.schedule?.mode==='game-time'?{appearance:'game-time'}:{})});
     perDay.set(authoredDay,rows);
    }
    for(const [d,messages] of perDay){bucket(d,channel).history.push({conversationId:conversation.id,conversationName:conversation.name,messages});}

@@ -22,9 +22,9 @@ export function groupNotes(notes=[],state={day:1}){
  return ['置顶','今天','过去7天','过去30天','更早'].filter(k=>groups.has(k)).map(k=>({title:k,notes:groups.get(k)}));
 }
 function item(note,state){
- const title=note.title?.trim()||preview(note)||'新备忘录';
- const detail=preview(note);
- const thumb=note.attachments?.[0]?.src?`<img class="nt-note-thumb" src="${esc(note.attachments[0].src)}" alt="">`:'';
+ const title=note.title?.trim()||(!note.locked&&preview(note))||'新备忘录';
+ const detail=note.locked?'已锁定':preview(note);
+ const thumb=!note.locked&&note.attachments?.[0]?.src?`<img class="nt-note-thumb" src="${esc(note.attachments[0].src)}" alt="">`:'';
  return `<button type="button" class="nt-note-row" data-action="open-note" data-id="${esc(note.id)}" data-notes-title="${esc((title+' '+detail).toLocaleLowerCase())}" aria-label="${esc(title)}">
   <span class="nt-note-copy"><strong>${note.locked?ntIcon('lock',14):''}${esc(title)}</strong><small><span>${esc(updateLabel(note,state))}</span>${detail?`<span class="nt-note-preview">${esc(detail)}</span>`:''}</small></span>${thumb}</button>`;
 }

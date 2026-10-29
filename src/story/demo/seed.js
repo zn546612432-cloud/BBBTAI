@@ -1,7 +1,9 @@
 // UI fixtures only. Reviewed story dialogue lives in separately imported story content.
+import {authoredNotes} from '../../apps/notes/data/seed.js';
 export const demoContent={
   smsSeedVersion:2,
   wechatRosterVersion:1,
+  notesSeedVersion:1,
   conversations:{
     wechat:[
       {id:'wang',name:'熙旺',avatar:'旺',messages:[]},
@@ -16,7 +18,7 @@ export const demoContent={
     mirage:[],
     messages:[]
   },
-  notes:[{id:'note-1',title:'留到下次',text:'那盤棋，改天接著下。',demo:true}],
+  notes:authoredNotes.map(note=>structuredClone(note)),
   orders:[{id:'order-1',title:'離線資料整理',owner:'Rookery 13',reward:'MOP 240',status:'开放',demo:true}],
   photos:[],
   reminders:[{id:'reminder-demo-1',title:'给手机充电',done:false,demo:true},{id:'reminder-demo-2',title:'整理照片',done:false,demo:true},{id:'reminder-demo-3',title:'继续上次的棋局',done:false,demo:true}],

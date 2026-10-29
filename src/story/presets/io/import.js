@@ -6,9 +6,20 @@ const authoredMessage=(pack,chat,message)=>({
  id:message.id,from:message.from,text:message.text,time:message.time,
  ...(message.assetId?{assetId:message.assetId}:{}),
  ...(message.sentDate?{sentDate:message.sentDate}:{}),
- day:pack.day,kind:'text',authored:true,storyImported:true,
+ day:pack.day,kind:message.kind||'text',authored:true,storyImported:true,
  ...(message.appearance==='game-time'?{schedule:{mode:'game-time',day:pack.day,clock:message.time}}:{})
 });
+
+// Legacy saves may have received later months before earlier days were authored.
+// Keep historical messages in date order, while preserving all player messages.
+function orderWeChatHistory(conversation){
+ const historical=message=>message.storyImported&&/^\d{4}-\d{2}-\d{2}$/.test(message.sentDate||'')&&!message.schedule;
+ const original=conversation.messages;
+ const history=original.filter(historical).sort((a,b)=>
+  (`${a.sentDate} ${a.time}`).localeCompare(`${b.sentDate} ${b.time}`));
+ if(!history.length)return;
+ conversation.messages=[...history,...original.filter(message=>!historical(message))];
+}
 
 /** Return a read-only conflict report. No changes are made to the game. */
 export function previewPresetImport(state,payload){
@@ -57,6 +68,7 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
    }
   }
  }
+ if(packs.some(pack=>pack.channel==='wechat'))for(const conversation of state.content.conversations.wechat||[])orderWeChatHistory(conversation);
  if(restoreDeleted)presets.deletedRuleIds=presets.deletedRuleIds.filter(id=>!packs.some(pack=>pack.rules.some(r=>r.id===id)));
  return report;
 }

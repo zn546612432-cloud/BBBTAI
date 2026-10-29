@@ -2,6 +2,7 @@ import {editorUi,resetEditorUi} from '../editor/index.js';
 import {listUi} from '../list/index.js';
 import {addNoteAttachment} from '../attachments/index.js';
 import {openSketch,saveSketch} from '../sketch/index.js';
+import {lockNote} from '../lock/index.js';
 
 const noteId=ctx=>ctx.store.get().nav.current.params?.noteId;
 const activeNote=ctx=>ctx.store.get().content.notes.find(n=>n.id===noteId(ctx));
@@ -32,7 +33,9 @@ function finishNote(ctx){
  if(current&&!current.title.trim()&&!current.text.trim()&&!current.attachments?.length){
   ctx.store.update(s=>{s.content.notes=s.content.notes.filter(n=>n.id!==current.id);});
  }
- resetEditorUi();ctx.router.back();
+ resetEditorUi();
+ if(note.locked)lockNote(note.id);
+ ctx.router.back();
 }
 
 export function handleNoteAction(action,target,ctx,loc){

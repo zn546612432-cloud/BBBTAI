@@ -1,0 +1,50 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-03-12 · 孤儿院集合",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        { "id": "wx-group-20240312-001", "from": "wang", "text": "@所有人 干爹找大家有事，一会孤儿院见", "time": "09:44", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-002", "from": "仔仔", "text": "1", "time": "09:44", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-003", "from": "胡枫", "text": "2", "time": "09:45", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-004", "from": "仔仔", "text": "？哥你", "time": "09:45", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-005", "from": "小辛", "text": "收至刂", "time": "09:54", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-006", "from": "阿威", "text": "收到", "time": "09:54", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-007", "from": "小辛", "text": "你们都不上网的吗哎呀", "time": "09:55", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-008", "from": "wang", "text": "🤣", "time": "09:56", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-009", "from": "wang", "text": "变装服装和身份证件大家一会留下来开个会核对一下", "time": "13:00", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-010", "from": "仔仔", "text": "我挑了几套衣服大家等下看一下", "time": "13:02", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-011", "from": "me", "text": "@小辛你是不是吃胖了，速度比之前慢了十一秒", "time": "14:20", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-012", "from": "小辛", "text": "我裤裆卡住了…………", "time": "14:21", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-013", "from": "胡枫", "text": "哈哈哈哈哈哈哈", "time": "14:21", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-014", "from": "胡枫", "text": "行动的时候要我帮你把裤子剪开吗？", "time": "14:22", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-015", "from": "仔仔", "text": "我给你做成开裆裤也行", "time": "14:23", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-016", "from": "小辛", "text": "欺负一条狗？", "time": "14:24", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-017", "from": "小辛", "kind": "image", "text": "/apps/wechat/stickers/dog.svg", "time": "14:24", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-018", "from": "me", "text": "嗯，小狗～", "time": "14:25", "sentDate": "2024-03-12" },
+        { "id": "wx-group-20240312-019", "from": "me", "kind": "image", "text": "/apps/wechat/stickers/whitecat.webp", "time": "14:26", "sentDate": "2024-03-12" }
+      ]
+    },
+    {
+      "conversationId": "wang",
+      "conversationName": "熙旺",
+      "messages": [
+        { "id": "wx-wang-20240312-001", "from": "wang", "text": "蒙蒙还没来？", "time": "10:55", "sentDate": "2024-03-12" },
+        { "id": "wx-wang-20240312-002", "from": "me", "text": "到门口啦～", "time": "11:05", "sentDate": "2024-03-12" }
+      ]
+    },
+    {
+      "conversationId": "hufeng",
+      "conversationName": "胡枫",
+      "messages": [
+        { "id": "wx-hufeng-20240312-001", "from": "hufeng", "text": "等你一个啦", "time": "10:56", "sentDate": "2024-03-12" },
+        { "id": "wx-hufeng-20240312-002", "from": "me", "text": "👌", "time": "11:05", "sentDate": "2024-03-12" }
+      ]
+    }
+  ]
+}

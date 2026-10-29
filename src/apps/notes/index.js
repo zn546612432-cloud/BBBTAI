@@ -5,6 +5,7 @@ import {renderFolders} from './features/folders/index.js';
 import {renderEditor,resetEditorUi} from './features/editor/index.js';
 import {handleNoteAction,saveNoteField} from './features/actions/index.js';
 import {filterNoteRows} from './features/search/index.js';
+import {renderLockedNote,isNoteUnlocked,prepareLockedNote,showUnlockDialog,hideUnlockDialog,lockNote,tryUnlockNote} from './features/lock/index.js';
 
 export const manifest={id:'notes',name:'备忘录',icon:3,defaultRoute:'/',kicker:'NOTES'};
 
@@ -12,7 +13,12 @@ export function render({store},loc){
  const state=store.get(),route=loc.route||'/',notes=state.content.notes||[];
  if(route==='/edit'){
   const note=notes.find(n=>n.id===loc.params?.noteId);
+  if(note?.locked&&!isNoteUnlocked(note.id))return `<main class="nt-screen nt-screen-locked" data-view-key="notes-locked">${renderLockedNote(note)}</main>`;
   return `<main class="nt-screen nt-screen-editor" data-view-key="notes-editor">${note?renderEditor(note):empty('未找到备忘录')}</main>`;
+ }
+ if(route==='/locked'){
+  const note=notes.find(n=>n.id===loc.params?.noteId);
+  return `<main class="nt-screen nt-screen-locked" data-view-key="notes-locked">${note?renderLockedNote(note):empty('未找到备忘录')}</main>`;
  }
  if(route==='/folders')return `<main class="nt-screen nt-screen-folders" data-view-key="notes-folders">${renderFolders(notes)}</main>`;
  return `<main class="nt-screen nt-screen-list" data-view-key="notes-list">${renderList(notes,state)}</main>`;
@@ -29,9 +35,14 @@ export function handle(action,target,ctx,loc){
  }
  if(action==='open-note'){
   resetEditorUi();
-  ctx.router.open({appId:'notes',route:'/edit',params:{noteId:target.dataset.id}});
+  const note=ctx.store.get().content.notes.find(n=>n.id===target.dataset.id);
+  if(note?.locked)prepareLockedNote(note.id);
+  ctx.router.open({appId:'notes',route:note?.locked?'/locked':'/edit',params:{noteId:target.dataset.id}});
   return;
  }
+ if(action==='notes-lock-back'){ctx.router.back();return;}
+ if(action==='notes-unlock-open'){showUnlockDialog(loc.params?.noteId);ctx.refresh();globalThis.document?.querySelector('.nt-unlock-dialog input')?.focus();return;}
+ if(action==='notes-unlock-cancel'){hideUnlockDialog(loc.params?.noteId);ctx.refresh();return;}
  if(action==='notes-folders'){
   ctx.router.open({appId:'notes',route:'/folders'});return;
  }
@@ -47,10 +58,17 @@ export function input(target,ctx){
 }
 
 export function submit(form,ctx){
+ if(form.dataset.form==='notes-unlock'){
+  const id=form.dataset.id;
+  if(tryUnlockNote(id,new FormData(form).get('password')||''))ctx.router.open({appId:'notes',route:'/edit',params:{noteId:id}});
+  else ctx.refresh();
+  return;
+ }
  if(form.dataset.form!=='note')return;
  const fields=new FormData(form),id=form.dataset.id;
  ctx.store.update(s=>{const note=s.content.notes.find(n=>n.id===id);if(!note)return;
   note.title=String(fields.get('title')||'');note.text=String(fields.get('text')||'');note.updatedDay=s.day;note.updatedClock=s.clock;
  });
+ lockNote(id);
  ctx.router.back();
 }

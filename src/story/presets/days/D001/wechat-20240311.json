@@ -1,0 +1,44 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-03-11 · 午饭和晚归",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        { "id": "wx-group-20240311-001", "from": "wang", "text": "中午吃什么？我点外卖", "time": "11:45", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-002", "from": "小辛", "text": "哪家？我不想吃烧腊饭了", "time": "11:46", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-003", "from": "胡枫", "text": "你们都吃什么？", "time": "11:46", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-004", "from": "胡枫", "text": "那你要吃什么？嘴别那么挑", "time": "11:47", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-005", "from": "wang", "text": "小辛，别的店送不了，最近风头紧，以后你再点别的", "time": "11:49", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-006", "from": "小辛", "text": "🥺", "time": "11:49", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-007", "from": "小辛", "text": "我一直刷到自助餐的广告，我想吃龙虾了", "time": "11:51", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-008", "from": "阿威", "text": "叉烧拼烧鸭吧", "time": "11:51", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-009", "from": "me", "text": "没事的，监控我都删了，老头自己疑神疑鬼，根本不会有人查到", "time": "11:53", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-010", "from": "me", "text": "都什么时代了", "time": "11:53", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-011", "from": "wang", "text": "干爹经验丰富，肯定有他的道理。阿蒙，你要吃什么？", "time": "11:56", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-012", "from": "小辛", "text": "我也觉得肯定没事，新闻都没报道", "time": "11:58", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-013", "from": "胡枫", "text": "害", "time": "11:59", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-014", "from": "胡枫", "text": "最好没事，我下个月还想去韩国", "time": "11:59", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-015", "from": "me", "text": "沙姜鸡", "time": "12:01", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-016", "from": "仔仔", "text": "我不吃了，我想把衣服缝好", "time": "12:02", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-017", "from": "wang", "text": "好，小辛你呢？", "time": "12:03", "sentDate": "2024-03-11" },
+        { "id": "wx-group-20240311-018", "from": "小辛", "text": "和蒙蒙哥一样", "time": "12:04", "sentDate": "2024-03-11" }
+      ]
+    },
+    {
+      "conversationId": "wang",
+      "conversationName": "熙旺",
+      "messages": [
+        { "id": "wx-wang-20240311-001", "from": "wang", "text": "我要去干爹那一趟，有要我帮你买的吗？", "time": "20:31", "sentDate": "2024-03-11" },
+        { "id": "wx-wang-20240311-002", "from": "me", "text": "不用啦，我冰箱还有酸奶，哥你早点回来", "time": "20:57", "sentDate": "2024-03-11" },
+        { "id": "wx-wang-20240311-003", "from": "wang", "text": "好", "time": "20:58", "sentDate": "2024-03-11" },
+        { "id": "wx-wang-20240311-004", "from": "wang", "text": "小辛说你又出门了？", "time": "22:45", "sentDate": "2024-03-11" },
+        { "id": "wx-wang-20240311-005", "from": "me", "text": "才看到消息…", "time": "23:40", "sentDate": "2024-03-11" }
+      ]
+    }
+  ]
+}

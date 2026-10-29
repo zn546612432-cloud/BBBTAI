@@ -11,6 +11,7 @@ import {render as nativeSmsRender} from '../src/apps/messages/replica.js';
 import {render as browserRender,handle as browserHandle} from '../src/apps/browser/index.js';
 import {initializeMirage} from '../src/apps/mirage/data.js';
 import {restartState} from '../src/system/restart/index.js';
+import {renderWeChatChat,pictureSrc} from '../src/apps/wechat/components/chat-view.js';
 
 const fixture=filename=>JSON.parse(readFileSync(new URL('../src/story/presets/days/'+filename,import.meta.url),'utf8'));
 const manifest=fixture('manifest.json');
@@ -32,9 +33,55 @@ test('2024-03-10 WeChat prehistory is visible at D01, grouped under the original
  assert.ok(group.messages.some(m=>m.from==='仔仔'&&m.text.includes('刷到')));
  assert.equal(visibleMessages(group).filter(m=>m.sentDate==='2024-03-10').length,22);
  assert.equal(visibleMessages(wang).filter(m=>m.sentDate==='2024-03-10').length,3);
- for(const name of ['胡枫','阿威','小辛','仔仔','傅隆生'])assert.ok(s.content.conversations.wechat.some(c=>c.name===name&&c.messages.length===0));
+ for(const name of ['阿威','小辛','仔仔','傅隆生'])assert.ok(s.content.conversations.wechat.some(c=>c.name===name&&c.messages.length===0));
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='hufeng').messages.length,2);
  assert.equal(s.content.conversations.mirage.length,0);
  assert.equal(s.content.conversations.messages.filter(c=>visibleMessages(c).length).length,4);
+});
+
+test('2024-03-11 group and Wang private history are present in correct order',()=>{
+ const s=state(),group=s.content.conversations.wechat.find(c=>c.id==='group'),wang=s.content.conversations.wechat.find(c=>c.id==='wang');
+ const dated=chat=>chat.messages.filter(m=>m.sentDate==='2024-03-11');
+ assert.equal(dated(group).length,18);
+ assert.equal(dated(wang).length,5);
+ assert.ok(dated(group).every(m=>m.storyImported));
+ assert.deepEqual(dated(group).map(m=>m.time).slice(0,4),['11:45','11:46','11:46','11:47']);
+ assert.deepEqual(dated(wang).map(m=>m.time),['20:31','20:57','20:58','22:45','23:40']);
+ assert.ok(group.messages.indexOf(dated(group)[0])>group.messages.findIndex(m=>m.sentDate==='2024-03-10'));
+ assert.match(renderWeChatChat(s,'group'),/2024年3月11日 11:45/);
+});
+
+test('2024-03-12 group, Wang, and Hufeng private messages include two local stickers',()=>{
+ const s=state(),chat=id=>s.content.conversations.wechat.find(c=>c.id===id);
+ const dated=id=>chat(id).messages.filter(m=>m.sentDate==='2024-03-12');
+ assert.equal(dated('group').length,19);
+ assert.equal(dated('wang').length,2);
+ assert.equal(dated('hufeng').length,2);
+ assert.deepEqual(dated('group').filter(m=>m.kind==='image').map(m=>m.text),[
+  '/apps/wechat/stickers/dog.svg','/apps/wechat/stickers/whitecat.webp'
+ ]);
+ assert.match(renderWeChatChat(s,'group'),/stickers\/dog.svg/);
+ const pack=fixture('D001/wechat-20240312.json'),count=chat('group').messages.length;
+ applyPresetImport(s,pack);
+ assert.equal(chat('group').messages.length,count);
+ const exported=exportPresetPacks(s,{day:1});
+ const rows=exported.find(p=>p.channel==='wechat').history.find(h=>h.conversationId==='group').messages;
+ assert.equal(rows.filter(m=>m.kind==='image').length,2);
+ assert.ok(readFileSync(new URL('../public/apps/wechat/stickers/whitecat.webp',import.meta.url)).length>1500);
+ assert.equal(pictureSrc('/apps/wechat/stickers/dog.svg','https://example.org/BBBTAI/releases/v1/src/apps/wechat/components/chat-view.js'),
+  'https://example.org/BBBTAI/releases/v1/apps/wechat/stickers/dog.svg');
+});
+
+test('new March 11–12 history fills an existing save without erasing player chat or shifting later months',()=>{
+ const s=initialState(),already=[fixture('D001/wechat.json'),fixture('D001/wechat-history-2024-03.json')];
+ applyPresetImport(s,already);
+ const group=s.content.conversations.wechat.find(c=>c.id==='group');
+ group.messages.push({id:'my-reply',from:'me',text:'我写的话还在',time:'23:00',actual:true});
+ applyPresetImport(s,[fixture('D001/wechat-20240311.json'),fixture('D001/wechat-20240312.json')]);
+ assert.ok(group.messages.some(m=>m.id==='my-reply'&&m.text==='我写的话还在'));
+ const historical=group.messages.filter(m=>m.storyImported&&m.sentDate);
+ assert.deepEqual(historical.map(m=>m.sentDate),[...historical.map(m=>m.sentDate)].sort());
+ assert.equal(new Set(group.messages.map(m=>m.id)).size,group.messages.length);
 });
 
 test('13 supplemental SMS and source messages validate, and only D01-D90 records load',()=>{

@@ -35,6 +35,8 @@ export function validatePresetPack(raw){
   if(!h||!label(h.conversationId)||h.conversationName!==undefined&&!label(h.conversationName)||!Array.isArray(h.messages)||h.messages.length>1000)fail('聊天记录窗口无效');
   for(const m of h.messages){
    if(!m||!ID.test(m.id||'')||!label(m.from)||!str(m.text,3000)||!m.text.trim()||!TIME.test(m.time||''))fail('历史消息格式无效');
+   if(m.kind!==undefined&&!['text','image'].includes(m.kind))fail(`${m.id} 历史消息类型无效`);
+   if(m.kind==='image'&&!/^\/apps\/wechat\/stickers\/[a-zA-Z0-9_-]+\.(?:png|webp|gif|svg)$/.test(m.text))fail(`${m.id} 表情包路径无效`);
    unique(historyIds,`${raw.channel}:${h.conversationId}:${m.id}`,'历史消息');
    if(m.sentDate!==undefined&&!validDate(m.sentDate))fail(`${m.id} 历史消息日期无效`);
    if(m.appearance!==undefined&&!['immediate','game-time'].includes(m.appearance))fail(`${m.id} 出现方式无效`);
