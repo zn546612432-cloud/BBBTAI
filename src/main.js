@@ -48,7 +48,8 @@ const toast=message=>{
  const appId=s.nav.current.appId;
  showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
 };
-const ctx=()=>({store,router,toast,refresh:render,pickImage(handler){assetHandler=handler;const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
+let imageOptions={maxEdge:1200,quality:.82};
+const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82))};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 function setShade({progress,settle=true}){
  const layer=$('#shade-layer');layer.classList.toggle('is-present',progress>0);layer.classList.toggle('is-dragging',!settle);layer.style.setProperty('--shade-progress',String(progress));layer.setAttribute('aria-hidden',String(progress===0));layer.inert=progress===0;
  $('#screen-layer').inert=progress>0||phoneBlocked(store.get())||!!powerFullscreen(store.get());$('#phone').classList.toggle('notification-open',progress>0);
@@ -274,7 +275,7 @@ $('#root').addEventListener('focusin',e=>{
   if(store.get().unlocked&&store.get().nav.current.appId==='wechat')registry.get('wechat')?.dismissEmojiForKeyboard?.(e.target);
 });
 $('#root').addEventListener('change',e=>{if(!store.get().unlocked)return;const app=registry.get(store.get().nav.current.appId);if(app?.change)try{quietEditorUpdate=!!app.isTextEdit?.(e.target);app.change(e.target,ctx(),store.get().nav.current);}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
-$('#asset-picker').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file||!assetHandler)return;try{if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>15_000_000)throw Error('请选择小于 15MB 的 PNG、JPEG 或 WebP');const bitmap=await createImageBitmap(file),scale=Math.min(1,1200/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();assetHandler(canvas.toDataURL('image/jpeg',.82),file.name);toast('图片已保存到本机');}catch(err){toast(err.message);}assetHandler=null;});
+$('#asset-picker').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file||!assetHandler)return;try{if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>15_000_000)throw Error('请选择小于 15MB 的 PNG、JPEG 或 WebP');const bitmap=await createImageBitmap(file),scale=Math.min(1,imageOptions.maxEdge/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();assetHandler(canvas.toDataURL('image/jpeg',imageOptions.quality),file.name);toast('图片已保存到本机');}catch(err){toast(err.message);}assetHandler=null;});
 mountViewport($('#phone'));
 setShade({progress:0});
 mountGestures($('#phone'),{

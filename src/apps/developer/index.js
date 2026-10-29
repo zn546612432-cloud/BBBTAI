@@ -13,13 +13,15 @@ import {phoneData} from '../../services/phone-data.js';
 import {btn,card,demo,empty,esc} from '../../system/ui.js';
 import {conversations as allConversations,selectedConversation,actors,actorName,renameConversation,renameActor,setSchedule,newMessage,reorderMessage,moveMessageTo,clearDelivery,scheduleLabel,createConversation,chatApps,isGroup} from './features/conversations/model.js';
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
+import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit,handleMomentsImport} from './features/moments/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[[['conversations','聊天'],['presets','剧情预设']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['preview','时间与测试']]];
+const tabs=[[['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['preview','时间与测试']]];
 const attr=v=>esc(v);
 function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='ghost'?ghostEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='moments'?momentsEditor(s):route==='ghost'?ghostEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(handleMoments(a,t,ctx))return;
  if(a==='editor-bank-rate'){const el=document.getElementById('gh-rate'),rate=el.value===''?null:Number(el.value);if(rate!==null&&(!Number.isFinite(rate)||rate<=0)){el.reportValidity();return;}store.update(s=>{s.bankData??={balance:0,transactions:[],rate:null};s.bankData.rate=rate;});return;}
  if(a==='editor-ghost-save'){saveGhostConfig(t,ctx);return;}
  if(a==='editor-ghost-mission'){const type=document.getElementById('gh-mission-type').value,input=document.getElementById('gh-order-seconds'),seconds=input.value===''?null:Number(input.value);if(seconds!==null&&(!Number.isInteger(seconds)||seconds<10||seconds>600)){input.reportValidity();return;}store.update(s=>{const g=ensureGhost(s);g.missionTypes??={};g.orderConfigs??={};g.missionTypes['mirage-recruit-hacker']=type;g.orderConfigs['mirage-recruit-hacker']={seconds};});return;}
@@ -52,6 +54,7 @@ export function handle(a,t,ctx){
 }
 export function change(t,ctx){
  const {store}=ctx;
+ if(changeMoments(t,ctx))return;
  if(changePresetField(t,ctx))return;
  if(t.id==='editor-conversation'){const i=t.value.indexOf(':');store.update(s=>{s.editor.channel=t.value.slice(0,i);s.editor.conversation=t.value.slice(i+1);});return;}
  if(t.id==='editor-conversation-name')store.update(s=>renameConversation(selectedConversation(s).c,t.value));
@@ -61,8 +64,9 @@ export function change(t,ctx){
  if(t.dataset.scheduleField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m)return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
  if(t.dataset.orderMessage){const value=Number(t.value);if(!Number.isInteger(value)||value<1)throw Error('排序位置需为正整数');store.update(s=>moveMessageTo(selectedConversation(s).c,t.dataset.orderMessage,value-1));}
 }
-export const isTextEdit=t=>isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';
+export const isTextEdit=t=>isMomentsTextEdit(t)||isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';
 export function input(t,ctx){
+ if(inputMoments(t,ctx))return;
  if(!isTextEdit(t))return;
  if(isPresetTextField(t)){changePresetField(t,ctx);return;}
  if((t.dataset.scheduleField||['date','time'].includes(t.type))&&(!t.value||!t.checkValidity()))return;
@@ -106,6 +110,10 @@ export function mountInteractions(root,ctx){
  root.addEventListener('input',e=>updateTimelinePreview(e.target));
  let drag=null;
  root.addEventListener('change',async e=>{
+  if(e.target.id==='mom-import-file'){
+   const file=e.target.files?.[0];if(file)try{await handleMomentsImport(file,ctx);}catch(error){ctx.toast(error.message||'朋友圈数据无法导入');}finally{e.target.value='';}
+   return;
+  }
   if(e.target.id!=='preset-import-file')return;
   const file=e.target.files?.[0];
   if(!file)return;
