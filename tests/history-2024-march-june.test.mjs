@@ -5,6 +5,7 @@ import {initialState} from '../src/services/storage.js';
 import {parsePresetPayload} from '../src/story/presets/io/format.js';
 import {applyPresetImport} from '../src/story/presets/io/import.js';
 import {exportPresetPacks} from '../src/story/presets/io/export.js';
+import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 
 const months=['03','04','05','06'];
 const packs=months.map(month=>JSON.parse(readFileSync(new URL(`../src/story/presets/days/D001/wechat-history-2024-${month}.json`,import.meta.url),'utf8')));
@@ -52,4 +53,34 @@ test('invalid historical asset IDs are rejected',()=>{
  const p=structuredClone(packs[0]);
  p.history[0].messages[0].assetId='../not-an-asset';
  assert.throws(()=>parsePresetPayload(p),/素材编号/);
+});
+
+test('all five historical media have working-format direct links and no unfinished placeholders',()=>{
+ const ids=new Set(rows().filter(m=>m.assetId).map(m=>m.assetId));
+ assert.equal(ids.size,5);
+ for(const asset of media.assets){
+  assert.ok(ids.has(asset.id));
+  assert.ok(asset.title.length>1);
+  assert.match(asset.sourceUrl,/^https:\/\//);
+  assert.match(asset.directUrl,/^https:\/\//);
+  assert.doesNotMatch(JSON.stringify(asset),/待补|待接入|user-to-supply|selection-needed|needs-import/);
+  if(asset.kind==='video'){
+   assert.match(asset.directUrl,/\.mp4$/);
+   assert.match(asset.posterUrl,/^https:\/\//);
+  }else assert.match(asset.directUrl,/\.jpe?g(?:\?|$)/);
+ }
+ assert.ok(rows().filter(m=>m.assetId).every(m=>!/(待补|待接入)/.test(m.text)));
+});
+
+test('historical media are real image and video bubbles inside WeChat',()=>{
+ const s=initialState();
+ applyPresetImport(s,packs);
+ const html=renderWeChatChat(s,'group');
+ assert.equal((html.match(/wx-shared-video-player/g)||[]).length,3);
+ assert.equal((html.match(/class="wx-shared-photo"/g)||[]).length,2);
+ for(const asset of media.assets){
+  assert.ok(html.includes(asset.directUrl.replaceAll('&','&amp;'))||html.includes(asset.directUrl));
+  assert.ok(html.includes(asset.sourceUrl));
+ }
+ assert.doesNotMatch(html,/待补|待接入/);
 });

@@ -8,7 +8,7 @@
 - `D001/wechat-history-2024-04.json`：4 月群聊与熙旺私聊，43 条
 - `D001/wechat-history-2024-05.json`：5 月群聊与熙旺私聊，27 条
 - `D001/wechat-history-2024-06.json`：6 月群聊，45 条
-- `src/story/assets/history-2024-mar-jun.media.json`：5 个图片/视频素材 ID、来源、占位状态
+- `src/story/assets/history-2024-mar-jun.media.json`：5 个可用图片/视频素材的真实地址、封面及来源
 
 合计 138 条独立消息：群聊 101 条，熙旺私聊 37 条。发送人 ID 沿用现有微信历史格式：熙蒙为 `me`，熙旺为 `wang`，其他成员用原中文名字；群聊 `conversationId=group`，私聊 `conversationId=wang`。
 
@@ -19,21 +19,21 @@
 - 04-25 20:04 熙蒙连发两条“哥哥”；20:34 熙旺回复，间隔 30 分钟。
 - 05-10 21:00 小辛问韩国好玩吗；三个小时后是 **05-11 00:00**，胡枫回复并发自拍，不可错排为 05-10 24:00。
 - 06-15 胡枫说“滚蛋”后 30 分钟，阿威补看聊天记录。
-- 除以上用户明确指定的时间和相对间隔外，**具体几点均为拟定时间**，用于让导入器通过合法 HH:MM 校验，不代表作者确认。人物原话保留；只把视频/图片表现为文字占位气泡。
+- 除以上用户明确指定的时间和相对间隔外，**具体几点均为拟定时间**，用于让导入器通过合法 HH:MM 校验，不代表作者确认。人物原话保留；图片和短视频通过 `assetId` 在微信气泡中直接展示。
 
 ## 图片与视频素材
 
-| ID | 类型 | 当前状态 | 来源 |
+| ID | 类型 | 展示内容 | 来源 |
 | --- | --- | --- | --- |
-| `wx-media-20240320-cat` | 小红书猫视频 | 用户自行选择 | — |
-| `wx-media-20240322-dog` | 小红书狗视频 | 用户自行选择 | — |
-| `wx-media-20240329-pet` | 小红书猫狗视频 | 用户自行选择 | — |
-| `wx-media-20240324-awei-arm` | 阿威健身照 | 已找到可用图库素材，待下载/裁切 | https://www.pexels.com/photo/crop-man-with-muscular-arm-6550858/ |
-| `wx-media-20240510-hufeng-selfie` | 文俊辉自拍 | 2024-05-09 三图合集中待挑一张、待核对使用权 | https://kpopping.com/kpics/240509-SEVENTEEN-Jun-Instagram-Update |
+| `wx-media-20240320-cat` | 短视频 | 小猫抓玩具，可在气泡内播放 | https://www.pexels.com/video/playing-catch-the-bait-with-a-cat-6864992/ |
+| `wx-media-20240322-dog` | 短视频 | 狗狗玩玩具，可在气泡内播放 | https://www.pexels.com/video/dog-playing-with-toy-13260951/ |
+| `wx-media-20240329-pet` | 短视频 | 两只狗狗玩闹，可在气泡内播放 | https://www.pexels.com/video/dogs-playing-854179/ |
+| `wx-media-20240324-awei-arm` | 图片 | 肌肉手臂局部特写，可点击查看大图 | https://www.pexels.com/photo/crop-man-with-muscular-arm-6550858/ |
+| `wx-media-20240510-hufeng-selfie` | 图片 | 2024-05-09 文俊辉公开动态照片，可点击查看大图 | https://kpopping.com/kpics/240509-SEVENTEEN-Jun-Instagram-Update |
 
-照片在聊天文件中以 `assetId` 关联素材目录。历史导入器保留 `assetId`（导出也保留），但**当前微信 UI 尚未依据 `assetId` 渲染图片**；目前仍会显示“素材待接入”的文字占位。需要选定照片、下载为本地素材，并在下一阶段把图片类型接入微信气泡组件。不可把网页相册 URL 当成图片文件 URL 直接塞进 `<img>`。
+聊天文件以 `assetId` 关联固定媒体目录，微信界面会渲染真实视频播放器或图片；媒体旁边的“素材来源”链接指向原始作品介绍页。视频选用的是可公开使用的 Pexels 素材，**并非冒充真实小红书笔记**；剧情情境仍按“小辛在群里分享短视频”表现。这样无须用户再另找链接。
 
-文俊辉真实肖像的转载页不等于使用授权，尤其公开 GitHub Pages 游戏发布前应确认许可范围。
+文俊辉真实肖像的转载页不等于使用授权，公开游戏使用应尊重肖像和摄影著作权；页面留有原出处链接供辨认。
 
 ## 玩法与历史记录的边界
 
