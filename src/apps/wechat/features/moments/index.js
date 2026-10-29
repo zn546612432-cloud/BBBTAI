@@ -7,7 +7,7 @@ import {wxIcon} from '../../components/icons.js';
 let openActions=null,replyTo=null;
 const heart=momentIcons.heart;
 
-const photos={macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror.webp',xiaoxinSelfie:'xiaoxin-selfie.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp'};
+const photos={macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg'};
 const local=filename=>new URL('../../../../../apps/wechat/media/'+filename,import.meta.url).href;
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
@@ -32,6 +32,7 @@ function pictureGrid(post){
 }
 function postContent(post){
  if(post.kind==='article')return '<button type="button" class="wx-moments-article" data-action="wx-moment-article" data-id="'+esc(post.id)+'"><span class="wx-moments-article-logo">📖</span><span><strong>'+esc(post.article.title)+'</strong><small>'+esc(post.article.publisher)+'</small></span></button>';
+ if(post.kind==='music')return '<div class="wx-moments-music" role="group" aria-label="分享音乐"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+' · '+esc(post.music.album)+'</small></span><span class="wx-moments-music-note">♫</span></div>';
  return pictureGrid(post);
 }
 function postCard(post,s){

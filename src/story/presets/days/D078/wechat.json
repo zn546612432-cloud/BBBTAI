@@ -1,0 +1,24 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 78,
+  "channel": "wechat",
+  "label": "D078 · 胡枫在群聊分享照片",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-d078-hufeng-photo",
+          "from": "胡枫",
+          "kind": "image",
+          "text": "/apps/wechat/media/user-hufeng-arcade.webp",
+          "time": "16:28",
+          "sentDate": "2025-08-04",
+          "appearance": "game-time"
+        }
+      ]
+    }
+  ]
+}
