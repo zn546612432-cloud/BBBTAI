@@ -1,0 +1,56 @@
+{
+  "format": "ximeng-historical-media-v1",
+  "assets": [
+    {
+      "id": "wx-media-20240320-cat",
+      "kind": "video",
+      "messageDate": "2024-03-20",
+      "status": "user-to-supply",
+      "source": "小红书",
+      "sourceUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "wx-media-20240322-dog",
+      "kind": "video",
+      "messageDate": "2024-03-22",
+      "status": "user-to-supply",
+      "source": "小红书",
+      "sourceUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "wx-media-20240329-pet",
+      "kind": "video",
+      "messageDate": "2024-03-29",
+      "status": "user-to-supply",
+      "source": "小红书",
+      "sourceUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "wx-media-20240324-awei-arm",
+      "kind": "image",
+      "messageDate": "2024-03-24",
+      "status": "source-found-needs-import",
+      "source": "Pexels/Andres Ayrton",
+      "sourceUrl": "https://www.pexels.com/photo/crop-man-with-muscular-arm-6550858/",
+      "directUrl": "https://images.pexels.com/photos/6550858/pexels-photo-6550858.jpeg?auto=compress&dpr=1&h=750&w=1260",
+      "localPath": null,
+      "license": "Pexels License",
+      "cropNote": "只显示半截胳膊；不要完整露脸"
+    },
+    {
+      "id": "wx-media-20240510-hufeng-selfie",
+      "kind": "image",
+      "messageDate": "2024-05-11",
+      "status": "selection-needed",
+      "source": "文俊辉 Instagram 2024-05-09 照片合集",
+      "sourceUrl": "https://kpopping.com/kpics/240509-SEVENTEEN-Jun-Instagram-Update",
+      "directUrl": null,
+      "localPath": null,
+      "license": "未经核实；公开发布前检查使用权",
+      "cropNote": "用户从三张照片中选一张；实际消息在5月11日00:00"
+    }
+  ]
+}

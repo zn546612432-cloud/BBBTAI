@@ -25,7 +25,7 @@ export function exportPresetPacks(state,{day=null}={}){
     const authoredDay=messageDay(message,state);
     if(day!==null&&authoredDay!==day)continue;
     const rows=perDay.get(authoredDay)||[];
-    rows.push({id:message.id,from:message.from,text:message.text,time:message.time,...(message.sentDate?{sentDate:message.sentDate}:{}),...(message.schedule?.mode==='game-time'?{appearance:'game-time'}:{})});
+    rows.push({id:message.id,from:message.from,text:message.text,time:message.time,...(message.assetId?{assetId:message.assetId}:{}),...(message.sentDate?{sentDate:message.sentDate}:{}),...(message.schedule?.mode==='game-time'?{appearance:'game-time'}:{})});
     perDay.set(authoredDay,rows);
    }
    for(const [d,messages] of perDay){bucket(d,channel).history.push({conversationId:conversation.id,conversationName:conversation.name,messages});}

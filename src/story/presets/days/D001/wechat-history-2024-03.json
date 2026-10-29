@@ -1,0 +1,203 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-03 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-20240320-001",
+          "from": "小辛",
+          "text": "【小红书搞笑猫猫视频·待补】",
+          "time": "21:18",
+          "sentDate": "2024-03-20",
+          "appearance": "immediate",
+          "assetId": "wx-media-20240320-cat"
+        },
+        {
+          "id": "wx-group-20240320-002",
+          "from": "胡枫",
+          "text": "猫猫～",
+          "time": "21:19",
+          "sentDate": "2024-03-20",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240322-001",
+          "from": "小辛",
+          "text": "【小红书搞笑狗狗视频·待补】",
+          "time": "23:43",
+          "sentDate": "2024-03-22",
+          "appearance": "immediate",
+          "assetId": "wx-media-20240322-dog"
+        },
+        {
+          "id": "wx-group-20240322-002",
+          "from": "胡枫",
+          "text": "这个狗好像你",
+          "time": "23:44",
+          "sentDate": "2024-03-22",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240322-003",
+          "from": "me",
+          "text": "这个狗好像你",
+          "time": "23:44",
+          "sentDate": "2024-03-22",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240324-001",
+          "from": "阿威",
+          "text": "【健身照片：半截胳膊·素材待接入】",
+          "time": "18:06",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate",
+          "assetId": "wx-media-20240324-awei-arm"
+        },
+        {
+          "id": "wx-group-20240324-002",
+          "from": "wang",
+          "text": "👍👍👍",
+          "time": "18:07",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240324-003",
+          "from": "me",
+          "text": "✊✊✊✊",
+          "time": "18:08",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240324-004",
+          "from": "小辛",
+          "text": "咋练的我去",
+          "time": "18:09",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240324-005",
+          "from": "阿威",
+          "text": "要不要跟我一起练？",
+          "time": "18:10",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240324-006",
+          "from": "小辛",
+          "text": "算了我吃不了苦",
+          "time": "18:11",
+          "sentDate": "2024-03-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-001",
+          "from": "小辛",
+          "text": "饭吗",
+          "time": "12:10",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-002",
+          "from": "wang",
+          "text": "在干爹那里",
+          "time": "12:11",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-003",
+          "from": "me",
+          "text": "饭",
+          "time": "12:12",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-004",
+          "from": "小辛",
+          "text": "其他几个呢？不吃我和二哥先走了",
+          "time": "12:13",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-005",
+          "from": "仔仔",
+          "text": "我到门口找你们",
+          "time": "12:14",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-006",
+          "from": "阿威",
+          "text": "你们走了？那我自己吃吧",
+          "time": "12:29",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-007",
+          "from": "胡枫",
+          "text": "我买了烧麦你吃不吃？@阿威？",
+          "time": "12:49",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-008",
+          "from": "阿威",
+          "text": "吃",
+          "time": "12:50",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240327-009",
+          "from": "阿威",
+          "text": "我来找你",
+          "time": "12:50",
+          "sentDate": "2024-03-27",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240329-001",
+          "from": "小辛",
+          "text": "【小红书搞笑猫狗视频·待补】",
+          "time": "00:16",
+          "sentDate": "2024-03-29",
+          "appearance": "immediate",
+          "assetId": "wx-media-20240329-pet"
+        },
+        {
+          "id": "wx-group-20240329-002",
+          "from": "胡枫",
+          "text": "这么晚还不睡觉",
+          "time": "00:18",
+          "sentDate": "2024-03-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240329-003",
+          "from": "me",
+          "text": "别刷了来我工房一趟看看你的监控",
+          "time": "00:19",
+          "sentDate": "2024-03-29",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-05 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-20240510-001",
+          "from": "小辛",
+          "text": "@胡枫韩国好玩吗？",
+          "time": "21:00",
+          "sentDate": "2024-05-10",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240511-001",
+          "from": "胡枫",
+          "text": "好玩，下次带你来",
+          "time": "00:00",
+          "sentDate": "2024-05-11",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240511-002",
+          "from": "胡枫",
+          "text": "【图片：文俊辉自拍·素材待接入】",
+          "time": "00:00",
+          "sentDate": "2024-05-11",
+          "appearance": "immediate",
+          "assetId": "wx-media-20240510-hufeng-selfie"
+        },
+        {
+          "id": "wx-group-20240511-003",
+          "from": "小辛",
+          "text": "帅哦",
+          "time": "00:02",
+          "sentDate": "2024-05-11",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240511-004",
+          "from": "阿威",
+          "text": "帅哦",
+          "time": "00:03",
+          "sentDate": "2024-05-11",
+          "appearance": "immediate"
+        }
+      ]
+    },
+    {
+      "conversationId": "wang",
+      "conversationName": "熙旺",
+      "messages": [
+        {
+          "id": "wx-wang-20240502-001",
+          "from": "me",
+          "text": "今天来接我吗",
+          "time": "18:42",
+          "sentDate": "2024-05-02",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240502-002",
+          "from": "wang",
+          "text": "好",
+          "time": "18:45",
+          "sentDate": "2024-05-02",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240503-001",
+          "from": "wang",
+          "text": "饭？",
+          "time": "18:16",
+          "sentDate": "2024-05-03",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240503-002",
+          "from": "me",
+          "text": "不想吃，吃腻了",
+          "time": "18:17",
+          "sentDate": "2024-05-03",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240503-003",
+          "from": "wang",
+          "text": "听话",
+          "time": "18:18",
+          "sentDate": "2024-05-03",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240503-004",
+          "from": "me",
+          "text": "那家店我吃了拉肚子！！！",
+          "time": "18:19",
+          "sentDate": "2024-05-03",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240503-005",
+          "from": "wang",
+          "text": "我收车回来给你带另一家",
+          "time": "18:20",
+          "sentDate": "2024-05-03",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-001",
+          "from": "me",
+          "text": "哥，有没有看最近的新闻",
+          "time": "21:07",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-002",
+          "from": "wang",
+          "text": "哪一个？",
+          "time": "21:08",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-003",
+          "from": "me",
+          "text": "前几天西班牙恐怖分子袭击",
+          "time": "21:09",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-004",
+          "from": "wang",
+          "text": "没有留意，怎么了？",
+          "time": "21:10",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-005",
+          "from": "me",
+          "text": "原来我的雇主是那个恐怖分子头子",
+          "time": "21:11",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-006",
+          "from": "wang",
+          "text": "会查到你吗？",
+          "time": "21:12",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-007",
+          "from": "me",
+          "text": "那倒不会…只是有点…",
+          "time": "21:13",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-008",
+          "from": "me",
+          "text": "你懂吧？",
+          "time": "21:14",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-009",
+          "from": "wang",
+          "text": "阿蒙……",
+          "time": "21:15",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-010",
+          "from": "me",
+          "text": "没想到我的技术居然那么高超，对方可是政府，他们的防火墙我轻轻松松就攻破了",
+          "time": "21:16",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-011",
+          "from": "wang",
+          "text": "原来你在夸奖自己啊",
+          "time": "21:17",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-012",
+          "from": "me",
+          "text": "哥也该夸奖一下我！",
+          "time": "21:18",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-013",
+          "from": "wang",
+          "text": "好，我弟弟最厉害了",
+          "time": "21:19",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-014",
+          "from": "me",
+          "text": "嘿嘿",
+          "time": "21:20",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-20240509-015",
+          "from": "me",
+          "text": "我是天才黑客",
+          "time": "21:21",
+          "sentDate": "2024-05-09",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,10 @@
   "format": "ximeng-preset-manifest-v1",
   "files": [
     "D001/wechat.json",
+    "D001/wechat-history-2024-03.json",
+    "D001/wechat-history-2024-04.json",
+    "D001/wechat-history-2024-05.json",
+    "D001/wechat-history-2024-06.json",
     "D001/messages.json",
     "D004/messages.json",
     "D010/messages.json",
