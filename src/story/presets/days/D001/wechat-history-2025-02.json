@@ -1,0 +1,44 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2025-02 · D1前历史聊天／原创补充","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20250204-001","from":"胡枫","text":"昨晚演习有两个人撞一块了","time":"11:34","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-002","from":"小辛","text":"别说了","time":"11:35","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-003","from":"仔仔","text":"我看录像了，好像保龄球","time":"11:38","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-004","from":"小辛","text":"你们也太没良心了","time":"11:40","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-005","from":"阿威","text":"头还疼吗","time":"11:42","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-006","from":"小辛","text":"一点点，不碍事","time":"11:44","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250204-007","from":"wang","text":"还疼就再去检查一下，别硬撑","time":"11:47","sentDate":"2025-02-04","appearance":"immediate"},
+      {"id":"wx-group-20250216-001","from":"阿威","text":"护具收在哪里","time":"16:03","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-002","from":"仔仔","text":"储物柜最下面那层","time":"16:06","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-003","from":"胡枫","text":"今天还练吗？外面下雨","time":"16:10","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-004","from":"wang","text":"室内练，七点集合","time":"16:12","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-005","from":"me","text":"我不练，工房有事","time":"16:18","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-006","from":"小辛","text":"我可以陪蒙哥留守","time":"16:19","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-007","from":"me","text":"不要，你一来就唱歌","time":"16:21","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250216-008","from":"小辛","text":"这是我的天赋！","time":"16:22","sentDate":"2025-02-16","appearance":"immediate"},
+      {"id":"wx-group-20250227-001","from":"小辛","text":"谁把我的草莓牛奶喝了！！！！","time":"23:10","sentDate":"2025-02-27","appearance":"immediate"},
+      {"id":"wx-group-20250227-002","from":"胡枫","text":"你问一下冰箱","time":"23:12","sentDate":"2025-02-27","appearance":"immediate"},
+      {"id":"wx-group-20250227-003","from":"小辛","text":"冰箱不会讲话","time":"23:13","sentDate":"2025-02-27","appearance":"immediate"},
+      {"id":"wx-group-20250227-004","from":"me","text":"你喝的是我的，我喝的是你的，扯平了","time":"23:16","sentDate":"2025-02-27","appearance":"immediate"},
+      {"id":"wx-group-20250227-005","from":"小辛","text":"你怎么一点愧疚感都没有啊","time":"23:17","sentDate":"2025-02-27","appearance":"immediate"},
+      {"id":"wx-group-20250227-006","from":"me","text":"没有哦","time":"23:18","sentDate":"2025-02-27","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20250211-001","from":"me","text":"哥哥在干嘛","time":"22:04","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-002","from":"wang","text":"刚送完客人，怎么了","time":"22:07","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-003","from":"me","text":"我今天好累","time":"22:08","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-004","from":"wang","text":"别再熬夜了，明天休息一天","time":"22:10","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-005","from":"me","text":"不行，有人催我交东西","time":"22:13","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-006","from":"wang","text":"阿蒙，你的身体比那些单子重要","time":"22:15","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-007","from":"me","text":"好好好，听哥哥的","time":"22:16","sentDate":"2025-02-11","appearance":"immediate"},
+      {"id":"wx-wang-20250211-008","from":"wang","text":"说话算话","time":"22:17","sentDate":"2025-02-11","appearance":"immediate"}
+    ]},
+    {"conversationId":"awei","conversationName":"阿威","messages":[
+      {"id":"wx-awei-20250219-001","from":"阿威","text":"蒙哥，上次你说的监控延迟还没好？","time":"14:41","sentDate":"2025-02-19","appearance":"immediate"},
+      {"id":"wx-awei-20250219-002","from":"me","text":"好了，昨天改完了","time":"14:46","sentDate":"2025-02-19","appearance":"immediate"},
+      {"id":"wx-awei-20250219-003","from":"阿威","text":"辛苦了","time":"14:48","sentDate":"2025-02-19","appearance":"immediate"},
+      {"id":"wx-awei-20250219-004","from":"me","text":"记得请我喝奶茶","time":"14:49","sentDate":"2025-02-19","appearance":"immediate"}
+    ]}
+  ]
+}

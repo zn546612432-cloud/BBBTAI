@@ -2,6 +2,10 @@ import {ensurePresets} from '../engine.js';
 import {parsePresetPayload} from './format.js';
 
 const historyKey=(channel,conversationId,id)=>`${channel}:${conversationId}:${id}`;
+// One published March 2024 message used a temporary placeholder. Migrate only
+// that exact shipped value; never replace a player's or editor's custom text.
+const correctedHistoryLink={id:'wx-group-20240310-019',previous:'【小红书分享链接 · 待补】',next:'https://www.whatyi.con'};
+const isCorrectableHistoryLink=(conversationId,message)=>conversationId==='group'&&message.id===correctedHistoryLink.id&&message.text===correctedHistoryLink.previous&&message.storyImported===true&&!message.actual;
 const authoredMessage=(pack,chat,message)=>({
  id:message.id,from:message.from,text:message.text,time:message.time,
  ...(message.assetId?{assetId:message.assetId}:{}),
@@ -63,7 +67,11 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
    if(!conversation){conversation={id:h.conversationId,name:h.conversationName||h.conversationId,avatar:(h.conversationName||h.conversationId).slice(0,1),messages:[]};conversations.push(conversation);}
    const known=new Set(conversation.messages.map(m=>m.id));
    for(const message of h.messages){
-    if(known.has(message.id))continue;
+    if(known.has(message.id)){
+     const current=conversation.messages.find(m=>m.id===message.id);
+     if(message.text===correctedHistoryLink.next&&isCorrectableHistoryLink(h.conversationId,current))current.text=correctedHistoryLink.next;
+     continue;
+    }
     conversation.messages.push(authoredMessage(pack,h,message));known.add(message.id);
    }
   }

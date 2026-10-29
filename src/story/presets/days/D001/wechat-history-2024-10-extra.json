@@ -1,0 +1,32 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2024-10（续）· D1前历史聊天／原创补充","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20241012-001","from":"小辛","text":"回澳门了！！！！","time":"20:12","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-002","from":"仔仔","text":"你们不是明天的机票吗","time":"20:14","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-003","from":"胡枫","text":"改签了，小辛想家","time":"20:15","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-004","from":"小辛","text":"放屁，我是想澳门的烧鹅","time":"20:15","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-005","from":"阿威","text":"代购呢","time":"20:22","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-006","from":"小辛","text":"完蛋","time":"20:23","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-007","from":"胡枫","text":"在我箱子里，别吓他了","time":"20:25","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-008","from":"me","text":"回来就来工房，门口那台电脑又蓝屏","time":"20:28","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241012-009","from":"小辛","text":"哥我才刚落地啊","time":"20:29","sentDate":"2024-10-12","appearance":"immediate"},
+      {"id":"wx-group-20241018-001","from":"仔仔","text":"明天练习的衣服不要乱丢，我洗完还要分人","time":"17:34","sentDate":"2024-10-18","appearance":"immediate"},
+      {"id":"wx-group-20241018-002","from":"阿威","text":"收到","time":"17:37","sentDate":"2024-10-18","appearance":"immediate"},
+      {"id":"wx-group-20241018-003","from":"小辛","text":"我的黑色外套是谁拿了","time":"17:42","sentDate":"2024-10-18","appearance":"immediate"},
+      {"id":"wx-group-20241018-004","from":"胡枫","text":"你身上穿着那个？","time":"17:44","sentDate":"2024-10-18","appearance":"immediate"},
+      {"id":"wx-group-20241018-005","from":"小辛","text":"…………","time":"17:46","sentDate":"2024-10-18","appearance":"immediate"},
+      {"id":"wx-group-20241018-006","from":"me","text":"傅小辛你出门带脑子了吗","time":"17:47","sentDate":"2024-10-18","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20241028-001","from":"wang","text":"阿蒙，回家了吗","time":"22:06","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-002","from":"me","text":"还在工房","time":"22:08","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-003","from":"wang","text":"我带了粥，给你放桌上","time":"22:09","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-004","from":"me","text":"哥你怎么又买粥","time":"22:10","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-005","from":"wang","text":"你昨晚说胃不舒服","time":"22:12","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-006","from":"me","text":"我随口说说你也记得","time":"22:13","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-007","from":"wang","text":"你的事我当然记得","time":"22:15","sentDate":"2024-10-28","appearance":"immediate"},
+      {"id":"wx-wang-20241028-008","from":"me","text":"那你等等我，我回去一起吃","time":"22:17","sentDate":"2024-10-28","appearance":"immediate"}
+    ]}
+  ]
+}

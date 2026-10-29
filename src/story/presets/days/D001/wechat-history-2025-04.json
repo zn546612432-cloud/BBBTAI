@@ -1,0 +1,47 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2025-04 · D1前历史聊天／原创补充；傅隆生仅好友验证一句","rules":[],"history":[
+    {"conversationId":"fulongsheng","conversationName":"傅隆生","messages":[
+      {"id":"wx-fulongsheng-20250401-001","from":"me","text":"我通过了你的朋友验证请求，现在我们可以开始聊天了","time":"14:42","sentDate":"2025-04-01","appearance":"immediate"}
+    ]},
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20250406-001","from":"仔仔","text":"有人看见我的量尺了吗","time":"09:47","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-002","from":"小辛","text":"蓝色那条？","time":"09:49","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-003","from":"仔仔","text":"对","time":"09:51","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-004","from":"小辛","text":"我拿去量腰围了","time":"09:52","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-005","from":"胡枫","text":"你量出什么了","time":"09:54","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-006","from":"小辛","text":"完美身材","time":"09:56","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250406-007","from":"仔仔","text":"还给我！！！！","time":"10:02","sentDate":"2025-04-06","appearance":"immediate"},
+      {"id":"wx-group-20250415-001","from":"wang","text":"晚上练习提前半小时，大家注意","time":"13:15","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-002","from":"阿威","text":"好","time":"13:18","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-003","from":"胡枫","text":"护腕要重新换一批，上次的快磨破了","time":"13:21","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-004","from":"仔仔","text":"我今晚统计尺寸","time":"13:23","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-005","from":"小辛","text":"能不能顺便做个帅的","time":"13:25","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-006","from":"仔仔","text":"先把你现在那只找回来再说","time":"13:28","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250415-007","from":"me","text":"我今天晚点回来，工房别断电","time":"13:32","sentDate":"2025-04-15","appearance":"immediate"},
+      {"id":"wx-group-20250426-001","from":"胡枫","text":"今天谁买菜","time":"16:37","sentDate":"2025-04-26","appearance":"immediate"},
+      {"id":"wx-group-20250426-002","from":"小辛","text":"叫外卖行不行","time":"16:40","sentDate":"2025-04-26","appearance":"immediate"},
+      {"id":"wx-group-20250426-003","from":"阿威","text":"昨天也是外卖","time":"16:43","sentDate":"2025-04-26","appearance":"immediate"},
+      {"id":"wx-group-20250426-004","from":"小辛","text":"可是外卖也是饭","time":"16:44","sentDate":"2025-04-26","appearance":"immediate"},
+      {"id":"wx-group-20250426-005","from":"wang","text":"我买吧，想吃什么发给我","time":"16:51","sentDate":"2025-04-26","appearance":"immediate"},
+      {"id":"wx-group-20250430-001","from":"me","text":"楼下路由器我换好了","time":"21:15","sentDate":"2025-04-30","appearance":"immediate"},
+      {"id":"wx-group-20250430-002","from":"胡枫","text":"难怪今天网快了","time":"21:19","sentDate":"2025-04-30","appearance":"immediate"},
+      {"id":"wx-group-20250430-003","from":"小辛","text":"蒙哥是神","time":"21:21","sentDate":"2025-04-30","appearance":"immediate"},
+      {"id":"wx-group-20250430-004","from":"me","text":"别拍马屁了快睡觉","time":"21:24","sentDate":"2025-04-30","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20250412-001","from":"me","text":"哥今天回不回来","time":"18:18","sentDate":"2025-04-12","appearance":"immediate"},
+      {"id":"wx-wang-20250412-002","from":"wang","text":"晚一点，怎么了阿蒙","time":"18:22","sentDate":"2025-04-12","appearance":"immediate"},
+      {"id":"wx-wang-20250412-003","from":"me","text":"想和你吃饭","time":"18:24","sentDate":"2025-04-12","appearance":"immediate"},
+      {"id":"wx-wang-20250412-004","from":"wang","text":"那等我，别先吃零食","time":"18:26","sentDate":"2025-04-12","appearance":"immediate"},
+      {"id":"wx-wang-20250412-005","from":"me","text":"好哦哥哥","time":"18:27","sentDate":"2025-04-12","appearance":"immediate"},
+      {"id":"wx-wang-20250412-006","from":"wang","text":"乖","time":"18:28","sentDate":"2025-04-12","appearance":"immediate"}
+    ]},
+    {"conversationId":"zaizai","conversationName":"仔仔","messages":[
+      {"id":"wx-zaizai-20250420-001","from":"仔仔","text":"蒙哥，能帮我看看这张设计图吗","time":"15:18","sentDate":"2025-04-20","appearance":"immediate"},
+      {"id":"wx-zaizai-20250420-002","from":"me","text":"颜色挺好，袖口是不是太窄了","time":"15:22","sentDate":"2025-04-20","appearance":"immediate"},
+      {"id":"wx-zaizai-20250420-003","from":"仔仔","text":"对！我也觉得","time":"15:24","sentDate":"2025-04-20","appearance":"immediate"},
+      {"id":"wx-zaizai-20250420-004","from":"me","text":"别给我做，穿不了那么花","time":"15:25","sentDate":"2025-04-20","appearance":"immediate"}
+    ]}
+  ]
+}

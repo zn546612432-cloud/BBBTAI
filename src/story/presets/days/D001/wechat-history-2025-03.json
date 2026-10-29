@@ -1,0 +1,42 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2025-03 · D1前历史聊天／原创补充","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20250310-001","from":"小辛","text":"诶今天一周年啊","time":"14:11","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-002","from":"仔仔","text":"什么一周年","time":"14:13","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-003","from":"小辛","text":"蒙哥换新手机一周年哈哈哈哈","time":"14:14","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-004","from":"me","text":"你很闲？","time":"14:16","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-005","from":"胡枫","text":"他可能连自己生日都记不住","time":"14:18","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-006","from":"小辛","text":"但是记得蒙蒙哥的手机生日🥹","time":"14:20","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250310-007","from":"me","text":"那你要不要给它买个蛋糕","time":"14:22","sentDate":"2025-03-10","appearance":"immediate"},
+      {"id":"wx-group-20250318-001","from":"阿威","text":"今天练完手臂抬不起来","time":"21:02","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-002","from":"胡枫","text":"我也是","time":"21:04","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-003","from":"仔仔","text":"我给你们留了饭，在厨房","time":"21:06","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-004","from":"小辛","text":"怎么不留我的！","time":"21:08","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-005","from":"仔仔","text":"你下午不是说减肥吗","time":"21:10","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-006","from":"小辛","text":"减肥归减肥 饭不能不吃","time":"21:12","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250318-007","from":"wang","text":"厨房还有，自己拿","time":"21:16","sentDate":"2025-03-18","appearance":"immediate"},
+      {"id":"wx-group-20250327-001","from":"me","text":"周末别碰工房里的那台主机，我有东西在跑","time":"23:08","sentDate":"2025-03-27","appearance":"immediate"},
+      {"id":"wx-group-20250327-002","from":"胡枫","text":"放心，我连它开关在哪都不知道","time":"23:09","sentDate":"2025-03-27","appearance":"immediate"},
+      {"id":"wx-group-20250327-003","from":"仔仔","text":"我只进去找剪刀","time":"23:11","sentDate":"2025-03-27","appearance":"immediate"},
+      {"id":"wx-group-20250327-004","from":"me","text":"剪刀为什么在工房？？？","time":"23:13","sentDate":"2025-03-27","appearance":"immediate"},
+      {"id":"wx-group-20250327-005","from":"仔仔","text":"上次给你裁线的时候放那儿了","time":"23:16","sentDate":"2025-03-27","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20250306-001","from":"wang","text":"阿蒙，你上次说想去看雪","time":"19:22","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-002","from":"me","text":"你还记得啊","time":"19:25","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-003","from":"wang","text":"当然记得，只是最近走不开","time":"19:27","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-004","from":"me","text":"没事，等你忙完","time":"19:29","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-005","from":"wang","text":"委屈你了","time":"19:31","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-006","from":"me","text":"那就多给我带几顿好吃的补偿","time":"19:32","sentDate":"2025-03-06","appearance":"immediate"},
+      {"id":"wx-wang-20250306-007","from":"wang","text":"好，想吃什么都带","time":"19:34","sentDate":"2025-03-06","appearance":"immediate"}
+    ]},
+    {"conversationId":"xiaoxin","conversationName":"小辛","messages":[
+      {"id":"wx-xiaoxin-20250323-001","from":"小辛","text":"蒙哥帮我看个视频","time":"00:41","sentDate":"2025-03-23","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250323-002","from":"me","text":"你自己看","time":"00:45","sentDate":"2025-03-23","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250323-003","from":"小辛","text":"是我昨天训练那段！我觉得自己超帅","time":"00:46","sentDate":"2025-03-23","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250323-004","from":"me","text":"看到你摔倒的部分了","time":"00:49","sentDate":"2025-03-23","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250323-005","from":"小辛","text":"那个不算啊啊啊啊","time":"00:50","sentDate":"2025-03-23","appearance":"immediate"}
+    ]}
+  ]
+}

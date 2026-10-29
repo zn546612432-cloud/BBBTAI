@@ -1,0 +1,42 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2025-05-01至05-12 · D1（05-19）前一周截止","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20250503-001","from":"阿威","text":"今天演习取消了吗","time":"10:41","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-002","from":"wang","text":"不取消，晚一点开始","time":"10:44","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-003","from":"仔仔","text":"那我先去买东西","time":"10:46","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-004","from":"小辛","text":"带我一份炸鸡！！","time":"10:47","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-005","from":"胡枫","text":"大早上吃炸鸡","time":"10:49","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-006","from":"小辛","text":"我昨晚还没睡呢，所以是夜宵","time":"10:50","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250503-007","from":"me","text":"傅小辛你最好现在就去睡","time":"10:52","sentDate":"2025-05-03","appearance":"immediate"},
+      {"id":"wx-group-20250508-001","from":"胡枫","text":"昨晚那个录像谁剪的","time":"18:03","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-002","from":"仔仔","text":"我剪了一版","time":"18:05","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-003","from":"胡枫","text":"怎么把我摔倒的镜头留着","time":"18:07","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-004","from":"小辛","text":"因为经典需要流传","time":"18:08","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-005","from":"阿威","text":"后半段配合比上次好","time":"18:12","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-006","from":"wang","text":"大家都有进步，周末休息一天","time":"18:14","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250508-007","from":"小辛","text":"大哥我爱你！！！！","time":"18:15","sentDate":"2025-05-08","appearance":"immediate"},
+      {"id":"wx-group-20250512-001","from":"仔仔","text":"我把大家的衣服都分好了，门口各自拿","time":"20:04","sentDate":"2025-05-12","appearance":"immediate"},
+      {"id":"wx-group-20250512-002","from":"胡枫","text":"谢啦","time":"20:07","sentDate":"2025-05-12","appearance":"immediate"},
+      {"id":"wx-group-20250512-003","from":"小辛","text":"我那个外套能不能再缝一下袖口","time":"20:09","sentDate":"2025-05-12","appearance":"immediate"},
+      {"id":"wx-group-20250512-004","from":"仔仔","text":"拿回来给我","time":"20:10","sentDate":"2025-05-12","appearance":"immediate"},
+      {"id":"wx-group-20250512-005","from":"wang","text":"明天没事的早点休息，别都熬夜","time":"20:13","sentDate":"2025-05-12","appearance":"immediate"},
+      {"id":"wx-group-20250512-006","from":"me","text":"知道啦哥","time":"20:16","sentDate":"2025-05-12","appearance":"immediate"}
+    ]},
+    {"conversationId":"hufeng","conversationName":"胡枫","messages":[
+      {"id":"wx-hufeng-20250505-001","from":"胡枫","text":"蒙哥你睡了吗","time":"02:14","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-002","from":"me","text":"没，怎么了","time":"02:17","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-003","from":"胡枫","text":"小辛躺客厅沙发睡着了，空调开得好冷","time":"02:19","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-004","from":"me","text":"给他盖件衣服，别又感冒","time":"02:21","sentDate":"2025-05-05","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20250509-001","from":"me","text":"哥，今天累吗","time":"23:08","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-002","from":"wang","text":"还好，刚收车","time":"23:10","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-003","from":"me","text":"我把你上次喜欢的电影找到了","time":"23:12","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-004","from":"wang","text":"等我回去一起看","time":"23:14","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-005","from":"me","text":"你说话算数啊","time":"23:15","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-006","from":"wang","text":"答应阿蒙的怎么会忘","time":"23:17","sentDate":"2025-05-09","appearance":"immediate"},
+      {"id":"wx-wang-20250509-007","from":"me","text":"嘿嘿，那我等你","time":"23:18","sentDate":"2025-05-09","appearance":"immediate"}
+    ]}
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2024-11 · D1前历史聊天／原创补充","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20241103-001","from":"小辛","text":"饭吗","time":"12:02","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-002","from":"仔仔","text":"等我五分钟","time":"12:05","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-003","from":"小辛","text":"你上次的五分钟足足半小时","time":"12:06","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-004","from":"仔仔","text":"因为有人把扣子扯掉了要我缝","time":"12:08","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-005","from":"阿威","text":"我赔你","time":"12:11","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-006","from":"胡枫","text":"哈哈哈哈哈哈","time":"12:12","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241103-007","from":"wang","text":"先吃饭，回来再缝吧","time":"12:15","sentDate":"2024-11-03","appearance":"immediate"},
+      {"id":"wx-group-20241114-001","from":"阿威","text":"今天对练还有人吗","time":"15:41","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-002","from":"胡枫","text":"有","time":"15:44","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-003","from":"小辛","text":"我昨晚扭到脚了","time":"15:45","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-004","from":"阿威","text":"又？","time":"15:46","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-005","from":"小辛","text":"不是训练扭的，睡醒下床踩空了","time":"15:48","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-006","from":"胡枫","text":"这种事你别往外说","time":"15:49","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241114-007","from":"me","text":"我已经截图了","time":"16:04","sentDate":"2024-11-14","appearance":"immediate"},
+      {"id":"wx-group-20241122-001","from":"me","text":"谁把外接硬盘放饮水机旁边了","time":"22:11","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-002","from":"仔仔","text":"我没碰过","time":"22:13","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-003","from":"阿威","text":"不是我","time":"22:14","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-004","from":"胡枫","text":"有名字吗","time":"22:15","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-005","from":"me","text":"上面贴了一个杰克的贴纸","time":"22:17","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-006","from":"小辛","text":"啊我的！！！！！","time":"22:18","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-007","from":"me","text":"你存训练录像还是存你的自拍","time":"22:20","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241122-008","from":"小辛","text":"不告诉你～～","time":"22:21","sentDate":"2024-11-22","appearance":"immediate"},
+      {"id":"wx-group-20241129-001","from":"wang","text":"明早九点集合，别迟到","time":"19:17","sentDate":"2024-11-29","appearance":"immediate"},
+      {"id":"wx-group-20241129-002","from":"小辛","text":"收到大哥","time":"19:18","sentDate":"2024-11-29","appearance":"immediate"},
+      {"id":"wx-group-20241129-003","from":"胡枫","text":"这次模拟演习要穿正装？","time":"19:22","sentDate":"2024-11-29","appearance":"immediate"},
+      {"id":"wx-group-20241129-004","from":"仔仔","text":"上次那套就好，别弄皱","time":"19:24","sentDate":"2024-11-29","appearance":"immediate"},
+      {"id":"wx-group-20241129-005","from":"me","text":"监控屏幕调好了，有画面就行，别把机器弄坏","time":"19:25","sentDate":"2024-11-29","appearance":"immediate"}
+    ]},
+    {"conversationId":"xiaoxin","conversationName":"小辛","messages":[
+      {"id":"wx-xiaoxin-20241107-001","from":"小辛","text":"哥你有空吗","time":"23:06","sentDate":"2024-11-07","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20241107-002","from":"me","text":"你又想借钱","time":"23:07","sentDate":"2024-11-07","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20241107-003","from":"小辛","text":"在你眼里我只有借钱这点出息吗","time":"23:08","sentDate":"2024-11-07","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20241107-004","from":"me","text":"还有唱歌","time":"23:09","sentDate":"2024-11-07","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20241107-005","from":"小辛","text":"我想问楼下的打印机怎么没墨了！！","time":"23:09","sentDate":"2024-11-07","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20241107-006","from":"me","text":"你拿错打印机了，左边那台","time":"23:12","sentDate":"2024-11-07","appearance":"immediate"}
+    ]},
+    {"conversationId":"hufeng","conversationName":"胡枫","messages":[
+      {"id":"wx-hufeng-20241117-001","from":"胡枫","text":"在吗 帮我看下手机怎么一直发烫","time":"01:33","sentDate":"2024-11-17","appearance":"immediate"},
+      {"id":"wx-hufeng-20241117-002","from":"me","text":"你几个小时没关游戏了","time":"01:36","sentDate":"2024-11-17","appearance":"immediate"},
+      {"id":"wx-hufeng-20241117-003","from":"胡枫","text":"四个吧","time":"01:37","sentDate":"2024-11-17","appearance":"immediate"},
+      {"id":"wx-hufeng-20241117-004","from":"me","text":"睡觉去","time":"01:38","sentDate":"2024-11-17","appearance":"immediate"},
+      {"id":"wx-hufeng-20241117-005","from":"胡枫","text":"遵命蒙哥","time":"01:39","sentDate":"2024-11-17","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20241120-001","from":"wang","text":"阿蒙，天气转凉，出门加件衣服","time":"08:12","sentDate":"2024-11-20","appearance":"immediate"},
+      {"id":"wx-wang-20241120-002","from":"me","text":"澳门哪有多冷","time":"09:32","sentDate":"2024-11-20","appearance":"immediate"},
+      {"id":"wx-wang-20241120-003","from":"wang","text":"上次是谁感冒了还说自己没事","time":"09:34","sentDate":"2024-11-20","appearance":"immediate"},
+      {"id":"wx-wang-20241120-004","from":"me","text":"我哥太啰嗦了怎么办","time":"09:35","sentDate":"2024-11-20","appearance":"immediate"},
+      {"id":"wx-wang-20241120-005","from":"wang","text":"那我不说了","time":"09:39","sentDate":"2024-11-20","appearance":"immediate"},
+      {"id":"wx-wang-20241120-006","from":"me","text":"说嘛，我听着呢哥哥","time":"09:40","sentDate":"2024-11-20","appearance":"immediate"}
+    ]}
+  ]
+}

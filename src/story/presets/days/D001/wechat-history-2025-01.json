@@ -1,0 +1,46 @@
+{
+  "format":"ximeng-preset-day-v1","day":1,"channel":"wechat",
+  "label":"2025-01 · D1前历史聊天／原创补充","rules":[],"history":[
+    {"conversationId":"group","conversationName":"GROUP","messages":[
+      {"id":"wx-group-20250102-001","from":"小辛","text":"新年第一练我决定缺席","time":"10:13","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250102-002","from":"阿威","text":"为什么","time":"10:16","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250102-003","from":"小辛","text":"新的一年要善待自己","time":"10:17","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250102-004","from":"wang","text":"小辛，十分钟后楼下见","time":"10:19","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250102-005","from":"小辛","text":"收到大哥立刻下来","time":"10:20","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250102-006","from":"胡枫","text":"善待自己失败","time":"10:21","sentDate":"2025-01-02","appearance":"immediate"},
+      {"id":"wx-group-20250113-001","from":"me","text":"无线网改密码了，别老拿工房那条线看视频","time":"19:02","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-002","from":"小辛","text":"为什么连网也要考验我","time":"19:04","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-003","from":"仔仔","text":"密码发哪里了","time":"19:07","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-004","from":"me","text":"贴在冰箱上","time":"19:08","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-005","from":"胡枫","text":"你不怕隔壁看见啊","time":"19:12","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-006","from":"me","text":"隔壁怎么进我们厨房？？？","time":"19:15","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250113-007","from":"阿威","text":"哈哈","time":"19:16","sentDate":"2025-01-13","appearance":"immediate"},
+      {"id":"wx-group-20250129-001","from":"仔仔","text":"新年快乐！！红包呢","time":"10:21","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-002","from":"胡枫","text":"新年快乐","time":"10:24","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-003","from":"小辛","text":"恭喜发财红包拿来！！！！","time":"10:25","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-004","from":"wang","text":"新年快乐，我给大家准备了","time":"10:29","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-005","from":"小辛","text":"大哥万岁！！！！","time":"10:30","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-006","from":"me","text":"别光抢红包，冰箱里那盒烧麦谁吃了","time":"11:10","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-007","from":"阿威","text":"我吃的","time":"11:12","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-008","from":"me","text":"还我","time":"11:12","sentDate":"2025-01-29","appearance":"immediate"},
+      {"id":"wx-group-20250129-009","from":"阿威","text":"晚上买给你","time":"11:14","sentDate":"2025-01-29","appearance":"immediate"}
+    ]},
+    {"conversationId":"xiaoxin","conversationName":"小辛","messages":[
+      {"id":"wx-xiaoxin-20250109-001","from":"小辛","text":"蒙哥你说我练德语怎么记不住这些词","time":"20:21","sentDate":"2025-01-09","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250109-002","from":"me","text":"你上次不是说自己语言天赋一流","time":"20:24","sentDate":"2025-01-09","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250109-003","from":"小辛","text":"天才也是需要一个适应期的","time":"20:25","sentDate":"2025-01-09","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250109-004","from":"me","text":"适应了半年了","time":"20:28","sentDate":"2025-01-09","appearance":"immediate"},
+      {"id":"wx-xiaoxin-20250109-005","from":"小辛","text":"哈哈哈哈哈哈你说话好伤人","time":"20:29","sentDate":"2025-01-09","appearance":"immediate"}
+    ]},
+    {"conversationId":"wang","conversationName":"熙旺","messages":[
+      {"id":"wx-wang-20250121-001","from":"wang","text":"今天收车早，带你去吃点好的？","time":"17:44","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-002","from":"me","text":"去哪","time":"17:46","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-003","from":"wang","text":"你挑","time":"17:47","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-004","from":"me","text":"澳大利亚","time":"17:49","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-005","from":"wang","text":"今晚恐怕来不及","time":"17:50","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-006","from":"me","text":"那就你常带我去的那家","time":"17:52","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-007","from":"wang","text":"好，半小时后来接你","time":"17:54","sentDate":"2025-01-21","appearance":"immediate"},
+      {"id":"wx-wang-20250121-008","from":"me","text":"我要坐副驾驶","time":"17:55","sentDate":"2025-01-21","appearance":"immediate"}
+    ]}
+  ]
+}
