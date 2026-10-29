@@ -15,8 +15,10 @@ function saveJSON(name,json){
 const choice=(list,value)=>list.map(([id,label])=>`<option value="${esc(id)}" ${id===value?'selected':''}>${esc(label)}</option>`).join('');
 const contentChannels=[['wechat','微信'],['noapp','NoApp'],['mirage','MIRAGE'],['messages','短信']];
 const conditions=[['any','任意回复'],['keywords-any','命中任意关键词'],['keywords-all','同时命中所有关键词'],['message-count','消息数量达到门槛']];
+const dayScopes=[['exact','仅指定一天'],['range','连续几天有效'],['any','任意游戏日与时间']];
 const kindName=r=>r.kind==='reply'?'收到玩家消息':'NPC 主动发送';
 const conditionName=r=>r.condition==='any'?'任意内容':r.condition==='message-count'?`至少 ${r.minMessages||1} 条`:r.keywords?.join(' / ')||'未设置关键词';
+const scopeName=r=>r.dayScope==='any'?'全部日期':r.dayScope==='range'?`D${r.startDay??r.day}–D${r.endDay??r.day}`:`D${r.day}`;
 const selectedRule=s=>(s.storyPresets?.rules||[]).find(r=>r.id===s.editor.presetId);
 const selectedDay=s=>Math.max(1,Math.min(90,Number(s.editor.presetDay||s.day)));
 const inputField=(label,field,value,type='text',extra='')=>`<label>${label}<input data-preset-field="${field}" type="${type}" value="${esc(value??'')}" ${extra}></label>`;
@@ -27,9 +29,11 @@ function ruleEditor(r,s){
  return `<section class="preset-editor-card" data-rule="${esc(r.id)}">
  <div class="preset-section-heading"><strong>编辑规则</strong><span>${esc(r.id)}</span></div>
  ${inputField('规则名称','title',r.title)}
- <div class="preset-two-col">${selectField('规则类型','kind',[['reply','玩家触发回复'],['proactive','NPC 主动消息']],r.kind)}${inputField('游戏日','day',r.day,'number','min="1" max="90"')}</div>
+ <div class="preset-two-col">${selectField('规则类型','kind',[['reply','玩家触发回复'],['proactive','NPC 主动消息']],r.kind)}${inputField('归档游戏日','day',r.day,'number','min="1" max="90"')}</div>
+ ${selectField('日期有效范围','dayScope',dayScopes,r.dayScope||'exact')}
+ ${r.dayScope==='range'?`<div class="preset-two-col">${inputField('从第几天','startDay',r.startDay??r.day,'number','min="1" max="90"')}${inputField('到第几天','endDay',r.endDay??r.day,'number','min="1" max="90"')}</div>`:''}
  <label>聊天窗口<select data-preset-field="conversation">${choice(conversations,`${r.channel}:${r.conversationId}`)}</select></label>
- <div class="preset-two-col">${inputField('开始时间','from',r.from,'time')}${inputField('结束时间','to',r.to,'time')}</div>
+ ${r.dayScope==='any'&&r.kind==='reply'?'<p class="editor-help">所有日期、所有时间都能根据玩家发送的文字匹配。一次性规则仍然只会发送一次。</p>':`<div class="preset-two-col">${inputField('开始时间','from',r.from,'time')}${inputField('结束时间','to',r.to,'time')}</div>`}
  ${r.kind==='proactive'?`${selectField('主动发送条件','mode',[['scheduled','到指定时间主动发送'],['conditional','满足消息数量后发送']],r.mode)}${r.mode==='conditional'?inputField('需要玩家已发送至少几条消息','minMessages',r.minMessages,'number','min="1" max="100"'):''}`:
  `${selectField('输入匹配方式','condition',conditions,r.condition)}${['keywords-any','keywords-all'].includes(r.condition)?inputField('关键词 · 用逗号隔开','keywords',(r.keywords||[]).join('，')):''}${r.condition==='message-count'?inputField('本批消息数量','minMessages',r.minMessages,'number','min="1" max="100"'):''}`}
  <label>NPC 回复气泡 <small>每行一条，可一次发送多条</small><textarea data-preset-field="messages" rows="4" placeholder="在这里输入台词">${esc((r.messages||[]).join('\n'))}</textarea></label>
@@ -76,7 +80,7 @@ export function presetEditor(s){
  <div class="preset-day-control"><button type="button" data-action="preset-day-prev" aria-label="前一天">‹</button><label>正在编辑的游戏日<input id="preset-day" type="number" min="1" max="90" value="${day}"></label><button type="button" data-action="preset-day-next" aria-label="后一天">›</button></div>
  <div class="preset-summary"><span><b>${rules.length}</b> 条剧情</span><span><b>${rules.filter(r=>r.kind==='reply').length}</b> 条回复</span><span><b>${rules.filter(r=>r.kind==='proactive').length}</b> 条主动消息</span></div>
  <div class="preset-add"><button type="button" class="preset-primary" data-action="preset-add" data-kind="reply">＋ 预设回复</button><button type="button" class="preset-secondary" data-action="preset-add" data-kind="proactive">＋ 主动消息</button></div>
- <div class="preset-rule-list">${rules.map(r=>`<button type="button" class="preset-rule ${r.id===selected?.id?'is-selected':''}" data-action="preset-select" data-id="${esc(r.id)}"><span class="preset-rule-tag ${r.kind}">${kindName(r)}</span><strong>${esc(r.title)}</strong><small>${r.from}–${r.to} · ${esc(r.kind==='proactive'?(r.mode==='scheduled'?'定时':'条件主动'):conditionName(r))} ${r.enabled?'':'· 已暂停'} ${p.usedIds.includes(r.id)?'· 已使用':''}</small><span class="preset-rule-chevron">›</span></button>`).join('')||'<p class="preset-empty">这一天还没有预设剧情，可以新增一条。</p>'}</div>
+ <div class="preset-rule-list">${rules.map(r=>`<button type="button" class="preset-rule ${r.id===selected?.id?'is-selected':''}" data-action="preset-select" data-id="${esc(r.id)}"><span class="preset-rule-tag ${r.kind}">${kindName(r)}</span><strong>${esc(r.title)}</strong><small>${esc(scopeName(r))} · ${r.dayScope==='any'&&r.kind==='reply'?'全天':`${r.from}–${r.to}`} · ${esc(r.kind==='proactive'?(r.mode==='scheduled'?'定时':'条件主动'):conditionName(r))} ${r.enabled?'':'· 已暂停'} ${p.usedIds.includes(r.id)?'· 已使用':''}</small><span class="preset-rule-chevron">›</span></button>`).join('')||'<p class="preset-empty">这一天还没有预设剧情，可以新增一条。</p>'}</div>
  ${selected?ruleEditor(selected,s):'<p class="preset-empty">选择上面的规则编辑，或添加一条新剧情。</p>'}
  ${previewTest(s)}
  ${importExportPanel(s)}
@@ -128,7 +132,8 @@ export function changePresetField(t,ctx){
   if(field==='conversation'){const [channel,...id]=t.value.split(':');r.channel=channel;r.conversationId=id.join(':');}
   else if(field==='keywords')r.keywords=t.value.split(/[，,\n]/).map(x=>x.trim()).filter(Boolean);
   else if(field==='messages')r.messages=t.value.split(/\r?\n/);
-  else if(field==='day'||field==='priority'||field==='minMessages')r[field]=Number(t.value);
+  else if(['day','startDay','endDay','priority','minMessages'].includes(field))r[field]=Number(t.value);
+  else if(field==='dayScope'){r.dayScope=t.value;if(t.value==='range'){r.startDay??=r.day;r.endDay??=r.day;}}
   else if(field==='once')r.once=t.value==='true';
   else if(field==='kind'){r.kind=t.value;if(r.kind==='proactive'&&!r.mode)r.mode='scheduled';}
   else r[field]=t.value;

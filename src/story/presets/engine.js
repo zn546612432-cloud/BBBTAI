@@ -4,7 +4,12 @@ import {starterPresetState} from './defaults.js';
 
 export const ensurePresets=s=>s.storyPresets||(s.storyPresets=starterPresetState());
 const used=(state,r)=>r.once&&(state.usedIds.includes(r.id)||(r.group&&state.usedGroups.includes(r.group)));
-const inWindow=(r,day,clock)=>r.day===day&&clock>=r.from&&clock<=r.to;
+// Old rules are exact-day rules. New rules can cover a run of days or be
+// available throughout the story, without duplicating the same dialogue 90 times.
+export const inRuleDay=(r,day)=>r.dayScope==='any'||(r.dayScope==='range'
+ ? day>=Number(r.startDay??r.day)&&day<=Number(r.endDay??r.day)
+ : r.day===day);
+const inWindow=(r,day,clock)=>inRuleDay(r,day)&&(r.dayScope==='any'&&r.kind==='reply'||clock>=r.from&&clock<=r.to);
 const sameConversation=(r,channel,conversationId)=>r.channel===channel&&r.conversationId===conversationId;
 const normal=text=>String(text||'').toLocaleLowerCase().replace(/\s+/g,'');
 const hasKeywords=(r,text)=>{
@@ -41,17 +46,21 @@ export function deliverRule(s,r,{day=s.day,clock=s.clock}={}){
  const lines=(r.messages||[]).map(x=>x.trim()).filter(Boolean);
  if(!lines.length)return false;
  const from=r.conversationId==='group'?'熙旺':r.conversationId;
+ let appended=0;
  for(let i=0;i<lines.length;i++){
   const id=`preset-${r.id}-${day}-${i}`;
   if(conversation.messages.some(m=>m.id===id))continue;
   conversation.messages.push({id,from,text:lines[i],time:clock,day,sentDate:dateParts({...s,day}).iso,kind:'text',actual:true,authored:true});
+  appended++;
  }
+ if(!appended)return false;
  if(r.once){preset.usedIds.push(r.id);if(r.group&&!preset.usedGroups.includes(r.group))preset.usedGroups.push(r.group);}
  if(r.kind==='proactive'){preset.firedProactiveDays??=[];preset.firedProactiveDays.push(`${r.id}:${day}`);}
  if(r.setsFlag&&!preset.flags.includes(r.setsFlag))preset.flags.push(r.setsFlag);
  s.events.push({type:r.kind==='proactive'?'story_proactive':'story_reply',ruleId:r.id,day,clock});
  if(!(s.unlocked&&s.nav.current.appId===r.channel&&s.nav.current.route==='/chat/'+r.conversationId)){
-  s.notifications.unshift({id:`preset-notice-${r.id}-${day}`,title:conversation.name,body:lines.at(-1),link:{appId:r.channel,route:'/chat/'+r.conversationId,params:{}}});
+  conversation.unread=Math.max(0,Number(conversation.unread)||0)+appended;
+  s.notifications.unshift({id:`preset-notice-${r.id}-${day}`,conversationId:r.conversationId,title:conversation.name,body:lines.at(-1),link:{appId:r.channel,route:'/chat/'+r.conversationId,params:{}}});
  }
  return true;
 }
@@ -65,15 +74,17 @@ export function deliverMissedScheduled(s,from,to={day:s.day,clock:s.clock}){
  const end=to.day*1440+Number(to.clock.slice(0,2))*60+Number(to.clock.slice(3,5));
  if(end<=start)return [];
  const rules=(s.storyPresets?.rules||[]).filter(r=>r.enabled&&r.kind==='proactive'&&r.mode==='scheduled')
-  .map(r=>({...r,at:r.day*1440+Number(r.from.slice(0,2))*60+Number(r.from.slice(3,5)),until:r.day*1440+Number(r.to.slice(0,2))*60+Number(r.to.slice(3,5))}))
+  .flatMap(r=>Array.from({length:Math.max(0,Math.min(90,to.day)-Math.max(1,from.day)+1)},(_,i)=>Math.max(1,from.day)+i)
+   .filter(day=>inRuleDay(r,day))
+   .map(day=>({...r,deliveryDay:day,at:day*1440+Number(r.from.slice(0,2))*60+Number(r.from.slice(3,5)),until:day*1440+Number(r.to.slice(0,2))*60+Number(r.to.slice(3,5))})))
   .filter(r=>r.until>start&&r.at<=end)
   .sort((a,b)=>a.at-b.at||Number(b.priority||0)-Number(a.priority||0));
  const delivered=[];
  for(const r of rules){
   const p=ensurePresets(s);
-  if(used(p,r)||(p.firedProactiveDays||[]).includes(`${r.id}:${r.day}`)||r.requiresFlag&&!p.flags.includes(r.requiresFlag))continue;
+  if(used(p,r)||(p.firedProactiveDays||[]).includes(`${r.id}:${r.deliveryDay}`)||r.requiresFlag&&!p.flags.includes(r.requiresFlag))continue;
   const minute=Math.max(r.at,start+1),clock=`${String(Math.floor(minute%1440/60)).padStart(2,'0')}:${String(minute%60).padStart(2,'0')}`;
-  if(deliverRule(s,r,{day:r.day,clock}))delivered.push(r.id);
+  if(deliverRule(s,r,{day:r.deliveryDay,clock}))delivered.push(r.id);
  }
  return delivered;
 }
@@ -93,7 +104,7 @@ export class PresetConversationEngine{
    this.pending.delete(key);
    const state=this.store.get(),{rule}=matchReplyRule(state,entry);
    if(!rule||deathLocked(state))return; // silence is a deliberate, valid result.
-   this.store.update(next=>{if(!used(ensurePresets(next),rule))deliverRule(next,rule);});
+   this.store.update(next=>{if(!used(ensurePresets(next),rule))deliverRule(next,rule,{day:entry.day,clock:entry.clock});});
   },this.settleMs);
   this.pending.set(key,entry);
  }

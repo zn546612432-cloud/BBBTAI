@@ -22,11 +22,14 @@ import {drainBattery,plugIn,unplug} from './system/power/battery.js';
 import {advanceGameMinutes,tickWorld,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {powerFullscreen} from './system/power/controls.js';
-import {PresetConversationEngine} from './story/presets/engine.js';
+import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
+// Resuming an older save must not require visiting developer tools to receive
+// scheduled messages whose window has already passed.
+try{store.update(s=>deliverMissedScheduled(s,{day:1,clock:'00:00'}));}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
 mountShell();
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
@@ -38,7 +41,13 @@ if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
-const toast=message=>showBanner({title:'系统提示',body:String(message),link:{appId:'messages'}});
+const nonImmersive=/演示|下一阶段|开发者|暂未接入|尚未接入|尚未开放|后续功能阶段|剧情|游戏存档|仅本机模拟|DEMO|测试中/i;
+const toast=message=>{
+ const s=store.get(),body=String(message);
+ if(s.nav.current.appId!=='editor'&&nonImmersive.test(body))return;
+ const appId=s.nav.current.appId;
+ showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
+};
 const ctx=()=>({store,router,toast,refresh:render,pickImage(handler){assetHandler=handler;const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 function setShade({progress,settle=true}){
  const layer=$('#shade-layer');layer.classList.toggle('is-present',progress>0);layer.classList.toggle('is-dragging',!settle);layer.style.setProperty('--shade-progress',String(progress));layer.setAttribute('aria-hidden',String(progress===0));layer.inert=progress===0;
@@ -331,4 +340,4 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!e.target.closest('input,textarea,select'))shade?setShade({progress:0}):router.back();
 });
 // A local deterministic preview reply, never a real AI or server presence event.
-setTimeout(()=>{if(processDemoReply(store)&&store.get().unlocked)toast('国际象棋邀请收到演示回应');},2400);
+setTimeout(()=>{processDemoReply(store);},2400);

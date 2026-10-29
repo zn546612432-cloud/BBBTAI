@@ -21,6 +21,8 @@ export function validatePresetPack(raw){
   if(!r||!ID.test(r.id||'')||!label(r.title)||!['reply','proactive'].includes(r.kind))fail('规则编号、标题或类型无效');
   unique(ruleIds,r.id,'规则');
   if(r.day!==raw.day||r.channel!==raw.channel||!label(r.conversationId))fail(`${r.id} 所属日期或聊天窗口与文件不一致`);
+  if(r.dayScope!==undefined&&!['exact','range','any'].includes(r.dayScope))fail(`${r.id} 日期范围无效`);
+  if(r.dayScope==='range'&&(!int(r.startDay,1,90)||!int(r.endDay,1,90)||r.startDay>r.endDay))fail(`${r.id} 起止日期无效`);
   if(!TIME.test(r.from||'')||!TIME.test(r.to||'')||r.from>r.to)fail(`${r.id} 时间范围无效`);
   if(r.kind==='proactive'&&!['scheduled','conditional'].includes(r.mode))fail(`${r.id} 主动发送模式无效`);
   if(!CONDITIONS.has(r.condition)||!int(r.minMessages,0,100)||!int(r.priority,0,999))fail(`${r.id} 触发条件或优先级无效`);

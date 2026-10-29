@@ -14,6 +14,6 @@ export function renderViewer(saved=[],id){
    <button data-action="photos-favorite" data-id="${esc(photo.id)}" ${real?'':'disabled'} aria-label="${photo.favorite?'取消收藏':'收藏'}" class="${photo.favorite?'is-favorite':''}">${phIcon('heart',25)}</button>
    <button data-action="photos-wallpaper" data-id="${esc(photo.id)}" ${real?'':'disabled'} aria-label="设为壁纸">${phIcon('collections',25)}</button>
    <button data-action="photos-delete" data-id="${esc(photo.id)}" ${real?'':'disabled'} aria-label="删除照片">${phIcon('trash',23)}</button>
-  </footer>${real?'':'<p class="ph-demo-caption">排版演示缩略图 · 可导入真实照片替换</p>'}
+  </footer>
  </section>`;
 }

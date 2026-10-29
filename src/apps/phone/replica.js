@@ -42,9 +42,9 @@ function contacts(data){
 function contactDetails(data){
   const person=data.contacts.find(x=>x.id===personId);
   if(!person){selected='contacts';return contacts(data);}
-  return `<div class="ios-phone-page ios-person-page"><header class="ios-person-toolbar">${btn('phone-tab',`${icon('back',19)} 联系人`,'',`data-tab="contacts"`)}${btn('phone-add','编辑','',`aria-label="在开发者模式编辑联系人"`)}</header>
+  return `<div class="ios-phone-page ios-person-page"><header class="ios-person-toolbar">${btn('phone-tab',`${icon('back',19)} 联系人`,'',`data-tab="contacts"`)}${btn('phone-add','编辑','',`aria-label="编辑联系人"`)}</header>
   <div class="ios-person-profile">${contactAvatar(person.name,true)}<h1>${esc(person.name)}</h1><p>${esc(data.self.region)}</p></div>
-  <div class="ios-person-detail"><small>电话号码</small><strong>${esc(person.number||'未设置号码')}</strong>${person.number?btn('phone-use-number','拨号','ios-person-dial',`data-id="${esc(person.id)}"`):'<p>可以在开发者模式中补充号码。</p>'}</div>${tabs()}</div>`;
+  <div class="ios-person-detail"><small>电话号码</small><strong>${esc(person.number||'未设置号码')}</strong>${person.number?btn('phone-use-number','拨号','ios-person-dial',`data-id="${esc(person.id)}"`):''}</div>${tabs()}</div>`;
 }
 function keypad(data){
   const keys=[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']];
@@ -67,10 +67,9 @@ export function handle(a,t,c){
   if(a==='phone-digit'){digits+=t.dataset.digit;c.refresh();}
   if(a==='phone-erase'){digits=digits.slice(0,-1);c.refresh();}
   if(a==='phone-region')return;
-  if(a==='phone-call')c.toast(digits?'电话功能暂未接入':'请先输入电话号码');
+  if(a==='phone-call')return;
   if(a==='phone-person'){personId=t.dataset.id;selected='person';c.refresh();}
   if(a==='phone-use-number'){const person=phoneData(c.store.get()).contacts.find(x=>x.id===t.dataset.id);if(person?.number){digits=person.number.replace(/[^\d+]/g,'');selected='keypad';c.refresh();}}
-  if(['phone-add','phone-edit','phone-menu'].includes(a))c.router.open({appId:'editor',route:'/phone'});
-  if(a==='phone-info'){const call=phoneData(c.store.get()).calls.find(x=>x.id===t.dataset.id);if(call)c.toast(`${call.number} · ${call.place||'澳门'} · ${call.day}`);}
+  if(['phone-add','phone-edit','phone-menu','phone-info'].includes(a))return;
 }
 export function input(el,c){if(el.name==='phone-search'){search=el.value;c.refresh();}}
