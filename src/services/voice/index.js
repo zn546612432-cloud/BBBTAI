@@ -1,1 +1,11 @@
-export class MiniMaxVoiceAdapter{constructor({endpoint='',accessToken=()=>null}={}){this.endpoint=endpoint;this.accessToken=accessToken;}async synthesize(scriptId){if(!this.endpoint)throw Error('MiniMax 尚未连接');const token=await this.accessToken();if(!token)throw Error('尚未登录');const res=await fetch(this.endpoint,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({scriptId})});if(!res.ok)throw Error('语音服务不可用');return res.blob();}}
+import {voicePreview} from '../ai/gateway.js';
+
+// Compatibility adapter for phone playback. API keys remain exclusively on the local server.
+// The old browser-side accessToken option was intentionally removed.
+export class MiniMaxVoiceAdapter {
+  constructor(config={}){this.config=config;}
+  async synthesize(text,options={}) {
+    if(typeof text!=='string'||!text.trim())throw Error('没有可朗读的文字');
+    return voicePreview({...this.config,...options,text});
+  }
+}
