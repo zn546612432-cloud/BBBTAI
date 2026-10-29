@@ -80,7 +80,7 @@ test('historical media are real image and video bubbles inside WeChat',()=>{
  assert.equal((html.match(/class="wx-shared-photo"/g)||[]).length,2);
  for(const asset of media.assets){
   assert.ok(html.includes(asset.directUrl.replaceAll('&','&amp;'))||html.includes(asset.directUrl));
-  assert.ok(html.includes(asset.sourceUrl));
  }
+ assert.doesNotMatch(html,/素材来源|wx-shared-media-footer|wx-shared-source|target="_blank"/);
  assert.doesNotMatch(html,/待补|待接入/);
 });

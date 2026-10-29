@@ -25,15 +25,13 @@ function invite(m,s,c){
     (['pending','deferred'].includes(status)?'<button type="button" data-action="accept-invite" data-id="'+esc(m.invitationId)+'">接受邀请</button>':'<small>'+esc(status==='accepted'?'已接受':'邀请已结束')+'</small>')+'</div>';
 }
 
-/** Historical media are rendered from a vetted, fixed catalogue, not arbitrary URLs in chat text. */
+/** A historical attachment is a bare WeChat media bubble, never a link-preview card. */
 function historicalMediaBubble(asset,m,s){
-  const title=esc(asset.title),source=esc(asset.sourceUrl);
-  const attribution='<a class="wx-shared-source" href="'+source+'" target="_blank" rel="noopener noreferrer" aria-label="查看素材来源">素材来源 ↗</a>';
+  const title=esc(asset.title);
   const visual=asset.kind==='video'
     ?'<video class="wx-shared-video-player" controls playsinline preload="none" poster="'+esc(asset.posterUrl)+'" aria-label="'+title+'"><source src="'+esc(asset.directUrl)+'" type="video/mp4">你的浏览器不支持视频播放</video>'
-    :'<a href="'+esc(asset.directUrl)+'" target="_blank" rel="noopener noreferrer" aria-label="查看大图：'+title+'"><img class="wx-shared-photo" src="'+esc(asset.directUrl)+'" alt="'+title+'" loading="eager" decoding="async"></a>';
-  return '<div class="wx-bubble wx-bubble-historical-media" title="'+esc(timestampLabel(m,s))+'" role="group" aria-label="'+title+'">'+visual+
-    '<div class="wx-shared-media-footer"><span>'+title+'</span>'+attribution+'</div></div>';
+    :'<img class="wx-shared-photo" src="'+esc(asset.directUrl)+'" alt="'+title+'" loading="eager" decoding="async">';
+  return '<div class="wx-bubble wx-bubble-historical-media" title="'+esc(timestampLabel(m,s))+'" role="group" aria-label="'+title+'">'+visual+'</div>';
 }
 
 function messageRow(m,s,c){
