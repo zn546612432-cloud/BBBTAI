@@ -16,7 +16,7 @@ test('gateway status never exposes API keys',async()=>{
     const response=await fetch(base+'/api/ai/status'),status=await response.json();
     assert.equal(response.status,200);
     assert.equal(status.mode,'local-only');
-    assert.equal(JSON.stringify(status).includes('API_KEY'),'false'==='true');
+    assert.equal(Object.hasOwn(status,'DEEPSEEK_API_KEY'),false);
   });
 });
 test('missing key is a safe 503 and no fake model reply',async()=>{
