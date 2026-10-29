@@ -2,13 +2,15 @@ import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
 import {wechatAvatars} from '../../avatars.js';
 import {profiles,authoredMoments,visibleMoments} from './data.js';
+import {momentIcons} from './icons.js';
+import {wxIcon} from '../../components/icons.js';
+let openActions=null,replyTo=null;
+const heart=momentIcons.heart;
 
-const photos={macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4'};
+const photos={macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg',foodMenu:'user-food-menu.jpeg',foodRice:'user-food-rice.jpeg',foodCheesecake:'user-food-cheesecake.jpeg',foodScallop:'user-food-scallop.jpeg',foodCooking:'user-food-cooking.jpeg',foodSashimi:'user-food-sashimi.jpeg',wynnFountain:'user-wynn-fountain.jpeg',wynnNight:'user-wynn-night.jpeg',yellowWall:'user-yellow-wall.jpeg'};
 const local=filename=>new URL('../../../../../apps/wechat/media/'+filename,import.meta.url).href;
-export const avatarUrl=name=>{
- const source=wechatAvatars[name]||wechatAvatars['熙蒙'];
- return new URL('../../../../../'+source.slice(1),import.meta.url).href;
-};
+// Avatar map already carries the build's base path. Never resolve it twice.
+export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
 export function momentImage(source){
  if(!source)return '';
  if(source.startsWith('data:image/'))return source; // Player-selected photograph.
@@ -30,6 +32,7 @@ function pictureGrid(post){
 }
 function postContent(post){
  if(post.kind==='article')return '<button type="button" class="wx-moments-article" data-action="wx-moment-article" data-id="'+esc(post.id)+'"><span class="wx-moments-article-logo">📖</span><span><strong>'+esc(post.article.title)+'</strong><small>'+esc(post.article.publisher)+'</small></span></button>';
+ if(post.kind==='music')return '<div class="wx-moments-music" role="group" aria-label="分享音乐"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+' · '+esc(post.music.album)+'</small></span><span class="wx-moments-music-note">♫</span></div>';
  return pictureGrid(post);
 }
 function postCard(post,s){
@@ -38,15 +41,17 @@ function postCard(post,s){
  const replies=[...(post.comments||[]),...(s.content.moments?.comments?.[post.id]||[])];
  const liked=likes.includes('熙蒙');
  return '<article class="wx-moments-post" data-key="'+esc(post.id)+'">'+
-  '<div class="wx-moments-post-avatar">'+avatar(post.author)+'</div><div class="wx-moments-post-content">'+
+  '<button type="button" class="wx-moments-post-avatar" data-action="wx-moment-profile" data-name="'+esc(post.author)+'" aria-label="查看'+esc(post.author)+'的相册">'+avatar(post.author)+'</button><div class="wx-moments-post-content">'+
   '<div class="wx-moments-poster">'+authorBtn(post.author)+(post.pinned?'<span class="wx-moments-pin-label">置顶</span>':'')+'</div>'+
   (post.text?'<p class="wx-moments-post-text">'+esc(post.text)+'</p>':'')+
   postContent(post)+
-  '<div class="wx-moments-meta"><span>'+esc(clockLabel(post.publishedAt,nowDate(s)))+'</span><button type="button" data-action="wx-moment-actions" data-id="'+esc(post.id)+'" aria-label="点赞和评论">··</button></div>'+
-  '<div class="wx-moments-action-row"><button type="button" data-action="wx-moment-like" data-id="'+esc(post.id)+'">'+(liked?'♥ 已赞':'♡ 赞')+'</button><button type="button" data-action="wx-moment-reply" data-id="'+esc(post.id)+'">♧ 评论</button></div>'+
+  '<div class="wx-moments-meta"><span>'+esc(clockLabel(post.publishedAt,nowDate(s)))+'</span><div class="wx-moments-tools">'+
+  (openActions===post.id?'<div class="wx-moments-action-menu" role="group" aria-label="动态操作"><button type="button" data-action="wx-moment-like" data-id="'+esc(post.id)+'">'+heart+(liked?'取消':'赞')+'</button><button type="button" data-action="wx-moment-reply" data-id="'+esc(post.id)+'">'+momentIcons['message-circle']+'评论</button></div>':'')+
+  '<button type="button" class="wx-moments-more" data-action="wx-moment-actions" data-id="'+esc(post.id)+'" aria-label="点赞和评论" aria-expanded="'+(openActions===post.id)+'"><span></span><span></span></button></div></div>'+
   (likes.length||replies.length?'<div class="wx-moments-reactions">'+
-   (likes.length?'<div class="wx-moments-likes">♥ '+esc(likes.join('、'))+'</div>':'')+
-   replies.map(x=>'<div><strong>'+esc(x.by)+'：</strong>'+esc(x.text)+'</div>').join('')+'</div>':'')+
+   (likes.length?'<div class="wx-moments-likes">'+heart+' '+esc(likes.join('、'))+'</div>':'')+
+   replies.map(x=>'<div class="wx-moments-reply"><strong>'+esc(x.by)+'：</strong>'+esc(x.text)+'</div>').join('')+'</div>':'')+
+  (replyTo===post.id?'<form data-form="wx-moment-comment" data-id="'+esc(post.id)+'" class="wx-moments-comment-form"><input name="text" required maxlength="300" autocomplete="off" placeholder="评论…" aria-label="评论内容"><button type="submit">发送</button><button type="button" data-action="wx-moment-cancel-reply" aria-label="取消评论">取消</button></form>':'')+
   '</div></article>';
 }
 function cover(name){
@@ -54,8 +59,8 @@ function cover(name){
  return '<section class="wx-moments-cover" style="background-image:linear-gradient(0deg,#101c2c75,transparent 70%),url(&quot;'+esc(momentImage(profile.cover))+'&quot;)">'+
   '<div class="wx-moments-cover-user"><span>'+esc(name)+'</span>'+avatar(name)+'</div></section><div class="wx-moments-bio">'+esc(profile.bio||' ')+'</div>';
 }
-function topBar(title,back=true){
- return '<div class="wx-moments-header"><button type="button" data-action="back" aria-label="返回">‹</button><strong>'+esc(title)+'</strong><button type="button" data-action="wx-moment-compose" aria-label="发表朋友圈">⊕</button></div>';
+function topBar(title){
+ return '<div class="wx-moments-header"><button type="button" data-action="back" aria-label="返回">'+wxIcon('chevron',25)+'</button><strong>'+esc(title)+'</strong>'+(title==='朋友圈'?'<button type="button" data-action="wx-moment-compose" aria-label="发表朋友圈">'+momentIcons.camera+'</button>':'<span></span>')+'</div>';
 }
 function pinnedRow(posts){
  if(!posts.length)return '';
@@ -68,16 +73,15 @@ function profilePage(s,name){
  const pinned=posts.filter(p=>p.pinned),recent=posts.filter(p=>!p.pinned);
  return '<section class="wx-moments-screen wx-moments-profile">'+topBar(name)+
   '<div class="wx-moments-scroll">'+cover(name)+pinnedRow(pinned)+
-  '<div class="wx-moments-timeline"><strong class="wx-moments-period">最近三天</strong>'+
-  (recent.length?recent.map(p=>postCard(p,s)).join(''):'<div class="wx-moments-three-days">—— 仅展示最近三天的朋友圈 ——</div>')+
-  '<div class="wx-moments-privacy">朋友仅展示最近三天的朋友圈</div></div></div></section>';
+  '<div class="wx-moments-timeline">'+recent.map(p=>postCard(p,s)).join('')+
+  '<div class="wx-moments-privacy">'+(name==='熙蒙'?'仅展示最近三天的朋友圈':'朋友仅展示最近三天的朋友圈')+'</div></div></div></section>';
 }
 function feedPage(s){
  const posts=visibleMoments(allPosts(s).filter(p=>p.privacy!=='private'),nowDate(s),{includePinned:false,clock:s.clock});
  return '<section class="wx-moments-screen">'+topBar('朋友圈')+'<div class="wx-moments-scroll">'+
   '<button type="button" class="wx-moments-my-header" data-action="wx-moment-profile" data-name="熙蒙">'+cover('熙蒙')+'</button>'+
   '<div class="wx-moments-timeline">'+(posts.length?posts.map(p=>postCard(p,s)).join(''):'<div class="wx-moments-three-days">最近三天还没有新动态，看看朋友们的置顶吧。</div>')+
-  '<div class="wx-moments-privacy">朋友圈 · 仅三天可见</div></div></div></section>';
+  '<div class="wx-moments-feed-end">·</div></div></div></section>';
 }
 function composerPage(s){
  const draft=s.content.moments?.draft||{};
@@ -122,15 +126,18 @@ export function renderMoments(s,route){
  return feedPage(s);
 }
 export function handleMoment(action,target,ctx){
- const id=target.dataset.id,route=path=>ctx.router.open({appId:'wechat',route:'/moments'+path});
+ const id=target.dataset.id,route=path=>{openActions=null;replyTo=null;ctx.router.open({appId:'wechat',route:'/moments'+path});};
  if(action==='wx-moment-profile'){route('/profile/'+encodeURIComponent(target.dataset.name));return true;}
  if(action==='wx-moment-compose'){route('/compose');return true;}
  if(action==='wx-moment-focus'){const post=allPosts(ctx.store.get()).find(p=>p.id===id);if(post)route('/comment/'+post.id);return true;}
- if(action==='wx-moment-actions'||action==='wx-moment-reply'){route('/comment/'+id);return true;}
+ if(action==='wx-moment-actions'){openActions=openActions===id?null:id;replyTo=null;ctx.refresh();return true;}
+ if(action==='wx-moment-reply'){openActions=null;replyTo=id;ctx.refresh();document.querySelector('[data-form="wx-moment-comment"] input')?.focus();return true;}
+ if(action==='wx-moment-cancel-reply'){replyTo=null;ctx.refresh();return true;}
  if(action==='wx-moment-photo'){route('/photo/'+id+'/'+target.dataset.index);return true;}
  if(action==='wx-moment-video'){route('/video/'+id);return true;}
  if(action==='wx-moment-article'){route('/article/'+id);return true;}
  if(action==='wx-moment-like'){
+  openActions=null;
   ctx.store.update(s=>{const m=s.content.moments??(s.content.moments={});m.likes??={};
    const original=allPosts(s).find(p=>p.id===id)?.likes?.includes('熙蒙')||false;
    const currently=m.likes[id]===undefined?original:m.likes[id];
@@ -154,6 +161,7 @@ export function submitMoment(form,ctx){
  }
  if(form.dataset.form==='wx-moment-comment'){
   const text=String(new FormData(form).get('text')||'').trim();if(!text)return true;
+  replyTo=null;
   ctx.store.update(s=>{const m=s.content.moments??(s.content.moments={});m.comments??={};(m.comments[form.dataset.id]??=[]).push({by:'熙蒙',text});});
   form.reset();return true;
  }
