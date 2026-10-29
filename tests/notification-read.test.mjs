@@ -67,7 +67,9 @@ test('new delivered incoming chat message increases unread once and is cleared w
 
 test('KIRA list and deep links persist read state per mail without clearing other blue dots',async()=>{
  const {kiraInbox}=await import('../src/apps/kira/features/inbox/index.js');
- const {store,storage}=setup(),mail=store.get().content.mail[0];
+ const {store,storage}=setup();
+ store.update(s=>s.content.mail.push({id:'unread-kira-test',from:'KIRA',subject:'联系确认',body:'收到请回复。',read:false}));
+ const mail=store.get().content.mail[0];
  const count=()=> (kiraInbox(store.get()).match(/●/g)||[]).length;
  const before=count(),priorDoc=globalThis.document;globalThis.document={querySelector:()=>null};
  try{const router=new PhoneRouter(store,registry);router.open({appId:'kira',route:'/mail/'+mail.id});router.back();}finally{globalThis.document=priorDoc;}

@@ -74,9 +74,8 @@ export function handle(a,t,c){
   });
   selected.clear();selectMode=false;confirmDelete=false;c.toast(`已删除 ${count} 条信息`);c.refresh();
  }
- if(a==='sms-pins'){menuOpen=false;c.toast('置顶消息编辑将在后续功能阶段开放');c.refresh();}
- if(a==='sms-profile'){menuOpen=false;c.toast('可在开发者功能中修改发件人姓名');c.refresh();}
- if(a==='sms-add-media')c.toast('图片短信将在后续功能阶段开放');
+ if(a==='sms-pins'||a==='sms-profile'){menuOpen=false;c.refresh();}
+ if(a==='sms-add-media')return;
 }
 export function submit(f,c){
  if(f.dataset.form==='send-chat')return sendChat(f,c);

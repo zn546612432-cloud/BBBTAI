@@ -103,6 +103,15 @@ test('Safari runs privately and uses the five requested saved sites',()=>{
  const c={store:fakeStore(state()),router:{open(){}},refresh(){}};
  const home=browserRender(c,{route:'/',params:{}});
  for(const name of ['GitHub','ChatGPT','临时邮箱','金光票务','网络服务'])assert.ok(home.includes(name));
+ for(const id of ['github','chatgpt','tempmail','ticketing','network']){
+  const html=browserRender(c,{route:'/page',params:{page:id}});
+  assert.ok(html.includes(`/apps/browser/snapshots/${id}.png`),`${id} must show a bundled real webpage screenshot`);
+  assert.doesNotMatch(html,/网页快照 · 实际网站的静态画面|在浏览器打开官网/);
+  assert.doesNotMatch(html,/票务服务书签（网址待核实）|个人收藏 \/ PRIVATE BROWSING/);
+  const png=readFileSync(new URL(`../public/apps/browser/snapshots/${id}.png`,import.meta.url));
+  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+  assert.ok(png.byteLength>20_000,`${id} screenshot was not bundled`);
+ }
  browserHandle('browser-open',{dataset:{page:'github'}},c,{route:'/',params:{}});
  assert.deepEqual(c.store.get().browserData.history,[]);
  assert.match(browserRender(c,{route:'/history',params:{}}),/暂无浏览记录/);

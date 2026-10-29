@@ -7,5 +7,5 @@ export function starterPresetState(){
 }
 
 export function blankPreset({day=57,channel='wechat',conversationId='wang',kind='reply'}={}){
- return {id:`rule-${crypto.randomUUID()}`,title:kind==='reply'?'新的预设回复':'新的主动消息',kind,mode:kind==='proactive'?'scheduled':'',day,channel,conversationId,from:'08:00',to:'23:59',priority:50,enabled:true,once:true,condition:'any',keywords:[],minMessages:0,requiresFlag:'',setsFlag:'',group:'',messages:['']};
+ return {id:`rule-${crypto.randomUUID()}`,title:kind==='reply'?'新的预设回复':'新的主动消息',kind,mode:kind==='proactive'?'scheduled':'',day,dayScope:'exact',startDay:day,endDay:day,channel,conversationId,from:'00:00',to:'23:59',priority:50,enabled:true,once:true,condition:'any',keywords:[],minMessages:0,requiresFlag:'',setsFlag:'',group:'',messages:['']};
 }

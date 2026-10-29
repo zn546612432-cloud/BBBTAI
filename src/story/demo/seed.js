@@ -20,6 +20,6 @@ export const demoContent={
   orders:[{id:'order-1',title:'離線資料整理',owner:'Rookery 13',reward:'MOP 240',status:'开放',demo:true}],
   photos:[],
   reminders:[{id:'reminder-demo-1',title:'给手机充电',done:false,demo:true},{id:'reminder-demo-2',title:'整理照片',done:false,demo:true},{id:'reminder-demo-3',title:'继续上次的棋局',done:false,demo:true}],
-  mail:[{id:'mail-1',from:'KIRA',subject:'档案索引',body:'演示邮件：附件可以在文件 App 中打开。',demo:true}],
+  mail:[],
 };
 export const demoInvitation={id:'demo-inv-001',senderId:'tai',recipientId:'player',source:'demo-fixture',status:'pending',createdDay:56,expiresDay:58,matchId:null};

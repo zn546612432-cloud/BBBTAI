@@ -40,6 +40,14 @@
 
 `rules[].kind`：`reply`（收到玩家回复后）或 `proactive`（NPC 自己发）。主动发送时 `mode` 为 `scheduled` 或 `conditional`（按玩家当天已发消息总数）；回复按 `condition` 判断：`any`、`keywords-any`、`keywords-all`、`message-count`。`priority` 大者优先；`group` 可以让同组的日夜回复只用一次；`requiresFlag`、`setsFlag` 表示剧情前置和阶段推进。
 
+`dayScope` 可选，旧规则默认 `exact`（只在 `day` 当天、`from`—`to` 时段有效）：
+
+- `"dayScope":"any"`：玩家输入关键词可在 D01–D90 **任何日期与时刻**命中；对定时主动消息，仍按 `from` 时刻发送。`once:true` 只使用一次。
+- `"dayScope":"range","startDay":15,"endDay":21`：在 **D15–D21（含两端）**内生效，仍可设置每天的 `from`—`to` 时段。
+- 不论使用哪种范围，`day` 仍是这条规则归档与导出的日期，而不是必须触发的那一天。
+
+主动消息在正常时间流逝、睡眠、充电跳日和重新打开旧存档时自动补齐；未打开聊天时同步增加会话未读数和系统顶部通知，打开对应聊天才清除。跳过条件主动消息的时段不会凭空补写玩家曾经发言。
+
 `history` 可选，用于导入历史聊天，格式如下：
 
 ```json

@@ -17,4 +17,4 @@ export function restartState(previous){
  if(previous.ghost?.config)next.ghost={config:clone(previous.ghost.config),orders:{},history:[],balance:0};
  return next;
 }
-export const restartDialog=()=>`<div class="lock-screen lock-passcode"><section class="restart-dialog" role="alertdialog" aria-modal="true" aria-labelledby="restart-title"><h2 id="restart-title">是否重启手机？</h2><p>剧情将回到第一天</p><div><button data-action="restart-cancel">否</button><button data-action="restart-confirm">是</button></div></section></div>`;
+export const restartDialog=()=>`<div class="lock-screen lock-passcode"><section class="restart-dialog" role="alertdialog" aria-modal="true" aria-labelledby="restart-title"><h2 id="restart-title">抹掉所有内容与设置？</h2><p>本机的新消息和使用记录将被清除。此操作无法撤销。</p><div><button data-action="restart-cancel">取消</button><button data-action="restart-confirm">抹掉</button></div></section></div>`;

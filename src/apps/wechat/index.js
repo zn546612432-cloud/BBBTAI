@@ -1,5 +1,5 @@
 import {sendChat,attachChat} from '../../components/chat.js';
-import {createConversation,actors,isGroup} from '../../editor/conversations/model.js';
+import {createConversation} from '../../editor/conversations/model.js';
 import {renderWeChatHome,routeForTab} from './components/views.js';
 import {renderWeChatChat,wechatConversation,smileIcon,keyboardIcon} from './components/chat-view.js';
 import {recallWeChatMessage} from './features/recall/index.js';
@@ -87,8 +87,6 @@ export function handle(action,target,ctx){
     return;
   }
   if(action==='wx-chat-more'){
-    const id=ctx.store.get().nav.current.route.slice(6),conversation=wechatConversation(ctx.store.get(),id);
-    if(conversation)ctx.toast(isGroup(conversation)?'群成员：'+actors(conversation).map(a=>a.name).join('、'):conversation.name);
     return;
   }
   if(action==='wx-tab'){
@@ -102,7 +100,6 @@ export function handle(action,target,ctx){
     return;
   }
   if(action==='wx-open-entry'){
-    ctx.toast((target.dataset.label||'此功能')+'：二级页面将在下一阶段接入');
     return;
   }
   if(action==='wx-open-contact'){
@@ -115,7 +112,6 @@ export function handle(action,target,ctx){
   if(action==='wx-open-groups'){
     const group=ctx.store.get().content.conversations.wechat?.find(c=>c.group||c.id==='group');
     if(group)ctx.router.open({appId:'wechat',route:'/chat/'+group.id});
-    else ctx.toast('还没有群聊');
     return;
   }
   if(action==='wx-index'){

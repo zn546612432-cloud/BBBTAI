@@ -46,6 +46,6 @@ export function renderCollections(saved=[]){
    <button data-action="photos-tab" data-route="/">前往图库</button>
   </div>
   <div class="ph-profile-sheet" hidden data-key="photos-profile-sheet"><div class="ph-sheet-head"><strong>照片与 iCloud</strong><button data-action="photos-profile">${phIcon('close',20)}</button></div>
-  <p>照片已保存在这部手机的游戏存档中，导入的内容可继续用于壁纸和分享。</p></div>
+  <p>照片已保存在此 iPhone 上。</p></div>
  </section>`;
 }
