@@ -2,7 +2,7 @@
   "format": "ximeng-preset-day-v1",
   "day": 78,
   "channel": "wechat",
-  "label": "D078 · 胡枫在群聊分享照片",
+  "label": "D078 · 熙蒙在群聊分享熙旺抓娃娃",
   "rules": [],
   "history": [
     {
@@ -10,11 +10,20 @@
       "conversationName": "GROUP",
       "messages": [
         {
-          "id": "wx-group-d078-hufeng-photo",
-          "from": "胡枫",
+          "id": "wx-group-d078-ximeng-text",
+          "from": "熙蒙",
+          "kind": "text",
+          "text": "我哥真厉害！",
+          "time": "16:28",
+          "sentDate": "2025-08-04",
+          "appearance": "game-time"
+        },
+        {
+          "id": "wx-group-d078-ximeng-arcade",
+          "from": "熙蒙",
           "kind": "image",
           "text": "/apps/wechat/media/user-hufeng-arcade.webp",
-          "time": "16:28",
+          "time": "16:29",
           "sentDate": "2025-08-04",
           "appearance": "game-time"
         }

@@ -19,9 +19,9 @@ test('Moments expire 72 hours after posting; profile pins remain',()=>{
  assert.ok(justBefore.some(p=>p.id==='xw-0519'));
  const atExpiry=visibleMoments(authoredMoments,'2025-05-22',{clock:'07:30',includePinned:false});
  assert.ok(!atExpiry.some(p=>p.id==='xw-0519'));
- const pinned=visibleMoments(authoredMoments,'2025-08-16',{author:'熙蒙',clock:'23:59'});
- assert.ok(pinned.some(p=>p.id==='xm-d15'));
- assert.ok(!visibleMoments(authoredMoments,'2025-08-16',{clock:'23:59',includePinned:false}).some(p=>p.id==='xm-d15'));
+ const pinned=visibleMoments(authoredMoments,'2025-08-16',{author:'仔仔',clock:'23:59'});
+ assert.ok(pinned.some(p=>p.id==='zz-d15'));
+ assert.ok(!visibleMoments(authoredMoments,'2025-08-16',{clock:'23:59',includePinned:false}).some(p=>p.id==='zz-d15'));
 });
 
 test('Both native WeChat entrances open Moments, which have complete media & profile views',()=>{
@@ -29,13 +29,13 @@ test('Both native WeChat entrances open Moments, which have complete media & pro
  assert.match(renderWeChatHome(s,'/discover'),/data-label="朋友圈"/);
  assert.match(renderWeChatHome(s,'/me'),/data-label="朋友圈"/);
  const feed=renderMoments(s,'/moments');
- const profile=renderMoments({...s,day:18},'/moments/profile/%E7%86%99%E8%92%99');
+ const profile=renderMoments({...s,day:18},'/moments/profile/%E4%BB%94%E4%BB%94');
  assert.match(feed,/wx-moments-post/);
  assert.match(feed,/data-action="wx-moment-profile"/);
  assert.match(profile,/置顶/);
  assert.match(profile,/仅展示最近三天/);
  assert.match(renderMoments(s,'/moments/compose'),/data-form="wx-moment-send"/);
- assert.match(renderMoments({...s,day:15},'/moments/photo/xm-d15/0'),/user-ximeng-brothers/);
+ assert.match(renderMoments({...s,day:15},'/moments/photo/zz-d15/0'),/user-ximeng-brothers/);
 });
 
 test('Design image and user avatar are shipped locally, never external links',()=>{
@@ -85,28 +85,35 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  const post=authoredMoments.find(p=>p.id==='hf-0519');assert.equal(post.comments.length,2);
 });
 
-test('46 authored posts span D01–D90 with 1–4 preset replies and mixed media',()=>{
- assert.equal(authoredMoments.length,46);
+test('45 authored posts span D01–D90 with 1–4 preset replies and mixed media',()=>{
+ assert.equal(authoredMoments.length,45);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
  assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&p.comments.length>=1&&p.comments.length<=4));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
- assert.ok(authoredMoments.some(p=>p.kind==='article'));
+ assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
  assert.ok(authoredMoments.some(p=>p.media.length>1));
  for(const post of authoredMoments)for(const media of post.media||[])assert.ok(momentImage(media),post.id+': '+media);
  const find=id=>authoredMoments.find(p=>p.id===id);
- assert.deepEqual(find('hf-0519').media,['shumai']);
+ assert.deepEqual(find('hf-0519').media,['foodRice']);
  assert.deepEqual(find('xw-0519').media,['morning']);
- assert.deepEqual(find('zz-0518').media,['fabric']);
  assert.deepEqual(find('xs-d04').media,['xmCaught']);
  assert.deepEqual(find('xw-d04').media,['xmDinner','dinnerDish']);
- assert.deepEqual(find('xm-d15').media,['brothers']);
+ assert.deepEqual(find('zz-d15').media,['brothers']);
+ assert.equal(find('zz-d15').author,'仔仔');
+ assert.equal(authoredMoments.filter(p=>p.author==='仔仔').length,1);
+ assert.ok(authoredMoments.filter(p=>p.author==='小辛'&&p.media.some(m=>m.startsWith('xiaoxin'))).length>=3);
+ assert.ok(authoredMoments.filter(p=>p.likes?.includes('仔仔')).length>=8);
+ assert.ok(!authoredMoments.some(p=>p.media.includes('shumai')||p.media.includes('design')||p.media.includes('fabric')));
  assert.deepEqual(find('xw-d70').media,['groupPhoto']);
+ assert.deepEqual(find('xm-d78').media,['arcade']);
  const root=new URL('../public/apps/wechat/media/',import.meta.url);
  for(const p of authoredMoments)for(const media of p.media)assert.ok(existsSync(new URL(momentImage(media).split('/').at(-1),root)),p.id);
  assert.ok(existsSync(new URL('../src/story/presets/days/D078/wechat.json',import.meta.url)));
  const [chat]=parsePresetPayload(JSON.parse(readFileSync(new URL('../src/story/presets/days/D078/wechat.json',import.meta.url),'utf8')));
- assert.equal(chat.history[0].messages[0].kind,'image');
- assert.equal(chat.history[0].messages[0].appearance,'game-time');
- assert.equal(chat.history[0].messages[0].sentDate,find('hf-d78').publishedAt.slice(0,10));
+ assert.equal(chat.history[0].messages[0].text,'我哥真厉害！');
+ assert.equal(chat.history[0].messages[1].kind,'image');
+ assert.equal(chat.history[0].messages[1].from,'熙蒙');
+ assert.equal(chat.history[0].messages[1].appearance,'game-time');
+ assert.equal(chat.history[0].messages[1].sentDate,find('xm-d78').publishedAt.slice(0,10));
 });
