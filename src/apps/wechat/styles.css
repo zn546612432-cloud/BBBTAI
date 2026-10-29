@@ -1,3 +1,4 @@
+@import url("./features/moments/styles.css");
 /* 微信一级 UI。独立样式，不继承系统桌面玻璃卡片设计。
    视觉尺寸参考 iPhone 版微信：#ededed 分组底色、白色行、
    绿色选中态、iOS 原生导航行高。 */

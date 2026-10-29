@@ -1,5 +1,5 @@
 import {syncDeathNight} from '../system/power/story.js';
-import {calendarAnchor,validDate} from './calendar.js';
+import {calendarAnchor,validDate,dateParts} from './calendar.js';
 import {demoContent,demoInvitation} from '../story/demo/seed.js';
 import {defaultPhoneData,ensurePhoneData} from './phone-data.js';
 import {starterPresetState} from '../story/presets/defaults.js';
@@ -89,4 +89,21 @@ function normalizeTimeline(s){
  s.timelineVersion=1;s.storyChargeGates??=[];
  syncDeathNight(s);
 }
-export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));}catch{this.state=(!isPreview&&migrateLegacy(storage))||initialState();this.persist();}normalizeTimeline(this.state);this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureBank(restored);ensurePhoneData(restored);removeObsoleteChatDemos(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}
+/** Fix the older release's real-world 2026 date stamp on ordinary WeChat
+ * bubbles. Preserve explicit custom dates and all authored story timestamps. */
+export function repairLegacyWechatDates(s){
+ const inGameDate=dateParts(s).iso;
+ if(inGameDate>='2026-01-01')return false;
+ let changed=false;
+ for(const c of s.content.conversations.wechat||[])for(const m of c.messages||[]){
+  if(!validDate(m.sentDate)||m.sentDate<'2026-01-01'||m.storyImported||m.schedule)continue;
+  const knownWrong=m.text==='不吃啦，肥死了。'&&c.name==='仔仔';
+  if(m.sentDateMode==='custom'&&!knownWrong)continue;
+  m.legacySentDate=m.sentDate;
+  m.sentDate=Number.isSafeInteger(m.day)?dateParts({...s,day:m.day}).iso:inGameDate;
+  if(m.sentDateMode==='custom')m.sentDateMode='today';
+  changed=true;
+ }
+ return changed;
+}
+export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));}catch{this.state=(!isPreview&&migrateLegacy(storage))||initialState();this.persist();}normalizeTimeline(this.state);this.persist();if(repairLegacyWechatDates(this.state))this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureBank(restored);ensurePhoneData(restored);removeObsoleteChatDemos(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);repairLegacyWechatDates(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}

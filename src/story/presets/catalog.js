@@ -1,5 +1,5 @@
 import {parsePresetPayload} from './io/format.js';
-import {applyPresetImport} from './io/import.js';
+import {applyPresetImport,hasBuiltInTextCorrections} from './io/import.js';
 
 /** Read only the authored files listed in the manifest; no player data is fetched. */
 export async function loadBuiltInPresets(fetcher=fetch){
@@ -28,6 +28,6 @@ export async function hydrateBuiltInPresets(store,fetcher=fetch){
  const deleted=new Set(s.storyPresets?.deletedRuleIds||[]);
  const needsLegacyLinkCorrection=s.content.conversations.wechat?.find(c=>c.id==='group')?.messages.some(m=>
   m.id==='wx-group-20240310-019'&&m.storyImported===true&&!m.actual&&m.text==='【小红书分享链接 · 待补】');
- if(!needsLegacyLinkCorrection&&!packs.some(pack=>pack.rules.some(rule=>!known.has(rule.id)&&!deleted.has(rule.id))||pack.history.some(h=>h.messages.some(m=>!s.content.conversations[pack.channel]?.find(c=>c.id===h.conversationId)?.messages.some(x=>x.id===m.id)))))return;
+ if(!needsLegacyLinkCorrection&&!hasBuiltInTextCorrections(s)&&!packs.some(pack=>pack.rules.some(rule=>!known.has(rule.id)&&!deleted.has(rule.id))||pack.history.some(h=>h.messages.some(m=>!s.content.conversations[pack.channel]?.find(c=>c.id===h.conversationId)?.messages.some(x=>x.id===m.id)))))return;
  store.update(next=>applyPresetImport(next,packs,{mode:'merge'}));
 }

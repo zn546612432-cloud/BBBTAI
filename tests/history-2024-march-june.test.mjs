@@ -55,18 +55,18 @@ test('invalid historical asset IDs are rejected',()=>{
  assert.throws(()=>parsePresetPayload(p),/素材编号/);
 });
 
-test('all five historical media have working-format direct links and no unfinished placeholders',()=>{
+test('all five historical media are bundled locally with source attribution, no placeholders',()=>{
  const ids=new Set(rows().filter(m=>m.assetId).map(m=>m.assetId));
  assert.equal(ids.size,5);
  for(const asset of media.assets){
   assert.ok(ids.has(asset.id));
   assert.ok(asset.title.length>1);
   assert.match(asset.sourceUrl,/^https:\/\//);
-  assert.match(asset.directUrl,/^https:\/\//);
+  assert.match(asset.directUrl,/^\/apps\/wechat\/media\//);
   assert.doesNotMatch(JSON.stringify(asset),/待补|待接入|user-to-supply|selection-needed|needs-import/);
   if(asset.kind==='video'){
    assert.match(asset.directUrl,/\.mp4$/);
-   assert.match(asset.posterUrl,/^https:\/\//);
+   assert.match(asset.posterUrl,/^\/apps\/wechat\/media\//);
   }else assert.match(asset.directUrl,/\.jpe?g(?:\?|$)/);
  }
  assert.ok(rows().filter(m=>m.assetId).every(m=>!/(待补|待接入)/.test(m.text)));
@@ -79,7 +79,7 @@ test('historical media are real image and video bubbles inside WeChat',()=>{
  assert.equal((html.match(/wx-shared-video-player/g)||[]).length,3);
  assert.equal((html.match(/class="wx-shared-photo"/g)||[]).length,2);
  for(const asset of media.assets){
-  assert.ok(html.includes(asset.directUrl.replaceAll('&','&amp;'))||html.includes(asset.directUrl));
+  assert.ok(html.includes(asset.directUrl.split('/').at(-1)));
  }
  assert.doesNotMatch(html,/素材来源|wx-shared-media-footer|wx-shared-source|target="_blank"/);
  assert.doesNotMatch(html,/待补|待接入/);

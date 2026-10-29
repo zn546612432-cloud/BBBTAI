@@ -24,10 +24,26 @@
       {"id":"wx-group-20250512-006","from":"me","text":"知道啦哥","time":"20:16","sentDate":"2025-05-12","appearance":"immediate"}
     ]},
     {"conversationId":"hufeng","conversationName":"胡枫","messages":[
+      {"id":"wx-hufeng-20250501-001","from":"胡枫","text":"蒙哥 你上次修的对讲机是不是放工房了","time":"14:16","sentDate":"2025-05-01","appearance":"immediate"},
+      {"id":"wx-hufeng-20250501-002","from":"me","text":"左边第二个柜子，贴黄色标签的","time":"14:20","sentDate":"2025-05-01","appearance":"immediate"},
+      {"id":"wx-hufeng-20250501-003","from":"胡枫","text":"找到啦，这个麦克风好多了","time":"14:22","sentDate":"2025-05-01","appearance":"immediate"},
+      {"id":"wx-hufeng-20250501-004","from":"me","text":"别再拿错，昨天仔仔对着坏的说了半天","time":"14:24","sentDate":"2025-05-01","appearance":"immediate"},
+      {"id":"wx-hufeng-20250501-005","from":"胡枫","text":"我笑到不行哈哈哈哈","time":"14:25","sentDate":"2025-05-01","appearance":"immediate"},
       {"id":"wx-hufeng-20250505-001","from":"胡枫","text":"蒙哥你睡了吗","time":"02:14","sentDate":"2025-05-05","appearance":"immediate"},
       {"id":"wx-hufeng-20250505-002","from":"me","text":"没，怎么了","time":"02:17","sentDate":"2025-05-05","appearance":"immediate"},
-      {"id":"wx-hufeng-20250505-003","from":"胡枫","text":"小辛躺客厅沙发睡着了，空调开得好冷","time":"02:19","sentDate":"2025-05-05","appearance":"immediate"},
-      {"id":"wx-hufeng-20250505-004","from":"me","text":"给他盖件衣服，别又感冒","time":"02:21","sentDate":"2025-05-05","appearance":"immediate"}
+      {"id":"wx-hufeng-20250505-003","from":"胡枫","text":"我电脑突然连不上内网了，明早还要看演习录像","time":"02:19","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-004","from":"me","text":"你是不是又把网线踩松了","time":"02:21","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-005","from":"胡枫","text":"……你怎么知道","time":"02:22","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-006","from":"me","text":"上次也是。你先看看接口灯亮没亮","time":"02:23","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-007","from":"胡枫","text":"亮了！！蒙哥你神了","time":"02:25","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-008","from":"me","text":"神什么，明天请我吃饭","time":"02:26","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250505-009","from":"胡枫","text":"得嘞，牛肉火锅！","time":"02:27","sentDate":"2025-05-05","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-001","from":"胡枫","text":"蒙哥，我那台电脑开机只有黑屏了……","time":"11:28","sentDate":"2025-05-13","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-002","from":"me","text":"你先别乱按，等我过去","time":"11:32","sentDate":"2025-05-13","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-003","from":"胡枫","text":"我没乱按啊，我就拍了它两下","time":"11:33","sentDate":"2025-05-13","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-004","from":"me","text":"……你最好祈祷硬盘没坏","time":"11:34","sentDate":"2025-05-13","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-005","from":"胡枫","text":"修好请你吃一个星期饭","time":"11:36","sentDate":"2025-05-13","appearance":"immediate"},
+      {"id":"wx-hufeng-20250513-006","from":"me","text":"这条我截图了","time":"11:37","sentDate":"2025-05-13","appearance":"immediate"}
     ]},
     {"conversationId":"wang","conversationName":"熙旺","messages":[
       {"id":"wx-wang-20250509-001","from":"me","text":"哥，今天累吗","time":"23:08","sentDate":"2025-05-09","appearance":"immediate"},

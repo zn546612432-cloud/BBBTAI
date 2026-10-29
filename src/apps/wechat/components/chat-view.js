@@ -13,7 +13,9 @@ export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>
 // Local story stickers must work under both the Site root and versioned Pages paths.
 export function pictureSrc(source,moduleUrl=import.meta.url){
  const match=String(source||'').match(/^\/apps\/wechat\/stickers\/([a-zA-Z0-9_-]+\.(?:png|webp|gif|svg))$/);
- return match?new URL(`../../../../apps/wechat/stickers/${match[1]}`,moduleUrl).href:source;
+ if(match)return new URL(`../../../../apps/wechat/stickers/${match[1]}`,moduleUrl).href;
+ const media=String(source||'').match(/^\/apps\/wechat\/media\/([a-zA-Z0-9_-]+\.(?:png|webp|jpe?g|mp4))$/);
+ return media?new URL(`../../../../apps/wechat/media/${media[1]}`,moduleUrl).href:source;
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.
@@ -35,8 +37,8 @@ function invite(m,s,c){
 function historicalMediaBubble(asset,m,s){
   const title=esc(asset.title);
   const visual=asset.kind==='video'
-    ?'<video class="wx-shared-video-player" controls playsinline preload="none" poster="'+esc(asset.posterUrl)+'" aria-label="'+title+'"><source src="'+esc(asset.directUrl)+'" type="video/mp4">你的浏览器不支持视频播放</video>'
-    :'<img class="wx-shared-photo" src="'+esc(asset.directUrl)+'" alt="'+title+'" loading="eager" decoding="async">';
+    ?'<video class="wx-shared-video-player" controls playsinline preload="metadata" poster="'+esc(pictureSrc(asset.posterUrl))+'" aria-label="'+title+'"><source src="'+esc(pictureSrc(asset.directUrl))+'" type="video/mp4">你的浏览器不支持视频播放</video>'
+    :'<img class="wx-shared-photo" src="'+esc(pictureSrc(asset.directUrl))+'" alt="'+title+'" loading="eager" decoding="async">';
   return '<div class="wx-bubble wx-bubble-historical-media" title="'+esc(timestampLabel(m,s))+'" role="group" aria-label="'+title+'">'+visual+'</div>';
 }
 

@@ -6,6 +6,13 @@ const historyKey=(channel,conversationId,id)=>`${channel}:${conversationId}:${id
 // that exact shipped value; never replace a player's or editor's custom text.
 const correctedHistoryLink={id:'wx-group-20240310-019',previous:'【小红书分享链接 · 待补】',next:'https://www.whatyi.con'};
 const isCorrectableHistoryLink=(conversationId,message)=>conversationId==='group'&&message.id===correctedHistoryLink.id&&message.text===correctedHistoryLink.previous&&message.storyImported===true&&!message.actual;
+export const correctedBuiltInMessages=[
+ {conversationId:'hufeng',id:'wx-hufeng-20250505-003',previous:'小辛躺客厅沙发睡着了，空调开得好冷',next:'我电脑突然连不上内网了，明早还要看演习录像'},
+ {conversationId:'hufeng',id:'wx-hufeng-20250505-004',previous:'给他盖件衣服，别又感冒',next:'你是不是又把网线踩松了'}
+];
+export function hasBuiltInTextCorrections(state){
+ return correctedBuiltInMessages.some(rule=>state.content.conversations.wechat?.find(c=>c.id===rule.conversationId)?.messages.some(m=>m.id===rule.id&&m.text===rule.previous&&m.storyImported&&!m.actual));
+}
 const authoredMessage=(pack,chat,message)=>({
  id:message.id,from:message.from,text:message.text,time:message.time,
  ...(message.assetId?{assetId:message.assetId}:{}),
@@ -70,6 +77,8 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
     if(known.has(message.id)){
      const current=conversation.messages.find(m=>m.id===message.id);
      if(message.text===correctedHistoryLink.next&&isCorrectableHistoryLink(h.conversationId,current))current.text=correctedHistoryLink.next;
+     const correction=correctedBuiltInMessages.find(x=>x.id===message.id&&x.conversationId===h.conversationId);
+     if(correction&&current?.text===correction.previous&&current.storyImported&&!current.actual&&message.text===correction.next)current.text=correction.next;
      continue;
     }
     conversation.messages.push(authoredMessage(pack,h,message));known.add(message.id);

@@ -6,7 +6,8 @@ export const wechatAvatars=Object.freeze({
  '阿威':'/apps/wechat/avatars/originals/awei.jpeg',
  '胡枫':'/apps/wechat/avatars/originals/hufeng.jpeg',
  '小辛':'/apps/wechat/avatars/originals/xiaoxin.jpeg',
- '仔仔':'/apps/wechat/avatars/originals/zaizai.jpeg'
+ '仔仔':'/apps/wechat/avatars/originals/zaizai.jpeg',
+ '傅隆生':'/apps/wechat/avatars/originals/fulongsheng.jpeg'
 });
 
 export function resolveWeChatAvatar(name,source=''){

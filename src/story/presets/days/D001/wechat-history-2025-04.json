@@ -37,8 +37,21 @@
       {"id":"wx-wang-20250412-005","from":"me","text":"好哦哥哥","time":"18:27","sentDate":"2025-04-12","appearance":"immediate"},
       {"id":"wx-wang-20250412-006","from":"wang","text":"乖","time":"18:28","sentDate":"2025-04-12","appearance":"immediate"}
     ]},
+    {"conversationId":"hufeng","conversationName":"胡枫","messages":[
+      {"id":"wx-hufeng-20250407-001","from":"胡枫","text":"蒙哥，你现在有空不","time":"18:12","sentDate":"2025-04-07","appearance":"immediate"},
+      {"id":"wx-hufeng-20250407-002","from":"me","text":"你又弄坏什么了","time":"18:13","sentDate":"2025-04-07","appearance":"immediate"},
+      {"id":"wx-hufeng-20250407-003","from":"胡枫","text":"这次不是电脑！耳机突然只有一边响","time":"18:14","sentDate":"2025-04-07","appearance":"immediate"},
+      {"id":"wx-hufeng-20250407-004","from":"me","text":"来工房，我看看","time":"18:15","sentDate":"2025-04-07","appearance":"immediate"},
+      {"id":"wx-hufeng-20250407-005","from":"胡枫","text":"你人真好，下次请你喝东西","time":"18:17","sentDate":"2025-04-07","appearance":"immediate"},
+      {"id":"wx-hufeng-20250425-001","from":"胡枫","text":"晚上吃饭不？阿威说楼下开了家新店","time":"17:42","sentDate":"2025-04-25","appearance":"immediate"},
+      {"id":"wx-hufeng-20250425-002","from":"me","text":"你们先吃，我在等我哥","time":"17:49","sentDate":"2025-04-25","appearance":"immediate"},
+      {"id":"wx-hufeng-20250425-003","from":"胡枫","text":"行，给你们留份烧麦","time":"17:50","sentDate":"2025-04-25","appearance":"immediate"},
+      {"id":"wx-hufeng-20250425-004","from":"me","text":"怎么吃饭还带外卖哈哈","time":"17:51","sentDate":"2025-04-25","appearance":"immediate"},
+      {"id":"wx-hufeng-20250425-005","from":"胡枫","text":"我有经验，你俩一定又懒得下来","time":"17:52","sentDate":"2025-04-25","appearance":"immediate"}
+    ]},
     {"conversationId":"zaizai","conversationName":"仔仔","messages":[
       {"id":"wx-zaizai-20250420-001","from":"仔仔","text":"蒙哥，能帮我看看这张设计图吗","time":"15:18","sentDate":"2025-04-20","appearance":"immediate"},
+      {"id":"wx-zaizai-20250420-design","from":"仔仔","kind":"image","text":"/apps/wechat/media/zaizai-fashion-design.webp","time":"15:19","sentDate":"2025-04-20","appearance":"immediate"},
       {"id":"wx-zaizai-20250420-002","from":"me","text":"颜色挺好，袖口是不是太窄了","time":"15:22","sentDate":"2025-04-20","appearance":"immediate"},
       {"id":"wx-zaizai-20250420-003","from":"仔仔","text":"对！我也觉得","time":"15:24","sentDate":"2025-04-20","appearance":"immediate"},
       {"id":"wx-zaizai-20250420-004","from":"me","text":"别给我做，穿不了那么花","time":"15:25","sentDate":"2025-04-20","appearance":"immediate"}

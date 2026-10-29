@@ -6,10 +6,12 @@ import {recallWeChatMessage} from './features/recall/index.js';
 import {speakWeChatText} from './features/tts/index.js';
 import {selectEmojiCategory,editEmojiInput} from './features/emoji/index.js';
 import {esc} from '../../system/ui.js';
+import {renderMoments,handleMoment,submitMoment} from './features/moments/index.js';
 
 export const manifest={id:'wechat',name:'微信',icon:0,defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
 export const render=({store},location)=>location.route.startsWith('/chat/')
   ?renderWeChatChat(store.get(),location.route.slice(6))
+  :location.route.startsWith('/moments')?renderMoments(store.get(),location.route)
   :renderWeChatHome(store.get(),location.route);
 
 export function openMessageMenu(bubble){
@@ -53,6 +55,7 @@ export function dismissEmojiForKeyboard(input){
 }
 
 export function handle(action,target,ctx){
+  if(handleMoment(action,target,ctx))return;
   if(action==='wx-message-options'){openMessageMenu(target);return;}
   if(action==='wx-message-menu-close'){const menu=target.closest('.wx-conversation')?.querySelector('.wx-message-menu');if(menu)menu.hidden=true;return;}
   if(action==='wx-message-tts'){
@@ -100,6 +103,7 @@ export function handle(action,target,ctx){
     return;
   }
   if(action==='wx-open-entry'){
+    if(target.dataset.label==='朋友圈')ctx.router.open({appId:'wechat',route:'/moments'});
     return;
   }
   if(action==='wx-open-contact'){
@@ -130,4 +134,4 @@ export function input(target){
     row.hidden=Boolean(term)&&!String(row.dataset.wxFilter||'').toLocaleLowerCase().includes(term);
   });
 }
-export const submit=(form,ctx)=>{if(form.dataset.form==='send-chat')sendChat(form,ctx);};
+export const submit=(form,ctx)=>{if(submitMoment(form,ctx))return;if(form.dataset.form==='send-chat')sendChat(form,ctx);};

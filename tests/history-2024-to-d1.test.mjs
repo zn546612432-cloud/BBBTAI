@@ -17,8 +17,8 @@ test('October through D1-7 history uses valid unique IDs and stays in the past',
  const ids=all.map(m=>m.id);
  assert.equal(new Set(ids).size,ids.length);
  assert.ok(all.length>200,`expected substantial month-by-month history, got ${all.length}`);
- assert.ok(all.every(m=>m.appearance==='immediate'&&m.sentDate<='2025-05-12'));
- assert.equal(all.map(m=>m.sentDate).sort().at(-1),'2025-05-12');
+ assert.ok(all.every(m=>m.appearance==='immediate'&&m.sentDate<='2025-05-13'));
+ assert.equal(all.map(m=>m.sentDate).sort().at(-1),'2025-05-13');
  assert.equal(all.map(m=>m.sentDate).sort()[0],'2024-10-12');
  packs.forEach(pack=>assert.equal(parsePresetPayload(pack).length,1));
  assert.equal(exact('group','2024-12-24','圣诞夜惊魂！！！！').length,1);
