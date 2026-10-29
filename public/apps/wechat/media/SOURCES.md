@@ -6,8 +6,8 @@
 | --- | --- | --- |
 | hufeng-mirror.webp | 胡枫（文俊辉）镜子自拍 | https://ph.pinterest.com/pin/seventeen-jun-wen-junhui-mirror-selca-selfie--675962225342882377/ |
 | hufeng-outdoors.webp | 胡枫（文俊辉）户外自拍 | https://x.com/junhuiquotes （原图 E3IQRCGXMAYey06） |
-| xiaoxin-mirror.webp | 小辛（林秋楠）镜子自拍 | https://sina.cn/news/detail/5350732060428902.html （演员微博转载） |
-| xiaoxin-selfie.webp | 小辛（林秋楠）耳机自拍 | https://sina.cn/news/detail/5324872063385807.html （演员微博转载） |
+| xiaoxin-mirror-clean.webp | 小辛（林秋楠）镜子自拍，去掉底部水印 | https://sina.cn/news/detail/5350732060428902.html （演员微博转载） |
+| xiaoxin-selfie-clean.webp | 小辛（林秋楠）耳机自拍，去掉底部水印 | https://sina.cn/news/detail/5324872063385807.html （演员微博转载） |
 | macau-morning.webp | 澳门黑沙海滩的白天天空 | https://my.trip.com/moments/detail/macau-39-144832130?locale=en-MY |
 | macau-dawn.webp | 澳门观音莲花苑晨景 | https://ent.ifeng.com/c/7xhQhe5rbQL |
 | shumai.webp | 烧麦 | https://www.macaotourism.gov.mo/pt/sight/estabelecimento-de-comidas-san-kam-wa-mei-sek |
