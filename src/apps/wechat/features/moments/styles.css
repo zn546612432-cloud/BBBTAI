@@ -120,3 +120,6 @@
 .wx-moments-photos.one .wx-moments-photo{aspect-ratio:auto;max-height:none;line-height:0;background:transparent}
 .wx-moments-photos.one .wx-moments-photo img{height:auto;max-height:280px;object-fit:contain;object-position:left center}
 .wx-moments-likes svg{fill:currentColor;stroke-width:0}
+.wx-moments-reply button{background:transparent;border:0;text-align:left;padding:0;color:inherit;font-size:inherit;line-height:inherit;max-width:100%;overflow-wrap:anywhere}
+.wx-moments-reply-choices{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.wx-moments-reply-choices button{border:1px solid #d8e4dc;background:#f5faf6;color:#4e7961;border-radius:5px;padding:5px 8px;font-size:11px;text-align:left;line-height:1.4}
