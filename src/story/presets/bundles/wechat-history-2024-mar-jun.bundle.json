@@ -1,0 +1,1186 @@
+{
+  "format": "ximeng-preset-bundle-v1",
+  "packs": [
+    {
+      "format": "ximeng-preset-day-v1",
+      "day": 1,
+      "channel": "wechat",
+      "label": "2024-03 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+      "rules": [],
+      "history": [
+        {
+          "conversationId": "group",
+          "conversationName": "GROUP",
+          "messages": [
+            {
+              "id": "wx-group-20240320-001",
+              "from": "小辛",
+              "text": "[视频] 小猫抓玩具",
+              "time": "21:18",
+              "sentDate": "2024-03-20",
+              "appearance": "immediate",
+              "assetId": "wx-media-20240320-cat"
+            },
+            {
+              "id": "wx-group-20240320-002",
+              "from": "胡枫",
+              "text": "猫猫～",
+              "time": "21:19",
+              "sentDate": "2024-03-20",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240322-001",
+              "from": "小辛",
+              "text": "[视频] 狗狗玩玩具",
+              "time": "23:43",
+              "sentDate": "2024-03-22",
+              "appearance": "immediate",
+              "assetId": "wx-media-20240322-dog"
+            },
+            {
+              "id": "wx-group-20240322-002",
+              "from": "胡枫",
+              "text": "这个狗好像你",
+              "time": "23:44",
+              "sentDate": "2024-03-22",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240322-003",
+              "from": "me",
+              "text": "这个狗好像你",
+              "time": "23:44",
+              "sentDate": "2024-03-22",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240324-001",
+              "from": "阿威",
+              "text": "[图片] 阿威的健身照",
+              "time": "18:06",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate",
+              "assetId": "wx-media-20240324-awei-arm"
+            },
+            {
+              "id": "wx-group-20240324-002",
+              "from": "wang",
+              "text": "👍👍👍",
+              "time": "18:07",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240324-003",
+              "from": "me",
+              "text": "✊✊✊✊",
+              "time": "18:08",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240324-004",
+              "from": "小辛",
+              "text": "咋练的我去",
+              "time": "18:09",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240324-005",
+              "from": "阿威",
+              "text": "要不要跟我一起练？",
+              "time": "18:10",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240324-006",
+              "from": "小辛",
+              "text": "算了我吃不了苦",
+              "time": "18:11",
+              "sentDate": "2024-03-24",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-001",
+              "from": "小辛",
+              "text": "饭吗",
+              "time": "12:10",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-002",
+              "from": "wang",
+              "text": "在干爹那里",
+              "time": "12:11",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-003",
+              "from": "me",
+              "text": "饭",
+              "time": "12:12",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-004",
+              "from": "小辛",
+              "text": "其他几个呢？不吃我和二哥先走了",
+              "time": "12:13",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-005",
+              "from": "仔仔",
+              "text": "我到门口找你们",
+              "time": "12:14",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-006",
+              "from": "阿威",
+              "text": "你们走了？那我自己吃吧",
+              "time": "12:29",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-007",
+              "from": "胡枫",
+              "text": "我买了烧麦你吃不吃？@阿威？",
+              "time": "12:49",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-008",
+              "from": "阿威",
+              "text": "吃",
+              "time": "12:50",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240327-009",
+              "from": "阿威",
+              "text": "我来找你",
+              "time": "12:50",
+              "sentDate": "2024-03-27",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240329-001",
+              "from": "小辛",
+              "text": "[视频] 两只狗狗玩闹",
+              "time": "00:16",
+              "sentDate": "2024-03-29",
+              "appearance": "immediate",
+              "assetId": "wx-media-20240329-pet"
+            },
+            {
+              "id": "wx-group-20240329-002",
+              "from": "胡枫",
+              "text": "这么晚还不睡觉",
+              "time": "00:18",
+              "sentDate": "2024-03-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240329-003",
+              "from": "me",
+              "text": "别刷了来我工房一趟看看你的监控",
+              "time": "00:19",
+              "sentDate": "2024-03-29",
+              "appearance": "immediate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "format": "ximeng-preset-day-v1",
+      "day": 1,
+      "channel": "wechat",
+      "label": "2024-04 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+      "rules": [],
+      "history": [
+        {
+          "conversationId": "group",
+          "conversationName": "GROUP",
+          "messages": [
+            {
+              "id": "wx-group-20240405-001",
+              "from": "wang",
+              "text": "开会啦",
+              "time": "09:13",
+              "sentDate": "2024-04-05",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240406-001",
+              "from": "wang",
+              "text": "我晚点到，你们先去",
+              "time": "09:40",
+              "sentDate": "2024-04-06",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-001",
+              "from": "小辛",
+              "text": "大哥你今天来吗？",
+              "time": "11:02",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-002",
+              "from": "wang",
+              "text": "膝盖还没好，走不了路",
+              "time": "11:03",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-003",
+              "from": "me",
+              "text": "他还没好",
+              "time": "11:04",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-004",
+              "from": "小辛",
+              "text": "大哥要小心啊！！！！！！心疼死了！！那一会我给你送点吃的",
+              "time": "11:05",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-005",
+              "from": "me",
+              "text": "不用啦我陪着他，饿不着",
+              "time": "11:06",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240410-006",
+              "from": "wang",
+              "text": "谢谢小辛",
+              "time": "11:07",
+              "sentDate": "2024-04-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240415-001",
+              "from": "me",
+              "text": "设备有问题的1111我",
+              "time": "15:28",
+              "sentDate": "2024-04-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-001",
+              "from": "胡枫",
+              "text": "今天演习手感还不错",
+              "time": "19:13",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-002",
+              "from": "阿威",
+              "text": "我也觉得",
+              "time": "19:14",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-003",
+              "from": "小辛",
+              "text": "默契度upupup中",
+              "time": "19:15",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-004",
+              "from": "胡枫",
+              "text": "我们是无敌的狼崽组合",
+              "time": "19:16",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-005",
+              "from": "小辛",
+              "text": "wowow～～",
+              "time": "19:17",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-006",
+              "from": "仔仔",
+              "text": "wowo～",
+              "time": "19:18",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240416-007",
+              "from": "me",
+              "text": "wowowo～",
+              "time": "19:19",
+              "sentDate": "2024-04-16",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-001",
+              "from": "wang",
+              "text": "辛苦大家，钱还是按以往分，这段时间先不聚在一起了",
+              "time": "17:36",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-002",
+              "from": "小辛",
+              "text": "老头儿那份留吗？",
+              "time": "17:37",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-003",
+              "from": "me",
+              "text": "这次行动他都不知道，留给他岂不是暴露",
+              "time": "17:38",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-004",
+              "from": "wang",
+              "text": "……",
+              "time": "17:39",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-005",
+              "from": "wang",
+              "text": "干爹其实知道",
+              "time": "17:40",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-006",
+              "from": "小辛",
+              "text": "？？？？真的假的",
+              "time": "17:41",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-007",
+              "from": "小辛",
+              "text": "他默许吗所以说",
+              "time": "17:42",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-008",
+              "from": "me",
+              "text": "你跟他说的？",
+              "time": "17:43",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-009",
+              "from": "wang",
+              "text": "他早发现了",
+              "time": "17:44",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-010",
+              "from": "胡枫",
+              "text": "啊",
+              "time": "17:45",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-011",
+              "from": "胡枫",
+              "text": "分干爹一份吧还是，不然他要打死我们了",
+              "time": "17:46",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240429-012",
+              "from": "me",
+              "text": "洗完再分，不着急",
+              "time": "17:47",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            }
+          ]
+        },
+        {
+          "conversationId": "wang",
+          "conversationName": "熙旺",
+          "messages": [
+            {
+              "id": "wx-wang-20240425-001",
+              "from": "me",
+              "text": "哥哥哥哥哥哥",
+              "time": "20:04",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-002",
+              "from": "me",
+              "text": "哥哥～～",
+              "time": "20:04",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-003",
+              "from": "wang",
+              "text": "怎么了蒙蒙",
+              "time": "20:34",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-004",
+              "from": "me",
+              "text": "想你了",
+              "time": "20:35",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-005",
+              "from": "wang",
+              "text": "我也想你",
+              "time": "20:36",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-006",
+              "from": "me",
+              "text": "不信",
+              "time": "20:37",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-007",
+              "from": "wang",
+              "text": "真的，有没有好好吃饭？",
+              "time": "20:38",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-008",
+              "from": "me",
+              "text": "你别去干爹那里了",
+              "time": "20:39",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-009",
+              "from": "wang",
+              "text": "我没有去干爹那里，我在出车",
+              "time": "20:40",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-010",
+              "from": "me",
+              "text": "哼",
+              "time": "20:41",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-011",
+              "from": "wang",
+              "text": "好啦，过了这段时间，我来找你",
+              "time": "20:42",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-012",
+              "from": "me",
+              "text": "我要去看雪！！",
+              "time": "20:43",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240425-013",
+              "from": "wang",
+              "text": "好，陪你去看雪。",
+              "time": "20:44",
+              "sentDate": "2024-04-25",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240429-001",
+              "from": "me",
+              "text": "钱收到了",
+              "time": "20:12",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240429-002",
+              "from": "wang",
+              "text": "好",
+              "time": "20:13",
+              "sentDate": "2024-04-29",
+              "appearance": "immediate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "format": "ximeng-preset-day-v1",
+      "day": 1,
+      "channel": "wechat",
+      "label": "2024-05 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+      "rules": [],
+      "history": [
+        {
+          "conversationId": "group",
+          "conversationName": "GROUP",
+          "messages": [
+            {
+              "id": "wx-group-20240510-001",
+              "from": "小辛",
+              "text": "@胡枫韩国好玩吗？",
+              "time": "21:00",
+              "sentDate": "2024-05-10",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240511-001",
+              "from": "胡枫",
+              "text": "好玩，下次带你来",
+              "time": "00:00",
+              "sentDate": "2024-05-11",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240511-002",
+              "from": "胡枫",
+              "text": "[图片] 胡枫发来的文俊辉自拍",
+              "time": "00:00",
+              "sentDate": "2024-05-11",
+              "appearance": "immediate",
+              "assetId": "wx-media-20240510-hufeng-selfie"
+            },
+            {
+              "id": "wx-group-20240511-003",
+              "from": "小辛",
+              "text": "帅哦",
+              "time": "00:02",
+              "sentDate": "2024-05-11",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240511-004",
+              "from": "阿威",
+              "text": "帅哦",
+              "time": "00:03",
+              "sentDate": "2024-05-11",
+              "appearance": "immediate"
+            }
+          ]
+        },
+        {
+          "conversationId": "wang",
+          "conversationName": "熙旺",
+          "messages": [
+            {
+              "id": "wx-wang-20240502-001",
+              "from": "me",
+              "text": "今天来接我吗",
+              "time": "18:42",
+              "sentDate": "2024-05-02",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240502-002",
+              "from": "wang",
+              "text": "好",
+              "time": "18:45",
+              "sentDate": "2024-05-02",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240503-001",
+              "from": "wang",
+              "text": "饭？",
+              "time": "18:16",
+              "sentDate": "2024-05-03",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240503-002",
+              "from": "me",
+              "text": "不想吃，吃腻了",
+              "time": "18:17",
+              "sentDate": "2024-05-03",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240503-003",
+              "from": "wang",
+              "text": "听话",
+              "time": "18:18",
+              "sentDate": "2024-05-03",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240503-004",
+              "from": "me",
+              "text": "那家店我吃了拉肚子！！！",
+              "time": "18:19",
+              "sentDate": "2024-05-03",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240503-005",
+              "from": "wang",
+              "text": "我收车回来给你带另一家",
+              "time": "18:20",
+              "sentDate": "2024-05-03",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-001",
+              "from": "me",
+              "text": "哥，有没有看最近的新闻",
+              "time": "21:07",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-002",
+              "from": "wang",
+              "text": "哪一个？",
+              "time": "21:08",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-003",
+              "from": "me",
+              "text": "前几天西班牙恐怖分子袭击",
+              "time": "21:09",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-004",
+              "from": "wang",
+              "text": "没有留意，怎么了？",
+              "time": "21:10",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-005",
+              "from": "me",
+              "text": "原来我的雇主是那个恐怖分子头子",
+              "time": "21:11",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-006",
+              "from": "wang",
+              "text": "会查到你吗？",
+              "time": "21:12",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-007",
+              "from": "me",
+              "text": "那倒不会…只是有点…",
+              "time": "21:13",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-008",
+              "from": "me",
+              "text": "你懂吧？",
+              "time": "21:14",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-009",
+              "from": "wang",
+              "text": "阿蒙……",
+              "time": "21:15",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-010",
+              "from": "me",
+              "text": "没想到我的技术居然那么高超，对方可是政府，他们的防火墙我轻轻松松就攻破了",
+              "time": "21:16",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-011",
+              "from": "wang",
+              "text": "原来你在夸奖自己啊",
+              "time": "21:17",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-012",
+              "from": "me",
+              "text": "哥也该夸奖一下我！",
+              "time": "21:18",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-013",
+              "from": "wang",
+              "text": "好，我弟弟最厉害了",
+              "time": "21:19",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-014",
+              "from": "me",
+              "text": "嘿嘿",
+              "time": "21:20",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-wang-20240509-015",
+              "from": "me",
+              "text": "我是天才黑客",
+              "time": "21:21",
+              "sentDate": "2024-05-09",
+              "appearance": "immediate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "format": "ximeng-preset-day-v1",
+      "day": 1,
+      "channel": "wechat",
+      "label": "2024-06 · 群聊/熙旺私聊历史（未指定时刻为拟定）",
+      "rules": [],
+      "history": [
+        {
+          "conversationId": "group",
+          "conversationName": "GROUP",
+          "messages": [
+            {
+              "id": "wx-group-20240613-001",
+              "from": "阿威",
+              "text": "今晚大家聚餐吗？",
+              "time": "17:58",
+              "sentDate": "2024-06-13",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240613-002",
+              "from": "胡枫",
+              "text": "对",
+              "time": "17:59",
+              "sentDate": "2024-06-13",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240613-003",
+              "from": "阿威",
+              "text": "好",
+              "time": "18:00",
+              "sentDate": "2024-06-13",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-001",
+              "from": "wang",
+              "text": "我在多邻国找了一些德语课程@小辛",
+              "time": "20:14",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-002",
+              "from": "小辛",
+              "text": "三哥之前发了一个网盘给我啦",
+              "time": "20:15",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-003",
+              "from": "wang",
+              "text": "辛苦你",
+              "time": "20:16",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-004",
+              "from": "小辛",
+              "text": "没事，我学东西超快，语言天赋一流",
+              "time": "20:17",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-005",
+              "from": "胡枫",
+              "text": "你把韩语学了下次跟我去韩国",
+              "time": "20:18",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-006",
+              "from": "小辛",
+              "text": "你请我去吗？",
+              "time": "20:19",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-007",
+              "from": "胡枫",
+              "text": "我偷熙蒙的钱请你",
+              "time": "20:20",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-008",
+              "from": "小辛",
+              "text": "不敢不敢",
+              "time": "20:21",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-009",
+              "from": "小辛",
+              "text": "二哥能把我打死",
+              "time": "20:22",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-010",
+              "from": "me",
+              "text": "我看得到哦",
+              "time": "20:23",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-011",
+              "from": "仔仔",
+              "text": "韩国人是不是真的不睡觉的？",
+              "time": "20:24",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-012",
+              "from": "胡枫",
+              "text": "对，晚上酒吧还有很多人",
+              "time": "20:25",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-013",
+              "from": "me",
+              "text": "你是不是谈对象了胡枫",
+              "time": "20:26",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-014",
+              "from": "仔仔",
+              "text": "？",
+              "time": "20:27",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-015",
+              "from": "小辛",
+              "text": "！",
+              "time": "20:28",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-016",
+              "from": "阿威",
+              "text": "什么瓜",
+              "time": "20:29",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-017",
+              "from": "胡枫",
+              "text": "我怎么不知道？",
+              "time": "20:30",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-018",
+              "from": "me",
+              "text": "上次发给你的链接是钓鱼网站，你的相册信息我全看见了",
+              "time": "20:31",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-019",
+              "from": "小辛",
+              "text": "什么相册",
+              "time": "20:32",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-020",
+              "from": "me",
+              "text": "有个漂亮的女生哦",
+              "time": "20:33",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-021",
+              "from": "胡枫",
+              "text": "什么相册？我真没有谈啊！！",
+              "time": "20:34",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-022",
+              "from": "小辛",
+              "text": "漂亮的女生",
+              "time": "20:35",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-023",
+              "from": "me",
+              "text": "上个月在伦敦人拍的",
+              "time": "20:36",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-024",
+              "from": "胡枫",
+              "text": "……",
+              "time": "20:37",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-025",
+              "from": "小辛",
+              "text": "……",
+              "time": "20:38",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-026",
+              "from": "wang",
+              "text": "嗯？",
+              "time": "20:39",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-027",
+              "from": "小辛",
+              "text": "那个女生是不是穿红色裙子？",
+              "time": "20:40",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-028",
+              "from": "me",
+              "text": "你认识啊？",
+              "time": "20:41",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-029",
+              "from": "胡枫",
+              "text": "………",
+              "time": "20:42",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-030",
+              "from": "胡枫",
+              "text": "我快笑死了…那个是小辛啊！",
+              "time": "20:43",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-031",
+              "from": "小辛",
+              "text": "是我",
+              "time": "20:44",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-032",
+              "from": "me",
+              "text": "？？？？？？？？",
+              "time": "20:45",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-033",
+              "from": "仔仔",
+              "text": "啊，我给小辛哥做的变装，是女装",
+              "time": "20:46",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-034",
+              "from": "me",
+              "text": "………………",
+              "time": "20:47",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-035",
+              "from": "me",
+              "text": "再也不入侵你们的手机了……我的眼睛",
+              "time": "20:48",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-036",
+              "from": "wang",
+              "text": "阿蒙你别这样对弟弟们",
+              "time": "20:49",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-037",
+              "from": "胡枫",
+              "text": "漂亮的女生@小辛",
+              "time": "20:50",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-038",
+              "from": "小辛",
+              "text": "说明我的脸蛋完美无比，如何",
+              "time": "20:51",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-039",
+              "from": "胡枫",
+              "text": "滚蛋",
+              "time": "20:52",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-040",
+              "from": "阿威",
+              "text": "翻完聊天记录笑死了",
+              "time": "21:22",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-041",
+              "from": "小辛",
+              "text": "请夸我美女",
+              "time": "21:23",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            },
+            {
+              "id": "wx-group-20240615-042",
+              "from": "阿威",
+              "text": "美女🌹",
+              "time": "21:24",
+              "sentDate": "2024-06-15",
+              "appearance": "immediate"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

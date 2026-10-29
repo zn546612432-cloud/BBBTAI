@@ -38,6 +38,7 @@ export function validatePresetPack(raw){
    unique(historyIds,`${raw.channel}:${h.conversationId}:${m.id}`,'历史消息');
    if(m.sentDate!==undefined&&!validDate(m.sentDate))fail(`${m.id} 历史消息日期无效`);
    if(m.appearance!==undefined&&!['immediate','game-time'].includes(m.appearance))fail(`${m.id} 出现方式无效`);
+   if(m.assetId!==undefined&&!ID.test(m.assetId))fail(`${m.id} 素材编号无效`);
   }
  }
  return structuredClone({...raw,history:raw.history||[]});

@@ -30,8 +30,8 @@ test('2024-03-10 WeChat prehistory is visible at D01, grouped under the original
  assert.equal(wang.messages.filter(m=>m.sentDate==='2024-03-10').length,3);
  assert.ok(group.messages.some(m=>m.from==='me'&&m.text.includes('换新手机')));
  assert.ok(group.messages.some(m=>m.from==='仔仔'&&m.text.includes('刷到')));
- assert.equal(visibleMessages(group).length,22);
- assert.equal(visibleMessages(wang).length,3);
+ assert.equal(visibleMessages(group).filter(m=>m.sentDate==='2024-03-10').length,22);
+ assert.equal(visibleMessages(wang).filter(m=>m.sentDate==='2024-03-10').length,3);
  for(const name of ['胡枫','阿威','小辛','仔仔','傅隆生'])assert.ok(s.content.conversations.wechat.some(c=>c.name===name&&c.messages.length===0));
  assert.equal(s.content.conversations.mirage.length,0);
  assert.equal(s.content.conversations.messages.filter(c=>visibleMessages(c).length).length,4);

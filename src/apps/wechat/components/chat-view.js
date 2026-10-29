@@ -4,6 +4,9 @@ import {timestampGroups,timestampLabel} from '../../../services/messaging/timest
 import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
+import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
+
+const historyMediaById=new Map(historyMedia.assets.map(asset=>[asset.id,asset]));
 
 export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
 
@@ -22,16 +25,28 @@ function invite(m,s,c){
     (['pending','deferred'].includes(status)?'<button type="button" data-action="accept-invite" data-id="'+esc(m.invitationId)+'">接受邀请</button>':'<small>'+esc(status==='accepted'?'已接受':'邀请已结束')+'</small>')+'</div>';
 }
 
+/** Historical media are rendered from a vetted, fixed catalogue, not arbitrary URLs in chat text. */
+function historicalMediaBubble(asset,m,s){
+  const title=esc(asset.title),source=esc(asset.sourceUrl);
+  const attribution='<a class="wx-shared-source" href="'+source+'" target="_blank" rel="noopener noreferrer" aria-label="查看素材来源">素材来源 ↗</a>';
+  const visual=asset.kind==='video'
+    ?'<video class="wx-shared-video-player" controls playsinline preload="none" poster="'+esc(asset.posterUrl)+'" aria-label="'+title+'"><source src="'+esc(asset.directUrl)+'" type="video/mp4">你的浏览器不支持视频播放</video>'
+    :'<a href="'+esc(asset.directUrl)+'" target="_blank" rel="noopener noreferrer" aria-label="查看大图：'+title+'"><img class="wx-shared-photo" src="'+esc(asset.directUrl)+'" alt="'+title+'" loading="eager" decoding="async"></a>';
+  return '<div class="wx-bubble wx-bubble-historical-media" title="'+esc(timestampLabel(m,s))+'" role="group" aria-label="'+title+'">'+visual+
+    '<div class="wx-shared-media-footer"><span>'+title+'</span>'+attribution+'</div></div>';
+}
+
 function messageRow(m,s,c){
   if(m.kind==='recalled')return '<div class="wx-recall-notice" data-key="message-'+esc(m.id)+'" role="status">'+(m.recalledBy==='me'?'你':'对方')+'撤回了一条消息</div>';
   const mine=m.from==='me',name=mine?'熙蒙':actorName(c,m.from);
+  const media=m.assetId?historyMediaById.get(m.assetId):null;
   const body=m.kind==='image'?'<img src="'+esc(m.text)+'" alt="聊天图片" class="wx-bubble-picture">':
     m.kind==='app_invitation'?invite(m,s,c):esc(m.text);
-  const isText=!m.kind||m.kind==='text';
+  const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
     portrait(name)+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
-    '<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>'+
+    (media?historicalMediaBubble(media,m,s):'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
     '</div></div>';
 }
 

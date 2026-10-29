@@ -4,6 +4,7 @@ import {parsePresetPayload} from './format.js';
 const historyKey=(channel,conversationId,id)=>`${channel}:${conversationId}:${id}`;
 const authoredMessage=(pack,chat,message)=>({
  id:message.id,from:message.from,text:message.text,time:message.time,
+ ...(message.assetId?{assetId:message.assetId}:{}),
  ...(message.sentDate?{sentDate:message.sentDate}:{}),
  day:pack.day,kind:'text',authored:true,storyImported:true,
  ...(message.appearance==='game-time'?{schedule:{mode:'game-time',day:pack.day,clock:message.time}}:{})
