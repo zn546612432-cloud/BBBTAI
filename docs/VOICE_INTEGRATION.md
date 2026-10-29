@@ -1,19 +1,47 @@
-# 语音接入说明
+# DeepSeek × MiniMax 本地接口（2026-10-30）
 
-当前工程未连接真实语音服务。现有电话页和 `src/services/voice/index.js` 仅保留未连接状态及接口边界，没有真实试听、角色通话或语音识别。
+已按之前的 TTS 截图提供：接口地址、模型、音色 ID、语种、语速和试听。“记忆向量”是独立的语义检索模块，暂未接入。
 
-参考截图中的第二、三页属于 TTS（文字转语音）配置：接口地址指定服务端点，API Key 用于账户鉴权，模型决定语音合成能力，voice_id 决定角色音色，语言与 speed 控制语种和语速。第一张“记忆向量”是语义记忆检索，与生成声音分别接入。
+## 本轮已完成
 
-以 MiniMax 为例，官方同步 HTTP 接口把文字合成为音频；参数包含 model、text、voice_setting.voice_id、voice_setting.speed、language_boost 等。国际站官方示例端点为 `https://api.minimax.io/v1/t2a_v2`，支持 `speech-2.8-turbo`；`Chinese` 与 `Chinese,Yue` 分别用于普通话和粤语增强。账户、Key 和音色必须来自实际使用的服务商站点，不能用几个品牌名切换后共用一套请求格式。
+- GET /api/ai/status：检查本地代理配置（不暴露密钥）。
+- POST /api/ai/chat：调用 DeepSeek Chat Completions，测试熙泰文字回复。
+- POST /api/voice/tts：调用 MiniMax Speech 2.8 HTTP T2A，返回 MP3。
+- 设置 → 开发者模式 → AI / 语音：端口状态、音色设置、DeepSeek 试聊、MiniMax 试听。
 
-官方文档：https://platform.minimax.io/docs/api-reference/speech-t2a-http
+这只是接口与试听实验室；AI 不会自动插入 noapp/MIRAGE/国际象棋聊天，也不会生成长期记忆，直到剧情规则与权限完成。
 
-## 本项目的接入方式
+## Windows PC 操作
 
-1. 为当前静态站点增加后端语音接口，保留现有站点身份和私人访问范围。
-2. API Key 放在后端配置；手机设置只选择服务、角色音色、语种与语速，不把服务端 Key 放进公开源码或本机剧情导出。
-3. 手机提交待朗读的文字和角色标识，后端校验参数并调用选定服务商的适配器。
-4. 后端把音频返回给手机播放器；相同文字、模型、音色和参数可缓存，试听需要真实服务额度。
-5. 若要做到玩家开口、角色作答的通话，再接入麦克风录音、语音识别、聊天模型及语音合成；先完成单句试听与语音消息，再实施连续通话。
+1. 在仓库根目录复制 .env.example 为 .env.local。后者已被 .gitignore 排除。
+2. 在 .env.local 写入 DEEPSEEK_API_KEY=实际密钥 和 MINIMAX_API_KEY=实际密钥；不要把密钥发送到聊天或上传 GitHub。
+3. 用 Node.js 22+ 执行 npm ci、npm run build、npm run dev。
+4. 浏览器打开 http://localhost:5173 ，进入设置 → 开发者模式 → AI / 语音。
+5. 点“检查连接”确定本地密钥是否已配置。检查状态本身不调用收费模型。
+6. 从 MiniMax 控制台复制实际 voice_id，选择 speech-2.8-turbo / speech-2.8-hd、普通话 / 粤语、语速，保存后点击试听。试聊及试听会产生 API 费用。
 
-以上是实现方案，不代表本轮已配置语音账号、产生音频或接通真实通话。
+## 接口示例
+
+POST /api/ai/chat
+请求 JSON：{"day":56,"channel":"noapp","messages":[{"role":"user","content":"在吗？"}]}
+返回 JSON：{"text":"…","day":56,"channel":"noapp"}。
+可用 channel：mirage、noapp、chess。D56 前禁止 noapp。
+
+POST /api/voice/tts
+请求 JSON：{"text":"文件发我。","model":"speech-2.8-turbo","voiceId":"真实voice_id","language":"Chinese,Yue","speed":1}
+返回 audio/mpeg；language 支持 Chinese、Chinese,Yue、auto。
+
+## 安全与上线限制
+
+- 本地服务默认仅监听 127.0.0.1:5173，未提供面向公众的登录、用量限制和权限。**不能直接向互联网暴露本地代理**。
+- GitHub Pages 不运行 Node 服务。静态游戏页面在未部署有鉴权的后端前无法使用这组 API。
+- 不要把 API Key 放在 public/runtime-config.js、浏览器 localStorage 或可导出的剧情 JSON。
+- 目前没有用户实际的 MiniMax / DeepSeek Key 和 MiniMax voice_id，无法声称已连通服务商。
+- 实时通话、MiniMax WebSocket 双向流、麦克风 ASR、角色跨 App 记忆、主动消息与持久化待后续实现。
+
+## 官方依据
+
+- DeepSeek https://api-docs.deepseek.com/api/create-chat-completion/
+- MiniMax Speech HTTP https://platform.minimax.io/docs/api-reference/speech-t2a-http
+- MiniMax Speech WebSocket https://platform.minimax.io/docs/api-reference/speech-t2a-websocket
+- MiniMax Voice Design https://platform.minimax.io/docs/api-reference/voice-design-design
