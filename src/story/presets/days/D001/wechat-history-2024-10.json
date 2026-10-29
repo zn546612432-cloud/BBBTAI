@@ -1,0 +1,197 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-10 · 历史聊天（补充场景均为创作草稿）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-2024-10-01-001",
+          "from": "小辛",
+          "text": "国庆快乐！！！！",
+          "time": "11:18",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-002",
+          "from": "阿威",
+          "text": "国庆快乐",
+          "time": "11:19",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-003",
+          "from": "胡枫",
+          "text": "国庆快乐！",
+          "time": "11:20",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-004",
+          "from": "仔仔",
+          "text": "国庆快乐",
+          "time": "11:21",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-005",
+          "from": "me",
+          "text": "怎么都在刷国庆快乐",
+          "time": "11:22",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-006",
+          "from": "wang",
+          "text": "国庆快乐",
+          "time": "11:24",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-007",
+          "from": "小辛",
+          "text": "阿枫和我下周去韩国玩，有没有要代购的",
+          "time": "11:26",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-008",
+          "from": "仔仔",
+          "text": "韩国有什么小众品牌的衣服吗？我搜一下",
+          "time": "11:30",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-009",
+          "from": "me",
+          "text": "带两把手枪",
+          "time": "11:32",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-010",
+          "from": "小辛",
+          "text": "我塞屁股里带回来吗哥",
+          "time": "11:33",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-011",
+          "from": "me",
+          "text": "可以可以",
+          "time": "11:34",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-10-01-012",
+          "from": "仔仔",
+          "text": "很变态你们！",
+          "time": "11:35",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        }
+      ]
+    },
+    {
+      "conversationId": "wang",
+      "conversationName": "熙旺",
+      "messages": [
+        {
+          "id": "wx-wang-2024-10-01-001",
+          "from": "wang",
+          "text": "国庆快乐",
+          "time": "09:00",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-002",
+          "from": "me",
+          "text": "群发？",
+          "time": "11:00",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-003",
+          "from": "me",
+          "text": "国庆快乐",
+          "time": "11:01",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-004",
+          "from": "wang",
+          "text": "你怎么才醒",
+          "time": "11:02",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-005",
+          "from": "me",
+          "text": "好困，昨天接了个单子",
+          "time": "11:04",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-006",
+          "from": "wang",
+          "text": "我跑车赚的够养你了，你别接单子了",
+          "time": "11:06",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-007",
+          "from": "me",
+          "text": "总不能让你跑一辈子的车。",
+          "time": "11:08",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-008",
+          "from": "me",
+          "text": "早晚我们离开澳门，去澳大利亚买一套别墅，庄园，养养袋鼠多好",
+          "time": "11:10",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-009",
+          "from": "wang",
+          "text": "你怎么想去澳大利亚",
+          "time": "11:12",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-wang-2024-10-01-010",
+          "from": "me",
+          "text": "其实我是不想待在澳门",
+          "time": "11:14",
+          "sentDate": "2024-10-01",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-09 · 历史聊天（补充场景均为创作草稿）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-2024-09-10-001",
+          "from": "仔仔",
+          "text": "我们换新据点了，一会发定位给你们，保持联系",
+          "time": "13:18",
+          "sentDate": "2024-09-10",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-10-002",
+          "from": "胡枫",
+          "text": "好",
+          "time": "13:20",
+          "sentDate": "2024-09-10",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-001",
+          "from": "wang",
+          "text": "各位，干爹来了，今晚聚餐",
+          "time": "17:38",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-002",
+          "from": "仔仔",
+          "text": "我还在机场",
+          "time": "17:39",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-003",
+          "from": "wang",
+          "text": "不急，慢慢，我去接你",
+          "time": "17:40",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-004",
+          "from": "仔仔",
+          "text": "爱你哥",
+          "time": "17:42",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-005",
+          "from": "me",
+          "text": "先走了",
+          "time": "20:42",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-006",
+          "from": "me",
+          "text": "你们记得锁门",
+          "time": "20:43",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-13-007",
+          "from": "胡枫",
+          "text": "okok",
+          "time": "20:45",
+          "sentDate": "2024-09-13",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-001",
+          "from": "胡枫",
+          "text": "新地方隔音怎么样",
+          "time": "22:03",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-002",
+          "from": "仔仔",
+          "text": "应该挺好的 我买了厚窗帘",
+          "time": "22:04",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-003",
+          "from": "小辛",
+          "text": "那我半夜唱歌应该没人投诉了吧",
+          "time": "22:05",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-004",
+          "from": "阿威",
+          "text": "我投诉",
+          "time": "22:07",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-005",
+          "from": "小辛",
+          "text": "为什么啊",
+          "time": "22:08",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-006",
+          "from": "阿威",
+          "text": "我睡你隔壁",
+          "time": "22:09",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-007",
+          "from": "me",
+          "text": "新地方网络接好了，别乱拔工房的线",
+          "time": "22:12",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-008",
+          "from": "wang",
+          "text": "辛苦阿蒙",
+          "time": "22:13",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-009",
+          "from": "me",
+          "text": "哥欠我一顿饭",
+          "time": "22:14",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-18-010",
+          "from": "wang",
+          "text": "好",
+          "time": "22:16",
+          "sentDate": "2024-09-18",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-24-001",
+          "from": "阿威",
+          "text": "这个格斗术真难学",
+          "time": "18:23",
+          "sentDate": "2024-09-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-24-002",
+          "from": "胡枫",
+          "text": "我也觉得………",
+          "time": "18:24",
+          "sentDate": "2024-09-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-24-003",
+          "from": "wang",
+          "text": "没事，我到时候教你们",
+          "time": "18:25",
+          "sentDate": "2024-09-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-24-004",
+          "from": "阿威",
+          "text": "旺哥超厉害，一学就会",
+          "time": "18:26",
+          "sentDate": "2024-09-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-24-005",
+          "from": "wang",
+          "text": "多谢夸奖…",
+          "time": "18:27",
+          "sentDate": "2024-09-24",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-001",
+          "from": "小辛",
+          "text": "下周出门有人帮我看一下行李没",
+          "time": "23:09",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-002",
+          "from": "胡枫",
+          "text": "你这次别再带半个房间的东西",
+          "time": "23:10",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-003",
+          "from": "仔仔",
+          "text": "我还以为你们只去几天",
+          "time": "23:11",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-004",
+          "from": "小辛",
+          "text": "你懂什么 这叫精致生活",
+          "time": "23:12",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-005",
+          "from": "me",
+          "text": "上次你在机场差点把零食撒一地",
+          "time": "23:13",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-09-29-006",
+          "from": "小辛",
+          "text": "那是意外！！",
+          "time": "23:15",
+          "sentDate": "2024-09-29",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

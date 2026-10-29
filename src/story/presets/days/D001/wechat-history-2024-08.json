@@ -1,0 +1,183 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-08 · 历史聊天（补充场景均为创作草稿）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "group",
+      "conversationName": "GROUP",
+      "messages": [
+        {
+          "id": "wx-group-2024-08-21-001",
+          "from": "me",
+          "text": "设备有问题11111",
+          "time": "15:26",
+          "sentDate": "2024-08-21",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-21-002",
+          "from": "wang",
+          "text": "这批枪手感不是很好",
+          "time": "15:28",
+          "sentDate": "2024-08-21",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-21-003",
+          "from": "me",
+          "text": "之前那个卖家被抓了，我在物色新的货源了",
+          "time": "15:31",
+          "sentDate": "2024-08-21",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-001",
+          "from": "阿威",
+          "text": "下午还演习吗",
+          "time": "10:10",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-002",
+          "from": "wang",
+          "text": "改体能训练",
+          "time": "10:12",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-003",
+          "from": "小辛",
+          "text": "我突然想起来下午有事",
+          "time": "10:14",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-004",
+          "from": "胡枫",
+          "text": "你刚才还说今天很闲",
+          "time": "10:17",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-005",
+          "from": "仔仔",
+          "text": "我给大家做了新队标贴纸",
+          "time": "10:21",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-006",
+          "from": "me",
+          "text": "不给小辛",
+          "time": "10:22",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-007",
+          "from": "小辛",
+          "text": "我现在就到",
+          "time": "10:23",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-008",
+          "from": "wang",
+          "text": "先练保护动作，上回有人手腕还肿着",
+          "time": "10:25",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-25-009",
+          "from": "小辛",
+          "text": "为什么感觉在说我",
+          "time": "10:26",
+          "sentDate": "2024-08-25",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-001",
+          "from": "wang",
+          "text": "急救包在哪？",
+          "time": "20:42",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-002",
+          "from": "仔仔",
+          "text": "沙发旁边",
+          "time": "20:43",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-003",
+          "from": "阿威",
+          "text": "我拿过来了",
+          "time": "20:44",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-004",
+          "from": "仔仔",
+          "text": "现在怎么样了情况",
+          "time": "20:47",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-005",
+          "from": "wang",
+          "text": "得带小辛去医生那",
+          "time": "21:17",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-006",
+          "from": "wang",
+          "text": "我带他去，熙蒙你看着大家",
+          "time": "21:18",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-007",
+          "from": "me",
+          "text": "好，注意安全",
+          "time": "21:19",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-008",
+          "from": "阿威",
+          "text": "车在下面，我陪他们等消息",
+          "time": "21:20",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-2024-08-30-009",
+          "from": "me",
+          "text": "都先别乱跑，有消息我会说",
+          "time": "21:21",
+          "sentDate": "2024-08-30",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

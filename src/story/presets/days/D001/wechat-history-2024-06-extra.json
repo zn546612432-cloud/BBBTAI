@@ -1,0 +1,47 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-06-extra · 历史聊天（补充场景均为创作草稿）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "hufeng",
+      "conversationName": "胡枫",
+      "messages": [
+        {
+          "id": "wx-hufeng-2024-06-11-001",
+          "from": "me",
+          "text": "https://album-check.invalid/share/0611",
+          "time": "21:08",
+          "sentDate": "2024-06-11",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-hufeng-2024-06-11-002",
+          "from": "胡枫",
+          "text": "这是啥",
+          "time": "21:15",
+          "sentDate": "2024-06-11",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-hufeng-2024-06-11-003",
+          "from": "me",
+          "text": "一个相册链接，帮我试试",
+          "time": "21:18",
+          "sentDate": "2024-06-11",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-hufeng-2024-06-11-004",
+          "from": "胡枫",
+          "text": "哦",
+          "time": "21:20",
+          "sentDate": "2024-06-11",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "format": "ximeng-preset-day-v1",
+  "day": 1,
+  "channel": "wechat",
+  "label": "2024-04-extra · 历史聊天（补充场景均为创作草稿）",
+  "rules": [],
+  "history": [
+    {
+      "conversationId": "xiaoxin",
+      "conversationName": "小辛",
+      "messages": [
+        {
+          "id": "wx-xiaoxin-2024-04-08-001",
+          "from": "小辛",
+          "text": "旺旺哥好点了吗？他怎么摔成这那样的好恐怖啊",
+          "time": "16:06",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-002",
+          "from": "小辛",
+          "text": "用不用我们去看他？",
+          "time": "16:06",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-003",
+          "from": "me",
+          "text": "死老头非要他练习翻楼",
+          "time": "16:13",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-004",
+          "from": "me",
+          "text": "三楼摔下来真是把我吓死了",
+          "time": "16:13",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-005",
+          "from": "小辛",
+          "text": "大哥真的不容易……",
+          "time": "16:14",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-006",
+          "from": "me",
+          "text": "你们也小心一点吧",
+          "time": "16:16",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-007",
+          "from": "me",
+          "text": "相信我的技术，你们大大方方走正门我也能保证你们不被监控拍到",
+          "time": "16:17",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-008",
+          "from": "小辛",
+          "text": "我百分百相信哥你的",
+          "time": "16:19",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-009",
+          "from": "小辛",
+          "text": "超安心！",
+          "time": "16:19",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-010",
+          "from": "小辛",
+          "text": "那我明天给大哥带点吃的？",
+          "time": "16:22",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-011",
+          "from": "me",
+          "text": "先让他休息吧，你别带着一帮人上来闹他",
+          "time": "16:24",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-xiaoxin-2024-04-08-012",
+          "from": "小辛",
+          "text": "收到收到 我小声一点",
+          "time": "16:25",
+          "sentDate": "2024-04-08",
+          "appearance": "immediate"
+        }
+      ]
+    }
+  ]
+}
