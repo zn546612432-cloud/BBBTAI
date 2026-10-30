@@ -70,4 +70,5 @@ export const submit=(form,ctx)=>{
 };
 export function mountCallEvents({store}){
  window.addEventListener('ximeng:tai-incoming-call',e=>startIncoming({store},String(e.detail?.preview||'熙泰邀请你语音通话')));
+ window.addEventListener('ximeng:noapp-voice-sent',e=>{const id=e.detail?.messageId;if(id)queueTaiReply({store,refresh:()=>{},toast:()=>{}},id);});
 }
