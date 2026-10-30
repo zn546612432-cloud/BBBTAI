@@ -4,17 +4,17 @@
 const TAGS=new Set(['laughs','chuckle','coughs','clear-throat','groans','breath','pant','inhale','exhale','gasps','sniffs','sighs','snorts','burps','lip-smacking','humming','hissing','emm','sneezes']);
 const ALIASES={gasp:'gasps',sigh:'sighs',laugh:'laughs',crying:'sniffs',yawns:'sighs',whispers:'breath'};
 const EMOTION={
- neutral:{speed:0.98,emotion:'',tag:'breath'},
- dry:{speed:0.96,emotion:'',tag:'snorts'},
- playful:{speed:1.03,emotion:'fluent',tag:'chuckle'},
- soft:{speed:0.91,emotion:'calm',tag:'exhale'},
- serious:{speed:0.95,emotion:'calm',tag:'breath'},
- danger:{speed:0.94,emotion:'calm',tag:'inhale'},
- happy:{speed:1.04,emotion:'happy',tag:'chuckle'},
- sad:{speed:0.88,emotion:'sad',tag:'sighs'},
- angry:{speed:0.95,emotion:'angry',tag:'snorts'},
- fearful:{speed:1.07,emotion:'fearful',tag:'inhale'},
- surprised:{speed:1,emotion:'surprised',tag:'gasps'},
+ neutral:{speed:0.92,emotion:'',tag:'breath'},
+ dry:{speed:0.91,emotion:'',tag:'snorts'},
+ playful:{speed:0.96,emotion:'fluent',tag:'chuckle'},
+ soft:{speed:0.87,emotion:'calm',tag:'exhale'},
+ serious:{speed:0.90,emotion:'calm',tag:'breath'},
+ danger:{speed:0.91,emotion:'calm',tag:'inhale'},
+ happy:{speed:0.99,emotion:'happy',tag:'chuckle'},
+ sad:{speed:0.86,emotion:'sad',tag:'sighs'},
+ angry:{speed:0.91,emotion:'angry',tag:'snorts'},
+ fearful:{speed:1.00,emotion:'fearful',tag:'inhale'},
+ surprised:{speed:0.97,emotion:'surprised',tag:'gasps'},
  disgusted:{speed:0.95,emotion:'disgusted',tag:'snorts'}
 };
 function hash(s){let n=2166136261;for(const ch of s)n=Math.imul(n^ch.charCodeAt(0),16777619)>>>0;return n;}
