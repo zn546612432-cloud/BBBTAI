@@ -1,3 +1,4 @@
+import {WALLET_CHALLENGE_ID,completeWalletChallenge} from '../mirage/contacts-seed.js';
 import {defaultConfig} from './catalog.js';
 import {createBoard} from './games/logic.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
@@ -39,7 +40,15 @@ export function nextGhostRound(s,id){
  return true;
 }
 export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const cfg=configFor(s,o.type,o.id);if(o.attempts>=cfg.retries)return false;o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);o.moves=0;o.errors=0;return true;}
-export function finish(s,id,success,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||o.status!=='running')return;o.status=success?'success':'failed';g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});}
+export function finish(s,id,success,now=Date.now()){
+ const g=ensureGhost(s),o=g.orders[id];
+ if(!o||o.status!=='running')return;
+ o.status=success?'success':'failed';
+ g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});
+ // Trigger the scripted D05 conversation and 10 BTC credit ONLY after
+ // the player successfully solves the challenge. This is idempotent.
+ if(success&&id===WALLET_CHALLENGE_ID)completeWalletChallenge(s);
+}
 export function submit(s,id,now=Date.now()){const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
 export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;changed=true;}}}return changed;}
 
