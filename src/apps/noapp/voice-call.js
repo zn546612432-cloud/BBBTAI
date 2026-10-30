@@ -36,9 +36,13 @@ export function callView(){
  const subtitle=ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
-   active?phoneButton('tai-mic',call.listening?'点击结束':'麦克风已开',glyph.mic,'is-mic'+(call.listening?' is-listening':''))+
-   phoneButton('tai-hangup','取消',glyph.hang,'is-hang')+
-   phoneButton('tai-speaker',call.speaker?'扬声器已开':'扬声器已关',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':'')):
+   active?
+   phoneButton('tai-speaker',call.speaker?'扬声器':'扬声器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':''))+
+   phoneButton('tai-expand','通话字幕',glyph.layout,'is-secondary')+
+   phoneButton('tai-mute',call.muted?'取消静音':'静音',call.muted?glyph.quiet:glyph.mic,'is-secondary')+
+   phoneButton('tai-mic',call.listening?'结束说话':'按下说话',glyph.mic,'is-secondary'+(call.listening?' is-listening':''))+
+   phoneButton('tai-hangup','结束',glyph.hang,'is-hang')+
+   phoneButton('tai-expand','拨号键盘',glyph.plus,'is-secondary'):
    phoneButton('tai-hangup','取消',glyph.hang,'is-hang');
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="文字转写"><header>通话文字 <button type="button" data-action="tai-expand" aria-label="关闭文字转写">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="发文字继续通话…"><button type="submit" '+(call.busy?'disabled':'')+'>发送</button></form></div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="log" aria-live="polite">'+call.turns.slice(-5).map(t=>'<p class="'+(t.role==='user'?'mine':'theirs')+'">'+esc(t.content)+'</p>').join('')+(call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 播放语音</button>':'')+'</div>':'';
@@ -50,7 +54,7 @@ export function callView(){
    '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
    '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
    liveCaptions+transcript+
-   '<div class="tai-call-bottom'+(ring?' two-actions':'')+'">'+controls+'</div>'+
+   '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
    '</section>';
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
