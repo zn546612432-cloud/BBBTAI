@@ -38,7 +38,7 @@ export function render({store},loc){
  if(loc.route==='/settings-ai')return setting(s);
  const head=s.day>=56?'<div class="noapp-voice-actions">'+
  btn('tai-api-settings','⚙ AI 设置','')+
- (id==='tai'?btn('tai-outgoing','☎ 语音电话','')+btn('tai-record','🎤 录语音 / 停止','')+btn('tai-test-incoming','模拟熙泰来电',''):'')+
+ (id==='tai'?btn('tai-outgoing','☎ 语音电话','')+btn('tai-record','🎤 录语音 / 停止','')+btn('tai-test-incoming','模拟熙泰来电','')+btn('tai-last-voice','让熙泰发语音',''):'')+
  '</div>':'';
  const note=id==='tai'?'<div class="noapp-voice-hint">语音文件只保存在你的设备；长按不必，点击开始，再点击结束。</div>':'';
  return '<div class="noapp-shell"><div class="noapp-note"><span>◈　私人频道</span>'+demo()+'</div>'+head+note+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:''}):chatList(s,'noapp'))+'</div>';
@@ -57,6 +57,7 @@ export async function handle(action,target,ctx){
  if(action==='tai-record')await toggleVoiceRecord(ctx);
  if(action==='tai-play-voice')await playVoiceMessage(id,ctx);
  if(action==='tai-convert-voice'){await convertTaiTextToVoice(ctx,id);ctx.toast('熙泰的语音已合成');}
+ if(action==='tai-last-voice'){const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai');const last=c?.messages.slice().reverse().find(m=>m.from==='tai'&&m.kind==='text');if(!last){ctx.toast('先和熙泰聊几句');return;}await convertTaiTextToVoice(ctx,last.id);ctx.toast('熙泰发来一条语音');}
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
