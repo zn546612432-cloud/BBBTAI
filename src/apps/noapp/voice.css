@@ -36,3 +36,7 @@
 .tai-api-setup input,.tai-api-setup select{padding:12px;font-size:16px;background:#121c2c;color:white;border:1px solid #50647e;border-radius:11px;min-height:44px}
 .tai-api-setup .button-primary{border-radius:12px;min-height:48px}
 .tai-api-setup p{font-size:11px;line-height:1.7;color:#97a9c5}
+
+.app-noapp .tai-chat-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 42px;box-shadow:0 2px 8px #0005;display:block}
+.app-noapp .noapp-composer-mic{border-radius:50%!important;background:#213c51!important;color:#dff0ff!important;font-size:17px!important;min-width:33px!important}
+.app-noapp .tai-make-voice{font-size:11px}
