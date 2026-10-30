@@ -39,13 +39,22 @@ export async function askTai({channel,day,messages,profile,memories}){
  const c=apiConfig(),req={channel,day,messages,profile,memories};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const {buildTaiPrompt}=await import('./tai-profile.js');
- const s=buildTaiPrompt(req);
- const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
-  model:'deepseek-flash',thinking:{type:'disabled'},messages:[{role:'system',content:s},...messages],
-  response_format:{type:'json_object'},max_tokens:1600,stream:false
- });
- const text=String(result.choices?.[0]?.message?.content||'').trim();
- if(!text)throw Error('DeepSeek 返回了空消息');
+ const system=buildTaiPrompt(req);
+ const base={model:'deepseek-flash',thinking:{type:'disabled'},
+  messages:[{role:'system',content:system},...messages],max_tokens:2400,stream:false};
+ // DeepSeek warns that JSON mode can return whitespace/empty content.
+ // Retry once without JSON response_format; never save empty chat bubbles.
+ let result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,
+  {...base,response_format:{type:'json_object'}});
+ let text=String(result.choices?.[0]?.message?.content||'').trim();
+ if(!text||text==='{}'||text==='{"messages":[]}'){
+  result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
+   ...base,response_format:{type:'text'},
+   messages:[...base.messages,{role:'system',content:'上一个回答是空的。请直接给出非空的角色聊天回复；可以用自然文字，不要空JSON。不要解释错误原因。'}]
+  });
+  text=String(result.choices?.[0]?.message?.content||'').trim();
+ }
+ if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
 export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1,tone='neutral'}){
