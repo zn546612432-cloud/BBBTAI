@@ -23,8 +23,8 @@ test('NoApp Tai replies use the local gateway and stay separate from fixed story
   const reply=store.get().content.conversations.noapp.find(c=>c.id==='tai').messages.at(-1);
   assert.equal(reply.text,'我还在看那份文件。');
   assert.equal(reply.aiGenerated,true);
-  assert.equal(reply.actual,false);
-  assert.equal(reply.testOnly,true);
+  assert.equal(reply.actual,true);
+  assert.equal(reply.testOnly,undefined);
  }finally{globalThis.fetch=original;}
 });
 test('a fixed reply after the player message prevents an extra AI reply',async()=>{
@@ -34,4 +34,24 @@ test('a fixed reply after the player message prevents an extra AI reply',async()
  const result=await replyToTaiMessage(store,'player-test');
  assert.equal(result.status,'scripted');
  assert.equal(chat.messages.at(-1).id,'scripted-test');
+});
+
+test('three Xitai text bubbles arrive in order without waiting for voice synthesis',async()=>{
+ const store=makeStore(),chat=store.get().content.conversations.noapp.find(c=>c.id==='tai');
+ chat.messages.push({id:'burst-player',from:'me',text:'刚才那个模型？',kind:'text',actual:true,day:56,time:'22:00'});
+ const previous=globalThis.fetch;
+ globalThis.fetch=async url=>new Response(JSON.stringify(url.endsWith('/status')
+  ?{mode:'local-only',deepseek:true,minimax:false}
+  :{text:JSON.stringify({messages:[
+   {text:'我看过。',mode:'text',tone:'dry'},
+   {text:'它的延迟很高。',mode:'text',tone:'serious'},
+   {text:'你应该先测实际负载。',mode:'text',tone:'neutral'}
+  ]})}),{status:200,headers:{'content-type':'application/json'}});
+ try{
+  const result=await replyToTaiMessage(store,'burst-player');
+  assert.equal(result.count,3);
+  const messages=store.get().content.conversations.noapp.find(c=>c.id==='tai').messages;
+  assert.deepEqual(messages.slice(-3).map(x=>x.text),['我看过。','它的延迟很高。','你应该先测实际负载。']);
+  assert.equal(messages.at(-1).actual,true);
+ }finally{globalThis.fetch=previous;}
 });
