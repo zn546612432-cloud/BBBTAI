@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {contacts,initializeMirage,completeWalletChallenge,WALLET_CHALLENGE_ID} from '../src/apps/mirage/data.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
-import {authorize,begin,nextGhostRound} from '../src/apps/ghost/state.js';
+import {authorize,begin,finish,nextGhostRound} from '../src/apps/ghost/state.js';
 import {missionProgress} from '../src/apps/developer/features/mission/index.js';
 import {XITAI_VOICE_ID,apiConfig,saveApiConfig} from '../src/services/ai/gateway.js';
 import {ORIGINAL_WORLDBOOKS} from '../src/services/ai/original-worldbooks.js';
@@ -62,4 +62,34 @@ test('only the supplied fixed voice can be saved; original worldbook text stays 
  finally{if(original===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=original;}
  assert.equal(Object.keys(ORIGINAL_WORLDBOOKS).length,4);
  assert.ok(ORIGINAL_WORLDBOOKS.relationship.length>13000);
+});
+
+test('D05 wallet reward is locked behind successful GHOST run, never issued on mere acceptance',()=>{
+ const store=makeStore(),s=store.get();s.day=5;s.clock='21:00';
+ initializeMirage(store);
+ const order=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
+ order.status='ACCEPTED';
+ s.ghost.orderConfigs??={};
+ s.ghost.orderConfigs[WALLET_CHALLENGE_ID]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
+ authorize(s,{orderId:WALLET_CHALLENGE_ID,type:'veil',mailId:null});
+ assert.equal(s.events.some(x=>x.type==='mirage_wallet_challenge_completed'),false);
+ assert.equal(s.content.conversations.mirage.some(x=>x.id==='mc-ourob-d05'),false);
+ assert.equal(begin(s,WALLET_CHALLENGE_ID,1000),true);
+ finish(s,WALLET_CHALLENGE_ID,true,2000);
+ assert.equal(s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status,'COMPLETED');
+ assert.equal(s.content.mirage.transactions.filter(x=>x.id==='ou-btc10').length,1);
+ assert.equal(s.events.filter(x=>x.type==='mirage_wallet_challenge_completed').length,1);
+ assert.equal(s.content.conversations.mirage.find(x=>x.id==='mc-ourob-d05').messages.length,6);
+ finish(s,WALLET_CHALLENGE_ID,true,3000);
+ assert.equal(s.events.filter(x=>x.type==='mirage_wallet_challenge_completed').length,1);
+});
+test('failed D05 Ghost attempts leave the 10BTC reward and congratulations locked',()=>{
+ const store=makeStore(),s=store.get();s.day=5;
+ initializeMirage(store);s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
+ authorize(s,{orderId:WALLET_CHALLENGE_ID,type:'veil',mailId:null});
+ assert.equal(begin(s,WALLET_CHALLENGE_ID,1000),true);
+ finish(s,WALLET_CHALLENGE_ID,false,2000);
+ assert.equal(s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status,'ACCEPTED');
+ assert.equal(s.content.mirage.transactions.some(x=>x.id==='ou-btc10'),false);
+ assert.equal(s.events.some(x=>x.type==='mirage_wallet_challenge_completed'),false);
 });
