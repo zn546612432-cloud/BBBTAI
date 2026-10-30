@@ -1,5 +1,6 @@
 import {btn,card,esc} from '../../../../system/ui.js';
-import {aiStatus,askTai,voicePreview} from '../../../../services/ai/gateway.js';
+import {aiStatus,voicePreview} from '../../../../services/ai/gateway.js';
+import {taiReviewPanel,handleTaiReview,submitTaiReview} from '../ai-profile/index.js';
 
 const defaults={voiceId:'',model:'speech-2.8-turbo',language:'Chinese',speed:1};
 const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===value?' selected':'')+'>'+esc(label)+'</option>';
@@ -22,17 +23,13 @@ export function aiVoicePanel(s){
     card('<h3>试听（会消耗 MiniMax 额度）</h3><textarea id="ai-voice-sample" rows="2" maxlength="800">别急。你把文件发我，我看看。</textarea>'+
     btn('ai-test-voice','生成并播放试听','button-primary wide')+
     '<audio id="ai-voice-player" controls hidden style="width:100%;margin-top:12px"></audio>')+
-    card('<h3>DeepSeek · 熙泰试聊</h3>'+
-    '<p class="editor-help">只验证文字端口，不写入正式剧情、记忆或聊天存档。</p>'+
-    '<textarea id="ai-chat-sample" rows="2" maxlength="2000">你今天在忙什么？</textarea>'+
-    btn('ai-test-chat','试聊熙泰（会消耗 DeepSeek 额度）','button-quiet wide')+
-    '<p id="ai-chat-result" class="editor-help" aria-live="polite">尚无测试回复</p>')+
-    '<p class="editor-help">注意：语音识别、实时通话与跨 App 长期记忆尚未接入。本页仅调试本地 API 和语音参数。</p>'+
-  '</div>';
+    '<p class="editor-help">语音识别与实时通话尚未接入；付费接口只在本机服务端配置密钥后可调用。</p>'+
+  '</div>'+taiReviewPanel(s);
 }
 function show(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 export async function handleAIVoice(action,t,ctx){
-  if(!['ai-check-ports','ai-test-voice','ai-test-chat'].includes(action))return false;
+  if(await handleTaiReview(action,t,ctx))return true;
+  if(!['ai-check-ports','ai-test-voice'].includes(action))return false;
   try {
     if(action==='ai-check-ports'){
       show('ai-port-status','检测中…');
@@ -53,22 +50,14 @@ export async function handleAIVoice(action,t,ctx){
         player.play().catch(()=>ctx.toast('音频已生成，请点播放器上的播放键'));
       }
     }
-    if(action==='ai-test-chat'){
-      const sample=document.getElementById('ai-chat-sample')?.value?.trim();
-      if(!sample)throw Error('请先填写试聊文字');
-      show('ai-chat-result','正在生成回复…');
-      const day=ctx.store.get().day, channel=day>=56?'noapp':'mirage';
-      const data=await askTai({day,channel,messages:[{role:'user',content:sample}]});
-      show('ai-chat-result',data.text);
-    }
   }catch(e){
-    if(action==='ai-test-chat')show('ai-chat-result',e.message);
-    else if(action==='ai-check-ports')show('ai-port-status',e.message);
+    if(action==='ai-check-ports')show('ai-port-status',e.message);
     ctx.toast(e.message);
   }
   return true;
 }
 export function submitAIVoice(form,ctx){
+  if(submitTaiReview(form,ctx))return true;
   if(form.dataset.form!=='ai-voice-config')return false;
   const values=new FormData(form);
   const voiceId=String(values.get('voiceId')||'').trim();

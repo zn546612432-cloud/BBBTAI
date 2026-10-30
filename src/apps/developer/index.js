@@ -86,7 +86,7 @@ export function input(t,ctx){
 }
 export function submit(f,ctx){const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
- if(form==='ai-voice-config'){submitAIVoice(f,ctx);return;}
+ if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}
  if(form?.startsWith('phone-')){
   const value=key=>String(data.get(key)||'').trim();
   const name=value('name'),number=value('number'),place=value('place'),day=value('day'),id=value('id');

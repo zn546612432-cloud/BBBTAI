@@ -1,4 +1,5 @@
 // Local-only AI gateway. Never publish this handler as an unauthenticated public API.
+import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
 const reply = (res, status, payload) => {
@@ -27,16 +28,18 @@ async function provider(url,key,input) {
   if(!response.ok)throw fail(502,'服务商请求失败（HTTP '+response.status+'）');
   return json;
 }
-const prompt = (day,channel) => [
-  '你正在扮演虚构互动叙事《熙蒙的手机》中的熙泰，是地下黑客 Dr. Ouroboros。',
-  '对话必须自然、简短、碎片化；聊到破译、攻击和技术挑战会更有表达欲。可以有脾气、拒绝、争执或冷战，不总是迁就熙蒙。',
-  '你和熙蒙感情深厚但不是无条件顺从。你不会干预熙蒙独立接单。',
-  '在 MIRAGE 对话时你是匿名黑客；D56 前不可揭露身份，NoApp 仅 D56 起开放。',
-  '你只能知道已经发生且有合理来源的信息，不可预知未来，不可篡改固定主线、电影结局或主动完成任务。',
-  '剧情中的网络犯罪仅作虚构叙事，不提供可直接执行的侵入、恶意软件、钓鱼或窃取步骤。',
-  '不要写舞台动作、心理描写或长段旁白。只返回熙泰本人发出的聊天文字。',
-  '当前游戏天数 D'+day+'；频道 '+channel+'。'
-].join('\n');
+function reviewDraft(payload){
+ const profile=payload.profile??{},memories=payload.memories??[];
+ if(!profile||typeof profile!=='object'||Array.isArray(profile))throw fail(400,'人物设定格式不合法');
+ for(const field of taiProfileFields)if(profile[field.key]!==undefined&&
+   (typeof profile[field.key]!=='string'||!profile[field.key].trim()||profile[field.key].length>1800))throw fail(400,'人物设定内容不合法');
+ if(!Array.isArray(memories)||memories.length>30)throw fail(400,'记忆数量不合法');
+ for(const memory of memories)if(!memory||!Number.isInteger(memory.day)||memory.day<1||memory.day>90||
+   typeof memory.text!=='string'||!memory.text.trim()||memory.text.length>600||
+   typeof memory.source!=='string'||memory.source.length>80||
+   !['shared','mirage','noapp','chess'].includes(memory.visibility))throw fail(400,'记忆格式不合法');
+ return {profile,memories};
+}
 export async function handleAIGateway(req,res,pathname) {
   if(!pathname.startsWith('/api/'))return false;
   if(pathname==='/api/ai/status'&&req.method==='GET'){
@@ -62,9 +65,10 @@ export async function handleAIGateway(req,res,pathname) {
         return {role:m.role,content:m.content};
       });
       if(messages.at(-1).role!=='user')throw fail(400,'最后一条必须是玩家消息');
+      const {profile,memories}=reviewDraft(payload);
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         model:process.env.DEEPSEEK_MODEL||'deepseek-flash',
-        messages:[{role:'system',content:prompt(day,channel)},...messages],
+        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories})},...messages],
         stream:false,max_tokens:350
       });
       const text=data.choices?.[0]?.message?.content;

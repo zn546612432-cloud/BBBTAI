@@ -33,7 +33,7 @@ function nextAlarm(s,from,end){
 }
 export function advanceGameMinutes(s,requested){
  syncDeathNight(s);
- if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0)return {minutes:0};
+ if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  const from=absoluteMinute(s),target=from+Math.max(0,Math.floor(requested));
  if(target<=from)return {minutes:0};
  if(s.deathPhase==='draining'){

@@ -55,6 +55,29 @@ test('pre-D56 MIRAGE prompt preserves secret identity; provider keys remain serv
     assert.equal(seen.headers.Authorization,'Bearer test-secret');
   });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
 });
+test('reviewed persona and only visible memories reach DeepSeek',async()=>{
+  const old=process.env.DEEPSEEK_API_KEY,originalFetch=globalThis.fetch;
+  process.env.DEEPSEEK_API_KEY='test-secret';
+  let seen;
+  globalThis.fetch=(url,init)=>String(url).startsWith('https://api.deepseek.com')
+    ?(seen=JSON.parse(init.body),Promise.resolve(new Response(JSON.stringify({choices:[{message:{content:'收到。'}}]}),{status:200,headers:{'content-type':'application/json'}})))
+    :originalFetch(url,init);
+  try{await withGateway(async base=>{
+    const r=await post(base,'/api/ai/chat',{
+      day:58,channel:'noapp',profile:{temperament:'经作者修改的性格'},
+      memories:[
+        {day:57,source:'NoApp 对话',visibility:'noapp',text:'已确认的共同事实'},
+        {day:59,source:'未来',visibility:'shared',text:'未来事件不能看见'},
+        {day:57,source:'MIRAGE',visibility:'mirage',text:'别的频道不能看见'}
+      ],messages:[{role:'user',content:'在吗？'}]
+    });
+    assert.equal(r.status,200);
+    const prompt=seen.messages[0].content;
+    assert.match(prompt,/经作者修改的性格/);
+    assert.match(prompt,/已确认的共同事实/);
+    assert.doesNotMatch(prompt,/未来事件不能看见|别的频道不能看见/);
+  });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
+});
 test('MiniMax returns hex MP3 as binary audio',async()=>{
   const old=process.env.MINIMAX_API_KEY,originalFetch=globalThis.fetch;
   process.env.MINIMAX_API_KEY='test-secret';

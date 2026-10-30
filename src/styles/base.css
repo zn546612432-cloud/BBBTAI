@@ -400,6 +400,13 @@ to{opacity:1;transform:none}
 .editor-actors summary span{float:right;color:#91a2ae}
 .editor-actor-list{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}
 .editor-save-note,.editor-help{font-size:11px;line-height:1.7;color:#8195a4;margin:12px 0 0}
+.ai-review-panel{margin-top:18px}.ai-review-panel .card{margin-bottom:14px}
+.ai-review-panel label strong{display:block;color:#29445a;font-size:13px;margin-bottom:2px}
+.ai-review-panel label small{display:block;color:#8295a3;margin-bottom:6px}
+.ai-review-panel input,.ai-review-panel select,.ai-review-panel textarea{width:100%;box-sizing:border-box;margin-top:5px}
+.ai-review-panel textarea{min-height:76px;resize:vertical;line-height:1.6}
+.ai-review-panel .ai-test-context{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ai-prompt-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:330px;overflow:auto;padding:12px;border-radius:10px;background:#eef3f7;color:#3b5366;font:11px/1.6 ui-monospace,monospace}
 .editor-list-heading{display:flex;justify-content:space-between;align-items:center;margin-top:25px}
 .editor-list-heading strong{font-size:15px}
 .editor-list-heading>span{font-size:11px;color:#8195a4}

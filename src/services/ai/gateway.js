@@ -2,14 +2,14 @@
 async function requestJSON(path,body){
   let response;
   try{response=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{cache:'no-store'});}
-  catch{throw Error('本地 AI 接口未启动：请用 npm run dev 打开 localhost:5173');}
+  catch{throw Error('AI 接口未启动：请使用本机开发服务');}
   let data;
-  try{data=await response.json();}catch{throw Error('接口未返回 JSON：GitHub Pages 没有后端服务');}
+  try{data=await response.json();}catch{throw Error('此公开预览仅供审阅，未部署付费 AI 后端');}
   if(!response.ok)throw Error(data.error||'接口请求失败');
   return data;
 }
 export const aiStatus=()=>requestJSON('/api/ai/status');
-export const askTai=({channel,day,messages})=>requestJSON('/api/ai/chat',{channel,day,messages});
+export const askTai=({channel,day,messages,profile,memories})=>requestJSON('/api/ai/chat',{channel,day,messages,profile,memories});
 export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1}){
   let response;
   try{response=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId,model,language,speed})});}

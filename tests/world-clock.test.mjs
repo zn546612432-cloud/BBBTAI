@@ -29,11 +29,11 @@ test('recovery sleep wakes at 08:00 with full charge when no earlier alarm',()=>
  assert.equal(setSleeping(s),true);assert.equal(tickWorld(s,20_000).event,'wake');
  assert.equal(s.clock,'08:00');assert.equal(s.day,92);assert.equal(s.batteryPercent,100);assert.equal(s.powerMode,'idle');
 });
-test('ordinary 03:00 emergency can charge directly to the next day',()=>{
+test('ordinary 03:00 emergency charges to 08:00 on the already advanced civil date',()=>{
  const s=initialState();s.clock='02:50';s.batteryPercent=67;
  assert.equal(advanceGameMinutes(s,40).event,'emergency');assert.equal(s.clock,'03:00');assert.equal(s.batteryPercent,1);
  assert.equal(tickWorld(s,8000).minutes,0);assert.equal(plugIn(s),true);
- assert.equal(s.emergencyCharge,false);assert.equal(s.day,57);assert.equal(s.clock,'08:00');assert.equal(s.batteryPercent,100);
+ assert.equal(s.emergencyCharge,false);assert.equal(s.day,56);assert.equal(s.clock,'08:00');assert.equal(s.batteryPercent,100);
 });
 test('typing slows ordinary time',()=>{
  const a=initialState(),b=initialState();tickWorld(a,5000);tickWorld(b,5000,{focused:true});

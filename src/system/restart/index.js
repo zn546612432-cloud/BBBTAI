@@ -6,6 +6,8 @@ export function restartState(previous){
  Object.assign(next,{day:1,clock:'08:00',calendar:calendarAnchor(1),batteryPercent:100,invitations:[],content:clone(previous.content),wallpaper:previous.wallpaper,iconOverrides:clone(previous.iconOverrides||{}),storyChargeGates:clone(previous.storyChargeGates||[])});
  next.storyPresets.rules=clone(previous.storyPresets?.rules||[]);
  next.storyPresets.deletedRuleIds=clone(previous.storyPresets?.deletedRuleIds||[]);
+ next.aiDraft=clone(previous.aiDraft||next.aiDraft);
+ next.aiDraft.testTurns=[];
  for(const list of Object.values(next.content.conversations))for(const c of list){
   c.unread=0;c.messages=c.messages.filter(m=>!m.actual);
   for(const m of c.messages){delete m.delivery;delete m.deliveryRevision;}

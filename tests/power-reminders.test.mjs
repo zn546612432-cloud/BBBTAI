@@ -30,8 +30,10 @@ test('battery drains independently of the clock and low power animates in the is
  assert.equal(s.batteryPercent,100);
 });
 
-test('1% enters an emergency black screen until charging; shutdown remains recoverable',()=>{
- const s=initialState();drainBattery(s,BATTERY_DRAIN_INTERVAL_MS*200);
+test('03:00 enters an emergency black screen until charging; shutdown remains recoverable',()=>{
+ const s=initialState();s.clock='02:59';drainBattery(s,BATTERY_DRAIN_INTERVAL_MS*200);
+ assert.equal(s.batteryPercent,2);
+ assert.equal(advanceGameMinutes(s,1).event,'emergency');
  assert.equal(s.batteryPercent,1);
  assert.equal(s.emergencyCharge,true);
  assert.match(powerFullscreen(s),/power-emergency-screen/);

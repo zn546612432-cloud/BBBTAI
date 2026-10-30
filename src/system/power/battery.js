@@ -11,14 +11,18 @@ export function drainBattery(s,ms){
  const before=batteryPercent(s),saved=Number.isFinite(s.powerActiveMs)?Math.max(0,s.powerActiveMs):0;
  const total=saved+ms,points=Math.floor(total/BATTERY_DRAIN_INTERVAL_MS);
  s.powerActiveMs=total%BATTERY_DRAIN_INTERVAL_MS;
- s.batteryPercent=Math.max(chargingBlock(s)?20:1,before-points);
- if(s.batteryPercent===1)s.emergencyCharge=true;
+ // The forced 1% state belongs to the 03:00 clock boundary, not elapsed
+ // foreground time (which can differ while someone is typing).
+ s.batteryPercent=Math.max(chargingBlock(s)?20:2,before-points);
  return before-s.batteryPercent;
 }
 export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&s.powerMode!=='charging'&&s.powerMode!=='sleeping';
 export function plugIn(s){
  if(!canCharge(s))return false;
- s.day+=1;s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;
+ // Midnight already advanced the civil date. Charging at 03:00 wakes on
+ // that same date; charging before midnight starts the next date.
+ if(Number(s.clock.slice(0,2))>=8)s.day+=1;
+ s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;
  s.powerMode='idle';s.emergencyCharge=false;s.poweredOff=false;s.powerActiveMs=0;s.worldMinuteFraction=0;s.chargeFraction=0;
  s.sleepWakeAt=null;s.alarmRinging=null;s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  syncDeathNight(s);
