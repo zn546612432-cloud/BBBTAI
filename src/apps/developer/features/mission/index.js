@@ -1,9 +1,34 @@
+import {linkedMissions,linkedMission,saveLinkedMission,resetLinkedMission} from '../../../mirage/linked-missions.js';
 import {esc,btn} from '../../../../system/ui.js';
 import {initializeMirage,WALLET_CHALLENGE_ID} from '../../../mirage/data.js';
 import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty,hackerBounty} from '../../../mirage/mission.js';
 import {ensureGhost,authorize,configFor} from '../../../ghost/state.js';
 import {tools as ghostTools} from '../../../ghost/catalog.js';
 
+let selectedLinkedId='';
+function linkedMissionEditor(s){
+ const list=linkedMissions(s),edit=linkedMission(s,selectedLinkedId)||null;
+ const id=edit?.id||'',cfg=s.content.orders?.find(o=>o.id===id);
+ const selected=(value,expected)=>value===expected?' selected':'';
+ return '<div class="card"><h3>多悬赏任务链</h3>'+
+ '<p>每份悬赏有独立 KIRA 邮件、浏览器检索、GHOST 游戏和结算进度。</p>'+
+ list.map(m=>'<div class="mission-step"><b>'+esc(m.title)+'</b><span>D · '+esc(m.stage)+'/6</span>'+btn('mission-linked-select','编辑','button-quiet','data-id="'+esc(m.id)+'"')+btn('mission-linked-open','打开','button-quiet','data-id="'+esc(m.id)+'"')+'</div>').join('')+
+ btn('mission-linked-new','新建悬赏','button-quiet wide')+'</div>'+
+ '<form class="card" data-form="mission-linked-config"><h3>'+(edit?'编辑 '+esc(edit.title):'创建新悬赏')+'</h3>'+
+ '<label>订单 ID<input required pattern="[a-zA-Z0-9][a-zA-Z0-9-]{2,62}" maxlength="63" name="id" value="'+esc(id)+'" '+(edit?'readonly':'')+' placeholder="contract-002"></label>'+
+ '<label>悬赏名称<input required maxlength="120" name="title" value="'+esc(edit?.title||'')+'"></label>'+
+ '<label>悬赏详情<textarea name="description" rows="3">'+esc(cfg?.description||'')+'</textarea></label>'+
+ '<label>发布者<input name="owner" value="'+esc(cfg?.owner||'ANONYMOUS')+'"></label>'+
+ '<label>网站报酬文案<input name="rewardLabel" value="'+esc(cfg?.reward||'1500 CREDITS')+'"></label>'+
+ '<label>邮件标题<input name="subject" value="'+esc(edit?.subject||'【MIRAGE】新订单')+'"></label>'+
+ '<label>邮件内容<textarea name="body" rows="5">'+esc(edit?.body||'')+'</textarea></label>'+
+ '<label>浏览器检索词<input name="browserQuery" value="'+esc(edit?.browserQuery||'')+'"></label>'+
+ '<label>Ghost 类型<select name="type">'+ghostTools.map(t=>'<option value="'+t.id+'"'+selected(t.id,edit?.type||'cipher')+'>'+esc(t.name)+'</option>').join('')+'</select></label>'+
+ '<label>限时（秒）<input type="number" min="10" max="600" name="seconds" value="'+esc(edit?.seconds??'')+'"></label>'+
+ '<label>成功到账（游戏币）<input type="number" min="0" max="1000000000" step="1" required name="reward" value="'+esc(edit?.reward??1500)+'"></label>'+
+ '<button class="button-primary wide" type="submit">保存并绑定所有 App</button>'+
+ (edit?btn('mission-linked-reset','重置此任务进度','button-quiet wide','data-id="'+esc(edit.id)+'"'):'')+'</form>';
+}
 export function missionProgress(s){
  const order=s.content.orders?.find(x=>x.id===HACKER_BOUNTY_ID);
  const mail=s.content.mail?.find(x=>x.id===HACKER_MAIL_ID);
@@ -35,6 +60,7 @@ export function missionEditor(s){
  +'<label>时限秒数（留空不限）<input name="seconds" type="number" min="10" max="600" value="'+esc(cfg.seconds??'')+'"></label>'
  +'<label>数字币奖励金额（留空待结算）<input name="reward" type="number" min="0" step="1" value="'+esc(cfg.reward??'')+'"></label>'
  +'<button class="button-primary wide" type="submit">保存整条任务链的设定</button></form>'
+ +linkedMissionEditor(s)
  +'<div class="card"><h3>D05 · 衔尾蛇博士</h3><p>10 BTC 钱包挑战 / GHOST 程序 / 领奖后的联系人与对话</p><div class="mission-step"><b>'+(s.content.orders?.find(x=>x.id===WALLET_CHALLENGE_ID)?.status||'NOT RELEASED')+'</b><span>'+(s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')?'已收到恭喜消息':'尚未完成')+'</span></div>'+btn('mission-wallet-test','进入 D05 钱包挑战','button-quiet wide')+btn('mission-wallet-reset','重置 D05 任务测试','button-quiet wide')+'</div>'
  +'<div class="card"><h3>任务链测试</h3>'+btn('mission-start','初始化并接取订单','button-quiet wide')
  +btn('mission-authorize','检测邮件步骤并授权 GHOST','button-quiet wide')
@@ -42,6 +68,16 @@ export function missionEditor(s){
 }
 export function missionAction(action,t,ctx){
  const x=missionProgress(ctx.store.get());
+ if(action==='mission-linked-new'){selectedLinkedId='';ctx.refresh();return true;}
+ if(action==='mission-linked-select'){selectedLinkedId=t.dataset.id;ctx.refresh();return true;}
+ if(action==='mission-linked-open'){
+  ctx.router.open({appId:'mirage',route:'/order/'+t.dataset.id,params:{}});return true;
+ }
+ if(action==='mission-linked-reset'){
+  ctx.store.update(s=>resetLinkedMission(s,t.dataset.id));
+  ctx.toast('此悬赏已重置');return true;
+ }
+
  if(action==='mission-wallet-test'){
   ctx.store.update(s=>{if(s.day<5){s.day=5;s.clock='21:00';}});
   initializeMirage(ctx.store);
@@ -88,6 +124,15 @@ export function missionAction(action,t,ctx){
  return false;
 }
 export function missionSubmit(form,ctx){
+ if(form.dataset.form==='mission-linked-config'){
+  const v=new FormData(form);
+  initializeMirage(ctx.store);
+  const entry={};
+  for(const key of ['id','title','description','owner','rewardLabel','subject','body','browserQuery','type','seconds','reward'])entry[key]=v.get(key);
+  ctx.store.update(s=>saveLinkedMission(s,entry));
+  selectedLinkedId=entry.id;
+  ctx.toast('悬赏已绑定 KIRA、浏览器和 GHOST');return true;
+ }
  if(form.dataset.form!=='mission-config')return false;
  const v=new FormData(form);
  const seconds=v.get('seconds')===''?null:Number(v.get('seconds'));
