@@ -27,6 +27,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: node --check public/voice-lab/panel.js
       - run: npm test
       - run: npm run build:pages
       - name: Build isolated preview
