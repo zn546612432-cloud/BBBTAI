@@ -80,7 +80,7 @@ export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
  const mode=s.powerMode||'idle';
- const rate=s.deathPhase==='draining'?NORMAL_MINUTES_PER_MS:mode==='charging'?CHARGING_MINUTES_PER_MS:mode==='sleeping'?SLEEPING_MINUTES_PER_MS:taiChat?TAI_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
+ const rate=s.deathPhase==='draining'?NORMAL_MINUTES_PER_MS:taiChat?TAI_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:mode==='charging'?CHARGING_MINUTES_PER_MS:mode==='sleeping'?SLEEPING_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
  const whole=Math.floor(total);
  if(!whole){s.worldMinuteFraction=total;return {minutes:0};}
