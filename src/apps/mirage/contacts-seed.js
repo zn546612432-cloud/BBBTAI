@@ -59,6 +59,8 @@ export function completeWalletChallenge(s){
  const list=s.content.conversations.mirage;
  let c=list.find(x=>x.id===ouroborosContact.id);
  if(!c){c=structuredClone(ouroborosContact);list.push(c);}
+ // Migrate old demo transcripts that appeared before the challenge was solved.
+ c.messages=c.messages.filter(m=>!/^ou-0[123]$/.test(m.id));
  const t=Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
  const minute=n=>String(Math.floor((t+n)%1440/60)).padStart(2,'0')+':'+String((t+n)%60).padStart(2,'0');
  const scripted=[
