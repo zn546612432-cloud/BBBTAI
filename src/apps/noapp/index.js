@@ -2,13 +2,15 @@ import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
-import {apiConfig,saveApiConfig,clearApiConfig} from '../../services/ai/gateway.js';
+import {apiConfig,saveApiConfig,clearApiConfig,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
 import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice} from './voice-call.js';
 
 export const manifest={id:'noapp',name:'NoApp',icon:12,unlockDay:56,defaultRoute:'/',supportsDeepLink:true,kicker:'PRIVATE CHANNEL'};
 let taiFeedback='',pendingTai=null;
+// Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
+let settingsDraft={};
 function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get().nav.current;if(nav.appId==='noapp'&&nav.route==='/chat/tai')ctx.refresh();}
 function queueTaiReply(ctx,messageId){
  if(pendingTai)clearTimeout(pendingTai);
@@ -23,12 +25,12 @@ function queueTaiReply(ctx,messageId){
  },3200);
 }
 const setting=(s)=>{
- const c=apiConfig();
+ const c={...apiConfig(),...settingsDraft};
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
  +'<label>MiniMax API Key<input type="password" name="minimax" autocomplete="off" placeholder="输入 MiniMax API Key" value="'+esc(c.minimax||'')+'"></label>'
  +'<label>MiniMax 平台<select name="region"><option value="cn" '+(c.region!=='intl'?'selected':'')+'>中国站 · minimaxi.com</option><option value="intl" '+(c.region==='intl'?'selected':'')+'>国际站 · minimax.io</option></select></label>'
- +'<label>音色 voice_id<input type="text" name="voiceId" value="'+esc(c.voiceId||'male-qn-qingse')+'" placeholder="male-qn-qingse"></label>'
+ +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/ai/character-worldbook.js" target="_blank" rel="noopener noreferrer">阅读熙泰完整人物世界书</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
@@ -52,7 +54,7 @@ export async function handle(action,target,ctx){
  if(action==='open-invite-match'){const matchId=startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='attach-chat')attachChat(id,'noapp',ctx);
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
- if(action==='tai-clear-ai'){clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
+ if(action==='tai-clear-ai'){settingsDraft={};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
  if(action==='tai-outgoing')startOutgoing(ctx);
  if(action==='tai-test-incoming')startIncoming(ctx);
  if(action==='tai-record'&&target.dataset.hold!=='true')await toggleVoiceRecord(ctx);
@@ -65,7 +67,7 @@ export const submit=(form,ctx)=>{
  if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-ai'){
-  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:data.get('voiceId'),ttsModel:data.get('ttsModel')});
+  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
   ctx.toast('已为三个 App 配置 DeepSeek，NoApp 另可生成 MiniMax 语音');return;
  }
 };
@@ -73,3 +75,6 @@ export function mountCallEvents({store}){
  window.addEventListener('ximeng:tai-incoming-call',e=>startIncoming({store},String(e.detail?.preview||'熙泰邀请你语音通话')));
  window.addEventListener('ximeng:noapp-voice-sent',e=>{const id=e.detail?.messageId;if(id)queueTaiReply({store,refresh:()=>{},toast:()=>{}},id);});
 }
+
+/** Persist API input values in memory while the Safari software keyboard is open. */
+export function input(t){if(t.closest?.('[data-form="tai-save-ai"]')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.value;}
