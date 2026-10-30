@@ -1,3 +1,4 @@
+import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
 import {askTai,aiStatus} from '../../services/ai/gateway.js';
 import {unpackTaiReply} from '../../services/ai/format.js';
@@ -60,8 +61,16 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-open-bounty')route(ctx,'/order/'+id);
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(action==='mc-complete-bounty'&&id===WALLET_CHALLENGE_ID){
-   let done=false;ctx.store.update(s=>{done=completeWalletChallenge(s);});
-   ctx.toast(done?'10 BTC · WALLET CHALLENGE COMPLETED':'任务已完成');
+   const o=ctx.store.get().content.orders.find(x=>x.id===id);
+   if(o?.status!=='ACCEPTED'){ctx.toast('CONTRACT NOT ACCEPTED');return;}
+   ctx.store.update(s=>{
+    const g=s.ghost??={orders:{},history:[],balance:0,config:{}};
+    g.orderConfigs??={};
+    g.orderConfigs[id]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
+    authorize(s,{orderId:id,type:'veil',mailId:null});
+   });
+   ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:id}});
+   return;
   }else if(action==='mc-accept-bounty'&&id===HACKER_BOUNTY_ID){
    newMailNotice=true;acceptHackerBounty(ctx.store);ctx.refresh();
   }else{
