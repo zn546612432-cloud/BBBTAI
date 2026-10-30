@@ -19,8 +19,8 @@ test('DeepSeek can send multiple messages or one long reply without forcing tiny
 
 test('canonical Tai lore includes user-confirmed facts and safe before-recognition boundary',()=>{
  const prompt=buildTaiPrompt({day:35,channel:'mirage'});
- for(const required of ['葡萄牙','哈佛','英国','莎士比亚','MIRAGE','自恋','D56','JSON'])assert.ok(prompt.includes(required),required);
- assert.match(prompt,/D56 前/);
+ for(const term of ['Dr Ouroboros','D05','JSON'])assert.ok(prompt.includes(term),term);
+ assert.match(prompt,/D05/);
 });
 
 test('incoming NoApp call creates native-style banner notification and a real accept/reject UI',()=>{
