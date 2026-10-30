@@ -6,7 +6,7 @@ import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
 import {unpackTaiReply} from '../../services/ai/format.js';
 
-let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false};
+let call={state:'idle',direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false};
 let recording=null;
 let playback=null;
 const AVATAR='/assets/tai-portrait.svg';
@@ -50,13 +50,13 @@ export function callView(){
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
  if(ctx.store.get().day<56)return;
- call={state:'ringing',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false};
+ call={state:'ringing',direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false};
  ctx.store.update(s=>{s.notifications.unshift({id:'tai-call-'+uid(),title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
 }
 export function startOutgoing(ctx){
  const p=taiPresence(ctx.store.get());
  if(!p.contactable||p.status!=='online'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
- call={state:'dialing',direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false};
+ call={state:'dialing',direction:'outgoing',muted:false,speaker:false,turns:[],started:0,busy:false};
  ctx.router.open({appId:'noapp',route:'/call'});
  setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();},1100);
 }
