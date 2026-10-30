@@ -69,7 +69,7 @@ export async function handleAIGateway(req,res,pathname) {
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         model:process.env.DEEPSEEK_MODEL||'deepseek-flash',
         messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories})},...messages],
-        stream:false,max_tokens:350
+        stream:false,max_tokens:1600,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;
       if(typeof text!=='string'||!text.trim())throw fail(502,'模型没有返回有效文字');
