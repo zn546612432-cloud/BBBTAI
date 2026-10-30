@@ -69,6 +69,7 @@ test('D05 wallet reward is locked behind successful GHOST run, never issued on m
  initializeMirage(store);
  const order=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
  order.status='ACCEPTED';
+ s.ghost??={orders:{},history:[],balance:0,config:{}};
  s.ghost.orderConfigs??={};
  s.ghost.orderConfigs[WALLET_CHALLENGE_ID]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
  authorize(s,{orderId:WALLET_CHALLENGE_ID,type:'veil',mailId:null});
