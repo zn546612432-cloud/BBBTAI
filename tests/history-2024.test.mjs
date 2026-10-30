@@ -165,10 +165,10 @@ test('Safari runs privately and uses the five requested saved sites',()=>{
  assert.match(browserRender(c,{route:'/history',params:{}}),/暂无浏览记录/);
 });
 
-test('MIRAGE first login does not generate contacts, and old filler is cleaned safely',()=>{
+test('MIRAGE first login seeds persistent relationships, and obsolete filler is cleaned safely',()=>{
  const storage=memory(),store=new PhoneStore(storage);
  initializeMirage(store);
- assert.equal(store.get().content.conversations.mirage.length,0);
+ assert.ok(store.get().content.conversations.mirage.length>=4);
  const old=structuredClone(store.get());
  old.content.conversations.mirage=[{id:'mc-0',name:'Isolde Mirage',messages:[]},{id:'my-contact',name:'自定义',messages:[],authored:true}];
  storage.setItem(KEY,JSON.stringify(old));
