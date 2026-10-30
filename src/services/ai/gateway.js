@@ -77,7 +77,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:voiceId||c.voiceId||'male-qn-qingse',speed:Number(speed),vol:1,pitch:0,...(prepared.emotion?{emotion:prepared.emotion}:{})},
+  voice_setting:{voice_id:voiceId||c.voiceId||'male-qn-qingse',speed:Number(speed),vol:0.95,pitch:-1,...(prepared.emotion?{emotion:prepared.emotion}:{})},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
