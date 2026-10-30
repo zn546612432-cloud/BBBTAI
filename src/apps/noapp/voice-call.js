@@ -1,5 +1,5 @@
 import {esc} from '../../system/ui.js';
-import {taiPresence} from '../../services/presence.js';
+import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {askTai,voicePreview,speechToText} from '../../services/ai/gateway.js';
 import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
@@ -10,17 +10,43 @@ let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],st
 let recording=null;
 let playback=null;
 const AVATAR='/assets/tai-portrait.svg';
-const avatar=()=>'<img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰头像">';
-const button=(action,title,icon,kind='')=>'<button type="button" data-action="'+action+'" class="tai-call-button '+kind+'"><span class="tai-call-button-icon">'+icon+'</span><small>'+title+'</small></button>';
-function statusText(){return {ringing:'NoApp 语音通话',dialing:'正在呼叫…',connected:'NoApp 语音通话',ended:'通话已结束'}[call.state]||'NoApp 语音通话';}
-export function callView(s){
- const ring=call.state==='ringing',connected=call.state==='connected';
- return '<div class="tai-call-screen" aria-label="熙泰语音通话"><div class="tai-call-top"><span>NOAPP · ENCRYPTED AUDIO</span><span class="tai-call-status">'+statusText()+'</span></div>'
- +'<div class="tai-call-person">'+avatar()+'<h1>陈熙泰</h1><p>'+(ring?'语音来电':call.state==='dialing'?'正在连接……':connected?'已接通 · '+Math.floor((Date.now()-call.started)/1000)+' 秒':'未连接')+'</p></div>'
- +(ring?'<div class="tai-call-choices">'+button('tai-decline','拒绝','✕','reject')+button('tai-accept','接听','☎','accept')+'</div>':connected?
- '<div class="tai-call-features">'+button('tai-mute',call.muted?'解除静音':'静音',call.muted?'🔇':'🎙')+button('tai-speaker',call.speaker?'扬声器开':'扬声器','◖))')+button('tai-hangup','挂断','☎','reject')+'</div>'
- +'<div class="tai-call-chat"><div class="tai-call-transcript" aria-live="polite">'+call.turns.slice(-6).map(x=>'<p><b>'+(x.role==='user'?'熙蒙':'熙泰')+'：</b>'+esc(x.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" placeholder="输入或用麦克风说话…" aria-label="电话回复" autocomplete="off" maxlength="1200"><button type="button" data-action="tai-mic" aria-label="说话">🎤</button><button type="submit" '+(call.busy?'disabled':'')+'>发送</button></form><small>语音识别取决于 Safari 支持；不支持时可打字继续，通话采用轮流发言。</small></div>':
- '<div class="tai-call-choices">'+button('tai-hangup','取消','✕','reject')+'</div>')+'</div>';
+const glyph={
+ mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>',
+ hang:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z"/></svg>',
+ speaker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9c2 2 2 4 0 6M20 5c4 4 4 10 0 14"/></svg>',
+ quiet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM3 3l18 18"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
+ layout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="1.5"/><rect x="10" y="10" width="11" height="11" rx="1.5"/></svg>',
+ answer:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z" transform="rotate(180 12 12)"/></svg>'
+};
+function phoneButton(action,title,art,kind=''){
+ return '<button type="button" data-action="'+action+'" class="tai-call-control '+kind+'" aria-label="'+title+'"><span class="tai-control-circle">'+art+'</span><span class="tai-control-label">'+title+'</span></button>';
+}
+function duration(){
+ if(!call.started)return '等待连接';
+ const sec=Math.floor((Date.now()-call.started)/1000);
+ return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+}
+export function callView(){
+ const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
+ const subtitle=ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
+ const controls=ring?
+   phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
+   active?phoneButton('tai-mic',call.listening?'点击结束':'麦克风已开',glyph.mic,'is-mic'+(call.listening?' is-listening':''))+
+   phoneButton('tai-hangup','取消',glyph.hang,'is-hang')+
+   phoneButton('tai-speaker',call.speaker?'扬声器已开':'扬声器已关',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':'')):
+   phoneButton('tai-hangup','取消',glyph.hang,'is-hang');
+ const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="文字转写"><header>通话文字 <button type="button" data-action="tai-expand" aria-label="关闭文字转写">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="发文字继续通话…"><button type="submit" '+(call.busy?'disabled':'')+'>发送</button></form></div>':'';
+ return '<section class="tai-call-screen" aria-label="NoApp语音通话">'
+  +'<div class="tai-call-ambient" aria-hidden="true"></div>'
+  +'<nav class="tai-call-topbar">'+
+   '<button type="button" data-action="tai-expand" aria-label="查看或收起通话文字">'+glyph.layout+'</button>'+
+   '<span class="tai-call-channel">NOAPP · AUDIO</span>'+
+   '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
+   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰照片"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
+   transcript+
+   '<div class="tai-call-bottom'+(ring?' two-actions':'')+'">'+controls+'</div>'+
+   '</section>';
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
  if(ctx.store.get().day<56)return;
@@ -32,7 +58,7 @@ export function startOutgoing(ctx){
  if(!p.contactable||p.status!=='online'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
  call={state:'dialing',direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false};
  ctx.router.open({appId:'noapp',route:'/call'});
- setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();ctx.refresh();},1100);
+ setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();},1100);
 }
 async function respond(text,ctx){
  if(call.state!=='connected'||call.busy||!text.trim())return;
@@ -63,10 +89,11 @@ export function callAction(action,ctx){
  switch(action){
  case 'tai-accept':
   if(call.state!=='ringing')return false;
-  call.state='connected';call.started=Date.now();ctx.refresh();return true;
+  call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();return true;
  case 'tai-decline':case 'tai-hangup':
   call.state='ended';call.turns=[];if(playback){playback.pause();URL.revokeObjectURL(playback.src);playback=null;}
   ctx.router.open({appId:'noapp',route:'/chat/tai'});return true;
+ case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
@@ -75,7 +102,7 @@ export function callAction(action,ctx){
   if(!Speech){
    if(!navigator.mediaDevices?.getUserMedia||!globalThis.MediaRecorder){ctx.toast('请打字继续；此设备没有开放麦克风。');return true;}
    if(recording?.call){
-    const active=recording;recording=null;active.recorder.stop();ctx.toast('正在识别这一段通话语音…');return true;
+    const active=recording;recording=null;call.listening=false;active.recorder.stop();ctx.refresh();ctx.toast('正在识别这一段通话语音…');return true;
    }
    (async()=>{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -86,8 +113,8 @@ export function callAction(action,ctx){
       try{const text=await speechToText(new Blob(chunks,{type:recorder.mimeType||'audio/mp4'}));await respond(text,ctx);}
       catch(e){ctx.toast('语音识别失败：'+e.message);}
     };
-    recording={recorder,call:true};recorder.start();ctx.toast('正在听，请再点一次麦克风结束。');
-    setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;recorder.stop();}},18000);
+    recording={recorder,call:true};call.listening=true;recorder.start();ctx.refresh();ctx.toast('正在听，请再点一次麦克风结束。');
+    setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;call.listening=false;recorder.stop();ctx.refresh();}},18000);
    })().catch(e=>ctx.toast('麦克风不可用：'+e.message));
    return true;
   }
