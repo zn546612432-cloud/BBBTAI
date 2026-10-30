@@ -134,3 +134,11 @@
 .app-noapp .noapp-shell>.page-pad{flex:1;min-height:0;overflow:auto}
 .app-noapp .noapp-shell .chat-messages{scroll-behavior:smooth}
 @media(max-width:390px){.app-noapp .noapp-mini-toolbar{padding-top:2px}}
+
+
+/* The output toggle is the browser audio mute state, not an unsupported
+   promise to route sound between physical iPhone speakers. */
+.app-noapp .tai-call-control:focus-visible,.app-noapp .noapp-composer-mic:focus-visible{outline:2px solid #b5e8ff;outline-offset:3px}
+.app-noapp .noapp-record-overlay.is-recording{bottom:max(80px,env(safe-area-inset-bottom) + 64px);box-shadow:0 18px 54px #000a}
+.app-noapp .noapp-record-overlay small{font-size:12px}
+@media(prefers-reduced-motion:reduce){.app-noapp .tai-control-circle{transition:none}}

@@ -1,3 +1,5 @@
+import {linkedMission,linkedMailId,advanceLinkedMission} from '../mirage/linked-missions.js';
+import {linkedMailView} from './features/mission/linked.js';
 import {authorize,submit} from '../ghost/state.js';
 import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,phishingThemes,advanceHackerMission} from '../mirage/mission.js';
 import {kiraInbox} from './features/inbox/index.js';
@@ -7,10 +9,36 @@ export const manifest={id:'kira',name:'KIRA',icon:10,defaultRoute:'/',supportsDe
 export function render({store},loc){
  const s=store.get();
  if(loc.route==='/compose/'+HACKER_BOUNTY_ID)return composeMission(s);
- if(loc.route.startsWith('/mail/'))return kiraDetail(s,loc.route.slice(6));
+ if(loc.route.startsWith('/mail/')){
+  const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
+  return mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
+ }
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a.startsWith('kira-linked-')){
+  const id=t.dataset.order,mission=linkedMission(c.store.get(),id);
+  if(!mission)return;
+  const mail=linkedMailId(id);
+  if(a==='kira-linked-research')return c.router.open({appId:'browser',route:'/mission-search',params:{orderId:id}});
+  if(a==='kira-linked-send'){
+   if(mission.stage<2)return c.toast('先检索任务资料');
+   c.store.update(s=>advanceLinkedMission(s,id,3));
+   c.toast('任务确认已发送');return;
+  }
+  if(a==='kira-linked-ghost'){
+   if(mission.stage<3)return c.toast('尚未发送任务确认');
+   c.store.update(s=>{authorize(s,{orderId:id,mailId:mail,type:linkedMission(s,id).type});advanceLinkedMission(s,id,4);});
+   return c.router.open({appId:'ghost',route:'/contract',params:{orderId:id}});
+  }
+  if(a==='kira-linked-settle'){
+   const success=c.store.get().ghost?.orders?.[id]?.status==='success';
+   if(!success)return c.toast('GHOST 尚未完成');
+   c.store.update(s=>submit(s,id));c.toast('任务已提交，等待结算');return;
+  }
+  return;
+ }
+
  if(a==='kira-back')c.router.back();
  if(a==='kira-mail')c.router.open({appId:'kira',route:'/mail/'+t.dataset.id});
  if(a==='kira-attachment')c.router.open({appId:'files',route:'/attachment',params:{mailId:t.dataset.id}});

@@ -2,7 +2,7 @@ import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
 import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -200,9 +200,10 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));const callCandidate=store.get();
- if(isProactiveCallDue(callCandidate)&&callCandidate.nav.current.route!=='/call'){
-  store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
-  window.dispatchEvent(new CustomEvent('ximeng:tai-incoming-call',{detail:{preview:'陈熙泰邀请你语音通话'}}));
+ if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
+    &&callCandidate.nav.current.appId!=='editor'){
+  if(startIncoming(ctx(),'熙泰邀请你语音通话'))
+   store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
  }
  void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
