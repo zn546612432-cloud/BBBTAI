@@ -8,6 +8,7 @@ import {unpackTaiReply} from '../../services/ai/format.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false};
 let recording=null;
+let pendingHold=null; // unique token for async microphone permission prompts
 let playback=null;
 const AVATAR="data:image/webp;base64,UklGRrADAABXRUJQVlA4IKQDAACwFQCdASpQAFAAPuFkp04opaMiKlYNoRAcCUAZMAYfyS2e+bsvX5Stjpt3tz9wXRE2+tvcLgSx3ZtNUhwnaPOkapE5bXGbTupmaqAkQZWUZnSAPQoGOM+UZL/gIcQeI+K6w+7EIjoKUJr8LPYB9XnzitlCMrI6WAuw+EqHqNFPATAE+GXU/m3Uit631X8fPtt+0eaId9252sLR1Wmli4N9yk8+/4aNyCbw30K2hw2DvWify5oJ4AD+8r/+PBBNbN9QRXas1B+KcVIBHrNKQg9db1HUE2uCUTrkUtWRkgfqz9MijqloAN9CaZYyqMXUVDvS3YOCB17CLKilIfIr/DrE6xFQ829GCkoioUO+DNjNNYsW5A94rkWqpv1sgG7z+50/4bDHM8eCbJA5nqWREJwa2BETb3dveKzx3W/BlGomXjEPh3YzG0nLuZEuY37yhXAHWg2fbWCOa9vY+N/XVnOKt9WS61xaVN8BbbQYgSGNtVK15/dqBETh+PDo4E2/yVzDZ3HlNgynSfihN2STUKe/suIGkGKjZA5ppPREMUTe5ZmnplhuiUr5NSswqWxghZ1ktOphHzHbbPGXLaNmdl3GeOezPdA/tEA8NfLtcoRf6cDi38TewJyzDRGIao6yVS5CM0iDvg+VNlZctTyVPO1grRMgkJIiTiKQLHbyCVX5ZrlLGgZeD0ZGx82b/WoxFbATPYikUprNqgFSLMgP7i4pVvCy0IhFeT/uQ9ODH3O7kSd8mnrFjDXV4oob6760elJllPJzRuNt/fYpT6wJtYpNJNrkpJE/2wKKy5Tra6+vvAW5WosrYuqiCwo4CaXHU0lonVguSCKNAYq1gq+igVUyAuntnQnxdsHQV9kcD61LC3yS5nsDmhT6SWJgpdaR1ucBvlMgXTBC7VioHhUyZh0Wbv5oDJYb7LaN4P4qe97Afeg4VlLlV54OFOUPWfc69aVwYCMABQVY+QLOhovZ6NiHioqaKvPcj7Z+HlX+TrPUhOo81DnO3r0brYMgxwaxWXpSUoTH/HP1CaA3RGFuNFeQY/NnbYv6uwMKGdgkmNeVa75koelldP5MhdGgk1MdNaFEzhggsimY3NPHOhh0YzF6GYbfCGe2LqL1h2iQNoFZRaKFblJRhTNBBRevL30YpkFVa7M2xj79YQKaBMU5aUfI19fKPNc7VKhkUZ6S6Rxe8GYDP/6lK8aeQDu3rTWw0h2gpfIc/U82LQimqfsF6dkYKZAAAA=="; // data URL avoids SVG-in-img nested image restrictions
 const AVATAR_SOURCE='/assets/tai-portrait.svg';
@@ -178,6 +179,7 @@ export async function toggleVoiceRecord(ctx){
  recorder.onstop=async()=>{
   stream.getTracks().forEach(t=>t.stop());
   try{
+   if(recorder._cancelled){ctx.toast('已取消录音');return;}
    const blob=new Blob(chunks,{type:recorder.mimeType||'audio/mp4'});
    const id='voice-'+uid(),duration=Math.max(1,Math.round((Date.now()-start)/1000));
    await saveClip(id,blob);
@@ -206,4 +208,60 @@ export async function convertTaiTextToVoice(ctx,id){
  const clip=await voicePreview({text:m.text,tone:m.aiTone||'neutral'});
  await saveClip('tai-'+id,clip);
  ctx.store.update(s=>{const c=s.content.conversations.noapp.find(x=>x.id==='tai');const m=c?.messages.find(x=>x.id===id);if(m){m.kind='voice';m.audioId='tai-'+id;m.voiceCaption=m.text;}});
+}
+
+/** iOS-style hold-to-record. Hold, see moving waves, release to send;
+ * slide upward before release to cancel. */
+export function mountHoldToTalk(root,makeContext){
+ if(!root||root.dataset.xitaiHoldMounted)return;
+ root.dataset.xitaiHoldMounted='1';
+ let active=null;
+ const indicator=()=>root.querySelector('.noapp-record-overlay');
+ function hide(){const el=indicator();if(el){el.classList.remove('is-recording');el.setAttribute('aria-hidden','true');} }
+ root.addEventListener('pointerdown',e=>{
+  const button=e.target.closest('[data-action="tai-record"][data-hold="true"]');
+  if(!button||active||!button.closest('.app-noapp'))return;
+  e.preventDefault();
+  const token={pointerId:e.pointerId,startY:e.clientY,timer:null,recording:false,cancel:false};
+  active=token;
+  try{button.setPointerCapture(e.pointerId);}catch{}
+  token.timer=setTimeout(async()=>{
+   if(active!==token)return;
+   token.recording=true;
+   const el=indicator();if(el){el.classList.add('is-recording');el.setAttribute('aria-hidden','false');}
+   const ctx=makeContext();
+   const nonce=pendingHold={};
+   try{
+    // getUserMedia requires a trusted gesture; browsers may ask permission here.
+    await toggleVoiceRecord(ctx);
+    if(pendingHold!==nonce||active!==token){
+     if(recording?.recorder?.state==='recording'){
+      recording.recorder._cancelled=true;recording.recorder.stop();recording=null;
+     }
+    }
+   }catch(err){ctx.toast(err.message);hide();}
+  },280);
+ },true);
+ async function release(e,forced=false){
+  const token=active;if(!token||e.pointerId!==token.pointerId)return;
+  active=null;clearTimeout(token.timer);
+  if(!token.recording){hide();return;}
+  pendingHold=null;
+  const ctx=makeContext();
+  const cancel=forced||token.cancel||e.clientY<token.startY-75;
+  const rec=recording;
+  if(rec?.recorder?.state==='recording'){
+   if(cancel)rec.recorder._cancelled=true;
+   rec.recorder.stop();recording=null;
+  }
+  hide();
+  if(cancel)ctx.toast('语音已取消');
+ }
+ root.addEventListener('pointermove',e=>{
+  if(!active||e.pointerId!==active.pointerId)return;
+  const el=indicator();if(el)el.classList.toggle('is-cancel-gesture',e.clientY<active.startY-75);
+ },true);
+ root.addEventListener('pointerup',e=>{void release(e,false);},true);
+ root.addEventListener('pointercancel',e=>{void release(e,true);},true);
+ root.addEventListener('lostpointercapture',e=>{if(active&&e.pointerId===active.pointerId)void release(e,true);},true);
 }
