@@ -1,6 +1,6 @@
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
-import {taiPresence} from '../presence.js';
+import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
 import {aiStatus,askTai,voicePreview} from './gateway.js';
@@ -14,7 +14,8 @@ export async function replyToTaiMessage(store,sourceMessageId){
  const initial=store.get(),c=conversation(initial);
  if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId))return {status:'scripted'};
  if(initial.day<56||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
- if(taiPresence(initial).status!=='online')return {status:'offline',message:'熙泰目前不在线，消息已保存'};
+ if(taiPresence(initial).status!=='online')return {status:'offline',message:'熙泰暂时不在线，消息已保存'};
+ markTaiEngaged();
  if(pendingRequest)return {status:'busy',message:'熙泰正在输入'};
  const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day)
