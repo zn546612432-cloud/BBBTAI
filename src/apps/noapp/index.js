@@ -38,9 +38,9 @@ export function render({store},loc){
  if(loc.route==='/settings-ai')return setting(s);
  const head=s.day>=56?'<div class="noapp-voice-actions">'+
  btn('tai-api-settings','⚙ AI 设置','')+
- (id==='tai'?btn('tai-outgoing','☎ 语音电话','')+btn('tai-record','🎤 录语音 / 停止','')+btn('tai-test-incoming','模拟熙泰来电','')+btn('tai-last-voice','让熙泰发语音',''):'')+
+ (id==='tai'?btn('tai-outgoing','☎ 语音电话','')+btn('tai-test-incoming','模拟熙泰来电','')+btn('tai-last-voice','让熙泰发语音',''):'')+
  '</div>':'';
- const note=id==='tai'?'<div class="noapp-voice-hint">语音文件只保存在你的设备；长按不必，点击开始，再点击结束。</div>':'';
+ const note=id==='tai'?'<div class="noapp-voice-hint">按住下方麦克风说话，松开发送，上滑取消。</div><div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音 · 松开发送</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消</small></div>':'';
  return '<div class="noapp-shell"><div class="noapp-note"><span>◈　私人频道</span>'+demo()+'</div>'+head+note+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:''}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
@@ -54,7 +54,7 @@ export async function handle(action,target,ctx){
  if(action==='tai-clear-ai'){clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
  if(action==='tai-outgoing')startOutgoing(ctx);
  if(action==='tai-test-incoming')startIncoming(ctx);
- if(action==='tai-record')await toggleVoiceRecord(ctx);
+ if(action==='tai-record'&&target.dataset.hold!=='true')await toggleVoiceRecord(ctx);
  if(action==='tai-play-voice')await playVoiceMessage(id,ctx);
  if(action==='tai-convert-voice'){await convertTaiTextToVoice(ctx,id);ctx.toast('熙泰的语音已合成');}
  if(action==='tai-last-voice'){const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai');const last=c?.messages.slice().reverse().find(m=>m.from==='tai'&&m.kind==='text');if(!last){ctx.toast('先和熙泰聊几句');return;}await convertTaiTextToVoice(ctx,last.id);ctx.toast('熙泰发来一条语音');}
