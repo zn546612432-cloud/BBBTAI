@@ -1,6 +1,6 @@
 import {esc} from '../../system/ui.js';
 import {taiPresence} from '../../services/presence.js';
-import {askTai,voicePreview} from '../../services/ai/gateway.js';
+import {askTai,voicePreview,speechToText} from '../../services/ai/gateway.js';
 import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
@@ -72,7 +72,25 @@ export function callAction(action,ctx){
  case 'tai-mic':{
   if(call.muted){ctx.toast('解除静音后再说话');return true;}
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!Speech){ctx.toast('此浏览器未提供语音识别，请输入文字继续；麦克风语音消息可单独录制。');return true;}
+  if(!Speech){
+   if(!navigator.mediaDevices?.getUserMedia||!globalThis.MediaRecorder){ctx.toast('请打字继续；此设备没有开放麦克风。');return true;}
+   if(recording?.call){
+    const active=recording;recording=null;active.recorder.stop();ctx.toast('正在识别这一段通话语音…');return true;
+   }
+   (async()=>{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const chunks=[],recorder=new MediaRecorder(stream);
+    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    recorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      try{const text=await speechToText(new Blob(chunks,{type:recorder.mimeType||'audio/mp4'}));await respond(text,ctx);}
+      catch(e){ctx.toast('语音识别失败：'+e.message);}
+    };
+    recording={recorder,call:true};recorder.start();ctx.toast('正在听，请再点一次麦克风结束。');
+    setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;recorder.stop();}},18000);
+   })().catch(e=>ctx.toast('麦克风不可用：'+e.message));
+   return true;
+  }
   try{
    const recognition=new Speech();recognition.lang='zh-CN';recognition.interimResults=false;recognition.maxAlternatives=1;
    recognition.onresult=e=>respond(e.results[0][0].transcript,ctx);
@@ -99,12 +117,15 @@ export async function toggleVoiceRecord(ctx){
    const blob=new Blob(chunks,{type:recorder.mimeType||'audio/mp4'});
    const id='voice-'+uid(),duration=Math.max(1,Math.round((Date.now()-start)/1000));
    await saveClip(id,blob);
+   let transcript='';
+   try{transcript=await speechToText(blob);}catch(error){ctx.toast('语音已保存；自动转写不可用：'+error.message);}
    ctx.store.update(s=>{
     const c=s.content.conversations.noapp.find(c=>c.id==='tai');
-    c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
+    c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,voiceCaption:transcript||null,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
     s.events.push({type:'voice_sent',channel:'noapp',messageId:id,day:s.day,clock:s.clock});
    });
-   ctx.toast('语音已发送到 NoApp（本机保存），AI 尚不能直接理解未转写的语音');
+   ctx.toast(transcript?'语音已发送并转写，正在等待熙泰回复…':'语音已发送（没有转写时 AI 不会臆测内容）');
+   if(transcript)window.dispatchEvent(new CustomEvent('ximeng:noapp-voice-sent',{detail:{messageId:id}}));
   }catch(e){ctx.toast('语音保存失败：'+e.message);}
  };
  recording={recorder,start};recorder.start();ctx.toast('正在录音，点击同一麦克风按钮结束（最长25秒）');
