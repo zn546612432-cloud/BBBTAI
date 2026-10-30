@@ -173,6 +173,9 @@ textarea{min-height:90px;resize:vertical;line-height:1.55}
 .app-noapp .bubble{background:#26404f;color:#e6f4f6;border-color:#325060}
 .app-noapp .mine .bubble{background:#b8d3d8;color:#173342}
 .app-noapp .composer input{background:#29414e;color:#fff;border-color:#ffffff21}
+.ai-chat-feedback{flex-shrink:0;padding:7px 15px;font-size:11px;line-height:1.4;background:#dceaf0;color:#315160}
+.app-noapp .ai-chat-feedback{background:#203b47;color:#b5d8de}
+.ai-test-label{font-size:9px;color:#7d9ba6;padding:0 3px}
 .app-noapp .chat-person small{color:#8fb0ba}
 .app-noapp .invite-card{background:#163440;color:#e2f5f4;border-color:#507d83}
 .app-noapp .invite-top small,.app-noapp .invite-meta{color:#9cbabc}
