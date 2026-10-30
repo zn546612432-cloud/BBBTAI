@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {contacts,initializeMirage,completeWalletChallenge,WALLET_CHALLENGE_ID} from '../src/apps/mirage/data.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
+import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
 import {authorize,begin,finish,nextGhostRound} from '../src/apps/ghost/state.js';
 import {missionProgress} from '../src/apps/developer/features/mission/index.js';
 import {XITAI_VOICE_ID,apiConfig,saveApiConfig} from '../src/services/ai/gateway.js';
@@ -93,4 +94,23 @@ test('failed D05 Ghost attempts leave the 10BTC reward and congratulations locke
  assert.equal(s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status,'ACCEPTED');
  assert.equal(s.content.mirage.transactions.some(x=>x.id==='ou-btc10'),false);
  assert.equal(s.events.some(x=>x.type==='mirage_wallet_challenge_completed'),false);
+});
+
+test('Ouroboros congratulates first, remaining authored exchange unfolds after player opens private chat',()=>{
+ const store=makeStore(),s=store.get();s.day=5;s.clock='21:00';s.unlocked=true;
+ initializeMirage(store);
+ s.content.orders.find(o=>o.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
+ assert.equal(completeWalletChallenge(s),true);
+ const c=s.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05');
+ assert.equal(c.messages.length,6);
+ assert.deepEqual(visibleMessages(c).map(m=>m.text),['恭喜你。']);
+ s.nav.current={appId:'mirage',route:'/chat/'+c.id,params:{}};
+ readConversationInState(s,'mirage',c.id);
+ const engine=new MessageDelivery(store);
+ engine.tick(1000,true);
+ engine.tick(6000,true);
+ assert.equal(visibleMessages(c).length,2);
+ engine.tick(22000,true);
+ assert.equal(visibleMessages(c).length,6);
+ assert.equal(c.unread,0);
 });
