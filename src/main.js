@@ -1,6 +1,7 @@
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
+import {mountCallEvents} from './apps/noapp/index.js';
 import {PhoneRouter} from './services/router.js';
 import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -26,6 +27,7 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+mountCallEvents({store});
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
