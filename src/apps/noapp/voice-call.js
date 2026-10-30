@@ -10,7 +10,6 @@ import {unpackTaiReply} from '../../services/ai/format.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false};
 let recording=null;
-let pendingHold=null; // unique token for async microphone permission prompts
 let callSerial=0;
 let activeRecognition=null;
 export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length};}
@@ -215,36 +214,65 @@ export function callAction(action,ctx){
  default:return false;
  }
 }
+let voicePermissionPending=false;
+async function beginVoiceRecording(ctx){
+ if(voicePermissionPending||recording)throw Error('麦克风正在使用中');
+ if(!navigator.mediaDevices?.getUserMedia||!globalThis.MediaRecorder)throw Error('需要 HTTPS 和麦克风权限才能录音');
+ voicePermissionPending=true;
+ let stream;
+ try{
+  // Called directly from pointerdown, before any delay or re-render, so iOS
+  // can associate the permission request with the player's real gesture.
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const preferred=['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+  const mime=preferred.find(type=>MediaRecorder.isTypeSupported?.(type))||'';
+  const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+  const clips=[],start=Date.now();
+  const current={recorder,stream,start,kind:'message',_cancelled:false,timer:null};
+  recorder.ondataavailable=e=>{if(e.data?.size)clips.push(e.data);};
+  recorder.onstop=async()=>{
+   clearTimeout(current.timer);
+   stream.getTracks().forEach(track=>track.stop());
+   if(recording===current)recording=null;
+   if(current._cancelled)return;
+   try{
+    const blob=new Blob(clips,{type:recorder.mimeType||mime||'audio/mp4'});
+    if(blob.size<128)throw Error('录音时间太短，请按住后说话');
+    const duration=Math.max(1,Math.round((Date.now()-start)/1000)),id='voice-'+uid();
+    await saveClip(id,blob);
+    let transcript='';
+    try{transcript=await speechToText(blob);}
+    catch(error){ctx.toast('语音已保存，但转写失败：'+error.message);}
+    ctx.store.update(s=>{
+     const c=s.content.conversations.noapp?.find(c=>c.id==='tai');if(!c)return;
+     c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,voiceCaption:transcript||null,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
+     if(transcript)rememberTaiConversation(s,transcript);
+     s.events.push({type:'voice_sent',channel:'noapp',messageId:id,day:s.day,clock:s.clock});
+    });
+    if(transcript&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('ximeng:noapp-voice-sent',{detail:{messageId:id}}));
+   }catch(e){ctx.toast('语音保存失败：'+e.message);}
+  };
+  recorder.onerror=()=>{current._cancelled=true;};
+  recording=current;
+  recorder.start(250);
+  current.timer=setTimeout(()=>stopVoiceRecording({cancel:false}),25000);
+  return current;
+ }catch(e){stream?.getTracks().forEach(track=>track.stop());throw e;}
+ finally{voicePermissionPending=false;}
+}
+function stopVoiceRecording({cancel=false}={}){
+ const current=recording;
+ if(!current||current.kind!=='message')return false;
+ current._cancelled=!!cancel;
+ clearTimeout(current.timer);
+ recording=null;
+ if(current.recorder.state==='recording')current.recorder.stop();
+ else current.stream.getTracks().forEach(track=>track.stop());
+ return true;
+}
 export async function toggleVoiceRecord(ctx){
- if(recording){
-  recording.recorder.stop();recording=null;ctx.toast('正在保存语音…');return;
- }
- if(!navigator.mediaDevices?.getUserMedia||!globalThis.MediaRecorder)throw Error('需要 HTTPS 与 Safari 麦克风权限才能录音');
- const stream=await navigator.mediaDevices.getUserMedia({audio:true});
- const chunks=[];const recorder=new MediaRecorder(stream);
- const start=Date.now();
- recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
- recorder.onstop=async()=>{
-  stream.getTracks().forEach(t=>t.stop());
-  try{
-   if(recorder._cancelled){ctx.toast('已取消录音');return;}
-   const blob=new Blob(chunks,{type:recorder.mimeType||'audio/mp4'});
-   const id='voice-'+uid(),duration=Math.max(1,Math.round((Date.now()-start)/1000));
-   await saveClip(id,blob);
-   let transcript='';
-   try{transcript=await speechToText(blob);}catch(error){ctx.toast('语音已保存；自动转写不可用：'+error.message);}
-   ctx.store.update(s=>{
-    const c=s.content.conversations.noapp.find(c=>c.id==='tai');
-    c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,voiceCaption:transcript||null,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
-    if(transcript)rememberTaiConversation(s,transcript);
-    s.events.push({type:'voice_sent',channel:'noapp',messageId:id,day:s.day,clock:s.clock});
-   });
-   ctx.toast(transcript?'语音已发送并转写，正在等待熙泰回复…':'语音已发送（没有转写时 AI 不会臆测内容）');
-   if(transcript)window.dispatchEvent(new CustomEvent('ximeng:noapp-voice-sent',{detail:{messageId:id}}));
-  }catch(e){ctx.toast('语音保存失败：'+e.message);}
- };
- recording={recorder,start};recorder.start();ctx.toast('正在录音，点击同一麦克风按钮结束（最长25秒）');
- setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;recorder.stop();}},25000);
+ if(recording?.kind==='message'){stopVoiceRecording();return;}
+ await beginVoiceRecording(ctx);
 }
 export async function playVoiceMessage(id,ctx){
  const blob=await loadClip(id);if(!blob)throw Error('找不到本机语音文件');
@@ -259,58 +287,56 @@ export async function convertTaiTextToVoice(ctx,id){
  ctx.store.update(s=>{const c=s.content.conversations.noapp.find(x=>x.id==='tai');const m=c?.messages.find(x=>x.id===id);if(m){m.kind='voice';m.audioId='tai-'+id;m.voiceCaption=m.text;}});
 }
 
-/** iOS-style hold-to-record. Hold, see moving waves, release to send;
- * slide upward before release to cancel. */
+/** iOS push-to-talk: request the microphone on the pointerdown gesture,
+ * handle delayed Safari permission dialogs, and never send after cancellation. */
 export function mountHoldToTalk(root,makeContext){
  if(!root||root.dataset.xitaiHoldMounted)return;
  root.dataset.xitaiHoldMounted='1';
  let active=null;
- const indicator=()=>root.querySelector('.noapp-record-overlay');
- function hide(){const el=indicator();if(el){el.classList.remove('is-recording');el.setAttribute('aria-hidden','true');} }
- root.addEventListener('pointerdown',e=>{
-  const button=e.target.closest('[data-action="tai-record"][data-hold="true"]');
-  if(!button||active||!button.closest('.app-noapp'))return;
-  e.preventDefault();
-  const token={pointerId:e.pointerId,startY:e.clientY,timer:null,recording:false,cancel:false};
-  active=token;
-  try{button.setPointerCapture(e.pointerId);}catch{}
-  token.timer=setTimeout(async()=>{
-   if(active!==token)return;
-   token.recording=true;
-   const el=indicator();if(el){el.classList.add('is-recording');el.setAttribute('aria-hidden','false');}
-   const ctx=makeContext();
-   const nonce=pendingHold={};
-   try{
-    // getUserMedia requires a trusted gesture; browsers may ask permission here.
-    await toggleVoiceRecord(ctx);
-    if(pendingHold!==nonce||active!==token){
-     if(recording?.recorder?.state==='recording'){
-      recording.recorder._cancelled=true;recording.recorder.stop();recording=null;
-     }
-    }
-   }catch(err){ctx.toast(err.message);hide();}
-  },280);
- },true);
- async function release(e,forced=false){
-  const token=active;if(!token||e.pointerId!==token.pointerId)return;
-  active=null;clearTimeout(token.timer);
-  if(!token.recording){hide();return;}
-  pendingHold=null;
-  const ctx=makeContext();
-  const cancel=forced||token.cancel||e.clientY<token.startY-75;
-  const rec=recording;
-  if(rec?.recorder?.state==='recording'){
-   if(cancel)rec.recorder._cancelled=true;
-   rec.recorder.stop();recording=null;
-  }
+ const overlay=()=>root.querySelector('.noapp-record-overlay');
+ function show(){const el=overlay();if(!el)return;el.classList.add('is-recording');el.setAttribute('aria-hidden','false');}
+ function hide(){const el=overlay();if(!el)return;el.classList.remove('is-recording','is-cancel-gesture');el.setAttribute('aria-hidden','true');}
+ function finish(token,cancel){
+  if(token.done)return;
+  token.done=true;
+  if(active===token)active=null;
+  if(token.ready){stopVoiceRecording({cancel});}
+  else token.cancel=cancel;
   hide();
-  if(cancel)ctx.toast('语音已取消');
  }
- root.addEventListener('pointermove',e=>{
-  if(!active||e.pointerId!==active.pointerId)return;
-  const el=indicator();if(el)el.classList.toggle('is-cancel-gesture',e.clientY<active.startY-75);
+ root.addEventListener('pointerdown',e=>{
+  const target=e.target.closest?.('[data-action="tai-record"][data-hold="true"]');
+  if(!target||!target.closest('.app-noapp')||active||recording||voicePermissionPending)return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  e.preventDefault();
+  const ctx=makeContext(),token={pointerId:e.pointerId,startY:e.clientY,startX:e.clientX,started:Date.now(),ready:false,done:false,cancel:false};
+  active=token;
+  try{target.setPointerCapture(e.pointerId);}catch{}
+  show();
+  // getUserMedia begins synchronously inside this trusted pointer event.
+  void beginVoiceRecording(ctx).then(()=>{
+   token.ready=true;
+   if(token.done)stopVoiceRecording({cancel:token.cancel});
+   else if(active===token)show();
+  }).catch(err=>{
+   if(!token.done)ctx.toast(err.message||'麦克风不可用');
+   if(active===token)active=null;
+   hide();
+  });
  },true);
- root.addEventListener('pointerup',e=>{void release(e,false);},true);
- root.addEventListener('pointercancel',e=>{void release(e,true);},true);
- root.addEventListener('lostpointercapture',e=>{if(active&&e.pointerId===active.pointerId)void release(e,true);},true);
+ root.addEventListener('pointermove',e=>{
+  const t=active;if(!t||t.pointerId!==e.pointerId)return;
+  t.cancel=e.clientY<t.startY-75;
+  overlay()?.classList.toggle('is-cancel-gesture',t.cancel);
+ },true);
+ function release(e,forceCancel=false){
+  const t=active;
+  if(!t||t.pointerId!==e.pointerId)return;
+  const tooShort=Date.now()-t.started<350;
+  const cancel=forceCancel||t.cancel||e.clientY<t.startY-75||tooShort;
+  finish(t,cancel);
+ }
+ root.addEventListener('pointerup',e=>release(e),true);
+ root.addEventListener('pointercancel',e=>release(e,true),true);
+ root.addEventListener('lostpointercapture',e=>release(e,true),true);
 }
