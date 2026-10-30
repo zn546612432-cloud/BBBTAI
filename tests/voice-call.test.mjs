@@ -32,6 +32,8 @@ test('incoming NoApp call creates native-style banner notification and a real ac
  const html=callView(state);
  assert.match(html,/tai-accept/);assert.match(html,/tai-decline/);assert.match(html,/tai-portrait.svg/);
  assert.equal(callAction('tai-accept',ctx),true);
+ assert.match(callView(state),/tai-call-bottom/);
+ assert.equal(callAction('tai-expand',ctx),true);
  assert.match(callView(state),/tai-call-transcript/);
  assert.equal(callAction('tai-hangup',ctx),true);
  assert.equal(opened.route,'/chat/tai');
