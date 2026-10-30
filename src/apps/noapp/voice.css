@@ -77,3 +77,17 @@
  .app-noapp .tai-call-channel{font-size:8px}
  .app-noapp .tai-control-label{font-size:11px}
 }
+
+/* Make the simulated phone respect the actual iOS visual viewport when the
+   keyboard opens; do not just prevent input focus zoom. */
+@media(max-width:600px){
+ html.viewport-mobile #phone.keyboard-open{
+  height:var(--visual-height,100dvh)!important;
+  min-height:0!important;
+  max-height:100dvh;
+ }
+ html.viewport-mobile #phone.keyboard-open #homebar{display:none}
+ html.viewport-mobile #phone.keyboard-open #screen-layer{
+  bottom:0!important;
+ }
+}
