@@ -41,7 +41,7 @@ export async function askTai({channel,day,messages,profile,memories}){
  const {buildTaiPrompt}=await import('./tai-profile.js');
  const s=buildTaiPrompt(req);
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
-  model:'deepseek-chat',messages:[{role:'system',content:s},...messages],
+  model:'deepseek-flash',thinking:{type:'disabled'},messages:[{role:'system',content:s},...messages],
   response_format:{type:'json_object'},max_tokens:1600,stream:false
  });
  const text=String(result.choices?.[0]?.message?.content||'').trim();
