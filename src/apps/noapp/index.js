@@ -1,3 +1,4 @@
+import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
@@ -61,7 +62,7 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai')queueTaiReply(ctx,id);return;}
+ if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-ai'){
   const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:data.get('voiceId'),ttsModel:data.get('ttsModel')});
