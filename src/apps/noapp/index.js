@@ -39,12 +39,13 @@ export function render({store},loc){
  const s=store.get(),id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  if(loc.route==='/call')return callView(s);
  if(loc.route==='/settings-ai')return setting(s);
- const head=s.day>=56?'<div class="noapp-voice-actions">'+
- btn('tai-api-settings','⚙ AI 设置','')+
- (id==='tai'?btn('tai-outgoing','☎ 语音电话','')+btn('tai-test-incoming','模拟熙泰来电','')+btn('tai-last-voice','让熙泰发语音',''):'')+
- '</div>':'';
- const note=id==='tai'?'<div class="noapp-voice-hint">按住下方麦克风说话，松开发送，上滑取消。</div><div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音 · 松开发送</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消</small></div>':'';
- return '<div class="noapp-shell"><div class="noapp-note"><span>◈　私人频道</span>'+demo()+'</div>'+head+note+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:''}):chatList(s,'noapp'))+'</div>';
+ const phoneIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.7 19.7 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.7L7.1 10a16 16 0 0 0 7 7l1.6-1.9a2 2 0 0 1 1.7-.6l3 .5a2 2 0 0 1 1.6 1.9Z"/></svg>';
+ const settingsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.5 1.5 0 0 0 .3 1.7l.1.1-2.2 2.2-.1-.1a1.5 1.5 0 0 0-1.7-.3l-.7.3a1.5 1.5 0 0 0-.9 1.4v.2H11v-.2a1.5 1.5 0 0 0-.9-1.4l-.7-.3a1.5 1.5 0 0 0-1.7.3l-.1.1-2.2-2.2.1-.1a1.5 1.5 0 0 0 .3-1.7l-.3-.7a1.5 1.5 0 0 0-1.4-.9H4v-3.2h.2a1.5 1.5 0 0 0 1.4-.9l.3-.7a1.5 1.5 0 0 0-.3-1.7l-.1-.1 2.2-2.2.1.1a1.5 1.5 0 0 0 1.7.3l.7-.3a1.5 1.5 0 0 0 .9-1.4V4h3.2v.2a1.5 1.5 0 0 0 .9 1.4l.7.3a1.5 1.5 0 0 0 1.7-.3l.1-.1 2.2 2.2-.1.1a1.5 1.5 0 0 0-.3 1.7l.3.7a1.5 1.5 0 0 0 1.4.9h.2v3.2h-.2a1.5 1.5 0 0 0-1.4.9Z"/></svg>';
+ const toolbar=s.day>=56?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
+ (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
+ '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
+ const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
+ return '<div class="noapp-shell">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:''}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;

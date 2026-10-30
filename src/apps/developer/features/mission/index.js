@@ -1,5 +1,5 @@
 import {esc,btn} from '../../../../system/ui.js';
-import {initializeMirage} from '../../../mirage/data.js';
+import {initializeMirage,WALLET_CHALLENGE_ID} from '../../../mirage/data.js';
 import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty,hackerBounty} from '../../../mirage/mission.js';
 import {ensureGhost,authorize,configFor} from '../../../ghost/state.js';
 import {tools as ghostTools} from '../../../ghost/catalog.js';
@@ -35,12 +35,36 @@ export function missionEditor(s){
  +'<label>时限秒数（留空不限）<input name="seconds" type="number" min="10" max="600" value="'+esc(cfg.seconds??'')+'"></label>'
  +'<label>数字币奖励金额（留空待结算）<input name="reward" type="number" min="0" step="1" value="'+esc(cfg.reward??'')+'"></label>'
  +'<button class="button-primary wide" type="submit">保存整条任务链的设定</button></form>'
+ +'<div class="card"><h3>D05 · 衔尾蛇博士</h3><p>10 BTC 钱包挑战 / GHOST 程序 / 领奖后的联系人与对话</p><div class="mission-step"><b>'+(s.content.orders?.find(x=>x.id===WALLET_CHALLENGE_ID)?.status||'NOT RELEASED')+'</b><span>'+(s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')?'已收到恭喜消息':'尚未完成')+'</span></div>'+btn('mission-wallet-test','进入 D05 钱包挑战','button-quiet wide')+btn('mission-wallet-reset','重置 D05 任务测试','button-quiet wide')+'</div>'
  +'<div class="card"><h3>任务链测试</h3>'+btn('mission-start','初始化并接取订单','button-quiet wide')
  +btn('mission-authorize','检测邮件步骤并授权 GHOST','button-quiet wide')
  +btn('mission-reset','重置这条任务的测试进度','button-quiet wide')+'</div></div>';
 }
 export function missionAction(action,t,ctx){
  const x=missionProgress(ctx.store.get());
+ if(action==='mission-wallet-test'){
+  ctx.store.update(s=>{if(s.day<5){s.day=5;s.clock='21:00';}});
+  initializeMirage(ctx.store);
+  ctx.router.open({appId:'mirage',route:'/order/'+WALLET_CHALLENGE_ID,params:{}});
+  return true;
+ }
+ if(action==='mission-wallet-reset'){
+  ctx.store.update(s=>{
+   const o=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
+   if(o)o.status='OPEN';
+   if(s.ghost?.orders)delete s.ghost.orders[WALLET_CHALLENGE_ID];
+   if(s.ghost?.history)s.ghost.history=s.ghost.history.filter(h=>h.orderId!==WALLET_CHALLENGE_ID);
+   s.events=s.events.filter(e=>e.type!=='mirage_wallet_challenge_completed');
+   s.notifications=s.notifications.filter(n=>n.id!=='mirage-ouroboros-complete');
+   if(s.content.mirage?.transactions)s.content.mirage.transactions=s.content.mirage.transactions.filter(x=>x.id!=='ou-btc10');
+   const contact=s.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05');
+   if(contact){
+    contact.messages=contact.messages.filter(m=>!/^ou-d05-after-/.test(m.id));
+    if(contact.storySeed&&!contact.messages.length)s.content.conversations.mirage=s.content.conversations.mirage.filter(c=>c.id!==contact.id);
+   }
+  });ctx.toast('D05 钱包挑战已重置');return true;
+ }
+
  if(action==='mission-visit'){
   const step=x.steps[Number(t.dataset.step)];if(step)ctx.router.open({appId:step.appId,route:step.route,params:step.key==='ghost'||step.key==='complete'?{orderId:HACKER_BOUNTY_ID}:{}});
   return true;

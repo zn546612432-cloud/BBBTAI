@@ -1,6 +1,7 @@
+import {isMirageAuthenticated} from '../../apps/mirage/session.js';
 import {actorName} from '../../editor/conversations/model.js';
 export const visibleMessages=c=>c.messages.filter(m=>!m.schedule||m.schedule.mode==='immediate'||m.delivery);
-export function isConversationOpen(s,channel,id){return s.unlocked&&s.nav.current.appId===channel&&s.nav.current.route==='/chat/'+id;}
+export function isConversationOpen(s,channel,id){return s.unlocked&&(channel!=='mirage'||isMirageAuthenticated())&&s.nav.current.appId===channel&&s.nav.current.route==='/chat/'+id;}
 const enabled=(s,channel)=>channel!=='noapp'||s.day>=56;
 export class MessageDelivery {
  constructor(store){this.store=store;this.waiting=new Map();}

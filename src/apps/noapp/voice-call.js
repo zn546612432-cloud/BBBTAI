@@ -64,7 +64,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
 }
 export function startOutgoing(ctx){
  const p=taiPresence(ctx.store.get());
- if(!p.contactable||p.status!=='online'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
+ if(!p.contactable||p.status==='away'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
  call={state:'dialing',direction:'outgoing',muted:false,speaker:false,turns:[],started:0,busy:false};
  ctx.router.open({appId:'noapp',route:'/call'});
  setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);},1100);

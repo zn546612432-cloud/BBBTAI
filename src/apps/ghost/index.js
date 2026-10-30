@@ -1,3 +1,4 @@
+import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
 import {tools,stages} from './catalog.js';
 import {ensureGhost,configFor,begin,finish,submit,settle,authorize,nextGhostRound} from './state.js';
@@ -39,7 +40,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='tool')return nav(ctx,'/tool',{tool:t.dataset.tool});
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
  if(a==='start'){if(!o)return;if(o.status==='running'||['success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
- if(a==='close'){if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
+ if(a==='close'){if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){return nav(ctx,'/contract',{orderId:id});}
  if(!o||o.status!=='running')return;if(o.type!=='strike'&&o.deadline!==null&&Date.now()>=o.deadline){ctx.store.update(n=>finish(n,id,false));return;}
  ctx.store.update(n=>{const run=n.ghost.orders[id],b=run.board,cfg=configFor(n,run.type,run.id);run.moves++;

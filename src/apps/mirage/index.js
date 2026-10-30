@@ -1,3 +1,5 @@
+import {isMirageAuthenticated,setMirageAuthenticated} from './session.js';
+import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
 import {askTai,aiStatus} from '../../services/ai/gateway.js';
 import {unpackTaiReply} from '../../services/ai/format.js';
@@ -9,8 +11,8 @@ import {glyph,face,web,productArt} from './art.js';
 import {initializeMirage,mirageData,contacts,money,cipher,saveRecord,purchase,MIRAGE_ACCOUNT,MIRAGE_PASSWORD,bountyGroups,isCompletedBounty,WALLET_CHALLENGE_ID,completeWalletChallenge} from './data.js';
 import {acceptHackerBounty,HACKER_BOUNTY_ID,HACKER_MAIL_ID} from './mission.js';
 export const manifest={id:'mirage',name:'MIRAGE',icon:8,defaultRoute:'/',supportsDeepLink:true,kicker:'CIPHER NETWORK'};
-let signedIn=false,decrypted=new Set(),decrypting=new Set(),pendingDelete=null,newMailNotice=false,filter='ALL',query='',draftAvatar,accountTapCount=0,lastAccountTap=0;
-export function onEnter(){signedIn=false;decrypted.clear();decrypting.clear();pendingDelete=null;newMailNotice=false;draftAvatar=undefined;accountTapCount=0;}
+let decrypted=new Set(),decrypting=new Set(),pendingDelete=null,newMailNotice=false,filter='ALL',query='',draftAvatar,accountTapCount=0,lastAccountTap=0;
+export function onEnter(){setMirageAuthenticated(false);decrypted.clear();decrypting.clear();pendingDelete=null;newMailNotice=false;draftAvatar=undefined;accountTapCount=0;}
 export function accountTap(input){const now=Date.now();accountTapCount=now-lastAccountTap<=850?accountTapCount+1:1;lastAccountTap=now;if(accountTapCount>=3){input.value=MIRAGE_ACCOUNT;accountTapCount=0;}}
 const at=(action,label,icon,attrs='')=>btn(action,glyph(icon),'mc-icon-button',`aria-label="${label}" title="${label}" ${attrs}`);
 const route=(ctx,path='/',params={})=>ctx.router.open({appId:'mirage',route:path,params});
@@ -40,10 +42,10 @@ function history(s,id){const c=contacts(s).find(c=>c.id===id);if(!c)return `${he
 function editMessage(s,params){const c=contacts(s).find(c=>c.id===params.contact);if(!c)return `${header('IDENTITY NOT FOUND','',true)}`;const m=c.messages.find(m=>m.id===params.id)||{};return `${header('COMPOSE ARCHIVE','',true)}<div class="mc-scroll mc-detail"><form class="mc-editor-form" data-form="mc-message" data-contact="${esc(c.id)}" data-id="${esc(m.id||'')}"><label>SENDER<select name="from"><option value="me" ${m.from==='me'?'selected':''}>${esc(mirageData(s).account)}</option><option value="${esc(c.id)}" ${m.from!=='me'?'selected':''}>${esc(c.name)}</option></select></label>${field('time','TIME',m.time&&/^\d\d:\d\d$/.test(m.time)?m.time:s.clock,'type="time" required')}${field('sentDate','DATE',m.sentDate||s.calendar?.anchorDate||'2024-03-10','type="date" required')}<label>MESSAGE<textarea name="text" required maxlength="10000">${esc(m.text||'')}</textarea></label><button type="submit" class="mc-primary">SAVE MESSAGE</button></form></div>`;}
 function deleteOverlay(){return pendingDelete?`<div class="mc-overlay"><section class="mc-dialog" role="alertdialog" aria-modal="true" aria-label="Delete record"><header><span>DELETE RECORD?</span></header><p>THIS RECORD WILL BE REMOVED FROM THIS PHONE.</p><div class="mc-dialog-buttons">${btn('mc-cancel-delete','CANCEL','mc-secondary')}${btn('mc-confirm-delete','DELETE','mc-primary')}</div></section></div>`:'';}
 function newMailOverlay(){return newMailNotice?`<div class="mc-overlay" role="dialog" aria-modal="true" aria-label="收到一条邮件"><section class="mc-dialog mc-mail-notice"><header>NEW MESSAGE ${at('mc-close-mail-notice','CLOSE','close')}</header><p>收到一条邮件</p><strong>【mirage】新订单</strong><div class="mc-dialog-buttons">${btn('mc-close-mail-notice','稍后查看','mc-secondary')}${btn('mc-open-kira-mail','打开 KIRA 邮件','mc-primary')}</div></section></div>`:'';}
-export function render({store},loc){const s=store.get();if(!signedIn)return login(s);let body;if(loc.route.startsWith('/chat/'))body=chatPage(s,loc.route.slice(6));else if(loc.route==='/bounties'||loc.route==='/bounties/completed')body=bountyPage(s,loc.route==='/bounties/completed');else if(loc.route.startsWith('/order/'))body=bountyDetail(s,loc.route.slice(7));else if(loc.route==='/market')body=market(s);else if(loc.route.startsWith('/product/'))body=product(s,loc.route.slice(9));else if(loc.route==='/cart')body=cart(s);else if(loc.route==='/wallet')body=wallet(s);else if(loc.route==='/manage')body=manage(s,loc.params||{});else if(loc.route==='/edit')body=editRecord(s,loc.params||{});else if(loc.route.startsWith('/history/'))body=history(s,loc.route.slice(9));else if(loc.route==='/edit-message')body=editMessage(s,loc.params||{});else if(loc.route==='/balance')body=`${header('EDIT LEDGER','',true)}<div class="mc-detail"><form class="mc-editor-form" data-form="mc-balance">${field('balance','AVAILABLE FUNDS / USD',mirageData(s).balance,'required type="number" min="0" max="1000000000000" step="0.01"')}<button type="submit" class="mc-primary">SAVE BALANCE</button></form></div>`;else body=contactsPage(s);return `<div class="mc-screen">${telemetry()}<div class="mc-interface">${body}</div>${deleteOverlay()}${newMailOverlay()}</div>`;}
+export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);let body;if(loc.route.startsWith('/chat/'))body=chatPage(s,loc.route.slice(6));else if(loc.route==='/bounties'||loc.route==='/bounties/completed')body=bountyPage(s,loc.route==='/bounties/completed');else if(loc.route.startsWith('/order/'))body=bountyDetail(s,loc.route.slice(7));else if(loc.route==='/market')body=market(s);else if(loc.route.startsWith('/product/'))body=product(s,loc.route.slice(9));else if(loc.route==='/cart')body=cart(s);else if(loc.route==='/wallet')body=wallet(s);else if(loc.route==='/manage')body=manage(s,loc.params||{});else if(loc.route==='/edit')body=editRecord(s,loc.params||{});else if(loc.route.startsWith('/history/'))body=history(s,loc.route.slice(9));else if(loc.route==='/edit-message')body=editMessage(s,loc.params||{});else if(loc.route==='/balance')body=`${header('EDIT LEDGER','',true)}<div class="mc-detail"><form class="mc-editor-form" data-form="mc-balance">${field('balance','AVAILABLE FUNDS / USD',mirageData(s).balance,'required type="number" min="0" max="1000000000000" step="0.01"')}<button type="submit" class="mc-primary">SAVE BALANCE</button></form></div>`;else body=contactsPage(s);return `<div class="mc-screen">${telemetry()}<div class="mc-interface">${body}</div>${deleteOverlay()}${newMailOverlay()}</div>`;}
 export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get();
- if(action==='mc-sign-up'&&!signedIn){const message=t.closest('.mc-login')?.querySelector('.mc-signup-warning');if(message){message.classList.add('is-visible');message.style.opacity='1';clearTimeout(message._hideTimer);message._hideTimer=setTimeout(()=>{message.style.opacity='0';message.classList.remove('is-visible');},3800);}return;}
- if(!signedIn)return;
+ if(action==='mc-sign-up'&&!isMirageAuthenticated()){const message=t.closest('.mc-login')?.querySelector('.mc-signup-warning');if(message){message.classList.add('is-visible');message.style.opacity='1';clearTimeout(message._hideTimer);message._hideTimer=setTimeout(()=>{message.style.opacity='0';message.classList.remove('is-visible');},3800);}return;}
+ if(!isMirageAuthenticated())return;
  if(action==='mc-tab'){pendingDelete=null;goTab(ctx,t.dataset.route);}
  if(action==='mc-contacts'){if(loc.route.startsWith('/chat/')||loc.route==='/manage')goTab(ctx,'/');else ctx.router.back();}
  if(action==='mc-chat'){
@@ -60,8 +62,16 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-open-bounty')route(ctx,'/order/'+id);
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(action==='mc-complete-bounty'&&id===WALLET_CHALLENGE_ID){
-   let done=false;ctx.store.update(s=>{done=completeWalletChallenge(s);});
-   ctx.toast(done?'10 BTC · WALLET CHALLENGE COMPLETED':'任务已完成');
+   const o=ctx.store.get().content.orders.find(x=>x.id===id);
+   if(o?.status!=='ACCEPTED'){ctx.toast('CONTRACT NOT ACCEPTED');return;}
+   ctx.store.update(s=>{
+    const g=s.ghost??={orders:{},history:[],balance:0,config:{}};
+    g.orderConfigs??={};
+    g.orderConfigs[id]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
+    authorize(s,{orderId:id,type:'veil',mailId:null});
+   });
+   ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:id}});
+   return;
   }else if(action==='mc-accept-bounty'&&id===HACKER_BOUNTY_ID){
    newMailNotice=true;acceptHackerBounty(ctx.store);ctx.refresh();
   }else{
@@ -91,7 +101,7 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-cart-minus'||action==='mc-cart-remove')ctx.store.update(s=>{const d=s.content.mirage,row=d.cart.find(x=>x.id===id);if(!row)return;if(action==='mc-cart-remove'||row.qty===1)d.cart=d.cart.filter(x=>x.id!==id);else row.qty--;});
  if(action==='mc-checkout'){purchase(ctx.store);ctx.toast('PURCHASE COMPLETE / ASSETS UPDATED');}
  if(action==='mc-export')ctx.download();
- if(action==='mc-logout'){signedIn=false;decrypted.clear();pendingDelete=null;goTab(ctx,'/');}
+ if(action==='mc-logout'){setMirageAuthenticated(false);decrypted.clear();pendingDelete=null;goTab(ctx,'/');}
 }
 
 let pendingMirageAI=new Set();
@@ -99,6 +109,8 @@ async function replyToOuroboros(ctx,contactId,sourceId){
  const initial=ctx.store.get();
  const c=initial.content.conversations.mirage?.find(x=>x.id===contactId);
  if(!c||!/(ouroboros|衔尾蛇)/i.test(c.name)||pendingMirageAI.has(contactId))return;
+ // The D05 authored exchange must finish before free-form DeepSeek replies.
+ if(c.messages.some(m=>m.scriptedOuroboros&&m.schedule&&!m.delivery))return;
  const last=c.messages.at(-1);if(last?.id!==sourceId||last.from!=='me')return;
  const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中填写 DeepSeek Key');
  pendingMirageAI.add(contactId);
@@ -109,7 +121,7 @@ async function replyToOuroboros(ctx,contactId,sourceId){
   const chunks=unpackTaiReply(result,'mirage');
   let inserted=0;
   for(const item of chunks){
-   if(!signedIn)break;
+   if(!isMirageAuthenticated())break;
    const now=ctx.store.get().content.conversations.mirage?.find(x=>x.id===contactId);
    if(!now||inserted===0&&now.messages.at(-1)?.id!==sourceId)break;
    const msgId=uid();
@@ -127,8 +139,8 @@ async function replyToOuroboros(ctx,contactId,sourceId){
 }
 
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
- if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;});signedIn=true;goTab(ctx,'/');return;}
- if(!signedIn)return;
+ if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;});setMirageAuthenticated(true);goTab(ctx,loc?.route?.startsWith('/chat/')?loc.route:'/');return;}
+ if(!isMirageAuthenticated())return;
  if(f==='mc-send'){const text=val('text');if(text){form.elements.text.value='';decrypted.add(form.dataset.id);const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:form.dataset.id,text});const contact=ctx.store.get().content.conversations.mirage?.find(c=>c.id===form.dataset.id);if(/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,form.dataset.id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);}}
  if(f==='mc-record'){const kind=form.dataset.kind;let record;if(kind==='contacts'){record={name:val('name'),online:val('online')==='true'};if(draftAvatar!==undefined)record.avatar=draftAvatar;}else if(kind==='bounties')record={title:val('title'),owner:val('owner'),reward:val('reward'),category:val('category'),status:val('status'),description:val('description')};else {const price=Number(val('price')),stock=Number(val('stock'));if(!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0)throw Error('INVALID PRICE OR STOCK');record={name:val('name'),category:val('category').toUpperCase(),price,stock,art:val('art'),description:val('description')};}if(!String(record.name||record.title||'').trim())throw Error('A NAME IS REQUIRED');saveRecord(ctx.store,kind,form.dataset.id,record);draftAvatar=undefined;ctx.router.back();ctx.toast('CHANGES SAVED');}
  if(f==='mc-message'){ctx.store.update(s=>{const c=s.content.conversations.mirage.find(c=>c.id===form.dataset.contact);if(!c)throw Error('IDENTITY NOT FOUND');const r={from:val('from'),time:val('time'),sentDate:val('sentDate'),text:val('text')};if(!r.text)throw Error('MESSAGE IS EMPTY');const old=c.messages.find(m=>m.id===form.dataset.id);if(old)Object.assign(old,r);else c.messages.push({id:uid(),kind:'text',authored:true,...r});});ctx.router.back();ctx.toast('MESSAGE SAVED');}
