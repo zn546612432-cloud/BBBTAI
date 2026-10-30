@@ -1,4 +1,7 @@
 import {uid} from '../../services/id.js';
+import {askTai,aiStatus} from '../../services/ai/gateway.js';
+import {unpackTaiReply} from '../../services/ai/format.js';
+import {dateParts} from '../../services/calendar.js';
 import {esc,btn} from '../../system/ui.js';
 import {sendMessage} from '../../services/messaging/index.js';
 import {visibleMessages} from '../../services/messaging/delivery.js';
@@ -69,10 +72,43 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-export')ctx.download();
  if(action==='mc-logout'){signedIn=false;decrypted.clear();pendingDelete=null;goTab(ctx,'/');}
 }
+
+let pendingMirageAI=new Set();
+async function replyToOuroboros(ctx,contactId,sourceId){
+ const initial=ctx.store.get();
+ const c=initial.content.conversations.mirage?.find(x=>x.id===contactId);
+ if(!c||!/(ouroboros|衔尾蛇)/i.test(c.name)||pendingMirageAI.has(contactId))return;
+ const last=c.messages.at(-1);if(last?.id!==sourceId||last.from!=='me')return;
+ const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中填写 DeepSeek Key');
+ pendingMirageAI.add(contactId);
+ try{
+  const history=visibleMessages(c).filter(m=>m.kind==='text'&&typeof m.text==='string'&&!m.demo).slice(-20).map(m=>({role:m.from==='me'?'user':'assistant',content:m.text.slice(0,2000)}));
+  if(history.at(-1)?.role!=='user')return;
+  const result=await askTai({day:initial.day,channel:'mirage',messages:history,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+  const chunks=unpackTaiReply(result,'mirage');
+  let inserted=0;
+  for(const item of chunks){
+   if(!signedIn)break;
+   const now=ctx.store.get().content.conversations.mirage?.find(x=>x.id===contactId);
+   if(!now||inserted===0&&now.messages.at(-1)?.id!==sourceId)break;
+   const msgId=uid();
+   ctx.store.update(s=>{
+    const target=s.content.conversations.mirage?.find(x=>x.id===contactId);if(!target)return;
+    target.messages.push({id:msgId,from:contactId,text:item.text,kind:'text',day:s.day,time:s.clock,sentDate:dateParts(s).iso,aiGenerated:true});
+    if(s.nav.current.appId!=='mirage'||s.nav.current.route!=='/chat/'+contactId){
+     target.unread=(Number(target.unread)||0)+1;
+     s.notifications.unshift({id:'mirage-ai-'+msgId,title:'MIRAGE',body:'NEW ENCRYPTED MESSAGE',link:{appId:'mirage',route:'/chat/'+contactId,params:{}}});
+    }
+   });
+   inserted++;if(chunks.length>1)await new Promise(r=>setTimeout(r,440));
+  }
+ }finally{pendingMirageAI.delete(contactId);}
+}
+
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
  if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;});signedIn=true;goTab(ctx,'/');return;}
  if(!signedIn)return;
- if(f==='mc-send'){const text=val('text');if(text){form.elements.text.value='';decrypted.add(form.dataset.id);sendMessage(ctx.store,{channel:'mirage',conversationId:form.dataset.id,text});}}
+ if(f==='mc-send'){const text=val('text');if(text){form.elements.text.value='';decrypted.add(form.dataset.id);const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:form.dataset.id,text});const contact=ctx.store.get().content.conversations.mirage?.find(c=>c.id===form.dataset.id);if(/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,form.dataset.id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);}}
  if(f==='mc-record'){const kind=form.dataset.kind;let record;if(kind==='contacts'){record={name:val('name'),online:val('online')==='true'};if(draftAvatar!==undefined)record.avatar=draftAvatar;}else if(kind==='bounties')record={title:val('title'),owner:val('owner'),reward:val('reward'),category:val('category'),status:val('status'),description:val('description')};else {const price=Number(val('price')),stock=Number(val('stock'));if(!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0)throw Error('INVALID PRICE OR STOCK');record={name:val('name'),category:val('category').toUpperCase(),price,stock,art:val('art'),description:val('description')};}if(!String(record.name||record.title||'').trim())throw Error('A NAME IS REQUIRED');saveRecord(ctx.store,kind,form.dataset.id,record);draftAvatar=undefined;ctx.router.back();ctx.toast('CHANGES SAVED');}
  if(f==='mc-message'){ctx.store.update(s=>{const c=s.content.conversations.mirage.find(c=>c.id===form.dataset.contact);if(!c)throw Error('IDENTITY NOT FOUND');const r={from:val('from'),time:val('time'),sentDate:val('sentDate'),text:val('text')};if(!r.text)throw Error('MESSAGE IS EMPTY');const old=c.messages.find(m=>m.id===form.dataset.id);if(old)Object.assign(old,r);else c.messages.push({id:uid(),kind:'text',authored:true,...r});});ctx.router.back();ctx.toast('MESSAGE SAVED');}
  if(f==='mc-balance'){const n=Number(val('balance'));if(!Number.isFinite(n)||n<0)throw Error('INVALID BALANCE');ctx.store.update(s=>{s.content.mirage.balance=n;});ctx.router.back();ctx.toast('BALANCE SAVED');}
