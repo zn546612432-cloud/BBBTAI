@@ -14,29 +14,13 @@ function uniqueBoard(g,type,cfg){
   board=createBoard(type,cfg);
  }
  if(used.includes(boardSignature(type,board))){
-  // Deterministic fallback for mocked/low entropy RNG, including adjacent
-  // rounds; preserve board structure instead of retrying the same puzzle.
-  const count=used.length+1;
-  for(let offset=0;offset<5000&&used.includes(boardSignature(type,board));offset++){
-   const n=count+offset;
-   if(type==='cipher'){
-    const tiles=[0,1,2,3,4,5,6,7,8];
-    const i=n%9,j=(i+1+Math.floor(n/9)%8)%9;
-    [tiles[i],tiles[j]]=[tiles[j],tiles[i]];
-    board.tiles=tiles;
-   }else if(type==='route'){
-    const masks=[...board.masks];
-    masks[n%9]=((masks[n%9]<<1)&15)|(masks[n%9]>>3);
-    masks[(n+3)%9]=((masks[(n+3)%9]<<1)&15)|(masks[(n+3)%9]>>3);
-    board.masks=masks;
-   }else if(type==='extract'){
-    board.target=String((count+offset)%1000000).padStart(6,'0');
-    board.options[board.correct]=board.target;
-   }else if(type==='veil'){
-    board.code=String(count+offset).padStart(cfg.codeLength||4,'0').slice(-(cfg.codeLength||4));
-   }else if(type==='strike'){
-    board.signature=String(count+offset).padStart(8,'0').slice(-8);
-   }
+  // Seed an internal PRNG instead of relying on a mocked or repeated
+  // Math.random implementation. This produces varied puzzle geometry.
+  let attempt=0;
+  while(attempt++<10000&&used.includes(boardSignature(type,board))){
+   let seed=((used.length+attempt)*2654435761)>>>0;
+   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+   board=createBoard(type,cfg,random);
   }
  }
  const signature=boardSignature(type,board);
