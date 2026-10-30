@@ -7,3 +7,7 @@
 .site-snapshot-image{display:block;width:100%;height:auto;max-width:none;user-select:none;-webkit-user-drag:none}
 .site-snapshot-footer{border-top:1px solid #e7e8eb;padding:17px 19px 25px;display:grid;gap:10px;font-size:11px;color:#8b929b}
 .site-snapshot-footer button{color:#007aff;text-align:center;font-weight:600;font-size:14px;padding:13px;border-radius:13px;background:#f0f5fc;border:1px solid #dce8f7}
+
+
+.app-browser .saf-linked-return{padding:10px 13px 4px;display:flex;justify-content:flex-end}
+.app-browser .saf-linked-return button{background:#eaf2fc;border:1px solid #c9d8ec;color:#244263;border-radius:12px;padding:10px 13px;font-size:13px;min-height:42px}
