@@ -8,7 +8,7 @@ import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
 import {unpackTaiReply} from '../../services/ai/format.js';
 
-let call={state:'idle',direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false};
+let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false};
 let recording=null;
 let callSerial=0;
 let activeRecognition=null;
@@ -39,7 +39,7 @@ export function callView(){
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
-   phoneButton('tai-speaker',call.speaker?'扬声器':'扬声器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':''))+
+   phoneButton('tai-speaker',call.speaker?'声音已开':'声音已关',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':''))+
    phoneButton('tai-expand','通话字幕',glyph.layout,'is-secondary')+
    phoneButton('tai-mute',call.muted?'取消静音':'静音',call.muted?glyph.quiet:glyph.mic,'is-secondary')+
    phoneButton('tai-mic',call.listening?'结束说话':'按下说话',glyph.mic,'is-secondary'+(call.listening?' is-listening':''))+
@@ -62,7 +62,7 @@ export function callView(){
 export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
  if(ctx.store.get().day<56||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
- call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:false,turns:[],started:0,busy:false,audioReady:false};
+ call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false};
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
@@ -84,7 +84,7 @@ export function startOutgoing(ctx){
  if(!p.contactable||p.status==='away'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
  if(['ringing','dialing','connected'].includes(call.state)){ctx.toast('当前已有通话');return false;}
  const sessionId=++callSerial;
- call={state:'dialing',sessionId,direction:'outgoing',muted:false,speaker:false,turns:[],started:0,busy:false,audioReady:false};
+ call={state:'dialing',sessionId,direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false};
  ctx.router.open({appId:'noapp',route:'/call'});
  setTimeout(()=>{if(call.sessionId!==sessionId||call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);},1100);
  return true;
@@ -96,6 +96,7 @@ async function playCallAudio(ctx,blob,sessionId){
  if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);}
  const url=URL.createObjectURL(blob);
  playback=new Audio(url);
+ playback.muted=!call.speaker;
  const current=playback;
  try{
   await current.play();
@@ -166,7 +167,7 @@ export function callAction(action,ctx){
  case 'tai-decline':case 'tai-hangup':
   if(!['ringing','dialing','connected'].includes(call.state))return true;
   const previous=call;
-  callSerial++;call={state:'ended',sessionId:callSerial,direction:previous.direction,muted:false,speaker:false,turns:[],started:0,busy:false};
+  callSerial++;call={state:'ended',sessionId:callSerial,direction:previous.direction,muted:false,speaker:true,turns:[],started:0,busy:false};
   if(activeRecognition){activeRecognition.abort?.();activeRecognition=null;}
   if(recording?.call){recording.recorder._cancelled=true;recording.recorder.stop();recording=null;}
   if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);playback=null;}
@@ -175,7 +176,7 @@ export function callAction(action,ctx){
    s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock});
   });
   ctx.router.open({appId:'noapp',route:'/chat/tai'});return true;
- case 'tai-play-audio':if(playback){playback.muted=false;playback.play().then(()=>{call.audioReady=false;ctx.refresh();}).catch(e=>ctx.toast(e.message));}return true;
+ case 'tai-play-audio':if(playback){playback.muted=!call.speaker;playback.play().then(()=>{call.audioReady=false;ctx.refresh();}).catch(e=>ctx.toast(e.message));}return true;
  case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
