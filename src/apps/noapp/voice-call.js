@@ -1,3 +1,4 @@
+import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {askTai,voicePreview,speechToText} from '../../services/ai/gateway.js';
@@ -188,6 +189,7 @@ export async function toggleVoiceRecord(ctx){
    ctx.store.update(s=>{
     const c=s.content.conversations.noapp.find(c=>c.id==='tai');
     c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,voiceCaption:transcript||null,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
+    if(transcript)rememberTaiConversation(s,transcript);
     s.events.push({type:'voice_sent',channel:'noapp',messageId:id,day:s.day,clock:s.clock});
    });
    ctx.toast(transcript?'语音已发送并转写，正在等待熙泰回复…':'语音已发送（没有转写时 AI 不会臆测内容）');
