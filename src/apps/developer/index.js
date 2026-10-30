@@ -86,7 +86,8 @@ export function input(t,ctx){
  root.querySelectorAll('[data-actor-name]').forEach(field=>{const name=people.get(field.dataset.actorName);if(name){field.setAttribute('aria-label',name+'的显示名称');if(field!==t)field.value=name;}});
  const title=root.querySelector('#editor-conversation-name');if(title&&title!==t)title.value=c.name;
 }
-export function submit(f,ctx){const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
+export function submit(f,ctx){
+ if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
  if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}
  if(form?.startsWith('phone-')){
