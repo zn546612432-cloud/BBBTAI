@@ -1,17 +1,18 @@
-// Same presence state across MIRAGE, NoApp and chess. A conversation in
-// progress gets a real-time grace period, so accelerated game time cannot
-// switch the character offline in the middle of a reply.
-const GRACE_MS=45*60*1000;
+// Macau game clock is used for scheduling; Xitai lives in UK but the
+// author chose 18:00-08:00 Macau as the principal reachable window.
+// Active conversations are protected against accelerated-time disconnects.
+const ENGAGED_GRACE_MS=45*60*1000;
 let lastEngagedAt=0;
 export function markTaiEngaged(){lastEngagedAt=Date.now();}
-export function taiPresence(s){
+export function clearTaiEngagement(){lastEngagedAt=0;}
+export function taiPresence(s,{now=Date.now()}={}){
  if(s.day<56)return {status:'offline',contactable:false,reason:'尚未相认'};
- if(lastEngagedAt&&Date.now()-lastEngagedAt<GRACE_MS)
-  return {status:'online',contactable:true,reason:'在线 · 聊天中'};
- const hour=Number(s.clock?.slice(0,2)||0);
- // An internationally based doctoral researcher can work late and keep odd hours.
- // This is a game rhythm, not a claim about the character's physical real-world presence.
- const status=(hour>=11||hour<4)?'online':hour>=9?'busy':'away';
- const reason={online:'在线',busy:'忙碌',away:'离开'}[status];
- return {status,contactable:true,reason};
+ if(lastEngagedAt&&now-lastEngagedAt<ENGAGED_GRACE_MS)
+  return {status:'online',contactable:true,reason:'在线 · 对话中'};
+ const mins=Number(s.clock?.slice(0,2)||0)*60+Number(s.clock?.slice(3,5)||0);
+ const inside=mins>=18*60||mins<8*60;
+ if(!inside)return {status:'away',contactable:true,reason:'离线 · 有时差'};
+ // This is an opportunity window, not an hourly on/off switch.
+ const status=(mins>=18*60&&mins<22*60)||(mins>=22*60||mins<3*60)?'online':'busy';
+ return {status,contactable:true,reason:status==='online'?'在线':'在线 · 回复可能较慢'};
 }
