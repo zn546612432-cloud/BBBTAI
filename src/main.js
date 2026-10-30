@@ -8,6 +8,7 @@ import {home,lock,appFrame,status,notifications,mountShell,notificationCard} fro
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
 import {processDemoReply} from './services/invitations.js';
+import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
@@ -195,7 +196,7 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);}catch(err){toast(err.message||'消息未能保存');}},500);
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 setInterval(()=>{
