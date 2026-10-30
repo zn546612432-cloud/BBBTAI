@@ -73,3 +73,24 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  for(let i=0;i<bytes.length;i++)bytes[i]=parseInt(hex.slice(i*2,i*2+2),16);
  return new Blob([bytes],{type:'audio/mpeg'});
 }
+
+/** MiniMax ASR 1.0: converts the player's recorded NoApp voice message to text. */
+export async function speechToText(blob){
+ if(!(blob instanceof Blob)||!blob.size||blob.size>25_000_000)throw Error('语音上传大小必须小于25MB');
+ const c=apiConfig();
+ if(!c.minimax)throw Error('语音识别需要在 NoApp 设置 MiniMax Key');
+ const root=c.region==='intl'?'https://api.minimax.io':'https://api.minimaxi.com';
+ const form=new FormData();form.append('model','asr-1.0');
+ const type=blob.type.toLowerCase(),ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':type.includes('webm')?'webm':'wav';
+ // Official ASR supports m4a/ogg and common audio containers. WebM support varies by account.
+ form.append('file',blob,'ximeng-voice.'+ext);form.append('response_format','json');
+ let r;
+ try{r=await fetch(root+'/v1/speech_to_text',{method:'POST',mode:'cors',credentials:'omit',headers:{Authorization:'Bearer '+c.minimax},body:form,referrerPolicy:'no-referrer'});}
+ catch{throw Error('语音识别请求受网络或浏览器 CORS 限制');}
+ let data;try{data=await r.json();}catch{throw Error('ASR 没有返回 JSON');}
+ if(!r.ok||data.base_resp?.status_code&&data.base_resp.status_code!==0)
+  throw Error('MiniMax ASR：'+(data.base_resp?.status_msg||data.error?.message||r.status));
+ const text=String(data.text||data.data?.text||data.result?.text||'').trim();
+ if(!text)throw Error('没有识别到可用语音文字');
+ return text;
+}
