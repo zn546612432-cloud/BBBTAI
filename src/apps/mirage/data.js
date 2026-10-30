@@ -1,3 +1,4 @@
+import {ensureMirageStory,WALLET_CHALLENGE_ID,completeWalletChallenge} from './contacts-seed.js';
 import {uid} from '../../services/id.js';
 import {hackerBounty,HACKER_BOUNTY_ID} from './mission.js';
 export const contactNames=['Isolde Mirage','Rookery 13','Nyx Voidwalker','Cipher-7','Vesper Nocturne','Dr. Ouroboros','Thalia Liminal','Orion Echo','Iris 404','Silas Rook','Lyra Null'];
@@ -12,13 +13,20 @@ export const defaultProducts=[
  {id:'mc-p6',name:'ENCRYPTED TERMINAL',category:'EQUIPMENT',price:6800,stock:3,description:'Portable private-network terminal.',art:'terminal'}
 ];
 export function mirageData(s){return s.content.mirage||{account:MIRAGE_ACCOUNT,balance:300000,products:defaultProducts,cart:[],transactions:[],assets:[]};}
-export function initializeMirage(store){if(store.get().content.mirage?.version===2)return;store.update(s=>{
- const previousVersion=s.content.mirage?.version||0;
- s.content.mirage={...mirageData(s),version:2};
- if(previousVersion<2&&!s.content.orders.some(o=>o.id===HACKER_BOUNTY_ID))s.content.orders.push({...hackerBounty});
- // Private contracts destroy their channels on completion. No sample identity
- // may appear in a fresh player's contact list merely because they signed in.
- });}
+export {WALLET_CHALLENGE_ID,completeWalletChallenge};
+export function initializeMirage(store){
+ const current=store.get();
+ const missingStarter=['mc-arms-partner','mc-peer-crypt','mc-support-echo','mc-done-sable'].some(id=>!current.content.conversations.mirage.some(x=>x.id===id));
+ const missingD05=current.day>=5&&!current.content.orders.some(x=>x.id===WALLET_CHALLENGE_ID);
+ const needsUpgrade=current.content.mirage?.version!==3;
+ if(!missingStarter&&!missingD05&&!needsUpgrade)return;
+ store.update(s=>{
+  const previousVersion=s.content.mirage?.version||0;
+  s.content.mirage={...mirageData(s),version:3};
+  if(previousVersion<2&&!s.content.orders.some(o=>o.id===HACKER_BOUNTY_ID))s.content.orders.push({...hackerBounty});
+  ensureMirageStory(s);
+ });
+}
 export const contacts=s=>{const list=[...(s.content.conversations.mirage||[])];return list.sort((a,b)=>(Number(b.lastOpened)||0)-(Number(a.lastOpened)||0)||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
 export const isCompletedBounty=order=>['COMPLETED','已完成'].includes(String(order.status||'').trim().toUpperCase());
 export const bountyGroups=orders=>({open:orders.filter(o=>!isCompletedBounty(o)),completed:orders.filter(isCompletedBounty)});
