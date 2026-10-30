@@ -1,6 +1,6 @@
 import {esc,btn} from '../../../../system/ui.js';
 import {initializeMirage} from '../../../mirage/data.js';
-import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty} from '../../../mirage/mission.js';
+import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty,hackerBounty} from '../../../mirage/mission.js';
 import {ensureGhost,authorize,configFor} from '../../../ghost/state.js';
 import {tools as ghostTools} from '../../../ghost/catalog.js';
 
@@ -71,7 +71,8 @@ export function missionSubmit(form,ctx){
  if(seconds!==null&&(!Number.isInteger(seconds)||seconds<10||seconds>600))throw Error('时限范围 10–600 秒');
  if(reward!==null&&(!Number.isSafeInteger(reward)||reward<0))throw Error('奖励必须是非负整数');
  ctx.store.update(s=>{
-  const o=s.content.orders.find(o=>o.id===HACKER_BOUNTY_ID);
+  let o=s.content.orders.find(o=>o.id===HACKER_BOUNTY_ID);
+  if(!o){o={...hackerBounty};s.content.orders.push(o);}
   if(o){o.title=String(v.get('title')||'').slice(0,120);o.description=String(v.get('description')||'').slice(0,5000);o.reward=String(v.get('rewardLabel')||'').slice(0,80);}
   const m=s.content.mail.find(m=>m.id===HACKER_MAIL_ID);
   if(m){m.subject=String(v.get('subject')||'').slice(0,150);m.body=String(v.get('body')||'').slice(0,8000);}
