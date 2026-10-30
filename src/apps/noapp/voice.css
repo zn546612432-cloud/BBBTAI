@@ -1,0 +1,38 @@
+
+/* NoApp call system: isolated iOS-inspired voice interface. */
+.app-noapp .noapp-shell{min-height:100%;background:linear-gradient(150deg,#111923,#111826);color:#ecf3ff}
+.app-noapp .noapp-voice-actions{display:flex;gap:9px;padding:9px 14px 4px;flex-wrap:wrap;align-items:center}
+.app-noapp .noapp-voice-actions button{background:#283343;border:1px solid #526175;color:#e6edf8;border-radius:20px;padding:9px 12px;font-size:12px;min-height:38px}
+.app-noapp .noapp-voice-actions button:active{background:#3d5369}
+.app-noapp .noapp-voice-hint{padding:5px 14px 10px;font-size:10px;color:#7c91ac}
+.app-noapp .noapp-voice-bubble{border-radius:16px;display:flex;gap:10px;align-items:center;color:#eaf3fe;background:#263a4c;border:1px solid #3d5366;padding:9px 12px;font-size:13px}
+.app-noapp .noapp-voice-bubble button{border:0;background:#a2d3ff;color:#17314e;border-radius:50%;width:34px;height:34px;flex-shrink:0}
+.app-noapp .noapp-voice-transcript{margin-top:5px;font-size:12px;line-height:1.6;color:#dce7f7;max-width:250px;white-space:normal}
+.app-noapp .tai-call-screen{height:100%;min-height:100%;display:flex;flex-direction:column;color:#f4f8ff;background:radial-gradient(circle at 42% 14%,#3a4c60 0%,#1d2c3c 36%,#0a1524 75%);margin:0;padding:18px 22px max(24px,env(safe-area-inset-bottom))}
+.app-noapp:has(.tai-call-screen) .app-content{overflow:hidden!important;padding:0!important}
+.app-noapp:has(.tai-call-screen) .app-nav{display:none!important}
+.tai-call-top{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:9px;letter-spacing:1.1px;color:#b2c2d6}
+.tai-call-person{display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;min-height:265px;flex:1}
+.tai-call-avatar{width:126px;height:126px;object-fit:cover;border:4px solid #c6d3e026;border-radius:50%;box-shadow:0 20px 45px #050b1680}
+.tai-call-person h1{font-size:29px;font-weight:580;letter-spacing:1px;margin:20px 0 6px}
+.tai-call-person p{font-size:14px;color:#becde2;margin:2px 0 0}
+.tai-call-choices{display:flex;justify-content:space-around;gap:48px;align-items:flex-end;margin:0 0 20px}
+.tai-call-features{display:flex;justify-content:space-around;gap:6px;margin:0 0 15px}
+.tai-call-button{display:flex;flex-direction:column;align-items:center;gap:9px;color:#eef5ff;border:0;background:transparent;font-size:12px;min-width:69px;padding:4px}
+.tai-call-button small{font-size:11px;color:#dbe4f0}
+.tai-call-button-icon{width:61px;height:61px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:50%;background:#ffffff30;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.tai-call-button.reject .tai-call-button-icon{background:#ee4d59;color:#fff;transform:rotate(135deg)}
+.tai-call-button.accept .tai-call-button-icon{background:#42c46a;color:#fff}
+.tai-call-chat{border:1px solid #ffffff24;border-radius:18px;background:#101e2dcc;padding:10px;margin-bottom:4px}
+.tai-call-transcript{max-height:140px;overflow:auto;font-size:11px;line-height:1.55;color:#c8d8e9}
+.tai-call-transcript p{margin:5px 0}.tai-call-transcript b{color:#e6f0ff}
+.tai-call-chat form{display:flex;gap:5px;margin:8px 0 4px}
+.tai-call-chat input{flex:1;min-width:0;background:#273549;border-radius:10px;border:1px solid #60758a;color:white;min-height:38px;padding:8px 10px;font-size:13px}
+.tai-call-chat form button{border-radius:9px;background:#e8eff8;color:#223c55;border:0;font-size:12px;padding:6px 10px}
+.tai-call-chat form button:disabled{opacity:.5}
+.tai-call-chat>small{display:block;font-size:10px;line-height:1.4;color:#8fa4bf}
+.app-noapp .tai-api-setup{padding:16px;display:grid;gap:12px;color:#d9e4f5}
+.tai-api-setup label{display:grid;gap:6px;font-size:12px}
+.tai-api-setup input,.tai-api-setup select{padding:12px;font-size:16px;background:#121c2c;color:white;border:1px solid #50647e;border-radius:11px;min-height:44px}
+.tai-api-setup .button-primary{border-radius:12px;min-height:48px}
+.tai-api-setup p{font-size:11px;line-height:1.7;color:#97a9c5}
