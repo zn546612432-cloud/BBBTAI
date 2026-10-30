@@ -74,7 +74,21 @@ async function respond(text,ctx){
    if(call.state!=='connected')break;
    if(playback){playback.pause();URL.revokeObjectURL(playback.src);playback=null;}
    playback=new Audio(URL.createObjectURL(blob));
-   try{await playback.play();}catch{ctx.toast('请点通话界面后再播放音频，iPhone 已阻止自动播放。');}
+   try{
+    await playback.play();
+    // play() resolves when playback STARTS, not when it FINISHES.
+    // Wait until this voice ends so consecutive Tai messages don't cut each other off.
+    const currentAudio=playback;
+    await new Promise(resolve=>{
+      let finished=false;
+      const done=()=>{if(finished)return;finished=true;currentAudio.removeEventListener('ended',done);currentAudio.removeEventListener('pause',done);currentAudio.removeEventListener('error',done);clearTimeout(watchdog);resolve();};
+      currentAudio.addEventListener('ended',done,{once:true});
+      currentAudio.addEventListener('pause',done,{once:true});
+      currentAudio.addEventListener('error',done,{once:true});
+      const watchdog=setTimeout(done,180000);
+      if(currentAudio.ended)done();
+    });
+   }catch{ctx.toast('Safari 阻止了自动播放，请先手动点一次播放器允许音频。');}
    if(replies.length>1)await new Promise(r=>setTimeout(r,420));
   }
  }catch(e){ctx.toast('电话回复失败：'+e.message);}
