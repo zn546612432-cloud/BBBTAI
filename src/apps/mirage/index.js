@@ -108,6 +108,8 @@ async function replyToOuroboros(ctx,contactId,sourceId){
  const initial=ctx.store.get();
  const c=initial.content.conversations.mirage?.find(x=>x.id===contactId);
  if(!c||!/(ouroboros|衔尾蛇)/i.test(c.name)||pendingMirageAI.has(contactId))return;
+ // The D05 authored exchange must finish before free-form DeepSeek replies.
+ if(c.messages.some(m=>m.scriptedOuroboros&&m.schedule&&!m.delivery))return;
  const last=c.messages.at(-1);if(last?.id!==sourceId||last.from!=='me')return;
  const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中填写 DeepSeek Key');
  pendingMirageAI.add(contactId);
