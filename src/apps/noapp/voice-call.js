@@ -66,7 +66,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
- setTimeout(()=>{
+ const missedTimer=setTimeout(()=>{
   if(call.sessionId!==sessionId||call.state!=='ringing')return;
   call.state='missed';callSerial++;
   ctx.store.update(s=>{
@@ -76,6 +76,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
   });
   ctx.refresh?.();
  },60000);
+ missedTimer.unref?.(); // Node tests should not remain open for a missed-call timeout.
  return true;
 }
 export function startOutgoing(ctx){
