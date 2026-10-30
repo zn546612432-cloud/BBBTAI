@@ -20,7 +20,7 @@ import {errorHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
 import {drainBattery,plugIn,unplug} from './system/power/battery.js';
-import {advanceGameMinutes,tickWorld,setSleeping,dismissAlarm} from './system/time/clock.js';
+import {advanceGameMinutes,tickWorld,isTaiConversation,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
@@ -204,7 +204,7 @@ setInterval(()=>{
  if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get()))return;
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  let outcome={};
- store.update(s=>{outcome=tickWorld(s,elapsed,{focused:editing});drainBattery(s,elapsed);});
+ store.update(s=>{outcome=tickWorld(s,elapsed,{focused:editing,taiChat:isTaiConversation(s)});drainBattery(s,elapsed);});
  if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
  if(outcome.event==='emergency')collapseIsland();
  if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
