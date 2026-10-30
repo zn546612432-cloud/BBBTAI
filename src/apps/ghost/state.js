@@ -1,3 +1,4 @@
+import {advanceLinkedMission} from '../mirage/linked-missions.js';
 import {WALLET_CHALLENGE_ID,completeWalletChallenge} from '../mirage/contacts-seed.js';
 import {defaultConfig} from './catalog.js';
 import {createBoard} from './games/logic.js';
@@ -48,9 +49,10 @@ export function finish(s,id,success,now=Date.now()){
  // Trigger the scripted D05 conversation and 10 BTC credit ONLY after
  // the player successfully solves the challenge. This is idempotent.
  if(success&&id===WALLET_CHALLENGE_ID)completeWalletChallenge(s);
+ if(success)advanceLinkedMission(s,id,5);
 }
 export function submit(s,id,now=Date.now()){const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
-export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;changed=true;}}}return changed;}
+export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;advanceLinkedMission(s,o.id,6);changed=true;}}}return changed;}
 
 export function needsWorldTick(s,now=Date.now()){return Object.values(s.ghost?.orders||{}).some(o=>o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward));}
 export function advanceGhost(s,now=Date.now()){for(const o of Object.values(s.ghost?.orders||{}))if(o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline))finish(s,o.id,o.type==='strike',now);settle(s,now);}
