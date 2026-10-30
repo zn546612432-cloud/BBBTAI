@@ -95,3 +95,21 @@
 .app-noapp .tai-worldbook-links{display:flex;flex-direction:column;gap:10px;margin:10px 0;padding:14px;border-radius:15px;background:#1d293a;border:1px solid #3d5068}
 .app-noapp .tai-worldbook-links strong{font-size:14px;color:#e7f1ff}
 .app-noapp .tai-worldbook-links a{font-size:13px;line-height:1.6;color:#b5d7ff;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+
+/* Hold-to-talk sheet and live telephone subtitles */
+.app-noapp .noapp-composer-mic[data-hold="true"]{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.app-noapp .noapp-record-overlay{position:absolute;z-index:28;left:15px;right:15px;bottom:75px;border-radius:22px;background:linear-gradient(145deg,#30445b,#14202f);border:1px solid #8bb8d066;padding:20px 15px 15px;box-shadow:0 18px 40px #0009;color:white;display:none;flex-direction:column;align-items:center;gap:13px;pointer-events:none}
+.app-noapp .noapp-record-overlay.is-recording{display:flex}
+.app-noapp .noapp-record-heading{font-size:15px;letter-spacing:.4px}
+.app-noapp .noapp-record-waves{height:43px;display:flex;align-items:center;justify-content:center;gap:4px}
+.app-noapp .noapp-record-waves i{display:block;width:3px;height:12px;max-height:38px;background:#a6f0f2;border-radius:8px;animation:tai-sound-wave .58s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-0.067s)}
+.app-noapp .noapp-record-overlay.is-cancel-gesture{border-color:#ff7373;background:#453039}
+.app-noapp .noapp-record-overlay.is-cancel-gesture small{color:#ffb4b4}
+.app-noapp .noapp-record-overlay small{font-size:11px;color:#b0c5df}
+@keyframes tai-sound-wave{from{height:6px;opacity:.66}to{height:38px;opacity:1}}
+@media(prefers-reduced-motion:reduce){.app-noapp .noapp-record-waves i{animation:none;height:18px}}
+.app-noapp .tai-live-captions{position:relative;flex:0 1 auto;max-height:26%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:7px 14px 11px;margin-bottom:10px;min-height:0;scrollbar-width:none}
+.app-noapp .tai-live-captions p{align-self:flex-start;max-width:88%;font-size:13px;line-height:1.55;color:#f9fafc;background:#ffffff1b;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:8px 12px;border-radius:15px 15px 15px 4px;margin:0;overflow-wrap:anywhere}
+.app-noapp .tai-live-captions p.mine{align-self:flex-end;background:#9dc9e6c9;color:#122031;border-radius:15px 15px 4px 15px}
+.app-noapp .tai-live-captions button{align-self:flex-start;color:#e8f4ff;background:#3a596c;border-radius:18px;font-size:12px;padding:9px}
+@media(max-height:720px){.app-noapp .tai-call-identity{min-height:180px;padding-bottom:10px}.app-noapp .tai-live-captions{max-height:22%}}
