@@ -30,7 +30,7 @@ const setting=(s)=>{
  +'<label>音色 voice_id<input type="text" name="voiceId" value="'+esc(c.voiceId||'male-qn-qingse')+'" placeholder="male-qn-qingse"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
- +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
+ +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/ai/character-worldbook.js" target="_blank" rel="noopener noreferrer">阅读熙泰完整人物世界书</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
 };
 export function render({store},loc){
  const s=store.get(),id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
