@@ -32,17 +32,13 @@ export const starterContacts=[
   ]}
 ];
 export const ouroborosContact={
- id:'mc-ourob-d05',name:'Dr Ouroboros',avatar:'D',online:true,storySeed:true,
- messages:[
-  msg('ou-01','mc-ourob-d05','各位，放了一个有十枚比特币的电子钱包在站上。谁拿得到，就是谁的。',5,'21:06'),
-  msg('ou-02','me','十枚？口气不小。',5,'21:12'),
-  msg('ou-03','mc-ourob-d05','总有人觉得自己配得上这个机会。',5,'21:15')
- ]
+ id:'mc-ourob-d05',name:'Dr Ouroboros',avatar:'D',online:true,storySeed:true,unread:1,
+ messages:[]
 };
 export const walletChallenge={
  id:WALLET_CHALLENGE_ID,title:'OUROBOROS / 10 BTC WALLET CHALLENGE',
  owner:'Dr Ouroboros',reward:'10 BTC',category:'CYBER',status:'OPEN',
- description:'匿名技术挑战：衔尾蛇博士放出装有十枚比特币的虚构测试钱包，公开邀请高手挑战。完成后由剧情系统判定，非现实加密钱包入侵操作。',
+ description:'10 BTC. One wallet. An open challenge to anyone who thinks they are clever enough to claim it. — Dr Ouroboros',
  storyDay:5,storySeed:true
 };
 export function ensureMirageStory(s){
@@ -50,8 +46,9 @@ export function ensureMirageStory(s){
  const list=s.content.conversations.mirage??=[];
  for(const c of starterContacts)if(!list.some(x=>x.id===c.id))list.push(structuredClone(c));
  if(s.day>=5){
-  if(!list.some(x=>x.id===ouroborosContact.id))list.push(structuredClone(ouroborosContact));
   if(!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))s.content.orders.push({...walletChallenge});
+  // The anonymous founder does not message Ximeng until the challenge is WON.
+  if(s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')&&!list.some(c=>c.id===ouroborosContact.id))list.push(structuredClone(ouroborosContact));
  }
 }
 export function completeWalletChallenge(s){
@@ -59,14 +56,28 @@ export function completeWalletChallenge(s){
  const o=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
  if(!o||o.status==='COMPLETED')return false;
  o.status='COMPLETED';
- const c=s.content.conversations.mirage.find(x=>x.id===ouroborosContact.id);
- if(c){
-  for(const m of [
-   msg('ou-04','me','我拿到了。',s.day,s.clock),
-   msg('ou-05','mc-ourob-d05','Congratulations. 比我预期的快。',s.day,s.clock),
-   msg('ou-06','mc-ourob-d05','未来我们还会有机会合作。',s.day,s.clock)
-  ])if(!c.messages.some(x=>x.id===m.id))c.messages.push(m);
+ const list=s.content.conversations.mirage;
+ let c=list.find(x=>x.id===ouroborosContact.id);
+ if(!c){c=structuredClone(ouroborosContact);list.push(c);}
+ // Migrate old demo transcripts that appeared before the challenge was solved.
+ c.messages=c.messages.filter(m=>!/^ou-0[123]$/.test(m.id));
+ const t=Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
+ const minute=n=>String(Math.floor((t+n)%1440/60)).padStart(2,'0')+':'+String((t+n)%60).padStart(2,'0');
+ const scripted=[
+  ['mc-ourob-d05','恭喜你。',0],
+  ['mc-ourob-d05','你属于哪个组织？',1],
+  ['me','我单干。',2],
+  ['mc-ourob-d05','真有趣。你知道吗，你打败了全世界百分之八十的黑客。你居然说自己是单干？',3],
+  ['me','因为我是天才。',4],
+  ['mc-ourob-d05','真有趣。拿好你的奖励饼干，黑客天才。希望我们以后还有合作的机会。',5]
+ ];
+ for(let i=0;i<scripted.length;i++){
+  const [from,text,offset]=scripted[i],id='ou-d05-after-'+i;
+  if(!c.messages.some(m=>m.id===id))c.messages.push(msg(id,from,text,s.day,minute(offset)));
  }
+ c.unread=Math.max(1,c.unread||0);
+ c.lastMessageAt=Date.now();
+ s.notifications.unshift({id:'mirage-ouroboros-complete',title:'Dr Ouroboros',body:'恭喜你。',conversationId:c.id,link:{appId:'mirage',route:'/chat/'+c.id,params:{}}});
  s.content.mirage??={};s.content.mirage.transactions??=[];
  if(!s.content.mirage.transactions.some(x=>x.id==='ou-btc10')){
   s.content.mirage.transactions.unshift({id:'ou-btc10',type:'REWARD',asset:'BTC',amount:10,time:s.clock,day:s.day,description:'OUROBOROS CHALLENGE'});

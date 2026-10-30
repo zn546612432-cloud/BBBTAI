@@ -49,7 +49,7 @@ test('BYOK MiniMax builds numeric channel, sample rate and bitrate; keys are kep
   saveApiConfig({deepseek:'fake-test-ds',minimax:'fake-test-mm',region:'cn',ttsModel:'speech-2.8-hd',voiceId:'male-qn-qingse'});
   assert.equal(apiConfig().minimax,'fake-test-mm');
   const blob=await voicePreview({text:'阿蒙，你还没睡？'});
-  assert.equal(blob.size,3);assert.equal(body.audio_setting.channel,1);
+  assert.equal(blob.size,3);assert.equal(body.voice_setting.voice_id,'moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4');assert.equal(body.audio_setting.channel,1);
   assert.equal(typeof body.audio_setting.channel,'number');
   assert.equal(typeof body.audio_setting.sample_rate,'number');
   assert.equal(typeof body.audio_setting.bitrate,'number');

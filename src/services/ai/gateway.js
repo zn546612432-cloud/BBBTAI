@@ -3,13 +3,14 @@ import {prepareXitaiSpeech} from '../voice/voice-regex.js';
 // For the user's isolated phone preview, keys may be entered per browser tab and
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
+export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
 export function apiConfig(){
- try{return JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');}catch{return {};}
+ try{return {...JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}'),voiceId:XITAI_VOICE_ID};}catch{return {voiceId:XITAI_VOICE_ID};}
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
  region:config.region==='intl'?'intl':'cn',
- voiceId:String(config.voiceId||'male-qn-qingse').trim(),
+ voiceId:XITAI_VOICE_ID,
  ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-turbo'};
  sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));return out;
 }
@@ -65,7 +66,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  speed=prepared.speed;
  if(!c.minimax){
   let r;
-  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId,model,language,speed})});}
+  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed})});}
   catch{throw Error('MiniMax 语音接口未配置');}
   if(!r.ok){let v={};try{v=await r.json();}catch{}throw Error(v.error||'MiniMax 语音接口失败');}
   if(!r.headers.get('Content-Type')?.includes('audio/'))throw Error('未返回音频');
@@ -77,7 +78,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:voiceId||c.voiceId||'male-qn-qingse',speed:Number(speed),vol:0.95,pitch:-1,...(prepared.emotion?{emotion:prepared.emotion}:{})},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:0.95,pitch:-1,...(prepared.emotion?{emotion:prepared.emotion}:{})},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;

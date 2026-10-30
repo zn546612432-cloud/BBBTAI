@@ -49,12 +49,13 @@ test('D01 retains at least four established MIRAGE identities and D05 challenge 
  assert.equal(contacts(store.get()).length,4);
  store.update(n=>{n.day=5;n.clock='21:30';});
  initializeMirage(store);
- assert.equal(contacts(store.get()).length,5);
+ assert.equal(contacts(store.get()).length,4);
  assert.ok(store.get().content.orders.some(o=>o.id===WALLET_CHALLENGE_ID));
  store.update(n=>{assert.equal(completeWalletChallenge(n),true);assert.equal(completeWalletChallenge(n),false);});
  const s5=store.get();
  assert.equal(s5.content.mirage.transactions.filter(x=>x.id==='ou-btc10').length,1);
- assert.equal(s5.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05').messages.filter(m=>m.id==='ou-06').length,1);
+ assert.equal(contacts(s5).length,5);
+ assert.equal(s5.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05').messages.filter(m=>m.text.includes('奖励饼干')).length,1);
 });
 test('remember only directly disclosed NoApp preferences, never invent future memories',()=>{
  const s=initialState();s.aiDraft.memories=[];s.day=65;

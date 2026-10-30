@@ -8,11 +8,11 @@ export function clearTaiEngagement(){lastEngagedAt=0;}
 export function taiPresence(s,{now=Date.now()}={}){
  if(s.day<56)return {status:'offline',contactable:false,reason:'尚未相认'};
  if(lastEngagedAt&&now-lastEngagedAt<ENGAGED_GRACE_MS)
-  return {status:'online',contactable:true,reason:'在线 · 对话中'};
+  return {status:'online',contactable:true,reason:'在线'};
  const mins=Number(s.clock?.slice(0,2)||0)*60+Number(s.clock?.slice(3,5)||0);
  const inside=mins>=18*60||mins<8*60;
- if(!inside)return {status:'away',contactable:true,reason:'离线 · 有时差'};
+ if(!inside)return {status:'away',contactable:true,reason:'离线'};
  // This is an opportunity window, not an hourly on/off switch.
  const status=(mins>=18*60&&mins<22*60)||(mins>=22*60||mins<3*60)?'online':'busy';
- return {status,contactable:true,reason:status==='online'?'在线':'在线 · 回复可能较慢'};
+ return {status,contactable:true,reason:status==='online'?'在线':'忙碌'};
 }

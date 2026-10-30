@@ -1,3 +1,4 @@
+import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
 import {preview,updateTimelinePreview} from './features/preview/index.js';
 import {aiVoicePanel,handleAIVoice,submitAIVoice} from './features/ai-voice/index.js';
 import {phoneEditor} from './features/phone/index.js';
@@ -16,13 +17,14 @@ import {conversations as allConversations,selectedConversation,actors,actorName,
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
 import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit,handleMomentsImport} from './features/moments/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[[['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['preview','时间与测试'],['ai','AI / 语音']]];
+const tabs=[[['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音']]];
 const attr=v=>esc(v);
 function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(handleMoments(a,t,ctx))return;
+ if(a.startsWith('mission-')&&missionAction(a,t,ctx))return;
  if(a.startsWith('ai-')){handleAIVoice(a,t,ctx);return;}
  if(a==='editor-bank-rate'){const el=document.getElementById('gh-rate'),rate=el.value===''?null:Number(el.value);if(rate!==null&&(!Number.isFinite(rate)||rate<=0)){el.reportValidity();return;}store.update(s=>{s.bankData??={balance:0,transactions:[],rate:null};s.bankData.rate=rate;});return;}
  if(a==='editor-ghost-save'){saveGhostConfig(t,ctx);return;}
@@ -84,7 +86,8 @@ export function input(t,ctx){
  root.querySelectorAll('[data-actor-name]').forEach(field=>{const name=people.get(field.dataset.actorName);if(name){field.setAttribute('aria-label',name+'的显示名称');if(field!==t)field.value=name;}});
  const title=root.querySelector('#editor-conversation-name');if(title&&title!==t)title.value=c.name;
 }
-export function submit(f,ctx){const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
+export function submit(f,ctx){
+ if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
  if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}
  if(form?.startsWith('phone-')){

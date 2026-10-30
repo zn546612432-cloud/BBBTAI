@@ -1,6 +1,6 @@
 import {esc} from '../../system/ui.js';
 import {tools,stages} from './catalog.js';
-import {ensureGhost,configFor,begin,finish,submit,settle,authorize} from './state.js';
+import {ensureGhost,configFor,begin,finish,submit,settle,authorize,nextGhostRound} from './state.js';
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'PRIVATE TOOL LIBRARY'};
@@ -45,8 +45,8 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  ctx.store.update(n=>{const run=n.ghost.orders[id],b=run.board,cfg=configFor(n,run.type,run.id);run.moves++;
   if(a==='tile'){const index=Number(t.dataset.index);if(b.selected===null)b.selected=index;else{b.tiles=swap(b.tiles,b.selected,index);b.selected=null;if(puzzleSolved(b.tiles))finish(n,id,true);}}
   if(a==='pipe'){const i=Number(t.dataset.index);b.masks[i]=rotate(b.masks[i]);if(connected(b.masks).has(8))finish(n,id,true);}
-  if(a==='match'){if(Number(t.dataset.index)===b.correct){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else Object.assign(b,fingerprints());}else{run.errors++;if(run.deadline!==null)run.deadline-=3000;}}
-  if(a==='key'){const key=t.dataset.key;if(key==='⌫')b.input=b.input.slice(0,-1);else if(key!=='↵'){if(key===b.code[b.input.length])b.input+=key;else{run.errors++;b.input='';if(run.deadline!==null)run.deadline-=2000;}if(b.input.length===b.code.length){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else{b.code=newCode(cfg.codeLength);b.input='';}}}}
+  if(a==='match'){if(Number(t.dataset.index)===b.correct){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}else{run.errors++;if(run.deadline!==null)run.deadline-=3000;}}
+  if(a==='key'){const key=t.dataset.key;if(key==='⌫')b.input=b.input.slice(0,-1);else if(key!=='↵'){if(key===b.code[b.input.length])b.input+=key;else{run.errors++;b.input='';if(run.deadline!==null)run.deadline-=2000;}if(b.input.length===b.code.length){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}}}
  });
 }
 export {authorize,submit,settle};
