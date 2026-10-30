@@ -119,12 +119,12 @@ function ttsConfig(source,voice){
  if(mood!=='danger')tryTag(state.sigh,'sighs');
  if(speech.length>18&&mood!=='danger')tryTag(state.hesitate,'emm');
  if(state.autoTags&&state.pause>0&&/[。！？]/.test(speech)&&!/<#/.test(speech))speech=speech.replace(/([。！？])(?=.{2,})/,'$1 <#'+Number(state.pause).toFixed(2)+'#> ');
- const vs={...voice,speed:state.speed,pitch:Math.round(state.pitch),vol:state.vol,text_normalization:state.normalize};
+ const vs={...voice,speed:Number(state.speed),pitch:Math.round(Number(state.pitch)),vol:Number(state.vol)};
  if(state.autoMood&&!$('emotion').value){const e={soft:'calm',danger:'calm',playful:'fluent'}[mood];if(e)vs.emotion=e;}
  if($('emotion').value)vs.emotion=$('emotion').value;
  if(vs.emotion==='whisper'&&!/^speech-2\.6/.test($('ttsModel').value)){delete vs.emotion;info('2.8 不支持 whisper，已取消该参数。');}
- const extra={language_boost:state.lang,audio_setting:{sample_rate:state.sample,bitrate:state.bitrate,format:'mp3',channel:state.channel}};
- if(state.modify){extra.voice_modify={pitch:state.fxPitch,intensity:state.fxIntensity,timbre:state.fxTimbre};if(state.fx)extra.voice_modify.sound_effects=state.fx;}
+ const extra={language_boost:state.lang||'auto',text_normalization:!!state.normalize,audio_setting:{sample_rate:Number(state.sample),bitrate:Number(state.bitrate),format:'mp3',channel:Number(state.channel)}};
+ if(state.modify){extra.voice_modify={pitch:Math.round(Number(state.fxPitch)),intensity:Math.round(Number(state.fxIntensity)),timbre:Math.round(Number(state.fxTimbre))};if(state.fx)extra.voice_modify.sound_effects=state.fx;}
  return {text:speech,voice_setting:vs,extra};
 }
 function preview(){const sample=$('ttsText').value;const r=ttsConfig(sample,{voice_id:$('voiceId').value,speed:1,vol:1,pitch:0});$('labPreviewOut').textContent='实际发声文本：\n'+r.text+'\n\nAPI 请求参数（不含 Key）：\n'+JSON.stringify({model:$('ttsModel').value,voice_setting:r.voice_setting,...r.extra},null,2);}
