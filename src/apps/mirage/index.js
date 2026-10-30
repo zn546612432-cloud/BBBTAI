@@ -1,3 +1,4 @@
+import {linkedMission,acceptLinkedMission} from './linked-missions.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from './session.js';
 import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
@@ -72,6 +73,10 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
    });
    ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:id}});
    return;
+  }else if(action==='mc-accept-bounty'&&linkedMission(ctx.store.get(),id)){
+   let accepted=false;
+   ctx.store.update(s=>{accepted=acceptLinkedMission(s,id);});
+   ctx.toast(accepted?'ORDER ACCEPTED · KIRA':'ORDER ALREADY ACCEPTED');
   }else if(action==='mc-accept-bounty'&&id===HACKER_BOUNTY_ID){
    newMailNotice=true;acceptHackerBounty(ctx.store);ctx.refresh();
   }else{
