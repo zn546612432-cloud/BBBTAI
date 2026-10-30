@@ -38,6 +38,7 @@ export function callView(){
    phoneButton('tai-speaker',call.speaker?'扬声器已开':'扬声器已关',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':'')):
    phoneButton('tai-hangup','取消',glyph.hang,'is-hang');
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="文字转写"><header>通话文字 <button type="button" data-action="tai-expand" aria-label="关闭文字转写">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="发文字继续通话…"><button type="submit" '+(call.busy?'disabled':'')+'>发送</button></form></div>':'';
+ const liveCaptions=active?'<div class="tai-live-captions" role="log" aria-live="polite">'+call.turns.slice(-5).map(t=>'<p class="'+(t.role==='user'?'mine':'theirs')+'">'+esc(t.content)+'</p>').join('')+(call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 播放语音</button>':'')+'</div>':'';
  return '<section class="tai-call-screen" aria-label="NoApp语音通话">'
   +'<div class="tai-call-ambient" aria-hidden="true"></div>'
   +'<nav class="tai-call-topbar">'+
@@ -45,7 +46,7 @@ export function callView(){
    '<span class="tai-call-channel">NOAPP · AUDIO</span>'+
    '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
    '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
-   transcript+
+   liveCaptions+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':'')+'">'+controls+'</div>'+
    '</section>';
 }
@@ -59,41 +60,61 @@ export function startOutgoing(ctx){
  if(!p.contactable||p.status!=='online'){ctx.toast('熙泰当前不在线，稍后再联系。');return;}
  call={state:'dialing',direction:'outgoing',muted:false,speaker:false,turns:[],started:0,busy:false};
  ctx.router.open({appId:'noapp',route:'/call'});
- setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();},1100);
+ setTimeout(()=>{if(call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);},1100);
 }
-async function respond(text,ctx){
- if(call.state!=='connected'||call.busy||!text.trim())return;
- const turn={role:'user',content:text.trim()};
- call.turns.push(turn);call.busy=true;ctx.refresh();
+// A telephone turn is ONE MiniMax TTS request, regardless of how many
+// chat bubbles DeepSeek chooses to send. Safari no longer drops later chunks.
+async function playCallAudio(ctx,blob){
+ if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);}
+ const url=URL.createObjectURL(blob);
+ playback=new Audio(url);
+ const current=playback;
  try{
-  const data=await askTai({channel:'noapp',day:ctx.store.get().day,messages:call.turns.slice(-20),profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
+  await current.play();
+  await new Promise(resolve=>{
+   if(current.ended){resolve();return;}
+   let finished=false;
+   const finish=()=>{if(finished)return;finished=true;clearTimeout(watchdog);current.removeEventListener('ended',finish);current.removeEventListener('pause',finish);current.removeEventListener('error',finish);resolve();};
+   current.addEventListener('ended',finish);current.addEventListener('pause',finish);current.addEventListener('error',finish);
+   const watchdog=setTimeout(finish,180000);
+  });
+ }catch{
+  call.audioReady=true;
+  ctx.toast('iPhone 阻止了自动播放，请点击「播放语音」收听熙泰。');
+ }finally{
+  call.audioReady=!!(playback&&playback.paused&&playback.currentTime===0);
+  if(call.state==='connected')ctx.refresh();
+ }
+}
+async function generateTurn(ctx,{opening=false,text=''}={}){
+ if(call.state!=='connected'||call.busy)return;
+ const requestDay=ctx.store.get().day;
+ if(!opening&&!String(text).trim())return;
+ if(!opening)call.turns.push({role:'user',content:String(text).trim()});
+ call.busy=true;markTaiEngaged();ctx.refresh();
+ try{
+  const history=call.turns.slice(-20);
+  const messages=opening?[...history,{role:'user',content:'[通话系统事件：语音电话刚接通。请由你先主动自然地说第一句话，不要反问我是系统，没有必要问候式客服套话。可以按关系和当前话题选择短句，偶尔非常自然地夹入一个简短葡语词。只生成熙泰的台词。]'}]:history;
+  const data=await askTai({channel:'noapp',day:requestDay,messages,profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
   const replies=unpackTaiReply(data,'noapp');
-  for(const reply of replies){
-   if(call.state!=='connected')break;
-   call.turns.push({role:'assistant',content:reply.text});ctx.refresh();
-   const blob=await voicePreview({text:reply.text,tone:reply.tone});
-   if(call.state!=='connected')break;
-   if(playback){playback.pause();URL.revokeObjectURL(playback.src);playback=null;}
-   playback=new Audio(URL.createObjectURL(blob));
-   try{
-    await playback.play();
-    // play() resolves when playback STARTS, not when it FINISHES.
-    // Wait until this voice ends so consecutive Tai messages don't cut each other off.
-    const currentAudio=playback;
-    await new Promise(resolve=>{
-      let finished=false;
-      const done=()=>{if(finished)return;finished=true;currentAudio.removeEventListener('ended',done);currentAudio.removeEventListener('pause',done);currentAudio.removeEventListener('error',done);clearTimeout(watchdog);resolve();};
-      currentAudio.addEventListener('ended',done,{once:true});
-      currentAudio.addEventListener('pause',done,{once:true});
-      currentAudio.addEventListener('error',done,{once:true});
-      const watchdog=setTimeout(done,180000);
-      if(currentAudio.ended)done();
-    });
-   }catch{ctx.toast('Safari 阻止了自动播放，请先手动点一次播放器允许音频。');}
-   if(replies.length>1)await new Promise(r=>setTimeout(r,420));
-  }
- }catch(e){ctx.toast('电话回复失败：'+e.message);}
- finally{call.busy=false;ctx.refresh();}
+  const completeSpeech=replies.map(x=>x.text.trim()).filter(Boolean).join(' ');
+  if(!completeSpeech)throw Error('熙泰暂时没有回应');
+  for(const r of replies)call.turns.push({role:'assistant',content:r.text});
+  call.lastSpeech=completeSpeech;ctx.refresh();
+  // One contiguous payload. Long words, breathing and personality are
+  // handled once by the MiniMax voice-worldbook composer.
+  const blob=await voicePreview({text:completeSpeech,tone:replies.at(-1)?.tone||'neutral'});
+  if(call.state!=='connected')return;
+  await playCallAudio(ctx,blob);
+ }catch(e){if(call.state==='connected')ctx.toast('通话 AI：'+e.message);}
+ finally{call.busy=false;if(call.state==='connected')ctx.refresh();}
+}
+async function respond(text,ctx){return generateTurn(ctx,{text});}
+function startGreeting(ctx){
+ if(call.state==='connected'&&!call.greeted){
+  call.greeted=true;
+  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true});});
+ }
 }
 export function submitCall(form,ctx){
  if(form.dataset.form!=='tai-call-turn')return false;
@@ -104,10 +125,11 @@ export function callAction(action,ctx){
  switch(action){
  case 'tai-accept':
   if(call.state!=='ringing')return false;
-  call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();return true;
+  call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);return true;
  case 'tai-decline':case 'tai-hangup':
   call.state='ended';call.turns=[];if(playback){playback.pause();URL.revokeObjectURL(playback.src);playback=null;}
   ctx.router.open({appId:'noapp',route:'/chat/tai'});return true;
+ case 'tai-play-audio':if(playback){playback.play().catch(e=>ctx.toast(e.message));}return true;
  case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;ctx.refresh();return true;
