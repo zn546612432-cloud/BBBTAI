@@ -1,3 +1,4 @@
+import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
@@ -11,7 +12,7 @@ let call={state:'idle',direction:'incoming',muted:false,speaker:false,turns:[],s
 let recording=null;
 let pendingHold=null; // unique token for async microphone permission prompts
 let playback=null;
-const AVATAR="data:image/webp;base64,UklGRrADAABXRUJQVlA4IKQDAACwFQCdASpQAFAAPuFkp04opaMiKlYNoRAcCUAZMAYfyS2e+bsvX5Stjpt3tz9wXRE2+tvcLgSx3ZtNUhwnaPOkapE5bXGbTupmaqAkQZWUZnSAPQoGOM+UZL/gIcQeI+K6w+7EIjoKUJr8LPYB9XnzitlCMrI6WAuw+EqHqNFPATAE+GXU/m3Uit631X8fPtt+0eaId9252sLR1Wmli4N9yk8+/4aNyCbw30K2hw2DvWify5oJ4AD+8r/+PBBNbN9QRXas1B+KcVIBHrNKQg9db1HUE2uCUTrkUtWRkgfqz9MijqloAN9CaZYyqMXUVDvS3YOCB17CLKilIfIr/DrE6xFQ829GCkoioUO+DNjNNYsW5A94rkWqpv1sgG7z+50/4bDHM8eCbJA5nqWREJwa2BETb3dveKzx3W/BlGomXjEPh3YzG0nLuZEuY37yhXAHWg2fbWCOa9vY+N/XVnOKt9WS61xaVN8BbbQYgSGNtVK15/dqBETh+PDo4E2/yVzDZ3HlNgynSfihN2STUKe/suIGkGKjZA5ppPREMUTe5ZmnplhuiUr5NSswqWxghZ1ktOphHzHbbPGXLaNmdl3GeOezPdA/tEA8NfLtcoRf6cDi38TewJyzDRGIao6yVS5CM0iDvg+VNlZctTyVPO1grRMgkJIiTiKQLHbyCVX5ZrlLGgZeD0ZGx82b/WoxFbATPYikUprNqgFSLMgP7i4pVvCy0IhFeT/uQ9ODH3O7kSd8mnrFjDXV4oob6760elJllPJzRuNt/fYpT6wJtYpNJNrkpJE/2wKKy5Tra6+vvAW5WosrYuqiCwo4CaXHU0lonVguSCKNAYq1gq+igVUyAuntnQnxdsHQV9kcD61LC3yS5nsDmhT6SWJgpdaR1ucBvlMgXTBC7VioHhUyZh0Wbv5oDJYb7LaN4P4qe97Afeg4VlLlV54OFOUPWfc69aVwYCMABQVY+QLOhovZ6NiHioqaKvPcj7Z+HlX+TrPUhOo81DnO3r0brYMgxwaxWXpSUoTH/HP1CaA3RGFuNFeQY/NnbYv6uwMKGdgkmNeVa75koelldP5MhdGgk1MdNaFEzhggsimY3NPHOhh0YzF6GYbfCGe2LqL1h2iQNoFZRaKFblJRhTNBBRevL30YpkFVa7M2xj79YQKaBMU5aUfI19fKPNc7VKhkUZ6S6Rxe8GYDP/6lK8aeQDu3rTWw0h2gpfIc/U82LQimqfsF6dkYKZAAAA=="; // data URL avoids SVG-in-img nested image restrictions
+const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
 const AVATAR_SOURCE='/assets/tai-portrait.svg';
 const glyph={
  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>',
