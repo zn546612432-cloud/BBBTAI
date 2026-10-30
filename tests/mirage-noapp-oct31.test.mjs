@@ -4,6 +4,8 @@ import {initialState} from '../src/services/storage.js';
 import {contacts,initializeMirage,completeWalletChallenge,WALLET_CHALLENGE_ID} from '../src/apps/mirage/data.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
+import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
+import {PhoneRouter} from '../src/services/router.js';
 import {authorize,begin,finish,nextGhostRound} from '../src/apps/ghost/state.js';
 import {missionProgress} from '../src/apps/developer/features/mission/index.js';
 import {XITAI_VOICE_ID,apiConfig,saveApiConfig} from '../src/services/ai/gateway.js';
@@ -106,6 +108,7 @@ test('Ouroboros congratulates first, remaining authored exchange unfolds after p
  assert.deepEqual(visibleMessages(c).map(m=>m.text),['恭喜你。']);
  s.nav.current={appId:'mirage',route:'/chat/'+c.id,params:{}};
  readConversationInState(s,'mirage',c.id);
+ setMirageAuthenticated(true);
  const engine=new MessageDelivery(store);
  engine.tick(1000,true);
  engine.tick(6000,true);
@@ -113,4 +116,23 @@ test('Ouroboros congratulates first, remaining authored exchange unfolds after p
  engine.tick(22000,true);
  assert.equal(visibleMessages(c).length,6);
  assert.equal(c.unread,0);
+ setMirageAuthenticated(false);
+});
+
+test('MIRAGE deep link does not clear unread messages while sign-in is still visible',()=>{
+ const store=makeStore(),s=store.get();s.day=5;s.unlocked=true;
+ initializeMirage(store);
+ s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
+ completeWalletChallenge(s);
+ const c=s.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05');
+ const previous=globalThis.document;
+ globalThis.document={querySelector:()=>null};
+ setMirageAuthenticated(false);
+ try{
+  new PhoneRouter(store,new Map([['mirage',{manifest:{id:'mirage'}}]])).open({appId:'mirage',route:'/chat/'+c.id});
+  assert.equal(c.unread,1);
+  assert.equal(s.notifications.filter(n=>n.id==='mirage-ouroboros-complete').length,1);
+  const e=new MessageDelivery(store);e.tick(1000,true);e.tick(11000,true);
+  assert.deepEqual(visibleMessages(c).map(m=>m.text),['恭喜你。']);
+ }finally{setMirageAuthenticated(false);if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
 });
