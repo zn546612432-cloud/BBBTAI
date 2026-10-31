@@ -27,7 +27,7 @@ function recordCall(s,{direction,status,seconds=0}){
 export function incomingCallBanner(s){
  if(call.state!=='ringing'||!s.unlocked||s.day<56)return '';
  return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
-   '<img class="tai-banner-avatar" src="'+AVATAR+'" alt="">'+
+   '<img class="tai-banner-avatar" src="'+esc(s.characterAvatars?.['熙泰']||AVATAR)+'" alt="">'+
    '<div class="tai-banner-info"><strong>陈熙泰</strong><small>NoApp · 语音来电</small></div>'+
    '<button type="button" class="tai-banner-decline" data-action="tai-banner-decline" aria-label="拒绝来电">'+glyph.hang+'</button>'+
    '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
@@ -52,7 +52,7 @@ function duration(){
  const sec=Math.floor((Date.now()-call.started)/1000);
  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
 }
-export function callView(){
+export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
  const subtitle=ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
  const controls=ring?
@@ -73,7 +73,7 @@ export function callView(){
    '<button type="button" data-action="tai-expand" aria-label="查看或收起通话文字">'+glyph.layout+'</button>'+
    '<span class="tai-call-channel">NOAPP · AUDIO</span>'+
    '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
-   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
+   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
    liveCaptions+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
    '</section>';
