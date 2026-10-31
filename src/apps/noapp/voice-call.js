@@ -33,6 +33,14 @@ export function incomingCallBanner(s){
    '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
 }
 let playback=null;
+let messagePlayback=null,voicePlaylistToken=0,pausedForMicrophone=false;
+function suspendVoicesForCapture(){
+ if(messagePlayback&&!messagePlayback.paused){pausedForMicrophone=true;messagePlayback.pause();}
+}
+function resumeVoicesAfterCapture(){
+ if(pausedForMicrophone&&messagePlayback){pausedForMicrophone=false;messagePlayback.play().catch(()=>{});}
+}
+
 const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
 const AVATAR_SOURCE='/assets/tai-portrait.svg';
 const glyph={
@@ -248,6 +256,7 @@ async function beginVoiceRecording(ctx){
  voicePermissionPending=true;
  let stream;
  try{
+  suspendVoicesForCapture();
   // Called directly from pointerdown, before any delay or re-render, so iOS
   // can associate the permission request with the player's real gesture.
   stream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -260,6 +269,7 @@ async function beginVoiceRecording(ctx){
   recorder.onstop=async()=>{
    clearTimeout(current.timer);
    stream.getTracks().forEach(track=>track.stop());
+   resumeVoicesAfterCapture();
    if(recording===current)recording=null;
    if(current._cancelled)return;
    try{
@@ -284,7 +294,7 @@ async function beginVoiceRecording(ctx){
   recorder.start(250);
   current.timer=setTimeout(()=>stopVoiceRecording({cancel:false}),25000);
   return current;
- }catch(e){stream?.getTracks().forEach(track=>track.stop());throw e;}
+ }catch(e){stream?.getTracks().forEach(track=>track.stop());resumeVoicesAfterCapture();throw e;}
  finally{voicePermissionPending=false;}
 }
 function stopVoiceRecording({cancel=false}={}){
@@ -302,9 +312,39 @@ export async function toggleVoiceRecord(ctx){
  await beginVoiceRecording(ctx);
 }
 export async function playVoiceMessage(id,ctx){
- const blob=await loadClip(id);if(!blob)throw Error('找不到本机语音文件');
- if(playback){playback.pause();URL.revokeObjectURL(playback.src);}
- playback=new Audio(URL.createObjectURL(blob));try{await playback.play();}catch(e){ctx.toast('点击播放按钮后重新试试：'+e.message);}
+ const c=ctx.store.get().content.conversations.noapp?.find(c=>c.id==='tai');
+ const list=c?.messages||[],index=list.findIndex(m=>(m.audioId||m.id)===id);
+ const selected=list[index];
+ const queue=selected?.from==='tai'?
+   list.slice(index).filter(m=>m.from==='tai'&&m.kind==='voice'):[selected].filter(Boolean);
+ const token=++voicePlaylistToken;
+ if(messagePlayback){messagePlayback.pause();if(messagePlayback.src.startsWith('blob:'))URL.revokeObjectURL(messagePlayback.src);}
+ messagePlayback=new Audio();
+ messagePlayback.preload='auto';
+ // Reuse a single audio element: after the initial tap, sequential play is
+ // much more reliable on iOS than creating three new autoplay elements.
+ for(const m of queue){
+  if(token!==voicePlaylistToken)break;
+  let blob=await loadClip(m.audioId||m.id);
+  if(!blob&&m.voiceRequested){
+   for(let wait=0;wait<35&&!blob&&token===voicePlaylistToken;wait++){
+    await new Promise(resolve=>setTimeout(resolve,240));
+    blob=await loadClip('tai-'+m.id);
+   }
+  }
+  if(!blob){if(m===selected)ctx.toast('语音尚未准备好');continue;}
+  const url=URL.createObjectURL(blob);
+  messagePlayback.src=url;
+  try{
+   await messagePlayback.play();
+   await new Promise(resolve=>{
+    const finish=()=>{messagePlayback?.removeEventListener('ended',finish);messagePlayback?.removeEventListener('error',finish);resolve();};
+    messagePlayback.addEventListener('ended',finish,{once:true});
+    messagePlayback.addEventListener('error',finish,{once:true});
+   });
+  }catch(e){ctx.toast('点击语音后重试：'+e.message);break;}
+  finally{URL.revokeObjectURL(url);}
+ }
 }
 export async function convertTaiTextToVoice(ctx,id){
  const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai'),m=c?.messages.find(x=>x.id===id);
