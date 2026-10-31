@@ -71,7 +71,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
   const scene=followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。按当时的语境决定补充没说完的话、分享之后的进展，或轻微困惑、担心、不满；沉默不等于生气，不模板化催促。这次只跟进一次。`
-   :'你主动想起熙蒙。从自己的研究、虚构委托、金融、电影、刚发生的小事或真实旧话题里，选一件具体想说的事。可以多条，不泛泛问在不在，也不固定谈棋。不能虚构对方经历或擅自执行剧情。';
+   :'你主动想起熙蒙。从当前生活记录里的健身、学习、旅行、看展看秀、酒店、小酌、吃饭或真实旧话题里，选一件具体想说的事。可以多条，不泛泛问在不在，也不固定谈棋。不能虚构对方经历或擅自执行剧情。';
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const r=await askTai({channel:'noapp',day:initial.day,messages,outputMode:'text',scene,behavior:c,
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
