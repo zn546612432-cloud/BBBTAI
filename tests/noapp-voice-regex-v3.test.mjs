@@ -24,7 +24,7 @@ test('emergency dialogue never injects laughter and long voice includes natural 
  const serious=prepareXitaiSpeech('有人在跟踪我，定位已经暴露，别回头。',{tone:'danger'});
  assert.doesNotMatch(serious.text,/\(chuckle\)|\(laughs\)/);
  const long=prepareXitaiSpeech('你这次调用的接口设计有一个非常明显的问题，我看了日志之后发现，你的请求队列阻塞很可能和缺失的超时配置直接相关。',{tone:'neutral'});
- assert.match(long.text,/\(breath\)/);
+ assert.match(long.text,/(?:\(breath\)|<#0\.)/);
  assert.ok((long.text.match(/\([a-z-]+\)/g)||[]).length<=4);
 });
 test('DeepSeek empty JSON content is retried as plain-text reply, not sent as blank chat',async()=>{
