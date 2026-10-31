@@ -11,8 +11,8 @@ const textOf=m=>String(m?.content??m?.text??'');
 // Tai may raise a topic of his own, while continuity limits invented shared events.
 export function taiTopicGate(messages=[],scene=''){
  const recent=(Array.isArray(messages)?messages:[]).filter(m=>m?.role==='user'||m?.from==='me')
-  .filter(m=>!/^\\s*\\[(?:游戏系统事件|电话系统事件|系统记录|语音消息)/.test(textOf(m)))
-  .slice(-4).map(textOf).join('\\n');
+  .filter(m=>!/^\s*\[(?:游戏系统事件|电话系统事件|系统记录|语音消息)/.test(textOf(m)))
+  .slice(-4).map(textOf).join('\n');
  const open=HOBBY_TOPICS.filter(t=>t.re.test(recent)).map(t=>t.key);
  return '话题自主性：熙泰不是客服，也不需要等熙蒙点名兴趣才准说自己的事。'+
   (open.length?'熙蒙最近提过'+open.join('、')+'，可以顺着这件事，但不必死守。':'')+
