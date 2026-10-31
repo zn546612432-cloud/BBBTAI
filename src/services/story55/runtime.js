@@ -73,7 +73,7 @@ export function sendQuestion55(s){
  }
  tickStory55(s);
 }
-export function nodeLink55(s,id){if(id==='recognition')return {appId:'noapp',route:'/story55/recognition',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/story55/questions',params:{}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:{appId:'calendar',route:'/story55/scene',params:{node:id}}};return map[n.kind];}
 export function tickStory55(s){
  if(!isStory55(s)||final55(s))return;
