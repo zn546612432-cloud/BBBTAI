@@ -30,7 +30,7 @@ test('native MIRAGE loads complete original account and UI, not full-screen stor
  assert.match(market,/mc-product-grid/);
  setMirageAuthenticated(false);
 });
-test('D06 wallet commission is listed in original MIRAGE contracts, not calendar',()=>{
+test('D06 wallet commission is listed in original MIRAGE contracts, not calendar',async()=>{
  const s=fixture();
  s.day=6;
  const {tickStory55}=await import('../src/services/story55/runtime.js');
@@ -78,7 +78,7 @@ test('add-reminder confirmation creates iOS reminders only after explicit confir
  diaryAction('diary-confirm-reminder',{dataset:{}},ctx);
  assert.equal(s.content.reminders.length,1);
 });
-test('55-day Calendar does not auto-inject story scene cards',()=>{
+test('55-day Calendar does not auto-inject story scene cards',async()=>{
  const s=fixture();s.day=42;
  const {tickStory55}=await import('../src/services/story55/runtime.js');
  s.content.calendarEvents=[{id:'s55-event-recognition',storyNode:'recognition',title:'旧版剧情弹窗'}];
