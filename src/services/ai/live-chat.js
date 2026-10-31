@@ -1,3 +1,4 @@
+import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
@@ -51,7 +52,11 @@ export async function replyToTaiMessage(store,sourceMessageId){
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};
  pendingRequest=true;
  try{
-  const result=await askTai({day:initial.day,channel:'noapp',messages,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+  const lastUser=c.messages.find(m=>m.id===sourceMessageId)?.text||'';
+  const result=await askTai({day:initial.day,channel:'noapp',messages,outputMode:'text',
+   scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，必要时可连发两三条，不要每一句都反问。',
+   relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
+   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   const entries=unpackTaiReply(result,'noapp');
   let emitted=0;
   const voiceJobs=[];
