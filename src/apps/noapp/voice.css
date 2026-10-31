@@ -142,3 +142,6 @@
 .app-noapp .noapp-record-overlay.is-recording{bottom:max(80px,env(safe-area-inset-bottom) + 64px);box-shadow:0 18px 54px #000a}
 .app-noapp .noapp-record-overlay small{font-size:12px}
 @media(prefers-reduced-motion:reduce){.app-noapp .tai-control-circle{transition:none}}
+
+.app-noapp .noapp-call-record{display:flex;align-items:center;gap:9px;max-width:230px;background:#283b4d;border:1px solid #ffffff20;border-radius:13px;padding:10px 13px;font-size:12px;color:#d5e5f4;line-height:1.5}
+.app-noapp .noapp-call-record span{font-size:17px;opacity:.8}
