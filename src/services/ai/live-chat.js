@@ -1,10 +1,11 @@
+import {unheardReply} from '../voice/unheard.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
-import {aiStatus,askTai,voicePreview} from './gateway.js';
+import {aiStatus,askTai,voicePreview,apiConfig} from './gateway.js';
 import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
@@ -65,18 +66,19 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  pendingRequests.add(store);
  const startedAt=now(),behavior=taiBehavior(initial);
  try{
-  const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const source=c.messages.find(m=>m.id===sourceMessageId);
+  const unheard=source?.kind==='voice'&&!source?.voiceCaption;
+  const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
   const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
-  const voiceTurn=voiceRequested||(initial.day>=60&&hashed%19===0);
-  const result=await askTai({day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
+  const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
+  const result=unheard?null:await askTai({day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
    behavior,
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，必要时可连发两三条，不要每一句都反问。',
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  const entries=unpackTaiReply(result,'noapp').slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+  const entries=(unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp')).slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
