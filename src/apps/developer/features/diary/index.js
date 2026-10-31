@@ -33,7 +33,7 @@ export function diaryEditorAction(action,target,ctx){
  return false;
 }
 export function diaryEditorChange(target,ctx){
- if(target.matches('[data-diary-day]')){ctx.store.update(s=>{s.editor.diaryDay=Number(target.value);});return true;}
+ if(target.matches?.('[data-diary-day]')){ctx.store.update(s=>{s.editor.diaryDay=Number(target.value);});return true;}
  return false;
 }
 export function diaryEditorSubmit(form,ctx){
