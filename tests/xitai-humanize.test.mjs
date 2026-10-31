@@ -17,21 +17,21 @@ test('unpackTaiReply 输出没有破折号',()=>{
  assert.equal(out.length,2);
  for(const m of out)assert.doesNotMatch(m.text,/[—–－]/);
 });
-test('话题闸门：对方没提就禁止主动聊莎士比亚、象棋和代码',()=>{
+test('人物主动性：没有禁聊的话题闸门，熙泰可以主动分享真实近况',()=>{
  const quiet=taiTopicGate([{role:'user',content:'给我发语音，我想听。'}]);
- assert.match(quiet,/莎士比亚/);assert.match(quiet,/国际象棋/);assert.match(quiet,/不要主动提/);
+ assert.match(quiet,/话题自主性/);assert.match(quiet,/不是客服/);
+ assert.doesNotMatch(quiet,/不要主动提/);
  const open=taiTopicGate([{role:'user',content:'你最近还在读麦克白吗'}]);
- assert.match(open,/熙蒙刚提到了莎士比亚/);
- assert.doesNotMatch(open,/没有提到[^\n]*莎士比亚/);
- assert.match(open,/没有提到国际象棋/);
+ assert.match(open,/莎士比亚/);
+ assert.doesNotMatch(open,/不能主动/);
 });
-test('提示词带口语规则、禁破折号与样稿，且文字模式不含语音标签说明',()=>{
+test('真人口语可夹葡语英语，不把例句直接下发模型',()=>{
  const prompt=buildTaiPrompt({day:60,channel:'noapp',outputMode:'text',messages:[{role:'user',content:'在干嘛'}]});
- assert.match(prompt,/活人感口语规则/);
- assert.match(prompt,/绝对不要使用破折号/);
- assert.match(prompt,/刚过隧道/);
- assert.match(prompt,/话题闸门/);
- assert.match(taiHumanPrompt({outputMode:'call'}),/语音和电话保持低缓平稳的语速/);
+ assert.match(prompt,/熙泰本人语气/);
+ assert.match(prompt,/不设最低数量/);
+ assert.match(prompt,/葡萄牙成长背景和英语教育/);
+ assert.doesNotMatch(taiHumanPrompt({messages:[{role:'user',content:'在吗'}]}),/刚过隧道/);
+ assert.match(taiHumanPrompt({outputMode:'call'}),/语音和电话/);
 });
 test('通话记录带内容回到聊天上下文',()=>{
  const s=initialState();s.day=62;s.clock='22:30';

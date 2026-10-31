@@ -9,7 +9,7 @@ import {askTai,voicePreview,speechToText} from '../../services/ai/gateway.js';
 import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
-import {unpackTaiReply} from '../../services/ai/format.js';
+import {unpackTaiReply,readableTaiVoiceText} from '../../services/ai/format.js';
 import {taiBehavior} from '../../services/ai/behavior.js';
 import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
@@ -385,7 +385,7 @@ export async function toggleVoiceRecord(ctx){
 export async function sendTaiTestVoice(ctx,{text,tone='dry'}={}){
  const s=ctx.store.get();
  if(s.day<56)throw Error('NoApp 语音测试需要 D56 之后');
- const body=String(text||'').trim().slice(0,1200);
+ const body=readableTaiVoiceText(String(text||'').trim().slice(0,1200));
  if(!body)throw Error('语音台词不能为空');
  const clip=await voicePreview({text:body,tone});
  const id='tai-voice-preview-'+uid(),audioId='tai-'+id;
@@ -413,6 +413,21 @@ export async function playVoiceMessage(id,ctx){
  for(const m of queue){
   if(token!==voicePlaylistToken)break;
   let blob=await loadClip(m.audioId||m.id);
+  // A voice synthesized before the parser fix may be literally speaking JSON.
+  // Repair its audio and visible transcript only after recovering the dialogue.
+  const oldCaption=String(m.voiceCaption||m.text||'');
+  if(m.from==='tai'&&/^\s*(?:\[\s*\{|\{\s*"(?:messages|text|reply))/.test(oldCaption)){
+   const clean=readableTaiVoiceText(oldCaption);
+   if(!clean||clean==='语音转写异常，原始数据已隐藏'){ctx.toast('旧语音格式异常，请重新生成');continue;}
+   try{
+    blob=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
+    await saveClip(m.audioId||m.id,blob);
+    ctx.store.update(state=>{
+     const record=state.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(x=>x.id===m.id);
+     if(record){record.voiceCaption=clean;record.text=clean;}
+    });
+   }catch(error){ctx.toast('旧语音重制失败：'+error.message);continue;}
+  }
   if(!blob&&m.voiceRequested){
    for(let wait=0;wait<35&&!blob&&token===voicePlaylistToken;wait++){
     await new Promise(resolve=>setTimeout(resolve,240));
@@ -436,9 +451,10 @@ export async function playVoiceMessage(id,ctx){
 export async function convertTaiTextToVoice(ctx,id){
  const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai'),m=c?.messages.find(x=>x.id===id);
  if(!m||m.from==='me')throw Error('只允许给熙泰的消息配音');
- const clip=await voicePreview({text:m.text,tone:m.aiTone||'neutral'});
+ const clean=readableTaiVoiceText(m.text);
+ const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
  await saveClip('tai-'+id,clip);
- ctx.store.update(s=>{const c=s.content.conversations.noapp.find(x=>x.id==='tai');const m=c?.messages.find(x=>x.id===id);if(m){m.kind='voice';m.audioId='tai-'+id;m.voiceCaption=m.text;}});
+ ctx.store.update(s=>{const c=s.content.conversations.noapp.find(x=>x.id==='tai');const m=c?.messages.find(x=>x.id===id);if(m){m.kind='voice';m.audioId='tai-'+id;m.voiceCaption=clean;m.text=clean;}});
 }
 
 /** iOS push-to-talk: request the microphone on the pointerdown gesture,

@@ -17,15 +17,15 @@ test('ordinary one-line reply is eligible for a single high-quality rewrite',()=
 });
 test('expansive text mode prefers 2-5 substantive bubbles, but permits justified one-liners',()=>{
  const prompt=buildTaiPrompt({channel:'noapp',day:62,outputMode:'text',messages:[{role:'user',content:'今天过得怎么样'}]});
- assert.match(prompt,/2至5条/);
+ assert.match(prompt,/不设最低数量/);
  assert.match(prompt,/酒店/);
- assert.match(prompt,/确实很忙时才适合一条/);
- assert.match(taiBehaviorPrompt(DEFAULT_TAI_BEHAVIOR),/2至5条/);
+ assert.match(prompt,/自然的短回复就停/);
+ assert.match(taiBehaviorPrompt(DEFAULT_TAI_BEHAVIOR),/不强制连发/);
 });
 test('every speaking mood stays unhurried and restrained',()=>{
  for(const tone of ['neutral','dry','playful','soft','serious','danger','happy','sad','angry','fearful','surprised','disgusted']){
   const prepared=prepareXitaiSpeech('刚从外面回来，去看了一场秀。酒店楼下太吵了，等下再下楼。',{tone});
-  assert.equal(prepared.emotion,'calm',tone);
+  assert.ok(['calm','fluent','sad','angry','fearful','surprised'].includes(prepared.emotion),tone);
   assert.ok(prepared.speed<=.92&&prepared.speed>=.78,tone+' speed '+prepared.speed);
   if(tone!=='playful')assert.doesNotMatch(prepared.text,/\(chuckle\)/,tone+' should not force a chuckle on neutral speech');
  }

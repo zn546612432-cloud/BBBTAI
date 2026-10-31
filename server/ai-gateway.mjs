@@ -82,13 +82,13 @@ export async function handleAIGateway(req,res,pathname) {
       reply(res,200,{text:text.trim(),channel,day});
     }else{
       if(!process.env.MINIMAX_API_KEY)throw fail(503,'请先在本地环境配置 MINIMAX_API_KEY');
-      const {text,voiceId,model='speech-2.8-hd',language='Chinese',speed=1}=payload;
+      const {text,voiceId,model='speech-2.8-hd',language='Chinese',speed=1,emotion='fluent'}=payload;
       if(typeof text!=='string'||!text.trim()||text.length>3000)throw fail(400,'试听文字须为 1–3000 字');
       if(typeof voiceId!=='string'||! /^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw fail(400,'请填写有效的 MiniMax voice_id');
-      if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2))throw fail(400,'语音参数不合法');
+      if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2)||!['calm','fluent','sad','angry','surprised','fearful'].includes(emotion))throw fail(400,'语音参数不合法');
       const data=await provider(MINIMAX,process.env.MINIMAX_API_KEY,{
         model,text,stream:false,output_format:'hex',language_boost:language,
-        voice_setting:{voice_id:voiceId,speed,vol:1,pitch:0,emotion:'calm'},
+        voice_setting:{voice_id:voiceId,speed,vol:1,pitch:0,emotion},
         audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
       });
       const hex=data.data?.audio;

@@ -100,8 +100,8 @@ test('local call gateway forwards voice mode, relationship context and configura
  try{await withGateway(async base=>{
   const r=await post(base,'/api/ai/chat',{day:60,channel:'noapp',outputMode:'call',scene:'电话测试事件',relationshipContext:'熙蒙亲口说过的具体约定',behavior:{verbosity:'expansive',maxMessages:4},messages:[{role:'user',content:'接着说'}]});
   assert.equal(r.status,200);const prompt=seen.messages[0].content;
-  assert.match(prompt,/语音世界书 3.0-若要大声嘶喊出爱的话/);
+  assert.match(prompt,/熙泰通话与语音/);assert.doesNotMatch(prompt,/\[BRE-05\]|强制插入/);
   assert.match(prompt,/熙蒙亲口说过的具体约定/);assert.match(prompt,/电话测试事件/);
-  assert.match(prompt,/一次允许1—4条独立消息/);assert.match(prompt,/2至5条/);
+  assert.match(prompt,/每轮最多4条独立消息/);assert.match(prompt,/不是最低条数或目标/);
  });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
 });
