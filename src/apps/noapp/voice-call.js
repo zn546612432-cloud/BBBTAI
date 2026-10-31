@@ -319,7 +319,7 @@ export async function playVoiceMessage(id,ctx){
  const list=c?.messages||[],index=list.findIndex(m=>(m.audioId||m.id)===id);
  const selected=list[index];
  const queue=selected?.from==='tai'?
-   list.slice(index).filter(m=>m.from==='tai'&&m.kind==='voice'):[selected].filter(Boolean);
+   list.slice(index).filter(m=>m.from==='tai'&&(m.kind==='voice'||m.voiceRequested)):[selected].filter(Boolean);
  const token=++voicePlaylistToken;
  if(messagePlayback){messagePlayback.pause();if(messagePlayback.src.startsWith('blob:'))URL.revokeObjectURL(messagePlayback.src);}
  messagePlayback=new Audio();
