@@ -1,3 +1,4 @@
+import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset} from '../src/apps/mirage/ouroboros-flow.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -25,17 +26,22 @@ test('Only opened Mirage conversation rises to top; no other conversation is res
  const another=items[1];another.lastOpened=101;assert.equal(contacts(store.get())[0].id,another.id);
  assert.equal(contacts(store.get())[1].id,selected.id);
 });
-test('Ouroboros cannot send D05 congratulations before 10BTC reward is earned',()=>{
- const store=makeStore();store.get().day=5;initializeMirage(store);
- assert.ok(store.get().content.orders.some(x=>x.id===WALLET_CHALLENGE_ID));
+test('Ouroboros appears only after D05 acceptance and waits for player-authored typed messages',()=>{
+ const store=makeStore();store.get().day=5;store.get().clock='21:00';initializeMirage(store);
  assert.equal(contacts(store.get()).some(x=>x.id==='mc-ourob-d05'),false);
- store.update(s=>{s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status='ACCEPTED';});
- store.update(s=>assert.equal(completeWalletChallenge(s),true));
+ assert.equal(acceptOuroborosChallenge(store.get()),true);
  const c=contacts(store.get()).find(x=>x.id==='mc-ourob-d05');
- assert.equal(c.messages.length,6);
- assert.ok(c.messages[2].text.includes('我单干'));
- assert.ok(c.messages[3].text.includes('百分之八十'));
- assert.ok(c.messages[5].text.includes('奖励饼干'));
+ assert.equal(c.messages.length,1);
+ assert.match(c.messages[0].text,/ORDER CREATED/);
+ assert.equal(completeWalletChallenge(store.get()),true);
+ assert.deepEqual(c.messages.map(x=>x.text),[c.messages[0].text]);
+ assert.equal(ouroborosDraft(store.get(),c.id),'我拿到了。');
+ assert.equal(sendOuroborosPreset(store.get(),c.id,'我拿到了。'),true);
+ assert.equal(c.messages.at(-1).text,'你属于哪个组织？');
+ assert.equal(sendOuroborosPreset(store.get(),c.id,'我单干。'),true);
+ assert.match(c.messages.at(-1).text,/百分之八十/);
+ assert.equal(sendOuroborosPreset(store.get(),c.id,'因为我是天才。'),true);
+ assert.match(c.messages.at(-1).text,/奖励饼干/);
  assert.equal(completeWalletChallenge(store.get()),false);
 });
 test('Ghost board generator uses unseen board signatures for retries and stages',()=>{
@@ -77,19 +83,19 @@ test('D05 wallet reward is locked behind successful GHOST run, never issued on m
  s.ghost.orderConfigs[WALLET_CHALLENGE_ID]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
  authorize(s,{orderId:WALLET_CHALLENGE_ID,type:'veil',mailId:null});
  assert.equal(s.events.some(x=>x.type==='mirage_wallet_challenge_completed'),false);
- assert.equal(s.content.conversations.mirage.some(x=>x.id==='mc-ourob-d05'),false);
+ assert.equal(s.content.conversations.mirage.some(x=>x.id==='mc-ourob-d05'),true);
  assert.equal(begin(s,WALLET_CHALLENGE_ID,1000),true);
  finish(s,WALLET_CHALLENGE_ID,true,2000);
  assert.equal(s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status,'COMPLETED');
  assert.equal(s.content.mirage.transactions.filter(x=>x.id==='ou-btc10').length,1);
  assert.equal(s.events.filter(x=>x.type==='mirage_wallet_challenge_completed').length,1);
- assert.equal(s.content.conversations.mirage.find(x=>x.id==='mc-ourob-d05').messages.length,6);
+ assert.equal(s.content.conversations.mirage.find(x=>x.id==='mc-ourob-d05').messages.length,1);
  finish(s,WALLET_CHALLENGE_ID,true,3000);
  assert.equal(s.events.filter(x=>x.type==='mirage_wallet_challenge_completed').length,1);
 });
 test('failed D05 Ghost attempts leave the 10BTC reward and congratulations locked',()=>{
  const store=makeStore(),s=store.get();s.day=5;
- initializeMirage(store);s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
+ initializeMirage(store);acceptOuroborosChallenge(s);
  authorize(s,{orderId:WALLET_CHALLENGE_ID,type:'veil',mailId:null});
  assert.equal(begin(s,WALLET_CHALLENGE_ID,1000),true);
  finish(s,WALLET_CHALLENGE_ID,false,2000);
@@ -98,27 +104,17 @@ test('failed D05 Ghost attempts leave the 10BTC reward and congratulations locke
  assert.equal(s.events.some(x=>x.type==='mirage_wallet_challenge_completed'),false);
 });
 
-test('Ouroboros congratulates first, remaining authored exchange unfolds after player opens private chat',()=>{
- const store=makeStore(),s=store.get();s.day=5;s.clock='21:00';s.unlocked=true;
- initializeMirage(store);
- s.content.orders.find(o=>o.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
- assert.equal(completeWalletChallenge(s),true);
+test('D05 payout writes no fake player bubbles; players reveal each script line by sending',()=>{
+ const store=makeStore(),s=store.get();s.day=5;s.clock='21:00';initializeMirage(store);
+ acceptOuroborosChallenge(s);completeWalletChallenge(s);
  const c=s.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05');
- assert.equal(c.messages.length,6);
- assert.deepEqual(visibleMessages(c).map(m=>m.text),['恭喜你。']);
- s.nav.current={appId:'mirage',route:'/chat/'+c.id,params:{}};
- readConversationInState(s,'mirage',c.id);
- setMirageAuthenticated(true);
- const engine=new MessageDelivery(store);
- engine.tick(1000,true);
- engine.tick(6000,true);
- assert.equal(visibleMessages(c).length,2);
- engine.tick(22000,true);
- assert.equal(visibleMessages(c).length,6);
- assert.equal(c.unread,0);
- setMirageAuthenticated(false);
+ assert.deepEqual(visibleMessages(c).map(m=>m.text),[c.messages[0].text]);
+ assert.equal(ouroborosDraft(s,c.id),'我拿到了。');
+ assert.equal(sendOuroborosPreset(s,c.id,'其他内容'),false);
+ assert.equal(visibleMessages(c).length,1);
+ assert.equal(sendOuroborosPreset(s,c.id,'我拿到了。'),true);
+ assert.equal(visibleMessages(c).length,4);
 });
-
 test('MIRAGE deep link does not clear unread messages while sign-in is still visible',()=>{
  const store=makeStore(),s=store.get();s.day=5;s.unlocked=true;
  initializeMirage(store);
@@ -131,8 +127,8 @@ test('MIRAGE deep link does not clear unread messages while sign-in is still vis
  try{
   new PhoneRouter(store,new Map([['mirage',{manifest:{id:'mirage'}}]])).open({appId:'mirage',route:'/chat/'+c.id});
   assert.equal(c.unread,1);
-  assert.equal(s.notifications.filter(n=>n.id==='mirage-ouroboros-complete').length,1);
+  assert.equal(s.notifications.filter(n=>n.id==='ourob-story-accepted').length,1);
   const e=new MessageDelivery(store);e.tick(1000,true);e.tick(11000,true);
-  assert.deepEqual(visibleMessages(c).map(m=>m.text),['恭喜你。']);
+  assert.match(visibleMessages(c)[0].text,/ORDER CREATED/);
  }finally{setMirageAuthenticated(false);if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
 });
