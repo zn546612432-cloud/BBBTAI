@@ -81,7 +81,7 @@ export async function handleAIGateway(req,res,pathname) {
       reply(res,200,{text:text.trim(),channel,day});
     }else{
       if(!process.env.MINIMAX_API_KEY)throw fail(503,'请先在本地环境配置 MINIMAX_API_KEY');
-      const {text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1}=payload;
+      const {text,voiceId,model='speech-2.8-hd',language='Chinese',speed=1}=payload;
       if(typeof text!=='string'||!text.trim()||text.length>3000)throw fail(400,'试听文字须为 1–3000 字');
       if(typeof voiceId!=='string'||! /^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw fail(400,'请填写有效的 MiniMax voice_id');
       if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2))throw fail(400,'语音参数不合法');
