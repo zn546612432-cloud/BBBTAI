@@ -153,7 +153,7 @@ async function generateTurn(ctx,{opening=false,text=''}={}){
   const data=await askTai({channel:'noapp',day:requestDay,messages,profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
   if(call.sessionId!==sessionId||call.state!=='connected')return;
   const replies=unpackTaiReply(data,'noapp');
-  const completeSpeech=replies.map(x=>x.text.trim()).filter(Boolean).join(' ');
+  const completeSpeech=replies.map(x=>(x.speechText||x.text).trim()).filter(Boolean).join(' ');
   if(!completeSpeech)throw Error('熙泰暂时没有回应');
   for(const r of replies)call.turns.push({role:'assistant',content:r.text});
   call.lastSpeech=completeSpeech;ctx.refresh();
