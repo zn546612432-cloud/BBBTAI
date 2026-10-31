@@ -1,7 +1,7 @@
 import {isStory55} from './services/story55/state.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {advanceScene55} from './services/story55/runtime.js';
+import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
@@ -36,6 +36,16 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// Migrate bookmarks saved by the retired 55-day calendar dialogue panels.
+if(isStory55(store.get())){
+ const legacy=loc=>loc?.appId==='calendar'&&loc.route==='/story55/scene';
+ const nav=store.get().nav;
+ if(legacy(nav.current)||nav.stack?.some(legacy))store.update(s=>{
+  const normalize=loc=>legacy(loc)?chatNodeLink55(s,loc.params?.node||'intro'):loc;
+  s.nav.current=normalize(s.nav.current);
+  s.nav.stack=(s.nav.stack||[]).map(normalize);
+ });
+}
 mountCallEvents({store});
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
 // Resuming an older save must not require visiting developer tools to receive
