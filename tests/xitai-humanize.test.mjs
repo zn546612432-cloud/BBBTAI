@@ -31,7 +31,7 @@ test('提示词带口语规则、禁破折号与样稿，且文字模式不含�
  assert.match(prompt,/绝对不要使用破折号/);
  assert.match(prompt,/刚过隧道/);
  assert.match(prompt,/话题闸门/);
- assert.match(taiHumanPrompt({outputMode:'call'}),/语音和电话里更要像说话/);
+ assert.match(taiHumanPrompt({outputMode:'call'}),/语音和电话保持低缓平稳的语速/);
 });
 test('通话记录带内容回到聊天上下文',()=>{
  const s=initialState();s.day=62;s.clock='22:30';
