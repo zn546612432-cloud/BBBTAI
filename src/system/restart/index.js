@@ -8,6 +8,10 @@ export function restartState(previous){
  next.storyPresets.deletedRuleIds=clone(previous.storyPresets?.deletedRuleIds||[]);
  next.aiDraft=clone(previous.aiDraft||next.aiDraft);
  next.aiDraft.testTurns=[];
+ // A new run must never inherit the previous player's private NoApp history.
+ for(const c of next.content.conversations.noapp||[])c.messages=[];
+ next.content.mirage&&(delete next.content.mirage.ouroborosScript);
+ next.content.orders=next.content.orders.filter(o=>!o.storySeed||o.storyDay===1);
  for(const list of Object.values(next.content.conversations))for(const c of list){
   c.unread=0;c.messages=c.messages.filter(m=>!m.actual);
   for(const m of c.messages){delete m.delivery;delete m.deliveryRevision;}
