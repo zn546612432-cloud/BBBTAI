@@ -97,3 +97,16 @@ test('phone gestures observe start, move and release in capture phase before chi
   assert.equal(listeners.get(name)?.capture,true,name);
  assert.equal(listeners.get('touchmove').passive,false);
 });
+
+test('a missing release from a detached lock control cannot poison later home-page swipes',()=>{
+ const state={locked:true,home:false,shade:false,page:0};
+ const {touch,out}=phoneHarness(state);
+ touch('touchstart',190,760,0); // navigation removes this original target before touchend
+ state.locked=false;state.home=true;
+ touch('touchstart',320,400,1000);
+ touch('touchmove',170,402,1050);
+ touch('touchend',80,405,1100);
+ assert.equal(out.unlocks,0);
+ assert.equal(out.pages.at(-1)?.dx,-240);
+ assert.equal(out.pages.at(-1)?.settle,true);
+});

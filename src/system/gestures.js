@@ -19,7 +19,10 @@ export function classifyGesture({dx,dy,home,locked,shade,top,bottom}){
 export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switcher=()=>{}}){
  let drag=null,suppressClickUntil=0;
  const start=(x,y,id,source,target,time)=>{
-  if(drag||target?.closest?.(BLOCKED)||isNativeScrollTarget(target))return;
+  // A render can remove the original press target before its release bubbles
+  // through the phone. A new press must never inherit that stale lock/page drag.
+  if(drag)finish(drag.x,drag.y,drag.id,drag.source,time,true);
+  if(target?.closest?.(BLOCKED)||isNativeScrollTarget(target))return;
   const s=state(),rect=root.getBoundingClientRect();
   drag={x,y,id,source,mode:null,...s,top:y-rect.top<115,bottom:rect.bottom-y<65,samples:[{x,t:time}]};
  };
@@ -91,6 +94,13 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
  };
  root.addEventListener('touchend',e=>finishTouch(e),{capture:true});
  root.addEventListener('touchcancel',e=>finishTouch(e,true),{capture:true});
+ // Finish even when the finger/mouse releases outside the phone or its original
+ // target was detached by navigation. Duplicate releases are harmless.
+ const doc=root.ownerDocument;
+ doc?.addEventListener('pointerup',e=>finishPointer(e),{capture:true});
+ doc?.addEventListener('pointercancel',e=>finishPointer(e,true),{capture:true});
+ doc?.addEventListener('touchend',e=>finishTouch(e),{capture:true});
+ doc?.addEventListener('touchcancel',e=>finishTouch(e,true),{capture:true});
  root.addEventListener('click',e=>{
   if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation();}
  },{capture:true});
