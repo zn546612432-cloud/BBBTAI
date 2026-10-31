@@ -27,7 +27,7 @@ export function initializeMirage(store){
   ensureMirageStory(s);
  });
 }
-export const contacts=s=>{const done=s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')||!!s.content.mirage?.ouroborosScript;const list=[...(s.content.conversations.mirage||[])].filter(c=>c.id!=='mc-ourob-d05'||done);return list.sort((a,b)=>(Number(b.lastOpened)||0)-(Number(a.lastOpened)||0)||((b.authored===true?1:0)-(a.authored===true?1:0))||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
+export const contacts=s=>{const done=s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')||!!s.content.mirage?.ouroborosScript;const list=[...(s.content.conversations.mirage||[])].filter(c=>c.id!=='mc-ourob-d05'||done);return list.sort((a,b)=>Math.max(Number(b.lastOpened)||0,Number(b.lastMessageAt)||0)-Math.max(Number(a.lastOpened)||0,Number(a.lastMessageAt)||0)||((b.authored===true?1:0)-(a.authored===true?1:0))||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
 export const isCompletedBounty=order=>['COMPLETED','已完成'].includes(String(order.status||'').trim().toUpperCase());
 export const bountyGroups=orders=>({open:orders.filter(o=>!isCompletedBounty(o)),completed:orders.filter(isCompletedBounty)});
 export const money=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
