@@ -1,3 +1,4 @@
+import {taiPresence} from './presence.js';
 // Two authored Xitai chess invitations across D56–D90, not an endless
 // auto-reply. Persisted IDs make this idempotent across refresh and reload.
 const SCHEDULE=[
@@ -5,7 +6,7 @@ const SCHEDULE=[
  {day:65,clock:'21:30',text:'下一局？'}
 ];
 export function nextScheduledTaiInvite(s){
- if(s.day<56)return null;
+ if(s.day<56||taiPresence(s).status!=='online')return null;
  const done=(s.events||[]).filter(e=>e.type==='tai_chess_invitation_offered').length;
  if(done>=Math.min(2,Math.max(0,Number(s.aiDraft?.maxChessInvites??2))))return null;
  const slot=SCHEDULE[done];
@@ -15,7 +16,7 @@ export function nextScheduledTaiInvite(s){
  return {...slot,index:done};
 }
 export function deliverTaiChessInvite(s,slot=nextScheduledTaiInvite(s)){
- if(!slot)return false;
+ if(!slot||taiPresence(s).status!=='online')return false;
  const id='tai-chess-story-'+(slot.index+1);
  if(s.invitations.some(i=>i.id===id))return false;
  s.invitations.push({id,senderId:'tai',recipientId:'player',source:'story-invitation',status:'pending',createdDay:s.day,createdClock:s.clock,expiresDay:Math.min(89,s.day+7),matchId:null});
