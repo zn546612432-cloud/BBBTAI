@@ -2,7 +2,7 @@ import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk,startIncoming,callState} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
 import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -93,7 +93,10 @@ function render(){
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
  const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
- patchHTML($('#status-layer'),status(s,{islandExpanded}));patchHTML($('#shade-layer'),notifications(s));
+ patchHTML($('#status-layer'),status(s,{islandExpanded}));
+ patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s));
+ $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
+ patchHTML($('#shade-layer'),notifications(s));
  if(s.deathPhase==='passcode'&&lockscreen.stage==='cover')lockscreen.open();
  const fullscreen=powerFullscreen(s,{passcode:s.deathPhase==='passcode'?lock(s,lockscreen.stage,lockscreen.digits):''}),overlay=$('#day-transition-layer');
  patchHTML(overlay,fullscreen);overlay.classList.toggle('is-visible',!!fullscreen);overlay.setAttribute('aria-hidden',String(!fullscreen));
@@ -189,7 +192,7 @@ function expandIsland(){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
  islandExpanded=true;render();collapseIsland(8000);
 }
-store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n)showBanner(n);}});render();
+store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  const s=store.get();if(!phoneBlocked(s))return;
  const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off';
@@ -238,6 +241,11 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-sleep'){collapseIsland();lockscreen.reset();store.update(s=>{setSleeping(s);});return;}
     if(action==='power-shutdown'){collapseIsland();store.update(s=>{s.poweredOff=true;s.unlocked=false;});return;}
     if(action==='power-dismiss-alarm'||action==='power-snooze'){stopAlarmSound();collapseIsland();store.update(s=>{dismissAlarm(s,{continueSleep:action==='power-snooze'});});return;}
+    if(action==='tai-banner-accept'){
+      if(callAction('tai-accept',ctx())){setShade({progress:0});router.open({appId:'noapp',route:'/call',params:{}});}
+      return;
+    }
+    if(action==='tai-banner-decline'){callAction('tai-decline',ctx());return;}
     if(action==='home'&&shade){setShade({progress:0});return;}
     if(!store.get().unlocked){
       if(action==='close-shade'){setShade({progress:0});return;}
@@ -254,8 +262,23 @@ $('#root').addEventListener('click',async e=>{
     if(action==='lock'){lockscreen.reset();shade=false;store.update(s=>{s.unlocked=false;s.nav.current={appId:'home',route:'/',params:{}};s.nav.stack=[];});return;}
     if(action==='notify'||action==='island'){setShade({progress:shade?0:1});return;}
     if(action==='close-shade'){setShade({progress:0});return;}
-    if(action==='notification'){const n=store.get().notifications.find(x=>x.id===target.dataset.id);if(!n)return;setShade({progress:0});readNotification(store,n.id);if(n.link)router.open(n.link);return;}
-    if(action==='banner-open'){const banner=$('#toast'),n=store.get().notifications.find(x=>x.id===banner?.dataset.noticeId);banner?.classList.remove('visible');if(n){readNotification(store,n.id);if(n.link)router.open(n.link);}return;}
+    if(action==='notification'){
+      const n=store.get().notifications.find(x=>x.id===target.dataset.id);if(!n)return;
+      setShade({progress:0});
+      if(n.type==='tai-incoming-call'&&callState().state==='ringing'){router.open({appId:'noapp',route:'/call',params:{}});return;}
+      readNotification(store,n.id);
+      if(n.type==='tai-incoming-call'||n.type==='tai-missed-call')router.open({appId:'noapp',route:'/chat/tai',params:{}});
+      else if(n.link)router.open(n.link);
+      return;
+    }
+    if(action==='banner-open'){
+      const banner=$('#toast'),n=store.get().notifications.find(x=>x.id===banner?.dataset.noticeId);banner?.classList.remove('visible');
+      if(n){
+       if(n.type==='tai-incoming-call'&&callState().state==='ringing')router.open({appId:'noapp',route:'/call',params:{}});
+       else{readNotification(store,n.id);if(n.link)router.open(n.link);}
+      }
+      return;
+    }
     const app=registry.get(store.get().nav.current.appId);
     if(app?.handle)await app.handle(action,target,ctx(),store.get().nav.current);
     if(['mc-accept-bounty','mc-complete-bounty'].includes(action))store.update(s=>{advanceGameMinutes(s,action==='mc-complete-bounty'?60:30);});
