@@ -28,8 +28,8 @@ test('D30 invite installs NoApp and recognition is visible in real chat bubbles'
  assert.equal(s.nav.current.appId,'noapp');
  assert.equal(s.nav.current.route,'/chat/tai');
  assert.deepEqual(nodeLink55(s,'recognition'),{appId:'noapp',route:'/chat/tai',params:{node:'recognition'}});
- assert.match(show(s),/data-action="s55-scene-next"/);
- assert.doesNotMatch(show(s),/class="composer"/);
+ assert.match(show(s),/class="composer"/);
+ assert.doesNotMatch(show(s),/data-action="s55-scene-next"/);
  advanceScene55(s,'recognition');
  assert.match(show(s),/欢迎回家/);
  while(!completed(s,'recognition'))advanceScene55(s,'recognition');
