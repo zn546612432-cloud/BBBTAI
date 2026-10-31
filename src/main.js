@@ -10,6 +10,7 @@ import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
 import {processDemoReply,sendUnansweredChessReminders,dueChessReminders} from './services/invitations.js';
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
+import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {readNotification} from './services/messaging/read.js';
@@ -241,7 +242,13 @@ setInterval(()=>{
  if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get()))return;
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  let outcome={};
- store.update(s=>{outcome=tickWorld(s,elapsed,{focused:editing,taiChat:isTaiConversation(s)});drainBattery(s,elapsed);});
+ store.update(s=>{
+  outcome=tickWorld(s,elapsed,{focused:editing,taiChat:isTaiConversation(s)});
+  drainBattery(s,elapsed);
+  // Story release is time-gated even if MIRAGE was already open before 20:00.
+  if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
+   ensureMirageStory(s);
+ });
  if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
  if(outcome.event==='emergency')collapseIsland();
  if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
