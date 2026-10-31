@@ -533,3 +533,5 @@ to{opacity:1;transform:none}
 #tai-call-banner-layer .tai-banner-accept{background:#40bc73}
 @keyframes tai-call-slide-in{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){#tai-call-banner-layer .tai-incoming-banner{animation:none}}
+
+@media(max-width:600px){html{-webkit-text-size-adjust:100%}#phone input,#phone textarea,#phone select{font-size:16px;max-width:100%;min-width:0}} /* Safari does not zoom on focus */
