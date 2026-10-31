@@ -29,7 +29,7 @@ export function handle(a,t,ctx){
   ctx.pickImage(src=>store.update(s=>{
    if(type==='avatar'){s.characterAvatars??={};s.characterAvatars[name]=src;}
    if(name!=='熙泰'){const m=editableMoments(s);m.profiles[name]??={};m.profiles[name][type]=src;}
-  }),{maxEdge:type==='avatar'?560:1200,quality:.86});
+  }),{maxEdge:type==='avatar'?560:1200,quality:.86,cropAspect:type==='avatar'?1:16/9});
   return;
  }
  if(handleMoments(a,t,ctx))return;
