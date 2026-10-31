@@ -1,3 +1,4 @@
+import {isStory55,taiRecognized} from '../story55/state.js';
 import {unheardReply} from '../voice/unheard.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
@@ -56,7 +57,7 @@ function synthesizeVoiceNotes(store,jobs){
 export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now}={}){
  const initial=store.get(),c=conversation(initial);
  if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId))return {status:'scripted'};
- if(initial.day<56||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
+ if(!taiRecognized(initial)||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
  const presence=taiPresence(initial);
  if(!presence.contactable||presence.status==='away')return {status:'offline',message:'熙泰暂时不在线，消息已保存'};
  markTaiEngaged();
@@ -74,7 +75,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
   const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
-  const request={day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
+  const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。',
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),

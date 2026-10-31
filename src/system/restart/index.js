@@ -1,7 +1,10 @@
+import {isStory55} from '../../services/story55/state.js';
+import {activateStory55} from '../../services/story55/runtime.js';
 import {initialState,clone} from '../../services/storage.js';
 import {calendarAnchor} from '../../services/calendar.js';
 // Story definitions remain editable; only the player's run is discarded.
 export function restartState(previous){
+ if(isStory55(previous)){const next=clone(previous);return activateStory55(next);}
  const next=initialState();
  Object.assign(next,{day:1,clock:'08:00',calendar:calendarAnchor(1),batteryPercent:100,invitations:[],content:clone(previous.content),wallpaper:previous.wallpaper,iconOverrides:clone(previous.iconOverrides||{}),characterAvatars:clone(previous.characterAvatars||{}),storyChargeGates:clone(previous.storyChargeGates||[])});
  next.storyPresets.rules=clone(previous.storyPresets?.rules||[]);

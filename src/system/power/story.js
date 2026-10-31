@@ -1,3 +1,4 @@
+import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
 export const DEATH_START=90*1440-1; // D90 23:59
@@ -7,6 +8,7 @@ export const deathLocked=s=>['draining','off','passcode'].includes(s.deathPhase)
 export const phoneBlocked=s=>deathLocked(s)||(s.dayChargeRemainingMs||0)>0;
 
 export function syncDeathNight(s){
+ if(isStory55(s)){s.day=Math.min(55,s.day);if(s.story55.ended){s.day=55;s.batteryPercent=1;s.deathPhase='off';s.unlocked=false;}return;}
  if(s.deathPhase==='recovered'||s.day<DEATH_DAY)return;
  s.powerMode='idle';s.sleepWakeAt=null;s.emergencyCharge=false;s.poweredOff=false;
  const at=storyMinute(s);
@@ -23,6 +25,7 @@ export function syncDeathNight(s){
 }
 
 export function chargingBlock(s){
+ if(isStory55(s))return story55ChargeGate(s);
  if(s.day===DEATH_DAY||deathLocked(s))return 'death';
  const flags=s.storyPresets?.flags||[];
  const gate=(s.storyChargeGates||[]).find(g=>g.day===s.day&&!flags.includes(g.untilFlag));

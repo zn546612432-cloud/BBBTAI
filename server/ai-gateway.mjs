@@ -60,7 +60,7 @@ export async function handleAIGateway(req,res,pathname) {
       if(!process.env.DEEPSEEK_API_KEY)throw fail(503,'请先在本地环境配置 DEEPSEEK_API_KEY');
       const day=Number(payload.day),channel=payload.channel;
       if(!Number.isInteger(day)||day<1||day>90)throw fail(400,'游戏天数不合法');
-      if(!['mirage','noapp','chess'].includes(channel)||channel==='noapp'&&day<56)throw fail(400,'当前频道或天数不可使用');
+      if(!['mirage','noapp','chess'].includes(channel)||channel==='noapp'&&(payload.storyVersion==='55-v1'?day<30||day>55||payload.recognized!==true:day<56))throw fail(400,'当前频道或天数不可使用');
       if(!Array.isArray(payload.messages)||payload.messages.length<1||payload.messages.length>24)throw fail(400,'聊天消息数量不合法');
       const messages=payload.messages.map(m=>{
         if(!['user','assistant'].includes(m?.role)||typeof m.content!=='string'||!m.content.trim()||m.content.length>2000)throw fail(400,'消息格式不合法');

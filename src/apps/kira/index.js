@@ -1,3 +1,4 @@
+import {mail55} from '../../services/story55/views.js';
 import {linkedMission,linkedMailId,advanceLinkedMission} from '../mirage/linked-missions.js';
 import {linkedMailView,linkedReceiptView} from './features/mission/linked.js';
 import {authorize,submit} from '../ghost/state.js';
@@ -11,6 +12,7 @@ export function render({store},loc){
  if(loc.route==='/compose/'+HACKER_BOUNTY_ID)return composeMission(s);
  if(loc.route.startsWith('/mail/')){
   const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
+  if(mail?.story55)return mail55(s,mail);
   return mail?.linkedReceipt?linkedReceiptView(s,mailId):mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
  }
  return kiraInbox(s);

@@ -1,3 +1,8 @@
+import {anonymousPresence55} from '../../services/story55/runtime.js';
+import {taiRecognized} from '../../services/story55/state.js';
+import {taiBehavior,replyDelayMs} from '../../services/ai/behavior.js';
+import {isStory55} from '../../services/story55/state.js';
+import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
 import {linkedMission,acceptLinkedMission} from './linked-missions.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from './session.js';
@@ -44,7 +49,7 @@ function history(s,id){const c=contacts(s).find(c=>c.id===id);if(!c)return `${he
 function editMessage(s,params){const c=contacts(s).find(c=>c.id===params.contact);if(!c)return `${header('IDENTITY NOT FOUND','',true)}`;const m=c.messages.find(m=>m.id===params.id)||{};return `${header('COMPOSE ARCHIVE','',true)}<div class="mc-scroll mc-detail"><form class="mc-editor-form" data-form="mc-message" data-contact="${esc(c.id)}" data-id="${esc(m.id||'')}"><label>SENDER<select name="from"><option value="me" ${m.from==='me'?'selected':''}>${esc(mirageData(s).account)}</option><option value="${esc(c.id)}" ${m.from!=='me'?'selected':''}>${esc(c.name)}</option></select></label>${field('time','TIME',m.time&&/^\d\d:\d\d$/.test(m.time)?m.time:s.clock,'type="time" required')}${field('sentDate','DATE',m.sentDate||s.calendar?.anchorDate||'2024-03-10','type="date" required')}<label>MESSAGE<textarea name="text" required maxlength="10000">${esc(m.text||'')}</textarea></label><button type="submit" class="mc-primary">SAVE MESSAGE</button></form></div>`;}
 function deleteOverlay(){return pendingDelete?`<div class="mc-overlay"><section class="mc-dialog" role="alertdialog" aria-modal="true" aria-label="Delete record"><header><span>DELETE RECORD?</span></header><p>THIS RECORD WILL BE REMOVED FROM THIS PHONE.</p><div class="mc-dialog-buttons">${btn('mc-cancel-delete','CANCEL','mc-secondary')}${btn('mc-confirm-delete','DELETE','mc-primary')}</div></section></div>`:'';}
 function newMailOverlay(){return newMailNotice?`<div class="mc-overlay" role="dialog" aria-modal="true" aria-label="收到一条邮件"><section class="mc-dialog mc-mail-notice"><header>NEW MESSAGE ${at('mc-close-mail-notice','CLOSE','close')}</header><p>收到一条邮件</p><strong>【mirage】新订单</strong><div class="mc-dialog-buttons">${btn('mc-close-mail-notice','稍后查看','mc-secondary')}${btn('mc-open-kira-mail','打开 KIRA 邮件','mc-primary')}</div></section></div>`:'';}
-export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);let body;if(loc.route.startsWith('/chat/'))body=chatPage(s,loc.route.slice(6));else if(loc.route==='/bounties'||loc.route==='/bounties/completed')body=bountyPage(s,loc.route==='/bounties/completed');else if(loc.route.startsWith('/order/'))body=bountyDetail(s,loc.route.slice(7));else if(loc.route==='/market')body=market(s);else if(loc.route.startsWith('/product/'))body=product(s,loc.route.slice(9));else if(loc.route==='/cart')body=cart(s);else if(loc.route==='/wallet')body=wallet(s);else if(loc.route==='/manage')body=manage(s,loc.params||{});else if(loc.route==='/edit')body=editRecord(s,loc.params||{});else if(loc.route.startsWith('/history/'))body=history(s,loc.route.slice(9));else if(loc.route==='/edit-message')body=editMessage(s,loc.params||{});else if(loc.route==='/balance')body=`${header('EDIT LEDGER','',true)}<div class="mc-detail"><form class="mc-editor-form" data-form="mc-balance">${field('balance','AVAILABLE FUNDS / USD',mirageData(s).balance,'required type="number" min="0" max="1000000000000" step="0.01"')}<button type="submit" class="mc-primary">SAVE BALANCE</button></form></div>`;else body=contactsPage(s);return `<div class="mc-screen">${telemetry()}<div class="mc-interface">${body}</div>${deleteOverlay()}${newMailOverlay()}</div>`;}
+export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);if(isStory55(s)&&!loc.route.startsWith('/chat/'))return mirage55(s,loc);let body;if(loc.route.startsWith('/chat/'))body=chatPage(s,loc.route.slice(6));else if(loc.route==='/bounties'||loc.route==='/bounties/completed')body=bountyPage(s,loc.route==='/bounties/completed');else if(loc.route.startsWith('/order/'))body=bountyDetail(s,loc.route.slice(7));else if(loc.route==='/market')body=market(s);else if(loc.route.startsWith('/product/'))body=product(s,loc.route.slice(9));else if(loc.route==='/cart')body=cart(s);else if(loc.route==='/wallet')body=wallet(s);else if(loc.route==='/manage')body=manage(s,loc.params||{});else if(loc.route==='/edit')body=editRecord(s,loc.params||{});else if(loc.route.startsWith('/history/'))body=history(s,loc.route.slice(9));else if(loc.route==='/edit-message')body=editMessage(s,loc.params||{});else if(loc.route==='/balance')body=`${header('EDIT LEDGER','',true)}<div class="mc-detail"><form class="mc-editor-form" data-form="mc-balance">${field('balance','AVAILABLE FUNDS / USD',mirageData(s).balance,'required type="number" min="0" max="1000000000000" step="0.01"')}<button type="submit" class="mc-primary">SAVE BALANCE</button></form></div>`;else body=contactsPage(s);return `<div class="mc-screen">${telemetry()}<div class="mc-interface">${body}</div>${deleteOverlay()}${newMailOverlay()}</div>`;}
 export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get();
  if(action==='mc-sign-up'&&!isMirageAuthenticated()){const message=t.closest('.mc-login')?.querySelector('.mc-signup-warning');if(message){message.classList.add('is-visible');message.style.opacity='1';clearTimeout(message._hideTimer);message._hideTimer=setTimeout(()=>{message.style.opacity='0';message.classList.remove('is-visible');},3800);}return;}
  if(!isMirageAuthenticated())return;
@@ -118,6 +123,7 @@ async function replyToOuroboros(ctx,contactId,sourceId){
  const initial=ctx.store.get();
  const c=initial.content.conversations.mirage?.find(x=>x.id===contactId);
  if(!c||!/(ouroboros|衔尾蛇)/i.test(c.name)||pendingMirageAI.has(contactId))return;
+ if(isStory55(initial)&&!anonymousPresence55(initial).online){ctx.toast(anonymousPresence55(initial).reason);return;}
  // The D05 authored exchange must finish before free-form DeepSeek replies.
  if(isOuroborosScriptActive(ctx.store.get(),contactId))return;
  const last=c.messages.at(-1);if(last?.id!==sourceId||last.from!=='me')return;
@@ -126,13 +132,13 @@ async function replyToOuroboros(ctx,contactId,sourceId){
  try{
   const history=visibleMessages(c).filter(m=>m.kind==='text'&&typeof m.text==='string'&&!m.demo).slice(-20).map(m=>({role:m.from==='me'?'user':'assistant',content:m.text.slice(0,2000)}));
   if(history.at(-1)?.role!=='user')return;
-  const result=await askTai({day:initial.day,channel:'mirage',messages:history,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+  const result=await askTai({day:initial.day,channel:'mirage',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:isStory55(initial)?taiRecognized(initial):undefined,messages:history,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   const chunks=unpackTaiReply(result,'mirage');
   let inserted=0;
   for(const item of chunks){
    if(!isMirageAuthenticated())break;
    const now=ctx.store.get().content.conversations.mirage?.find(x=>x.id===contactId);
-   if(!now||inserted===0&&now.messages.at(-1)?.id!==sourceId)break;
+   if(!now||ctx.store.get().day!==initial.day||now.messages.filter(m=>m.from==='me').at(-1)?.id!==sourceId)break;
    const msgId=uid();
    ctx.store.update(s=>{
     const target=s.content.conversations.mirage?.find(x=>x.id===contactId);if(!target)return;
@@ -142,7 +148,7 @@ async function replyToOuroboros(ctx,contactId,sourceId){
      s.notifications.unshift({id:'mirage-ai-'+msgId,title:'MIRAGE',body:'NEW ENCRYPTED MESSAGE',link:{appId:'mirage',route:'/chat/'+contactId,params:{}}});
     }
    });
-   inserted++;if(chunks.length>1)await new Promise(r=>setTimeout(r,440));
+   inserted++;if(chunks.length>1)await new Promise(r=>setTimeout(r,replyDelayMs(item.text,taiBehavior(initial))));
   }
  }finally{pendingMirageAI.delete(contactId);}
 }

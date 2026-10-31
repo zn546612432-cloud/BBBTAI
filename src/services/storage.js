@@ -1,3 +1,6 @@
+import {isStory55} from './story55/state.js';
+import {activateStory55,tickStory55} from './story55/runtime.js';
+import {accrueMining} from './story55/mining.js';
 import {syncDeathNight} from '../system/power/story.js';
 import {calendarAnchor,validDate,dateParts} from './calendar.js';
 import {demoContent,demoInvitation} from '../story/demo/seed.js';
@@ -7,9 +10,10 @@ import {ensureBank} from './bank.js';
 import {ensureAuthoredNotes} from '../apps/notes/data/seed.js';
 import {defaultTaiDraft,ensureTaiDraft} from './ai/tai-profile.js';
 export const isPreview=globalThis.document?.querySelector('meta[name=phone-preview]')?.content==='true';
-export const KEY=isPreview?'ximeng-phone-preview-v2':'ximeng-phone-v2';
+export const story55Preview=new URLSearchParams(globalThis.location?.search||'').get('story')==='55'||globalThis.document?.querySelector('meta[name=phone-story]')?.content==='55';
+export const KEY=story55Preview?'ximeng-phone-story55-v1':isPreview?'ximeng-phone-preview-v2':'ximeng-phone-v2';
 export const clone=v=>structuredClone(v);
-export const initialState=()=>({version:2,timelineVersion:1,deathPhase:null,storyChargeGates:[],dayChargeRemainingMs:0,day:56,calendar:calendarAnchor(56),clock:'21:18',batteryPercent:82,powerActiveMs:0,powerMode:'idle',worldMinuteFraction:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,emergencyCharge:false,poweredOff:false,unlocked:false,homePage:0,wallpaper:'/wallpapers/midnight-glass.png',iconOverrides:{},nav:{current:{appId:'home',route:'/',params:{}},stack:[]},content:{...clone(demoContent),phone:defaultPhoneData()},invitations:[clone(demoInvitation)],matches:[],notifications:[],events:[],drafts:{},editor:{conversation:'tai',presetDay:57},storyPresets:starterPresetState(),aiDraft:defaultTaiDraft(),bankData:{balance:1280,rate:1,transactions:[],account:'•• 1846'},musicPlaying:false});
+export const initialState=()=>{const s=({version:2,timelineVersion:1,deathPhase:null,storyChargeGates:[],dayChargeRemainingMs:0,day:56,calendar:calendarAnchor(56),clock:'21:18',batteryPercent:82,powerActiveMs:0,powerMode:'idle',worldMinuteFraction:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,emergencyCharge:false,poweredOff:false,unlocked:false,homePage:0,wallpaper:'/wallpapers/midnight-glass.png',iconOverrides:{},nav:{current:{appId:'home',route:'/',params:{}},stack:[]},content:{...clone(demoContent),phone:defaultPhoneData()},invitations:[clone(demoInvitation)],matches:[],notifications:[],events:[],drafts:{},editor:{conversation:'tai',presetDay:57},storyPresets:starterPresetState(),aiDraft:defaultTaiDraft(),bankData:{balance:1280,rate:1,transactions:[],account:'•• 1846'},musicPlaying:false});return story55Preview?activateStory55(s):s;};
 export function validateState(s){if(!s||s.version!==2||!Number.isSafeInteger(s.day)||s.day<1||!/^([01]\d|2[0-3]):[0-5]\d$/.test(s.clock))throw Error('状态版本或时间无效');if(s.batteryPercent!==undefined&&(!Number.isInteger(s.batteryPercent)||s.batteryPercent<0||s.batteryPercent>100))throw Error('电量格式无效');for(const key of ['invitations','matches','notifications','events'])if(!Array.isArray(s[key]))throw Error(key+' 格式无效');if(!s.content?.conversations||!s.nav?.current||typeof s.wallpaper!=='string')throw Error('手机状态不完整');if(s.calendar&&(!Number.isSafeInteger(s.calendar.anchorDay)||s.calendar.anchorDay<1||!validDate(s.calendar.anchorDate)))throw Error('日历基准无效');const ids=new Set();for(const inv of s.invitations){if(!inv.id||ids.has(inv.id)||!['pending','accepted','deferred','declined','expired'].includes(inv.status))throw Error('邀请格式无效');ids.add(inv.id);}return s;}
 export function migrateLegacy(storage){try{const old=JSON.parse(storage.getItem('ximeng-phone-ui-v1'));if(!old||old.schemaVersion!==1)return null;const s=initialState();s.day=old.day;s.calendar=calendarAnchor(old.day);s.clock=old.clock;s.content.notes=old.notes||s.content.notes;s.content.photos=old.photos||[];for(const c of old.conversations||[]){if(['wechat','mirage','noapp'].includes(c.app)&&c.id!=='tai'){const group=s.content.conversations[c.app];const found=group?.find(x=>x.id===c.id);if(found)found.messages=c.messages;else group?.push({id:c.id,name:c.name,avatar:c.avatar,messages:c.messages});}}return s;}catch{return null;}}
 function discardOldMorningNotices(s){
@@ -100,6 +104,7 @@ function ensureWeChatRoster(s){
  return true;
 }
 function normalizeTimeline(s){
+ if(isStory55(s)){accrueMining(s);tickStory55(s);syncDeathNight(s);return;}
  if(s.timelineVersion!==1||!s.calendar)s.calendar=calendarAnchor(s.day);
  s.timelineVersion=1;s.storyChargeGates??=[];
  syncDeathNight(s);

@@ -1,3 +1,4 @@
+import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {WALLET_CHALLENGE_ID,completeWalletChallenge} from '../mirage/contacts-seed.js';
 import {defaultConfig} from './catalog.js';
@@ -5,7 +6,7 @@ import {createBoard} from './games/logic.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
 export function configFor(s,type,id){return {...defaultConfig,...s.ghost?.config?.[type],...s.ghost?.orders?.[id]?.settings};}
 export function authorize(s,{orderId,mailId,type}){const g=ensureGhost(s);const selected=type||g.missionTypes?.[orderId]||'cipher';if(!g.orders[orderId])g.orders[orderId]={id:orderId,mailId,type:selected,key:'GH-'+orderId.replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase(),status:'authorized',attempts:0,settings:{...defaultConfig,...g.config[selected],...g.orderConfigs?.[orderId]}};return g.orders[orderId];}
-const boardSignature=(type,b)=>JSON.stringify(type==='cipher'?b.tiles:type==='route'?b.masks:type==='extract'?b.target:type==='veil'?b.code:b.signature);
+const boardSignature=(type,b)=>JSON.stringify(type==='cipher'?b.tiles:type==='route'?b.masks:type==='extract'?b.target:type==='veil'?b.code:type==='verify'?b.target:b.signature);
 const signatures=(g,type)=>g.usedBoardSignatures??={cipher:[],route:[],extract:[],veil:[],strike:[]};
 function uniqueBoard(g,type,cfg){
  const used=signatures(g,type)[type]??=[];
@@ -45,6 +46,8 @@ export function finish(s,id,success,now=Date.now()){
  const g=ensureGhost(s),o=g.orders[id];
  if(!o||o.status!=='running')return;
  o.status=success?'success':'failed';
+ if(success&&o.story55Project)completeDeploymentRun(s,o);
+ if(success&&o.story55Commission){o.status='paid';s.bankData.balance+=20000;s.bankData.transactions.unshift({id:o.id,label:'MIRAGE COMMISSION',amount:20000,time:s.clock});}
  g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});
  // Trigger the scripted D05 conversation and 10 BTC credit ONLY after
  // the player successfully solves the challenge. This is idempotent.

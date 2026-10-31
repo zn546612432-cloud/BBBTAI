@@ -1,3 +1,4 @@
+import {isStory55,taiRecognized,final55} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {aiStatus,askTai} from './gateway.js';
 import {unpackTaiReply} from './format.js';
@@ -14,7 +15,7 @@ const chat=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const stamp=x=>Number(x.day)*1440+Number((x.clock||x.time||'00:00').slice(0,2))*60+Number((x.clock||x.time||'00:00').slice(3,5));
 const history=s=>visibleMessages(chat(s)||{messages:[]}).filter(m=>!m.demo&&m.day<=s.day&&m.kind!=='image'&&m.kind!=='call'&&m.kind!=='app_invitation'&&m.text?.trim());
 function eligible(s){
- return s.day>=56&&s.day<90&&!s.poweredOff&&s.powerMode==='idle'&&taiPresence(s).status==='online';
+ return taiRecognized(s)&&(isStory55(s)?!final55(s):s.day<90)&&!s.poweredOff&&s.powerMode==='idle'&&taiPresence(s).status==='online';
 }
 function elapsed(s,entry,c,now){
  if(c.triggerClock==='real'&&entry.receivedAt)return Math.max(0,(now-entry.receivedAt)/60000);
@@ -73,7 +74,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。按当时的语境决定补充没说完的话、分享之后的进展，或轻微困惑、担心、不满；沉默不等于生气，不模板化催促。这次只跟进一次。`
    :'你主动想起熙蒙。从当前生活记录里的健身、学习、旅行、看展看秀、酒店、小酌、吃饭或真实旧话题里，选一件具体想说的事。可以多条，不泛泛问在不在，也不固定谈棋。不能虚构对方经历或擅自执行剧情。';
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
-  const r=await askTai({channel:'noapp',day:initial.day,messages,outputMode:'text',scene,behavior:c,
+  const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:'text',scene,behavior:c,
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   const items=unpackTaiReply(r,'noapp').slice(0,c.maxMessages);
   let expected=history(initial).at(-1)?.id,emitted=0;

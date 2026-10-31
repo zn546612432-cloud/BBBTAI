@@ -1,3 +1,5 @@
+import {isStory55} from './story55/state.js';
+import {story55Presence} from './story55/runtime.js';
 import {taiForcedOnline} from './ai/test-controls.js';
 // Macau game clock is used for scheduling; Xitai lives in UK but the
 // author chose 18:00-08:00 Macau as the principal reachable window.
@@ -7,6 +9,7 @@ let lastEngagedAt=0;
 export function markTaiEngaged(){lastEngagedAt=Date.now();}
 export function clearTaiEngagement(){lastEngagedAt=0;}
 export function taiPresence(s,{now=Date.now()}={}){
+ if(isStory55(s))return story55Presence(s,now);
  if(s.day<56)return {status:'offline',contactable:false,reason:'尚未相认'};
  if(taiForcedOnline())return {status:'online',contactable:true,reason:'在线'};
  if(lastEngagedAt&&now-lastEngagedAt<ENGAGED_GRACE_MS)

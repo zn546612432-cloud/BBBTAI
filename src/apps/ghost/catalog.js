@@ -1,4 +1,5 @@
 export const tools=[
+ {id:'verify',name:'验证',en:'VERIFY',detail:'MODULE ORDER CHECK',glyph:'✓'},
  {id:'cipher',name:'破译',en:'CIPHER',detail:'MATRIX RECONSTRUCTION',glyph:'◇'},
  {id:'route',name:'链接',en:'ROUTE',detail:'SIGNAL ROUTING',glyph:'⌁'},
  {id:'extract',name:'窃取',en:'EXTRACT',detail:'DATA MATCHING',glyph:'⊡'},

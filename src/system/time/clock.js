@@ -1,3 +1,4 @@
+import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
 import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
 // Civil game time, story day and battery are deliberately independent.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
@@ -35,7 +36,8 @@ function nextAlarm(s,from,end){
 export function advanceGameMinutes(s,requested){
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
- const from=absoluteMinute(s),target=from+Math.max(0,Math.floor(requested));
+ const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
+ if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
  if(target<=from)return {minutes:0};
  if(s.deathPhase==='draining'){
   const at=Math.min(target,DEATH_END);setAbsoluteMinute(s,at);syncDeathNight(s);
@@ -50,7 +52,7 @@ export function advanceGameMinutes(s,requested){
   const at=nextClockOccurrence(from,'03:00');
   if(at<=stop.at)stop={at,type:'emergency'};
  }
- if(s.deathPhase!=='recovered'&&from<DEATH_START&&target>=DEATH_START&&DEATH_START<=stop.at)stop={at:DEATH_START,type:'death-start'};
+ if(!isStory55(s)&&s.deathPhase!=='recovered'&&from<DEATH_START&&target>=DEATH_START&&DEATH_START<=stop.at)stop={at:DEATH_START,type:'death-start'};
  const advanced=stop.at-from;
  setAbsoluteMinute(s,stop.at);
  if(s.powerMode==='charging'||s.powerMode==='sleeping'){
@@ -89,7 +91,7 @@ export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  return outcome;
 }
 export function setSleeping(s){
- if(deathLocked(s)||s.day===90||s.powerMode!=='charging'||s.alarmRinging)return false;
+ if(deathLocked(s)||(isStory55(s)?s.day===55:s.day===90)||s.powerMode!=='charging'||s.alarmRinging)return false;
  s.powerMode='sleeping';s.sleepWakeAt=wakeMinute(s);s.worldMinuteFraction=0;
  s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  return true;
