@@ -17,7 +17,7 @@ test('Chess invitation waits for real Xitai online status; force-online is sessi
  globalThis.sessionStorage={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)};
  try{
   clearTaiEngagement();
-  const s=initialState();s.day=56;s.clock='11:00';
+  const s=initialState();s.day=57;s.clock='11:00';
   assert.equal(taiPresence(s).status,'away');
   assert.equal(nextScheduledTaiInvite(s),null);
   setTaiForcedOnline(true);
@@ -101,7 +101,7 @@ test('A one-time follow-up is eligible when a proactive message is unanswered fo
  assert.equal(isTaiFollowupDue(s),false);
 });
 test('Sparse MiniMax voice tags enrich long speech without exposing tags to plain chats',()=>{
- const words='我正准备把论文改完，可你突然不说话，我还以为你睡着了。其实你发来的那段代码我已经看过，后面还有些细节要聊。';
+ const words='我正准备把论文改完，可你突然不说话，我还以为你睡着了。其实你发来的那段代码我已经看过，后面还有些细节要聊，我希望你能听听我的意见，再决定要不要推翻整个架构。';
  const prepared=prepareXitaiSpeech(words,{tone:'soft',autoTags:true});
  assert.ok(prepared.characterCount>53);
  assert.ok(prepared.tagCount>=1&&prepared.tagCount<=4);
