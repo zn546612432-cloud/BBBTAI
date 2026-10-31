@@ -75,7 +75,7 @@ export async function replyToTaiMessage(store,sourceMessageId){
    if(item.mode==='voice'){
     // Queue TTS in its own chain so three voice messages do not create three
     // simultaneous MiniMax calls. Failed audio leaves the written bubble.
-    voiceJobs.push({id,text:item.text,tone:item.tone,day:initial.day});
+    voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    }
    if(entries.length>1)await new Promise(resolve=>setTimeout(resolve,420+Math.random()*460));
   }
