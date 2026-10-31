@@ -53,11 +53,14 @@ export async function replyToTaiMessage(store,sourceMessageId){
  pendingRequest=true;
  try{
   const lastUser=c.messages.find(m=>m.id===sourceMessageId)?.text||'';
-  const result=await askTai({day:initial.day,channel:'noapp',messages,outputMode:'text',
+  const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
+  const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
+  const voiceTurn=voiceRequested||(initial.day>=60&&hashed%19===0);
+  const result=await askTai({day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，必要时可连发两三条，不要每一句都反问。',
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  const entries=unpackTaiReply(result,'noapp');
+  const entries=unpackTaiReply(result,'noapp').map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
