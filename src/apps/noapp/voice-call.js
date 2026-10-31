@@ -1,3 +1,4 @@
+import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
@@ -418,6 +419,7 @@ export function mountHoldToTalk(root,makeContext){
   if(active===token)active=null;
   if(token.ready){stopVoiceRecording({cancel});}
   else token.cancel=cancel;
+  releaseFeedback(token.target,{cancel});
   hide();
  }
  root.addEventListener('pointerdown',e=>{
@@ -432,17 +434,21 @@ export function mountHoldToTalk(root,makeContext){
   // getUserMedia begins synchronously inside this trusted pointer event.
   void beginVoiceRecording(ctx).then(()=>{
    token.ready=true;
+   impact('success');
    if(token.done)stopVoiceRecording({cancel:token.cancel});
    else if(active===token)show();
   }).catch(err=>{
    if(!token.done)ctx.toast(err.message||'麦克风不可用');
    if(active===token)active=null;
+   releaseFeedback(token.target,{cancel:true});
    hide();
   });
  },true);
  root.addEventListener('pointermove',e=>{
   const t=active;if(!t||t.pointerId!==e.pointerId)return;
+  const was=t.cancel;
   t.cancel=e.clientY<t.startY-75;
+  if(t.cancel&&!was)impact('cancel');
   overlay()?.classList.toggle('is-cancel-gesture',t.cancel);
  },true);
  function release(e,forceCancel=false){
