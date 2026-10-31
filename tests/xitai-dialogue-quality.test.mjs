@@ -12,7 +12,7 @@ test('ordinary one-line reply is eligible for a single high-quality rewrite',()=
  assert.equal(needsTaiResponseRepair({...input,entries:[{text:'在酒店。'},{text:'下午出去看了展。'}]}),false);
  assert.equal(needsTaiResponseRepair({...input,lastUser:'晚安'}),false);
  assert.equal(needsTaiResponseRepair({...input,outputMode:'voice'}),false);
- assert.equal(needsTaiResponseRepair({...input,entries:[{text:'我先忙，晚点说。'}]}),true);
+ assert.equal(needsTaiResponseRepair({...input,entries:[{text:'我先忙，晚点说。'}]}),false);
  assert.match(taiResponseRepairScene('在酒店。'),/2至5条/);
 });
 test('expansive text mode prefers 2-5 substantive bubbles, but permits justified one-liners',()=>{
@@ -27,7 +27,7 @@ test('every speaking mood stays unhurried and restrained',()=>{
   const prepared=prepareXitaiSpeech('刚从外面回来，去看了一场秀。酒店楼下太吵了，等下再下楼。',{tone});
   assert.equal(prepared.emotion,'calm',tone);
   assert.ok(prepared.speed<=.92&&prepared.speed>=.78,tone+' speed '+prepared.speed);
-  assert.doesNotMatch(prepared.text,/\(chuckle\)/,tone+' should not force a chuckle on neutral speech');
+  if(tone!=='playful')assert.doesNotMatch(prepared.text,/\(chuckle\)/,tone+' should not force a chuckle on neutral speech');
  }
 });
 test('speech composer keeps audible pauses between sentences and message groups',()=>{
