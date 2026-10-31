@@ -77,7 +77,7 @@ test('D05 wallet reward is locked behind successful GHOST run, never issued on m
  const store=makeStore(),s=store.get();s.day=5;s.clock='21:00';
  initializeMirage(store);
  const order=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
- order.status='ACCEPTED';
+ assert.equal(acceptOuroborosChallenge(s),true);
  s.ghost??={orders:{},history:[],balance:0,config:{}};
  s.ghost.orderConfigs??={};
  s.ghost.orderConfigs[WALLET_CHALLENGE_ID]={seconds:90,rounds:1,codeLength:3,retries:3,reward:null};
@@ -118,7 +118,7 @@ test('D05 payout writes no fake player bubbles; players reveal each script line 
 test('MIRAGE deep link does not clear unread messages while sign-in is still visible',()=>{
  const store=makeStore(),s=store.get();s.day=5;s.unlocked=true;
  initializeMirage(store);
- s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID).status='ACCEPTED';
+ assert.equal(acceptOuroborosChallenge(s),true);
  completeWalletChallenge(s);
  const c=s.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05');
  const previous=globalThis.document;
