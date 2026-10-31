@@ -24,7 +24,7 @@ def install(bundle):
             raise SystemExit(f"Missing media: {path}")
     original = CATALOG.read_text(encoding="utf-8")
     replaced, matches = re.subn(
-        r'("id": "triplets",\s*"title": "orphanage-archive\\.enc",[^}]*?"asset":\s*)"[^"]*"',
+        r'("id": "triplets",\s*"title": "orphanage-archive\.enc",[^}]*?"asset":\s*)"[^"]*"',
         lambda m: m.group(1) + '"/assets/story55/' + PHOTO + '"',
         original, count=1)
     if matches != 1:
