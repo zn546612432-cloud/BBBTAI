@@ -88,3 +88,12 @@ test('notification sheet has only the shared bottom home indicator, no duplicate
  const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
  assert.match(css,/#homebar\{[^}]*touch-action:none/);
 });
+
+test('phone gestures observe start, move and release in capture phase before child controls',()=>{
+ const listeners=new Map();
+ mountGestures({addEventListener:(name,fn,options)=>listeners.set(name,options)},
+  {state:()=>({}),page:()=>{},shade:()=>{},unlock:()=>{}});
+ for(const name of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture','touchstart','touchmove','touchend','touchcancel'])
+  assert.equal(listeners.get(name)?.capture,true,name);
+ assert.equal(listeners.get('touchmove').passive,false);
+});

@@ -58,39 +58,39 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   if(!e.isPrimary||e.button!==0)return;
   if(e.pointerType==='touch'&&typeof window!=='undefined'&&'ontouchstart' in window)return;
   start(e.clientX,e.clientY,e.pointerId,'pointer',e.target,e.timeStamp);
- });
+ },{capture:true});
  root.addEventListener('pointermove',e=>{
   if(drag?.source!=='pointer'||drag.id!==e.pointerId)return;
   move(e.clientX,e.clientY,e.pointerId,'pointer',e.timeStamp,()=>{
    if(!root.hasPointerCapture(e.pointerId))root.setPointerCapture(e.pointerId);
    e.preventDefault();
   });
- },{passive:false});
+ },{passive:false,capture:true});
  const finishPointer=(e,cancel=false)=>{
   finish(e.clientX,e.clientY,e.pointerId,'pointer',e.timeStamp,cancel);
   if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);
  };
- root.addEventListener('pointerup',e=>finishPointer(e));
- root.addEventListener('pointercancel',e=>finishPointer(e,true));
- root.addEventListener('lostpointercapture',e=>finish(e.clientX,e.clientY,e.pointerId,'pointer',e.timeStamp,true));
+ root.addEventListener('pointerup',e=>finishPointer(e),{capture:true});
+ root.addEventListener('pointercancel',e=>finishPointer(e,true),{capture:true});
+ root.addEventListener('lostpointercapture',e=>finish(e.clientX,e.clientY,e.pointerId,'pointer',e.timeStamp,true),{capture:true});
 
  root.addEventListener('touchstart',e=>{
   if(e.touches.length!==1)return;
   const finger=e.changedTouches[0];
   start(finger.clientX,finger.clientY,finger.identifier,'touch',e.target,e.timeStamp);
- },{passive:true});
+ },{passive:true,capture:true});
  root.addEventListener('touchmove',e=>{
   if(drag?.source!=='touch')return;
   const finger=[...e.changedTouches].find(t=>t.identifier===drag.id);
   if(finger)move(finger.clientX,finger.clientY,finger.identifier,'touch',e.timeStamp,()=>{if(e.cancelable)e.preventDefault();});
- },{passive:false});
+ },{passive:false,capture:true});
  const finishTouch=(e,cancel=false)=>{
   if(drag?.source!=='touch')return;
   const finger=[...e.changedTouches].find(t=>t.identifier===drag.id);
   if(finger)finish(finger.clientX,finger.clientY,finger.identifier,'touch',e.timeStamp,cancel);
  };
- root.addEventListener('touchend',e=>finishTouch(e));
- root.addEventListener('touchcancel',e=>finishTouch(e,true));
+ root.addEventListener('touchend',e=>finishTouch(e),{capture:true});
+ root.addEventListener('touchcancel',e=>finishTouch(e,true),{capture:true});
  root.addEventListener('click',e=>{
   if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation();}
  },{capture:true});
