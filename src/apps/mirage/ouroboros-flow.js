@@ -42,7 +42,9 @@ export function markOuroborosWon(s){
  return true;
 }
 export function ouroborosDraft(s,id){if(id!==CONTACT)return '';
- const stage=ouroborosStage(s);return stage==='won'?'我拿到了。':stage==='asked'?'我单干。':stage==='impressed'?'因为我是天才。':'';
+ const stage=ouroborosStage(s),c=contact(s);
+ if(stage==='asked'&&!c?.messages.some(m=>m.id==='ou-group'&&m.delivery))return '';
+ return stage==='won'?'我拿到了。':stage==='asked'?'我单干。':stage==='impressed'?'因为我是天才。':'';
 }
 const REPLIES={
  won:[['ou-congrats','恭喜你。'],['ou-group','你属于哪个组织？']],
@@ -56,8 +58,12 @@ export function sendOuroborosPreset(s,id,text){
  const c=contact(s);if(!c)return false;
  c.messages.push(line('ou-player-'+stage,'me',expected,s));
  const next=NEXT[stage];s.content.mirage.ouroborosScript.stage=next;
- for(const [key,reply] of REPLIES[stage])if(!c.messages.some(x=>x.id===key))c.messages.push(line(key,CONTACT,reply,s));
+ for(const [key,reply] of REPLIES[stage])if(!c.messages.some(x=>x.id===key)){
+  const m=line(key,CONTACT,reply,s);
+  if(key==='ou-group')m.schedule={mode:'chat-delay',seconds:2};
+  c.messages.push(m);
+ }
  c.lastMessageAt=Date.now();
  return true;
 }
-export function isOuroborosScriptActive(s,id){return id===CONTACT&&!!ouroborosDraft(s,id);}
+export function isOuroborosScriptActive(s,id){return id===CONTACT&&['won','asked','impressed'].includes(ouroborosStage(s));}
