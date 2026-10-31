@@ -4,7 +4,7 @@ import {btn,card,demo,empty,esc} from '../../../../system/ui.js';
 import {dateParts,dateLabel,setPreviewDate} from '../../../../services/calendar.js';
 const attr=v=>esc(v);
 export function assets(s){return `<div class="editor-panel">${card(`<strong>手机壁纸</strong><p>当前图片可从本机替换。</p>${btn('replace-wallpaper','更换壁纸','button-primary wide')}`)}<div class="section-heading">人物头像与朋友圈背景</div>
-<div class="surface-list">${[...new Set(['熙泰',...momentPeople])].map(name=>{
+<div class="surface-list">${[...new Set(['熙泰','熙蒙','熙旺','傅隆生','胡枫','小辛','阿威','仔仔',...momentPeople,...(s.content.conversations.wechat||[]).filter(c=>!c.group).map(c=>c.name),...(s.content.phone?.contacts||[]).map(c=>c.name)])].map(name=>{
  const tai=name==='熙泰',avatar=s.characterAvatars?.[name]||(tai?TAI_PORTRAIT:momentProfiles(s)[name]?.avatar||'');
  const cover=momentProfiles(s)[name]?.cover||'';
  return `<div class="list-row character-asset-row"><span class="list-copy"><strong>${esc(name)}</strong><small>头像 · 朋友圈封面</small></span>${avatar?'<img src="'+esc(avatar)+'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:12px">':''}${btn('character-upload-avatar','换头像','text-button',`data-name="${esc(name)}"`)}${!tai?btn('character-upload-cover','换封面','text-button',`data-name="${esc(name)}"`):''}</div>`;
