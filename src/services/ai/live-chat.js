@@ -25,7 +25,10 @@ function synthesizeVoiceNotes(store,jobs){
      if(m){m.kind='voice';m.audioId=audioId;m.voiceCaption=job.text;
        delete m.voiceRequested;}
     });
-   }catch(error){console.warn('MiniMax voice failed; text remains:',error?.message);}
+   }catch(error){
+    console.warn('MiniMax voice failed; text remains:',error?.message);
+    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;}});
+   }
   }
  };
  // A rejection must not poison subsequent voice synthesis.
