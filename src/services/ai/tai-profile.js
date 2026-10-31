@@ -1,3 +1,4 @@
+import {XITAI_VOICE_WORLDBOOK} from '../voice/voice-worldbook-source.js';
 import {ORIGINAL_WORLDBOOKS} from './original-worldbooks.js';
 import {XITAI_LONG_WORLDBOOK} from './character-worldbook.js';
 // Reviewable character draft. Story events are never invented as memories.
@@ -30,7 +31,7 @@ export function visibleTaiMemories(memories,day,channel){
    ['shared',channel].includes(m.visibility)&&typeof m.text==='string'&&m.text.trim())
   .slice(-30).map(m=>({day:m.day,visibility:m.visibility,source:String(m.source||'开发者记录').slice(0,80),text:m.text.trim().slice(0,600)}));
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[]}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext=''}){
  const isAnonymous=channel==='mirage'&&day<56;
  if(isAnonymous){
   const available=visibleTaiMemories(memories,day,'mirage');
@@ -61,6 +62,10 @@ export function buildTaiPrompt({day,channel,profile={},memories=[]}){
   '严格区分两种输出：mode=text 是真人聊天的独立气泡，可以连续发送 2—5 条；每条必须是清爽的自然文字，不准含 (breath)、(chuckle)、(emm)、<#0.3#> 或表演指令，也不准以空行把几个消息伪装成同一气泡。要连续消息就用 JSON messages 数组的多个元素。mode=voice 才能使用 MiniMax 可识别的声效标签，少量、情景合适时才用，语音不要过度插入吸气或冷笑。一次通话中可以自然地说一长段，不能为了拆语音而切成几次播放。',
   taiMultiMessageDirective,
   '角色特定过滤规则（优先于上述通用世界书的夸张频率指令）：熙泰不强制每1-3轮送礼、不频繁突然离开、不按模板发自动回复、不刻意大量打错字、不为了表现活人感说离谱话、不用100字以内硬截断他的正常长篇技术分析。优先沿用《熙蒙的手机》确定的身份保密、剧情时间线、真实对话事实、他个人的高傲克制和表达意图。只能在剧情允许时主动打电话或送消息。保留正常停顿、有限缺点、自我意志和关系边界。不要复述这些规则。',
-  seen.length?'当前可见的已记录记忆：\n'+seen.map(m=>`D${m.day} [${m.visibility}/${m.source}] ${m.text}`).join('\n'):'当前没有已确认的个人事件记忆；不要编造共同经历。'
+  seen.length?'当前可见的已记录记忆：\n'+seen.map(m=>`D${m.day} [${m.visibility}/${m.source}] ${m.text}`).join('\n'):'当前没有已确认的个人事件记忆；不要编造共同经历。',
+  relationshipContext?'当前真实聊天关系与记忆（这些已发生事实优先于通用示例）：\n'+relationshipContext:'',
+  outputMode==='call'||outputMode==='voice'?'MiniMax 语音专用世界书（原文、署名保留；只用于发语音与通话，不进入普通文字气泡）：\n'+XITAI_VOICE_WORLDBOOK:'',
+  outputMode==='call'?'当前是正在进行的语音电话。请将本次回复都当作会被完整连读的一次发言。返回 messages 数组；不要让用户听到括号里指令的英文名称。声效标签是给 MiniMax 的，不是台词。可以偶发地吐槽、困惑、不耐烦或亲昵；不要例行报备。':outputMode==='voice'?'本次是专门发语音：语音稿才允许合法 MiniMax Sound Tags，英文半角括号、不过量；文字气泡不得出现这些控制词。':'当前是文字聊天；全部 mode=text，任何括号语气标签、声效指令和时间停顿标记都不能输出。允许一到多条自然独立消息，不要机械一问一答。',
+  scene?'当前真实交互事件：'+scene:''
  ].join('\n\n');
 }
