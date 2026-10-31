@@ -517,3 +517,19 @@ to{opacity:1;transform:none}
 .preset-import-preview details{font-size:11px;color:#517187}
 .preset-import-preview ul{max-height:140px;overflow:auto;padding-left:20px;overflow-wrap:anywhere}
 @media (max-width:380px){.preset-two-col{column-gap:7px}.preset-editor-card{padding:13px 11px}.preset-add{gap:5px}.preset-primary,.preset-secondary{font-size:11px}}
+
+/* Native-feeling NoApp incoming-call notification. It sits independently of
+   the ordinary one-button toast so both answer and decline work on iPhone. */
+#tai-call-banner-layer{position:absolute;top:59px;left:0;right:0;z-index:62;pointer-events:none}
+#tai-call-banner-layer:empty{display:none}
+#tai-call-banner-layer .tai-incoming-banner{margin:9px 10px;display:flex;align-items:center;gap:10px;padding:11px 10px;border:1px solid #ffffff4d;border-radius:24px;background:#232c38ed;backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 15px 35px #0008;color:#f8fbff;pointer-events:auto;animation:tai-call-slide-in .25s cubic-bezier(.15,.7,.3,1)}
+#tai-call-banner-layer .tai-banner-avatar{width:47px;height:47px;object-fit:cover;border-radius:13px;flex-shrink:0}
+#tai-call-banner-layer .tai-banner-info{min-width:0;display:flex;flex:1;flex-direction:column;gap:3px;line-height:1.25}
+#tai-call-banner-layer .tai-banner-info strong{font-weight:600;font-size:15px}
+#tai-call-banner-layer .tai-banner-info small{color:#d0d6e1;font-size:12px}
+#tai-call-banner-layer button{border-radius:50%;flex:0 0 42px;height:42px;display:grid;place-items:center;color:#fff;padding:9px;touch-action:manipulation}
+#tai-call-banner-layer button svg{width:24px;height:24px}
+#tai-call-banner-layer .tai-banner-decline{background:#f34b56}
+#tai-call-banner-layer .tai-banner-accept{background:#40bc73}
+@keyframes tai-call-slide-in{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#tai-call-banner-layer .tai-incoming-banner{animation:none}}
