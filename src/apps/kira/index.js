@@ -39,7 +39,7 @@ export function handle(a,t,c){
   return;
  }
 
- if(a==='kira-back')c.router.back();
+ if(a==='kira-back')c.router.open({appId:'kira',route:'/',params:{}});
  if(a==='kira-mail')c.router.open({appId:'kira',route:'/mail/'+t.dataset.id});
  if(a==='kira-attachment')c.router.open({appId:'files',route:'/attachment',params:{mailId:t.dataset.id}});
  if(a==='kira-mission-browser')c.router.open({appId:'browser',route:'/mission-search',params:{orderId:HACKER_BOUNTY_ID}});
