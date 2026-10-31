@@ -454,8 +454,12 @@ $('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefa
   if(e.target.dataset.storyScene){
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
    if(!conversationId)throw Error('预设聊天尚未选中联系人');
-   store.update(s=>sendScriptedDraft55(s,channel,conversationId,text));
-   e.target.elements.text.value='';return;
+   const pending=currentScript55(store.get(),channel,conversationId);
+   if(!pending||pending.kind!=='me'||text.trim()!==pending.text.trim())throw Error('请先发送输入框里的完整预设内容');
+   // Clear before state-driven DOM patch, so the next authored line can type
+   // immediately even if iOS keeps focus on the same input element.
+   e.target.elements.text.value='';
+   store.update(s=>sendScriptedDraft55(s,channel,conversationId,text));return;
   }
   const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
