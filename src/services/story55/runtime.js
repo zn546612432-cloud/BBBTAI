@@ -34,6 +34,10 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
  if(line[0]==='call'&&!acceptCall)throw Error('请接听未知来电');
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
+ if(line[0]==='watch'&&id==='ending'){
+  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
+  if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+ }
  if(!['system','call','watch'].includes(line[0])){
   const channel=id==='recognition'?'noapp':['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':completed(s,'recognition')?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
@@ -73,18 +77,20 @@ export function sendQuestion55(s){
  }
  tickStory55(s);
 }
-export function nodeLink55(s,id){if(id==='recognition')return {appId:'noapp',route:'/story55/recognition',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/story55/questions',params:{}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:{appId:'calendar',route:'/story55/scene',params:{node:id}}};return map[n.kind];}
 export function tickStory55(s){
  if(!isStory55(s)||final55(s))return;
- const c=story55Config(s);if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
+ const c=story55Config(s);
+ if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
+ s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  for(const n of c.nodes){
   if(s.day<n.day)continue;
-  if(!s.content.calendarEvents.some(e=>e.id==='s55-event-'+n.id)&&n.kind==='scene')s.content.calendarEvents.push({id:'s55-event-'+n.id,title:n.title,startDate:date55(n.day),endDate:date55(n.day),startTime:'20:00',endTime:'21:00',notes:n.title,color:'mint',storyNode:n.id});
+  if(!s.content.calendarEvents.some(e=>e.id==='s55-event-'+n.id)&&n.kind==='scene'&&!['recognition','ending'].includes(n.id))s.content.calendarEvents.push({id:'s55-event-'+n.id,title:n.title,startDate:date55(n.day),endDate:date55(n.day),startTime:'20:00',endTime:'21:00',notes:n.title,color:'mint',storyNode:n.id});
  }
  // Daily cost uses plot dates, not wall-clock time. Insufficient cash becomes a visible liability.
  for(let day=14;day<=s.day;day++)if(!s.story55.expenseDays.includes(day)){

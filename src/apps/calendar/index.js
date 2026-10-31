@@ -1,5 +1,5 @@
 import {isStory55} from '../../services/story55/state.js';
-import {sceneView55} from '../../services/story55/views.js';
+import {sceneView55,s55Button} from '../../services/story55/views.js';
 import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
 import {calendarEvents,validEvent,longDate,weekday} from './data/model.js';
@@ -16,7 +16,12 @@ export const manifest={id:'calendar',name:'日历',defaultRoute:'/',kicker:'CALE
 const isoDate=(state,params)=>/^\d{4}-\d{2}-\d{2}$/.test(params?.date||'')?params.date:dateParts(state).iso;
 const open=(ctx,route,params={})=>ctx.router.open({appId:'calendar',route,params});
 
-export function render({store},loc={route:'/',params:{}}){if(isStory55(arguments[0].store.get())&&arguments[1].route==='/story55/scene')return sceneView55(arguments[0].store.get(),arguments[1]);
+export function render({store},loc={route:'/',params:{}}){
+ if(isStory55(store.get())&&loc.route==='/story55/scene'){
+  const id=loc.params?.node;
+  if(id==='recognition'||id==='ending')return '<main class="cl-screen"><section class="cl-event-page"><h1>私人消息</h1><p>这段对话请在 NoApp 中查看。</p>'+s55Button('node','前往 NoApp',`data-node="${id}"`)+'</section></main>';
+  return sceneView55(store.get(),loc);
+ }
  const state=store.get(),route=loc.route||'/',params=loc.params||{},today=dateParts(state).iso;
  const date=isoDate(state,params),events=calendarEvents(state);
  const inner=route==='/year'?renderYear(date,today):

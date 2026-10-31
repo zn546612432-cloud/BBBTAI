@@ -177,3 +177,26 @@
 .app-noapp .tai-live-captions p.theirs{align-self:center;text-align:center;max-width:100%;border-radius:12px;margin:0;animation:tai-caption-in .16s ease-out}
 @keyframes tai-caption-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.app-noapp .tai-live-captions p.theirs{animation:none}}
+
+
+/* Story55: private conversations live inside NoApp, never on Calendar cards. */
+.app-noapp .noapp-gate{
+ min-height:100%;box-sizing:border-box;padding:48px 24px;
+ background:linear-gradient(165deg,#151d2a,#0d1420);color:#f2f5fa;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center
+}
+.app-noapp .noapp-gate-logo{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(125deg,#647693,#283448);box-shadow:0 18px 45px #0005;font-size:39px;font-weight:300}
+.app-noapp .noapp-gate h1{font-size:25px;font-weight:520;margin:4px 0 0}
+.app-noapp .noapp-gate p{font-size:14px;line-height:1.7;color:#c5d0e0;margin:0}
+.app-noapp .noapp-gate small{color:#8495aa}
+.app-noapp .noapp-gate .s55-button{min-height:44px;border:1px solid #7290af;border-radius:14px;padding:10px 18px;background:#3e5976;color:#fff}
+.app-noapp .noapp-story55-active .composer{display:none!important}
+.app-noapp .noapp-story55-step{
+ align-self:center;box-sizing:border-box;width:calc(100% - 22px);margin:12px 11px 22px;
+ padding:15px 16px;background:#223246eb;border:1px solid #60779266;border-radius:16px;
+ display:flex;flex-direction:column;align-items:stretch;gap:9px;box-shadow:0 8px 26px #050c1870
+}
+.app-noapp .noapp-story55-step small{font-size:10px;letter-spacing:.16em;color:#9db9d7}
+.app-noapp .noapp-story55-preview{font-size:14px;line-height:1.65;color:#f0f6ff;margin:2px 0 6px}
+.app-noapp .noapp-story55-step .s55-button{min-height:42px;border:1px solid #8aa6c8;border-radius:12px;background:#547493;color:#fff;font-size:14px;font-weight:520}
+.app-noapp .noapp-final-voice{background:#324a64}
