@@ -74,12 +74,13 @@ test('Relationship scene includes canon and only genuine older NoApp statements'
  assert.match(context,/不要以陌生人口吻/);
  assert.doesNotMatch(context,/私人微信中的密码/);
 });
-test('Original voice worldbook is used ONLY by call/voice prompts, not normal chat',()=>{
+test('Curated Xitai-specific voice direction is used ONLY by call/voice prompts, not normal chat',()=>{
  const common={day:60,channel:'noapp'};
  const plain=buildTaiPrompt({...common,outputMode:'text'});
  const call=buildTaiPrompt({...common,outputMode:'call',scene:'正在通话',relationshipContext:'熙蒙刚说了晚安'});
- assert.doesNotMatch(plain,/语音世界书 3.0-若要大声嘶喊出爱的话/);
- assert.match(call,/语音世界书 3.0-若要大声嘶喊出爱的话/);
+ assert.doesNotMatch(plain,/熙泰通话与语音/);
+ assert.match(call,/熙泰通话与语音/);
+ assert.doesNotMatch(call,/\[BRE-05\]|强制插入/);
  assert.match(call,/熙蒙刚说了晚安/);
  assert.match(call,/正在通话/);
  assert.match(plain,/全部 mode=text/);
