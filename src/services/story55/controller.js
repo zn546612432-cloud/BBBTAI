@@ -73,6 +73,7 @@ export function submitStory55Form(form,c){
   const lines=String(d.get('lines')).trim();if(lines)cfg.scenes[n.id]=lines.split('\n').map(x=>{const i=x.indexOf('|');if(i<1)throw Error('每行请填写：角色ID | 台词');return [x.slice(0,i).trim(),x.slice(i+1).trim()];});
  }
  if(kind==='s55-resource'){const table=String(d.get('table'));if(!['mails','documents','pages','locations'].includes(table))throw Error('资源类型无效');const r=cfg[table].find(x=>x.id===d.get('id'));if(!r)throw Error('资源不存在');r[table==='mails'?'subject':table==='locations'?'name':'title']=String(d.get('title'));if(table==='locations'){r.x=Number(d.get('x'));r.y=Number(d.get('y'));r.area=String(d.get('area'));r.description=String(d.get('body'));}else{r.body=String(d.get('body'));if(table==='documents')r.asset=String(d.get('asset')).trim();}}
+ if(kind==='s55-media-config'){cfg.finalAudio=String(d.get('finalAudio')||'').trim();}
  if(kind==='s55-project-config'){const p=cfg.projects.find(p=>p.id===d.get('id'));p.key=String(d.get('key')).trim();p.gains=String(d.get('gains')).split(',').map(Number);p.batches=p.gains.length;p.steps=String(d.get('steps')).split(',').map(x=>x.trim());p.minimumHardware=Number(d.get('hardware'));}
  const checked=validateStory55Config(cfg);c.store.update(s=>{if(kind==='s55-project-config'){const id=String(d.get('id'));if(s.story55.projects[id]?.batches.length)throw Error('项目已有进度，请先创建新周目再调整批次或小游戏');}s.story55.config=checked;tickStory55(s);});return true;
 }
