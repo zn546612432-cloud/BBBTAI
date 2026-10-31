@@ -20,3 +20,13 @@ export function linkedMailView(s,orderId){
   '<div class="kira-linked-progress"><span class="'+(stage>=1?'complete':'')+'">01 收件</span><span class="'+(stage>=2?'complete':'')+'">02 检索</span><span class="'+(stage>=3?'complete':'')+'">03 确认</span><span class="'+(stage>=5?'complete':'')+'">04 GHOST</span><span class="'+(paid?'complete':'')+'">05 结算</span></div>'+
   next+'</div>';
 }
+
+export function linkedReceiptView(s,mailId){
+ const receipt=s.content.mail.find(m=>m.id===mailId&&m.linkedReceipt);
+ if(!receipt)return empty('邮件不存在');
+ return '<div class="kira-mail-detail kira-payment-receipt">'+
+ '<div class="kira-mail-toolbar">'+btn('kira-back','‹　收件箱')+'</div>'+
+ '<div class="kira-detail-head"><h2>'+esc(receipt.subject)+'</h2><p>来自 '+esc(receipt.from)+'</p></div>'+
+ '<div class="kira-mail-body">'+esc(receipt.body)+'</div>'+
+ '<div class="kira-linked-state">✓ PAYMENT RECEIVED</div></div>';
+}

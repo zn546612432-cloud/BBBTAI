@@ -13,6 +13,25 @@ let recording=null;
 let callSerial=0;
 let activeRecognition=null;
 export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length};}
+function recordCall(s,{direction,status,seconds=0}){
+ const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
+ if(!chat)return;
+ const label=status==='missed'?'未接语音来电':status==='declined'?'已拒绝语音来电':
+   status==='cancelled'?'已取消语音呼叫':'语音通话 · '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+ const entry={id:'tai-call-history-'+uid(),from:direction==='incoming'?'tai':'me',text:label,
+   kind:'call',callStatus:status,duration:seconds,day:s.day,time:s.clock,actual:true};
+ chat.messages.push(entry);
+ if(status==='missed'&&!(s.unlocked&&s.nav.current.appId==='noapp'&&s.nav.current.route==='/chat/tai'))
+  chat.unread=Math.max(0,Number(chat.unread)||0)+1;
+}
+export function incomingCallBanner(s){
+ if(call.state!=='ringing'||!s.unlocked||s.day<56)return '';
+ return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
+   '<img class="tai-banner-avatar" src="'+AVATAR+'" alt="">'+
+   '<div class="tai-banner-info"><strong>陈熙泰</strong><small>NoApp · 语音来电</small></div>'+
+   '<button type="button" class="tai-banner-decline" data-action="tai-banner-decline" aria-label="拒绝来电">'+glyph.hang+'</button>'+
+   '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
+}
 let playback=null;
 const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
 const AVATAR_SOURCE='/assets/tai-portrait.svg';
@@ -73,6 +92,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
    const n=s.notifications.find(n=>n.id===notificationId);
    if(n){n.title='陈熙泰';n.body='未接语音通话';n.type='tai-missed-call';}
    s.events.push({type:'tai_call_missed',day:s.day,clock:s.clock});
+   recordCall(s,{direction:'incoming',status:'missed'});
   });
   ctx.refresh?.();
  },60000);
@@ -173,9 +193,14 @@ export function callAction(action,ctx){
   if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);playback=null;}
   ctx.store.update(s=>{
    if(previous.notificationId)s.notifications=s.notifications.filter(n=>n.id!==previous.notificationId);
-   s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock});
+   const outcome=previous.state==='ringing'?'declined':previous.state==='dialing'?'cancelled':'ended';
+   s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock,durationSeconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
+   recordCall(s,{direction:previous.direction,status:outcome,seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
   });
-  ctx.router.open({appId:'noapp',route:'/chat/tai'});return true;
+  // Declining the top banner must not eject the player from another App.
+  if(ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call')
+   ctx.router.open({appId:'noapp',route:'/chat/tai'});
+  return true;
  case 'tai-play-audio':if(playback){playback.muted=!call.speaker;playback.play().then(()=>{call.audioReady=false;ctx.refresh();}).catch(e=>ctx.toast(e.message));}return true;
  case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;

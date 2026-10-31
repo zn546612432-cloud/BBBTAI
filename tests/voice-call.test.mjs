@@ -35,6 +35,8 @@ test('incoming NoApp call creates native-style banner notification and a real ac
  assert.match(callView(state),/tai-call-bottom/);
  assert.equal(callAction('tai-expand',ctx),true);
  assert.match(callView(state),/tai-call-transcript/);
+ // Opening the actual call screen is done by the notification/router handler.
+ store.update(s=>{s.nav.current={appId:'noapp',route:'/call',params:{}};});
  assert.equal(callAction('tai-hangup',ctx),true);
  assert.equal(opened.route,'/chat/tai');
 });

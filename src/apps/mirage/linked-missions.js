@@ -2,6 +2,22 @@
 // remain untouched; developer-authored contracts get independent progress.
 const PREFIX='linked-contract-mail-';
 export const linkedMailId=id=>PREFIX+id;
+export const linkedReceiptId=id=>'linked-payment-receipt-'+id;
+export function recordLinkedMissionPayment(s,id,amount,at){
+ const mission=linkedMission(s,id);
+ if(!mission||!Number.isFinite(amount)||amount<0)return false;
+ const receiptId=linkedReceiptId(id);
+ if(s.content.mail.some(m=>m.id===receiptId))return false;
+ const order=s.content.orders.find(o=>o.id===id);
+ s.content.mail.unshift({
+  id:receiptId,orderId:id,from:'MIRAGE · SETTLEMENT',
+  subject:'PAYMENT CONFIRMED · '+mission.title,
+  body:'ORDER: '+id+'\nSTATUS: SETTLED\nCREDITS: +'+amount.toLocaleString('en-US')+'\nTRANSACTION: '+at,
+  read:false,linkedReceipt:true
+ });
+ s.notifications.unshift({id:'linked-payment-notice-'+id,title:'KIRA',body:'Payment received · '+(order?.title||mission.title),link:{appId:'kira',route:'/mail/'+receiptId,params:{}}});
+ return true;
+}
 export const linkedMission=(s,id)=>s.content?.mirage?.linkedMissions?.[id]||null;
 export const linkedMissions=s=>Object.values(s.content?.mirage?.linkedMissions||{});
 export function saveLinkedMission(s,entry){
@@ -61,9 +77,23 @@ export function resetLinkedMission(s,id){
  const mission=linkedMission(s,id);if(!mission)return false;
  mission.stage=0;
  const order=s.content.orders.find(o=>o.id===id);if(order)order.status='OPEN';
+ const previous=s.ghost?.orders?.[id];
+ if(previous?.status==='paid'){
+  // Explicit developer reset reverses the test payout before a rerun.
+  // Otherwise the same mission could be collected repeatedly.
+  const ledger=s.content.mirage?.digitalTransactions||[];
+  const credit=ledger.filter(x=>x.orderId===id).reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+  if(credit>0){
+   if(Number.isFinite(s.ghost.balance))s.ghost.balance-=credit;
+   s.content.mirage.digitalBalance=(Number(s.content.mirage.digitalBalance)||0)-credit;
+   s.events.push({type:'linked_mission_payment_reversed',orderId:id,amount:credit,day:s.day,clock:s.clock});
+  }
+  s.content.mirage.digitalTransactions=ledger.filter(x=>x.orderId!==id);
+ }
  const mailId=linkedMailId(id);
- s.content.mail=s.content.mail.filter(m=>m.id!==mailId);
- s.notifications=s.notifications.filter(n=>n.id!=='linked-mail-notice-'+id);
+ const receiptId=linkedReceiptId(id);
+ s.content.mail=s.content.mail.filter(m=>m.id!==mailId&&m.id!==receiptId);
+ s.notifications=s.notifications.filter(n=>n.id!=='linked-mail-notice-'+id&&n.id!=='linked-payment-notice-'+id);
  if(s.ghost?.orders)delete s.ghost.orders[id];
  if(s.ghost?.history)s.ghost.history=s.ghost.history.filter(h=>h.orderId!==id);
  return true;
