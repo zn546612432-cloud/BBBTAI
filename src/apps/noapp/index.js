@@ -1,5 +1,6 @@
-import {sceneView55} from '../../services/story55/views.js';
-import {isStory55,taiRecognized} from '../../services/story55/state.js';
+import {s55Button} from '../../services/story55/views.js';
+import {scene55,sceneLines} from '../../services/story55/runtime.js';
+import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
@@ -56,8 +57,34 @@ const setting=(s)=>{
  +'<button type="button" data-action="tai-test-voice">让熙泰发语音</button></section>'
  +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/fix/xitai-system-card-v5-20261031/docs/XITAI_CHARACTER_CARD_V5.md" target="_blank" rel="noopener noreferrer">阅读熙泰专属人设 v5 与接入说明</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
 };
-export function render({store},loc){if(isStory55(store.get())&&loc.route==='/story55/recognition')return sceneView55(store.get(),loc);
- const s=store.get(),id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
+function activeNoAppStory(s){
+ if(!isStory55(s)||s.story55?.ended)return null;
+ if(!taiRecognized(s)&&s.story55?.noappInstalled&&nodeStatus(s,'recognition').state==='ready')return 'recognition';
+ if(taiRecognized(s)&&nodeStatus(s,'ending').state==='ready')return 'ending';
+ return null;
+}
+function noappGate(s){
+ const invited=completed(s,'invite');
+ return '<main class="noapp-gate" aria-label="NoApp私人频道"><div class="noapp-gate-logo">N</div><h1>NoApp</h1><p>'+
+  (invited?'你收到了一封私人频道内测邀请。':'尚未收到私人频道的内测邀请。')+
+  '</p>'+(invited?s55Button('install-noapp','安装并打开 NoApp'):'<small>新的邀请将由 KIRA 邮件送达</small>')+'</main>';
+}
+function storyChatStep(s,id){
+ const lines=sceneLines(s,id),index=scene55(s,id).index,line=lines[index];if(!line)return '';
+ const kind=line[0],watch=kind==='watch',own=kind==='me',system=kind==='system';
+ const label=watch?'▶ 播放熙蒙最后的录音':own?'发送':system?'继续':'查看新消息';
+ const preview=own||system?'<p class="noapp-story55-preview">'+esc(line[1])+'</p>':'';
+ return '<section class="noapp-story55-step" aria-label="NoApp剧情消息"><small>'+
+  (id==='ending'?'最后的同步':'私人频道')+'</small>'+preview+
+  s55Button(watch?'final-audio':'scene-next',label,`data-node="${id}"`)+
+  '</section>';
+}
+export function render({store},loc){
+ const s=store.get();
+ if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
+ const legacyStoryRoute=loc.route==='/story55/recognition'||loc.route==='/story55/ending';
+ const id=legacyStoryRoute?'tai':loc.route.startsWith('/chat/')?loc.route.slice(6):null;
+ const currentStory=id==='tai'?activeNoAppStory(s):null;
  if(loc.route==='/call')return callView(s);
  if(loc.route==='/settings-ai')return setting(s);
  const phoneIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.7 19.7 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.7L7.1 10a16 16 0 0 0 7 7l1.6-1.9a2 2 0 0 1 1.7-.6l3 .5a2 2 0 0 1 1.6 1.9Z"/></svg>';
@@ -66,7 +93,7 @@ export function render({store},loc){if(isStory55(store.get())&&loc.route==='/sto
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
  '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
- return '<div class="noapp-shell">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:''}):chatList(s,'noapp'))+'</div>';
+ return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:currentStory?storyChatStep(s,currentStory):''}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;
