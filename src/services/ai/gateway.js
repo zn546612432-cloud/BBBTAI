@@ -43,7 +43,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
  const base={model:'deepseek-flash',thinking:{type:'disabled'},
-  messages:[{role:'system',content:system},...messages],max_tokens:2400,stream:false};
+  messages:[{role:'system',content:system},...messages],max_tokens:4096,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
  // Retry once without JSON response_format; never save empty chat bubbles.
  let result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,
