@@ -1,5 +1,7 @@
 import {isStory55} from './services/story55/state.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
+import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
+import {advanceScene55} from './services/story55/runtime.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
@@ -128,12 +130,13 @@ function render(){
  const nextPane=$('#screen-layer .chat-messages');
  if(nextPane){const added=[...nextPane.querySelectorAll('.message-row[data-key]')].filter(el=>!oldKeys.has(el.dataset.key));if(!changed&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)for(const row of added)row.animate([{opacity:0,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,easing:'ease-out'});if(changed||nearBottom)nextPane.scrollTop=nextPane.scrollHeight;}
  mountScriptedMirageDraft();
+ mountStory55Incoming();
  lastNavigation=navigation;
  lastLocation={...current};
 }
 let pendingMirageType=null;
 function mountScriptedMirageDraft(){
- const input=$('#screen-layer .mc-composer input[data-story-type]');
+ const input=$('#screen-layer .composer input[data-story-type]');
  if(!input){
   if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
   return;
@@ -152,6 +155,32 @@ function mountScriptedMirageDraft(){
   if(offset>=full.length){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
  };
  pendingMirageType={identity,element:input,timer:setInterval(step,105)};
+}
+// Never reveal a Next button or automatically send the player's authored text.
+// NPC lines arrive in the already-open native conversation, one at a time.
+let pendingStory55Incoming=null;
+function mountStory55Incoming(){
+ const s=store.get(),loc=s.nav.current,channel=loc.appId;
+ const conversationId=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
+ const line=s.unlocked&&conversationId?currentScript55(s,channel,conversationId):null;
+ if(!line||line.kind==='me'||line.kind==='watch'){
+  if(pendingStory55Incoming){clearTimeout(pendingStory55Incoming.timer);pendingStory55Incoming=null;}
+  return;
+ }
+ const identity=[line.id,line.index,channel,conversationId].join(':');
+ if(pendingStory55Incoming?.identity===identity)return;
+ if(pendingStory55Incoming)clearTimeout(pendingStory55Incoming.timer);
+ const time=line.kind==='system'?540:line.kind==='call'?800:Math.min(2200,900+line.text.length*18);
+ const timer=setTimeout(()=>{
+  pendingStory55Incoming=null;
+  const current=store.get(),route=current.nav.current;
+  if(!current.unlocked||route.appId!==channel||route.route!=='/chat/'+conversationId)return;
+  const live=currentScript55(current,channel,conversationId);
+  if(!live||live.id!==line.id||live.index!==line.index||live.kind==='me'||live.kind==='watch')return;
+  try{store.update(next=>advanceScene55(next,line.id,{acceptCall:live.kind==='call'}));}
+  catch(error){console.error('无法播放预设消息',error);}
+ },time);
+ pendingStory55Incoming={identity,timer};
 }
 function requestUnlock(link=null){
  if(phoneBlocked(store.get())||lockscreen.stage!=='cover'||unlockingCover)return;
@@ -411,7 +440,14 @@ $('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noti
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
-$('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(submitStory55Form(e.target,ctx()))return;const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
+$('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(submitStory55Form(e.target,ctx()))return;
+  if(e.target.dataset.storyScene){
+   const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
+   if(!conversationId)throw Error('预设聊天尚未选中联系人');
+   store.update(s=>sendScriptedDraft55(s,channel,conversationId,text));
+   e.target.elements.text.value='';return;
+  }
+  const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
 $('#root').addEventListener('focusin',e=>{
   if(store.get().unlocked&&store.get().nav.current.appId==='wechat')registry.get('wechat')?.dismissEmojiForKeyboard?.(e.target);
