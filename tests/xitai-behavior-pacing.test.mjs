@@ -32,7 +32,7 @@ test('settings normalize corrupt saves and retain meaningful order/ranges',()=>{
 });
 test('runtime prompt resolves incompatible imported quotas and applies chosen verbosity',()=>{
  const p=buildTaiPrompt({day:60,channel:'noapp',behavior:{verbosity:'expansive',maxMessages:4}});
- assert.match(p,/一次允许1—4条独立消息/);assert.match(p,/展开表达/);
+ assert.match(p,/一次允许1—4条独立消息/);assert.match(p,/2至5条/);
  assert.doesNotMatch(p,/CRITICAL_FREQUENCY_OVERRIDE|SYSTEM_OVERRIDE_PRIORITY|两条封顶|一条消息12字以内/);
  assert.doesNotMatch(p,/\{\{char\}\}|\{\{user\}\}/);
 });
@@ -43,7 +43,7 @@ test('three telephone thoughts include explicit pauses; legal sound tags survive
  assert.match(prepareXitaiSpeech(speech).text,/<#1.6#>/);
  assert.doesNotMatch(replies.map(r=>r.text).join(''),/breath|<#/);
  const single=composeCallSpeech([{text:'第一句。第二句。第三句。'}],{callPause:1});
- assert.equal((single.match(/<#0.45#>/g)||[]).length,2);
+ assert.equal((single.match(/<#0.5#>/g)||[]).length,2);
 });
 test('new user message cancels all stale AI text before first bubble arrives',async()=>{
  const {s,chat,store}=fixture();chat.messages.push({id:'u1',from:'me',text:'先说这个',day:60,time:'21:00'});

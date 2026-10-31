@@ -11,7 +11,7 @@ export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
  region:config.region==='intl'?'intl':'cn',
  voiceId:XITAI_VOICE_ID,
- ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-turbo'};
+ ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd'};
  sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));return out;
 }
 export function clearApiConfig(){sessionStorage.removeItem(BYOK_SESSION);}
@@ -43,7 +43,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
  const base={model:'deepseek-flash',thinking:{type:'disabled'},
-  messages:[{role:'system',content:system},...messages],max_tokens:2400,stream:false};
+  messages:[{role:'system',content:system},...messages],max_tokens:4096,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
  // Retry once without JSON response_format; never save empty chat bubbles.
  let result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,
@@ -59,11 +59,11 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
-export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=null,tone='neutral'}){
+export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
  const prepared=prepareXitaiSpeech(text,{tone,autoTags:true});
  text=prepared.text;
- speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.88,Math.min(1.08,Number(speed))):Math.max(0.88,Math.min(1.08,prepared.speed));
+ speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.78,Math.min(0.92,Number(speed))):Math.max(0.78,Math.min(0.92,prepared.speed));
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed})});}
@@ -78,7 +78,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,...(prepared.emotion?{emotion:prepared.emotion}:{})},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
