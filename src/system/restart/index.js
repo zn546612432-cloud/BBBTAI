@@ -3,7 +3,7 @@ import {calendarAnchor} from '../../services/calendar.js';
 // Story definitions remain editable; only the player's run is discarded.
 export function restartState(previous){
  const next=initialState();
- Object.assign(next,{day:1,clock:'08:00',calendar:calendarAnchor(1),batteryPercent:100,invitations:[],content:clone(previous.content),wallpaper:previous.wallpaper,iconOverrides:clone(previous.iconOverrides||{}),storyChargeGates:clone(previous.storyChargeGates||[])});
+ Object.assign(next,{day:1,clock:'08:00',calendar:calendarAnchor(1),batteryPercent:100,invitations:[],content:clone(previous.content),wallpaper:previous.wallpaper,iconOverrides:clone(previous.iconOverrides||{}),characterAvatars:clone(previous.characterAvatars||{}),storyChargeGates:clone(previous.storyChargeGates||[])});
  next.storyPresets.rules=clone(previous.storyPresets?.rules||[]);
  next.storyPresets.deletedRuleIds=clone(previous.storyPresets?.deletedRuleIds||[]);
  next.aiDraft=clone(previous.aiDraft||next.aiDraft);
@@ -11,6 +11,7 @@ export function restartState(previous){
  // A new run must never inherit the previous player's private NoApp history.
  for(const c of next.content.conversations.noapp||[])c.messages=[];
  next.content.mirage&&(delete next.content.mirage.ouroborosScript);
+ next.content.conversations.mirage=next.content.conversations.mirage.filter(c=>c.id!=='mc-ourob-d05');
  next.content.orders=next.content.orders.filter(o=>!o.storySeed||o.storyDay===1);
  for(const list of Object.values(next.content.conversations))for(const c of list){
   c.unread=0;c.messages=c.messages.filter(m=>!m.actual);
