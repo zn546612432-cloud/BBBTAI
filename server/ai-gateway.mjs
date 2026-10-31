@@ -74,7 +74,7 @@ export async function handleAIGateway(req,res,pathname) {
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         model:process.env.DEEPSEEK_MODEL||'deepseek-flash',
         messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages})},...messages],
-        stream:false,max_tokens:2400,response_format:{type:'json_object'}
+        stream:false,max_tokens:4096,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;
       if(typeof text!=='string'||!text.trim())throw fail(502,'模型没有返回有效文字');
@@ -87,7 +87,7 @@ export async function handleAIGateway(req,res,pathname) {
       if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2))throw fail(400,'语音参数不合法');
       const data=await provider(MINIMAX,process.env.MINIMAX_API_KEY,{
         model,text,stream:false,output_format:'hex',language_boost:language,
-        voice_setting:{voice_id:voiceId,speed,vol:1,pitch:0},
+        voice_setting:{voice_id:voiceId,speed,vol:1,pitch:0,emotion:'calm'},
         audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
       });
       const hex=data.data?.audio;
