@@ -60,6 +60,7 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
 test('a previously bookmarked Calendar scene no longer renders D55 dialogue',()=>{
  const s=make();previewNode55(s,'ending');
  const html=registry.get('calendar').render({store:{get:()=>s}},{route:'/story55/scene',params:{node:'ending'}});
- assert.match(html,/前往 NoApp/);
+ assert.match(html,/cl-screen/);
+ assert.doesNotMatch(html,/s55-scene-next|剧情消息|前往 NoApp/);
  assert.doesNotMatch(html,/CALENDAR \/ D55/);
 });
