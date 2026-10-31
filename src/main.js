@@ -2,7 +2,7 @@ import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
 import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -217,7 +217,7 @@ function expandIsland(){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
  islandExpanded=true;render();collapseIsland(8000);
 }
-store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
+store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  const s=store.get();if(!phoneBlocked(s))return;
  const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off';
@@ -233,6 +233,7 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))retur
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
  }
+ if(!document.hidden&&callState().state==='connected')maybeAdvanceCall(ctx());
  void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
@@ -338,28 +339,69 @@ $('#root').addEventListener('contextmenu',e=>{
 });
 // Swipe left on a lock-screen or shade notification to dismiss; swipe up
 // on the compact banner to hide it without marking the message read.
-let noticeGesture=null;
+let noticeGesture=null,noticeSwipeAnimating=false;
 const noticeStart=(target,x,y)=>{
  const node=target.closest?.('.lock-notification,.shade-notification,#toast');
- if(!node)return;noticeGesture={node,x,y};
+ if(!node)return;
+ noticeGesture={node,x,y,dragging:false};
+};
+const noticeMove=(x,y)=>{
+ const item=noticeGesture;if(!item)return;
+ const dx=x-item.x,dy=y-item.y;
+ if(item.node.id==='toast'){
+  if(dy<-8&&Math.abs(dy)>Math.abs(dx)){
+   item.dragging=true;item.node.style.transition='none';
+   item.node.style.transform='translate3d(0,'+Math.max(-105,dy)+'px,0)';
+   item.node.style.opacity=String(Math.max(0.15,1+dy/140));
+  }
+  return;
+ }
+ if(dx< -8&&Math.abs(dx)>Math.abs(dy)*1.12){
+  item.dragging=true;noticeSwipeAnimating=true;
+  item.node.style.transition='none';
+  item.node.style.transform='translate3d('+Math.max(-300,dx)+'px,0,0)';
+  item.node.style.opacity=String(Math.max(0.12,1+dx/270));
+ }
+};
+const noticeReset=item=>{
+ item.node.style.transition='transform .22s ease,opacity .22s ease';
+ item.node.style.transform='';
+ item.node.style.opacity='';
+ setTimeout(()=>{noticeSwipeAnimating=false;render();},230);
 };
 const noticeFinish=(x,y)=>{
  const item=noticeGesture;noticeGesture=null;if(!item)return;
  const dx=x-item.x,dy=y-item.y;
  if(item.node.id==='toast'&&dy< -42&&Math.abs(dy)>Math.abs(dx)){
   suppressNotificationClickUntil=Date.now()+550;
-  clearTimeout(toastTimer);item.node.classList.remove('visible');item.node.dataset.noticeId='';return;
+  clearTimeout(toastTimer);
+  item.node.style.transition='transform .2s ease,opacity .2s ease';
+  item.node.style.transform='translate3d(0,-120px,0)';
+  item.node.style.opacity='0';
+  setTimeout(()=>{
+   item.node.classList.remove('visible');item.node.dataset.noticeId='';
+   item.node.style.transform='';item.node.style.opacity='';item.node.style.transition='';
+  },210);
+  return;
  }
  if(item.node.id!=='toast'&&dx< -55&&Math.abs(dx)>Math.abs(dy)*1.15){
   suppressNotificationClickUntil=Date.now()+550;
+  noticeSwipeAnimating=true;
   const id=item.node.dataset.id;
-  if(id)readNotification(store,id);
+  item.node.style.transition='transform .24s cubic-bezier(.2,.85,.25,1),opacity .24s ease';
+  item.node.style.transform='translate3d(-115%,0,0)';
+  item.node.style.opacity='0';
+  setTimeout(()=>{noticeSwipeAnimating=false;if(id)readNotification(store,id);else render();},245);
+  return;
  }
+ if(item.dragging)noticeReset(item);
 };
 $('#root').addEventListener('touchstart',e=>{if(e.touches.length===1)noticeStart(e.target,e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+$('#root').addEventListener('touchmove',e=>{if(noticeGesture&&e.touches[0])noticeMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
 $('#root').addEventListener('touchend',e=>{if(noticeGesture&&e.changedTouches[0])noticeFinish(e.changedTouches[0].clientX,e.changedTouches[0].clientY);},{passive:true});
-$('#root').addEventListener('touchcancel',()=>{noticeGesture=null;},{passive:true});
+$('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noticeGesture);noticeGesture=null;},{passive:true});
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
+$('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
 $('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit)return;e.preventDefault();try{const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
