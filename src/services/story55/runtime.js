@@ -9,6 +9,8 @@ export function activateStory55(s){
  s.nav={current:{appId:'home',route:'/',params:{}},stack:[]};
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
  s.content.orders=[];s.content.mail=[];s.content.reminders=[];s.content.calendarEvents=[];
+ s.content.photos=[];s.content.notes=[];s.content.notesSeedVersion=1;
+ s.content.alarms=[];if(s.content.phone)s.content.phone.calls=[];s.content.moments={posts:[],editedPosts:{},deletedIds:[],profiles:{},likes:{},comments:{}}; // Previous 90-day posts are not part of the 55-day campaign.
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
  s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:c.economics.openingBalance,transactions:[]};

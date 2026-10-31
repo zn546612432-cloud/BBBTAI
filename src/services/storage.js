@@ -10,7 +10,9 @@ import {ensureBank} from './bank.js';
 import {ensureAuthoredNotes} from '../apps/notes/data/seed.js';
 import {defaultTaiDraft,ensureTaiDraft} from './ai/tai-profile.js';
 export const isPreview=globalThis.document?.querySelector('meta[name=phone-preview]')?.content==='true';
-export const story55Preview=new URLSearchParams(globalThis.location?.search||'').get('story')==='55'||globalThis.document?.querySelector('meta[name=phone-story]')?.content==='55';
+// Browser builds always run the 55-day campaign. Node-only legacy test fixtures
+// retain the old state format to verify backward compatibility.
+export const story55Preview=typeof window!=='undefined'||new URLSearchParams(globalThis.location?.search||'').get('story')==='55';
 export const KEY=story55Preview?'ximeng-phone-story55-v1':isPreview?'ximeng-phone-preview-v2':'ximeng-phone-v2';
 export const clone=v=>structuredClone(v);
 export const initialState=()=>{const s=({version:2,timelineVersion:1,deathPhase:null,storyChargeGates:[],dayChargeRemainingMs:0,day:56,calendar:calendarAnchor(56),clock:'21:18',batteryPercent:82,powerActiveMs:0,powerMode:'idle',worldMinuteFraction:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,emergencyCharge:false,poweredOff:false,unlocked:false,homePage:0,wallpaper:'/wallpapers/midnight-glass.png',iconOverrides:{},nav:{current:{appId:'home',route:'/',params:{}},stack:[]},content:{...clone(demoContent),phone:defaultPhoneData()},invitations:[clone(demoInvitation)],matches:[],notifications:[],events:[],drafts:{},editor:{conversation:'tai',presetDay:57},storyPresets:starterPresetState(),aiDraft:defaultTaiDraft(),bankData:{balance:1280,rate:1,transactions:[],account:'•• 1846'},musicPlaying:false});return story55Preview?activateStory55(s):s;};
@@ -126,4 +128,27 @@ export function repairLegacyWechatDates(s){
  }
  return changed;
 }
-export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));}catch{this.state=(!isPreview&&migrateLegacy(storage))||initialState();this.persist();}normalizeTimeline(this.state);this.persist();if(repairLegacyWechatDates(this.state))this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(globalThis.document&&removeInfiniteChessFixture(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureTaiDraft(this.state))this.persist();if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureTaiDraft(restored);ensureBank(restored);ensurePhoneData(restored);removeObsoleteChatDemos(restored);if(globalThis.document)removeInfiniteChessFixture(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);repairLegacyWechatDates(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}
+// Copy ONLY historical WeChat chat bubbles from the former 90-day local save.
+ // This is intentionally additive, repeat-safe and does not bring any old
+ // scenario progress, NoApp chats, phone assets or D01+ scheduled messages back.
+function importPreD01WechatHistory(storage,state){
+ const raw=storage?.getItem?.('ximeng-phone-v2');
+ if(!raw)return false;
+ let old;try{old=JSON.parse(raw);}catch{return false;}
+ const source=old?.content?.conversations?.wechat;
+ if(!Array.isArray(source))return false;
+ let changed=false;
+ for(const previous of source){
+  if(!Array.isArray(previous?.messages)||typeof previous.id!=='string')continue;
+  const keep=previous.messages.filter(m=>m&&typeof m.id==='string'&&typeof m.sentDate==='string'&&m.sentDate<'2025-05-19'&&validDate(m.sentDate)&&!m.demo).map(m=>clone(m));
+  if(!keep.length)continue;
+  const list=state.content.conversations.wechat;
+  let target=list.find(x=>x.id===previous.id);
+  if(!target){target={id:previous.id,name:previous.name||previous.id,avatar:previous.avatar||'微',messages:[],unread:0};list.push(target);}
+  const seen=new Set(target.messages.map(m=>m.id));
+  for(const msg of keep)if(!seen.has(msg.id)){target.messages.push(msg);seen.add(msg.id);changed=true;}
+  target.messages.sort((a,b)=>String(a.sentDate||'').localeCompare(String(b.sentDate||''))||String(a.time||'').localeCompare(String(b.time||'')));
+ }
+ return changed;
+}
+export class PhoneStore{constructor(storage=globalThis.localStorage){this.storage=storage;this.listeners=new Set();try{this.state=validateState(JSON.parse(storage.getItem(KEY)));if(story55Preview&&!isStory55(this.state))throw Error('legacy timeline');}catch{this.state=(!story55Preview&&!isPreview&&migrateLegacy(storage))||initialState();this.persist();}if(story55Preview&&isStory55(this.state)&&!this.state.story55.legacyHistoryImported){importPreD01WechatHistory(storage,this.state);this.state.story55.legacyHistoryImported=true;}normalizeTimeline(this.state);this.persist();if(repairLegacyWechatDates(this.state))this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(globalThis.document&&removeInfiniteChessFixture(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay){this.state.editor.presetDay=57;this.persist();}if(ensureTaiDraft(this.state))this.persist();if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){try{this.storage.setItem(KEY,JSON.stringify(this.state));}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);this.state=next;this.persist();for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureTaiDraft(restored);ensureBank(restored);ensurePhoneData(restored);removeObsoleteChatDemos(restored);if(globalThis.document)removeInfiniteChessFixture(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);repairLegacyWechatDates(restored);this.state=validateState(restored);this.persist();for(const fn of this.listeners)fn(restored);}}

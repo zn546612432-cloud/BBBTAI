@@ -24,7 +24,7 @@ export async function loadBuiltInPresets(fetcher=fetch){
 
 /** Initial fixture loading is additive and idempotent; local authored edits win. */
 export async function hydrateBuiltInPresets(store,fetcher=fetch){
- if(isStory55(store.get()))return;
+ if(isStory55(store.get())){const packs=(await loadBuiltInPresets(fetcher)).filter(pack=>pack.channel==='wechat');if(!packs.length)return;const historical=packs.map(pack=>({...pack,rules:[],history:pack.history.map(h=>({...h,messages:h.messages.filter(m=>m.sentDate&&m.sentDate<'2025-05-19')})).filter(h=>h.messages.length)})).filter(pack=>pack.history.length);if(historical.length)store.update(s=>applyPresetImport(s,historical,{mode:'merge'}));return;}
  const packs=await loadBuiltInPresets(fetcher),s=store.get();
  const known=new Set((s.storyPresets?.rules||[]).map(r=>r.id));
  const deleted=new Set(s.storyPresets?.deletedRuleIds||[]);
