@@ -86,6 +86,7 @@ function animateNavigation(previous,direction=1){
  current?.animate([{opacity:0,transform:`translateY(${direction*14}px) scale(.985)`},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:270,easing:'cubic-bezier(.2,.75,.25,1)'});
 }
 function render(){
+ if($('#phone').dataset.gestureActive==='1'&&!phoneBlocked(store.get()))return;
  if(draggingHome&&!phoneBlocked(store.get()))return;
  if(phoneBlocked(store.get()))draggingHome=false;
  const s=store.get(),current=s.nav.current,navigation=s.unlocked?JSON.stringify(current):'lock';
@@ -236,7 +237,7 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))retur
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
  }
  if(!document.hidden&&callState().state==='connected')maybeAdvanceCall(ctx());
- void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
+ if(!document.hidden&&!['ringing','dialing','connected'].includes(callState().state))void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 setInterval(()=>{
@@ -432,6 +433,70 @@ $('#asset-picker').addEventListener('change',async e=>{
    toast('图片已保存到本机');
   }
  }catch(err){toast(err.message);}
+});
+mountViewport($('#phone'));
+setShade({progress:0});
+mountGestures($('#phone'),{
+ state:()=>({home:store.get().unlocked&&store.get().nav.current.appId==='home',locked:!store.get().unlocked,shade,page:store.get().homePage||0}),
+ page:({dx,velocity=0,cancel=false,settle})=>{
+  const track=$('#screen-layer .home-track');
+  if(!track){pagerBase=null;draggingHome=false;return;}
+  const width=track.parentElement.clientWidth||1,count=track.children.length||1;
+  // Start from where the track visually is, so grabbing it mid-animation does not jump.
+  if(pagerBase===null)pagerBase=new DOMMatrix(getComputedStyle(track).transform).m41;
+  const offset=dragOffset({base:pagerBase,dx,width,count});
+  if(!settle){
+   draggingHome=true;track.style.transition='none';track.style.transform=`translate3d(${offset}px,0,0)`;
+   const dots=$('#screen-layer .page-dots');if(dots){const near=nearestPage(offset,width,count);dots.querySelectorAll('button').forEach((dot,i)=>dot.classList.toggle('active',i===near));}
+   return;
+  }
+  const from=nearestPage(pagerBase,width,count),target=cancel?from:pageTarget({from,offset,velocity,width,count});
+  pagerBase=null;draggingHome=false;track.style.transition='';
+  store.update(s=>{s.homePage=target;});
+  // Patching the inline transform and transition in one frame suppresses the CSS
+  // transition in Safari. Animate from the actual finger release pixel position.
+  const settled=$('#screen-layer .home-track');
+  if(settled&&Math.abs(offset+target*width)>1&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+   settled.animate([
+    {transform:`translate3d(${offset}px,0,0)`},
+    {transform:`translate3d(${-target*width}px,0,0)`}
+   ],{duration:360,easing:'cubic-bezier(.2,.8,.22,1)'});
+  }
+ },
+ shade:setShade,
+ goHome:({dy,settle,complete=false})=>{
+  const screen=$('#screen-layer'),status=$('#status-layer');
+  if(!settle){
+   const lift=Math.max(0,-dy),progress=Math.min(lift/360,1);
+   screen.style.transition='none';screen.style.transform=`translate3d(0,${-lift*.18}px,0) scale(${1-progress*.22})`;
+   screen.style.borderRadius=`${Math.round(progress*30)}px`;
+   screen.style.boxShadow=`0 ${12+progress*15}px ${progress*46}px #0005`;
+   screen.style.zIndex='3';
+   status.style.opacity=String(1-progress*.6);
+   return;
+  }
+  if(!complete){
+   screen.style.transition='transform 280ms cubic-bezier(.2,.85,.2,1.18), border-radius 280ms ease, box-shadow 280ms ease';
+   screen.style.transform='';screen.style.borderRadius='';screen.style.boxShadow='';screen.style.zIndex='';
+   status.style.transition='opacity 260ms ease';status.style.opacity='';
+   setTimeout(()=>{screen.style.transition='';status.style.transition='';},300);
+   return;
+  }
+  screen.style.transition='';screen.style.transform='';screen.style.borderRadius='';screen.style.boxShadow='';screen.style.zIndex='';status.style.opacity='';
+  if(dy<-195){tasks.show(store.get().nav.current);return;}
+  swipeHomeReturn=Math.max(0,-dy);router.home();
+ },
+ switcher:()=>tasks.show(store.get().nav.current),
+ unlock:()=>{if(lockscreen.stage==='cover')requestUnlock();}
+});
+document.addEventListener('keydown',e=>{
+  if(store.get().deathPhase==='off'&&['Enter',' '].includes(e.key)){e.preventDefault();lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
+  if(!store.get().unlocked){
+    if(lockscreen.stage==='cover'&&['ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();requestUnlock();}
+    else if(/^\d$/.test(e.key)||['Backspace','Escape'].includes(e.key)){e.preventDefault();enterDigit(e.key==='Backspace'?'erase':e.key==='Escape'?'cancel':e.key);}
+    return;
+  }
+  if(e.key==='Escape'&&!e.target.closest('input,textarea,select'))shade?setShade({progress:0}):router.back();
 });
 // A local deterministic preview reply, never a real AI or server presence event.
 setTimeout(()=>{processDemoReply(store);},2400);

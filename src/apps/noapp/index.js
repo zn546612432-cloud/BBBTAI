@@ -3,27 +3,36 @@ import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
+import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
+import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
+import {maybeSendProactive} from '../../services/ai/proactive.js';
 import {apiConfig,saveApiConfig,clearApiConfig,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
-import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice} from './voice-call.js';
+import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice,callState} from './voice-call.js';
 
 export const manifest={id:'noapp',name:'NoApp',icon:12,unlockDay:56,defaultRoute:'/',supportsDeepLink:true,kicker:'PRIVATE CHANNEL'};
-let taiFeedback='',pendingTai=null;
+let taiFeedback='',pendingTai=null,replyVersion=0;
 // Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
 let settingsDraft={};
 function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get().nav.current;if(nav.appId==='noapp'&&nav.route==='/chat/tai')ctx.refresh();}
 function queueTaiReply(ctx,messageId){
+ const version=++replyVersion;
  if(pendingTai)clearTimeout(pendingTai);
+ ctx.store.update(s=>{const m=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===messageId);if(m&&!m.receivedAt)m.receivedAt=Date.now();});
  showFeedback(ctx,'已发送');
- pendingTai=setTimeout(async()=>{
+ const run=async()=>{
+  if(version!==replyVersion)return;
   pendingTai=null;
   try{
    showFeedback(ctx,'熙泰正在输入…');
    const result=await replyToTaiMessage(ctx.store,messageId);
+   if(version!==replyVersion)return;
+   if(result.status==='busy'){pendingTai=setTimeout(run,500);return;}
    showFeedback(ctx,result.status==='offline'||result.status==='unavailable'?result.message:'');
-  }catch(error){showFeedback(ctx,error.message||'AI 回复失败');ctx.toast(error.message||'AI 回复失败');}
- },3200);
+  }catch(error){if(version===replyVersion){showFeedback(ctx,error.message||'AI 回复失败');ctx.toast(error.message||'AI 回复失败');}}
+ };
+ pendingTai=setTimeout(run,3000);
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
@@ -34,6 +43,7 @@ const setting=(s)=>{
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
+ +behaviorSettings(taiBehavior(s),settingsDraft)
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
  +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
  +'<div class="tai-test-actions"><button type="button" data-action="tai-test-incoming">模拟熙泰来电</button><button type="button" data-action="tai-outgoing">给熙泰打电话</button></div>'
@@ -68,6 +78,11 @@ export async function handle(action,target,ctx){
   ctx.toast(taiForcedOnline()?'已为本标签页强制在线':'已恢复正常在线时间');
   return;
  }
+ if(action==='tai-test-outreach'||action==='tai-test-followup'){
+  if(['ringing','dialing','connected'].includes(callState().state)){ctx.toast('请先结束当前通话');return;}
+  const sent=await maybeSendProactive(ctx.store,{force:action==='tai-test-followup'?'followup':'topic'});
+  ctx.toast(sent?'熙泰已发来测试消息':'熙泰需要在线；跟进测试还需要最后一条是他发来且未回复的消息');return;
+ }
  if(action==='tai-test-voice'){
   const box=target.closest('.tai-api-setup');
   const message=box?.querySelector('[name="testSpeech"]')?.value?.trim();
@@ -88,6 +103,12 @@ export async function handle(action,target,ctx){
 export const submit=(form,ctx)=>{
  if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
+ if(form.dataset.form==='tai-save-behavior'){
+  const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));
+  ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.behavior=behavior;});
+  for(const key of Object.keys(behavior))delete settingsDraft['behavior_'+key];
+  ctx.refresh();ctx.toast('熙泰的聊天与通话设置已保存');return;
+ }
  if(form.dataset.form==='tai-save-ai'){
   const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
   ctx.toast('已为三个 App 配置 DeepSeek，NoApp 另可生成 MiniMax 语音');return;
@@ -99,6 +120,6 @@ export function mountCallEvents({store}){
 }
 
 /** Persist API input values in memory while the Safari software keyboard is open. */
-export function input(t){if(t.closest?.('.tai-api-setup')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.value;}
+export function input(t){if(t.closest?.('.tai-api-setup')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.type==='checkbox'?t.checked:t.value;}
 
 export function change(target){input(target);}

@@ -1,4 +1,5 @@
 // Local-only AI gateway. Never publish this handler as an unauthenticated public API.
+import {normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
@@ -66,10 +67,14 @@ export async function handleAIGateway(req,res,pathname) {
       });
       if(messages.at(-1).role!=='user')throw fail(400,'最后一条必须是玩家消息');
       const {profile,memories}=reviewDraft(payload);
+      const outputMode=['text','voice','call'].includes(payload.outputMode)?payload.outputMode:'text';
+      const scene=typeof payload.scene==='string'?payload.scene.slice(0,2000):'';
+      const relationshipContext=typeof payload.relationshipContext==='string'?payload.relationshipContext.slice(0,8000):'';
+      const behavior=normalizeTaiBehavior(payload.behavior);
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         model:process.env.DEEPSEEK_MODEL||'deepseek-flash',
-        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories})},...messages],
-        stream:false,max_tokens:1600,response_format:{type:'json_object'}
+        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior})},...messages],
+        stream:false,max_tokens:2400,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;
       if(typeof text!=='string'||!text.trim())throw fail(502,'模型没有返回有效文字');
@@ -77,7 +82,7 @@ export async function handleAIGateway(req,res,pathname) {
     }else{
       if(!process.env.MINIMAX_API_KEY)throw fail(503,'请先在本地环境配置 MINIMAX_API_KEY');
       const {text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1}=payload;
-      if(typeof text!=='string'||!text.trim()||text.length>800)throw fail(400,'试听文字须为 1–800 字');
+      if(typeof text!=='string'||!text.trim()||text.length>3000)throw fail(400,'试听文字须为 1–3000 字');
       if(typeof voiceId!=='string'||! /^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw fail(400,'请填写有效的 MiniMax voice_id');
       if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2))throw fail(400,'语音参数不合法');
       const data=await provider(MINIMAX,process.env.MINIMAX_API_KEY,{

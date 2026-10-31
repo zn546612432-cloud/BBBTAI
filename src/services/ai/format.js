@@ -9,7 +9,7 @@ export function unpackTaiReply(response,channel='noapp'){
  try{parsed=JSON.parse(raw.replace(/^\s*```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim());}catch{parsed=null;}
  const entries=Array.isArray(parsed?.messages)?parsed.messages:parsed?.reply?[{text:parsed.reply,mode:parsed.mode,tone:parsed.tone}]:[{text:raw}];
  const normalized=entries.slice(0,6).flatMap(x=>{
-  const mode=channel==='noapp'&&x?.mode==='voice'?'voice':'text';
+  const mode=channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
   const speechText=String(x?.text||'').trim().slice(0,3000);
   const display=cleanedText(speechText);
   const tone=['dry','playful','soft','serious','neutral'].includes(x?.tone)?x.tone:'neutral';

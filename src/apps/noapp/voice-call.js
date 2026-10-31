@@ -9,6 +9,8 @@ import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
 import {unpackTaiReply} from '../../services/ai/format.js';
+import {taiBehavior} from '../../services/ai/behavior.js';
+import {composeCallSpeech} from '../../services/voice/call-speech.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false};
 let recording=null;
@@ -119,8 +121,7 @@ export function startOutgoing(ctx){
  setTimeout(()=>{if(call.sessionId!==sessionId||call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);},1100);
  return true;
 }
-// A telephone turn is ONE MiniMax TTS request, regardless of how many
-// chat bubbles DeepSeek chooses to send. Safari no longer drops later chunks.
+// Reuse one MiniMax playback with explicit pause markers between thought groups.
 async function playCallAudio(ctx,blob,sessionId){
  if(call.sessionId!==sessionId||call.state!=='connected')return;
  if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);}
@@ -128,6 +129,7 @@ async function playCallAudio(ctx,blob,sessionId){
  playback=new Audio(url);
  playback.muted=!call.speaker;
  const current=playback;
+ current.addEventListener('ended',()=>{if(call.sessionId===sessionId&&call.state==='connected')call.lastTaiEndAt=Date.now();},{once:true});
  try{
   await current.play();
   if(call.sessionId!==sessionId||call.state!=='connected'){current.pause();return;}
@@ -165,18 +167,18 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
     '熙蒙刚在电话里讲了话，请依据关系和前文自然回应，不要只机械地答一问一答。';
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const data=await askTai({channel:'noapp',day:requestDay,messages,outputMode:'call',scene,
+   behavior:taiBehavior(ctx.store.get()),
    relationshipContext:xitaiRelationshipContext(ctx.store.get(),{mode:'call'}),
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
-  if(call.sessionId!==sessionId||call.state!=='connected')return;
-  const replies=unpackTaiReply(data,'noapp');
-  const completeSpeech=replies.map(x=>(x.speechText||x.text).trim()).filter(Boolean).join(' ');
+  if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
+  const replies=unpackTaiReply(data,'call');
+  const completeSpeech=composeCallSpeech(replies,taiBehavior(ctx.store.get()));
   if(!completeSpeech)throw Error('熙泰暂时没有回应');
   for(const r of replies)call.turns.push({role:'assistant',content:r.text});
-  call.lastSpeech=completeSpeech;ctx.refresh();
-  // One contiguous payload. Long words, breathing and personality are
-  // handled once by the MiniMax voice-worldbook composer.
+  call.lastSpeech=replies.map(r=>r.text).join('\n');ctx.refresh();
+  // Explicit sentence and thought pauses survive voice-worldbook preparation.
   const blob=await voicePreview({text:completeSpeech,tone:replies.at(-1)?.tone||'neutral'});
-  if(call.sessionId!==sessionId||call.state!=='connected')return;
+  if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
   await playCallAudio(ctx,blob,sessionId);
  }catch(e){if(call.sessionId===sessionId&&call.state==='connected')ctx.toast('通话 AI：'+e.message);}
  finally{
@@ -190,15 +192,17 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
   }
  }
 }
-export function nextCallIdleEvent(snapshot,now=Date.now()){
- if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||!snapshot.lastTaiEndAt)return '';
+export function nextCallIdleEvent(snapshot,now=Date.now(),config){
+ if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
+ const c=taiBehavior({aiDraft:{behavior:config}});
  const silence=now-snapshot.lastTaiEndAt;
- if(snapshot.nudgeCount===0&&silence>=45000)return 'nudge';
- if(snapshot.nudgeCount===1&&silence>=125000)return 'closing';
+ if(snapshot.nudgeCount===0&&silence>=c.callNudgeSeconds*1000)return 'nudge';
+ if(snapshot.nudgeCount===1&&silence>=c.callCloseSeconds*1000)return 'closing';
  return '';
 }
 export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
- const event=nextCallIdleEvent(call,now);
+ if(playback&&!playback.paused)return false;
+ const event=nextCallIdleEvent(call,now,taiBehavior(ctx.store.get()));
  if(!event)return false;
  call.nudgeCount=event==='nudge'?1:2;
  void generateTurn(ctx,{event,endAfter:event==='closing'});

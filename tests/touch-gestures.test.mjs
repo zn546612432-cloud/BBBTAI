@@ -88,3 +88,35 @@ test('notification sheet has only the shared bottom home indicator, no duplicate
  const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
  assert.match(css,/#homebar\{[^}]*touch-action:none/);
 });
+
+test('phone gestures observe start, move and release in capture phase before child controls',()=>{
+ const listeners=new Map();
+ mountGestures({addEventListener:(name,fn,options)=>listeners.set(name,options)},
+  {state:()=>({}),page:()=>{},shade:()=>{},unlock:()=>{}});
+ for(const name of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture','touchstart','touchmove','touchend','touchcancel'])
+  assert.equal(listeners.get(name)?.capture,true,name);
+ assert.equal(listeners.get('touchmove').passive,false);
+});
+
+test('a missing release from a detached lock control cannot poison later home-page swipes',()=>{
+ const state={locked:true,home:false,shade:false,page:0};
+ const {touch,out}=phoneHarness(state);
+ touch('touchstart',190,760,0); // navigation removes this original target before touchend
+ state.locked=false;state.home=true;
+ touch('touchstart',320,400,1000);
+ touch('touchmove',170,402,1050);
+ touch('touchend',80,405,1100);
+ assert.equal(out.unlocks,0);
+ assert.equal(out.pages.at(-1)?.dx,-240);
+ assert.equal(out.pages.at(-1)?.settle,true);
+});
+
+test('mouse press suppresses native dragging on system surfaces while a plain tap remains clickable',()=>{
+ const {root}=phoneHarness({locked:false,home:true,shade:false,page:0});
+ const event={isPrimary:true,button:0,pointerType:'mouse',pointerId:7,clientX:190,clientY:400,target:{closest:()=>null}};
+ assert.equal(root.dispatch('pointerdown',event).prevented,true);
+ root.dispatch('pointerup',event);
+ assert.equal(root.dispatch('click',{}).prevented,undefined);
+ const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
+ assert.match(css,/\.home-screen,\.lock-screen,#status-layer[^}]*user-select:none/);
+});
