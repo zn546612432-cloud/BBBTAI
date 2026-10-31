@@ -1,5 +1,8 @@
 # 熙泰 · DeepSeek 思考模式对照实验
 
+**Windows 最简操作：** 从 GitHub 下载此分支 ZIP，解压后右键 `scripts/run-xitai-benchmark.ps1` → **使用 PowerShell 运行**；选 1 快速测试或 2 完整测试，密钥在隐藏输入框中输入。脚本结束会清除临时环境变量。你也可以按下方手动命令运行。若执行策略拦截，可在 PowerShell 中执行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-xitai-benchmark.ps1`（仅对本次脚本进程生效）；运行前应阅读确认该脚本的来源与内容。
+
+
 用途：比较 **DeepSeek V4.1 Flash 与 V4 Pro** 的非思考 / low / high / max 思考模式，在《熙蒙的手机》**真实运行时世界书与 JSON 回复协议**下，谁更像熙泰。
 
 本脚本是可复现实验工具；**并非已经取得的实时评测结论**。所有请求在运行者电脑中发出，不上传密钥到仓库，不在报告中存储密钥、不保存模型 reasoning_content。
