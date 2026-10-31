@@ -7,6 +7,7 @@ import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
 import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
 import {maybeSendProactive} from '../../services/ai/proactive.js';
 import {apiConfig,saveApiConfig,clearApiConfig,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
+import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
 import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice,callState} from './voice-call.js';
@@ -38,6 +39,7 @@ const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
+ +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label><p>V4 Pro：明确关闭思考，temperature = 1.3。只影响新发送的 AI 回复；Flash 保持原有配置。</p>'
  +'<label>MiniMax API Key<input type="password" name="minimax" autocomplete="off" placeholder="输入 MiniMax API Key" value="'+esc(c.minimax||'')+'"></label>'
  +'<label>MiniMax 平台<select name="region"><option value="cn" '+(c.region!=='intl'?'selected':'')+'>中国站 · minimaxi.com</option><option value="intl" '+(c.region==='intl'?'selected':'')+'>国际站 · minimax.io</option></select></label>'
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
@@ -110,8 +112,8 @@ export const submit=(form,ctx)=>{
   ctx.refresh();ctx.toast('熙泰的聊天与通话设置已保存');return;
  }
  if(form.dataset.form==='tai-save-ai'){
-  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
-  ctx.toast('已为三个 App 配置 DeepSeek，NoApp 另可生成 MiniMax 语音');return;
+  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
+  ctx.toast('已保存所选 DeepSeek 模型（NoApp / MIRAGE / 国际象棋共用）');return;
  }
 };
 export function mountCallEvents({store}){
