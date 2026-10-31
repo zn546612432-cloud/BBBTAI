@@ -1,4 +1,4 @@
-import {isStory55,story55Config,nodeById,nodeStatus,completeNode,date55} from './state.js';
+import {isStory55,story55Config,nodeById,nodeStatus,completeNode,completed,date55} from './state.js';
 import {anonymousPresence55,activateStory55,advanceScene55,scene55,sceneLines,markMail55,readEvidence55,sendQuestion55,payNode55,nodeLink55,tickStory55} from './runtime.js';
 import {authorizeProject,startDeploymentStep,upgradeHardware} from './projects.js';
 import {validateStory55Config,importStory55Config,exportStory55Config} from './config.js';
@@ -21,6 +21,10 @@ export async function handleStory55Action(a,t,c){
  if(!a.startsWith('s55-'))return false;
  const id=t.dataset.node,project=t.dataset.project;
  if(a==='s55-new-run'){archiveAndStart(c);return true;}
+ if(a==='s55-install-noapp'){
+  if(!isStory55(c.store.get())||!completed(c.store.get(),'invite'))throw Error('请先在KIRA收到并阅读NoApp邀请');
+  c.store.update(s=>{s.story55.noappInstalled=true;});open(c,'noapp','/chat/tai');return true;
+ }
  if(a==='s55-select-node'){c.store.update(s=>s.editor.story55Node=id);return true;}
  if(a==='s55-select-project'){c.store.update(s=>s.editor.story55Project=project);return true;}
  if(!isStory55(c.store.get()))throw Error('请先在55天运行台创建周目');
@@ -57,7 +61,16 @@ export async function handleStory55Action(a,t,c){
  }
  if(a==='s55-final-audio'){
   const src=story55Config(c.store.get()).finalAudio;if(!src)throw Error('终局音频尚未配置；可在运行台的配置中设置finalAudio资源路径');
-  const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');audio.src=src;audio.onended=()=>c.store.update(s=>{s.story55.finalAudioHeard=true;advanceScene55(s,id);});await audio.play();return true;
+  const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');
+  // Older saved story configs contain /assets/...; resolve against the running
+  // module so GitHub Pages /BBBTAI/releases/<hash>/ also finds the real MP3.
+  audio.src=src.startsWith('/assets/')?new URL('../../../'+src.slice(1),import.meta.url).href:src;
+  audio.onerror=()=>c.toast?.('终局录音无法加载，请检查文件路径');
+  audio.onended=()=>{
+   if(c.store.get().story55.finalAudioHeard)return; // replay does not replay the ending
+   c.store.update(s=>{s.story55.finalAudioHeard=true;advanceScene55(s,id);});
+  };
+  await audio.play();return true;
  }
  return true;
 }
