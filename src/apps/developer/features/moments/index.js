@@ -1,3 +1,4 @@
+import {isStory55} from '../../../../services/story55/state.js';
 import {esc} from '../../../../system/ui.js';
 import {avatarUrl,momentImage} from '../../../wechat/features/moments/index.js';
 import {allMoments,findMoment,momentPeople,momentProfiles,momentDate,momentDay,normalizeMomentTime,editableMoments,editMoment,addMoment,removeMoment,exportMomentPackage,importMomentPackage} from '../../../wechat/features/moments/model.js';
@@ -15,7 +16,7 @@ const pick=(type,label)=>`<button type="button" class="mom-btn" data-action="mom
 function overview(s){
  const chosen=s.editor?.momentsFilter||'all',list=allMoments(s).filter(p=>chosen==='all'||p.author===chosen).sort((x,y)=>y.publishedAt.localeCompare(x.publishedAt)),profiles=momentProfiles(s);
  return `<div class="mom-overview">${rowHeader(`全部朋友圈 · ${list.length} 条`,'mom-new-post','＋新建')}
-  <p class="mom-caption">可预览 D01–D90 的全部动态，包括尚未发布、超过三天和置顶的内容。</p>
+  <p class="mom-caption">可预览 D01–D${isStory55(s)?'55':'90'} 的全部动态，包括尚未发布、超过三天和置顶的内容。</p>
   <label>按发布人筛选<select data-moment-filter><option value="all">全部人物</option>${people(chosen)}</select></label>
   <div class="mom-profile-strip">${momentPeople.map(name=>`<button type="button" data-action="mom-open-profile" data-name="${a(name)}">${image(profiles[name].avatar||avatarUrl(name),name)}<span>${a(name)}</span></button>`).join('')}</div>
   ${list.map(p=>`<article class="mom-overview-card"><div class="mom-post-head">${image(profiles[p.author]?.avatar||avatarUrl(p.author),p.author)}<div><strong>${a(p.author)}</strong><small>D${String(p.storyDay||momentDay(p.publishedAt)).padStart(2,'0')} · ${a(p.publishedAt.replace('T',' '))}${p.pinned?' · 📌置顶':''}</small></div><button type="button" data-action="mom-select-post" data-id="${a(p.id)}">编辑</button></div>
@@ -43,7 +44,7 @@ function detailEditor(s){
  return `<div class="mom-detail">${rowHeader('编辑朋友圈','mom-open-all','返回全部预览')}
   <div class="mom-form-block"><label>选择动态<select data-moment-selected>${allMoments(s).sort((x,y)=>x.publishedAt.localeCompare(y.publishedAt)).map(x=>`<option value="${a(x.id)}" ${x.id===id?'selected':''}>D${x.storyDay||momentDay(x.publishedAt)} · ${a(x.author)} · ${a((x.text||'无文字').slice(0,12))}</option>`).join('')}</select></label>
   <label>发布人<select data-moment-field="author">${people(p.author)}</select></label>
-  <div class="mom-inline">${field('day','游戏天数 D01–D90',day,'number')}${field('time','定时发布',time,'time')}</div>
+  <div class="mom-inline">${field('day',`游戏天数 D01–D${isStory55(s)?55:90}`,day,'number')}${field('time','定时发布',time,'time')}</div>
   <div class="mom-date-hint">D${day} = ${momentDate(day)} ${time}，到游戏时刻后自动展示</div>
   ${area('text','正文（可只发图片）',p.text)}
   <div class="mom-inline">${select('kind','内容类型',p.kind||'text',[['text','图文 / 纯文字'],['article','公众号链接'],['music','音乐'],['video','视频']])}${select('privacy','可见范围',p.privacy||'public',[['public','朋友可见'],['private','仅自己可见']])}</div>
@@ -67,7 +68,7 @@ function detailEditor(s){
 
 export function momentsEditor(s){
  const mode=s.editor?.momentsMode||'overview';
- return `<section class="editor-panel mom-editor"><div class="mom-hero"><small>MOMENTS / STORY WORKBENCH</small><h2>微信朋友圈编辑器</h2><p>七位人物 · 90 天时间线 · 本机保存 · 完整导出</p><div class="mom-stats"><span>${allMoments(s).length} 条动态</span><span>${momentPeople.length} 位人物</span><span>三天可见</span></div></div>
+ return `<section class="editor-panel mom-editor"><div class="mom-hero"><small>MOMENTS / STORY WORKBENCH</small><h2>微信朋友圈编辑器</h2><p>七位人物 · ${isStory55(s)?55:90} 天时间线 · 本机保存 · 完整导出</p><div class="mom-stats"><span>${allMoments(s).length} 条动态</span><span>${momentPeople.length} 位人物</span><span>三天可见</span></div></div>
   <div class="mom-toolbar"><button type="button" class="mom-btn ${mode==='overview'?'mom-primary':''}" data-action="mom-open-all">全部预览</button><button type="button" class="mom-btn ${mode==='edit'?'mom-primary':''}" data-action="mom-open-edit">编辑</button><button type="button" class="mom-btn ${mode==='profile'?'mom-primary':''}" data-action="mom-open-profile" data-name="熙蒙">人物资料</button></div>
   <div class="mom-toolbar"><button type="button" class="mom-btn mom-add" data-action="mom-new-post">＋新建</button><button type="button" class="mom-btn" data-action="mom-export">↓ 导出</button><button type="button" class="mom-btn" data-action="mom-import">↑ 导入</button></div>
   <input id="mom-import-file" type="file" accept="application/json,.json" hidden>
@@ -81,7 +82,7 @@ function updateField(s,t){
  if(field&&field!=='bio'){
   if(field==='day'||field==='time'){
    const day=field==='day'?Number(t.value):p.storyDay||momentDay(p.publishedAt),time=field==='time'?t.value:p.publishedAt.slice(11,16);
-   if(!Number.isInteger(day)||day<1||day>90||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))return;
+   if(!Number.isInteger(day)||day<1||day>(isStory55(s)?55:90)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))return;
    editMoment(s,id,post=>{post.storyDay=day;post.publishedAt=normalizeMomentTime(day,time);});return;
   }
   editMoment(s,id,post=>{
@@ -125,7 +126,7 @@ export function handleMoments(action,t,ctx){
   store.update(s=>{s.editor.momentsMode=action==='mom-open-all'?'overview':action==='mom-open-edit'?'edit':'profile';if(t.dataset.name)s.editor.momentsProfile=t.dataset.name;});return true;
  }
  if(action==='mom-select-post'){store.update(s=>{s.editor.momentsSelected=id;s.editor.momentsMode='edit';});return true;}
- if(action==='mom-new-post'){store.update(s=>{s.editor.momentsSelected=addMoment(s,s.day<=90?s.day:1);s.editor.momentsMode='edit';});return true;}
+ if(action==='mom-new-post'){store.update(s=>{s.editor.momentsSelected=addMoment(s,s.day<=(isStory55(s)?55:90)?s.day:1);s.editor.momentsMode='edit';});return true;}
  if(action==='mom-delete-post'){
   if(!globalThis.confirm?.('确定删除这条朋友圈吗？建议先导出备份。'))return true;
   store.update(s=>{removeMoment(s,selected);s.editor.momentsSelected=allMoments(s)[0]?.id||'';s.editor.momentsMode='overview';});return true;
