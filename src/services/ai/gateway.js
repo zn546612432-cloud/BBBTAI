@@ -61,9 +61,9 @@ export async function askTai({channel,day,messages,profile,memories}){
 }
 export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1,tone='neutral'}){
  const c=apiConfig();
- const prepared=prepareXitaiSpeech(text,{tone});
+ const prepared=prepareXitaiSpeech(text,{tone,autoTags:false});
  text=prepared.text;
- speed=prepared.speed;
+ speed=Number.isFinite(Number(speed))?Math.max(0.88,Math.min(1.08,Number(speed))):1;
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed})});}
@@ -78,7 +78,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-turbo',langua
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:0.95,pitch:-1,...(prepared.emotion?{emotion:prepared.emotion}:{})},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,...(prepared.emotion?{emotion:prepared.emotion}:{})},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
