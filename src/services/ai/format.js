@@ -3,6 +3,7 @@
 // belong only in the optional voice payload.
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
 const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
+import {humanizeTaiText} from './humanize.js';
 export function unpackTaiReply(response,channel='noapp'){
  const raw=typeof response==='string'?response:String(response?.text||'');
  let parsed;
@@ -10,8 +11,8 @@ export function unpackTaiReply(response,channel='noapp'){
  const entries=Array.isArray(parsed?.messages)?parsed.messages:parsed?.reply?[{text:parsed.reply,mode:parsed.mode,tone:parsed.tone}]:[{text:raw}];
  const normalized=entries.slice(0,6).flatMap(x=>{
   const mode=channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
-  const speechText=String(x?.text||'').trim().slice(0,3000);
-  const display=cleanedText(speechText);
+  const speechText=humanizeTaiText(String(x?.text||'').trim().slice(0,3000),{stripStage:false});
+  const display=humanizeTaiText(cleanedText(speechText));
   const tone=['dry','playful','soft','serious','neutral'].includes(x?.tone)?x.tone:'neutral';
   if(!display)return [];
   // A paragraph break in a short written reply indicates distinct send events.
