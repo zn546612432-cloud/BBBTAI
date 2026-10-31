@@ -1,3 +1,4 @@
+import {acceptOuroborosChallenge,sendOuroborosPreset} from '../src/apps/mirage/ouroboros-flow.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,PhoneStore} from '../src/services/storage.js';
@@ -51,7 +52,14 @@ test('D01 retains at least four established MIRAGE identities and D05 challenge 
  initializeMirage(store);
  assert.equal(contacts(store.get()).length,4);
  assert.ok(store.get().content.orders.some(o=>o.id===WALLET_CHALLENGE_ID));
- store.update(n=>{assert.equal(completeWalletChallenge(n),true);assert.equal(completeWalletChallenge(n),false);});
+ store.update(n=>{
+  assert.equal(acceptOuroborosChallenge(n),true);
+  assert.equal(completeWalletChallenge(n),true);
+  assert.equal(completeWalletChallenge(n),false);
+  assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','我拿到了。'),true);
+  assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','我单干。'),true);
+  assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','因为我是天才。'),true);
+ });
  const s5=store.get();
  assert.equal(s5.content.mirage.transactions.filter(x=>x.id==='ou-btc10').length,1);
  assert.equal(contacts(s5).length,5);
