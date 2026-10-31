@@ -93,10 +93,10 @@ test('anonymous 25-minute window persists independently of plot time and cannot 
  s.day=14;assert.equal(anonymousPresence55(s,1000).online,false);
 });
 
-test('developer location keeps the editor open and home widgets use the55-day graph',async()=>{
+test('developer location stays open while home widget keeps native reminders',async()=>{
  const {home,reminderWidget}=await import('../src/system/shell.js');
  const s=fixture();s.nav={current:{appId:'developer',route:'/story55',params:{}},stack:[]};previewNode55(s,'code');
- assert.equal(s.nav.current.appId,'developer');assert.match(home(s),/还有 41 天/);assert.match(reminderWidget(s),/基础框架邮件/);
+ assert.equal(s.nav.current.appId,'developer');assert.match(home(s),/还有 41 天/);assert.match(reminderWidget(s),/提醒事项表/);assert.doesNotMatch(reminderWidget(s),/基础框架邮件|data-action="s55-node"/);
 });
 test('five questions become real MIRAGE history and NoApp installation precedes recognition',()=>{
  const s=fixture();previewNode55(s,'questions');

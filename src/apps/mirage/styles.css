@@ -27,3 +27,7 @@
 .mc-mail-notice>strong{font-size:17px;color:#d7ebc4}.mc-mail-notice .mc-dialog-buttons>button{flex:1;font-size:9px;letter-spacing:0}
 
 .mc-contact .mc-unread-green{display:inline-block;width:7px;height:7px;border-radius:50%;background:#90e0a5;vertical-align:middle;margin-right:5px;box-shadow:0 0 10px #77db9a88}
+
+/* Exit control exists on login and top-level native MIRAGE views. */
+.app-mirage .mc-login-back{position:absolute;left:12px;top:10px;z-index:11;min-width:32px;min-height:36px;background:#102c2bbb;border:1px solid #557f7466;color:#b5dbca;border-radius:9px;font-size:27px;line-height:1;cursor:pointer}
+.app-mirage .mc-header>.mc-icon-button:first-child{min-width:36px;min-height:38px;flex:none;color:#c1e0d1}

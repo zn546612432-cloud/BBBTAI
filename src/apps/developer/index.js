@@ -1,4 +1,6 @@
 import {story55Editor} from './features/story55/index.js';
+import {isStory55} from '../../services/story55/state.js';
+import {diaryEditor,diaryEditorAction,diaryEditorChange,diaryEditorSubmit} from './features/diary/index.js';
 import {editableMoments} from '../wechat/features/moments/model.js';
 import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
 import {preview,updateTimelinePreview} from './features/preview/index.js';
@@ -19,12 +21,13 @@ import {conversations as allConversations,selectedConversation,actors,actorName,
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
 import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit,handleMomentsImport} from './features/moments/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[[['story55','55天剧情树'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音']]];
+const tabs=[[['story55','55天剧情树'],['diary','日程日记'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音']]];
 const attr=v=>esc(v);
-function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='story55'?story55Editor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.filter(([id])=>!(isStory55(s)&&id==='presets')).map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?(isStory55(s)?story55Editor(s):presetEditor(s)):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(diaryEditorAction(a,t,ctx))return;
  if(a==='character-upload-avatar'||a==='character-upload-cover'){
   const name=t.dataset.name,type=a==='character-upload-avatar'?'avatar':'cover';
   ctx.pickImage(src=>store.update(s=>{
@@ -54,7 +57,7 @@ export function handle(a,t,ctx){
  if(a==='rearm-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
  if(a==='test-message'){
   const x=selectedConversation(store.get());
-  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&s.day<56)s.day=56;});
+  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
   router.open({appId:x.channel,route:'/chat/'+x.c.id});return;
  }
  if(a==='add-image-message'||a==='replace-message-image'){
@@ -67,6 +70,7 @@ export function handle(a,t,ctx){
  if(a==='export-content')ctx.download();
 }
 export function change(t,ctx){
+ if(diaryEditorChange(t,ctx))return;
  const {store}=ctx;
  if(changeMoments(t,ctx))return;
  if(changePresetField(t,ctx))return;
@@ -97,6 +101,7 @@ export function input(t,ctx){
  const title=root.querySelector('#editor-conversation-name');if(title&&title!==t)title.value=c.name;
 }
 export function submit(f,ctx){
+ if(diaryEditorSubmit(f,ctx))return;
  if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
  if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}

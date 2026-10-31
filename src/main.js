@@ -7,7 +7,7 @@ import {PhoneStore} from './services/storage.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
-import {registry} from './system/registry.js';
+import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
@@ -296,7 +296,7 @@ $('#root').addEventListener('click',async e=>{
     }
     if(action==='home'){if(tasks.visible)tasks.hide();else if(store.get().nav.current.appId==='home')tasks.show(store.get().nav.current);else router.home();return;}
     if(action==='back'){router.back();return;}
-    if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||m.unlockDay&&store.get().day<m.unlockDay)return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
+    if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,store.get()))return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
     if(action==='home-reminder-toggle'){toggleReminder(store,target.dataset.id);return;}
     if(action==='page'){store.update(s=>{s.homePage=Number(target.dataset.page);});return;}
     if(action==='lock'){lockscreen.reset();shade=false;store.update(s=>{s.unlocked=false;s.nav.current={appId:'home',route:'/',params:{}};s.nav.stack=[];});return;}

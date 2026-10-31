@@ -385,7 +385,7 @@ export async function toggleVoiceRecord(ctx){
 }
 export async function sendTaiTestVoice(ctx,{text,tone='dry'}={}){
  const s=ctx.store.get();
- if(!taiRecognized(s))throw Error('NoApp 语音测试需要 D56 之后');
+ if(!taiRecognized(s))throw Error('NoApp 语音测试需要相认以后');
  const body=readableTaiVoiceText(String(text||'').trim().slice(0,1200));
  if(!body)throw Error('语音台词不能为空');
  const clip=await voicePreview({text:body,tone});
