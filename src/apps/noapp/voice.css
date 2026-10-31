@@ -190,7 +190,7 @@
 .app-noapp .noapp-gate p{font-size:14px;line-height:1.7;color:#c5d0e0;margin:0}
 .app-noapp .noapp-gate small{color:#8495aa}
 .app-noapp .noapp-gate .s55-button{min-height:44px;border:1px solid #7290af;border-radius:14px;padding:10px 18px;background:#3e5976;color:#fff}
-.app-noapp .noapp-story55-active .composer{display:none!important}
+.app-noapp .noapp-story55-active .composer{display:flex!important}
 .app-noapp .noapp-story55-step{
  align-self:center;box-sizing:border-box;width:calc(100% - 22px);margin:12px 11px 22px;
  padding:15px 16px;background:#223246eb;border:1px solid #60779266;border-radius:16px;
