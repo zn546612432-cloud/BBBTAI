@@ -214,6 +214,9 @@ export function callAction(action,ctx){
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
+  // iOS lowers or interrupts remote audio when a new mic audio session opens.
+  // Keep the call half-duplex: no microphone capture until Xitai finishes.
+  if(call.busy||playback&&!playback.paused){ctx.toast('等熙泰说完，再按麦克风。');return true;}
   if(call.muted){ctx.toast('解除静音后再说话');return true;}
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!Speech){
