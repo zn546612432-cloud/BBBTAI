@@ -2,7 +2,7 @@ import {displayDate} from '../calendar.js';
 // Original game life, stable within each game day. No real-world event claims.
 // Keep a small authored itinerary rather than rerolling a new life every prompt.
 const days=[
- {place:'英国住处',zone:'Europe/London',focus:'读一段莎士比亚，晚些时候准备训练；可以谈喜欢或不认同的人物，而不是卖弄引文'},
+ {place:'英国住处',zone:'Europe/London',focus:'早上赖了一会儿床，晚些时候准备训练；今天惦记的是一杯像样的咖啡和早饭吃什么'},
  {place:'英国校园',zone:'Europe/London',focus:'有课程和阅读安排，今天惦记的是出门吃顿像样的饭；学习之外也有自己的口味'},
  {place:'英国住处',zone:'Europe/London',focus:'训练日，练完有些酸，洗澡、吃饭，可能抱怨健身房里一件小事'},
  {place:'巴黎酒店',zone:'Europe/Paris',focus:'短途旅行，看展与看秀后回酒店；可聊某个剪裁、作品或现场小插曲，不编真实品牌场次日期'},

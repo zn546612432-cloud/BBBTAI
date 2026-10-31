@@ -8,6 +8,7 @@ import {deathLocked} from '../../system/power/story.js';
 import {aiStatus,askTai,voicePreview,apiConfig} from './gateway.js';
 import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
+import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -61,7 +62,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  markTaiEngaged();
  if(pendingRequests.has(store))return {status:'busy',message:'熙泰正在输入'};
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day)
-  .slice(-20).map(m=>({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)}));
+  .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};
  pendingRequests.add(store);
  const startedAt=now(),behavior=taiBehavior(initial);

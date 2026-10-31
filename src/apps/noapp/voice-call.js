@@ -19,13 +19,14 @@ let recording=null;
 let callSerial=0;
 let activeRecognition=null;
 export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length};}
-function recordCall(s,{direction,status,seconds=0}){
+function recordCall(s,{direction,status,seconds=0,turns=[]}){
  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
  if(!chat)return;
  const label=status==='missed'?'未接语音来电':status==='declined'?'已拒绝语音来电':
    status==='cancelled'?'已取消语音呼叫':'语音通话 · '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
  const entry={id:'tai-call-history-'+uid(),from:direction==='incoming'?'tai':'me',text:label,
    kind:'call',callStatus:status,duration:seconds,day:s.day,time:s.clock,actual:true};
+ if(status==='ended'&&turns.length)entry.transcript=turns.slice(-14).map(t=>(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(0,900);
  chat.messages.push(entry);
  if(status==='missed'&&!(s.unlocked&&s.nav.current.appId==='noapp'&&s.nav.current.route==='/chat/tai'))
   chat.unread=Math.max(0,Number(chat.unread)||0)+1;
@@ -264,7 +265,7 @@ export function callAction(action,ctx){
     s.aiDraft.memories.push({day:s.day,visibility:'noapp',source:'NoApp已发生通话',text:transcript});
     s.aiDraft.memories=s.aiDraft.memories.slice(-30);
    }
-   recordCall(s,{direction:previous.direction,status:outcome,seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
+   recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
   });
   // Declining the top banner must not eject the player from another App.
   if(ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call')
