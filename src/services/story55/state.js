@@ -20,7 +20,10 @@ export function completeNode(s,id,{test=false}={}){
  const n=nodeById(s,id);if(!n)throw Error('节点不存在');
  if(completed(s,id))return false;
  if(!test&&nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
- if(id==='recognition')s.story55.noappInstalled=true;
+ if(id==='recognition'){
+  s.story55.noappInstalled=true;
+  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';
+ }
  s.story55.completed[id]={day:s.day,clock:s.clock,test:!!test};
  s.events.push({type:'story55_node_completed',id,day:s.day,clock:s.clock,test:!!test});
  return true;
