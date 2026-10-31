@@ -3,19 +3,21 @@
 // Structured transformations, not a verbatim prompt pasted into an API body.
 const TAGS=new Set(['laughs','chuckle','coughs','clear-throat','groans','breath','pant','inhale','exhale','gasps','sniffs','sighs','snorts','burps','lip-smacking','humming','hissing','emm','sneezes']);
 const ALIASES={gasp:'gasps',sigh:'sighs',laugh:'laughs',crying:'sniffs',yawns:'sighs',whispers:'breath'};
+// The character's baseline is calm and slow. Model 'angry'/'happy' presets
+// exaggerate intonation; communicate emotion through wording and pauses instead.
 const EMOTION={
- neutral:{speed:0.92,emotion:'',tag:'breath'},
- dry:{speed:0.91,emotion:'',tag:'snorts'},
- playful:{speed:0.96,emotion:'fluent',tag:'chuckle'},
- soft:{speed:0.87,emotion:'calm',tag:'exhale'},
- serious:{speed:0.90,emotion:'calm',tag:'breath'},
- danger:{speed:0.91,emotion:'calm',tag:'inhale'},
- happy:{speed:0.99,emotion:'happy',tag:'chuckle'},
- sad:{speed:0.86,emotion:'sad',tag:'sighs'},
- angry:{speed:0.91,emotion:'angry',tag:'snorts'},
- fearful:{speed:1.00,emotion:'fearful',tag:'inhale'},
- surprised:{speed:0.97,emotion:'surprised',tag:'gasps'},
- disgusted:{speed:0.95,emotion:'disgusted',tag:'snorts'}
+ neutral:{speed:0.84,emotion:'calm'},
+ dry:{speed:0.83,emotion:'calm'},
+ playful:{speed:0.87,emotion:'calm'},
+ soft:{speed:0.81,emotion:'calm'},
+ serious:{speed:0.82,emotion:'calm'},
+ danger:{speed:0.83,emotion:'calm'},
+ happy:{speed:0.86,emotion:'calm'},
+ sad:{speed:0.80,emotion:'calm'},
+ angry:{speed:0.82,emotion:'calm'},
+ fearful:{speed:0.83,emotion:'calm'},
+ surprised:{speed:0.86,emotion:'calm'},
+ disgusted:{speed:0.83,emotion:'calm'}
 };
 function hash(s){let n=2166136261;for(const ch of s)n=Math.imul(n^ch.charCodeAt(0),16777619)>>>0;return n;}
 const cleanTags=input=>String(input||'')
@@ -34,7 +36,9 @@ function insertBreath(s,tag){
  let boundary=-1;
  const clauses=/[，、；;。.!！？?]/g;let m;
  while((m=clauses.exec(s))&&m.index<s.length*.75){if(m.index>s.length*.22)boundary=m.index+1;}
- if(boundary<0){boundary=Math.max(1,Math.floor(s.length*.60));}
+ // Never place a synthetic breath in the middle of a Chinese word.
+ // Natural punctuation already gives TTS a pause when there is no boundary.
+ if(boundary<0)return s;
  return s.slice(0,boundary)+'('+tag+')'+s.slice(boundary);
 }
 function countTags(s){return (s.match(/\((?:[a-z-]+)\)/gi)||[]).length;}
@@ -56,12 +60,8 @@ export function prepareXitaiSpeech(text,{tone='neutral',autoTags=true}={}){
   result=insertBreath(result, charCount>85&&seed%3===0?'exhale':'breath');
  }
  // B4 / light scoffing, when the sentence actually sounds teasing.
- if(autoTags&&countTags(result)<budget&&charCount>=8&&charCount<160
-   &&!['danger','serious','fearful','sad'].includes(tone)
-   &&tone==='dry'&&seed%7===2&&!/跟踪|危险|救命|出事|失踪|死亡/.test(result)){
-   result=result.replace(/([。？！!?])/,'(chuckle)$1');
- }
- if(autoTags&&countTags(result)<budget&&tone==='playful'&&charCount>=10&&seed%5===1){
+ // Dry sarcasm stays dry; synthetic chuckles can sound jarringly excited.
+ if(autoTags&&countTags(result)<budget&&tone==='playful'&&charCount>=18&&seed%13===1){
   result=result.replace(/([。？！!?])/,'(chuckle)$1');
  }
  // KIS rules: only if the message really includes a kiss action; avoid
