@@ -100,3 +100,5 @@ export function mountCallEvents({store}){
 
 /** Persist API input values in memory while the Safari software keyboard is open. */
 export function input(t){if(t.closest?.('.tai-api-setup')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.value;}
+
+export function change(target){input(target);}
