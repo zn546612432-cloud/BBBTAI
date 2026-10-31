@@ -53,3 +53,26 @@
 - 尚未写完55天全部群聊、私聊、朋友圈、心愿和正式棋局对白；当前固定稿用于证明触发链。枪械升级及完整心愿奖励尚未接入新经济循环。
 - 不包含真实入侵、真实挖矿或交易；游戏内容由本地状态和小游戏驱动。
 - 自动测试覆盖旧版兼容、五种游戏、11批部署、失败重试、重复结算、刷新续存、调查到相认、资金、挖矿、时间截止和语音终局门槛。AI网络与移动端语音服务未在此次自动测试中实调。
+
+## D30照片和D55录音：真实媒体安装（待资源上传）
+
+用户提供的三胞胎婴儿原图及熙蒙死亡录音必须分别作为 `triplets-baby-photo.jpg` 和 `ximeng-final-keywords.mp3` 接入。原录音虽然文件名是 MP3，内部实际为 QuickTime/AAC；请使用素材包中的已转换 MP3，不要把 MOV 直接改扩展名。
+
+**注意构建目录**：游戏的 `npm run build` 只复制 `public/`，因此真实文件必须是：
+
+- `public/assets/story55/triplets-baby-photo.jpg`
+- `public/assets/story55/ximeng-final-keywords.mp3`
+
+在仓库根目录运行（先解压本次素材包）：
+
+```sh
+python scripts/install-story55-media.py "/absolute/path/to/unpacked-bundle"
+npm test
+npm run build:pages
+```
+
+安装脚本只修改 `src/story/story55/catalog.js` 的三胞胎文件 `asset` 与 `finalAudio` 字段，且不会触碰旧微信、朋友圈、旧90天周目存档。浏览器开发者界面也可设置终局录音路径（素材必须已发布，否则不会播放）。
+
+在 **PR #24 合并 main 之前**，核对两个真实文件均出现在提交中、Pages 构建产物存在并且 iPhone Safari 实机测试：D30 文件实际显示照片，D55 手表完整播放后才结束，音频播放失败不能强制终局。童年照不要上传。
+
+这份脚本和文档不是媒体文件本身。未提交两个二进制素材时，PR #24 应继续保持未合并状态。
