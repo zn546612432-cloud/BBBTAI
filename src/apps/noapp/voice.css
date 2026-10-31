@@ -156,3 +156,10 @@
 .app-noapp .tai-test-actions{display:flex;gap:8px;flex-wrap:wrap}
 .app-noapp .tai-test-controls button{min-height:42px;padding:9px 12px;border-radius:12px;background:#2c4357;color:#f2f8ff;border:1px solid #718da535;font-size:13px}
 .app-noapp .tai-test-controls textarea,.app-noapp .tai-test-controls select{width:100%;margin-top:7px;padding:10px;border-radius:12px;background:#0c1e2b;color:#e9f8ff;border:1px solid #7197ac69;font-size:16px;resize:vertical}
+
+/* QQ-style outlined microphone, with uninterrupted visual press feedback. */
+.app-noapp .noapp-composer-mic{display:grid;place-items:center;min-width:38px;min-height:40px;border-radius:50%;background:transparent;color:#d8e5ef;border:0;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .14s,background .14s,box-shadow .14s}
+.app-noapp .noapp-composer-mic svg{height:24px;width:24px}
+.app-noapp .noapp-composer-mic.is-pressed{transform:scale(.89);background:#6b9eb73b;box-shadow:0 0 0 6px #95cbe71c}
+.app-noapp .noapp-record-overlay.is-recording .noapp-record-waves i{animation-play-state:running}
+@media(prefers-reduced-motion:reduce){.app-noapp .noapp-composer-mic{transition:none}}
