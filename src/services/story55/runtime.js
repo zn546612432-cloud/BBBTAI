@@ -42,7 +42,7 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  if(!['system','call','watch'].includes(line[0])){
-  const channel=id==='recognition'?'noapp':['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':completed(s,'recognition')?'noapp':'mirage';
+  const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',members:Object.keys(actors),messages:[],unread:0};list.push(c);}
@@ -80,8 +80,14 @@ export function sendQuestion55(s){
  }
  tickStory55(s);
 }
+// Scripted conversations navigate to the existing messaging apps, not Calendar.
+export function chatNodeLink55(s,id){
+ const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
+ const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
+ return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
+}
 export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
- const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/story55/questions',params:{}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:{appId:'calendar',route:'/story55/scene',params:{node:id}}};return map[n.kind];}
+ const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/story55/questions',params:{}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 export function tickStory55(s){
  if(!isStory55(s))return;
  ensureNativeMirage55(s);
