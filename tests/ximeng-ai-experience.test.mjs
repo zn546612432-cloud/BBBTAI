@@ -57,6 +57,7 @@ test('D01 retains at least four established MIRAGE identities and D05 challenge 
   assert.equal(completeWalletChallenge(n),true);
   assert.equal(completeWalletChallenge(n),false);
   assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','我拿到了。'),true);
+  n.content.conversations.mirage.find(c=>c.id==='mc-ourob-d05').messages.find(m=>m.id==='ou-group').delivery={day:5,clock:'21:31'};
   assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','我单干。'),true);
   assert.equal(sendOuroborosPreset(n,'mc-ourob-d05','因为我是天才。'),true);
  });
