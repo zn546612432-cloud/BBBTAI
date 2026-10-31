@@ -10,6 +10,7 @@ export function createBoard(type,config,random=Math.random){
  if(type==='route'){const masks=routeSolution.map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
  if(type==='extract')return {...fingerprints(random),round:0};
  if(type==='veil')return {code:newCode(config.codeLength,random),input:'',round:0};
+ if(type==='verify'){const target=shuffle(['CORE','LINK','DATA','CHECK','AUTH','CACHE','IO','MAP','INDEX','WATCH','SYNC','FRAME','TRACE','ROUTE','LOCAL','KEY'],random).slice(0,4);return {target,tokens:shuffle(target,random),input:[],used:[]};}
  if(type==='strike')return {signature:newCode(8,random)};
  return {};
 }

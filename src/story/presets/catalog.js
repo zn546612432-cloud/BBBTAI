@@ -1,3 +1,4 @@
+import {isStory55} from '../../services/story55/state.js';
 import {parsePresetPayload} from './io/format.js';
 import {applyPresetImport,hasBuiltInTextCorrections} from './io/import.js';
 
@@ -23,6 +24,7 @@ export async function loadBuiltInPresets(fetcher=fetch){
 
 /** Initial fixture loading is additive and idempotent; local authored edits win. */
 export async function hydrateBuiltInPresets(store,fetcher=fetch){
+ if(isStory55(store.get()))return;
  const packs=await loadBuiltInPresets(fetcher),s=store.get();
  const known=new Set((s.storyPresets?.rules||[]).map(r=>r.id));
  const deleted=new Set(s.storyPresets?.deletedRuleIds||[]);

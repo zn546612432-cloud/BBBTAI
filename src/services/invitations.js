@@ -1,6 +1,7 @@
+import {isStory55,taiRecognized} from './story55/state.js';
 import {taiPresence} from './presence.js';
 const uid=()=>globalThis.crypto?.randomUUID?.()||`inv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-export function createPlayerInvitation(store){const s=store.get();if(s.day<56)throw Error('这个联系人尚未开放');const existing=s.invitations.find(i=>i.senderId==='player'&&i.status==='pending');if(existing)return existing.id;const id=uid();store.update(s=>{s.invitations.push({id,senderId:'player',recipientId:'tai',source:'local-demo',status:'pending',createdDay:s.day,expiresDay:s.day+2,matchId:null});s.events.push({type:'chess_invitation_sent',invitationId:id,day:s.day,clock:s.clock});});return id;}
+export function createPlayerInvitation(store){const s=store.get();if(!taiRecognized(s))throw Error('这个联系人尚未开放');const existing=s.invitations.find(i=>i.senderId==='player'&&i.status==='pending');if(existing)return existing.id;const id=uid();store.update(s=>{s.invitations.push({id,senderId:'player',recipientId:'tai',source:'local-demo',status:'pending',createdDay:s.day,expiresDay:s.day+2,matchId:null});s.events.push({type:'chess_invitation_sent',invitationId:id,day:s.day,clock:s.clock});});return id;}
 export function receiveInvitation(store,id){const inv=store.get().invitations.find(i=>i.id===id);if(!inv||inv.senderId!=='tai'||!['demo-fixture','story-invitation'].includes(inv.source))throw Error('邀请来源不可验证');if(inv.expiresDay<store.get().day){store.update(s=>{s.invitations.find(i=>i.id===id).status='expired';});throw Error('邀请已过期');}if(inv.status==='accepted')return inv.matchId;if(inv.status!=='pending'&&inv.status!=='deferred')throw Error('邀请无法接受');const matchId=uid();store.update(s=>{const item=s.invitations.find(i=>i.id===id);item.status='accepted';item.matchId=matchId;s.matches.push({id:matchId,invitationId:id,opponent:'tai',pgn:'',status:'active',turn:'w',createdDay:s.day,history:[],chat:[{id:uid(),from:'tai',text:'来一盘？',time:s.clock}]});s.events.push({type:'chess_match_started',matchId,invitationId:id,day:s.day,clock:s.clock});});return matchId;}
 export function deferInvitation(store,id){
  store.update(s=>{
@@ -23,7 +24,7 @@ export function deferInvitation(store,id){
 export function maybeInviteFromTaiChat(store,messageId){
  const s=store.get(),c=s.content.conversations.noapp?.find(x=>x.id==='tai');
  const message=c?.messages.find(m=>m.id===messageId&&m.from==='me');
- if(!message||s.day<56||taiPresence(s).status!=='online')return false;
+ if(!message||!taiRecognized(s)||taiPresence(s).status!=='online')return false;
  if(!/(来一盘|下一局|下棋|国际象棋|来下棋|下期吗|再来一盘)/.test(message.text))return false;
  const count=s.events.filter(e=>e.type==='tai_chess_invitation_offered').length;
  const max=Math.min(2,Math.max(0,Number(s.aiDraft?.maxChessInvites??2)));

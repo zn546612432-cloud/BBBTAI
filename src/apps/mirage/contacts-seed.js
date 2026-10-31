@@ -1,3 +1,4 @@
+import {isStory55} from '../../services/story55/state.js';
 import {markOuroborosWon} from './ouroboros-flow.js';
 // Additive, player-editable MIRAGE history. No real malware instructions.
 export const WALLET_CHALLENGE_ID='mirage-ouroboros-10btc-d05';
@@ -43,6 +44,7 @@ export const walletChallenge={
  storyDay:5,storySeed:true
 };
 export function ensureMirageStory(s){
+ if(isStory55(s))return;
  s.content.conversations??={};
  const list=s.content.conversations.mirage??=[];
  for(const c of starterContacts)if(!list.some(x=>x.id===c.id))list.push(structuredClone(c));

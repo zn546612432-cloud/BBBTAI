@@ -1,3 +1,4 @@
+import {isStory55,taiRecognized} from '../story55/state.js';
 import {taiLifeContext} from './life-context.js';
 import {visibleMessages} from '../messaging/delivery.js';
 import {callBridgeNote,isRecentTaiCall} from './humanize.js';
@@ -5,7 +6,7 @@ import {callBridgeNote,isRecentTaiCall} from './humanize.js';
 // NoApp messages and author-confirmed canon. Never read WeChat/private drafts.
 const relevant=/喜欢|讨厌|害怕|记住|约好|答应|说好了|哥哥|圣诞惊魂夜|想你|我生气|你不认识|有事|博士|生日/;
 export function xitaiRelationshipContext(s,{mode='text'}={}){
- if(s.day<56)return '';
+ if(!taiRecognized(s))return '';
  const c=s.content.conversations.noapp?.find(x=>x.id==='tai');
  const history=visibleMessages(c||{messages:[]}).filter(m=>m?.actual!==false&&!m.demo&&m.day<=s.day&&m.kind!=='app_invitation'&&m.kind!=='image'&&(m.kind!=='call'||m.transcript)&&m.text);
  const recent=history.filter(m=>m.kind!=='call').slice(-16);

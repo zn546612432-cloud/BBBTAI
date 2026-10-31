@@ -1,3 +1,5 @@
+import {isStory55} from './services/story55/state.js';
+import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
@@ -38,13 +40,15 @@ try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情
 // scheduled messages whose window has already passed.
 try{store.update(s=>deliverMissedScheduled(s,{day:1,clock:'00:00'}));}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
+const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
+if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
 mountShell();
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
-if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
+if(store.get().unlocked&&!story55Review)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
@@ -315,6 +319,7 @@ $('#root').addEventListener('click',async e=>{
       }
       return;
     }
+    if(await handleStory55Action(action,target,ctx()))return;
     const app=registry.get(store.get().nav.current.appId);
     if(app?.handle)await app.handle(action,target,ctx(),store.get().nav.current);
     if(['mc-accept-bounty','mc-complete-bounty'].includes(action))store.update(s=>{advanceGameMinutes(s,action==='mc-complete-bounty'?60:30);});
@@ -406,7 +411,7 @@ $('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noti
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
-$('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit)return;e.preventDefault();try{const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
+$('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(submitStory55Form(e.target,ctx()))return;const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
 $('#root').addEventListener('focusin',e=>{
   if(store.get().unlocked&&store.get().nav.current.appId==='wechat')registry.get('wechat')?.dismissEmojiForKeyboard?.(e.target);

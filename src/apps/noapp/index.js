@@ -1,3 +1,5 @@
+import {sceneView55} from '../../services/story55/views.js';
+import {isStory55,taiRecognized} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
@@ -54,13 +56,13 @@ const setting=(s)=>{
  +'<button type="button" data-action="tai-test-voice">让熙泰发语音</button></section>'
  +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/fix/xitai-system-card-v5-20261031/docs/XITAI_CHARACTER_CARD_V5.md" target="_blank" rel="noopener noreferrer">阅读熙泰专属人设 v5 与接入说明</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
 };
-export function render({store},loc){
+export function render({store},loc){if(isStory55(store.get())&&loc.route==='/story55/recognition')return sceneView55(store.get(),loc);
  const s=store.get(),id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  if(loc.route==='/call')return callView(s);
  if(loc.route==='/settings-ai')return setting(s);
  const phoneIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.7 19.7 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.7L7.1 10a16 16 0 0 0 7 7l1.6-1.9a2 2 0 0 1 1.7-.6l3 .5a2 2 0 0 1 1.6 1.9Z"/></svg>';
  const settingsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.5 1.5 0 0 0 .3 1.7l.1.1-2.2 2.2-.1-.1a1.5 1.5 0 0 0-1.7-.3l-.7.3a1.5 1.5 0 0 0-.9 1.4v.2H11v-.2a1.5 1.5 0 0 0-.9-1.4l-.7-.3a1.5 1.5 0 0 0-1.7.3l-.1.1-2.2-2.2.1-.1a1.5 1.5 0 0 0 .3-1.7l-.3-.7a1.5 1.5 0 0 0-1.4-.9H4v-3.2h.2a1.5 1.5 0 0 0 1.4-.9l.3-.7a1.5 1.5 0 0 0-.3-1.7l-.1-.1 2.2-2.2.1.1a1.5 1.5 0 0 0 1.7.3l.7-.3a1.5 1.5 0 0 0 .9-1.4V4h3.2v.2a1.5 1.5 0 0 0 .9 1.4l.7.3a1.5 1.5 0 0 0 1.7-.3l.1-.1 2.2 2.2-.1.1a1.5 1.5 0 0 0-.3 1.7l.3.7a1.5 1.5 0 0 0 1.4.9h.2v3.2h-.2a1.5 1.5 0 0 0-1.4.9Z"/></svg>';
- const toolbar=s.day>=56?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
+ const toolbar=taiRecognized(s)?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
  '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';

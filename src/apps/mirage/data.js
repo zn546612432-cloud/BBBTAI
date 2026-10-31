@@ -1,3 +1,4 @@
+import {isStory55} from '../../services/story55/state.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID,completeWalletChallenge} from './contacts-seed.js';
 import {uid} from '../../services/id.js';
 import {hackerBounty,HACKER_BOUNTY_ID} from './mission.js';
@@ -15,6 +16,7 @@ export const defaultProducts=[
 export function mirageData(s){return s.content.mirage||{account:MIRAGE_ACCOUNT,balance:300000,products:defaultProducts,cart:[],transactions:[],assets:[]};}
 export {WALLET_CHALLENGE_ID,completeWalletChallenge};
 export function initializeMirage(store){
+ if(isStory55(store.get()))return;
  const current=store.get();
  const missingStarter=['mc-arms-partner','mc-peer-crypt','mc-support-echo','mc-done-sable'].some(id=>!current.content.conversations.mirage.some(x=>x.id===id));
  const missingD05=(current.day>5||current.day===5&&current.clock>='20:00')&&!current.content.orders.some(x=>x.id===WALLET_CHALLENGE_ID);

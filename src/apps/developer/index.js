@@ -1,3 +1,4 @@
+import {story55Editor} from './features/story55/index.js';
 import {editableMoments} from '../wechat/features/moments/model.js';
 import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
 import {preview,updateTimelinePreview} from './features/preview/index.js';
@@ -18,10 +19,10 @@ import {conversations as allConversations,selectedConversation,actors,actorName,
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
 import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit,handleMomentsImport} from './features/moments/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[[['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音']]];
+const tabs=[[['story55','55天剧情树'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音']]];
 const attr=v=>esc(v);
 function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='story55'?story55Editor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(a==='character-upload-avatar'||a==='character-upload-cover'){

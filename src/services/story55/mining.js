@@ -1,0 +1,8 @@
+import {isStory55,completed} from './state.js';
+export const MINING_RATES=[.05,.08,.15,.3,.5,.8,1.2,2,3,5];
+export const MINING_COSTS=[5000,10000,20000,40000,80000,160000,320000,640000,1280000];
+const stamp=s=>(s.day-1)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3));
+export function installMining(s){if(!completed(s,'paris'))throw Error('尚未取得这套程序');if(s.story55.mining)return;if(s.bankData.balance<100000)throw Error('安装费用不足');s.bankData.balance-=100000;s.story55.mining={level:1,btc:0,lastMinute:stamp(s)};s.bankData.transactions.unshift({id:'s55-mining-install',label:'MINING PROGRAM',amount:-100000,time:s.clock});}
+export function accrueMining(s){const m=s.story55?.mining;if(!isStory55(s)||!m||s.story55.ended)return;const now=stamp(s);if(now<=m.lastMinute)return;const delta=now-m.lastMinute;m.btc+=delta/60*MINING_RATES[m.level-1];m.lastMinute=now;}
+export function upgradeMining(s){accrueMining(s);const m=s.story55.mining,cost=MINING_COSTS[m?.level-1];if(!m||cost===undefined)throw Error('不能继续升级');if(s.bankData.balance<cost)throw Error('余额不足');s.bankData.balance-=cost;m.level++;s.bankData.transactions.unshift({id:'s55-mining-level-'+m.level,label:'MINING UPGRADE',amount:-cost,time:s.clock});}
+export function sellMining(s){accrueMining(s);const m=s.story55.mining;if(!m||m.btc<=0)throw Error('没有可兑换BTC');const amount=Math.floor(m.btc*120000*100)/100;if(!amount)return;const sold=amount/120000;m.btc-=sold;s.bankData.balance+=amount;s.bankData.transactions.unshift({id:'s55-btc-'+(++s.story55.btcSales|| (s.story55.btcSales=1)),label:'BTC GAME EXCHANGE',amount,time:s.clock});}

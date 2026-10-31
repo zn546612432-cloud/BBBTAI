@@ -1,8 +1,9 @@
+import {isStory55,taiRecognized} from '../story55/state.js';
 import {isMirageAuthenticated} from '../../apps/mirage/session.js';
 import {actorName} from '../../editor/conversations/model.js';
 export const visibleMessages=c=>c.messages.filter(m=>!m.schedule||m.schedule.mode==='immediate'||m.delivery);
 export function isConversationOpen(s,channel,id){return s.unlocked&&(channel!=='mirage'||isMirageAuthenticated())&&s.nav.current.appId===channel&&s.nav.current.route==='/chat/'+id;}
-const enabled=(s,channel)=>channel!=='noapp'||s.day>=56;
+const enabled=(s,channel)=>channel!=='noapp'||taiRecognized(s);
 export class MessageDelivery {
  constructor(store){this.store=store;this.waiting=new Map();}
  tick(now=Date.now(),pageVisible=true){
