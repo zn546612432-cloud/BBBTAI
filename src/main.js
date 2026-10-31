@@ -45,6 +45,7 @@ const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
 if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
+let noticeSwipeAnimating=false;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
@@ -339,7 +340,7 @@ $('#root').addEventListener('contextmenu',e=>{
 });
 // Swipe left on a lock-screen or shade notification to dismiss; swipe up
 // on the compact banner to hide it without marking the message read.
-let noticeGesture=null,noticeSwipeAnimating=false;
+let noticeGesture=null;
 const noticeStart=(target,x,y)=>{
  const node=target.closest?.('.lock-notification,.shade-notification,#toast');
  if(!node)return;
