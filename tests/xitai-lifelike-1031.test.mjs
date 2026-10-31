@@ -1,3 +1,5 @@
+import {cropGeometry} from '../src/features/avatar-cropper/index.js';
+import {pressFeedback,releaseFeedback} from '../src/system/feedback/index.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -106,4 +108,25 @@ test('Sparse MiniMax voice tags enrich long speech without exposing tags to plai
  assert.ok(prepared.characterCount>53);
  assert.ok(prepared.tagCount>=1&&prepared.tagCount<=4);
  assert.match(prepared.text,/\((breath|exhale|inhale)\)/);
+});
+
+test('Avatar crop stays within image boundaries at 1:1 and 16:9 ratios',()=>{
+ const square=cropGeometry({imageWidth:1000,imageHeight:500,canvasWidth:512,canvasHeight:512,zoom:1,offsetX:99999,offsetY:500});
+ assert.equal(square.width,1024);
+ assert.equal(square.height,512);
+ assert.equal(square.x,0);
+ assert.equal(square.y,0);
+ const center=cropGeometry({imageWidth:1000,imageHeight:500,canvasWidth:512,canvasHeight:512,zoom:1});
+ assert.equal(center.x,-256);
+ const wide=cropGeometry({imageWidth:2000,imageHeight:1200,canvasWidth:1200,canvasHeight:675,zoom:1,offsetX:-200,offsetY:100});
+ assert.ok(wide.width>=1200&&wide.height>=675);
+ assert.ok(wide.x<=0&&wide.x+wide.width>=1200);
+ assert.ok(wide.y<=0&&wide.y+wide.height>=675);
+});
+test('Reusable recording feedback keeps pressed visuals without a vibration API',()=>{
+ const set=new Set(),element={classList:{add:x=>set.add(x),remove:x=>set.delete(x)}};
+ pressFeedback(element);
+ assert.equal(set.has('is-pressed'),true);
+ releaseFeedback(element,{cancel:true});
+ assert.equal(set.has('is-pressed'),false);
 });
