@@ -1,3 +1,4 @@
+import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
@@ -56,8 +57,8 @@ const toast=message=>{
  const appId=s.nav.current.appId;
  showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
 };
-let imageOptions={maxEdge:1200,quality:.82};
-const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82))};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
+let imageOptions={maxEdge:1200,quality:.82,cropAspect:0};
+const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82)),cropAspect:Number(options.cropAspect)||0};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 mountHoldToTalk($('#root'),ctx);
 function setShade({progress,settle=true}){
  const layer=$('#shade-layer');layer.classList.toggle('is-present',progress>0);layer.classList.toggle('is-dragging',!settle);layer.style.setProperty('--shade-progress',String(progress));layer.setAttribute('aria-hidden',String(progress===0));layer.inert=progress===0;
@@ -410,70 +411,27 @@ $('#root').addEventListener('focusin',e=>{
   if(store.get().unlocked&&store.get().nav.current.appId==='wechat')registry.get('wechat')?.dismissEmojiForKeyboard?.(e.target);
 });
 $('#root').addEventListener('change',e=>{if(!store.get().unlocked)return;const app=registry.get(store.get().nav.current.appId);if(app?.change)try{quietEditorUpdate=!!app.isTextEdit?.(e.target);app.change(e.target,ctx(),store.get().nav.current);}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
-$('#asset-picker').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file||!assetHandler)return;try{if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>15_000_000)throw Error('请选择小于 15MB 的 PNG、JPEG 或 WebP');const bitmap=await createImageBitmap(file),scale=Math.min(1,imageOptions.maxEdge/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();assetHandler(canvas.toDataURL('image/jpeg',imageOptions.quality),file.name);toast('图片已保存到本机');}catch(err){toast(err.message);}assetHandler=null;});
-mountViewport($('#phone'));
-setShade({progress:0});
-mountGestures($('#phone'),{
- state:()=>({home:store.get().unlocked&&store.get().nav.current.appId==='home',locked:!store.get().unlocked,shade,page:store.get().homePage||0}),
- page:({dx,velocity=0,cancel=false,settle})=>{
-  const track=$('#screen-layer .home-track');
-  if(!track){pagerBase=null;draggingHome=false;return;}
-  const width=track.parentElement.clientWidth||1,count=track.children.length||1;
-  // Start from where the track visually is, so grabbing it mid-animation does not jump.
-  if(pagerBase===null)pagerBase=new DOMMatrix(getComputedStyle(track).transform).m41;
-  const offset=dragOffset({base:pagerBase,dx,width,count});
-  if(!settle){
-   draggingHome=true;track.style.transition='none';track.style.transform=`translate3d(${offset}px,0,0)`;
-   const dots=$('#screen-layer .page-dots');if(dots){const near=nearestPage(offset,width,count);dots.querySelectorAll('button').forEach((dot,i)=>dot.classList.toggle('active',i===near));}
-   return;
+$('#asset-picker').addEventListener('change',async e=>{
+ const file=e.target.files?.[0],handler=assetHandler,opts={...imageOptions};
+ assetHandler=null;
+ if(!file||!handler)return;
+ try{
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>15_000_000)throw Error('请选择小于 15MB 的 PNG、JPEG 或 WebP');
+  const bitmap=await createImageBitmap(file);
+  if(opts.cropAspect){
+   openAvatarCropper({bitmap,aspect:opts.cropAspect,size:opts.maxEdge,quality:opts.quality,
+    onSave:data=>{handler(data,file.name);toast('裁剪图片已保存');},
+    onCancel:error=>{if(error)toast('无法保存裁剪图片：'+error.message);}});
+  }else{
+   const scale=Math.min(1,opts.maxEdge/Math.max(bitmap.width,bitmap.height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+   bitmap.close?.();
+   handler(canvas.toDataURL('image/jpeg',opts.quality),file.name);
+   toast('图片已保存到本机');
   }
-  const from=nearestPage(pagerBase,width,count),target=cancel?from:pageTarget({from,offset,velocity,width,count});
-  pagerBase=null;draggingHome=false;track.style.transition='';
-  store.update(s=>{s.homePage=target;});
-  // Patching the inline transform and transition in one frame suppresses the CSS
-  // transition in Safari. Animate from the actual finger release pixel position.
-  const settled=$('#screen-layer .home-track');
-  if(settled&&Math.abs(offset+target*width)>1&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-   settled.animate([
-    {transform:`translate3d(${offset}px,0,0)`},
-    {transform:`translate3d(${-target*width}px,0,0)`}
-   ],{duration:360,easing:'cubic-bezier(.2,.8,.22,1)'});
-  }
- },
- shade:setShade,
- goHome:({dy,settle,complete=false})=>{
-  const screen=$('#screen-layer'),status=$('#status-layer');
-  if(!settle){
-   const lift=Math.max(0,-dy),progress=Math.min(lift/360,1);
-   screen.style.transition='none';screen.style.transform=`translate3d(0,${-lift*.18}px,0) scale(${1-progress*.22})`;
-   screen.style.borderRadius=`${Math.round(progress*30)}px`;
-   screen.style.boxShadow=`0 ${12+progress*15}px ${progress*46}px #0005`;
-   screen.style.zIndex='3';
-   status.style.opacity=String(1-progress*.6);
-   return;
-  }
-  if(!complete){
-   screen.style.transition='transform 280ms cubic-bezier(.2,.85,.2,1.18), border-radius 280ms ease, box-shadow 280ms ease';
-   screen.style.transform='';screen.style.borderRadius='';screen.style.boxShadow='';screen.style.zIndex='';
-   status.style.transition='opacity 260ms ease';status.style.opacity='';
-   setTimeout(()=>{screen.style.transition='';status.style.transition='';},300);
-   return;
-  }
-  screen.style.transition='';screen.style.transform='';screen.style.borderRadius='';screen.style.boxShadow='';screen.style.zIndex='';status.style.opacity='';
-  if(dy<-195){tasks.show(store.get().nav.current);return;}
-  swipeHomeReturn=Math.max(0,-dy);router.home();
- },
- switcher:()=>tasks.show(store.get().nav.current),
- unlock:()=>{if(lockscreen.stage==='cover')requestUnlock();}
-});
-document.addEventListener('keydown',e=>{
-  if(store.get().deathPhase==='off'&&['Enter',' '].includes(e.key)){e.preventDefault();lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
-  if(!store.get().unlocked){
-    if(lockscreen.stage==='cover'&&['ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();requestUnlock();}
-    else if(/^\d$/.test(e.key)||['Backspace','Escape'].includes(e.key)){e.preventDefault();enterDigit(e.key==='Backspace'?'erase':e.key==='Escape'?'cancel':e.key);}
-    return;
-  }
-  if(e.key==='Escape'&&!e.target.closest('input,textarea,select'))shade?setShade({progress:0}):router.back();
+ }catch(err){toast(err.message);}
 });
 // A local deterministic preview reply, never a real AI or server presence event.
 setTimeout(()=>{processDemoReply(store);},2400);
