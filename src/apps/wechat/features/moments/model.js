@@ -1,4 +1,5 @@
 import {authoredMoments,profiles as originalProfiles} from './data.js';
+import {isStory55} from '../../../../services/story55/state.js';
 
 const BASE=Date.UTC(2025,4,19);
 export const momentPeople=Object.keys(originalProfiles);
@@ -11,7 +12,7 @@ export function editableMoments(s){
 }
 export function allMoments(s){
  const m=getMomentContent(s),deleted=new Set(m.deletedIds||[]);
- return [...authoredMoments.map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
+ return [...(isStory55(s)?[]:authoredMoments).map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
   .filter(p=>p&&p.id&&!deleted.has(p.id));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);
@@ -48,7 +49,7 @@ export function addGameMomentComment(s,id,text,to=null){
 export function exportMomentPackage(s){
  const m=getMomentContent(s);
  return {
-  schema:'bbbtai.wechat.moments/1',startDate:'2025-05-19',days:90,
+  schema:'bbbtai.wechat.moments/1',startDate:'2025-05-19',days:isStory55(s)?55:90,
   profiles:momentProfiles(s),
   posts:allMoments(s).map(p=>structuredClone(p)),
   overrides:{profiles:structuredClone(m.profiles||{}),editedPosts:structuredClone(m.editedPosts||{}),deletedIds:[...(m.deletedIds||[])],posts:structuredClone(m.posts||[])},
