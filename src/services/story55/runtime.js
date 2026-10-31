@@ -8,7 +8,7 @@ export function activateStory55(s){
  Object.assign(s,{day:1,clock:'08:00',calendar:{anchorDay:1,anchorDate:c.startDate},deathPhase:null,powerMode:'idle',poweredOff:false,emergencyCharge:false,batteryPercent:100,dayChargeRemainingMs:0,worldMinuteFraction:0,powerActiveMs:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,events:[],notifications:[],invitations:[],matches:[],storyChargeGates:[]});
  s.nav={current:{appId:'home',route:'/',params:{}},stack:[]};
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
- s.content.orders=[];s.content.mail=[];s.content.reminders=[];s.content.calendarEvents=[];
+ s.content.orders=[];s.content.mail=[];s.content.reminders=[];s.content.calendarEvents=[];s.content.moments=(s.content.moments||[]).filter(m=>m.sentDate&&m.sentDate<c.startDate);
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
  s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:c.economics.openingBalance,transactions:[]};
