@@ -1,5 +1,6 @@
 // Local-only AI gateway. Never publish this handler as an unauthenticated public API.
 import {normalizeTaiBehavior} from '../src/services/ai/behavior.js';
+import {deepseekModelOptions} from '../src/services/ai/model-config.js';
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
@@ -72,7 +73,7 @@ export async function handleAIGateway(req,res,pathname) {
       const relationshipContext=typeof payload.relationshipContext==='string'?payload.relationshipContext.slice(0,8000):'';
       const behavior=normalizeTaiBehavior(payload.behavior);
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
-        model:process.env.DEEPSEEK_MODEL||'deepseek-flash',
+        ...deepseekModelOptions(payload.model??process.env.DEEPSEEK_MODEL),
         messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages})},...messages],
         stream:false,max_tokens:4096,response_format:{type:'json_object'}
       });
