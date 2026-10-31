@@ -1,11 +1,12 @@
 import {restartDialog} from './restart/index.js';
 import {btn,esc,icon,timeLabel,demo} from './ui.js';
-import {registry,installed,homePages,dockApps} from './registry.js';
+import {registry,installed,homePages,dockApps,appUnlocked} from './registry.js';
 import {taiPresence} from '../services/presence.js';
 import {reminders} from '../services/reminders.js';
 import {storyDay,dateParts,dateLabel} from '../services/calendar.js';
 import {actors,isGroup} from '../editor/conversations/model.js';
 import {dynamicIsland} from './power/island.js';
+import {isStory55,story55Config,nodeStatus} from '../services/story55/state.js';
 const signal='<svg width="44" height="15" viewBox="0 0 44 15" fill="none" aria-hidden="true"><path d="M2 11v2m5-5v5m5-8v8m5-11v11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 5c4-4 10-4 14 0m-11 3c2-2 6-2 8 0m-4 3h.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 export const batteryLevel=s=>Math.max(0,Math.min(100,Number.isFinite(Number(s.batteryPercent))?Math.round(Number(s.batteryPercent)):82));
 const battery=s=>`<button class="status-battery${batteryLevel(s)<=20?' is-low':''}${['charging','sleeping'].includes(s.powerMode)?' is-charging':''}" data-action="power-open" aria-label="电量 ${batteryLevel(s)}%，查看充电"><span>${batteryLevel(s)}</span></button>`;
@@ -14,13 +15,14 @@ const notificationApp=(n)=>{
   return registry.get(id)?.manifest||registry.get('messages')?.manifest;
 };
 export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
-const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||m.unlockDay&&s.day<m.unlockDay)return '';return btn('open-app',`${icon(m,s)}<span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}"`);};
+const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';return btn('open-app',`${icon(m,s)}<span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}"`);};
 export function reminderWidget(s){
+  if(isStory55(s)){const pending=story55Config(s).nodes.filter(n=>nodeStatus(s,n.id).state==='ready');return `<section class="reminder-widget widget" aria-label="提醒事项表"><button class="reminder-widget-title" data-action="open-app" data-app="reminders"><span>提醒事项</span><span>${pending.length}<small> ›</small></span></button><div class="reminder-widget-list">${pending.slice(0,3).map(n=>`<button class="reminder-widget-row" data-action="s55-node" data-node="${n.id}"><i></i><span>${esc(n.title)}</span></button>`).join('')||'<span class="reminder-clear">当前没有待办事项</span>'}</div></section>`;}
   const items=reminders(s),pending=items.filter(r=>!r.done);
   return `<section class="reminder-widget widget" aria-label="提醒事项表"><button class="reminder-widget-title" data-action="open-app" data-app="reminders"><span>提醒事项</span><span>${pending.length}<small> ›</small></span></button><div class="reminder-widget-list">${pending.slice(0,3).map(r=>`<button class="reminder-widget-row" data-action="home-reminder-toggle" data-id="${esc(r.id)}" aria-label="标为完成：${esc(r.title)}"><i></i><span>${esc(r.title)}</span>${r.demo?demo():''}</button>`).join('')||`<span class="reminder-clear">${items.length?'今天的事项已完成':'暂无提醒事项'}</span>`}</div></section>`;
 }
 function homePage(s,page){const d=dateParts(s);return `<section class="home-page" data-key="page-${page}" ${page===(s.homePage||0)?'':'inert aria-hidden="true"'}>${page===0?`<div class="home-widgets"><button class="widget weather-widget" data-action="open-app" data-app="weather"><span class="widget-top">澳门 <span>☁</span></span><span class="widget-large">24°</span><span class="widget-foot">多云</span></button><button class="widget calendar-widget" data-action="open-app" data-app="calendar"><span class="widget-top">${d.weekday} <span>✧</span></span><span class="widget-large">${d.date}</span><span class="widget-foot">${d.year}年${d.month}月</span></button></div>`:page===1?reminderWidget(s):''}<div class="home-grid">${homePages[page].map(id=>entry(id,s)).join('')}</div><div class="home-spacer"></div></section>`;}
-export function home(s){const page=s.homePage||0;return `<div class="home-screen" data-view-key="home"><div class="home-top"><span class="eyebrow">距离 BIG DAY 还有 ${storyDay(s.day).remaining} 天</span><span class="small-day">${timeLabel(s)}</span></div><div class="home-pager"><div class="home-track" style="transform:translate3d(${-page*100}%,0,0)">${homePages.map((_,i)=>homePage(s,i)).join('')}</div></div><div class="page-dots">${homePages.map((_,i)=>btn('page','<i></i>',i===page?'active':'',`data-page="${i}" aria-label="第${i+1}页"`)).join('')}</div><div class="home-dock">${dockApps.map(id=>entry(id,s)).join('')}</div></div>`;}
+export function home(s){const page=s.homePage||0;return `<div class="home-screen" data-view-key="home"><div class="home-top"><span class="eyebrow">距离 BIG DAY 还有 ${storyDay(s.day,s).remaining} 天</span><span class="small-day">${timeLabel(s)}</span></div><div class="home-pager"><div class="home-track" style="transform:translate3d(${-page*100}%,0,0)">${homePages.map((_,i)=>homePage(s,i)).join('')}</div></div><div class="page-dots">${homePages.map((_,i)=>btn('page','<i></i>',i===page?'active':'',`data-page="${i}" aria-label="第${i+1}页"`)).join('')}</div><div class="home-dock">${dockApps.map(id=>entry(id,s)).join('')}</div></div>`;}
 export function lock(s,stage='cover',digits=''){
   if(stage==='restart')return restartDialog();
   const keypad=stage!=='cover';

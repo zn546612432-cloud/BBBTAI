@@ -1,3 +1,4 @@
+import {isStory55,taiRecognized} from '../story55/state.js';
 import {displayDate} from '../calendar.js';
 // Original game life, stable within each game day. No real-world event claims.
 // Keep a small authored itinerary rather than rerolling a new life every prompt.
@@ -11,9 +12,9 @@ const days=[
  {place:'英国住处',zone:'Europe/London',focus:'有自己的学习与理财安排，空下来会听音乐、找电影、聊朋友聚餐；不用强行聊研究'}
 ];
 export function taiLifeContext(s){
- if(s.day<56)return '';
+ if(!taiRecognized(s))return '';
  const routine=[days[0],days[1],days[2],days[6]];
- const plan=s.day===64?days[3]:s.day===65?days[4]:s.day===66?days[5]:routine[((s.day-56)%routine.length+routine.length)%routine.length];
+ const plan=isStory55(s)?(s.day>=43?{place:'巴黎酒店',zone:'Europe/Paris',focus:'学术会议期间，承接巴黎通话与见面约定，只有空闲时才聊生活，不预知后续危险结果'}:routine[s.day%routine.length]):s.day===64?days[3]:s.day===65?days[4]:s.day===66?days[5]:routine[((s.day-56)%routine.length+routine.length)%routine.length];
  // Game D01 = 2025-05-19. A Macau clock is not his local clock overseas.
  const [h,m]=String(s.clock||'00:00').split(':').map(Number);
  const instant=new Date(displayDate(s).getTime()+((h-8)*60+m)*60000);

@@ -1,3 +1,4 @@
+import {isStory55,taiRecognized} from '../../services/story55/state.js';
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
@@ -32,7 +33,7 @@ function recordCall(s,{direction,status,seconds=0,turns=[]}){
   chat.unread=Math.max(0,Number(chat.unread)||0)+1;
 }
 export function incomingCallBanner(s){
- if(call.state!=='ringing'||!s.unlocked||s.day<56)return '';
+ if(call.state!=='ringing'||!s.unlocked||!taiRecognized(s))return '';
  return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
    '<img class="tai-banner-avatar" src="'+esc(s.characterAvatars?.['熙泰']||AVATAR)+'" alt="">'+
    '<div class="tai-banner-info"><strong>陈熙泰</strong><small>NoApp · 语音来电</small></div>'+
@@ -96,7 +97,7 @@ export function callView(s){
    '</section>';
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
- if(ctx.store.get().day<56||['ringing','dialing','connected'].includes(call.state))return false;
+ if(!taiRecognized(ctx.store.get())||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
  call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,reason:/邀请你语音|语音通话/.test(preview)?'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事':preview};
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
@@ -178,7 +179,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
   const history=call.turns.slice(-20);
   const scene=callScene({opening,event,direction:call.direction,reason:call.reason});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
-  const data=event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,messages,outputMode:'call',scene,
+  const data=event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
    behavior:taiBehavior(ctx.store.get()),
    relationshipContext:xitaiRelationshipContext(ctx.store.get(),{mode:'call'}),
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
@@ -384,7 +385,7 @@ export async function toggleVoiceRecord(ctx){
 }
 export async function sendTaiTestVoice(ctx,{text,tone='dry'}={}){
  const s=ctx.store.get();
- if(s.day<56)throw Error('NoApp 语音测试需要 D56 之后');
+ if(!taiRecognized(s))throw Error('NoApp 语音测试需要 D56 之后');
  const body=readableTaiVoiceText(String(text||'').trim().slice(0,1200));
  if(!body)throw Error('语音台词不能为空');
  const clip=await voicePreview({text:body,tone});
