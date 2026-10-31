@@ -61,6 +61,9 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   if(!e.isPrimary||e.button!==0)return;
   if(e.pointerType==='touch'&&typeof window!=='undefined'&&'ontouchstart' in window)return;
   start(e.clientX,e.clientY,e.pointerId,'pointer',e.target,e.timeStamp);
+  // Prevent native text/image dragging before it can steal the pointer stream.
+  // We leave click events intact, and app inputs/scroll surfaces are excluded.
+  if(drag&&(drag.locked||drag.home||drag.shade))e.preventDefault();
  },{capture:true});
  root.addEventListener('pointermove',e=>{
   if(drag?.source!=='pointer'||drag.id!==e.pointerId)return;

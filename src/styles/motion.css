@@ -73,7 +73,7 @@
 @media(max-height:760px){.home-screen{padding-top:calc(73px + env(safe-area-inset-top,0px))}.lock-screen{padding-top:calc(78px + env(safe-area-inset-top,0px))}.home-top{margin-bottom:17px}.widget{height:116px}.home-widgets{margin-bottom:20px}.lock-passcode .lock-space{min-height:0}.passcode-panel{padding-bottom:8px}}
 @media(prefers-reduced-motion:reduce){.home-track,.shade{transition:none!important}}
 .app-dark .mirage-page,.app-dark .terminal-page{background:transparent}
-.home-screen,#status-layer,.app-nav,.shade{user-select:none;-webkit-user-select:none}
+.home-screen,.lock-screen,#status-layer,.app-nav,.shade{user-select:none;-webkit-user-select:none}
 .notification-open #status-layer{color:#f0f8ff}
 .passcode-panel{animation:keypad-appear .2s ease both}
 @keyframes keypad-appear{from{opacity:0}to{opacity:1}}

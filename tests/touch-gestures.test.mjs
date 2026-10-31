@@ -110,3 +110,13 @@ test('a missing release from a detached lock control cannot poison later home-pa
  assert.equal(out.pages.at(-1)?.dx,-240);
  assert.equal(out.pages.at(-1)?.settle,true);
 });
+
+test('mouse press suppresses native dragging on system surfaces while a plain tap remains clickable',()=>{
+ const {root}=phoneHarness({locked:false,home:true,shade:false,page:0});
+ const event={isPrimary:true,button:0,pointerType:'mouse',pointerId:7,clientX:190,clientY:400,target:{closest:()=>null}};
+ assert.equal(root.dispatch('pointerdown',event).prevented,true);
+ root.dispatch('pointerup',event);
+ assert.equal(root.dispatch('click',{}).prevented,undefined);
+ const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
+ assert.match(css,/\.home-screen,\.lock-screen,#status-layer[^}]*user-select:none/);
+});
