@@ -1,3 +1,4 @@
+import {editableMoments} from '../wechat/features/moments/model.js';
 import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
 import {preview,updateTimelinePreview} from './features/preview/index.js';
 import {aiVoicePanel,handleAIVoice,submitAIVoice} from './features/ai-voice/index.js';
@@ -23,6 +24,14 @@ function nav(route){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`
 export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route)}${route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(a==='character-upload-avatar'||a==='character-upload-cover'){
+  const name=t.dataset.name,type=a==='character-upload-avatar'?'avatar':'cover';
+  ctx.pickImage(src=>store.update(s=>{
+   if(type==='avatar'){s.characterAvatars??={};s.characterAvatars[name]=src;}
+   if(name!=='熙泰'){const m=editableMoments(s);m.profiles[name]??={};m.profiles[name][type]=src;}
+  }),{maxEdge:type==='avatar'?560:1200,quality:.86});
+  return;
+ }
  if(handleMoments(a,t,ctx))return;
  if(a.startsWith('mission-')&&missionAction(a,t,ctx))return;
  if(a.startsWith('ai-')){handleAIVoice(a,t,ctx);return;}

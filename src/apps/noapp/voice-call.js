@@ -27,12 +27,20 @@ function recordCall(s,{direction,status,seconds=0}){
 export function incomingCallBanner(s){
  if(call.state!=='ringing'||!s.unlocked||s.day<56)return '';
  return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
-   '<img class="tai-banner-avatar" src="'+AVATAR+'" alt="">'+
+   '<img class="tai-banner-avatar" src="'+esc(s.characterAvatars?.['熙泰']||AVATAR)+'" alt="">'+
    '<div class="tai-banner-info"><strong>陈熙泰</strong><small>NoApp · 语音来电</small></div>'+
    '<button type="button" class="tai-banner-decline" data-action="tai-banner-decline" aria-label="拒绝来电">'+glyph.hang+'</button>'+
    '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
 }
 let playback=null;
+let messagePlayback=null,voicePlaylistToken=0,pausedForMicrophone=false;
+function suspendVoicesForCapture(){
+ if(messagePlayback&&!messagePlayback.paused){pausedForMicrophone=true;messagePlayback.pause();}
+}
+function resumeVoicesAfterCapture(){
+ if(pausedForMicrophone&&messagePlayback){pausedForMicrophone=false;messagePlayback.play().catch(()=>{});}
+}
+
 const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
 const AVATAR_SOURCE='/assets/tai-portrait.svg';
 const glyph={
@@ -52,7 +60,7 @@ function duration(){
  const sec=Math.floor((Date.now()-call.started)/1000);
  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
 }
-export function callView(){
+export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
  const subtitle=ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
  const controls=ring?
@@ -73,7 +81,7 @@ export function callView(){
    '<button type="button" data-action="tai-expand" aria-label="查看或收起通话文字">'+glyph.layout+'</button>'+
    '<span class="tai-call-channel">NOAPP · AUDIO</span>'+
    '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
-   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+AVATAR+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
+   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
    liveCaptions+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
    '</section>';
@@ -153,7 +161,7 @@ async function generateTurn(ctx,{opening=false,text=''}={}){
   const data=await askTai({channel:'noapp',day:requestDay,messages,profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
   if(call.sessionId!==sessionId||call.state!=='connected')return;
   const replies=unpackTaiReply(data,'noapp');
-  const completeSpeech=replies.map(x=>x.text.trim()).filter(Boolean).join(' ');
+  const completeSpeech=replies.map(x=>(x.speechText||x.text).trim()).filter(Boolean).join(' ');
   if(!completeSpeech)throw Error('熙泰暂时没有回应');
   for(const r of replies)call.turns.push({role:'assistant',content:r.text});
   call.lastSpeech=completeSpeech;ctx.refresh();
@@ -206,6 +214,9 @@ export function callAction(action,ctx){
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
+  // iOS lowers or interrupts remote audio when a new mic audio session opens.
+  // Keep the call half-duplex: no microphone capture until Xitai finishes.
+  if(call.busy||playback&&!playback.paused){ctx.toast('等熙泰说完，再按麦克风。');return true;}
   if(call.muted){ctx.toast('解除静音后再说话');return true;}
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!Speech){
@@ -248,6 +259,7 @@ async function beginVoiceRecording(ctx){
  voicePermissionPending=true;
  let stream;
  try{
+  suspendVoicesForCapture();
   // Called directly from pointerdown, before any delay or re-render, so iOS
   // can associate the permission request with the player's real gesture.
   stream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -260,6 +272,7 @@ async function beginVoiceRecording(ctx){
   recorder.onstop=async()=>{
    clearTimeout(current.timer);
    stream.getTracks().forEach(track=>track.stop());
+   resumeVoicesAfterCapture();
    if(recording===current)recording=null;
    if(current._cancelled)return;
    try{
@@ -284,7 +297,7 @@ async function beginVoiceRecording(ctx){
   recorder.start(250);
   current.timer=setTimeout(()=>stopVoiceRecording({cancel:false}),25000);
   return current;
- }catch(e){stream?.getTracks().forEach(track=>track.stop());throw e;}
+ }catch(e){stream?.getTracks().forEach(track=>track.stop());resumeVoicesAfterCapture();throw e;}
  finally{voicePermissionPending=false;}
 }
 function stopVoiceRecording({cancel=false}={}){
@@ -302,9 +315,39 @@ export async function toggleVoiceRecord(ctx){
  await beginVoiceRecording(ctx);
 }
 export async function playVoiceMessage(id,ctx){
- const blob=await loadClip(id);if(!blob)throw Error('找不到本机语音文件');
- if(playback){playback.pause();URL.revokeObjectURL(playback.src);}
- playback=new Audio(URL.createObjectURL(blob));try{await playback.play();}catch(e){ctx.toast('点击播放按钮后重新试试：'+e.message);}
+ const c=ctx.store.get().content.conversations.noapp?.find(c=>c.id==='tai');
+ const list=c?.messages||[],index=list.findIndex(m=>(m.audioId||m.id)===id);
+ const selected=list[index];
+ const queue=selected?.from==='tai'?
+   list.slice(index).filter(m=>m.from==='tai'&&(m.kind==='voice'||m.voiceRequested)):[selected].filter(Boolean);
+ const token=++voicePlaylistToken;
+ if(messagePlayback){messagePlayback.pause();if(messagePlayback.src.startsWith('blob:'))URL.revokeObjectURL(messagePlayback.src);}
+ messagePlayback=new Audio();
+ messagePlayback.preload='auto';
+ // Reuse a single audio element: after the initial tap, sequential play is
+ // much more reliable on iOS than creating three new autoplay elements.
+ for(const m of queue){
+  if(token!==voicePlaylistToken)break;
+  let blob=await loadClip(m.audioId||m.id);
+  if(!blob&&m.voiceRequested){
+   for(let wait=0;wait<35&&!blob&&token===voicePlaylistToken;wait++){
+    await new Promise(resolve=>setTimeout(resolve,240));
+    blob=await loadClip('tai-'+m.id);
+   }
+  }
+  if(!blob){if(m===selected)ctx.toast('语音尚未准备好');continue;}
+  const url=URL.createObjectURL(blob);
+  messagePlayback.src=url;
+  try{
+   await messagePlayback.play();
+   await new Promise(resolve=>{
+    const finish=()=>{messagePlayback?.removeEventListener('ended',finish);messagePlayback?.removeEventListener('error',finish);resolve();};
+    messagePlayback.addEventListener('ended',finish,{once:true});
+    messagePlayback.addEventListener('error',finish,{once:true});
+   });
+  }catch(e){ctx.toast('点击语音后重试：'+e.message);break;}
+  finally{URL.revokeObjectURL(url);}
+ }
 }
 export async function convertTaiTextToVoice(ctx,id){
  const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai'),m=c?.messages.find(x=>x.id===id);

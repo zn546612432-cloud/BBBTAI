@@ -4,11 +4,12 @@ const compatible=(a,b)=>a&&a.nodeType===b.nodeType&&(a.nodeType!==1||a.tagName==
 export function patchElement(old,fresh){
  if(old.nodeType===3){if(old.nodeValue!==fresh.nodeValue)old.nodeValue=fresh.nodeValue;return;}
  if(old.nodeType!==1)return;
+ const storyAnimating=old.hasAttribute('data-story-type')&&old.getAttribute('data-story-type')===fresh.getAttribute('data-story-type')&&old.getAttribute('data-story-stage')===fresh.getAttribute('data-story-stage');
  for(const a of [...old.attributes])if(!fresh.hasAttribute(a.name))old.removeAttribute(a.name);
  for(const a of fresh.attributes)if(old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);
  const focused=old===old.ownerDocument.activeElement;
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
- if(old.tagName==='INPUT'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
+ if(old.tagName==='INPUT'){if(!focused&&!storyAnimating&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
  patchChildren(old,[...fresh.childNodes]);
  if(old.tagName==='SELECT'&&!focused)old.value=fresh.value;
 }

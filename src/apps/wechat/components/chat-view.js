@@ -20,7 +20,7 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
 
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
-const portrait=name=>'<span class="wx-message-avatar"><img src="'+esc(resolveWeChatAvatar(name))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
+const portrait=(name,s)=>'<span class="wx-message-avatar"><img src="'+esc(s.characterAvatars?.[name]||s.characterAvatars?.[name==='哥'?'熙旺':name]||resolveWeChatAvatar(name))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
 const action=(name,title,icon)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'">'+icon+'</button>';
 const voiceIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M9 11v6m3-8c3 2.6 3 7.4 0 10m3-13c4.8 4.5 4.8 11.5 0 16"/></svg>';
 const plusIcon='<svg width="29" height="29" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 8v12M8 14h12"/></svg>';
@@ -52,7 +52,7 @@ function messageRow(m,s,c){
     m.kind==='app_invitation'?invite(m,s,c):esc(m.text);
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
-    portrait(name)+'<div class="wx-message-body">'+
+    portrait(name,s)+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
     (media?historicalMediaBubble(media,m,s):'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
     '</div></div>';

@@ -25,7 +25,10 @@ function synthesizeVoiceNotes(store,jobs){
      if(m){m.kind='voice';m.audioId=audioId;m.voiceCaption=job.text;
        delete m.voiceRequested;}
     });
-   }catch(error){console.warn('MiniMax voice failed; text remains:',error?.message);}
+   }catch(error){
+    console.warn('MiniMax voice failed; text remains:',error?.message);
+    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;}});
+   }
   }
  };
  // A rejection must not poison subsequent voice synthesis.
@@ -75,7 +78,7 @@ export async function replyToTaiMessage(store,sourceMessageId){
    if(item.mode==='voice'){
     // Queue TTS in its own chain so three voice messages do not create three
     // simultaneous MiniMax calls. Failed audio leaves the written bubble.
-    voiceJobs.push({id,text:item.text,tone:item.tone,day:initial.day});
+    voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    }
    if(entries.length>1)await new Promise(resolve=>setTimeout(resolve,420+Math.random()*460));
   }

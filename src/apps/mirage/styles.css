@@ -25,3 +25,5 @@
 .mc-login>.mc-signup-warning{position:absolute;top:57%;left:8%;width:84%;z-index:10;padding:5px 3px;background:#072e2bda;color:#ff8d8d;font:800 10px/1.4 Arial,sans-serif;letter-spacing:.25px;text-align:center;text-shadow:0 0 4px #ff4343;opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .3s ease,transform .3s ease}
 .mc-login>.mc-signup-warning.is-visible{opacity:1;transform:translateY(0)}
 .mc-mail-notice>strong{font-size:17px;color:#d7ebc4}.mc-mail-notice .mc-dialog-buttons>button{flex:1;font-size:9px;letter-spacing:0}
+
+.mc-contact .mc-unread-green{display:inline-block;width:7px;height:7px;border-radius:50%;background:#90e0a5;vertical-align:middle;margin-right:5px;box-shadow:0 0 10px #77db9a88}

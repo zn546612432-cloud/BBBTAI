@@ -18,7 +18,7 @@ export function deliverTaiChessInvite(s,slot=nextScheduledTaiInvite(s)){
  if(!slot)return false;
  const id='tai-chess-story-'+(slot.index+1);
  if(s.invitations.some(i=>i.id===id))return false;
- s.invitations.push({id,senderId:'tai',recipientId:'player',source:'story-invitation',status:'pending',createdDay:s.day,expiresDay:Math.min(89,s.day+7),matchId:null});
+ s.invitations.push({id,senderId:'tai',recipientId:'player',source:'story-invitation',status:'pending',createdDay:s.day,createdClock:s.clock,expiresDay:Math.min(89,s.day+7),matchId:null});
  const c=s.content.conversations.noapp.find(c=>c.id==='tai');
  if(c){
   c.messages.push({id:'tai-invite-note-'+(slot.index+1),from:'tai',text:slot.text,day:s.day,time:s.clock,kind:'text',storyImported:true,actual:true});
