@@ -102,6 +102,6 @@ test('local call gateway forwards voice mode, relationship context and configura
   assert.equal(r.status,200);const prompt=seen.messages[0].content;
   assert.match(prompt,/语音世界书 3.0-若要大声嘶喊出爱的话/);
   assert.match(prompt,/熙蒙亲口说过的具体约定/);assert.match(prompt,/电话测试事件/);
-  assert.match(prompt,/一次允许1—4条独立消息/);assert.match(prompt,/展开表达/);
+  assert.match(prompt,/一次允许1—4条独立消息/);assert.match(prompt,/2至5条/);
  });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
 });
