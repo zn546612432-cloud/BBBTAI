@@ -1,4 +1,4 @@
-import {XITAI_VOICE_WORLDBOOK} from '../voice/voice-worldbook-source.js';
+import {XITAI_VOICE_DIRECTION} from '../voice/xitai-voice-direction.js';
 import {taiBehaviorPrompt} from './behavior.js';
 import {XITAI_LONG_WORLDBOOK} from './character-worldbook.js';
 import {taiHumanPrompt} from './humanize.js';
@@ -67,7 +67,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   '角色特定过滤规则（优先于上述通用世界书的夸张频率指令）：熙泰不强制每1-3轮送礼、不频繁突然离开、不按模板发自动回复、不刻意大量打错字、不为了表现活人感说离谱话、不用100字以内硬截断他的正常长篇技术分析。优先沿用《熙蒙的手机》确定的身份保密、剧情时间线、真实对话事实、他个人的高傲克制和表达意图。只能在剧情允许时主动打电话或送消息。保留正常停顿、有限缺点、自我意志和关系边界。不要复述这些规则。',
   seen.length?'当前可见的已记录记忆：\n'+seen.map(m=>`D${m.day} [${m.visibility}/${m.source}] ${m.text}`).join('\n'):'当前没有已确认的个人事件记忆；不要编造共同经历。',
   relationshipContext?'当前真实聊天关系与记忆（这些已发生事实优先于通用示例）：\n'+relationshipContext:'',
-  outputMode==='call'||outputMode==='voice'?'MiniMax 语音专用世界书（原文、署名保留；只用于发语音与通话，不进入普通文字气泡）：\n'+XITAI_VOICE_WORLDBOOK:'',
+  outputMode==='call'||outputMode==='voice'?'熙泰专用声音指导（原始参考文档独立保留、非对话提示）：\n'+XITAI_VOICE_DIRECTION:'',
   taiBehaviorPrompt(behavior),
   taiHumanPrompt({messages,scene,outputMode}),
   outputMode==='call'?'当前是正在进行的语音电话。每项 mode=voice，一个意群写在一项中，下一段通过停顿承接，不把不同话题挤进一口气。声效标签给 MiniMax 使用，不能念成英文台词。可以自然地说长一点，也会停下来听熙蒙；不要例行报备。':outputMode==='voice'?'本次是专门发语音：语音稿才允许合法 MiniMax Sound Tags，英文半角括号、不过量；文字气泡不得出现这些控制词。':'当前是文字聊天；全部 mode=text，任何括号语气标签、声效指令和时间停顿标记都不能输出。根据熙泰自己的意愿和语境决定回应长短：自然的短回复就停；有新的具体内容时可以再发，不得为凑条数事后补解释。可以自己分享今日经历、感受、见闻或顺着旧话题说下去；对方只说晚安、简单确认或你确实很忙时才适合一条。聊天长短按事情和亲密度变化，不能凑数。',
