@@ -1,11 +1,12 @@
+import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
-import {receiveInvitation,deferInvitation,startAcceptedInvitation} from '../../services/invitations.js';
+import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
 import {apiConfig,saveApiConfig,clearApiConfig,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
-import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice} from './voice-call.js';
+import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice} from './voice-call.js';
 
 export const manifest={id:'noapp',name:'NoApp',icon:12,unlockDay:56,defaultRoute:'/',supportsDeepLink:true,kicker:'PRIVATE CHANNEL'};
 let taiFeedback='',pendingTai=null;
@@ -33,6 +34,12 @@ const setting=(s)=>{
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
+ +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
+ +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
+ +'<div class="tai-test-actions"><button type="button" data-action="tai-test-incoming">模拟熙泰来电</button><button type="button" data-action="tai-outgoing">给熙泰打电话</button></div>'
+ +'<label>测试语音台词<textarea name="testSpeech" rows="3" placeholder="例如：嗯？你还没睡？">'+esc(settingsDraft.testSpeech||'嗯？你还没睡？我还以为你终于肯休息了。')+'</textarea></label>'
+ +'<label>语音情绪<select name="testTone">'+['neutral','dry','playful','soft','serious'].map(v=>'<option value="'+v+'"'+(settingsDraft.testTone===v?' selected':'')+'>'+v+'</option>').join('')+'</select></label>'
+ +'<button type="button" data-action="tai-test-voice">让熙泰发语音</button></section>'
  +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/ai/character-worldbook.js" target="_blank" rel="noopener noreferrer">阅读熙泰完整人物世界书</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
 };
 export function render({store},loc){
@@ -56,6 +63,20 @@ export async function handle(action,target,ctx){
  if(action==='attach-chat')attachChat(id,'noapp',ctx);
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
  if(action==='tai-clear-ai'){settingsDraft={};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
+ if(action==='tai-force-online'){
+  setTaiForcedOnline(!taiForcedOnline());ctx.refresh();
+  ctx.toast(taiForcedOnline()?'已为本标签页强制在线':'已恢复正常在线时间');
+  return;
+ }
+ if(action==='tai-test-voice'){
+  const box=target.closest('.tai-api-setup');
+  const message=box?.querySelector('[name="testSpeech"]')?.value?.trim();
+  const tone=box?.querySelector('[name="testTone"]')?.value||'neutral';
+  if(!message){ctx.toast('请填写测试语音台词');return;}
+  await sendTaiTestVoice(ctx,{text:message,tone});
+  ctx.toast('熙泰的测试语音已发送到 NoApp');
+  return;
+ }
  if(action==='tai-outgoing')startOutgoing(ctx);
  if(action==='tai-test-incoming')startIncoming(ctx);
  if(action==='tai-record'&&target.dataset.hold!=='true')await toggleVoiceRecord(ctx);
@@ -65,7 +86,7 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-ai'){
   const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
@@ -78,4 +99,4 @@ export function mountCallEvents({store}){
 }
 
 /** Persist API input values in memory while the Safari software keyboard is open. */
-export function input(t){if(t.closest?.('[data-form="tai-save-ai"]')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.value;}
+export function input(t){if(t.closest?.('.tai-api-setup')&&t.name&&t.name!=='voiceId')settingsDraft[t.name]=t.value;}
