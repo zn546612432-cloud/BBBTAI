@@ -1,5 +1,6 @@
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config} from './config.js';
+import {ensureNativeMirage55} from '../../apps/mirage/data.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
@@ -82,7 +83,9 @@ export function sendQuestion55(s){
 export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/story55/questions',params:{}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:{appId:'calendar',route:'/story55/scene',params:{node:id}}};return map[n.kind];}
 export function tickStory55(s){
- if(!isStory55(s)||final55(s))return;
+ if(!isStory55(s))return;
+ ensureNativeMirage55(s);
+ if(final55(s))return;
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
@@ -90,10 +93,8 @@ export function tickStory55(s){
   s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
- for(const n of c.nodes){
-  if(s.day<n.day)continue;
-  if(!s.content.calendarEvents.some(e=>e.id==='s55-event-'+n.id)&&n.kind==='scene'&&!['recognition','ending'].includes(n.id))s.content.calendarEvents.push({id:'s55-event-'+n.id,title:n.title,startDate:date55(n.day),endDate:date55(n.day),startTime:'20:00',endTime:'21:00',notes:n.title,color:'mint',storyNode:n.id});
- }
+ // Previous prototype inserted every scene as a Calendar event. Never do that.
+ s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));
  // Daily cost uses plot dates, not wall-clock time. Insufficient cash becomes a visible liability.
  for(let day=14;day<=s.day;day++)if(!s.story55.expenseDays.includes(day)){
   const cost=c.economics.dailyExpense,paid=Math.min(Math.max(0,s.bankData.balance),cost);s.bankData.balance-=paid;s.story55.livingDebt+=cost-paid;s.story55.expenseDays.push(day);
