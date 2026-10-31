@@ -37,8 +37,8 @@ export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
-export async function askTai({channel,day,messages,profile,memories}){
- const c=apiConfig(),req={channel,day,messages,profile,memories};
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext=''}){
+ const c=apiConfig(),req={channel,day,messages,profile,memories,outputMode,scene,relationshipContext};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const {buildTaiPrompt}=await import('./tai-profile.js');
  const system=buildTaiPrompt(req);
@@ -59,11 +59,11 @@ export async function askTai({channel,day,messages,profile,memories}){
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
-export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=1,tone='neutral'}){
+export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
- const prepared=prepareXitaiSpeech(text,{tone,autoTags:false});
+ const prepared=prepareXitaiSpeech(text,{tone,autoTags:true});
  text=prepared.text;
- speed=Number.isFinite(Number(speed))?Math.max(0.88,Math.min(1.08,Number(speed))):1;
+ speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.88,Math.min(1.08,Number(speed))):Math.max(0.88,Math.min(1.08,prepared.speed));
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed})});}

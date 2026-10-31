@@ -48,11 +48,11 @@ export function prepareXitaiSpeech(text,{tone='neutral',autoTags=true}={}){
  if(!result)return {text:'',speed:mood.speed,emotion:mood.emotion};
  const originalNoTags=result.replace(/\([a-z-]+\)/gi,'');
  const charCount=originalNoTags.length;
- const budget=Math.min(Math.max(1,Math.ceil(charCount/31)),Math.max(1,Math.floor(charCount/25)+1),8);
+ const budget=Math.min(Math.max(1,Math.ceil(charCount/65)),4);
  // BRE-01/05/07: semantic breathing only in sufficiently long lines.
  // 2.8 has native sound tags, but (gasps) is the supported spelling.
  const seed=hash(result+tone);
- if(autoTags&&charCount>31&&countTags(result)<budget){
+ if(autoTags&&charCount>53&&countTags(result)<budget&&!/\(breath\)|\(inhale\)|\(exhale\)/.test(result)){
   result=insertBreath(result, charCount>85&&seed%3===0?'exhale':'breath');
  }
  // B4 / light scoffing, when the sentence actually sounds teasing.

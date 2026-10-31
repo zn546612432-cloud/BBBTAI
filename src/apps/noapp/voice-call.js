@@ -1,3 +1,5 @@
+import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
+import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
@@ -148,17 +150,23 @@ async function playCallAudio(ctx,blob,sessionId){
   }
  }
 }
-async function generateTurn(ctx,{opening=false,text=''}={}){
+async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}={}){
  if(call.state!=='connected'||call.busy)return;
  const sessionId=call.sessionId;
  const requestDay=ctx.store.get().day;
- if(!opening&&!String(text).trim())return;
- if(!opening)call.turns.push({role:'user',content:String(text).trim()});
+ if(!opening&&!event&&!String(text).trim())return;
+ if(!opening&&!event){call.turns.push({role:'user',content:String(text).trim()});call.lastPlayerAt=Date.now();call.nudgeCount=0;}
  call.busy=true;markTaiEngaged();ctx.refresh();
  try{
   const history=call.turns.slice(-20);
-  const messages=opening?[...history,{role:'user',content:'[通话系统事件：语音电话刚接通。请由你先主动自然地说第一句话，不要反问我是系统，没有必要问候式客服套话。可以按关系和当前话题选择短句，偶尔非常自然地夹入一个简短葡语词。只生成熙泰的台词。]'}]:history;
-  const data=await askTai({channel:'noapp',day:requestDay,messages,profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
+  const scene=opening?'电话刚接通。你要主动开口，可以带一点忙碌、轻嘲或亲密；不是客服式问候。':
+    event==='nudge'?'你已经说完上一段，熙蒙在电话另一端安静了很久。你可以困惑地问他怎么不说话、是否在忙或是否睡着了，但不要永远耐心等待。':
+    event==='closing'?'电话里仍然很安静，你可以说自己困了、还要忙或者先挂电话。语气要贴合熙泰，不要长篇解释。':
+    '熙蒙刚在电话里讲了话，请依据关系和前文自然回应，不要只机械地答一问一答。';
+  const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
+  const data=await askTai({channel:'noapp',day:requestDay,messages,outputMode:'call',scene,
+   relationshipContext:xitaiRelationshipContext(ctx.store.get(),{mode:'call'}),
+   profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
   if(call.sessionId!==sessionId||call.state!=='connected')return;
   const replies=unpackTaiReply(data,'noapp');
   const completeSpeech=replies.map(x=>(x.speechText||x.text).trim()).filter(Boolean).join(' ');
@@ -171,7 +179,30 @@ async function generateTurn(ctx,{opening=false,text=''}={}){
   if(call.sessionId!==sessionId||call.state!=='connected')return;
   await playCallAudio(ctx,blob,sessionId);
  }catch(e){if(call.sessionId===sessionId&&call.state==='connected')ctx.toast('通话 AI：'+e.message);}
- finally{if(call.sessionId===sessionId){call.busy=false;if(call.state==='connected')ctx.refresh();}}
+ finally{
+  if(call.sessionId===sessionId){
+   call.busy=false;
+   call.lastTaiEndAt=Date.now();
+   if(call.state==='connected'){
+    if(endAfter)callAction('tai-hangup',ctx);
+    else ctx.refresh();
+   }
+  }
+ }
+}
+export function nextCallIdleEvent(snapshot,now=Date.now()){
+ if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||!snapshot.lastTaiEndAt)return '';
+ const silence=now-snapshot.lastTaiEndAt;
+ if(snapshot.nudgeCount===0&&silence>=45000)return 'nudge';
+ if(snapshot.nudgeCount===1&&silence>=125000)return 'closing';
+ return '';
+}
+export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
+ const event=nextCallIdleEvent(call,now);
+ if(!event)return false;
+ call.nudgeCount=event==='nudge'?1:2;
+ void generateTurn(ctx,{event,endAfter:event==='closing'});
+ return true;
 }
 async function respond(text,ctx){return generateTurn(ctx,{text});}
 function startGreeting(ctx){
@@ -314,6 +345,22 @@ export async function toggleVoiceRecord(ctx){
  if(recording?.kind==='message'){stopVoiceRecording();return;}
  await beginVoiceRecording(ctx);
 }
+export async function sendTaiTestVoice(ctx,{text,tone='dry'}={}){
+ const s=ctx.store.get();
+ if(s.day<56)throw Error('NoApp 语音测试需要 D56 之后');
+ const body=String(text||'').trim().slice(0,1200);
+ if(!body)throw Error('语音台词不能为空');
+ const clip=await voicePreview({text:body,tone});
+ const id='tai-voice-preview-'+uid(),audioId='tai-'+id;
+ await saveClip(audioId,clip);
+ ctx.store.update(state=>{
+  const c=state.content.conversations.noapp?.find(c=>c.id==='tai');
+  if(!c)return;
+  c.messages.push({id,from:'tai',kind:'voice',text:body,voiceCaption:body,audioId,
+   day:state.day,time:state.clock,sentDate:dateParts(state).iso,actual:true,aiGenerated:true,testOnly:true});
+ });
+ return id;
+}
 export async function playVoiceMessage(id,ctx){
  const c=ctx.store.get().content.conversations.noapp?.find(c=>c.id==='tai');
  const list=c?.messages||[],index=list.findIndex(m=>(m.audioId||m.id)===id);
@@ -372,6 +419,7 @@ export function mountHoldToTalk(root,makeContext){
   if(active===token)active=null;
   if(token.ready){stopVoiceRecording({cancel});}
   else token.cancel=cancel;
+  releaseFeedback(token.target,{cancel});
   hide();
  }
  root.addEventListener('pointerdown',e=>{
@@ -379,24 +427,29 @@ export function mountHoldToTalk(root,makeContext){
   if(!target||!target.closest('.app-noapp')||active||recording||voicePermissionPending)return;
   if(e.pointerType==='mouse'&&e.button!==0)return;
   e.preventDefault();
-  const ctx=makeContext(),token={pointerId:e.pointerId,startY:e.clientY,startX:e.clientX,started:Date.now(),ready:false,done:false,cancel:false};
+  const ctx=makeContext(),token={pointerId:e.pointerId,startY:e.clientY,startX:e.clientX,started:Date.now(),ready:false,done:false,cancel:false,target};
+  pressFeedback(target);
   active=token;
   try{target.setPointerCapture(e.pointerId);}catch{}
   show();
   // getUserMedia begins synchronously inside this trusted pointer event.
   void beginVoiceRecording(ctx).then(()=>{
    token.ready=true;
+   impact('success');
    if(token.done)stopVoiceRecording({cancel:token.cancel});
    else if(active===token)show();
   }).catch(err=>{
    if(!token.done)ctx.toast(err.message||'麦克风不可用');
    if(active===token)active=null;
+   releaseFeedback(token.target,{cancel:true});
    hide();
   });
  },true);
  root.addEventListener('pointermove',e=>{
   const t=active;if(!t||t.pointerId!==e.pointerId)return;
+  const was=t.cancel;
   t.cancel=e.clientY<t.startY-75;
+  if(t.cancel&&!was)impact('cancel');
   overlay()?.classList.toggle('is-cancel-gesture',t.cancel);
  },true);
  function release(e,forceCancel=false){
