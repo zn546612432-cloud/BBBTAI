@@ -2,7 +2,10 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 
 const root=path.resolve('src/story/presets/days');
-const manifest=JSON.parse(await readFile(path.join(root,'manifest.json'),'utf8'));
+let manifest;
+try{manifest=JSON.parse(await readFile(path.join(root,'manifest.json'),'utf8'));}
+catch(error){if(error.code!=='ENOENT')throw error;console.log('Incomplete static test fixture: historical bundle skipped.');}
+if(manifest){
 if(manifest.format!=='ximeng-preset-manifest-v1'||!Array.isArray(manifest.files))throw Error('Invalid preset manifest');
 const packs=[];
 let count=0;
@@ -21,3 +24,5 @@ const target='dist/src/story/presets/days/pre-d01-wechat.json';
 await mkdir(path.dirname(target),{recursive:true});
 await writeFile(target,JSON.stringify(bundle));
 console.log('Bundled '+count+' pre-D01 WeChat messages from '+packs.length+' historical packs.');
+
+}
