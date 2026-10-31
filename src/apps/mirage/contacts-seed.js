@@ -1,3 +1,4 @@
+import {markOuroborosWon} from './ouroboros-flow.js';
 // Additive, player-editable MIRAGE history. No real malware instructions.
 export const WALLET_CHALLENGE_ID='mirage-ouroboros-10btc-d05';
 const msg=(id,from,text,day,time)=>({id,from,text,day,time,kind:'text',storyImported:true});
@@ -45,48 +46,10 @@ export function ensureMirageStory(s){
  s.content.conversations??={};
  const list=s.content.conversations.mirage??=[];
  for(const c of starterContacts)if(!list.some(x=>x.id===c.id))list.push(structuredClone(c));
- if(s.day>=5){
+ if(s.day>5||(s.day===5&&s.clock>='20:00')){
   if(!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))s.content.orders.push({...walletChallenge});
   // The anonymous founder does not message Ximeng until the challenge is WON.
   if(s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')&&!list.some(c=>c.id===ouroborosContact.id))list.push(structuredClone(ouroborosContact));
  }
 }
-export function completeWalletChallenge(s){
- if(s.day<5)throw Error('悬赏在 D05 才出现');
- const o=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
- if(!o||o.status==='COMPLETED')return false;
- o.status='COMPLETED';
- const list=s.content.conversations.mirage;
- let c=list.find(x=>x.id===ouroborosContact.id);
- if(!c){c=structuredClone(ouroborosContact);list.push(c);}
- // Migrate old demo transcripts that appeared before the challenge was solved.
- c.messages=c.messages.filter(m=>!/^ou-0[123]$/.test(m.id));
- const t=Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
- const minute=n=>String(Math.floor((t+n)%1440/60)).padStart(2,'0')+':'+String((t+n)%60).padStart(2,'0');
- const scripted=[
-  ['mc-ourob-d05','恭喜你。',0],
-  ['mc-ourob-d05','你属于哪个组织？',1],
-  ['me','我单干。',2],
-  ['mc-ourob-d05','真有趣。你知道吗，你打败了全世界百分之八十的黑客。你居然说自己是单干？',3],
-  ['me','因为我是天才。',4],
-  ['mc-ourob-d05','真有趣。拿好你的奖励饼干，黑客天才。希望我们以后还有合作的机会。',5]
- ];
- for(let i=0;i<scripted.length;i++){
-  const [from,text,offset]=scripted[i],id='ou-d05-after-'+i;
-  if(!c.messages.some(m=>m.id===id)){
-   const m=msg(id,from,text,s.day,minute(offset));
-   m.scriptedOuroboros=true;
-   if(i>0)m.schedule={mode:'chat-delay',seconds:i*4};
-   c.messages.push(m);
-  }
- }
- c.unread=Math.max(1,c.unread||0);
- c.lastMessageAt=Date.now();
- s.notifications.unshift({id:'mirage-ouroboros-complete',title:'Dr Ouroboros',body:'恭喜你。',conversationId:c.id,link:{appId:'mirage',route:'/chat/'+c.id,params:{}}});
- s.content.mirage??={};s.content.mirage.transactions??=[];
- if(!s.content.mirage.transactions.some(x=>x.id==='ou-btc10')){
-  s.content.mirage.transactions.unshift({id:'ou-btc10',type:'REWARD',asset:'BTC',amount:10,time:s.clock,day:s.day,description:'OUROBOROS CHALLENGE'});
- }
- s.events.push({type:'mirage_wallet_challenge_completed',day:s.day,clock:s.clock,asset:'BTC',quantity:10});
- return true;
-}
+export function completeWalletChallenge(s){return markOuroborosWon(s);}
