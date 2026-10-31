@@ -8,6 +8,7 @@ import {deathLocked} from '../../system/power/story.js';
 import {aiStatus,askTai,voicePreview,apiConfig} from './gateway.js';
 import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
+import {needsTaiResponseRepair,taiResponseRepairScene} from './turn-quality.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 
@@ -74,12 +75,22 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
   const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
-  const result=unheard?null:await askTai({day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
+  const request={day:initial.day,channel:'noapp',messages,outputMode:voiceTurn?'voice':'text',
    behavior,
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，必要时可连发两三条，不要每一句都反问。',
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
-   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  const entries=(unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp')).slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
+  const result=unheard?null:await askTai(request);
+  let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
+  if(!unheard&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&
+    needsTaiResponseRepair({entries:draftEntries,lastUser,behavior,outputMode:request.outputMode})){
+    try{
+      const expanded=unpackTaiReply(await askTai({...request,scene:request.scene+'\n'+taiResponseRepairScene(draftEntries[0].text)}),'noapp');
+      // Never replace a useful answer with an empty or another under-filled turn.
+      if(expanded.length>=2)draftEntries=expanded;
+    }catch(error){console.warn('Xitai reply expansion unavailable; keeping original:',error?.message);}
+  }
+  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
