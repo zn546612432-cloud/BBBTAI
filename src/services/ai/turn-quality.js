@@ -2,7 +2,7 @@
 // The model still chooses what to say; a second generation is not a template reply.
 const TINY_PLAYER=/^(?:嗯+|哦+|噢+|啊+|哈+|好+|行+|ok|okay|收到|知道了|晚安|早安|拜拜|再见|谢谢|睡了|先睡了|\.{1,3}|。+|[👍❤️]+)[。！!~\s]*$/i;
 const RESPECT_BRIEF=/只回一句|一句话(回答|就好)|简短回答|别多说|不用回|不要回复|不必回复|晚点再聊|我要睡了/;
-const SELF_CLOSING=/^(?:晚安|早安|先这样|我先忙|在开会|忙着呢|晚点说|有事先挂|下次再聊)[。！!~\s]*$/;
+const SELF_CLOSING=/^(?:晚安|早安|先这样|我先忙|在开会|忙着呢|晚点说|有事先挂|下次再聊)(?:[，,]?(?:晚点说|待会聊|先不聊))?[。！!~\s]*$/;
 export function needsTaiResponseRepair({entries=[],lastUser='',behavior={},outputMode='text'}={}){
  const player=String(lastUser).trim();
  const reply=entries?.[0]?.text?.trim()||'';
