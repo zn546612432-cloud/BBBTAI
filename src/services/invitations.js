@@ -8,6 +8,9 @@ export function startAcceptedInvitation(store,id){const inv=store.get().invitati
 export function processDemoReply(store){const s=store.get(),presence=taiPresence(s);const expired=s.invitations.filter(i=>i.source==='local-demo'&&i.senderId==='player'&&i.status==='pending'&&i.expiresDay<s.day);if(expired.length)store.update(s=>{for(const inv of s.invitations)if(expired.some(e=>e.id===inv.id))inv.status='expired';});if(presence.status!=='online')return false;const pending=store.get().invitations.find(i=>i.source==='local-demo'&&i.senderId==='player'&&i.status==='pending'&&i.createdDay<=s.day&&i.expiresDay>=s.day);if(!pending)return false;store.update(s=>{const inv=s.invitations.find(i=>i.id===pending.id);inv.status='accepted';s.notifications.unshift({id:uid(),title:'Dr Ouroboros',body:'邀请已接受 · 打开国际象棋',link:{appId:'chess',route:'/invitation',params:{invitationId:inv.id}},demo:true});s.events.push({type:'chess_invitation_demo_accepted',invitationId:inv.id,day:s.day,clock:s.clock});});return true;}
 
 const asMinutes=(day,clock)=>Number(day)*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
+export function dueChessReminders(s){
+ return (s.invitations||[]).some(inv=>inv.senderId==='tai'&&inv.source==='story-invitation'&&['pending','deferred'].includes(inv.status)&&!inv.reminderSent&&asMinutes(s.day,s.clock)-asMinutes(inv.createdDay,inv.createdClock||'21:17')>=240&&asMinutes(s.day,s.clock)-asMinutes(inv.createdDay,inv.createdClock||'21:17')<=7*1440&&s.day<90);
+}
 export function sendUnansweredChessReminders(s){
  const outgoing=[],c=s.content.conversations.noapp?.find(x=>x.id==='tai');
  if(!c||s.day>=90)return outgoing;
