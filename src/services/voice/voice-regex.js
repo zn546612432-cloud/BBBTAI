@@ -50,13 +50,13 @@ function capTags(s,budget){
 // segment: entry, inflection, and landing. Short phrases must remain intact;
 // fabricating three reactions inside "嗯" would sound absurd.
 function cadence(text,{tone='neutral'}={}){
- const raw=text.replace(/\\([a-z-]+\\)/gi,'').replace(/<#\\d+(?:\\.\\d+)?#>/g,'');
+ const raw=text.replace(/\([a-z-]+\)/gi,'').replace(/<#\d+(?:\.\d+)?#>/g,'');
  if(raw.length<28)return text;
  const points=[];const regex=/[，、；;。！？?!]/g;let match;
  while((match=regex.exec(text))!==null){
   const end=match.index+match[0].length;
   if(end>text.length*.18&&end<text.length*.84&&
-   !/^\\s*(?:<#|\\()/.test(text.slice(end,end+5)))points.push(end);
+   !/^\s*(?:<#|\()/.test(text.slice(end,end+5)))points.push(end);
  }
  // Prefer real clause boundaries, not arbitrary syllable slicing.
  if(points.length<2)return text;
@@ -71,13 +71,13 @@ export function prepareXitaiSpeech(text,{tone='neutral',autoTags=true}={}){
  const mood=EMOTION[tone]||EMOTION.neutral;
  let result=cleanTags(text).trim();
  if(!result)return {text:'',speed:mood.speed,emotion:mood.emotion};
- const originalNoTags=result.replace(/\\([a-z-]+\\)/gi,'');
+ const originalNoTags=result.replace(/\([a-z-]+\)/gi,'');
  const charCount=originalNoTags.length;
  const budget=Math.min(Math.max(1,Math.ceil(charCount/65)),3);
  const seed=hash(result+tone);
  // Sound tags only if the actual semantics justify them; do not add
  // three chuckles, sniffs or gasps merely to make a voice sound "expressive".
- if(autoTags&&charCount>68&&countTags(result)<budget&&!/\\(breath\\)|\\(inhale\\)|\\(exhale\\)/.test(result)){
+ if(autoTags&&charCount>68&&countTags(result)<budget&&!/\(breath\)|\(inhale\)|\(exhale\)/.test(result)){
   result=insertBreath(result,'breath');
  }
  if(autoTags&&tone==='playful'&&charCount>=28&&seed%5===0&&countTags(result)<budget&&/笑|逗|好玩|厉害|吃醋|开玩笑/.test(result)){
@@ -85,10 +85,10 @@ export function prepareXitaiSpeech(text,{tone='neutral',autoTags=true}={}){
  }
  if(/(?:木啊|木嘛|啵啵)/.test(result))result=result.replace(/(?:木啊|木嘛|啵啵)/g,'(lip-smacking)');
  result=capTags(result,budget);
- if(autoTags&&!/<#\\d/.test(result))result=cadence(result,{tone});
- result=result.replace(/^\\s*<#(?:\\d+(?:\\.\\d+)?)#>\\s*/,'')
-  .replace(/\\s*<#(?:\\d+(?:\\.\\d+)?)#>\\s*$/,'')
-  .replace(/(?:\\s*<#(?:\\d+(?:\\.\\d+)?)#>\\s*){2,}/g,' <#0.35#> ');
+ if(autoTags&&!/<#\d/.test(result))result=cadence(result,{tone});
+ result=result.replace(/^\s*<#(?:\d+(?:\.\d+)?)#>\s*/,'')
+  .replace(/\s*<#(?:\d+(?:\.\d+)?)#>\s*$/,'')
+  .replace(/(?:\s*<#(?:\d+(?:\.\d+)?)#>\s*){2,}/g,' <#0.35#> ');
  return {text:result,speed:mood.speed,emotion:mood.emotion,tone,tagCount:countTags(result),characterCount:charCount,
   prosodyBeats:Math.min(3,(result.match(/<#/g)||[]).length+1)};
 }
