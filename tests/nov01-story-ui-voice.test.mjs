@@ -29,6 +29,7 @@ test('D05 sends ORDER CREATED on accepting and player sends staged messages afte
  assert.equal(ouroborosDraft(s,c.id),'我拿到了。');
  assert.equal(sendOuroborosPreset(s,c.id,'我拿到了。'),true);
  assert.equal(c.messages.at(-1).text,'你属于哪个组织？');
+ c.messages.find(m=>m.id==='ou-group').delivery={day:5,clock:'21:01'};
  assert.equal(sendOuroborosPreset(s,c.id,'我单干。'),true);
  assert.match(c.messages.at(-1).text,/百分之八十/);
  assert.equal(sendOuroborosPreset(s,c.id,'因为我是天才。'),true);
