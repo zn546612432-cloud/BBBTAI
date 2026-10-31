@@ -19,6 +19,7 @@ export function acceptOuroborosChallenge(s){
  const conversations=s.content.conversations.mirage;
  if(!contact(s))conversations.push(structuredClone(ouroborosContact));
  const c=contact(s);
+ c.unread=0;
  c.messages=c.messages.filter(m=>!m.ouroborosScript&&!/^ou-(?:0\d|d05-after-)/.test(m.id));
  s.content.mirage.ouroborosScript={stage:'accepted'};
  const message=line('ou-order-created',CONTACT,'ORDER CREATED · CONTRACT #D05 · 10 BTC WALLET CHALLENGE',s);
