@@ -10,6 +10,8 @@ import {taiPresence} from '../presence.js';
 import {visibleMessages,isConversationOpen} from '../messaging/delivery.js';
 export const TAI_OUTREACH_DAYS=[57,60,64,68,71,75,79,83,87];
 export const TAI_CALL_DAYS=[63,73,81];
+export const TAI_55_OUTREACH_DAYS=[32,34,37,41,44,47,50,53];
+export const TAI_55_CALL_DAYS=[36,45,52];
 const inFlight=new WeakSet(),errors=new WeakMap();
 const chat=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const stamp=x=>Number(x.day)*1440+Number((x.clock||x.time||'00:00').slice(0,2))*60+Number((x.clock||x.time||'00:00').slice(3,5));
@@ -48,7 +50,7 @@ export function isProactiveMessageDue(s,{now=Date.now()}={}){
  const messages=history(s),last=messages.at(-1);
  if(last?.from==='me'||last?.followup)return false; // never skip an unanswered player message
  const minutes=stamp(s)%1440;
- const scheduled=TAI_OUTREACH_DAYS.includes(s.day)&&minutes>=19*60&&
+ const scheduled=(isStory55(s)?TAI_55_OUTREACH_DAYS:TAI_OUTREACH_DAYS).includes(s.day)&&minutes>=19*60&&
   !s.events.some(e=>e.type==='tai_proactive_sent'&&e.day===s.day)&&!messages.some(m=>m.day===s.day&&m.from==='me');
  if(scheduled)return true;
  // A new topic needs a quiet gap, and never competes with a due follow-up.
@@ -56,7 +58,7 @@ export function isProactiveMessageDue(s,{now=Date.now()}={}){
 }
 export function isProactiveCallDue(s){
  const minutes=stamp(s)%1440;
- if(!taiBehavior(s).proactive||!eligible(s)||minutes<19*60||!TAI_CALL_DAYS.includes(s.day)||paused(s))return false;
+ if(!taiBehavior(s).proactive||!eligible(s)||minutes<19*60||!(isStory55(s)?TAI_55_CALL_DAYS:TAI_CALL_DAYS).includes(s.day)||paused(s))return false;
  if(s.events.some(e=>e.type==='tai_proactive_call'&&e.day===s.day))return false;
  return chat(s)?.messages?.some(m=>m.from==='me'&&!m.demo);
 }
