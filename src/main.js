@@ -8,7 +8,7 @@ import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
-import {processDemoReply,sendUnansweredChessReminders} from './services/invitations.js';
+import {processDemoReply,sendUnansweredChessReminders,dueChessReminders} from './services/invitations.js';
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
@@ -226,7 +226,7 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(store.get().invitations.some(i=>i.senderId==='tai'&&['pending','deferred'].includes(i.status)))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
