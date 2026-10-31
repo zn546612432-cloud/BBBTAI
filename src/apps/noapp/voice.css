@@ -145,3 +145,14 @@
 
 .app-noapp .noapp-call-record{display:flex;align-items:center;gap:9px;max-width:230px;background:#283b4d;border:1px solid #ffffff20;border-radius:13px;padding:10px 13px;font-size:12px;color:#d5e5f4;line-height:1.5}
 .app-noapp .noapp-call-record span{font-size:17px;opacity:.8}
+
+/* Dedicated test controls stay off the player chat screen. */
+.app-noapp .tai-test-controls{display:flex;flex-direction:column;gap:12px;margin:18px 0;padding:16px;border-radius:18px;border:1px solid #ffffff28;background:#fff0;color:inherit}
+.app-noapp .tai-test-controls h3{margin:0;font-size:17px}
+.app-noapp .tai-test-controls p{margin:0;color:#9db2c4;font-size:12px;line-height:1.4}
+.app-noapp .tai-test-controls label{font-size:13px;line-height:1.5}
+.app-noapp .tai-test-controls .tai-test-toggle{display:flex;align-items:center;gap:10px}
+.app-noapp .tai-test-toggle input{width:21px;height:21px;accent-color:#72b9d2}
+.app-noapp .tai-test-actions{display:flex;gap:8px;flex-wrap:wrap}
+.app-noapp .tai-test-controls button{min-height:42px;padding:9px 12px;border-radius:12px;background:#2c4357;color:#f2f8ff;border:1px solid #718da535;font-size:13px}
+.app-noapp .tai-test-controls textarea,.app-noapp .tai-test-controls select{width:100%;margin-top:7px;padding:10px;border-radius:12px;background:#0c1e2b;color:#e9f8ff;border:1px solid #7197ac69;font-size:16px;resize:vertical}
