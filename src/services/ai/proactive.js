@@ -63,6 +63,7 @@ export async function maybeSendProactive(store){
   if(!items.length)throw Error('AI 自主消息为空');
   if(!(followup?isTaiFollowupDue(store.get()):isProactiveMessageDue(store.get())))return false;
   store.update(s=>{
+   const sourceId=followup?s.content.conversations.noapp.find(c=>c.id==='tai')?.messages.filter(m=>m.proactive&&!m.followup).at(-1)?.id:null;
    const target=s.content.conversations.noapp.find(c=>c.id==='tai');
    if(!target)return;
    for(const item of items.slice(0,3)){
@@ -75,7 +76,7 @@ export async function maybeSendProactive(store){
     }
    }
    s.events.push(followup
-    ?{type:'tai_proactive_followup',sourceId:c.messages.filter(m=>m.proactive&&m.from==='tai').at(-1)?.id,day:s.day,clock:s.clock}
+    ?{type:'tai_proactive_followup',sourceId,day:s.day,clock:s.clock}
     :{type:'tai_proactive_sent',day:s.day,clock:s.clock});
   });
   return true;
