@@ -427,7 +427,8 @@ export function mountHoldToTalk(root,makeContext){
   if(!target||!target.closest('.app-noapp')||active||recording||voicePermissionPending)return;
   if(e.pointerType==='mouse'&&e.button!==0)return;
   e.preventDefault();
-  const ctx=makeContext(),token={pointerId:e.pointerId,startY:e.clientY,startX:e.clientX,started:Date.now(),ready:false,done:false,cancel:false};
+  const ctx=makeContext(),token={pointerId:e.pointerId,startY:e.clientY,startX:e.clientX,started:Date.now(),ready:false,done:false,cancel:false,target};
+  pressFeedback(target);
   active=token;
   try{target.setPointerCapture(e.pointerId);}catch{}
   show();
