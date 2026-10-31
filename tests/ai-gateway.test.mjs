@@ -90,3 +90,18 @@ test('MiniMax returns hex MP3 as binary audio',async()=>{
     assert.deepEqual([...new Uint8Array(await r.arrayBuffer())],[73,68,51]);
   });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.MINIMAX_API_KEY;else process.env.MINIMAX_API_KEY=old;}
 });
+
+test('local call gateway forwards voice mode, relationship context and configurable behavior',async()=>{
+ const old=process.env.DEEPSEEK_API_KEY,originalFetch=globalThis.fetch;
+ process.env.DEEPSEEK_API_KEY='test-secret';let seen;
+ globalThis.fetch=(url,init)=>String(url).startsWith('https://api.deepseek.com')
+  ?(seen=JSON.parse(init.body),Promise.resolve(new Response(JSON.stringify({choices:[{message:{content:'{"messages":[{"text":"我听着。","mode":"voice"}]}'}}]}),{headers:{'content-type':'application/json'}})))
+  :originalFetch(url,init);
+ try{await withGateway(async base=>{
+  const r=await post(base,'/api/ai/chat',{day:60,channel:'noapp',outputMode:'call',scene:'电话测试事件',relationshipContext:'熙蒙亲口说过的具体约定',behavior:{verbosity:'expansive',maxMessages:4},messages:[{role:'user',content:'接着说'}]});
+  assert.equal(r.status,200);const prompt=seen.messages[0].content;
+  assert.match(prompt,/语音世界书 3.0-若要大声嘶喊出爱的话/);
+  assert.match(prompt,/熙蒙亲口说过的具体约定/);assert.match(prompt,/电话测试事件/);
+  assert.match(prompt,/一次允许1—4条独立消息/);assert.match(prompt,/展开表达/);
+ });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
+});

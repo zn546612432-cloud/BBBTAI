@@ -163,3 +163,11 @@
 .app-noapp .noapp-composer-mic.is-pressed{transform:scale(.89);background:#6b9eb73b;box-shadow:0 0 0 6px #95cbe71c}
 .app-noapp .noapp-record-overlay.is-recording .noapp-record-waves i{animation-play-state:running}
 @media(prefers-reduced-motion:reduce){.app-noapp .noapp-composer-mic{transition:none}}
+
+.app-noapp .tai-behavior-settings{margin:24px 0;padding:18px 14px;background:#ffffff08;border:1px solid #ffffff19;border-radius:18px}
+.app-noapp .tai-behavior-settings h3{margin:0 0 18px;font-size:18px}
+.app-noapp .tai-behavior-settings details{margin:18px 0;padding-top:15px;border-top:1px solid #ffffff17}
+.app-noapp .tai-behavior-settings summary{font-size:15px;cursor:pointer;margin-bottom:14px}
+.app-noapp .tai-setting-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app-noapp .tai-setting-pair label{min-width:0}
+.app-noapp .tai-setting-pair input{width:100%;min-width:0}

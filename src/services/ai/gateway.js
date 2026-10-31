@@ -37,10 +37,10 @@ export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext=''}){
- const c=apiConfig(),req={channel,day,messages,profile,memories,outputMode,scene,relationshipContext};
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior}){
+ const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
- const {buildTaiPrompt}=await import('./tai-profile.js');
  const system=buildTaiPrompt(req);
  const base={model:'deepseek-flash',thinking:{type:'disabled'},
   messages:[{role:'system',content:system},...messages],max_tokens:2400,stream:false};

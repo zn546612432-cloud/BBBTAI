@@ -29,6 +29,7 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   drag.samples.push({x,t:time});if(drag.samples.length>12)drag.samples.shift();
   if(!drag.mode)drag.mode=classifyGesture({dx,dy,...drag});
   if(!drag.mode)return;
+  if(root.dataset)root.dataset.gestureActive='1';
   prevent();suppressClickUntil=Date.now()+500;
   if(drag.mode==='pages')page({dx,index:drag.page,settle:false});
   if(drag.mode==='shade')shade({progress:Math.max(0,Math.min(1,(drag.shade?1:0)+dy/root.clientHeight)),settle:false});
@@ -41,6 +42,7 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
  const finish=(x,y,id,source,time,cancel=false)=>{
   if(!drag||drag.source!==source||drag.id!==id)return;
   const g=drag;drag=null;
+  if(root.dataset)delete root.dataset.gestureActive;
   const dx=x-g.x,dy=y-g.y;
   if(g.mode==='pages')page({dx,velocity:cancel?0:releaseVelocity(g.samples,time),index:g.page,cancel,settle:true});
   if(g.mode==='shade')shade({progress:cancel?Number(g.shade):g.shade?Number(dy>-70):Number(dy>70),settle:true});
