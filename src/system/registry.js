@@ -8,7 +8,8 @@ export const registry=new Map(modules.map(m=>[m.manifest.id,m]));
 // Native-style UI replicas are isolated within their app folders; retained
 // implementations remain available for legacy fixtures and migrations.
 for(const module of [phoneReplica,messagesReplica,weatherReplica])registry.set(module.manifest.id,module);
-export const appUnlocked=(id,s)=>isStory55(s)&&id==='noapp'?!!s.story55.noappInstalled:!registry.get(id)?.manifest.unlockDay||s.day>=registry.get(id).manifest.unlockDay;
+// Keep the NoApp icon accessible; its own screen enforces the invitation and recognition gates.
+export const appUnlocked=(id,s)=>isStory55(s)&&id==='noapp'?true:!registry.get(id)?.manifest.unlockDay||s.day>=registry.get(id).manifest.unlockDay;
 export const installed=s=>[...registry.values()].filter(m=>!m.manifest.hidden&&appUnlocked(m.manifest.id,s)).map(m=>m.manifest);
 export const appById=id=>registry.get(id);
 export const homePages=[['wechat','photos','camera','notes','calendar','weather','maps','clock'],['mirage','ghost','kira','bank','chess','files','music','schedule'],['reminders','aomi','browser','noapp','settings']];
