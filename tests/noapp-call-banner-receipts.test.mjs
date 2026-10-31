@@ -1,0 +1,60 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {startIncoming,incomingCallBanner,callAction,callState} from '../src/apps/noapp/voice-call.js';
+import {visibleMessages} from '../src/services/messaging/delivery.js';
+import {initializeMirage} from '../src/apps/mirage/data.js';
+import {saveLinkedMission,acceptLinkedMission,resetLinkedMission,linkedReceiptId} from '../src/apps/mirage/linked-missions.js';
+import {authorize,begin,finish,submit,settle} from '../src/apps/ghost/state.js';
+import {linkedMailView} from '../src/apps/kira/features/mission/linked.js';
+const createStore=(initial=initialState())=>{let s=initial;return {get:()=>s,update(fn){const next=structuredClone(s);fn(next);s=next;return s;}};};
+
+test('incoming call shows supplied user-photo banner with separate answer and decline actions',()=>{
+ const store=createStore();store.update(s=>{s.day=63;s.unlocked=true;});
+ let opens=[];
+ const ctx={store,router:{open(x){opens.push(x);}},refresh(){},toast(){}};
+ assert.equal(startIncoming(ctx),true);
+ const html=incomingCallBanner(store.get());
+ assert.match(html,/tai-banner-accept/);
+ assert.match(html,/tai-banner-decline/);
+ assert.match(html,/data:image\/webp;base64/);
+ assert.equal(callState().state,'ringing');
+ assert.equal(callAction('tai-decline',ctx),true);
+ assert.equal(incomingCallBanner(store.get()),'');
+ assert.equal(opens.length,0,'rejecting banner should not switch away from other apps');
+ const c=store.get().content.conversations.noapp.find(x=>x.id==='tai');
+ assert.equal(visibleMessages(c).at(-1).text,'已拒绝语音来电');
+ assert.equal(store.get().events.filter(x=>x.type==='tai_call_declined').length,1);
+});
+test('missed call and unrelated notifications do not overwrite each other',()=>{
+ const store=createStore();store.update(s=>{s.day=63;s.unlocked=true;s.notifications.push({id:'family-message',title:'哥'});});
+ const ctx={store,router:{open(){}},refresh(){},toast(){}};
+ assert.equal(startIncoming(ctx),true);
+ assert.equal(callAction('tai-decline',ctx),true);
+ assert.ok(store.get().notifications.some(x=>x.id==='family-message'));
+ assert.equal(store.get().notifications.filter(x=>x.type==='tai-incoming-call').length,0);
+});
+test('custom GHOST payouts create one KIRA receipt, and developer reset reverses test credit',()=>{
+ const store=createStore();initializeMirage(store);
+ const id='linked-audit-309',reward=2400;
+ store.update(s=>saveLinkedMission(s,{id,title:'设备批次审核',owner:'BASILISK',
+  subject:'设备审核确认',body:'核对收据，完成虚拟任务。',browserQuery:'设备报告',type:'veil',reward,seconds:60}));
+ store.update(s=>acceptLinkedMission(s,id));
+ store.update(s=>authorize(s,{orderId:id,type:'veil',mailId:'linked-contract-mail-'+id}));
+ store.update(s=>{assert.equal(begin(s,id,100),true);finish(s,id,true,200);assert.equal(submit(s,id,300),true);settle(s,121000);});
+ let s=store.get(),receiptId=linkedReceiptId(id);
+ assert.equal(s.ghost.balance,reward);
+ assert.equal(s.content.mirage.digitalBalance,reward);
+ assert.equal(s.content.mail.filter(m=>m.id===receiptId).length,1);
+ assert.equal(s.notifications.filter(n=>n.id==='linked-payment-notice-'+id).length,1);
+ assert.ok(linkedMailView(s,id).includes('款项已入账'));
+ store.update(s=>settle(s,160000));
+ assert.equal(store.get().content.mail.filter(m=>m.id===receiptId).length,1);
+ store.update(s=>resetLinkedMission(s,id));
+ s=store.get();
+ assert.equal(s.ghost.balance,0);
+ assert.equal(s.content.mirage.digitalBalance,0);
+ assert.ok(!s.content.mail.some(m=>m.id===receiptId));
+ assert.ok(!s.content.mirage.digitalTransactions.some(x=>x.orderId===id));
+ assert.equal(s.events.filter(e=>e.type==='linked_mission_payment_reversed').length,1);
+});
