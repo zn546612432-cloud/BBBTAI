@@ -2,6 +2,7 @@
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
   "version": 1,
+  "finalAudio": "/assets/story55/ximeng-final-keywords.mp3",
   "startDate": "2025-05-19",
   "totalDays": 55,
   "nodes": [
@@ -804,7 +805,7 @@ export const STORY55_CONFIG={
       "title": "orphanage-archive.enc",
       "body": "澳门孤儿院档案已解密。三名婴儿登记名：陈熙旺、陈熙蒙、陈熙泰。",
       "node": "photo",
-      "asset": ""
+      "asset": "/assets/story55/triplets-baby-photo.jpg"
     }
   ],
   "pages": [
