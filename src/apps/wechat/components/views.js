@@ -65,7 +65,7 @@ function chats(s){
     const time=last?.time||'';
     const unread=Math.max(0,Number(c.unread)||0);
     return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(c.name+' '+preview)+'">'+
-      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,resolveWeChatAvatar(c.name,c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread">'+(unread>99?'99+':unread)+'</span>':'')+'</span>'+ 
+      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,s.characterAvatars?.[c.name]||resolveWeChatAvatar(c.name,c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread">'+(unread>99?'99+':unread)+'</span>':'')+'</span>'+ 
       '<span class="wx-chat-main"><span class="wx-chat-top"><strong>'+esc(c.name)+'</strong><time>'+esc(time)+'</time></span>'+
       '<span class="wx-chat-preview">'+esc(preview)+'</span></span></button>';
   }).join('');
@@ -87,7 +87,7 @@ function contactList(s){
   return [...grouped.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([letter,group])=>
     '<section class="wx-contact-section" data-wx-section="'+esc(letter)+'"><h2>'+esc(letter)+'</h2>'+
     group.map(c=>'<button type="button" class="wx-contact-row" data-action="wx-open-contact" data-name="'+esc(c.name)+'" data-id="'+esc(c.id||'')+'" data-wx-filter="'+esc(c.name)+'">'+
-      avatar(c.name,resolveWeChatAvatar(c.name,c.avatar),'wx-avatar-contact')+'<strong>'+esc(c.name)+'</strong></button>').join('')+'</section>').join('');
+      avatar(c.name,s.characterAvatars?.[c.name]||resolveWeChatAvatar(c.name,c.avatar),'wx-avatar-contact')+'<strong>'+esc(c.name)+'</strong></button>').join('')+'</section>').join('');
 }
 function contacts(s){
   const top=header('通讯录',iconButton('wx-open-entry','personAdd','添加联系人'));
