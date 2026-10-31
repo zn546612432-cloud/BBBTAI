@@ -93,3 +93,17 @@ test('D55 final voice is an in-chat sound bubble, not a Next-button card',()=>{
  assert.match(html,/data-action="s55-final-audio"/);
  assert.doesNotMatch(html,/s55-scene-next|noapp-story55-step/);
 });
+
+test('D30 investigation questions stay in MIRAGE composer, requiring five explicit taps',()=>{
+ const s=state();previewNode55(s,'questions');
+ assert.deepEqual(nodeLink55(s,'questions'),{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}});
+ for(let i=0;i<5;i++){
+  const question=scriptedDraft55(s,'mirage','s55-ouroboros');
+  assert.equal(question.id,'questions');
+  assert.equal(question.index,i);
+  sendScriptedDraft55(s,'mirage','s55-ouroboros',question.text);
+ }
+ assert.equal(completed(s,'questions'),true);
+ const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-question-')).length,5);
+});
