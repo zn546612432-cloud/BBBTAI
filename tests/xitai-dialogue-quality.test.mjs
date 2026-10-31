@@ -15,11 +15,12 @@ test('ordinary one-line reply is eligible for a single high-quality rewrite',()=
  assert.equal(needsTaiResponseRepair({...input,entries:[{text:'我先忙，晚点说。'}]}),false);
  assert.match(taiResponseRepairScene('在酒店。'),/2至5条/);
 });
-test('expansive text mode prefers 2-5 substantive bubbles, but permits justified one-liners',()=>{
+test('v5 text mode uses complete long sentences without a minimum bubble quota',()=>{
  const prompt=buildTaiPrompt({channel:'noapp',day:62,outputMode:'text',messages:[{role:'user',content:'今天过得怎么样'}]});
  assert.match(prompt,/不设最低数量/);
  assert.match(prompt,/酒店/);
- assert.match(prompt,/自然的短回复就停/);
+ assert.doesNotMatch(prompt,/自然的短回复就停|文字可极短|聊天自然、简短、碎片化/);
+ assert.match(prompt,/完整长句/);
  assert.match(taiBehaviorPrompt(DEFAULT_TAI_BEHAVIOR),/不强制连发/);
 });
 test('every speaking mood stays unhurried and restrained',()=>{

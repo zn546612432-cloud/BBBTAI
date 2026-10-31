@@ -12,7 +12,7 @@ const until=async predicate=>{for(let n=0;n<60;n++){if(predicate())return;await 
 test('canon overrides wrong old drafts and overseas life follows the game day, not the Macau hour',()=>{
  const p=buildTaiPrompt({day:64,channel:'noapp',profile:{relationship:'不认识熙旺'}});
  assert.match(p,/陈熙旺、陈熙蒙、陈熙泰是三胞胎/);
- assert.match(p,/旧存档草稿与错误AI聊天/);
+ assert.match(p,/优先于旧存档风格、历史AI错误/);
  assert.doesNotMatch(p,/高频：AI 编程|多于汇报自己生活/);
  const {s}=fixture();s.clock='01:00';
  assert.match(taiLifeContext(s),/巴黎酒店，当地 19:00/);

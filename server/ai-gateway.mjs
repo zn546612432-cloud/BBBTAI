@@ -72,9 +72,10 @@ export async function handleAIGateway(req,res,pathname) {
       const scene=typeof payload.scene==='string'?payload.scene.slice(0,2000):'';
       const relationshipContext=typeof payload.relationshipContext==='string'?payload.relationshipContext.slice(0,8000):'';
       const behavior=normalizeTaiBehavior(payload.behavior);
+      const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         ...deepseekModelOptions(payload.model??process.env.DEEPSEEK_MODEL),
-        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages})},...messages],
+        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized})},...messages],
         stream:false,max_tokens:4096,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;

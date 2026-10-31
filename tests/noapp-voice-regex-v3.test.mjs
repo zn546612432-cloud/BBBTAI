@@ -6,8 +6,8 @@ import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 import {askTai,saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js';
 
 test('detailed Xitai worldbook contains independent personality, education and identity boundaries',()=>{
- assert.ok(XITAI_LONG_WORLDBOOK.length>4000);
- for(const t of ['哈佛','MIRAGE','自负','国际象棋','莎士比亚','相认前','D56','金融','语音'])
+ assert.match(XITAI_LONG_WORLDBOOK,/专属系统底层设定 v5/);
+ for(const t of ['哈佛','MIRAGE','自负','国际象棋','莎士比亚','匿名期','当前阶段','金融','语音'])
   assert.ok(XITAI_LONG_WORLDBOOK.includes(t),t);
  const prompt=buildTaiPrompt({day:56,channel:'noapp'});
  assert.ok(prompt.includes('完整人物世界书'));

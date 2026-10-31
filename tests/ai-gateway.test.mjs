@@ -40,7 +40,7 @@ test('forbidden NoApp before D56 and invalid voice ID rejected before provider r
     if(oldMini===undefined)delete process.env.MINIMAX_API_KEY;else process.env.MINIMAX_API_KEY=oldMini;
   }
 });
-test('pre-D56 MIRAGE prompt preserves secret identity; provider keys remain server-side',async()=>{
+test('anonymous MIRAGE prompt preserves secret identity; provider keys remain server-side',async()=>{
   const old=process.env.DEEPSEEK_API_KEY,originalFetch=globalThis.fetch;
   process.env.DEEPSEEK_API_KEY='test-secret';
   let seen;
@@ -51,7 +51,7 @@ test('pre-D56 MIRAGE prompt preserves secret identity; provider keys remain serv
     const r=await post(base,'/api/ai/chat',{day:20,channel:'mirage',messages:[{role:'user',content:'怎么样'}]});
     assert.deepEqual(await r.json(),{text:'检查日志。',day:20,channel:'mirage'});
     const message=JSON.parse(seen.body).messages[0].content;
-    assert.match(message,/D56 前不可揭露身份/);
+    assert.match(message,/尚未相认/);
     assert.equal(seen.headers.Authorization,'Bearer test-secret');
   });}finally{globalThis.fetch=originalFetch;if(old===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=old;}
 });

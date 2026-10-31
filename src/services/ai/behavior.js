@@ -31,8 +31,8 @@ export function replyDelayMs(text,config,{first=false,random=Math.random}={}){
 }
 export function taiBehaviorPrompt(input){
  const c=normalizeTaiBehavior(input);
- const length={brief:'不必展开，想说清楚也可以写完整一句话。',balanced:'有话就多说，没话就停；长短根据眼前的事情而定。',expansive:'愿意分享更多个人想法、生活和感受，绝不强制连发或凑几条。'}[c.verbosity];
+ const length={brief:'只聚焦当前要点，仍必须用语法完整的长句表达，不能退回碎片或三个字以内短句。',balanced:'用连贯完整的长句说清态度与内容，不以缩字或短句表现高冷。',expansive:'愿意分享更多个人想法、生活和感受，绝不强制连发或凑几条。'}[c.verbosity];
  return '作者偏好：'+length+'每轮最多'+c.maxMessages+'条独立消息（只是 UI 安全上限，**不是最低条数或目标**）。每条都有自己的态度或内容；不要把上一条解释一遍当新消息。'
- + (c.initiative==='off'?'这一轮以现有话题为主。':c.initiative==='active'?'可以主动聊想说的近况，也能被日常琐事自然打断。':'能主动分享自己的事，也可以不解释就停。')
+ + (c.initiative==='off'?'这一轮以现有话题为主。':c.initiative==='active'?'可以主动聊想说的近况，也能被日常琐事自然打断。':'能主动分享自己的事，也完整表达自己的态度后收住。')
  +'熙泰的生活不围绕熙蒙的提问转动，但地点与行为不能和已发送消息矛盾。自由对话优先人物意愿，不采用通用世界书的字数和条数配额。';
 }
