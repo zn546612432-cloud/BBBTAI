@@ -10,13 +10,19 @@ import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
-const replyAfter=(c,id)=>{const i=c?.messages.findIndex(m=>m.id===id)??-1;return i<0||c.messages.slice(i+1).some(m=>m.from!=='me'&&m.kind!=='app_invitation');};
+const replyAfter=(c,id)=>{
+ if(!c)return true;
+ const source=c.messages.find(m=>m.id===id);
+ const messages=visibleMessages(c).filter(m=>!m.demo&&(!Number.isInteger(source?.day)||!Number.isInteger(m.day)||m.day<=source.day));
+ const i=messages.findIndex(m=>m.id===id);
+ return i<0||messages.slice(i+1).some(m=>m.from!=='me'&&m.kind!=='app_invitation');
+};
 const pendingRequests=new WeakSet();
 export const isTaiReplyPending=store=>pendingRequests.has(store);
 export function isCurrentTaiTurn(s,sourceMessageId,day){
  const c=conversation(s);
  return !!c&&s.day===day&&!deathLocked(s)&&!s.poweredOff&&s.powerMode==='idle'&&
-  taiPresence(s).status!=='away'&&c.messages.filter(m=>m.from==='me'&&!m.demo).at(-1)?.id===sourceMessageId;
+  taiPresence(s).status!=='away'&&visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.day<=s.day).at(-1)?.id===sourceMessageId;
 }
 let ttsQueue=Promise.resolve();
 function synthesizeVoiceNotes(store,jobs){
@@ -60,7 +66,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  const startedAt=now(),behavior=taiBehavior(initial);
  try{
   const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
-  const lastUser=c.messages.find(m=>m.id===sourceMessageId)?.text||'';
+  const source=c.messages.find(m=>m.id===sourceMessageId);
+  const lastUser=source?.voiceCaption||source?.text||'';
   const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
   const voiceTurn=voiceRequested||(initial.day>=60&&hashed%19===0);

@@ -110,3 +110,13 @@ test('phone startup actually mounts gestures and viewport, preserving the delete
  assert.match(main,/mountGestures\(\$\('#phone'\),\s*\{/);
  assert.match(main,/unlock:\(\)=>\{if\(lockscreen.stage==='cover'\)requestUnlock\(\)/);
 });
+
+test('future and undelivered authored messages do not masquerade as a reply or cancel the current turn',async()=>{
+ const {chat,store}=fixture();
+ chat.messages.push({id:'u-now',from:'me',text:'现在说的事',day:60,time:'21:00'},
+  {id:'future-tai',from:'tai',text:'未来剧情不能用',day:61,time:'21:00',schedule:{mode:'game-time',day:61,clock:'21:00'}},
+  {id:'future-me',from:'me',text:'下一天的预设',day:61,time:'21:01',schedule:{mode:'game-time',day:61,clock:'21:01'}});
+ const old=globalThis.fetch;globalThis.fetch=provider(['我在看。']);
+ try{const r=await replyToTaiMessage(store,'u-now',{wait:async()=>{}});assert.equal(r.count,1);}
+ finally{globalThis.fetch=old;}
+});
