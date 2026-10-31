@@ -1,4 +1,5 @@
 import {prepareXitaiSpeech} from '../voice/voice-regex.js';
+import {readableTaiVoiceText} from './format.js';
 import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
@@ -68,7 +69,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.78,Math.min(0.92,Number(speed))):Math.max(0.78,Math.min(0.92,prepared.speed));
  if(!c.minimax){
   let r;
-  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed})});}
+  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
   catch{throw Error('MiniMax 语音接口未配置');}
   if(!r.ok){let v={};try{v=await r.json();}catch{}throw Error(v.error||'MiniMax 语音接口失败');}
   if(!r.headers.get('Content-Type')?.includes('audio/'))throw Error('未返回音频');
@@ -80,7 +81,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:prepared.emotion},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
