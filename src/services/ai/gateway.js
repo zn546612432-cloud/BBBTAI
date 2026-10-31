@@ -1,14 +1,16 @@
 import {prepareXitaiSpeech} from '../voice/voice-regex.js';
+import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
 export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
 export function apiConfig(){
- try{return {...JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}'),voiceId:XITAI_VOICE_ID};}catch{return {voiceId:XITAI_VOICE_ID};}
+ try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceId:XITAI_VOICE_ID};}
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
+ model:normalizeDeepSeekModel(config.model),
  region:config.region==='intl'?'intl':'cn',
  voiceId:XITAI_VOICE_ID,
  ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd'};
@@ -39,10 +41,10 @@ export async function aiStatus(){
 }
 export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior};
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,model:c.model};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
- const base={model:'deepseek-flash',thinking:{type:'disabled'},
+ const base={...deepseekModelOptions(c.model),
   messages:[{role:'system',content:system},...messages],max_tokens:4096,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
  // Retry once without JSON response_format; never save empty chat bubbles.
