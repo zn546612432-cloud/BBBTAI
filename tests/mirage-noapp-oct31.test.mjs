@@ -65,12 +65,12 @@ test('developer workflow inspector progresses through dependent apps',()=>{
  store.get().content.mail.push({id:'mirage-new-order',missionStep:3});
  p=missionProgress(store.get());assert.equal(p.steps[0].done,true);assert.equal(p.steps[3].done,true);
 });
-test('only the supplied fixed voice can be saved; original worldbook text stays complete',()=>{
+test('only the supplied fixed voice can be saved; remaining original references stay complete after removal of casual series',()=>{
  const original=globalThis.sessionStorage;
  const m=new Map();globalThis.sessionStorage={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)};
  try{saveApiConfig({voiceId:'different-voice'});assert.equal(apiConfig().voiceId,XITAI_VOICE_ID);}
  finally{if(original===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=original;}
- assert.equal(Object.keys(ORIGINAL_WORLDBOOKS).length,4);
+ assert.equal(Object.keys(ORIGINAL_WORLDBOOKS).length,3);
  assert.ok(ORIGINAL_WORLDBOOKS.relationship.length>13000);
 });
 

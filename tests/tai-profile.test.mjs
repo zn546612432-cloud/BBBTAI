@@ -4,7 +4,7 @@ import {buildTaiPrompt,defaultTaiDraft,visibleTaiMemories} from '../src/services
 
 test('review draft exposes character rules without fabricating personal events',()=>{
  const d=defaultTaiDraft();
- assert.match(d.profile.relationship,/感情深厚/);
+ assert.match(d.profile.relationship,/渴望亲情与爱/);
  assert.match(d.profile.knowledge,/草稿/);
  assert.deepEqual(d.memories,[]);
  assert.match(buildTaiPrompt({day:20,channel:'mirage',profile:d.profile,memories:d.memories}),/不要编造共同经历/);
