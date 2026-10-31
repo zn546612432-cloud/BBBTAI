@@ -15,6 +15,45 @@ export const defaultProducts=[
 ];
 export function mirageData(s){return s.content.mirage||{account:MIRAGE_ACCOUNT,balance:300000,products:defaultProducts,cart:[],transactions:[],assets:[]};}
 export {WALLET_CHALLENGE_ID,completeWalletChallenge};
+// 55-day campaigns use the ORIGINAL MIRAGE design and complete native data
+// rather than the old prototype-only story dashboard or D05 mission script.
+export const STORY55_BOUNTY_ID='s55-mirage-wallet-bounty';
+export function ensureNativeMirage55(s){
+ if(!isStory55(s))return;
+ const old=s.content.mirage||{};
+ const seed=old.nativeSeedVersion!==1;
+ s.content.mirage={
+  account:MIRAGE_ACCOUNT,balance:300000,products:structuredClone(defaultProducts),
+  cart:[],transactions:[],assets:[],digitalBalance:0,digitalTransactions:[],
+  ...old,
+  products:Array.isArray(old.products)?old.products:structuredClone(defaultProducts),
+  cart:Array.isArray(old.cart)?old.cart:[],
+  assets:Array.isArray(old.assets)?old.assets:[],
+  balance:Number.isFinite(old.balance)?old.balance:300000,
+  nativeSeedVersion:1,version:3
+ };
+ if(seed){
+  const contacts=s.content.conversations.mirage??(s.content.conversations.mirage=[]);
+  // Only the original visual identities, not their discarded D01-D90 messages.
+  for(const contact of ['BASILISK SUPPLY','Pale Vector','ECHO-41','SABLE ACCOUNT']){
+   if(contacts.some(x=>x.name===contact))continue;
+   const initial={id:'s55-contact-'+contact.toLowerCase().replace(/[^a-z0-9]+/g,'-'),name:contact,avatar:contact.slice(0,2),online:false,messages:[],unread:0};
+   contacts.push(initial);
+  }
+ }
+ s.content.orders??=[];
+ if(s.day>=6){
+  const existing=s.content.orders.find(o=>o.id===STORY55_BOUNTY_ID);
+  if(!existing)s.content.orders.push({
+   id:STORY55_BOUNTY_ID,title:'10 BTC / WALLET CHALLENGE',owner:'Dr Ouroboros',reward:'10 BTC',
+   category:'CYBER',status:s.story55.completed.wallet?'COMPLETED':'OPEN',
+   description:'PRIVATE WALLET CHALLENGE — Complete the GHOST extraction workflow.',
+   story55:true
+  });
+  else if(s.story55.completed.wallet)existing.status='COMPLETED';
+ }
+}
+
 export function initializeMirage(store){
  if(isStory55(store.get()))return;
  const current=store.get();
