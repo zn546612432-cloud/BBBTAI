@@ -11,7 +11,7 @@ export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
  region:config.region==='intl'?'intl':'cn',
  voiceId:XITAI_VOICE_ID,
- ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-turbo'};
+ ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd'};
  sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));return out;
 }
 export function clearApiConfig(){sessionStorage.removeItem(BYOK_SESSION);}
@@ -59,7 +59,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
-export async function voicePreview({text,voiceId,model='speech-2.8-turbo',language='Chinese',speed=null,tone='neutral'}){
+export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
  const prepared=prepareXitaiSpeech(text,{tone,autoTags:true});
  text=prepared.text;
