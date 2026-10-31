@@ -27,7 +27,7 @@ export function acceptOuroborosChallenge(s){
 }
 export function markOuroborosWon(s){
  const o=s.content.orders.find(x=>x.id===WALLET_CHALLENGE_ID);
- if(!o||o.status==='COMPLETED')return false;
+ if(!o||o.status!=='ACCEPTED'||!ouroborosAvailable(s))return false;
  o.status='COMPLETED';
  if(!contact(s))s.content.conversations.mirage.push(structuredClone(ouroborosContact));
  const story=s.content.mirage.ouroborosScript??={stage:'accepted'};
