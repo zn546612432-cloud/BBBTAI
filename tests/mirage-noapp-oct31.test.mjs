@@ -38,6 +38,7 @@ test('Ouroboros appears only after D05 acceptance and waits for player-authored 
  assert.equal(ouroborosDraft(store.get(),c.id),'我拿到了。');
  assert.equal(sendOuroborosPreset(store.get(),c.id,'我拿到了。'),true);
  assert.equal(c.messages.at(-1).text,'你属于哪个组织？');
+ c.messages.find(m=>m.id==='ou-group').delivery={day:5,clock:'21:01'};
  assert.equal(sendOuroborosPreset(store.get(),c.id,'我单干。'),true);
  assert.match(c.messages.at(-1).text,/百分之八十/);
  assert.equal(sendOuroborosPreset(store.get(),c.id,'因为我是天才。'),true);
@@ -113,7 +114,7 @@ test('D05 payout writes no fake player bubbles; players reveal each script line 
  assert.equal(sendOuroborosPreset(s,c.id,'其他内容'),false);
  assert.equal(visibleMessages(c).length,1);
  assert.equal(sendOuroborosPreset(s,c.id,'我拿到了。'),true);
- assert.equal(visibleMessages(c).length,4);
+ assert.equal(visibleMessages(c).length,3);
 });
 test('MIRAGE deep link does not clear unread messages while sign-in is still visible',()=>{
  const store=makeStore(),s=store.get();s.day=5;s.unlocked=true;
