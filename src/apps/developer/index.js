@@ -1,4 +1,5 @@
 import {story55Editor} from './features/story55/index.js';
+import {isStory55} from '../../services/story55/state.js';
 import {diaryEditor,diaryEditorAction,diaryEditorChange,diaryEditorSubmit} from './features/diary/index.js';
 import {editableMoments} from '../wechat/features/moments/model.js';
 import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
@@ -56,7 +57,7 @@ export function handle(a,t,ctx){
  if(a==='rearm-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
  if(a==='test-message'){
   const x=selectedConversation(store.get());
-  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&s.day<56)s.day=56;});
+  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
   router.open({appId:x.channel,route:'/chat/'+x.c.id});return;
  }
  if(a==='add-image-message'||a==='replace-message-image'){
