@@ -4,6 +4,7 @@ import {timestampGroups,timestampLabel} from '../../../services/messaging/timest
 import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
+import {currentScript55,scriptedDraft55} from '../../../services/story55/scripted-chat.js';
 import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
 
 const historyMediaById=new Map(historyMedia.assets.map(asset=>[asset.id,asset]));
@@ -62,14 +63,16 @@ function messageRow(m,s,c){
 export function renderWeChatChat(s,id){
   const c=wechatConversation(s,id);
   if(!c)return empty('对话不存在');
+  const line=currentScript55(s,'wechat',id),script=scriptedDraft55(s,'wechat',id);
+  const scriptedAttributes=script?' data-story-stage="'+esc(script.id+':'+script.index)+'" data-story-type="'+esc(script.text)+'"':'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
     timestampGroups(visibleMessages(c),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+
-    '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'">'+
+    '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'"'+(script?' data-story-scene="'+esc(script.id)+'"':'')+'>'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(s.drafts[id]||'')+'">'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+(script?'':esc(s.drafts[id]||''))+'"'+scriptedAttributes+(line&&!script?' disabled':'')+'>'+
       action('wx-emoji','表情',smileIcon)+
       action('attach-chat','发送图片',plusIcon).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
       '<button type="submit" class="wx-composer-send" aria-label="发送消息">发送</button></form>'+

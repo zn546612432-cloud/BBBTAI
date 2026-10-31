@@ -17,10 +17,12 @@ const isoDate=(state,params)=>/^\d{4}-\d{2}-\d{2}$/.test(params?.date||'')?param
 const open=(ctx,route,params={})=>ctx.router.open({appId:'calendar',route,params});
 
 export function render({store},loc={route:'/',params:{}}){
+ // Old bookmarked scene URLs must never re-open the retired plot-card UI.
+ // Startup migrates these links into the correct chat; a direct stale Calendar
+ // link falls back to the real native month view.
  if(isStory55(store.get())&&loc.route==='/story55/scene'){
-  const id=loc.params?.node;
-  if(id==='recognition'||id==='ending')return '<main class="cl-screen"><section class="cl-event-page"><h1>私人消息</h1><p>这段对话请在 NoApp 中查看。</p>'+s55Button('node','前往 NoApp',`data-node="${id}"`)+'</section></main>';
-  return sceneView55(store.get(),loc);
+  const s=store.get(),today=dateParts(s).iso;
+  return '<main class="cl-screen">'+renderMonth(today,today,calendarEvents(s))+'</main>';
  }
  const state=store.get(),route=loc.route||'/',params=loc.params||{},today=dateParts(state).iso;
  const date=isoDate(state,params),events=calendarEvents(state);
