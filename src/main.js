@@ -8,7 +8,7 @@ import {registry} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
-import {processDemoReply} from './services/invitations.js';
+import {processDemoReply,sendUnansweredChessReminders} from './services/invitations.js';
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
@@ -45,6 +45,7 @@ const tasks=createTaskSwitcher({router,registry});
 if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
+let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
 const nonImmersive=/演示|下一阶段|开发者|暂未接入|尚未接入|尚未开放|后续功能阶段|剧情|游戏存档|仅本机模拟|DEMO|测试中/i;
 const toast=message=>{
@@ -118,8 +119,31 @@ function render(){
  if(navigation===lastNavigation&&oldScroll!==undefined&&$('#screen-layer #app-content'))$('#screen-layer #app-content').scrollTop=oldScroll;else router.restoreScroll();
  const nextPane=$('#screen-layer .chat-messages');
  if(nextPane){const added=[...nextPane.querySelectorAll('.message-row[data-key]')].filter(el=>!oldKeys.has(el.dataset.key));if(!changed&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)for(const row of added)row.animate([{opacity:0,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,easing:'ease-out'});if(changed||nearBottom)nextPane.scrollTop=nextPane.scrollHeight;}
+ mountScriptedMirageDraft();
  lastNavigation=navigation;
  lastLocation={...current};
+}
+let pendingMirageType=null;
+function mountScriptedMirageDraft(){
+ const input=$('#screen-layer .mc-composer input[data-story-type]');
+ if(!input){
+  if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  return;
+ }
+ const identity=input.dataset.storyStage+':'+input.dataset.storyType;
+ if(pendingMirageType?.identity===identity&&pendingMirageType.element===input)return;
+ if(pendingMirageType)clearInterval(pendingMirageType.timer);
+ const full=input.dataset.storyType;
+ // Do not overwrite text that the player has already started entering.
+ if(input.value&&input.value!==full)return;
+ input.value='';let offset=0;
+ const step=()=>{
+  if(!input.isConnected){clearInterval(pendingMirageType?.timer);pendingMirageType=null;return;}
+  if(document.activeElement===input&&input.value!==full.slice(0,offset)){clearInterval(pendingMirageType?.timer);pendingMirageType=null;return;}
+  input.value=full.slice(0,++offset);
+  if(offset>=full.length){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+ };
+ pendingMirageType={identity,element:input,timer:setInterval(step,105)};
 }
 function requestUnlock(link=null){
  if(phoneBlocked(store.get())||lockscreen.stage!=='cover'||unlockingCover)return;
@@ -202,7 +226,7 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(store.get().invitations.some(i=>i.senderId==='tai'&&['pending','deferred'].includes(i.status)))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
@@ -224,6 +248,7 @@ setInterval(()=>{
  if(outcome.event==='wake'){collapseIsland();lockscreen.reset();}
 },800);
 $('#root').addEventListener('click',async e=>{
+ if(Date.now()<suppressNotificationClickUntil&&e.target.closest?.('.lock-notification,.shade-notification,#toast')){e.preventDefault();return;}
   const openedMessageMenu=$('#screen-layer .wx-message-menu:not([hidden])');
   if(openedMessageMenu&&!e.target.closest('.wx-message-menu,.wx-bubble'))openedMessageMenu.hidden=true;
   if(e.target.matches('.mc-login [data-mirage-account]')){registry.get('mirage')?.accountTap?.(e.target);return;}
@@ -304,6 +329,31 @@ $('#root').addEventListener('contextmenu',e=>{
   if(!bubble)return;
   e.preventDefault();cancelMessageHold();registry.get('wechat')?.openMessageMenu?.(bubble);
 });
+// Swipe left on a lock-screen or shade notification to dismiss; swipe up
+// on the compact banner to hide it without marking the message read.
+let noticeGesture=null;
+const noticeStart=(target,x,y)=>{
+ const node=target.closest?.('.lock-notification,.shade-notification,#toast');
+ if(!node)return;noticeGesture={node,x,y};
+};
+const noticeFinish=(x,y)=>{
+ const item=noticeGesture;noticeGesture=null;if(!item)return;
+ const dx=x-item.x,dy=y-item.y;
+ if(item.node.id==='toast'&&dy< -42&&Math.abs(dy)>Math.abs(dx)){
+  suppressNotificationClickUntil=Date.now()+550;
+  clearTimeout(toastTimer);item.node.classList.remove('visible');item.node.dataset.noticeId='';return;
+ }
+ if(item.node.id!=='toast'&&dx< -55&&Math.abs(dx)>Math.abs(dy)*1.15){
+  suppressNotificationClickUntil=Date.now()+550;
+  const id=item.node.dataset.id;
+  if(id)readNotification(store,id);
+ }
+};
+$('#root').addEventListener('touchstart',e=>{if(e.touches.length===1)noticeStart(e.target,e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+$('#root').addEventListener('touchend',e=>{if(noticeGesture&&e.changedTouches[0])noticeFinish(e.changedTouches[0].clientX,e.changedTouches[0].clientY);},{passive:true});
+$('#root').addEventListener('touchcancel',()=>{noticeGesture=null;},{passive:true});
+$('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
+$('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
 $('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit)return;e.preventDefault();try{const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
 $('#root').addEventListener('focusin',e=>{
