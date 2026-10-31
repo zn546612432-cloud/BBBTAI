@@ -17,7 +17,7 @@ export {WALLET_CHALLENGE_ID,completeWalletChallenge};
 export function initializeMirage(store){
  const current=store.get();
  const missingStarter=['mc-arms-partner','mc-peer-crypt','mc-support-echo','mc-done-sable'].some(id=>!current.content.conversations.mirage.some(x=>x.id===id));
- const missingD05=current.day>=5&&!current.content.orders.some(x=>x.id===WALLET_CHALLENGE_ID);
+ const missingD05=(current.day>5||current.day===5&&current.clock>='20:00')&&!current.content.orders.some(x=>x.id===WALLET_CHALLENGE_ID);
  const needsUpgrade=current.content.mirage?.version!==3;
  if(!missingStarter&&!missingD05&&!needsUpgrade)return;
  store.update(s=>{
@@ -27,7 +27,7 @@ export function initializeMirage(store){
   ensureMirageStory(s);
  });
 }
-export const contacts=s=>{const done=s.events?.some(e=>e.type==='mirage_wallet_challenge_completed');const list=[...(s.content.conversations.mirage||[])].filter(c=>c.id!=='mc-ourob-d05'||done);return list.sort((a,b)=>(Number(b.lastOpened)||0)-(Number(a.lastOpened)||0)||((b.authored===true?1:0)-(a.authored===true?1:0))||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
+export const contacts=s=>{const done=s.events?.some(e=>e.type==='mirage_wallet_challenge_completed')||!!s.content.mirage?.ouroborosScript;const list=[...(s.content.conversations.mirage||[])].filter(c=>c.id!=='mc-ourob-d05'||done);return list.sort((a,b)=>(Number(b.lastOpened)||0)-(Number(a.lastOpened)||0)||((b.authored===true?1:0)-(a.authored===true?1:0))||(a.name==='Isolde Mirage'?-1:b.name==='Isolde Mirage'?1:0));};
 export const isCompletedBounty=order=>['COMPLETED','已完成'].includes(String(order.status||'').trim().toUpperCase());
 export const bountyGroups=orders=>({open:orders.filter(o=>!isCompletedBounty(o)),completed:orders.filter(isCompletedBounty)});
 export const money=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
