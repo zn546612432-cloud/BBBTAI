@@ -3,6 +3,8 @@ await rm('dist',{recursive:true,force:true});
 await mkdir('dist',{recursive:true});
 await cp('public','dist',{recursive:true});
 await cp('src','dist/src',{recursive:true});
+// Archive is loaded as one file rather than dozens of sequential requests.
+await import('./build-pre-d01-history.mjs');
 await rm('dist/src/legacy',{recursive:true,force:true});
 await cp('index.html','dist/index.html');
 await mkdir('dist/vendor',{recursive:true});
