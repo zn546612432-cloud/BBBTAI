@@ -115,7 +115,7 @@ export function resetLinkedMission(s,id){
  s.content.mail=s.content.mail.filter(m=>m.id!==mailId&&m.id!==receiptId&&m.id!==deliveryId);
  if(s.content.missionFiles)s.content.missionFiles=s.content.missionFiles.filter(f=>f.orderId!==id);
  s.notifications=s.notifications.filter(n=>n.id!=='linked-mail-notice-'+id&&n.id!=='linked-payment-notice-'+id);
- mission.submitted=false;delete mission.deliveredAt;
+ mission.submitted=false;delete mission.deliveredAt;delete mission.failed;
  if(s.ghost?.orders)delete s.ghost.orders[id];
  if(s.ghost?.history)s.ghost.history=s.ghost.history.filter(h=>h.orderId!==id);
  return true;
