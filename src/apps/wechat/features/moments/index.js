@@ -1,6 +1,7 @@
 import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
-import {wechatAvatars,publicWeChatAsset} from '../../avatars.js';
+import {wechatAvatars,publicWeChatAsset,resolveWeChatAvatar} from '../../avatars.js';
+import {rebaseBundledPublicAsset} from '../../../../services/public-assets.js';
 import {profiles,authoredMoments,visibleMoments} from './data.js';
 import {allMoments,findMoment,momentProfiles,addGameMomentComment} from './model.js';
 import {momentIcons} from './icons.js';
@@ -13,16 +14,22 @@ const local=filename=>publicWeChatAsset('media/'+filename);
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
 export function momentImage(source){
- if(!source)return '';
- if(source.startsWith('data:image/'))return source; // Player-selected photograph.
- if(source.startsWith('avatar:'))return avatarUrl(source.slice(7));
- return photos[source]?local(photos[source]):'';
+ const input=String(source||'');
+ if(!input)return '';
+ if(input.startsWith('avatar:'))return avatarUrl(input.slice(7));
+ if(photos[input])return local(photos[input]);
+ // Preserve media that was edited into a Moment or imported from an older
+ // storyline package; previously these were silently replaced with "".
+ const rebased=rebaseBundledPublicAsset(input);
+ if(rebased!==input)return rebased;
+ if(/^(?:https:\/\/|data:image\/|blob:)/i.test(input))return input;
+ return '';
 }
 const allPosts=s=>allMoments(s).filter(p=>p.privacy!=='private'||p.author==='熙蒙');
 const nowDate=s=>dateParts(s).iso;
 const clockLabel=(date,now)=>date.slice(0,10)===now?'今天 '+date.slice(11):date.slice(5,7).replace(/^0/,'')+'月'+Number(date.slice(8,10))+'日 '+date.slice(11);
 const im=(src,alt,cls='')=>'<img class="'+cls+'" src="'+esc(momentImage(src))+'" alt="'+esc(alt)+'" loading="eager" decoding="async">';
-const avatar=(name,s)=>'<img class="wx-moments-avatar" src="'+esc(momentProfiles(s)[name]?.avatar||avatarUrl(name))+'" alt="'+esc(name)+'头像" loading="eager">';
+const avatar=(name,s)=>'<img class="wx-moments-avatar" src="'+esc(resolveWeChatAvatar(name,momentProfiles(s)[name]?.avatar))+'" alt="'+esc(name)+'头像" loading="eager">';
 const authorBtn=name=>'<button type="button" class="wx-moments-author" data-action="wx-moment-profile" data-name="'+esc(name)+'">'+esc(name)+'</button>';
 function pictureGrid(post){
  if(!post.media?.length)return '';

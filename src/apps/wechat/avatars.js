@@ -1,6 +1,6 @@
 // User-supplied source images, preserved without recompression in public/.
 // Fallback-by-name is intentional: older browser saves still contain letter avatars.
-import {publicAssetPath} from '../../services/public-assets.js';
+import {publicAssetPath,rebaseBundledPublicAsset} from '../../services/public-assets.js';
 // Static assets live in public/, so Pages must prefix the deployed base path.
 export const publicWeChatAsset=path=>{
  return publicAssetPath('apps/wechat/'+String(path).replace(/^\/+/, '').replace(/^apps\/wechat\//,''));
@@ -17,8 +17,12 @@ export const wechatAvatars=Object.freeze({
 
 export function resolveWeChatAvatar(name,source=''){
  const candidate=String(source||'');
- // A player-edited image takes priority over the bundled example asset.
- if(/^\/apps\/wechat\//.test(candidate))return publicWeChatAsset(candidate);
- if(/^(?:\/|data:image\/(?:png|jpeg|webp);base64,|https:\/\/)/i.test(candidate))return candidate;
+ // Old saves can point to a previous /releases/<hash>/ folder; those
+ // folders do not survive the next deployment. Rebase before rendering.
+ const rebased=rebaseBundledPublicAsset(candidate);
+ if(rebased!==candidate)return rebased;
+ if(/^\/(?:apps\/wechat\/)/.test(candidate))return publicWeChatAsset(candidate);
+ // Preserve custom uploaded data images and intentional remote portraits.
+ if(/^(?:\/|data:image\/|https:\/\/|blob:)/i.test(candidate))return candidate;
  return wechatAvatars[name]||candidate||name?.slice(0,1)||'?';
 }

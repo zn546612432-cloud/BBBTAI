@@ -3,6 +3,7 @@ import {visibleMessages} from '../../../services/messaging/delivery.js';
 import {timestampGroups,timestampLabel} from '../../../services/messaging/timestamps.js';
 import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
+import {rebaseBundledPublicAsset} from '../../../services/public-assets.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
 import {currentScript55,scriptedDraft55} from '../../../services/story55/scripted-chat.js';
 import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
@@ -13,15 +14,16 @@ export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>
 
 // Local story stickers must work under both the Site root and versioned Pages paths.
 export function pictureSrc(source,moduleUrl=import.meta.url){
- const match=String(source||'').match(/^\/apps\/wechat\/stickers\/([a-zA-Z0-9_-]+\.(?:png|webp|gif|svg))$/);
- if(match)return new URL(`../../../../apps/wechat/stickers/${match[1]}`,moduleUrl).href;
- const media=String(source||'').match(/^\/apps\/wechat\/media\/([a-zA-Z0-9_-]+\.(?:png|webp|jpe?g|mp4))$/);
- return media?new URL(`../../../../apps/wechat/media/${media[1]}`,moduleUrl).href:source;
+ const input=String(source||'');
+ // moduleUrl is injectable so old release paths can be tested explicitly.
+ const base=new URL('../../../../',moduleUrl).pathname;
+ const updated=rebaseBundledPublicAsset(input,{base});
+ return updated===input?input:new URL(updated,moduleUrl).href;
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
-const portrait=(name,s)=>'<span class="wx-message-avatar"><img src="'+esc(s.characterAvatars?.[name]||s.characterAvatars?.[name==='哥'?'熙旺':name]||resolveWeChatAvatar(name))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
+const portrait=(name,s)=>'<span class="wx-message-avatar"><img src="'+esc(resolveWeChatAvatar(name==='哥'?'熙旺':name,s.characterAvatars?.[name]||s.characterAvatars?.[name==='哥'?'熙旺':name]))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
 const action=(name,title,icon)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'">'+icon+'</button>';
 const voiceIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M9 11v6m3-8c3 2.6 3 7.4 0 10m3-13c4.8 4.5 4.8 11.5 0 16"/></svg>';
 const plusIcon='<svg width="29" height="29" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 8v12M8 14h12"/></svg>';
