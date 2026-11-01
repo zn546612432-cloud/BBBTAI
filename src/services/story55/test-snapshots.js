@@ -1,7 +1,8 @@
 // Developer-only savepoints. Kept in separate storage so timeline resets never
 // mutate or remove snapshots. These are NOT canonical story configuration files.
-const INDEX_KEY='ximeng-phone-story55-snapshots-index-v1';
-const DATA_PREFIX='ximeng-phone-story55-snapshot-v1:';
+const reviewNamespace=(globalThis.location?.pathname||'').match(/\/review\/([a-z0-9-]+)\//i)?.[1]||'';
+const INDEX_KEY='ximeng-phone-story55-snapshots-index-v1'+(reviewNamespace?':review:'+reviewNamespace:'');
+const DATA_PREFIX='ximeng-phone-story55-snapshot-v1:'+(reviewNamespace?'review:'+reviewNamespace+':':'');
 const clone=value=>structuredClone(value);
 
 export function storySourceVersion(s){
