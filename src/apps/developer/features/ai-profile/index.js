@@ -2,6 +2,7 @@ import {isStory55,taiRecognized} from '../../../../services/story55/state.js';
 import {btn,esc} from '../../../../system/ui.js';
 import {uid} from '../../../../services/id.js';
 import {askTai} from '../../../../services/ai/gateway.js';
+import {mirageAIEnabled,mirageAIRevision} from '../../../../services/ai/channel-controls.js';
 import {buildTaiPrompt,defaultTaiDraft,taiProfileFields,visibleTaiMemories} from '../../../../services/ai/tai-profile.js';
 
 const value=v=>esc(String(v??''));
@@ -29,10 +30,13 @@ export async function handleTaiReview(action,target,ctx){
  try{
   const {day,channel,d}=testContext(ctx);
   if(action==='ai-preview-prompt'){const el=document.getElementById('ai-test-prompt');if(el){el.textContent=buildTaiPrompt({day,channel,profile:d.profile,memories:d.memories});el.hidden=false;}return true;}
+  const revision=mirageAIRevision(ctx.store.get());
+  if(channel==='mirage'&&!mirageAIEnabled(ctx.store.get()))throw Error('请先开启上方的 MIRAGE AI 回复开关');
   const sample=document.getElementById('ai-chat-sample')?.value?.trim();if(!sample)throw Error('请先输入测试消息');
   const result=document.getElementById('ai-chat-result');if(result)result.textContent='正在生成回复…';
   const messages=[...d.testTurns.filter(t=>t.channel===channel&&t.day===day).slice(-10).map(t=>({role:t.role,content:t.content})),{role:'user',content:sample}];
   const answer=await askTai({day,channel,messages,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),profile:d.profile,memories:d.memories});
+  if(channel==='mirage'&&(!mirageAIEnabled(ctx.store.get())||revision!==mirageAIRevision(ctx.store.get())))return true;
   ctx.store.update(s=>{s.aiDraft.testTurns.push({role:'user',content:sample,day,channel},{role:'assistant',content:answer.text,day,channel});s.aiDraft.testTurns=s.aiDraft.testTurns.slice(-24);});
   const shown=document.getElementById('ai-chat-result');if(shown)shown.textContent=answer.text;
  }catch(error){const result=document.getElementById('ai-chat-result');if(result)result.textContent=error.message;ctx.toast(error.message);}

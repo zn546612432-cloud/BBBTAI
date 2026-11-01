@@ -1,6 +1,7 @@
 import {btn,card,esc} from '../../../../system/ui.js';
 import {aiStatus,voicePreview,XITAI_VOICE_ID} from '../../../../services/ai/gateway.js';
 import {taiReviewPanel,handleTaiReview,submitTaiReview} from '../ai-profile/index.js';
+import {mirageAIEnabled} from '../../../../services/ai/channel-controls.js';
 
 const defaults={voiceId:XITAI_VOICE_ID,model:'speech-2.8-turbo',language:'Chinese',speed:1};
 const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===value?' selected':'')+'>'+esc(label)+'</option>';
@@ -8,6 +9,7 @@ const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===v
 export function aiVoicePanel(s){
   const p={...defaults,...s.aiVoiceSettings};
   return '<div class="editor-panel">'+
+    card('<h3>MIRAGE · AI 回复</h3><label style="display:flex;align-items:center;gap:10px"><input type="checkbox" style="width:18px;height:18px;flex:none;padding:0" data-mirage-ai '+(mirageAIEnabled(s)?'checked':'')+'> 开启 MIRAGE AI 回复（开发测试）</label><p class="editor-help">默认关闭。关闭时不调用 AI，固定剧情照常运行；关闭开关后，尚未送达的 AI 回复会停止。此开关保存在当前手机存档，不影响 NoApp 和国际象棋。</p>')+
     card('<span class="eyebrow">DEEPSEEK × MINIMAX / LOCAL GATEWAY</span><h2>熙泰 · AI 接口与音色实验室</h2>'+
     '<p class="editor-help">文字大脑：DeepSeek · 语音合成：MiniMax。接口仅在本机开发服务器启用；正式 GitHub Pages 无服务端。密钥只写入本机 .env.local，绝不填在游戏里。</p>'+
     '<p>文字接口 <code>POST /api/ai/chat</code><br>语音接口 <code>POST /api/voice/tts</code><br>检查接口 <code>GET /api/ai/status</code></p>'+
