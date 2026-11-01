@@ -32,7 +32,7 @@ export function createLinkedArtifact(s,id,{test=false}={}){
  s.events.push({type:'linked_artifact_created',orderId:id,artifactId,...timeLabel(s),test:!!test});
  return file;
 }
-export function deliverLinkedArtifact(s,id,attachmentId,{test=false}={}){
+export function deliverLinkedArtifact(s,id,attachmentId,{test=false,note=''}={}){
  if(!validMission(s,id))throw Error('找不到对应的 MIRAGE 委托');
  const m=linkedMission(s,id),o=currentOrder(s,id),run=s.ghost?.orders?.[id];
  if(o.status!=='ACCEPTED'||m.stage<5||run?.status!=='success')throw Error('请先完成 GHOST 并生成任务成果');
@@ -43,7 +43,7 @@ export function deliverLinkedArtifact(s,id,attachmentId,{test=false}={}){
  const reviewMinutes=Number.isInteger(m.reviewMinutes)&&m.reviewMinutes>0?m.reviewMinutes:30;
  const mail={
   id:linkedDeliveryId(id),orderId:id,from:'熙蒙',to:o.owner||'ANONYMOUS',
-  subject:'RE: '+m.subject,body:'任务已经完成，请查收加密成果。附件：'+file.title,
+  subject:'RE: '+m.subject,body:(String(note||'').trim().slice(0,1500)||'任务已经完成，请查收加密成果。')+'\n附件：'+file.title,
   attachments:[file.id],read:true,linkedDelivery:true,day:s.day,time:s.clock,test:!!test
  };
  s.content.mail.unshift(mail);
