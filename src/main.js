@@ -3,7 +3,7 @@ import {handleStory55Action,submitStory55Form} from './services/story55/controll
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
-import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55} from './services/story55/finale.js';
+import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
@@ -280,6 +280,10 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 // D55 terminal animation runs on real elapsed time, separate from game minutes.
 setInterval(()=>{
  const current=store.get(),phase=current.story55?.finalTransition?.phase;
+ if(endingVoiceRevealDue55(current,Date.now())){
+  store.update(s=>revealEndingVoice55(s));
+  return;
+ }
  if(finaleInProgress55(current)&&phase!=='off'){
   const wasSecond=secondView55(current);
   store.update(s=>tickFinale55(s,Date.now()));
@@ -309,7 +313,7 @@ const worldTickBatch=new WorldTickBatch();
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(lockscreen.stage==='restart'||document.hidden||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
+ if(lockscreen.stage==='restart'||document.hidden||endingAwaitingVoice55(store.get())||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  const tickOptions={focused:editing,taiChat:isTaiConversation(store.get())};
  const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
