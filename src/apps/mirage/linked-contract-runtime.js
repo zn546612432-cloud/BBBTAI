@@ -55,7 +55,9 @@ export function deliverLinkedArtifact(s,id,attachmentId,{test=false,note=''}={})
  return mail;
 }
 export function tickLinkedContracts(s){
- const missions=s.content?.mirage?.linkedMissions||{},now=linkedGameMinute(s);
+ const missions=s.content?.mirage?.linkedMissions||{};
+ if(!Object.keys(missions).length)return false;
+ const now=linkedGameMinute(s);
  let updated=false;
  for(const [id,m] of Object.entries(missions)){
   const order=currentOrder(s,id);if(!order)continue;
