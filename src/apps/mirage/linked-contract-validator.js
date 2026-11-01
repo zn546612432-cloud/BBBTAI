@@ -21,6 +21,7 @@ export function validateLinkedContract(s,id){
  const original=linkedMission(s,id);
  if(!original)return {...report,error:'不存在的委托配置'};
  const copy=structuredClone(s);
+ if(!copy.content.orders?.some(o=>o?.id===id))return {...report,error:'MIRAGE 悬赏订单不存在：'+id};
  const m=linkedMission(copy,id);
  try{
   resetLinkedMission(copy,id);
