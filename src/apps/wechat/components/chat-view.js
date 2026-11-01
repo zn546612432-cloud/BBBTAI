@@ -17,7 +17,8 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
  const input=String(source||'');
  // moduleUrl is injectable so old release paths can be tested explicitly.
  const base=new URL('../../../../',moduleUrl).pathname;
- return rebaseBundledPublicAsset(input,{base});
+ const updated=rebaseBundledPublicAsset(input,{base});
+ return updated===input?input:new URL(updated,moduleUrl).href;
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.
