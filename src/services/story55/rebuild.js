@@ -226,3 +226,33 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  s.nav=author.nav;
  return s.story55.developerRebuild;
 }
+
+/**
+ * Node preview is a focused variant of date jump. Rebuild all earlier days,
+ * then simulate same-day prerequisites, leaving the chosen node uncompleted.
+ */
+export function prepareStory55NodeAtDay(s,id){
+ const current=story55Config(s).nodes.find(n=>n.id===id);
+ if(!current)throw Error('剧情节点不存在：'+id);
+ rebuildStory55AtDay(s,current.day,'20:00');
+ const visit=(depId,stack=[])=>{
+  if(completed(s,depId))return;
+  if(stack.includes(depId))throw Error('剧情节点存在循环：'+depId);
+  const node=story55Config(s).nodes.find(n=>n.id===depId);
+  if(!node)throw Error('找不到剧情前置节点：'+depId);
+  if(node.day>current.day)throw Error('前置节点晚于目标日期：'+depId);
+  for(const parent of node.requires)visit(parent,[...stack,depId]);
+  if(completed(s,depId))return;
+  if(nodeStatus(s,depId).state!=='ready')throw Error('无法预览：'+nodeStatus(s,depId).reason);
+  const progressed=simulateNode(s,node);
+  if(!progressed||!completed(s,depId)){
+   throw Error('前置项目需要跨天完成：'+depId+'。请调整剧情时间线。');
+  }
+  tickStory55(s);
+ };
+ for(const depId of current.requires)visit(depId,[id]);
+ s.story55.previewNode=id;
+ s.editor.story55Node=id;
+ if(id==='recognition'&&completed(s,'invite'))s.story55.noappInstalled=true;
+ return {node:id,day:current.day};
+}
