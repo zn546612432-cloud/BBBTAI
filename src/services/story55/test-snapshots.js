@@ -5,14 +5,34 @@ const DATA_PREFIX='ximeng-phone-story55-snapshot-v1:';
 const clone=value=>structuredClone(value);
 
 export function storySourceVersion(s){
-  const chats=Object.fromEntries(Object.entries(s.content?.conversations||{}).map(([channel,items])=>[
-    channel,items.map(c=>({id:c.id,messages:(c.messages||[]).filter(m=>m.authored||m.storyImported).map(m=>({id:m.id,from:m.from,text:m.text,sentDate:m.sentDate,schedule:m.schedule}))}))
-  ]));
-  const source=JSON.stringify({config:s.story55?.config,presets:s.storyPresets?.rules,conversations:chats});
-  // FNV-1a: change detector, not an authenticity/security hash.
+  // Only immutable authored content belongs to a story version. Runtime chat
+  // delivery, NPC replies, payouts and read receipts must NOT change it.
+  const conversations=Object.fromEntries(
+    Object.entries(s.content?.conversations||{}).map(([channel,items])=>[
+      channel,items.map(c=>({
+        id:c.id,
+        ...(c.authored===true?{name:c.name,members:c.members}:{}),
+        messages:(c.messages||[])
+         .filter(m=>!m.story55&&!m.demo&&!/^preset-/.test(m.id||'')&&
+           (m.authored===true||m.storyImported===true||m.schedule?.mode==='game-time'||typeof m.sentDate==='string'&&m.sentDate<'2025-05-19'))
+         .map(m=>({id:m.id,from:m.from,text:m.text,sentDate:m.sentDate,schedule:m.schedule,kind:m.kind}))
+      })).filter(c=>c.messages.length||c.name)
+    ]).filter(([,items])=>items.length)
+  );
+  const linked=Object.values(s.content?.mirage?.linkedMissions||{}).map(m=>{
+    const {stage,...definition}=m;
+    return definition;
+  }).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  const source=JSON.stringify({
+    config:s.story55?.config,
+    presets:s.storyPresets?.rules,
+    conversations,linked,
+    moments:s.content?.moments?.posts
+  });
+  // FNV-1a change detector, NOT an authenticity or cryptographic signature.
   let hash=2166136261;
   for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}
-  return (hash>>>0).toString(16).padStart(8,'0');
+  return 'v2-'+(hash>>>0).toString(16).padStart(8,'0');
 }
 function readIndex(storage){
   try{const parsed=JSON.parse(storage.getItem(INDEX_KEY)||'[]');return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x.id==='string'):[];}
