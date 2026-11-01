@@ -8,6 +8,7 @@ import {completed} from '../src/services/story55/state.js';
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {registry} from '../src/system/registry.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
+import {revealEndingVoice55,ENDING_VOICE_APPEAR_DELAY_MS} from '../src/services/story55/finale.js';
 
 const state=()=>{const s=initialState();activateStory55(s);return s;};
 test('D01 starts with an NPC message in the ORIGINAL WeChat group, and does not send the player text',()=>{
@@ -88,10 +89,13 @@ test('D55 final voice is an in-chat sound bubble, not a Next-button card',()=>{
   if(step.kind==='me')sendScriptedDraft55(s,'noapp','tai',step.text);
   else advanceScene55(s,'ending');
  }
+ const before=registry.get('noapp').render({store:{get:()=>s}},{route:'/chat/tai',params:{}});
+ assert.doesNotMatch(before,/data-action="s55-final-audio"/);
+ assert.equal(revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS),true);
  const html=registry.get('noapp').render({store:{get:()=>s}},{route:'/chat/tai',params:{}});
- assert.match(html,/noapp-final-pending/);
  assert.match(html,/data-action="s55-final-audio"/);
- assert.doesNotMatch(html,/s55-scene-next|noapp-story55-step/);
+ assert.match(html,/22:46/);
+ assert.doesNotMatch(html,/noapp-final-pending|s55-scene-next|noapp-story55-step/);
 });
 
 test('D30 investigation questions stay in MIRAGE composer, requiring five explicit taps',()=>{

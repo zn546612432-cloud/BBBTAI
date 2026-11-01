@@ -1,4 +1,5 @@
 import {chargingBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
+import {secondView55} from '../../services/story55/finale.js';
 // Battery and civil game clock evolve independently.
 // From 08:00 at 100%, ordinary use reaches 20% around 23:00.
 export const LOW_BATTERY_PERCENT=20;
@@ -6,7 +7,7 @@ export const BATTERY_DRAIN_INTERVAL_MS=1_125_000/80;
 export const batteryPercent=s=>Number.isFinite(Number(s.batteryPercent))?Math.max(0,Math.min(100,Math.round(Number(s.batteryPercent)))):82;
 export const needsCharge=s=>batteryPercent(s)<=LOW_BATTERY_PERCENT;
 export function drainBattery(s,ms){
- if(deathLocked(s)||s.dayChargeRemainingMs>0)return 0;
+ if(secondView55(s)||deathLocked(s)||s.dayChargeRemainingMs>0)return 0;
  if(!Number.isFinite(ms)||ms<=0||s.powerMode==='charging'||s.powerMode==='sleeping'||s.emergencyCharge)return 0;
  const before=batteryPercent(s),saved=Number.isFinite(s.powerActiveMs)?Math.max(0,s.powerActiveMs):0;
  const total=saved+ms,points=Math.floor(total/BATTERY_DRAIN_INTERVAL_MS);

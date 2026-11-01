@@ -1,4 +1,5 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
 // Civil game time, story day and battery are deliberately independent.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
@@ -38,6 +39,7 @@ function nextAlarm(s,from,end){
  return found;
 }
 export function advanceGameMinutes(s,requested){
+ if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
@@ -82,19 +84,25 @@ export function advanceGameMinutes(s,requested){
 }
 export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId==='noapp'&&(n.route==='/chat/tai'||n.route==='/call'))||(n.appId==='mirage'&&/^\/chat\//.test(n.route)&&/ouroboros/i.test(n.route));}
 export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
+ // D55: after the 23-second recording actually finishes, 3 game minutes
+ // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
+ if(endingAwaitingReply55(s))return STORY55_NORMAL_MINUTES_PER_MS;
  const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
  return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
+ if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
  const rate=worldMinuteRate(s,{focused,taiChat});
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
- const whole=Math.floor(total);
+ // Decimal floating-point can put 2999ms + 1ms just below 1 minute.
+ // Account for sub-nanominute rounding without fast-forwarding normal play.
+ const whole=Math.floor(total+1e-9);
  if(!whole){s.worldMinuteFraction=total;return {minutes:0};}
  const outcome=advanceGameMinutes(s,whole);
- s.worldMinuteFraction=outcome.event&&outcome.event!=='none'?0:total-whole;
+ s.worldMinuteFraction=outcome.event&&outcome.event!=='none'?0:Math.max(0,total-whole);
  return outcome;
 }
 export function setSleeping(s){

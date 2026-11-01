@@ -1,0 +1,90 @@
+name: Publish isolated D55 finale review (preserve main)
+
+on:
+  push:
+    branches:
+      - feature/d55-final-handoff-20261101
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: d55-finale-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d55-finale-20261101/
+    steps:
+      - name: Checkout unchanged production
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production-source
+      - name: Checkout the D55 finale test branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d55-final-handoff-20261101
+          path: finale-source
+      - name: Checkout existing D03 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d03-flow-ghost-kira-20261101
+          path: d03-source
+      - name: Checkout earlier Story55 review
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve production and standard preview
+        working-directory: production-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist production-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist production-dist/preview
+          mv production-dist dist
+      - name: Preserve D03 review
+        working-directory: d03-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d03-flow-20261101/" npm run build:pages
+      - name: Preserve earlier Story55 review
+        working-directory: story55-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+      - name: Test and build isolated D55 finale
+        working-directory: finale-source
+        run: |
+          npm ci
+          npm test
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d55-finale-20261101/" npm run build:pages
+          grep -q 'phone-preview' dist/index.html
+          test -s dist/release.json
+      - name: Stage all reviews separately
+        run: |
+          for name in d03-flow-20261101 55-20261101 d55-finale-20261101; do mkdir -p "production-source/dist/review/$name"; done
+          cp -a d03-source/dist/. production-source/dist/review/d03-flow-20261101/
+          cp -a story55-source/dist/. production-source/dist/review/55-20261101/
+          cp -a finale-source/dist/. production-source/dist/review/d55-finale-20261101/
+          test -s production-source/dist/index.html
+          test -s production-source/dist/review/d55-finale-20261101/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production-source/dist
+      - name: Publish unchanged main plus isolated reviews
+        id: deployment
+        uses: actions/deploy-pages@v4

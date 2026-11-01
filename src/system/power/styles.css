@@ -85,3 +85,16 @@
 #phone.death-draining #homebar{visibility:hidden}
 
 #phone.death-draining .unlock-hint{visibility:hidden}
+
+
+/* D55: terminal power-down, unresponsive 1% / 0%, then Xitai's charge. */
+.s55-finale-battery,.s55-finale-off,.s55-finale-charging{background:#000}
+.s55-finale-battery .power-emergency-actions .power-control{opacity:.58;pointer-events:none;filter:grayscale(.4)}
+.s55-finale-battery .power-emergency-actions .power-control:active{transform:none}
+.s55-finale-off{padding:0}
+.s55-wake-surface{position:absolute;inset:0;display:block;width:100%;height:100%;opacity:0;background:transparent;cursor:default;touch-action:manipulation}
+.s55-finale-charging{gap:19px}
+.s55-finale-charge-icon{position:relative;width:125px;height:62px;border:3px solid #f0f3f5;border-radius:15px;padding:5px}
+.s55-finale-charge-icon:after{content:"";position:absolute;right:-9px;top:18px;width:5px;height:20px;border-radius:0 4px 4px 0;background:#eef1f4}
+.s55-finale-charge-icon span{display:block;height:100%;background:#64d894;border-radius:8px;transition:width .2s linear}
+.s55-finale-charge-percent{font-size:27px;font-weight:520;color:#f5f8f7;font-variant-numeric:tabular-nums}

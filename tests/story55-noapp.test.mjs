@@ -1,3 +1,5 @@
+import {advanceGameMinutes} from '../src/system/time/clock.js';
+import {revealEndingVoice55,ENDING_VOICE_APPEAR_DELAY_MS} from '../src/services/story55/finale.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -48,17 +50,43 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
   advanceScene55(s,'ending');
  }
  assert.equal(sceneLines(s,'ending')[scene55(s,'ending').index][0],'watch');
+ assert.doesNotMatch(show(s),/data-action="s55-final-audio"/);
+ assert.equal(s.clock,'22:25');
+ assert.equal(revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS),true);
  assert.match(show(s),/data-action="s55-final-audio"/);
+ assert.match(show(s),/22:46/);
  s.story55.finalAudioHeard=true;advanceScene55(s,'ending');
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.kind==='story55_final_audio'));
  assert.match(show(s),/noapp-final-voice/);
  assert.match(show(s),/aria-label="播放语音"/);
  assert.doesNotMatch(show(s),/最后的密钥录音/);
- while(!completed(s,'ending'))advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,6);
+ assert.equal(s.clock,'22:46');
+ advanceGameMinutes(s,3);advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
- assert.equal(s.batteryPercent,1);
+ assert.equal(s.deathPhase,'s55-accelerating');
  assert.ok(story55Config(s).finalAudio.endsWith('.mp3'));
 });
+test('D55 NoApp composer is never removed for 22:25, 22:46, 22:49 or after the last reply',()=>{
+ const s=make();previewNode55(s,'ending');
+ for(let i=0;i<5;i++)advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,5);
+ assert.match(show(s),/data-form="send-chat"/);
+ assert.match(show(s),/class="composer"/);
+ revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS);
+ assert.match(show(s),/data-form="send-chat"/);
+ s.story55.finalAudioHeard=true;
+ advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,6);
+ assert.match(show(s),/data-form="send-chat"/);
+ advanceGameMinutes(s,3);advanceScene55(s,'ending');
+ assert.equal(s.story55.ended,true);
+ assert.match(show(s),/data-form="send-chat"/);
+ assert.match(show(s),/placeholder="发送消息…"/);
+ s.story55.secondView=true;s.deathPhase='recovered';
+ assert.match(show(s),/data-form="send-chat"/);
+});
+
 test('a previously bookmarked Calendar scene no longer renders D55 dialogue',()=>{
  const s=make();previewNode55(s,'ending');
  const html=registry.get('calendar').render({store:{get:()=>s}},{route:'/story55/scene',params:{node:'ending'}});

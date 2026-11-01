@@ -3,6 +3,7 @@ import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {tickFlowD03} from './flow-d03.js';
+import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
@@ -37,7 +38,7 @@ export function finishScene55(s,id){
  if(!completeNode(s,id))return false;
  s.story55.activeScene=null;
  if(n.credit){s.bankData.balance+=n.credit;if(n.liability)s.story55.liabilities+=n.credit;s.bankData.transactions.unshift({id:'s55-'+id,label:n.liability?'ANONYMOUS LOAN':'STORY CREDIT',amount:n.credit,time:s.clock,date:date55(s.day)});}
- if(id==='ending'){s.story55.ended=true;s.batteryPercent=1;s.deathPhase='off';s.unlocked=false;}
+ if(id==='ending')startFinale55(s);
  tickStory55(s);return true;
 }
 export function advanceScene55(s,id,{acceptCall=false}={}){
@@ -45,21 +46,27 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
+ if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
+ const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(line[0]==='call'&&!acceptCall)throw Error('请接听未知来电');
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
  if(line[0]==='watch'&&id==='ending'){
+  // Already in the actual 22:46 chat log; never create a second voice bubble.
+  revealEndingVoice55(s,Date.now(),{force:true});
+  s.story55.endingVoiceSent=true;
   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
-  if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  if(!['system','call','watch'].includes(line[0])){
   const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:line[1],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  r.index++;
+ if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
 }
@@ -107,6 +114,9 @@ export function tickStory55(s){
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
+ // Update only the former default line; never overwrite author-edited dialogue.
+ const finalLines=story55Config(s).scenes?.ending;
+ if(finalLines?.[6]?.[1]==='熙蒙？熙蒙？')finalLines[6][1]=ENDING_FINAL_REPLY;
  if(final55(s))return;
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}

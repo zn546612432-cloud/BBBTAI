@@ -3,6 +3,7 @@ import {handleStory55Action,submitStory55Form} from './services/story55/controll
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
+import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
@@ -52,7 +53,7 @@ mountCallEvents({store});
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
-try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);});}catch(error){console.error('消息时间线恢复失败',error);}
+try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
 const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
 if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
@@ -221,7 +222,7 @@ function enterDigit(key){
   const recovery=store.get().deathPhase==='passcode';
   if(phoneBlocked(store.get())&&!recovery)return;
   if(recovery&&key==='cancel'){lockscreen.reset();store.update(s=>{s.deathPhase='off';});return;}
-  const result=lockscreen.key(key,recovery||store.get().deathPhase==='recovered'?'6180':'0816');
+  const result=lockscreen.key(key,recovery||secondView55(store.get())||store.get().deathPhase==='recovered'?'6180':'0119');
   if(result==='ignored')return;
   if(result==='restart'){render();return;}
   if(result==='cancelled'){pendingNoticeId=null;render();return;}
@@ -270,14 +271,35 @@ function expandIsland(){
 store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  const s=store.get();if(!phoneBlocked(s))return;
- const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off';
+ const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off',finalOff=s.deathPhase==='s55-off';
  if(recovery&&(e.target.closest?.('#day-transition-layer')||type==='keydown'))return;
  if(off&&(e.target.closest?.('[data-action="story-wake"]')||type==='keydown'&&['Enter',' '].includes(e.key)))return;
+  if(finalOff&&(e.target.closest?.('[data-action="story55-wake"]')||type==='keydown'&&['Enter',' '].includes(e.key)))return;
  if(e.cancelable)e.preventDefault();e.stopImmediatePropagation();
 },{capture:true,passive:false});
+// D55 terminal animation runs on real elapsed time, separate from game minutes.
+setInterval(()=>{
+ const current=store.get(),phase=current.story55?.finalTransition?.phase;
+ if(endingVoiceRevealDue55(current,Date.now())){
+  store.update(s=>revealEndingVoice55(s));
+  return;
+ }
+ if(finaleInProgress55(current)&&phase!=='off'){
+  const wasSecond=secondView55(current);
+  store.update(s=>tickFinale55(s,Date.now()));
+  if(!wasSecond&&secondView55(store.get())){lockscreen.reset();collapseIsland();}
+  return;
+ }
+ if(secondView55(current)){
+  const now=new Date(),minute=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  if(current.clock!==minute||current.realDate!==today||current.batteryPercent!==100)store.update(s=>syncSecondClock55(s,now));
+ }
+},300);
+
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
@@ -291,7 +313,7 @@ const worldTickBatch=new WorldTickBatch();
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
+ if(lockscreen.stage==='restart'||document.hidden||endingAwaitingVoice55(store.get())||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  const tickOptions={focused:editing,taiChat:isTaiConversation(store.get())};
  const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
@@ -299,6 +321,7 @@ setInterval(()=>{
  store.update(s=>{
   outcome=tickWorld(s,tickElapsed,tickOptions);
   drainBattery(s,tickElapsed);
+   if(endingReplyDue55(s))advanceScene55(s,'ending');
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
    ensureMirageStory(s);
@@ -319,6 +342,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
     if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.replace(restartState(store.get()));location.reload();return;}
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
+    if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
     if(action==='power-open'||action==='power-charge'){expandIsland();return;}
     if(action==='power-decline'){collapseIsland();return;}
@@ -554,6 +578,7 @@ mountGestures($('#phone'),{
  unlock:()=>{if(lockscreen.stage==='cover')requestUnlock();}
 });
 document.addEventListener('keydown',e=>{
+  if(store.get().deathPhase==='s55-off'&&['Enter',' '].includes(e.key)){e.preventDefault();store.update(s=>startSecondCharge55(s));return;}
   if(store.get().deathPhase==='off'&&['Enter',' '].includes(e.key)){e.preventDefault();lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
   if(!store.get().unlocked){
     if(lockscreen.stage==='cover'&&['ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();requestUnlock();}

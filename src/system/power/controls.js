@@ -1,6 +1,13 @@
 import {esc} from '../ui.js';
 
 export function powerFullscreen(s,{passcode=''}={}){
+ if(s.deathPhase==='s55-accelerating')return '';
+ if(s.deathPhase==='s55-one-percent'||s.deathPhase==='s55-zero-percent'){
+  const zero=s.deathPhase==='s55-zero-percent',percent=zero?'0%':'1%';
+  return '<section class="power-fullscreen s55-finale-battery" role="alertdialog" aria-label="电量 '+percent+'"><div class="power-emergency-battery"><i'+(zero?' style="width:0"':'')+'></i></div><div class="power-emergency-percent">'+percent+'</div><div class="power-emergency-actions"><button type="button" disabled class="power-control power-control-secondary">关机</button><button type="button" disabled class="power-control power-control-primary">充电</button></div></section>';
+ }
+ if(s.deathPhase==='s55-off')return '<section class="power-fullscreen s55-finale-off" aria-label="手机已关机"><button type="button" class="s55-wake-surface" data-action="story55-wake" aria-label="唤醒手机并开始充电"></button></section>';
+ if(s.deathPhase==='s55-charging')return '<section class="power-fullscreen s55-finale-charging" aria-label="正在充电"><div class="s55-finale-charge-icon"><span style="width:'+Math.max(0,Math.min(100,s.batteryPercent))+'%"></span></div><div class="s55-finale-charge-percent">'+s.batteryPercent+'%</div></section>';
  if(s.deathPhase==='draining')return '';
  if(s.deathPhase==='off')return '<section class="power-fullscreen power-off-screen"><button class="power-wake" data-action="story-wake" aria-label="唤醒屏幕"></button></section>';
  if(s.deathPhase==='passcode')return `<section class="power-fullscreen power-recovery-screen" aria-label="输入密码">${passcode}</section>`;
