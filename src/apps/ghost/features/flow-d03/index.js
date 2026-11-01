@@ -27,6 +27,8 @@ export function renderFlowD03(s,loc){
   if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';
   else body+='<div class="gh-flow-panel"><form data-form="gh-flow-key" autocomplete="off"><label for="gh-flow-key">密钥</label><input id="gh-flow-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>'+
     (p.keyAccepted?'<div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>›</span></button></div>':'');
+ }else if(loc.route==='/flow-install'){
+  body=headline('部署工具','deploy')+'<h1>部署工具</h1><div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>开始部署 ›</span></button></div>';
  }else if(loc.route==='/flow-projects'){
   body=headline('项目')+'<h1>项目</h1>'+
    (p.deployed?'<div class="gh-flow-project-list">'+btn('scan',FLOW_TOOL+'　›','gh-flow-project')+'</div>':'<div class="gh-empty">暂无已部署项目</div>');
@@ -40,8 +42,8 @@ export function handleFlowD03(action,ctx){
  if(!action.startsWith('gh-flow-'))return false;
  switch(action){
   case 'gh-flow-home':dialog=null;nav(ctx);break;
-  case 'gh-flow-projects':dialog=null;route(ctx,'/flow-projects');break;
   case 'gh-flow-deploy':dialog=null;route(ctx,'/flow-deploy');break;
+  case 'gh-flow-projects':dialog=null;route(ctx,'/flow-projects');break;
   case 'gh-flow-record':dialog=null;route(ctx,'/flow-record');break;
   case 'gh-flow-install':{
    let installed=false;
@@ -77,5 +79,6 @@ export function submitFlowD03Form(form,ctx){
  if(!p.linkOpened){if(error)error.textContent='尚未收到对应的部署任务';return true;}
  if(key!==FLOW_KEY){if(error)error.textContent='密钥错误';return true;}
  ctx.store.update(s=>acceptFlowKey(s,key));
+ route(ctx,'/flow-install');
  return true;
 }
