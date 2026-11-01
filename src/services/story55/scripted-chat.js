@@ -4,6 +4,7 @@
 import {isStory55,nodeStatus,story55Config} from './state.js';
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
+import {endingReplyDue55} from './finale.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const NOAPP=new Set(['recognition','paris','ending']);
@@ -36,6 +37,7 @@ export function currentScript55(s,channel,conversationId){
   const progress=scene55(s,n.id),lines=sceneLines(s,n.id);
   const index=progress.index||0;
   if(index>=lines.length)continue;
+  if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
   return {id:n.id,index,kind,text,channel,conversationId};
  }
