@@ -753,7 +753,7 @@ export const STORY55_CONFIG={
       ],
       [
         "tai",
-        "熙蒙？熙蒙？"
+        "熙蒙！熙蒙！"
       ]
     ],
     "invitation": [
