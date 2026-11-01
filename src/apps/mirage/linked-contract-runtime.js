@@ -20,7 +20,7 @@ export function createLinkedArtifact(s,id,{test=false}={}){
  const artifactId=linkedArtifactId(id);
  s.content.missionFiles??=[];
  const existing=s.content.missionFiles.find(f=>f.id===artifactId);
- if(existing)return existing;
+ if(existing){advanceLinkedMission(s,id,5);return existing;}
  const file={
   id:artifactId,orderId:id,title:'GH-'+id.toUpperCase()+'.enc',
   kind:'encrypted-result',mime:'application/octet-stream',
@@ -68,6 +68,19 @@ export function tickLinkedContracts(s){
    s.events.push({type:'linked_contract_deadline_missed',orderId:id,...timeLabel(s)});
    updated=true;continue;
   }
+  // Backward compatibility: an older preview allowed GHOST to submit with
+  // no KIRA attachment. Never fabricate a sent mail or payment. Reopen the
+  // successful puzzle so the player can create and send the actual artifact.
+  if(order.status==='ACCEPTED'&&!m.submitted&&run?.status==='settling'){
+   run.status='success';delete run.dueAt;delete run.submittedAt;
+   updated=true;
+  }
+  if(order.status==='ACCEPTED'&&!m.submitted&&run?.status==='success'&&m.stage>=4){
+   const file=linkedArtifacts(s).find(f=>f.id===linkedArtifactId(id));
+   if(!file||m.stage<5){
+    if(createLinkedArtifact(s,id))updated=true;
+   }
+  }
   if(order.status!=='REVIEWING'||!m.submitted||run?.status!=='settling')continue;
   if(!Number.isFinite(run.reviewAtGameMinute)||now<run.reviewAtGameMinute)continue;
   const value=Number(run.rewardAtSubmission);
@@ -91,6 +104,9 @@ export function linkedNeedsWorldTick(s){
  return Object.entries(missions).some(([id,m])=>{
   const order=currentOrder(s,id),run=s.ghost?.orders?.[id];
   return order?.status==='ACCEPTED'&&linkedDeliveryExpired(s,id)
+   ||order?.status==='ACCEPTED'&&!m.submitted&&run?.status==='settling'
+   ||order?.status==='ACCEPTED'&&!m.submitted&&run?.status==='success'&&m.stage>=4&&
+      (!linkedArtifacts(s).some(f=>f.id===linkedArtifactId(id))||m.stage<5)
    ||order?.status==='REVIEWING'&&m.submitted&&run?.status==='settling'
      &&Number.isFinite(run.reviewAtGameMinute)&&linkedGameMinute(s)>=run.reviewAtGameMinute;
  });
