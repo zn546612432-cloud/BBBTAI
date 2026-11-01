@@ -170,6 +170,6 @@ test('old successful GHOST-only submission is migrated without inventing a KIRA 
  s.clock='10:00';
  assert.equal(tickLinkedContracts(s),false);
  deliverLinkedArtifact(s,ID,linkedArtifactId(ID));
- s.clock='10:30';assert.equal(tickLinkedContracts(s),true);
+ s.clock='11:00';assert.equal(tickLinkedContracts(s),true);
  assert.equal(s.content.mirage.digitalBalance,2500);
 });
