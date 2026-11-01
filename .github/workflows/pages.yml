@@ -49,6 +49,29 @@ jobs:
             `dist/releases/${release.version}/apps/mirage/world-land.svg`,
             `dist/releases/${release.version}/apps/mirage/skull.svg`
           ];
+          const media=[
+            'apps/mirage/world-land.svg',
+            'apps/wechat/avatars/originals/ximeng.jpeg',
+            'apps/wechat/avatars/originals/xiwang.jpeg',
+            'apps/wechat/avatars/originals/awei.jpeg',
+            'apps/wechat/avatars/originals/hufeng.jpeg',
+            'apps/wechat/avatars/originals/xiaoxin.jpeg',
+            'apps/wechat/avatars/originals/zaizai.jpeg',
+            'apps/wechat/avatars/originals/fulongsheng.jpeg',
+            'apps/wechat/media/user-group-photo.webp',
+            'apps/wechat/media/user-food-rice.jpeg',
+            'apps/wechat/media/moment-cat-video.mp4'
+          ];
+          const preview=JSON.parse(readFileSync('dist/preview/release.json','utf8'));
+          for(const [root,version] of [['dist',release],['dist/preview',preview]]){
+            for(const item of media){
+              files.push(root+'/'+item);
+              files.push(root+'/releases/'+version.version+'/'+item);
+            }
+            const css=readFileSync(root+'/releases/'+version.version+'/src/apps/mirage/styles.css','utf8');
+            if(!css.includes(version.url+'apps/mirage/world-land.svg'))
+              throw new Error('MIRAGE map URL not versioned for '+root);
+          }
           for(const file of files)if(!existsSync(file))throw new Error('Missing Pages asset: '+file);
           const index=readFileSync('dist/index.html','utf8');
           if(!index.includes(release.url+'src/main.js'))throw new Error('Main entry is not version-pinned');
