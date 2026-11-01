@@ -85,7 +85,12 @@ export function advanceLinkedMission(s,id,step){
  const order=s.content.orders.find(o=>o.id===id);
  if(!order||order.status==='OPEN')return false;
  const next=Math.min(6,Math.max(0,Number(step)||0));
- if(next>mission.stage){mission.stage=next;return true;}
+ // A cross-App action cannot skip the browser, KIRA confirmation, GHOST
+ // artifact or manual-delivery prerequisite, even through a stale deep link.
+ if(next!==mission.stage+1)return false;
+ if(next===5&&s.ghost?.orders?.[id]?.status!=='success')return false;
+ if(next===6&&(s.ghost?.orders?.[id]?.status!=='paid'||!mission.submitted))return false;
+ mission.stage=next;return true;
  return false;
 }
 export function resetLinkedMission(s,id){
