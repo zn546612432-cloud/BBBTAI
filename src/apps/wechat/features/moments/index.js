@@ -22,7 +22,7 @@ export function momentImage(source){
  // storyline package; previously these were silently replaced with "".
  const rebased=rebaseBundledPublicAsset(input);
  if(rebased!==input)return rebased;
- if(/^(?:https:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,|blob:)/i.test(input))return input;
+ if(/^(?:https:\/\/|data:image\/|blob:)/i.test(input))return input;
  return '';
 }
 const allPosts=s=>allMoments(s).filter(p=>p.privacy!=='private'||p.author==='熙蒙');
