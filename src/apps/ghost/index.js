@@ -5,7 +5,7 @@ import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
 import {tools,stages,moduleLabel} from './catalog.js';
-import {ensureGhost,configFor,begin,finish,submit,settle,authorize,nextGhostRound} from './state.js';
+import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound} from './state.js';
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'工具程序'};
@@ -58,5 +58,5 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
   if(a==='key'){const key=t.dataset.key;if(key==='⌫')b.input=b.input.slice(0,-1);else if(key!=='↵'){if(key===b.code[b.input.length])b.input+=key;else{run.errors++;b.input='';}if(b.input.length===b.code.length){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}}}
  });
 }
-export {authorize,submit as submitOrder,settle};
+export {authorize,submitGhostOrder as submitOrder,settle};
 export function submit(form,ctx){return submitFlowD03Form(form,ctx);}
