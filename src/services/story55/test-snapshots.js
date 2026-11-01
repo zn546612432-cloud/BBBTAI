@@ -20,7 +20,7 @@ export function storySourceVersion(s){
     ]).filter(([,items])=>items.length)
   );
   const linked=Object.values(s.content?.mirage?.linkedMissions||{}).map(m=>{
-    const {stage,...definition}=m;
+    const {stage,submitted,deliveredAt,failed,...definition}=m;
     return definition;
   }).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
   const source=JSON.stringify({
