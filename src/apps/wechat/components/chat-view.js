@@ -67,7 +67,7 @@ export function renderWeChatChat(s,id){
   const scriptedAttributes=script?' data-story-stage="'+esc(script.id+':'+script.index)+'" data-story-type="'+esc(script.text)+'"':'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
-    timestampGroups(visibleMessages(c),s).map(({m,separator})=>
+    timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+
     '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'"'+(script?' data-story-scene="'+esc(script.id)+'"':'')+'>'+

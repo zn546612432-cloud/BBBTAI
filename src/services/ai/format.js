@@ -55,8 +55,11 @@ export function unpackTaiReply(response,channel='noapp'){
   const display=humanizeTaiText(cleanedText(speechText));
   const tone=['dry','playful','soft','serious','neutral'].includes(x?.tone)?x.tone:'neutral';
   if(!display)return [];
-  const chunks=mode==='text'&&display.length<950?display.split(/\n\s*\n|(?<=。)[\n]+/).map(v=>v.trim()).filter(Boolean):[display];
-  const pieces=chunks.length>=2&&chunks.length<=6&&chunks.every(v=>v.length<=400)?chunks:[display];
+  // Free text is sent as distinct chat bubbles at semicolons and line breaks;
+  // audio remains one uninterrupted speech segment.
+  const split=mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
+  const parts=split.length>1?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):[display];
+  const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
   return pieces.map(text=>({text,mode,tone,...(mode==='voice'?{speechText}:{} )}));
  }).slice(0,6).filter(x=>x.text);
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');

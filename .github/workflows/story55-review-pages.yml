@@ -7,6 +7,9 @@ on:
       - '.github/workflows/story55-review-pages.yml'
       - 'src/services/storage.js'
       - 'src/services/story55/test-snapshots.js'
+      - 'src/**'
+      - 'tests/**'
+      - 'public/assets/story55/**'
   workflow_dispatch:
 
 permissions:

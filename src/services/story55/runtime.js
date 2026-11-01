@@ -45,7 +45,7 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
-  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',members:Object.keys(actors),messages:[],unread:0};list.push(c);}
+  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
   c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?line[0]:cid,text:line[1],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  r.index++;

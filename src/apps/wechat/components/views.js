@@ -57,10 +57,10 @@ function menu(){
     '</div>';
 }
 function chats(s){
-  const conversations=(s.content.conversations.wechat||[]).filter(c=>visibleMessages(c).length||c.unread||c.authored||['wang','group'].includes(c.id));
+  const conversations=(s.content.conversations.wechat||[]).filter(c=>visibleMessages(c,s).length||c.unread||c.authored||['wang','group'].includes(c.id));
   const title=header('微信',iconButton('wx-toggle-menu','plus','更多操作'))+menu();
   const rows=conversations.map((c,i)=>{
-    const last=visibleMessages(c).at(-1);
+    const last=visibleMessages(c,s).at(-1);
     const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':last.text||''):'暂无消息';
     const time=last?.time||'';
     const unread=Math.max(0,Number(c.unread)||0);

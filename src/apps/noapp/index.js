@@ -69,7 +69,7 @@ function finalAudioBubble(s,line){
  return '<div class="message-row mine noapp-final-pending" role="group" aria-label="最后一段语音">'+
  '<div class="message-body"><div class="noapp-voice-bubble noapp-final-voice">'+
  '<button type="button" data-action="s55-final-audio" data-node="'+esc(line.id)+'" aria-label="播放熙蒙最后的录音">▶</button>'+
- '<span>熙蒙 · 最后的密钥录音</span></div></div></div>';
+ '<span class="noapp-wave" aria-hidden="true">'+Array.from({length:22},(_,i)=>'<i style="--h:'+(5+(i*13%19))+'px"></i>').join('')+'</span><span class="noapp-voice-duration">23″</span><span class="noapp-voice-caption-label">最后的密钥录音</span></div></div></div>';
 }
 export function render({store},loc){
  const s=store.get();

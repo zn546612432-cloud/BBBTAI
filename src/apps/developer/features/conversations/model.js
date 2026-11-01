@@ -5,7 +5,9 @@ export const conversations=s=>Object.entries(s.content.conversations).flatMap(([
 export const selectedConversation=s=>conversations(s).find(x=>x.c.id===s.editor.conversation&&(!s.editor.channel||x.channel===s.editor.channel))||conversations(s)[0]||null;
 export function actorName(c,id){return c.actorNames?.[id]||c.participants?.find(p=>p.id===id)?.name||(id===c.id?c.name:names[id]||id);}
 export function actors(c){
- const ids=new Set(c.participants?.length?c.participants.map(p=>p.id):c.id==='group'?['me','wang','胡枫','小辛','阿威','仔仔']:['me',c.id]);
+ // Membership in the original group is fixed; historical senders are not a roster.
+ if(c.id==='group')return ['me','wang','胡枫','小辛','阿威','仔仔'].map(id=>({id,name:actorName(c,id)}));
+ const ids=new Set(c.participants?.length?c.participants.map(p=>p.id):['me',c.id]);
  for(const m of c.messages)if(m.from)ids.add(m.from);
  return [...ids].map(id=>({id,name:actorName(c,id)}));
 }

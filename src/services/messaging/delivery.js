@@ -1,7 +1,20 @@
 import {isStory55,taiRecognized} from '../story55/state.js';
 import {isMirageAuthenticated} from '../../apps/mirage/session.js';
 import {actorName} from '../../editor/conversations/model.js';
-export const visibleMessages=c=>c.messages.filter(m=>!m.schedule||m.schedule.mode==='immediate'||m.delivery);
+import {dateParts} from '../calendar.js';
+import {messageDate} from './timestamps.js';
+// Do not expose future-authored messages in developer timeline previews.
+const excludedBrotherSenders=new Set(['father','fulongsheng','傅隆生','tai','xitai','陈熙泰','熙泰','ouroboros']);
+export function visibleMessages(c,s){
+ const today=s?dateParts(s).iso:null;
+ return (c?.messages||[]).filter(m=>{
+  if(c?.id==='group'&&excludedBrotherSenders.has(String(m.from||'').toLowerCase()))return false;
+  if(m.schedule&&m.schedule.mode!=='immediate'&&!m.delivery)return false;
+  if(!s||!today||(!m.sentDate&&!Number.isInteger(m.day)))return true;
+  const date=messageDate(m,s);
+  return date<today||(date===today&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(m.time||''))||m.time<=s.clock));
+ });
+}
 export function isConversationOpen(s,channel,id){return s.unlocked&&(channel!=='mirage'||isMirageAuthenticated())&&s.nav.current.appId===channel&&s.nav.current.route==='/chat/'+id;}
 const enabled=(s,channel)=>channel!=='noapp'||taiRecognized(s);
 export class MessageDelivery {

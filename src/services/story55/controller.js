@@ -62,9 +62,9 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-final-audio'){
   const src=story55Config(c.store.get()).finalAudio;if(!src)throw Error('终局音频尚未配置；可在运行台的配置中设置finalAudio资源路径');
   const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');
-  // Older saved story configs contain /assets/...; resolve against the running
-  // module so GitHub Pages /BBBTAI/releases/<hash>/ also finds the real MP3.
-  audio.src=src.startsWith('/assets/')?new URL('../../../'+src.slice(1),import.meta.url).href:src;
+  // Media lives beside the deployed index, NOT beside a hashed JS module.
+  const pageBase=new URL('./',globalThis.location?.href||document.baseURI);
+  audio.src=/^https?:\/\//i.test(src)?src:new URL(src.replace(/^\/+/,''),pageBase).href;
   audio.onerror=()=>c.toast?.('终局录音无法加载，请检查文件路径');
   audio.onended=()=>{
    if(c.store.get().story55.finalAudioHeard)return; // replay does not replay the ending
