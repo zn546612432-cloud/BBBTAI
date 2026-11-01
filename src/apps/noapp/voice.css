@@ -220,3 +220,17 @@
 .app-noapp .tai-call-identity{padding-bottom:clamp(4px,6vh,50px)}
 .app-noapp .tai-call-bottom.grid-six .tai-control-circle{background:#64666b8a}
 .app-noapp .tai-call-bottom.grid-six .tai-call-control.is-hang .tai-control-circle{background:#f04c54}
+
+.app-noapp .s55-locked-call{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:22px 18px max(20px,env(safe-area-inset-bottom))}
+.app-noapp .s55-locked-call .tai-call-identity{flex:1;min-height:160px;padding-bottom:10px}
+.app-noapp .s55-call-top{font-size:11px;letter-spacing:1.8px;opacity:.8;text-align:center}
+.app-noapp .s55-call-subtitles{width:100%;max-height:31vh;overflow:auto;min-height:112px;padding:16px 18px;background:#ffffff18;border:1px solid #ffffff20;border-radius:18px;backdrop-filter:blur(16px)}
+.app-noapp .s55-call-subtitles small{display:block;margin-bottom:8px;color:#b2cffa;font-size:12px}
+.app-noapp .s55-call-subtitles p{margin:0;font-size:15px;line-height:1.65;color:white;white-space:pre-wrap}
+.app-noapp .s55-call-subtitles em{display:block;margin-top:9px;font-style:normal;color:#f7b7ae;font-size:12px}
+.app-noapp .s55-call-bottom{width:100%;min-height:100px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.app-noapp .s55-call-answer{padding:15px 36px;background:#32b96e;color:white;border:0;border-radius:40px;font-size:17px}
+.app-noapp .s55-call-retry,.app-noapp .s55-call-settings{padding:11px 12px;background:#ffffff25;color:#fff;border:1px solid #ffffff30;border-radius:12px;font-size:13px}
+.app-noapp .s55-call-uninterruptible{color:#bec6d4;font-size:12px;text-align:center}
+.app-mirage .mc-story-incoming{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#102e2e;color:#b5eadc;padding:11px}
+.app-mirage .mc-story-incoming button{border:0;border-radius:9px;background:#2c9a76;color:white;padding:11px}

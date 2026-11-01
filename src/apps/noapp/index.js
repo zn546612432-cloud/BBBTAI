@@ -1,4 +1,5 @@
 import {s55Button} from '../../services/story55/views.js';
+import {scriptedCallView} from '../../services/story55/scripted-phone.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
@@ -73,7 +74,9 @@ function finalAudioBubble(s,line){
 }
 export function render({store},loc){
  const s=store.get();
- if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
+ if(loc.route==='/story-call')return scriptedCallView(s);
+  if(loc.route==='/settings-ai')return setting(s);
+  if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
  const legacyStoryRoute=loc.route==='/story55/recognition'||loc.route==='/story55/ending';
  const id=legacyStoryRoute?'tai':loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  const currentStory=id==='tai'?currentScript55(s,'noapp','tai'):null;

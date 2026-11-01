@@ -4,6 +4,7 @@ import {authorizeProject,startDeploymentStep,upgradeHardware} from './projects.j
 import {validateStory55Config,importStory55Config,exportStory55Config} from './config.js';
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
+import {beginScriptedCall,answerScriptedCall,retryScriptedCall} from './scripted-phone.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshot,getTestSnapshot,restoreTestSnapshot,deleteTestSnapshot,storySourceVersion} from './test-snapshots.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
@@ -46,7 +47,11 @@ export async function handleStory55Action(a,t,c){
  if(['s55-read-file','s55-read-page','s55-read-map'].includes(a)){c.store.update(s=>readEvidence55(s,a.slice(9),t.dataset.id));return true;}
  if(a==='s55-question'){c.store.update(s=>sendQuestion55(s));return true;}
  if(a==='s55-pay-node'){c.store.update(s=>payNode55(s,id));return true;}
- if(a==='s55-scene-next'||a==='s55-accept-story-call'){c.store.update(s=>advanceScene55(s,id,{acceptCall:a==='s55-accept-story-call'}));return true;}
+ if(a==='s55-accept-story-call'){beginScriptedCall(c,id);return true;}
+  if(a==='s55-call-answer'){answerScriptedCall(c);return true;}
+  if(a==='s55-call-retry'){retryScriptedCall(c);return true;}
+  if(a==='s55-call-settings'){open(c,'noapp','/settings-ai');return true;}
+  if(a==='s55-scene-next'){c.store.update(s=>advanceScene55(s,id));return true;}
  if(a==='s55-export-config'){exportText(exportStory55Config(c.store.get()),'ximeng-story55-config.json');return true;}
  if(a==='s55-commission'){
   let run;c.store.update(s=>{const g=s.ghost??={orders:{},history:[],balance:0,config:{}};const pending=Object.values(g.orders).find(o=>o.story55Commission&&o.status!=='paid');if(pending){run=pending.id;return;}run='s55-job-'+(Object.values(g.orders).filter(o=>o.story55Commission).length+1);g.orders[run]={id:run,type:'extract',key:'JOB-CHECK',status:'authorized',attempts:0,story55Commission:true,settings:{seconds:60,retries:1000,rounds:2,codeLength:4,reward:20000}};});open(c,'ghost','/contract',{orderId:run});return true;
