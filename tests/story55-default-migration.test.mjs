@@ -30,5 +30,5 @@ test('55-day run restores authored D01–D55 Moments but excludes future D56–D
   assert.ok(allMoments(s).every(p=>p.storyDay<=55));
  addMoment(s,10);
  assert.ok(allMoments(s).length>1);
- assert.equal(allMoments(s)[0].storyDay,10);
+ assert.equal(allMoments(s).find(p=>p.id.startsWith('moment-editor-')).storyDay,10);
 });

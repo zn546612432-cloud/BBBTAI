@@ -5,6 +5,7 @@ import {validateStory55Config,importStory55Config,exportStory55Config} from './c
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
 import {beginScriptedCall,answerScriptedCall,retryScriptedCall} from './scripted-phone.js';
+import {selectStory55Pin} from '../../apps/maps/features/story55/index.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshot,getTestSnapshot,restoreTestSnapshot,deleteTestSnapshot,storySourceVersion} from './test-snapshots.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
@@ -40,7 +41,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-document'){open(c,'files','/story55',{document:t.dataset.id});return true;}
  if(a==='s55-backup'){c.download();return true;}
  if(a==='s55-map-area'){open(c,'maps','/',{area:t.dataset.area});return true;}
- if(a==='s55-map-pin'){open(c,'maps','/place',{id:t.dataset.id});return true;}
+ if(a==='s55-map-pin'){selectStory55Pin(t);return true;}
  if(a==='s55-run-step'){let run;c.store.update(s=>run=startDeploymentStep(s,project));open(c,'ghost','/contract',{orderId:run});return true;}
  if(a==='s55-upgrade'){c.store.update(s=>upgradeHardware(s));return true;}
  if(a==='s55-read-mail'){c.store.update(s=>markMail55(s,t.dataset.id));return true;}
