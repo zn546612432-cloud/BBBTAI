@@ -87,7 +87,7 @@ export function render({store},loc){
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
  '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
- return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:!s.story55?.ended}):chatList(s,'noapp'))+'</div>';
+ return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:!s.story55?.ended&&!(isStory55(s)&&s.story55.endingVoiceSent&&s.story55.scenes?.ending?.index===6)}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;
