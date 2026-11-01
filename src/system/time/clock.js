@@ -1,4 +1,5 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {secondView55,finaleInProgress55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
 // Civil game time, story day and battery are deliberately independent.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
@@ -38,6 +39,7 @@ function nextAlarm(s,from,end){
  return found;
 }
 export function advanceGameMinutes(s,requested){
+ if(secondView55(s)||finaleInProgress55(s))return {minutes:0};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
@@ -86,6 +88,7 @@ export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
  return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
+ if(secondView55(s)||finaleInProgress55(s))return {minutes:0};
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
