@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
-      name: github-pages
+      name: story55-review-pages
       url: ${{ steps.deployment.outputs.page_url }}review/55-20261101/
     steps:
       - name: Check out unchanged production main
