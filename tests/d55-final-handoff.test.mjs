@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,advanceScene55,scene55,sceneLines} from '../src/services/story55/runtime.js';
 import {previewNode55} from '../src/services/story55/controller.js';
-import {advanceGameMinutes,tickWorld} from '../src/system/time/clock.js';
+import {advanceGameMinutes,tickWorld,worldMinuteRate,STORY55_NORMAL_MINUTES_PER_MS} from '../src/system/time/clock.js';
 import {syncDeathNight,phoneBlocked} from '../src/system/power/story.js';
 import {drainBattery} from '../src/system/power/battery.js';
 import {powerFullscreen} from '../src/system/power/controls.js';
 import {dateParts} from '../src/services/calendar.js';
 import {LockScreen} from '../src/system/lock.js';
 import {currentScript55} from '../src/services/story55/scripted-chat.js';
-import {ENDING_CLOCKS,ENDING_FINAL_REPLY,endingReplyDue55,tickFinale55,startSecondCharge55,syncSecondClock55,secondView55,FAST_FORWARD_MS,ONE_PERCENT_MS,ZERO_PERCENT_MS,RECHARGE_MS} from '../src/services/story55/finale.js';
+import {ENDING_CLOCKS,ENDING_FINAL_REPLY,ENDING_VOICE_APPEAR_DELAY_MS,endingAwaitingVoice55,endingVoiceRevealDue55,revealEndingVoice55,endingReplyDue55,tickFinale55,startSecondCharge55,syncSecondClock55,secondView55,FAST_FORWARD_MS,ONE_PERCENT_MS,ZERO_PERCENT_MS,RECHARGE_MS} from '../src/services/story55/finale.js';
 
 function endingReady(){
  const s=initialState();activateStory55(s);previewNode55(s,'ending');
@@ -141,4 +141,56 @@ test('legacy D55 ending saves migrate without deleting conversations or bypassin
  assert.equal(secondView55(resumed),true);
  assert.equal(resumed.batteryPercent,100);
  assert.equal(resumed.deathPhase,'recovered');
+});
+
+test('regression: 22:25 voice is NOT immediately visible; 22:46 voice is one timestamped bubble',()=>{
+ const {s}=endingReady();
+ for(let i=0;i<5;i++)advanceScene55(s,'ending');
+ assert.equal(endingAwaitingVoice55(s),true);
+ assert.equal(s.clock,'22:25');
+ const chat=s.content.conversations.noapp.find(c=>c.id==='tai');
+ const start=s.story55.endingVoiceQueuedAt;
+ assert.ok(Number.isFinite(start));
+ assert.equal(chat.messages.filter(m=>m.id==='s55-ending-final-voice').length,0);
+ assert.equal(endingVoiceRevealDue55(s,start+ENDING_VOICE_APPEAR_DELAY_MS-1),false);
+ assert.equal(tickWorld(s,60000).minutes,0);
+ assert.equal(advanceGameMinutes(s,10).minutes,0);
+ assert.equal(s.clock,'22:25');
+ assert.equal(revealEndingVoice55(s,start+ENDING_VOICE_APPEAR_DELAY_MS-1),false);
+ assert.equal(revealEndingVoice55(s,start+ENDING_VOICE_APPEAR_DELAY_MS),true);
+ assert.equal(s.clock,'22:46');
+ assert.equal(chat.messages.filter(m=>m.id==='s55-ending-final-voice').length,1);
+ assert.equal(chat.messages.find(m=>m.id==='s55-ending-final-voice').time,'22:46');
+ assert.equal(revealEndingVoice55(s,start+100000),false);
+ assert.equal(endingReplyDue55(s),false);
+ // Listening to the real audio cannot consume the 3 game-minute wait.
+ assert.equal(tickWorld(s,23000).minutes,0);
+ assert.equal(s.clock,'22:46');
+ assert.equal(endingReplyDue55(s),false);
+});
+
+test('regression: after real audio ends, exactly 3 game minutes progress in 9 real seconds; never an instant reply',()=>{
+ const {s}=endingReady();
+ for(let i=0;i<5;i++)advanceScene55(s,'ending');
+ revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS);
+ const chat=s.content.conversations.noapp.find(c=>c.id==='tai');
+ s.story55.finalAudioHeard=true;
+ advanceScene55(s,'ending');
+ assert.equal(s.clock,'22:46');
+ assert.equal(worldMinuteRate(s,{taiChat:true}),STORY55_NORMAL_MINUTES_PER_MS);
+ assert.equal(endingReplyDue55(s),false);
+ tickWorld(s,2999,{taiChat:true});
+ assert.equal(s.clock,'22:46');
+ assert.equal(chat.messages.some(m=>m.text===ENDING_FINAL_REPLY),false);
+ tickWorld(s,1,{taiChat:true});
+ assert.equal(s.clock,'22:47');
+ tickWorld(s,3000,{taiChat:true});
+ assert.equal(s.clock,'22:48');
+ assert.equal(endingReplyDue55(s),false);
+ tickWorld(s,3000,{taiChat:true});
+ assert.equal(s.clock,'22:49');
+ assert.equal(endingReplyDue55(s),true);
+ advanceScene55(s,'ending');
+ assert.equal(chat.messages.filter(m=>m.text===ENDING_FINAL_REPLY).length,1);
+ assert.equal(s.deathPhase,'s55-accelerating');
 });
