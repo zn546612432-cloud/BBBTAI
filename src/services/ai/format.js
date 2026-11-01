@@ -58,7 +58,7 @@ export function unpackTaiReply(response,channel='noapp'){
   // Free text is sent as distinct chat bubbles at semicolons and line breaks;
   // audio remains one uninterrupted speech segment.
   const split=mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
-  const parts=split.length>1?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):[display];
+  const parts=split.length>1?(/[；;]/.test(display)?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):split):[display];
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
   return pieces.map(text=>({text,mode,tone,...(mode==='voice'?{speechText}:{} )}));
  }).slice(0,6).filter(x=>x.text);
