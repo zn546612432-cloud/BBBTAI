@@ -15,7 +15,7 @@ export function timestampGroups(messages,s){
   last={date,minutes};
   // Every first message of a day carries a full calendar date, not only "today".
   const dateLabel=date.slice(0,4)+'年'+Number(date.slice(5,7))+'月'+Number(date.slice(8,10))+'日';
-  return {m,separator:show?(newDay?[dateLabel,clock].filter(Boolean).join(' '):(clock||timestampLabel(m,s))):null};
+  return {m,separator:show?(newDay&&s.story55?.version?[dateLabel,clock].filter(Boolean).join(' '):timestampLabel(m,s)):null};
  });
 }
 export function datePreset(m,s){if(m.sentDateMode==='custom')return 'custom';const diff=Math.round((Date.parse(dateParts(s).iso)-Date.parse(messageDate(m,s)))/DAY);return diff===0?'today':diff===1?'yesterday':diff===2?'before-yesterday':'custom';}

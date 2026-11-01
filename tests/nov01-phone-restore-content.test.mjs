@@ -34,6 +34,7 @@ test('WeChat shows full day separators and aliases xin to 小辛 rather than gho
  const s=initialState();activateStory55(s);
  const group=s.content.conversations.wechat.find(c=>c.id==='group');
  group.messages.push({id:'sample-xin',from:'xin',text:'帮我看一下',sentDate:'2025-05-19',time:'09:50'});
+ s.clock='10:00';
  const html=renderWeChatChat(s,'group');
  assert.match(html,/2025年5月19日 09:50/);
  assert.match(html,/小辛/);

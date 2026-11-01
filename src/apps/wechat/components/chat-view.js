@@ -14,9 +14,9 @@ export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>
 // Local story stickers must work under both the Site root and versioned Pages paths.
 export function pictureSrc(source,moduleUrl=import.meta.url){
  const match=String(source||'').match(/^\/apps\/wechat\/stickers\/([a-zA-Z0-9_-]+\.(?:png|webp|gif|svg))$/);
- if(match)return publicWeChatAsset('stickers/'+match[1]);
+ if(match)return moduleUrl===import.meta.url?publicWeChatAsset('stickers/'+match[1]):new URL('../../../../apps/wechat/stickers/'+match[1],moduleUrl).href;
  const media=String(source||'').match(/^\/apps\/wechat\/media\/([a-zA-Z0-9_-]+\.(?:png|webp|jpe?g|mp4))$/);
- return media?publicWeChatAsset('media/'+media[1]):source;
+ return media?(moduleUrl===import.meta.url?publicWeChatAsset('media/'+media[1]):new URL('../../../../apps/wechat/media/'+media[1],moduleUrl).href):source;
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.

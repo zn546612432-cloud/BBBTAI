@@ -6,8 +6,9 @@ import {story55Map,selectStory55Pin} from '../src/apps/maps/features/story55/ind
 import {render as ghostRender} from '../src/apps/ghost/index.js';
 test('map pin selection works as local UI, not a navigation and clock change',()=>{
  const s=initialState();activateStory55(s);
- const html=story55Map(s,{params:{}});
- assert.match(html,/data-map-area="MACAU"/);
+ s.story55.completed.uk=true;
+ const html=story55Map(s,{params:{area:'WORLD'}});
+ assert.match(html,/data-map-area="WORLD"/);
  assert.match(html,/data-map-detail=/);
  assert.match(html,/s55-map-placeholder/);
  assert.equal(selectStory55Pin(null),false);
