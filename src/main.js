@@ -295,7 +295,7 @@ setInterval(()=>{
 
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
