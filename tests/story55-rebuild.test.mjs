@@ -44,6 +44,9 @@ test('D45 rebuild reconstructs storyline, inbox, wallet, NoApp and phased GHOST'
 test('jump backward reconstructs without retaining future unlocks or completed story',()=>{
  const s=phone();
  rebuildStory55AtDay(s,45);
+ s.content.mirage.assets.push({id:'future-purchase',productId:'mc-p5',quantity:1});
+ s.content.mirage.cart.push({id:'mc-p5',qty:1});
+ s.content.mirage.balance=11;
  rebuildStory55AtDay(s,12);
  assert.equal(s.day,12);
  assert.equal(completed(s,'return'),true);
@@ -52,6 +55,9 @@ test('jump backward reconstructs without retaining future unlocks or completed s
  assert.equal(s.story55.noappInstalled,undefined);
  assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').name,'Dr Ouroboros');
  assert.equal(s.content.mail.some(m=>m.id==='invite-mail'),false);
+ assert.deepEqual(s.content.mirage.assets,[]);
+ assert.deepEqual(s.content.mirage.cart,[]);
+ assert.equal(s.content.mirage.balance,300000);
  assert.equal(ids(s).has('history-2024-0310'),true);
 });
 test('D55 leaves final scene and audio playable, but finishes the prior-day tasks',()=>{
