@@ -44,7 +44,7 @@ test('old saved WeChat images and photos are re-based to the active release',()=
  assert.equal(momentImage('/BBBTAI/releases/outdated/apps/wechat/media/moment-0.webp'),momentImage('macau'));
  assert.equal(momentImage('https://example.org/photo.webp'),'https://example.org/photo.webp');
  const moduleUrl='https://zn546612432-cloud.github.io/BBBTAI/releases/new-build/src/apps/wechat/components/chat-view.js';
- assert.equal(pictureSrc('/BBBTAI/releases/outdated/apps/wechat/media/moment-0.webp',moduleUrl),base+'apps/wechat/media/moment-0.webp');
+ assert.equal(pictureSrc('/BBBTAI/releases/outdated/apps/wechat/media/moment-0.webp',moduleUrl),'https://zn546612432-cloud.github.io'+base+'apps/wechat/media/moment-0.webp');
 });
 
 test('seven original avatars and group portraits are included and resolve on all WeChat screens',()=>{
