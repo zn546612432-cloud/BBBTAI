@@ -2,7 +2,7 @@ import {esc,empty} from '../../../system/ui.js';
 import {visibleMessages} from '../../../services/messaging/delivery.js';
 import {timestampGroups,timestampLabel} from '../../../services/messaging/timestamps.js';
 import {actorName,isGroup} from '../../../editor/conversations/model.js';
-import {resolveWeChatAvatar} from '../avatars.js';
+import {resolveWeChatAvatar,publicWeChatAsset} from '../avatars.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
 import {currentScript55,scriptedDraft55} from '../../../services/story55/scripted-chat.js';
 import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
@@ -14,9 +14,9 @@ export const wechatConversation=(s,id)=>s.content.conversations.wechat?.find(c=>
 // Local story stickers must work under both the Site root and versioned Pages paths.
 export function pictureSrc(source,moduleUrl=import.meta.url){
  const match=String(source||'').match(/^\/apps\/wechat\/stickers\/([a-zA-Z0-9_-]+\.(?:png|webp|gif|svg))$/);
- if(match)return new URL(`../../../../apps/wechat/stickers/${match[1]}`,moduleUrl).href;
+ if(match)return moduleUrl===import.meta.url?publicWeChatAsset('stickers/'+match[1]):new URL('../../../../apps/wechat/stickers/'+match[1],moduleUrl).href;
  const media=String(source||'').match(/^\/apps\/wechat\/media\/([a-zA-Z0-9_-]+\.(?:png|webp|jpe?g|mp4))$/);
- return media?new URL(`../../../../apps/wechat/media/${media[1]}`,moduleUrl).href:source;
+ return media?(moduleUrl===import.meta.url?publicWeChatAsset('media/'+media[1]):new URL('../../../../apps/wechat/media/'+media[1],moduleUrl).href):source;
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.

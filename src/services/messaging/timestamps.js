@@ -8,7 +8,15 @@ export function timestampGroups(messages,s){
  // Older imported history sometimes preceded later player messages in the
  // underlying array. Render by in-game date without altering saved order.
  const sorted=[...messages].sort((a,b)=>`${messageDate(a,s)}T${messageClock(a,s)||'00:00'}`.localeCompare(`${messageDate(b,s)}T${messageClock(b,s)||'00:00'}`));
- let last=null;return sorted.map(m=>{const date=messageDate(m,s),clock=messageClock(m,s),minutes=clock?Number(clock.slice(0,2))*60+Number(clock.slice(3)):null;const show=!last||date!==last.date||minutes===null||last.minutes===null||Math.abs(minutes-last.minutes)>=5;last={date,minutes};return {m,separator:show?timestampLabel(m,s):null};});
+ let last=null;return sorted.map(m=>{
+  const date=messageDate(m,s),clock=messageClock(m,s),minutes=clock?Number(clock.slice(0,2))*60+Number(clock.slice(3)):null;
+  const newDay=!last||date!==last.date;
+  const show=newDay||minutes===null||last.minutes===null||Math.abs(minutes-last.minutes)>=5;
+  last={date,minutes};
+  // Every first message of a day carries a full calendar date, not only "today".
+  const dateLabel=date.slice(0,4)+'年'+Number(date.slice(5,7))+'月'+Number(date.slice(8,10))+'日';
+  return {m,separator:show?(newDay&&s.story55?.version?[dateLabel,clock].filter(Boolean).join(' '):timestampLabel(m,s)):null};
+ });
 }
 export function datePreset(m,s){if(m.sentDateMode==='custom')return 'custom';const diff=Math.round((Date.parse(dateParts(s).iso)-Date.parse(messageDate(m,s)))/DAY);return diff===0?'today':diff===1?'yesterday':diff===2?'before-yesterday':'custom';}
 export function setMessageDate(m,s,{preset,date,time}){

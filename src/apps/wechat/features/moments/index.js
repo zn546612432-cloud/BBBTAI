@@ -1,6 +1,6 @@
 import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
-import {wechatAvatars} from '../../avatars.js';
+import {wechatAvatars,publicWeChatAsset} from '../../avatars.js';
 import {profiles,authoredMoments,visibleMoments} from './data.js';
 import {allMoments,findMoment,momentProfiles,addGameMomentComment} from './model.js';
 import {momentIcons} from './icons.js';
@@ -9,7 +9,7 @@ let openActions=null,replyTo=null,replyToName=null,replyDraft='';
 const heart=momentIcons.heart;
 
 const photos={macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg',foodMenu:'user-food-menu.jpeg',foodRice:'user-food-rice.jpeg',foodCheesecake:'user-food-cheesecake.jpeg',foodScallop:'user-food-scallop.jpeg',foodCooking:'user-food-cooking.jpeg',foodSashimi:'user-food-sashimi.jpeg',wynnFountain:'user-wynn-fountain.jpeg',wynnNight:'user-wynn-night.jpeg',yellowWall:'user-yellow-wall.jpeg'};
-const local=filename=>new URL('../../../../../apps/wechat/media/'+filename,import.meta.url).href;
+const local=filename=>publicWeChatAsset('media/'+filename);
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
 export function momentImage(source){

@@ -4,7 +4,9 @@ import {authorizeProject,startDeploymentStep,upgradeHardware} from './projects.j
 import {validateStory55Config,importStory55Config,exportStory55Config} from './config.js';
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
+import {resolvePhoneAudioPath} from '../voice/asset-url.js';
 import {beginScriptedCall,answerScriptedCall,retryScriptedCall} from './scripted-phone.js';
+import {selectStory55Pin} from '../../apps/maps/features/story55/index.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshot,getTestSnapshot,restoreTestSnapshot,deleteTestSnapshot,storySourceVersion} from './test-snapshots.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
@@ -40,7 +42,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-document'){open(c,'files','/story55',{document:t.dataset.id});return true;}
  if(a==='s55-backup'){c.download();return true;}
  if(a==='s55-map-area'){open(c,'maps','/',{area:t.dataset.area});return true;}
- if(a==='s55-map-pin'){open(c,'maps','/place',{id:t.dataset.id});return true;}
+ if(a==='s55-map-pin'){selectStory55Pin(t);return true;}
  if(a==='s55-run-step'){let run;c.store.update(s=>run=startDeploymentStep(s,project));open(c,'ghost','/contract',{orderId:run});return true;}
  if(a==='s55-upgrade'){c.store.update(s=>upgradeHardware(s));return true;}
  if(a==='s55-read-mail'){c.store.update(s=>markMail55(s,t.dataset.id));return true;}
@@ -67,15 +69,16 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-final-audio'){
   const src=story55Config(c.store.get()).finalAudio;if(!src)throw Error('终局音频尚未配置；可在运行台的配置中设置finalAudio资源路径');
   const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');
-  // Media lives beside the deployed index, NOT beside a hashed JS module.
-  const pageBase=new URL('./',globalThis.location?.href||document.baseURI);
-  audio.src=/^https?:\/\//i.test(src)?src:new URL(src.replace(/^\/+/,''),pageBase).href;
-  audio.onerror=()=>c.toast?.('终局录音无法加载，请检查文件路径');
+  // The same asset path must work under /BBBTAI/ and isolated review sites.
+  const pageBase=import.meta.env?.BASE_URL||'/';
+  audio.src=resolvePhoneAudioPath(src,{base:pageBase});
+  audio.onerror=()=>c.toast?.('录音加载失败：请检查 '+src+' 的站内文件路径');
   audio.onended=()=>{
    if(c.store.get().story55.finalAudioHeard)return; // replay does not replay the ending
    c.store.update(s=>{s.story55.finalAudioHeard=true;advanceScene55(s,id);});
   };
-  await audio.play();return true;
+  try{await audio.play();}catch(err){c.toast?.('播放失败：'+(err?.message||'请在手机上重新点击播放'));}
+  return true;
  }
  return true;
 }

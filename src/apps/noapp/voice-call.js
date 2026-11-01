@@ -1,4 +1,5 @@
 import {isStory55,taiRecognized} from '../../services/story55/state.js';
+import {resolvePhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
@@ -435,18 +436,34 @@ export async function playVoiceMessage(id,ctx){
     blob=await loadClip('tai-'+m.id);
    }
   }
-  const asset=typeof m.voiceSrc==='string'&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(m.voiceSrc)?new URL(m.voiceSrc.slice(1),new URL('./',globalThis.location?.href||document.baseURI)).href:null;
-  if(!blob&&!asset){if(m===selected)ctx.toast('语音尚未准备好');continue;}
+  const asset=typeof m.voiceSrc==='string'&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(m.voiceSrc)?resolvePhoneAudioPath(m.voiceSrc):null;
+  // An authored text-only bubble can be generated on first playback,
+  // provided the developer has configured MiniMax. Cache it for next time.
+  if(!blob&&!asset&&m.from==='tai'&&String(m.voiceCaption||m.text||'').trim()){
+   try{
+    blob=await voicePreview({text:m.voiceCaption||m.text,tone:m.aiTone||'neutral'});
+    await saveClip(m.audioId||m.id,blob);
+   }catch(error){
+    if(m===selected)ctx.toast('熙泰语音未生成：'+(error?.message||'请先配置 MiniMax'));
+    continue;
+   }
+  }
+  if(!blob&&!asset){if(m===selected)ctx.toast('没有这条语音的音频文件，请在开发者入口生成');continue;}
   const url=blob?URL.createObjectURL(blob):asset;
   messagePlayback.src=url;
   try{
-   await messagePlayback.play();
-   await new Promise(resolve=>{
-    const finish=()=>{messagePlayback?.removeEventListener('ended',finish);messagePlayback?.removeEventListener('error',finish);resolve();};
-    messagePlayback.addEventListener('ended',finish,{once:true});
-    messagePlayback.addEventListener('error',finish,{once:true});
+   // Register first: very short clips can end before an awaited play().
+   await new Promise((resolve,reject)=>{
+    const current=messagePlayback;
+    const clean=()=>{current.removeEventListener('ended',ended);current.removeEventListener('error',failed);};
+    const ended=()=>{clean();resolve();};
+    const failed=()=>{clean();reject(Error('文件加载失败或格式不兼容'));};
+    current.addEventListener('ended',ended,{once:true});
+    current.addEventListener('error',failed,{once:true});
+    try{Promise.resolve(current.play()).catch(error=>{clean();reject(error);});}
+    catch(error){clean();reject(error);}
    });
-  }catch(e){ctx.toast('点击语音后重试：'+e.message);break;}
+  }catch(e){ctx.toast('语音播放失败：'+(e?.message||'请重新点击播放'));break;}
   finally{if(blob)URL.revokeObjectURL(url);}
  }
 }

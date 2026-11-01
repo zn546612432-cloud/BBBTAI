@@ -12,7 +12,9 @@ export function editableMoments(s){
 }
 export function allMoments(s){
  const m=getMomentContent(s),deleted=new Set(m.deletedIds||[]);
- return [...(isStory55(s)?[]:authoredMoments).map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
+ // Retain the original authored D01–D55 posts, including all linked photographs.
+ // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
+ return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
   .filter(p=>p&&p.id&&!deleted.has(p.id));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);

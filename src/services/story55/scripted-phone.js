@@ -2,6 +2,7 @@
 import {isStory55,nodeStatus,completed,story55Config} from './state.js';
 import {scene55,sceneLines,advanceScene55} from './runtime.js';
 import {voicePreview} from '../ai/gateway.js';
+import {resolvePhoneAudioPath} from '../voice/asset-url.js';
 import {createGestureAudio} from '../voice/playback.js';
 import {TAI_PORTRAIT} from '../../apps/noapp/portrait.js';
 import {esc} from '../../system/ui.js';
@@ -28,7 +29,7 @@ function assetUrl(s,node,index){
  const path=story55Config(s).voiceAssets?.[node]?.[index];
  if(!path)return null;
  if(typeof path!=='string'||!/^\/assets\/[a-z0-9_./-]+\.(mp3|wav|m4a|ogg)$/i.test(path))throw Error('音频必须放在 /assets/');
- return new URL(path.slice(1),new URL('./',globalThis.location?.href||document.baseURI)).href;
+ return resolvePhoneAudioPath(path);
 }
 async function speak(ctx,a,content,index){
  let temp=null;

@@ -1,5 +1,6 @@
 import {esc} from '../../../system/ui.js';
 import {visibleMessages} from '../../../services/messaging/delivery.js';
+import {timestampLabel} from '../../../services/messaging/timestamps.js';
 import {actors,isGroup} from '../../../editor/conversations/model.js';
 import {wxIcon} from './icons.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
@@ -62,7 +63,7 @@ function chats(s){
   const rows=conversations.map((c,i)=>{
     const last=visibleMessages(c,s).at(-1);
     const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':last.text||''):'暂无消息';
-    const time=last?.time||'';
+    const time=last?timestampLabel(last,s):'';
     const unread=Math.max(0,Number(c.unread)||0);
     return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(c.name+' '+preview)+'">'+
       '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,s.characterAvatars?.[c.name]||resolveWeChatAvatar(c.name,c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread">'+(unread>99?'99+':unread)+'</span>':'')+'</span>'+ 
