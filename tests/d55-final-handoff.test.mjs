@@ -124,3 +124,21 @@ test('main uses pre-handoff 0119 and 6180 after, without adding a wipe screen',(
  assert.match(main,/startSecondCharge55/);
  assert.doesNotMatch(main,/blood-wipe|wipe-blood|擦血/);
 });
+
+
+test('legacy D55 ending saves migrate without deleting conversations or bypassing charging',()=>{
+ const {s}=endingReady();
+ const id='do-not-delete';s.content.conversations.noapp.find(x=>x.id==='tai').messages.push({id,from:'me',text:'别删我的聊天',time:'22:46'});
+ s.story55.ended=true;s.deathPhase='off';s.batteryPercent=1;
+ syncDeathNight(s);
+ assert.equal(s.deathPhase,'s55-off');
+ assert.equal(s.batteryPercent,0);
+ assert.equal(startSecondCharge55(s,Date.now()),true);
+ assert.ok(s.content.conversations.noapp.find(x=>x.id==='tai').messages.some(m=>m.id===id));
+ const resumed=endingReady().s;
+ resumed.story55.ended=true;resumed.deathPhase='recovered';resumed.batteryPercent=25;
+ syncDeathNight(resumed);
+ assert.equal(secondView55(resumed),true);
+ assert.equal(resumed.batteryPercent,100);
+ assert.equal(resumed.deathPhase,'recovered');
+});
