@@ -7,6 +7,7 @@ import {storyDay,dateParts,dateLabel} from '../services/calendar.js';
 import {actors,isGroup} from '../editor/conversations/model.js';
 import {dynamicIsland} from './power/island.js';
 import {isStory55,story55Config,nodeStatus} from '../services/story55/state.js';
+import {unreadBadge,unreadAppCount} from '../services/unread-badges.js';
 const signal='<svg width="44" height="15" viewBox="0 0 44 15" fill="none" aria-hidden="true"><path d="M2 11v2m5-5v5m5-8v8m5-11v11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 5c4-4 10-4 14 0m-11 3c2-2 6-2 8 0m-4 3h.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 export const batteryLevel=s=>Math.max(0,Math.min(100,Number.isFinite(Number(s.batteryPercent))?Math.round(Number(s.batteryPercent)):82));
 const battery=s=>`<button class="status-battery${batteryLevel(s)<=20?' is-low':''}${['charging','sleeping'].includes(s.powerMode)?' is-charging':''}" data-action="power-open" aria-label="电量 ${batteryLevel(s)}%，查看充电"><span>${batteryLevel(s)}</span></button>`;
@@ -15,7 +16,7 @@ const notificationApp=(n)=>{
   return registry.get(id)?.manifest||registry.get('messages')?.manifest;
 };
 export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
-const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';return btn('open-app',`${icon(m,s)}<span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}"`);};
+const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
 export function reminderWidget(s){
   const items=reminders(s),pending=items.filter(r=>!r.done);
   return `<section class="reminder-widget widget" aria-label="提醒事项表"><button class="reminder-widget-title" data-action="open-app" data-app="reminders"><span>提醒事项</span><span>${pending.length}<small> ›</small></span></button><div class="reminder-widget-list">${pending.slice(0,3).map(r=>`<button class="reminder-widget-row" data-action="home-reminder-toggle" data-id="${esc(r.id)}" aria-label="标为完成：${esc(r.title)}"><i></i><span>${esc(r.title)}</span>${r.demo?demo():''}</button>`).join('')||`<span class="reminder-clear">${items.length?'今天的事项已完成':'暂无提醒事项'}</span>`}</div></section>`;
