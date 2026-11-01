@@ -6,7 +6,7 @@ import {messageDate} from './timestamps.js';
 // Do not expose future-authored messages in developer timeline previews.
 const excludedBrotherSenders=new Set(['father','fulongsheng','傅隆生','tai','xitai','陈熙泰','熙泰','ouroboros']);
 export function visibleMessages(c,s){
- const today=s?dateParts(s).iso:null;
+ const today=s?.calendar?.anchorDate&&Number.isInteger(s.day)?dateParts(s).iso:null;
  return (c?.messages||[]).filter(m=>{
   if(c?.id==='group'&&excludedBrotherSenders.has(String(m.from||'').toLowerCase()))return false;
   if(m.schedule&&m.schedule.mode!=='immediate'&&!m.delivery)return false;

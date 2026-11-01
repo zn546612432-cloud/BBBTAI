@@ -29,7 +29,7 @@ test('future MIRAGE authored messages follow game date and clock',()=>{
  assert.equal(dateParts(s).iso,'2025-05-23');
 });
 test('DeepSeek splits text semicolons and newlines, not voice',()=>{
- const result=unpackTaiReply({text:JSON.stringify({messages:[{text:'你又熬夜了；昨天怎么答应我的;算了。\\n我先忙',mode:'text'}]})},'noapp');
+ const result=unpackTaiReply({text:JSON.stringify({messages:[{text:'你又熬夜了；昨天怎么答应我的;算了。\n我先忙',mode:'text'}]})},'noapp');
  assert.deepEqual(result.map(x=>x.text),['你又熬夜了','昨天怎么答应我的','算了','我先忙']);
  const voice=unpackTaiReply({text:JSON.stringify({messages:[{text:'你又熬夜了；昨天怎么答应我的',mode:'voice'}]})},'noapp');
  assert.equal(voice.length,1);
