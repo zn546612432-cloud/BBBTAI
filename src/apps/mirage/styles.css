@@ -31,3 +31,6 @@
 /* Exit control exists on login and top-level native MIRAGE views. */
 .app-mirage .mc-login-back{position:absolute;left:12px;top:10px;z-index:11;min-width:32px;min-height:36px;background:#102c2bbb;border:1px solid #557f7466;color:#b5dbca;border-radius:9px;font-size:27px;line-height:1;cursor:pointer}
 .app-mirage .mc-header>.mc-icon-button:first-child{min-width:36px;min-height:38px;flex:none;color:#c1e0d1}
+
+/* Flow's D03 link lives inside the decrypted message, not in a generic dialog. */
+.mc-clear-text .mc-flow-link{border:0;background:none;padding:0;color:#84caff;text-decoration:underline;text-underline-offset:3px;font:inherit;display:inline;cursor:pointer;min-height:0;min-width:0;width:auto}.mc-clear-text .mc-flow-link:focus-visible{outline:2px solid #84caff;outline-offset:2px}

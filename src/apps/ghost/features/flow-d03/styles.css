@@ -1,0 +1,21 @@
+/* D03 key installer and archive view */
+.app-ghost .gh-project-nav{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 0 18px}
+.app-ghost .gh-project-nav .gh-button{min-height:45px;font-size:12px}
+.gh-flow-shell .gh-top{margin-bottom:25px}
+.gh-flow-shell .gh-flow-panel{border:1px solid var(--gh-line);background:#0e1a19;padding:18px;margin-top:23px}
+.gh-flow-panel form{display:flex;flex-direction:column;align-items:stretch}
+.gh-flow-panel label{font-size:12px;color:var(--gh-dim);margin-bottom:14px}
+.gh-flow-panel input{width:100%;min-height:49px;border:1px solid #48645e;border-radius:4px;background:#071210;color:var(--gh-ink);font:16px ui-monospace,monospace;padding:10px;outline:0}
+.gh-flow-panel input:focus-visible{border-color:#b1d8ca}
+.gh-flow-error{display:block;min-height:20px;margin-top:8px;color:#ed7979;font-size:11px}
+.gh-flow-panel strong,.gh-flow-panel b{font-size:17px}
+.gh-flow-panel p{margin:14px 0 0;font-size:13px;color:var(--gh-dim)}
+.gh-flow-project-list{margin-top:16px}
+.gh-flow-project-list .gh-flow-project,.gh-flow-project-list button{display:flex;width:100%;min-height:64px;align-items:center;justify-content:space-between;gap:12px;background:#10201d;border:1px solid #48645e;padding:16px;color:var(--gh-ink);font-size:15px;text-align:left}
+.gh-flow-project-list button>span{font-size:22px;color:var(--gh-dim)}
+.gh-flow-overlay{position:absolute;inset:0;min-height:100%;display:flex;align-items:center;justify-content:center;background:#000c;z-index:20;padding:18px}
+.gh-flow-dialog{width:100%;max-width:290px;background:#13221f;border:1px solid #a2cabb;padding:24px 18px;box-shadow:0 14px 40px #0009}
+.gh-flow-dialog h2{font-size:18px;line-height:1.6;text-align:center;font-weight:500;margin:0 0 23px}
+.gh-flow-dialog-actions{display:flex;gap:9px}
+.gh-flow-dialog-actions button{min-height:45px;margin-top:0;flex:1;letter-spacing:0;font-size:12px!important}
+.gh-flow-secondary{border:1px solid #6a9081!important;background:none!important;padding:12px!important}
