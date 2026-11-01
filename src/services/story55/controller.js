@@ -35,6 +35,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-projects'){open(c,'ghost','/deployments');return true;}
  if(a==='s55-project'){open(c,'ghost','/deployment',{project});return true;}
  if(a==='s55-files'){open(c,'files','/story55');return true;}
+ if(a==='s55-linked-file'){open(c,'files','/linked/'+encodeURIComponent(t.dataset.order));return true;}
  if(a==='s55-document'){open(c,'files','/story55',{document:t.dataset.id});return true;}
  if(a==='s55-backup'){c.download();return true;}
  if(a==='s55-map-area'){open(c,'maps','/',{area:t.dataset.area});return true;}
