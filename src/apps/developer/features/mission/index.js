@@ -1,4 +1,5 @@
 import {linkedMissions,linkedMission,saveLinkedMission,resetLinkedMission} from '../../../mirage/linked-missions.js';
+import {validateLinkedContract} from '../../../mirage/linked-contract-validator.js';
 import {esc,btn} from '../../../../system/ui.js';
 import {initializeMirage,WALLET_CHALLENGE_ID} from '../../../mirage/data.js';
 import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty,hackerBounty} from '../../../mirage/mission.js';
@@ -12,7 +13,7 @@ function linkedMissionEditor(s){
  const selected=(value,expected)=>value===expected?' selected':'';
  return '<div class="card"><h3>多悬赏任务链</h3>'+
  '<p>每份悬赏拥有独立 KIRA 邮件、浏览器检索、GHOST 成果文件、手动回复附件、游戏时间审核与钱包流水。</p>'+
- list.map(m=>'<div class="mission-step"><b>'+esc(m.title)+'</b><span>D · '+esc(m.stage)+'/6</span>'+btn('mission-linked-select','编辑','button-quiet','data-id="'+esc(m.id)+'"')+btn('mission-linked-open','打开','button-quiet','data-id="'+esc(m.id)+'"')+'</div>').join('')+
+ list.map(m=>'<div class="mission-step"><b>'+esc(m.title)+'</b><span>D · '+esc(m.stage)+'/6</span>'+btn('mission-linked-select','编辑','button-quiet','data-id="'+esc(m.id)+'"')+btn('mission-linked-open','打开','button-quiet','data-id="'+esc(m.id)+'"')+btn('mission-linked-validate','模拟整条任务','button-quiet','data-id="'+esc(m.id)+'"')+'</div>').join('')+
  btn('mission-linked-new','新建悬赏','button-quiet wide')+'</div>'+
  '<form class="card" data-form="mission-linked-config"><h3>'+(edit?'编辑 '+esc(edit.title):'创建新悬赏')+'</h3>'+
  '<label>订单 ID<input required pattern="[a-zA-Z0-9][a-zA-Z0-9-]{2,62}" maxlength="63" name="id" value="'+esc(id)+'" '+(edit?'readonly':'')+' placeholder="contract-002"></label>'+
@@ -27,8 +28,17 @@ function linkedMissionEditor(s){
  '<label>限时（秒）<input type="number" min="10" max="600" name="seconds" value="'+esc(edit?.seconds??'')+'"></label>'+
  '<label>发布日 D<input type="number" min="1" max="55" required name="publishDay" value="'+esc(edit?.publishDay??1)+'"></label>'+' <label>下架日 D<input type="number" min="1" max="55" required name="expiryDay" value="'+esc(edit?.expiryDay??55)+'"></label>'+' <label>交付截止日 D（留空不限制）<input type="number" min="1" max="55" name="deadlineDay" value="'+esc(edit?.deadlineDay??'')+'"></label>'+' <label>交付截止时间<input type="time" name="deadlineClock" value="'+esc(edit?.deadlineClock||'23:59')+'"></label>'+' <label>雇主审核时间（游戏分钟）<input type="number" min="1" max="10080" required name="reviewMinutes" value="'+esc(edit?.reviewMinutes??30)+'"></label>'+' <label>成功到账（游戏币）<input type="number" min="0" max="1000000000" step="1" required name="reward" value="'+esc(edit?.reward??1500)+'"></label>'+
  '<button class="button-primary wide" type="submit">保存并绑定所有 App</button>'+
- (edit?btn('mission-linked-reset','重置此任务进度','button-quiet wide','data-id="'+esc(edit.id)+'"'):'')+'</form>';
+ (edit?btn('mission-linked-reset','重置此任务进度','button-quiet wide','data-id="'+esc(edit.id)+'"'):'')+'</form>'+linkedValidationPanel(s);
 }
+function linkedValidationPanel(s){
+ const report=s.editor?.linkedValidation;
+ if(!report)return '';
+ return '<div class="card"><h3>最近一次跨 App 测试 · '+esc(report.id)+'</h3>'+
+  '<p>'+(report.ok?'✓ 任务链配置完整':'✗ 任务链检查未通过：'+esc(report.error||'未知原因'))+'</p>'+
+  (report.steps||[]).map((step,i)=>'<div class="mission-step"><span>'+(step.ok?'✓':'✗')+'</span><b>'+esc(step.app)+'</b><small>'+esc(step.detail)+'</small></div>').join('')+
+  '<p>只在临时克隆状态中模拟，不会改动正式玩家钱包、真实小游戏记录或编辑的委托内容。</p></div>';
+}
+
 export function missionProgress(s){
  const order=s.content.orders?.find(x=>x.id===HACKER_BOUNTY_ID);
  const mail=s.content.mail?.find(x=>x.id===HACKER_MAIL_ID);
@@ -68,6 +78,12 @@ export function missionEditor(s){
 }
 export function missionAction(action,t,ctx){
  const x=missionProgress(ctx.store.get());
+ if(action==='mission-linked-validate'){
+  const result=validateLinkedContract(ctx.store.get(),t.dataset.id);
+  ctx.store.update(s=>{s.editor??={};s.editor.linkedValidation=result;});
+  ctx.toast(result.ok?'完整任务链检查通过':'任务链检查失败：'+result.error);
+  return true;
+ }
  if(action==='mission-linked-new'){selectedLinkedId='';ctx.refresh();return true;}
  if(action==='mission-linked-select'){selectedLinkedId=t.dataset.id;ctx.refresh();return true;}
  if(action==='mission-linked-open'){
