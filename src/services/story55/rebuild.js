@@ -10,6 +10,7 @@ import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {defaultProducts} from '../../apps/mirage/data.js';
 import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
+import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -67,6 +68,8 @@ function restoreAuthoring(s,source){
   }
  }
  s.content.notes=source.notes;
+ s.content.notesSeedVersion=0;
+ ensureAuthoredNotes(s);
  s.content.photos=source.photos;
  s.content.moments=source.moments;
  for(const mail of source.authoredMail)if(!s.content.mail.some(m=>m.id===mail.id))s.content.mail.push(mail);

@@ -1,9 +1,9 @@
 import {dateParts} from '../../../../services/calendar.js';
 import {uid} from '../../../../services/id.js';
-const names={me:'熙蒙',wang:'熙旺',tai:'Dr Ouroboros',rook:'Rookery 13','胡枫':'胡枫','小辛':'小辛','阿威':'阿威','仔仔':'仔仔'};
+const names={me:'熙蒙',wang:'熙旺',tai:'Dr Ouroboros',rook:'Rookery 13',xin:'小辛',zai:'仔仔',father:'傅隆生','胡枫':'胡枫','小辛':'小辛','阿威':'阿威','仔仔':'仔仔'};
 export const conversations=s=>Object.entries(s.content.conversations).flatMap(([channel,list])=>list.map(c=>({channel,c})));
 export const selectedConversation=s=>conversations(s).find(x=>x.c.id===s.editor.conversation&&(!s.editor.channel||x.channel===s.editor.channel))||conversations(s)[0]||null;
-export function actorName(c,id){return c.actorNames?.[id]||c.participants?.find(p=>p.id===id)?.name||(id===c.id?c.name:names[id]||id);}
+export function actorName(c,id){if(c.id==='group'&&id==='xin')return '小辛';if(c.id==='group'&&id==='zai')return '仔仔';return c.actorNames?.[id]||c.participants?.find(p=>p.id===id)?.name||(id===c.id?c.name:names[id]||id);}
 export function actors(c){
  // Membership in the original group is fixed; historical senders are not a roster.
  if(c.id==='group')return ['me','wang','胡枫','小辛','阿威','仔仔'].map(id=>({id,name:actorName(c,id)}));

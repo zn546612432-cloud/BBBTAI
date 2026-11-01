@@ -24,10 +24,11 @@ test('ordinary browser URL starts directly in 55-day D01 and migrates only histo
  assert.equal(r.status,0,r.stderr||r.stdout);
  assert.match(r.stdout,/55-day default/);
 });
-test('55-day run starts without 90-day authored Moments but can create its own posts',()=>{
+test('55-day run restores authored D01–D55 Moments but excludes future D56–D90 posts',()=>{
  const s=initialState();activateStory55(s);
- assert.equal(allMoments(s).length,0);
+ assert.ok(allMoments(s).some(p=>p.id==='xw-0519'));
+  assert.ok(allMoments(s).every(p=>p.storyDay<=55));
  addMoment(s,10);
- assert.equal(allMoments(s).length,1);
+ assert.ok(allMoments(s).length>1);
  assert.equal(allMoments(s)[0].storyDay,10);
 });

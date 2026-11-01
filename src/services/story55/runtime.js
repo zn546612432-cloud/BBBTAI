@@ -1,6 +1,7 @@
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
+import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
@@ -10,7 +11,11 @@ export function activateStory55(s){
  s.nav={current:{appId:'home',route:'/',params:{}},stack:[]};
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
  s.content.orders=[];s.content.mail=[];s.content.missionFiles=[];s.content.reminders=[];s.content.calendarEvents=[];
- s.content.photos=[];s.content.notes=[];s.content.notesSeedVersion=1;
+ s.content.photos=[];
+ // Preserve authored notes; reset only player-created runtime notes.
+ s.content.notes=(s.content.notes||[]).filter(n=>n.authored===true).map(n=>structuredClone(n));
+ s.content.notesSeedVersion=0;
+ ensureAuthoredNotes(s);
  s.content.alarms=[];if(s.content.phone)s.content.phone.calls=[];s.content.moments={posts:[],editedPosts:{},deletedIds:[],profiles:{},likes:{},comments:{}}; // Previous 90-day posts are not part of the 55-day campaign.
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
@@ -46,7 +51,7 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?line[0]:cid,text:line[1],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:line[1],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  r.index++;
  if(r.index===lines.length)finishScene55(s,id);
