@@ -7,6 +7,10 @@ export const CHARGING_MINUTES_PER_MS=60/3000;
 export const SLEEPING_MINUTES_PER_MS=60/1000;
 export const TYPING_MINUTES_PER_MS=2/60000;
 export const TAI_CHAT_MINUTES_PER_MS=1/60000; // real 1 min = game 1 min
+// Confirmed pacing for the current 55-day campaign; legacy saves keep their
+// original pacing so compatibility/recovery behavior does not change.
+export const STORY55_NORMAL_MINUTES_PER_MS=1/3000;
+export const STORY55_CHAT_MINUTES_PER_MS=2/60000;
 const DAY_MINUTES=1440;
 export const clockMinutes=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
 export const absoluteMinute=s=>(s.day-1)*DAY_MINUTES+clockMinutes(s.clock);
@@ -82,7 +86,9 @@ export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
  const mode=s.powerMode||'idle';
- const rate=s.deathPhase==='draining'?NORMAL_MINUTES_PER_MS:taiChat?TAI_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:mode==='charging'?CHARGING_MINUTES_PER_MS:mode==='sleeping'?SLEEPING_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
+ const normalRate=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
+ const chatRate=isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS;
+ const rate=s.deathPhase==='draining'?normalRate:taiChat?chatRate:focused?TYPING_MINUTES_PER_MS:mode==='charging'?CHARGING_MINUTES_PER_MS:mode==='sleeping'?SLEEPING_MINUTES_PER_MS:normalRate;
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
  const whole=Math.floor(total);
  if(!whole){s.worldMinuteFraction=total;return {minutes:0};}

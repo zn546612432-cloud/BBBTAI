@@ -1,9 +1,9 @@
 // User-supplied source images, preserved without recompression in public/.
 // Fallback-by-name is intentional: older browser saves still contain letter avatars.
+import {publicAssetPath} from '../../services/public-assets.js';
 // Static assets live in public/, so Pages must prefix the deployed base path.
 export const publicWeChatAsset=path=>{
- const base=import.meta.env?.BASE_URL||'/';
- return base.replace(/\/?$/,'/')+'apps/wechat/'+String(path).replace(/^\/+/, '').replace(/^apps\/wechat\//,'');
+ return publicAssetPath('apps/wechat/'+String(path).replace(/^\/+/, '').replace(/^apps\/wechat\//,''));
 };
 export const wechatAvatars=Object.freeze({
  '熙蒙':publicWeChatAsset('avatars/originals/ximeng.jpeg'),

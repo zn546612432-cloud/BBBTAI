@@ -70,8 +70,7 @@ export async function handleStory55Action(a,t,c){
   const src=story55Config(c.store.get()).finalAudio;if(!src)throw Error('终局音频尚未配置；可在运行台的配置中设置finalAudio资源路径');
   const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');
   // The same asset path must work under /BBBTAI/ and isolated review sites.
-  const pageBase=import.meta.env?.BASE_URL||'/';
-  audio.src=resolvePhoneAudioPath(src,{base:pageBase});
+  audio.src=resolvePhoneAudioPath(src);
   audio.onerror=()=>c.toast?.('录音加载失败：请检查 '+src+' 的站内文件路径');
   audio.onended=()=>{
    if(c.store.get().story55.finalAudioHeard)return; // replay does not replay the ending

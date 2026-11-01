@@ -32,3 +32,13 @@ test('55-day run restores authored D01–D55 Moments but excludes future D56–D
  assert.ok(allMoments(s).length>1);
  assert.equal(allMoments(s).find(p=>p.id.startsWith('moment-editor-')).storyDay,10);
 });
+test('55-day preview cannot load or overwrite the production phone',()=>{
+ const program=`
+  globalThis.window={};globalThis.location={pathname:'/BBBTAI/preview/',search:''};
+  globalThis.document={querySelector:()=>({content:'true'})};
+  const {KEY}=await import('./src/services/storage.js');
+  if(KEY!=='ximeng-phone-story55-preview-v1')throw Error('preview shares production save');
+ `;
+ const r=spawnSync(process.execPath,['--input-type=module','-e',program],{cwd:process.cwd(),encoding:'utf8'});
+ assert.equal(r.status,0,r.stderr||r.stdout);
+});
