@@ -1,4 +1,5 @@
 import {s55Button} from '../../services/story55/views.js';
+import {scriptedCallView} from '../../services/story55/scripted-phone.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
@@ -69,11 +70,13 @@ function finalAudioBubble(s,line){
  return '<div class="message-row mine noapp-final-pending" role="group" aria-label="最后一段语音">'+
  '<div class="message-body"><div class="noapp-voice-bubble noapp-final-voice">'+
  '<button type="button" data-action="s55-final-audio" data-node="'+esc(line.id)+'" aria-label="播放熙蒙最后的录音">▶</button>'+
- '<span>熙蒙 · 最后的密钥录音</span></div></div></div>';
+ '<span class="noapp-wave" aria-hidden="true">'+Array.from({length:22},(_,i)=>'<i style="--h:'+(5+(i*13%19))+'px"></i>').join('')+'</span><span class="noapp-voice-duration">23″</span><span class="noapp-voice-caption-label">最后的密钥录音</span></div></div></div>';
 }
 export function render({store},loc){
  const s=store.get();
- if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
+ if(loc.route==='/story-call')return scriptedCallView(s);
+  if(loc.route==='/settings-ai')return setting(s);
+  if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
  const legacyStoryRoute=loc.route==='/story55/recognition'||loc.route==='/story55/ending';
  const id=legacyStoryRoute?'tai':loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  const currentStory=id==='tai'?currentScript55(s,'noapp','tai'):null;

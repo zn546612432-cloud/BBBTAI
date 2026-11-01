@@ -200,3 +200,37 @@
 .app-noapp .noapp-story55-preview{font-size:14px;line-height:1.65;color:#f0f6ff;margin:2px 0 6px}
 .app-noapp .noapp-story55-step .s55-button{min-height:42px;border:1px solid #8aa6c8;border-radius:12px;background:#547493;color:#fff;font-size:14px;font-weight:520}
 .app-noapp .noapp-final-voice{background:#324a64}
+
+/* Compact waveform voice bubbles, no forced transcript. */
+.app-noapp .noapp-voice-stack{display:flex;flex-direction:column;gap:5px;max-width:min(252px,76vw)}
+.app-noapp .noapp-voice-bubble{display:flex;align-items:center;gap:10px;max-width:min(252px,76vw);min-width:165px;padding:8px 11px;min-height:48px;border-radius:15px;background:#33495d;color:#eaf5ff;box-shadow:0 1px 3px #0002}
+.app-noapp .noapp-voice-bubble button{flex:0 0 29px;width:29px;height:29px;min-width:29px;border:0;background:#e2f0ff;color:#2b4053;border-radius:50%;font-size:13px;display:grid;place-items:center}
+.app-noapp .noapp-wave{display:flex;align-items:center;gap:2px;height:28px;flex:1;min-width:80px;max-width:136px}
+.app-noapp .noapp-wave i{display:block;width:3px;flex:1;height:var(--h,10px);min-height:3px;max-height:26px;background:currentColor;opacity:.8;border-radius:4px}
+.app-noapp .noapp-voice-duration{font-size:12px;color:#dce7f2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.app-noapp .noapp-voice-caption{font-size:11px;color:#b9c9d9;padding-left:5px;max-width:250px}
+.app-noapp .noapp-voice-caption summary{cursor:pointer;list-style:none;width:max-content;padding:2px 0}
+.app-noapp .noapp-voice-caption summary::-webkit-details-marker{display:none}
+.app-noapp .noapp-voice-caption p{background:#27394b;border-radius:9px;padding:9px 10px;margin:3px 0 0;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+.app-noapp .noapp-final-voice{background:#4b677b;min-width:215px;max-width:275px}
+.app-noapp .noapp-final-voice .noapp-voice-caption-label{font-size:10px;line-height:1.3;max-width:68px}
+.app-noapp .tai-call-screen{background:linear-gradient(180deg,#222329,#2b2b30 48%,#1a1b20 100%)}
+.app-noapp .tai-call-ambient{background:radial-gradient(circle at 50% 48%,#45464f90,transparent 54%),linear-gradient(#27282e,#12141b);filter:blur(35px)}
+.app-noapp .tai-call-avatar{border-radius:50%;box-shadow:0 12px 32px #0007}
+.app-noapp .tai-call-identity{padding-bottom:clamp(4px,6vh,50px)}
+.app-noapp .tai-call-bottom.grid-six .tai-control-circle{background:#64666b8a}
+.app-noapp .tai-call-bottom.grid-six .tai-call-control.is-hang .tai-control-circle{background:#f04c54}
+
+.app-noapp .s55-locked-call{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:22px 18px max(20px,env(safe-area-inset-bottom))}
+.app-noapp .s55-locked-call .tai-call-identity{flex:1;min-height:160px;padding-bottom:10px}
+.app-noapp .s55-call-top{font-size:11px;letter-spacing:1.8px;opacity:.8;text-align:center}
+.app-noapp .s55-call-subtitles{width:100%;max-height:31vh;overflow:auto;min-height:112px;padding:16px 18px;background:#ffffff18;border:1px solid #ffffff20;border-radius:18px;backdrop-filter:blur(16px)}
+.app-noapp .s55-call-subtitles small{display:block;margin-bottom:8px;color:#b2cffa;font-size:12px}
+.app-noapp .s55-call-subtitles p{margin:0;font-size:15px;line-height:1.65;color:white;white-space:pre-wrap}
+.app-noapp .s55-call-subtitles em{display:block;margin-top:9px;font-style:normal;color:#f7b7ae;font-size:12px}
+.app-noapp .s55-call-bottom{width:100%;min-height:100px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.app-noapp .s55-call-answer{padding:15px 36px;background:#32b96e;color:white;border:0;border-radius:40px;font-size:17px}
+.app-noapp .s55-call-retry,.app-noapp .s55-call-settings{padding:11px 12px;background:#ffffff25;color:#fff;border:1px solid #ffffff30;border-radius:12px;font-size:13px}
+.app-noapp .s55-call-uninterruptible{color:#bec6d4;font-size:12px;text-align:center}
+.app-mirage .mc-story-incoming{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#102e2e;color:#b5eadc;padding:11px}
+.app-mirage .mc-story-incoming button{border:0;border-radius:9px;background:#2c9a76;color:white;padding:11px}

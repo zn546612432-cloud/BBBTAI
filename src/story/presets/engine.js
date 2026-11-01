@@ -60,7 +60,7 @@ export function deliverRule(s,r,{day=s.day,clock=s.clock}={}){
  s.events.push({type:r.kind==='proactive'?'story_proactive':'story_reply',ruleId:r.id,day,clock});
  if(!(s.unlocked&&s.nav.current.appId===r.channel&&s.nav.current.route==='/chat/'+r.conversationId)){
   conversation.unread=Math.max(0,Number(conversation.unread)||0)+appended;
-  s.notifications.unshift({id:`preset-notice-${r.id}-${day}`,conversationId:r.conversationId,title:conversation.name,body:lines.at(-1),link:{appId:r.channel,route:'/chat/'+r.conversationId,params:{}}});
+  s.notifications.unshift({id:`preset-notice-${r.id}-${day}`,conversationId:r.conversationId,title:conversation.name,body:lines.at(-1),day,clock,link:{appId:r.channel,route:'/chat/'+r.conversationId,params:{}}});
  }
  return true;
 }

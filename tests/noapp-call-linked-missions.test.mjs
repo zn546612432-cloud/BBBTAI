@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {initializeMirage} from '../src/apps/mirage/data.js';
-import {saveLinkedMission,linkedMission,acceptLinkedMission,advanceLinkedMission,resetLinkedMission,linkedMailId} from '../src/apps/mirage/linked-missions.js';
+import {saveLinkedMission,linkedMission,acceptLinkedMission,advanceLinkedMission,resetLinkedMission,linkedMailId,linkedArtifactId} from '../src/apps/mirage/linked-missions.js';
 import {authorize,begin,finish,submit,settle} from '../src/apps/ghost/state.js';
+import {deliverLinkedArtifact} from '../src/apps/mirage/linked-contract-runtime.js';
 import {startIncoming,callState,callAction} from '../src/apps/noapp/voice-call.js';
 const storeFor=(state=initialState())=>{let s=state;return {get:()=>s,update(fn){const next=structuredClone(s);fn(next);s=next;return s;}};};
 const linked={id:'hardware-support-02',title:'硬件交付校验',description:'核对订单回执和虚构设备测试结果。',
@@ -21,12 +22,12 @@ test('developer can independently bind and complete a second custom contract acr
  assert.ok(s.content.mail.some(m=>m.id===linkedMailId(linked.id)));
  assert.equal(s.notifications.filter(n=>n.id==='linked-mail-notice-'+linked.id).length,1);
  store.update(s=>{advanceLinkedMission(s,linked.id,2);advanceLinkedMission(s,linked.id,3);});
- store.update(s=>authorize(s,{orderId:linked.id,mailId:linkedMailId(linked.id),type:linked.type}));
+ store.update(s=>{authorize(s,{orderId:linked.id,mailId:linkedMailId(linked.id),type:linked.type});advanceLinkedMission(s,linked.id,4);});
  store.update(s=>assert.equal(begin(s,linked.id,1000),true));
  store.update(s=>finish(s,linked.id,true,2000));
  assert.equal(linkedMission(store.get(),linked.id).stage,5);
- store.update(s=>assert.equal(submit(s,linked.id,3000),true));
- store.update(s=>settle(s,125000));
+ store.update(s=>{assert.equal(submit(s,linked.id,3000),false);deliverLinkedArtifact(s,linked.id,linkedArtifactId(linked.id));});
+ store.update(s=>{s.clock='22:30';settle(s,125000);});
  s=store.get();
  assert.equal(linkedMission(s,linked.id).stage,6);
  assert.equal(s.ghost.balance,1500);

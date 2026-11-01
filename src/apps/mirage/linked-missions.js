@@ -3,6 +3,10 @@
 const PREFIX='linked-contract-mail-';
 export const linkedMailId=id=>PREFIX+id;
 export const linkedReceiptId=id=>'linked-payment-receipt-'+id;
+export const linkedDeliveryId=id=>'linked-delivery-mail-'+id;
+export const linkedArtifactId=id=>'linked-result-'+id+'.enc';
+export const linkedGameMinute=s=>(Math.max(1,s.day)-1)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
+export const linkedMissionVisible=(s,id)=>{const m=linkedMission(s,id);if(!m||s.story55?.version!==1)return true;return (!m.publishDay||s.day>=m.publishDay)&&(!m.expiryDay||s.day<=m.expiryDay||s.content.orders.some(o=>o.id===id&&o.status!=='OPEN'));};
 export function recordLinkedMissionPayment(s,id,amount,at){
  const mission=linkedMission(s,id);
  if(!mission||!Number.isFinite(amount)||amount<0)return false;
@@ -13,9 +17,9 @@ export function recordLinkedMissionPayment(s,id,amount,at){
   id:receiptId,orderId:id,from:'MIRAGE · SETTLEMENT',
   subject:'PAYMENT CONFIRMED · '+mission.title,
   body:'ORDER: '+id+'\nSTATUS: SETTLED\nCREDITS: +'+amount.toLocaleString('en-US')+'\nTRANSACTION: '+at,
-  read:false,linkedReceipt:true
+  read:false,linkedReceipt:true,day:s.day,time:s.clock
  });
- s.notifications.unshift({id:'linked-payment-notice-'+id,title:'KIRA',body:'Payment received · '+(order?.title||mission.title),link:{appId:'kira',route:'/mail/'+receiptId,params:{}}});
+ s.notifications.unshift({id:'linked-payment-notice-'+id,title:'KIRA',body:'Payment received · '+(order?.title||mission.title),day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+receiptId,params:{}}});
  return true;
 }
 export const linkedMission=(s,id)=>s.content?.mirage?.linkedMissions?.[id]||null;
@@ -36,10 +40,19 @@ export function saveLinkedMission(s,entry){
  if(!Number.isSafeInteger(reward)||reward<0||reward>1e9)throw Error('奖励请输入非负整数（不超过十亿）');
  const seconds=entry.seconds==null||entry.seconds===''?null:Number(entry.seconds);
  if(seconds!==null&&(!Number.isInteger(seconds)||seconds<10||seconds>600))throw Error('时限请输入 10–600 秒');
+ const publishDay=entry.publishDay==null||entry.publishDay===''?1:Number(entry.publishDay);
+ const expiryDay=entry.expiryDay==null||entry.expiryDay===''?55:Number(entry.expiryDay);
+ const deadlineDay=entry.deadlineDay==null||entry.deadlineDay===''?null:Number(entry.deadlineDay);
+ const deadlineClock=entry.deadlineClock||'23:59';
+ const reviewMinutes=entry.reviewMinutes==null||entry.reviewMinutes===''?30:Number(entry.reviewMinutes);
+ if(!Number.isInteger(publishDay)||publishDay<1||publishDay>55||!Number.isInteger(expiryDay)||expiryDay<publishDay||expiryDay>55)throw Error('任务发布日期或下架日期无效');
+ if(deadlineDay!==null&&(!Number.isInteger(deadlineDay)||deadlineDay<publishDay||deadlineDay>55))throw Error('交付期限不能早于发布日');
+ if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(deadlineClock)))throw Error('交付截止时间无效');
+ if(!Number.isInteger(reviewMinutes)||reviewMinutes<1||reviewMinutes>10080)throw Error('审核时间须为1至10080游戏分钟');
  const linked={id,title,subject:String(entry.subject||'【MIRAGE】新订单').slice(0,140),
   body:String(entry.body||'请确认并完成任务。').slice(0,6000),
   browserQuery:String(entry.browserQuery||title).slice(0,100),
-  type,reward,seconds,stage:before?.stage||0};
+  type,reward,seconds,publishDay,expiryDay,deadlineDay,deadlineClock,reviewMinutes,stage:before?.stage||0};
  existing[id]=linked;
  const data={id,title,description:String(entry.description||'').slice(0,6000),
   reward:String(entry.rewardLabel||reward+' CREDITS').slice(0,100),owner:String(entry.owner||'ANONYMOUS').slice(0,100),category:'CYBER',status:order?.status||'OPEN'};
@@ -53,14 +66,16 @@ export function acceptLinkedMission(s,id){
  const mission=linkedMission(s,id);
  if(!mission)return false;
  const order=s.content.orders.find(x=>x.id===id);
- if(!order||order.status!=='OPEN')return false;
+ if(!order||order.status!=='OPEN'||!linkedMissionVisible(s,id))return false;
+ const today=linkedGameMinute(s);
+ if(mission.deadlineDay&&today>=(mission.deadlineDay-1)*1440+Number(mission.deadlineClock.slice(0,2))*60+Number(mission.deadlineClock.slice(3)))return false;
  order.status='ACCEPTED';
  mission.stage=Math.max(1,mission.stage);
  const mailId=linkedMailId(id);
  if(!s.content.mail.some(m=>m.id===mailId)){
   s.content.mail.unshift({id:mailId,orderId:id,from:order.owner+' · MIRAGE',
-   subject:mission.subject,body:mission.body,read:false,linkedContract:true,missionStep:1});
-  s.notifications.unshift({id:'linked-mail-notice-'+id,title:'KIRA',body:mission.subject,link:{appId:'kira',route:'/mail/'+mailId,params:{}}});
+   subject:mission.subject,body:mission.body,read:false,linkedContract:true,missionStep:1,day:s.day,time:s.clock});
+  s.notifications.unshift({id:'linked-mail-notice-'+id,title:'KIRA',body:mission.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+mailId,params:{}}});
  }
  return true;
 }
@@ -70,7 +85,12 @@ export function advanceLinkedMission(s,id,step){
  const order=s.content.orders.find(o=>o.id===id);
  if(!order||order.status==='OPEN')return false;
  const next=Math.min(6,Math.max(0,Number(step)||0));
- if(next>mission.stage){mission.stage=next;return true;}
+ // A cross-App action cannot skip the browser, KIRA confirmation, GHOST
+ // artifact or manual-delivery prerequisite, even through a stale deep link.
+ if(next!==mission.stage+1)return false;
+ if(next===5&&s.ghost?.orders?.[id]?.status!=='success')return false;
+ if(next===6&&(s.ghost?.orders?.[id]?.status!=='paid'||!mission.submitted))return false;
+ mission.stage=next;return true;
  return false;
 }
 export function resetLinkedMission(s,id){
@@ -91,9 +111,11 @@ export function resetLinkedMission(s,id){
   s.content.mirage.digitalTransactions=ledger.filter(x=>x.orderId!==id);
  }
  const mailId=linkedMailId(id);
- const receiptId=linkedReceiptId(id);
- s.content.mail=s.content.mail.filter(m=>m.id!==mailId&&m.id!==receiptId);
+ const receiptId=linkedReceiptId(id),deliveryId=linkedDeliveryId(id);
+ s.content.mail=s.content.mail.filter(m=>m.id!==mailId&&m.id!==receiptId&&m.id!==deliveryId);
+ if(s.content.missionFiles)s.content.missionFiles=s.content.missionFiles.filter(f=>f.orderId!==id);
  s.notifications=s.notifications.filter(n=>n.id!=='linked-mail-notice-'+id&&n.id!=='linked-payment-notice-'+id);
+ mission.submitted=false;delete mission.deliveredAt;delete mission.failed;
  if(s.ghost?.orders)delete s.ghost.orders[id];
  if(s.ghost?.history)s.ghost.history=s.ghost.history.filter(h=>h.orderId!==id);
  return true;

@@ -9,7 +9,7 @@ export function activateStory55(s){
  Object.assign(s,{day:1,clock:'08:00',calendar:{anchorDay:1,anchorDate:c.startDate},deathPhase:null,powerMode:'idle',poweredOff:false,emergencyCharge:false,batteryPercent:100,dayChargeRemainingMs:0,worldMinuteFraction:0,powerActiveMs:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,events:[],notifications:[],invitations:[],matches:[],storyChargeGates:[]});
  s.nav={current:{appId:'home',route:'/',params:{}},stack:[]};
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
- s.content.orders=[];s.content.mail=[];s.content.reminders=[];s.content.calendarEvents=[];
+ s.content.orders=[];s.content.mail=[];s.content.missionFiles=[];s.content.reminders=[];s.content.calendarEvents=[];
  s.content.photos=[];s.content.notes=[];s.content.notesSeedVersion=1;
  s.content.alarms=[];if(s.content.phone)s.content.phone.calls=[];s.content.moments={posts:[],editedPosts:{},deletedIds:[],profiles:{},likes:{},comments:{}}; // Previous 90-day posts are not part of the 55-day campaign.
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
@@ -45,7 +45,7 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
-  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',members:Object.keys(actors),messages:[],unread:0};list.push(c);}
+  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
   c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?line[0]:cid,text:line[1],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  r.index++;
@@ -97,7 +97,7 @@ export function tickStory55(s){
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
-  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
+  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));

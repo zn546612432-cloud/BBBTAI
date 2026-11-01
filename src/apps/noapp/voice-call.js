@@ -435,8 +435,9 @@ export async function playVoiceMessage(id,ctx){
     blob=await loadClip('tai-'+m.id);
    }
   }
-  if(!blob){if(m===selected)ctx.toast('语音尚未准备好');continue;}
-  const url=URL.createObjectURL(blob);
+  const asset=typeof m.voiceSrc==='string'&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(m.voiceSrc)?new URL(m.voiceSrc.slice(1),new URL('./',globalThis.location?.href||document.baseURI)).href:null;
+  if(!blob&&!asset){if(m===selected)ctx.toast('语音尚未准备好');continue;}
+  const url=blob?URL.createObjectURL(blob):asset;
   messagePlayback.src=url;
   try{
    await messagePlayback.play();
@@ -446,7 +447,7 @@ export async function playVoiceMessage(id,ctx){
     messagePlayback.addEventListener('error',finish,{once:true});
    });
   }catch(e){ctx.toast('点击语音后重试：'+e.message);break;}
-  finally{URL.revokeObjectURL(url);}
+  finally{if(blob)URL.revokeObjectURL(url);}
  }
 }
 export async function convertTaiTextToVoice(ctx,id){
