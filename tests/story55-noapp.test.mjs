@@ -1,4 +1,5 @@
 import {advanceGameMinutes} from '../src/system/time/clock.js';
+import {revealEndingVoice55,ENDING_VOICE_APPEAR_DELAY_MS} from '../src/services/story55/finale.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -49,7 +50,11 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
   advanceScene55(s,'ending');
  }
  assert.equal(sceneLines(s,'ending')[scene55(s,'ending').index][0],'watch');
+ assert.doesNotMatch(show(s),/data-action="s55-final-audio"/);
+ assert.equal(s.clock,'22:25');
+ assert.equal(revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS),true);
  assert.match(show(s),/data-action="s55-final-audio"/);
+ assert.match(show(s),/22:46/);
  s.story55.finalAudioHeard=true;advanceScene55(s,'ending');
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.kind==='story55_final_audio'));
  assert.match(show(s),/noapp-final-voice/);
