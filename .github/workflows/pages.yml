@@ -36,6 +36,24 @@ jobs:
           PHONE_PREVIEW=true GITHUB_PAGES_BASE="/${{ github.event.repository.name }}/preview/" npm run build:pages
           mv dist production-dist/preview
           mv production-dist dist
+      - name: Verify packaged image assets and release URLs
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,existsSync} from 'node:fs';
+          const release=JSON.parse(readFileSync('dist/release.json','utf8'));
+          const files=[
+            'dist/index.html',
+            'dist/apps/mirage/world-land.svg',
+            'dist/apps/mirage/skull.svg',
+            `dist/releases/${release.version}/src/apps/mirage/art.js`,
+            `dist/releases/${release.version}/apps/mirage/world-land.svg`,
+            `dist/releases/${release.version}/apps/mirage/skull.svg`
+          ];
+          for(const file of files)if(!existsSync(file))throw new Error('Missing Pages asset: '+file);
+          const index=readFileSync('dist/index.html','utf8');
+          if(!index.includes(release.url+'src/main.js'))throw new Error('Main entry is not version-pinned');
+          console.log('Verified Pages resources:',release.version);
+          NODE
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
