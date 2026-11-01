@@ -4,9 +4,10 @@ import {initialState} from '../src/services/storage.js';
 import {startIncoming,incomingCallBanner,callAction,callState} from '../src/apps/noapp/voice-call.js';
 import {visibleMessages} from '../src/services/messaging/delivery.js';
 import {initializeMirage} from '../src/apps/mirage/data.js';
-import {saveLinkedMission,acceptLinkedMission,resetLinkedMission,linkedReceiptId} from '../src/apps/mirage/linked-missions.js';
+import {saveLinkedMission,acceptLinkedMission,advanceLinkedMission,resetLinkedMission,linkedReceiptId,linkedArtifactId} from '../src/apps/mirage/linked-missions.js';
 import {authorize,begin,finish,submit,settle} from '../src/apps/ghost/state.js';
 import {linkedMailView} from '../src/apps/kira/features/mission/linked.js';
+import {deliverLinkedArtifact} from '../src/apps/mirage/linked-contract-runtime.js';
 const createStore=(initial=initialState())=>{let s=initial;return {get:()=>s,update(fn){const next=structuredClone(s);fn(next);s=next;return s;}};};
 
 test('incoming call shows supplied user-photo banner with separate answer and decline actions',()=>{
@@ -40,8 +41,8 @@ test('custom GHOST payouts create one KIRA receipt, and developer reset reverses
  store.update(s=>saveLinkedMission(s,{id,title:'设备批次审核',owner:'BASILISK',
   subject:'设备审核确认',body:'核对收据，完成虚拟任务。',browserQuery:'设备报告',type:'veil',reward,seconds:60}));
  store.update(s=>acceptLinkedMission(s,id));
- store.update(s=>authorize(s,{orderId:id,type:'veil',mailId:'linked-contract-mail-'+id}));
- store.update(s=>{assert.equal(begin(s,id,100),true);finish(s,id,true,200);assert.equal(submit(s,id,300),true);settle(s,121000);});
+ store.update(s=>{advanceLinkedMission(s,id,2);advanceLinkedMission(s,id,3);authorize(s,{orderId:id,type:'veil',mailId:'linked-contract-mail-'+id});advanceLinkedMission(s,id,4);});
+ store.update(s=>{assert.equal(begin(s,id,100),true);finish(s,id,true,200);assert.equal(submit(s,id,300),false);deliverLinkedArtifact(s,id,linkedArtifactId(id));s.clock='22:30';settle(s,121000);});
  let s=store.get(),receiptId=linkedReceiptId(id);
  assert.equal(s.ghost.balance,reward);
  assert.equal(s.content.mirage.digitalBalance,reward);
