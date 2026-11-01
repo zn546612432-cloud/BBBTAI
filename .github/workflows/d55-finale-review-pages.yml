@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
-      name: github-pages
+      name: d55-finale-review-pages
       url: https://zn546612432-cloud.github.io/BBBTAI/review/d55-finale-20261101/
     steps:
       - name: Checkout unchanged production
