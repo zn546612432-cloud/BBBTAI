@@ -42,7 +42,7 @@ export function incomingCallBanner(s){
    '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
 }
 let playback=null;
-let messagePlayback=null,voicePlaylistToken=0,pausedForMicrophone=false;
+let messagePlayback=null,voicePlaylistToken=0,pausedForMicrophone=false,cancelMessagePlayback=null;
 function suspendVoicesForCapture(){
  if(messagePlayback&&!messagePlayback.paused){pausedForMicrophone=true;messagePlayback.pause();}
 }
@@ -407,14 +407,18 @@ export async function playVoiceMessage(id,ctx){
  const queue=selected?.from==='tai'?
    list.slice(index).filter(m=>m.from==='tai'&&(m.kind==='voice'||m.voiceRequested)):[selected].filter(Boolean);
  const token=++voicePlaylistToken;
+ cancelMessagePlayback?.();
  if(messagePlayback){messagePlayback.pause();if(messagePlayback.src.startsWith('blob:'))URL.revokeObjectURL(messagePlayback.src);}
  messagePlayback=createGestureAudio();
+ if(!messagePlayback){ctx.toast('当前浏览器不支持音频播放');return;}
+ const player=messagePlayback;
  messagePlayback.preload='auto';
  // Reuse a single audio element: after the initial tap, sequential play is
  // much more reliable on iOS than creating three new autoplay elements.
  for(const m of queue){
   if(token!==voicePlaylistToken)break;
-  let blob=await loadClip(m.audioId||m.id);
+  // A bundled recording remains playable even if local audio storage is denied.
+  let blob=await loadClip(m.audioId||m.id).catch(()=>null);
   // A voice synthesized before the parser fix may be literally speaking JSON.
   // Repair its audio and visible transcript only after recovering the dialogue.
   const oldCaption=String(m.voiceCaption||m.text||'');
@@ -433,7 +437,7 @@ export async function playVoiceMessage(id,ctx){
   if(!blob&&m.voiceRequested){
    for(let wait=0;wait<35&&!blob&&token===voicePlaylistToken;wait++){
     await new Promise(resolve=>setTimeout(resolve,240));
-    blob=await loadClip('tai-'+m.id);
+    blob=await loadClip('tai-'+m.id).catch(()=>null);
    }
   }
   const asset=typeof m.voiceSrc==='string'&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(m.voiceSrc)?resolvePhoneAudioPath(m.voiceSrc):null;
@@ -449,17 +453,20 @@ export async function playVoiceMessage(id,ctx){
    }
   }
   if(!blob&&!asset){if(m===selected)ctx.toast('没有这条语音的音频文件，请在开发者入口生成');continue;}
+  if(token!==voicePlaylistToken)break;
   const url=blob?URL.createObjectURL(blob):asset;
-  messagePlayback.src=url;
+  player.src=url;
   try{
    // Register first: very short clips can end before an awaited play().
    await new Promise((resolve,reject)=>{
-    const current=messagePlayback;
-    const clean=()=>{current.removeEventListener('ended',ended);current.removeEventListener('error',failed);};
+    const current=player;
+    const cancel=()=>{clean();resolve();};
+    const clean=()=>{current.removeEventListener('ended',ended);current.removeEventListener('error',failed);if(cancelMessagePlayback===cancel)cancelMessagePlayback=null;};
     const ended=()=>{clean();resolve();};
     const failed=()=>{clean();reject(Error('文件加载失败或格式不兼容'));};
     current.addEventListener('ended',ended,{once:true});
     current.addEventListener('error',failed,{once:true});
+    cancelMessagePlayback=cancel;
     try{Promise.resolve(current.play()).catch(error=>{clean();reject(error);});}
     catch(error){clean();reject(error);}
    });

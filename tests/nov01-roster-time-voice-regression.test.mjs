@@ -43,7 +43,7 @@ test('Tai voice bubble has waveform and hidden transcript; Ximeng text only',()=
  assert.match(html,/<summary>转文字<\/summary>/);
  assert.doesNotMatch(html,/data-action="tai-record"/);
 });
-test('D55 media URL resolves from deployment root, not hashed release path',()=>{
+test('D55 recording uses the deployment-aware shared audio resolver',()=>{
  const code=readFileSync(new URL('../src/services/story55/controller.js',import.meta.url),'utf8');
- assert.match(code,/pageBase/);
+ assert.match(code,/audio\.src=resolvePhoneAudioPath\(src\)/);
 });

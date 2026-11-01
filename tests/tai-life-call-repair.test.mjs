@@ -56,9 +56,10 @@ test('a blocked call track holds its own caption and cannot release the next sen
   assert.equal(tts,1);assert.match(callView(s),/刚看完展览/);assert.doesNotMatch(callView(s),/有件衣服/);
   assert.equal(maybeAdvanceCall(ctx,{now:Date.now()+500000}),false);
   FakeAudio.current.block=false;callAction('tai-play-audio',ctx);await new Promise(r=>setImmediate(r));FakeAudio.current.end();
-  await until(()=>tts===2);
+  // Request start precedes decoding the response and publishing its caption.
+  await until(()=>tts===2&&callView(s).includes('有件衣服'));
   assert.match(callView(s),/有件衣服/);assert.doesNotMatch(callView(s),/<p class="theirs">刚看完展览/);
-  FakeAudio.current.end();await until(()=>tts===3);FakeAudio.current.end();
+  FakeAudio.current.end();await until(()=>tts===3&&callView(s).includes('回头讲给你听'));FakeAudio.current.end();
   await until(()=>!callView(s).includes('<p class="theirs">'));
   callAction('tai-hangup',ctx);assert.equal(callState().state,'ended');
  }finally{callAction('tai-hangup',ctx);globalThis.Audio=oldAudio;globalThis.fetch=oldFetch;globalThis.sessionStorage=oldSession;}

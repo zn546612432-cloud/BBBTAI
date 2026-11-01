@@ -4,11 +4,11 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {story55Map,selectStory55Pin} from '../src/apps/maps/features/story55/index.js';
 import {render as ghostRender} from '../src/apps/ghost/index.js';
+import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 test('map pin selection works as local UI, not a navigation and clock change',()=>{
- const s=initialState();activateStory55(s);
- s.story55.completed.uk=true;
- const html=story55Map(s,{params:{area:'WORLD'}});
- assert.match(html,/data-map-area="WORLD"/);
+ const s=activateStory55(initialState());rebuildStory55AtDay(s,45);
+ const html=story55Map(s,{params:{}});
+ assert.match(html,/data-map-area="MACAU"/);
  assert.match(html,/data-map-detail=/);
  assert.match(html,/s55-map-placeholder/);
  assert.equal(selectStory55Pin(null),false);
