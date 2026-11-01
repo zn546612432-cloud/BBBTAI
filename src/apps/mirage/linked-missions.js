@@ -6,7 +6,7 @@ export const linkedReceiptId=id=>'linked-payment-receipt-'+id;
 export const linkedDeliveryId=id=>'linked-delivery-mail-'+id;
 export const linkedArtifactId=id=>'linked-result-'+id+'.enc';
 export const linkedGameMinute=s=>(Math.max(1,s.day)-1)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
-export const linkedMissionVisible=(s,id)=>{const m=linkedMission(s,id);return !m||(!m.publishDay||s.day>=m.publishDay)&&(!m.expiryDay||s.day<=m.expiryDay||s.content.orders.some(o=>o.id===id&&o.status!=='OPEN'));};
+export const linkedMissionVisible=(s,id)=>{const m=linkedMission(s,id);if(!m||s.story55?.version!==1)return true;return (!m.publishDay||s.day>=m.publishDay)&&(!m.expiryDay||s.day<=m.expiryDay||s.content.orders.some(o=>o.id===id&&o.status!=='OPEN'));};
 export function recordLinkedMissionPayment(s,id,amount,at){
  const mission=linkedMission(s,id);
  if(!mission||!Number.isFinite(amount)||amount<0)return false;
