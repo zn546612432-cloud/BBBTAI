@@ -97,7 +97,7 @@ export function tickStory55(s){
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
-  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
+  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));
