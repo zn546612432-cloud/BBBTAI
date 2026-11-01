@@ -2,7 +2,7 @@ import {isStory55} from './services/story55/state.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
-import {tickFlowD03} from './services/story55/flow-d03.js';
+import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
