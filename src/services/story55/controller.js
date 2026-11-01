@@ -8,7 +8,7 @@ import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshot,getTestSnapshot,restoreTestSnapshot,deleteTestSnapshot,storySourceVersion} from './test-snapshots.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
 const open=(c,appId,route='/',params={})=>c.router.open({appId,route,params});
-function archiveAndStart(c){const old=c.store.get(),nav=structuredClone(old.nav);if(isStory55(old))saveTestSnapshot(c.store.storage,old,'创建新周目前 · D'+old.day);if(!isStory55(old))c.store.storage?.setItem('ximeng-phone-before-story55',JSON.stringify(old));c.store.update(s=>{activateStory55(s);s.nav=nav;s.unlocked=true;});}
+function archiveAndStart(c){const old=c.store.get(),nav=structuredClone(old.nav);if(isStory55(old))saveTestSnapshot(c.store.storage,old,'创建新周目前 · D'+old.day);else c.store.storage?.setItem('ximeng-phone-before-story55',JSON.stringify(old));c.store.update(s=>{if(isStory55(s))rebuildStory55AtDay(s,1,'08:00');else activateStory55(s);s.nav=nav;s.unlocked=true;});}
 export function previewNode55(s,id){return prepareStory55NodeAtDay(s,id);}
 
 function exportText(text,name){const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);}
