@@ -55,6 +55,7 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-exit'){ctx.router.back();return;}
  if(action==='mc-sign-up'&&!isMirageAuthenticated()){const message=t.closest('.mc-login')?.querySelector('.mc-signup-warning');if(message){message.classList.add('is-visible');message.style.opacity='1';clearTimeout(message._hideTimer);message._hideTimer=setTimeout(()=>{message.style.opacity='0';message.classList.remove('is-visible');},3800);}return;}
  if(!isMirageAuthenticated())return;
+ if(action==='mc-flow-test'){ctx.store.update(state=>openFlowTest(state));ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}
  if(action==='mc-tab'){pendingDelete=null;goTab(ctx,t.dataset.route);}
  if(action==='mc-contacts'){if(loc.route.startsWith('/chat/')||loc.route==='/manage')goTab(ctx,'/');else ctx.router.back();}
  if(action==='mc-chat'){
