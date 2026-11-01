@@ -97,10 +97,12 @@ export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
  const rate=worldMinuteRate(s,{focused,taiChat});
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
- const whole=Math.floor(total);
+ // Decimal floating-point can put 2999ms + 1ms just below 1 minute.
+ // Account for sub-nanominute rounding without fast-forwarding normal play.
+ const whole=Math.floor(total+1e-9);
  if(!whole){s.worldMinuteFraction=total;return {minutes:0};}
  const outcome=advanceGameMinutes(s,whole);
- s.worldMinuteFraction=outcome.event&&outcome.event!=='none'?0:total-whole;
+ s.worldMinuteFraction=outcome.event&&outcome.event!=='none'?0:Math.max(0,total-whole);
  return outcome;
 }
 export function setSleeping(s){
