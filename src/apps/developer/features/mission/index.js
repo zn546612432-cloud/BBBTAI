@@ -11,7 +11,7 @@ function linkedMissionEditor(s){
  const id=edit?.id||'',cfg=s.content.orders?.find(o=>o.id===id);
  const selected=(value,expected)=>value===expected?' selected':'';
  return '<div class="card"><h3>多悬赏任务链</h3>'+
- '<p>每份悬赏有独立 KIRA 邮件、浏览器检索、GHOST 游戏和结算进度。</p>'+
+ '<p>每份悬赏拥有独立 KIRA 邮件、浏览器检索、GHOST 成果文件、手动回复附件、游戏时间审核与钱包流水。</p>'+
  list.map(m=>'<div class="mission-step"><b>'+esc(m.title)+'</b><span>D · '+esc(m.stage)+'/6</span>'+btn('mission-linked-select','编辑','button-quiet','data-id="'+esc(m.id)+'"')+btn('mission-linked-open','打开','button-quiet','data-id="'+esc(m.id)+'"')+'</div>').join('')+
  btn('mission-linked-new','新建悬赏','button-quiet wide')+'</div>'+
  '<form class="card" data-form="mission-linked-config"><h3>'+(edit?'编辑 '+esc(edit.title):'创建新悬赏')+'</h3>'+
@@ -25,7 +25,7 @@ function linkedMissionEditor(s){
  '<label>浏览器检索词<input name="browserQuery" value="'+esc(edit?.browserQuery||'')+'"></label>'+
  '<label>Ghost 类型<select name="type">'+ghostTools.map(t=>'<option value="'+t.id+'"'+selected(t.id,edit?.type||'cipher')+'>'+esc(t.name)+'</option>').join('')+'</select></label>'+
  '<label>限时（秒）<input type="number" min="10" max="600" name="seconds" value="'+esc(edit?.seconds??'')+'"></label>'+
- '<label>成功到账（游戏币）<input type="number" min="0" max="1000000000" step="1" required name="reward" value="'+esc(edit?.reward??1500)+'"></label>'+
+ '<label>发布日 D<input type="number" min="1" max="55" required name="publishDay" value="'+esc(edit?.publishDay??1)+'"></label>'+' <label>下架日 D<input type="number" min="1" max="55" required name="expiryDay" value="'+esc(edit?.expiryDay??55)+'"></label>'+' <label>交付截止日 D（留空不限制）<input type="number" min="1" max="55" name="deadlineDay" value="'+esc(edit?.deadlineDay??'')+'"></label>'+' <label>交付截止时间<input type="time" name="deadlineClock" value="'+esc(edit?.deadlineClock||'23:59')+'"></label>'+' <label>雇主审核时间（游戏分钟）<input type="number" min="1" max="10080" required name="reviewMinutes" value="'+esc(edit?.reviewMinutes??30)+'"></label>'+' <label>成功到账（游戏币）<input type="number" min="0" max="1000000000" step="1" required name="reward" value="'+esc(edit?.reward??1500)+'"></label>'+
  '<button class="button-primary wide" type="submit">保存并绑定所有 App</button>'+
  (edit?btn('mission-linked-reset','重置此任务进度','button-quiet wide','data-id="'+esc(edit.id)+'"'):'')+'</form>';
 }
@@ -128,7 +128,7 @@ export function missionSubmit(form,ctx){
   const v=new FormData(form);
   initializeMirage(ctx.store);
   const entry={};
-  for(const key of ['id','title','description','owner','rewardLabel','subject','body','browserQuery','type','seconds','reward'])entry[key]=v.get(key);
+  for(const key of ['id','title','description','owner','rewardLabel','subject','body','browserQuery','type','seconds','reward','publishDay','expiryDay','deadlineDay','deadlineClock','reviewMinutes'])entry[key]=v.get(key);
   ctx.store.update(s=>saveLinkedMission(s,entry));
   selectedLinkedId=entry.id;
   ctx.toast('悬赏已绑定 KIRA、浏览器和 GHOST');return true;
