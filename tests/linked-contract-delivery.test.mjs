@@ -12,6 +12,7 @@ import {authorize,begin,finish,submit,settle,needsWorldTick,advanceGhost} from '
 import {render as kiraRender,handle as kiraHandle,submit as kiraSubmit} from '../src/apps/kira/index.js';
 import {render as filesRender} from '../src/apps/files/index.js';
 import {render as mirageRender} from '../src/apps/mirage/index.js';
+import {validateLinkedContract} from '../src/apps/mirage/linked-contract-validator.js';
 
 const ID='contract-archive-002';
 const create=({publishDay=1,expiryDay=55,deadlineDay=null,deadlineClock='23:59',reviewMinutes=60}={})=>{
@@ -130,4 +131,24 @@ test('explicit reset removes attached sent record, digital credit and generated 
  assert.equal(s.content.mail.some(m=>m.id===linkedDeliveryId(ID)),false);
  assert.equal(s.content.mail.some(m=>m.id===linkedReceiptId(ID)),false);
  assert.equal(s.content.orders.find(o=>o.id===ID).status,'OPEN');
+});
+
+test('developer one-click simulation detects missing links without altering the current save',()=>{
+ const s=create({publishDay:10,reviewMinutes:60}),before=JSON.stringify(s);
+ const result=validateLinkedContract(s,ID);
+ assert.equal(result.ok,true,result.error);
+ assert.equal(result.steps.filter(x=>x.ok).length,5);
+ assert.equal(JSON.stringify(s),before,'the dry-run must not affect player data');
+ const broken=structuredClone(s);
+ delete broken.content.orders[broken.content.orders.findIndex(o=>o.id===ID)];
+ const failure=validateLinkedContract(broken,ID);
+ assert.equal(failure.ok,false);
+ assert.match(failure.error,/MIRAGE/);
+});
+test('developer validator reports review finishing beyond D55 instead of lying about payout',()=>{
+ const s=create({publishDay:55,reviewMinutes:200});
+ const result=validateLinkedContract(s,ID);
+ assert.equal(result.ok,false);
+ assert.match(result.error,/D55/);
+ assert.equal(s.content.mirage.digitalBalance,0);
 });
