@@ -15,6 +15,14 @@ export const STORY55_CONFIG={
       "gateDay": 1
     },
     {
+      "id": "flow-d03",
+      "day": 3,
+      "title": "Flow 的漏洞扫描工具",
+      "kind": "flow",
+      "requires": ["intro"],
+      "gateDay": 3
+    },
+    {
       "id": "wallet",
       "day": 6,
       "title": "管理者的钱包比赛",
