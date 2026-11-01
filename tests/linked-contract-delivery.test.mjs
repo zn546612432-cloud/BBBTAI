@@ -146,7 +146,7 @@ test('developer one-click simulation detects missing links without altering the 
  assert.match(failure.error,/MIRAGE/);
 });
 test('developer validator reports review finishing beyond D55 instead of lying about payout',()=>{
- const s=create({publishDay:55,reviewMinutes:200});
+ const s=create({publishDay:55,reviewMinutes:2000});
  const result=validateLinkedContract(s,ID);
  assert.equal(result.ok,false);
  assert.match(result.error,/D55/);
