@@ -1,5 +1,5 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
-import {secondView55,finaleInProgress55} from '../../services/story55/finale.js';
+import {secondView55,finaleInProgress55,syncSecondClock55} from '../../services/story55/finale.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
 export const DEATH_START=90*1440-1; // D90 23:59
@@ -11,6 +11,18 @@ export const phoneBlocked=s=>deathLocked(s)||(s.dayChargeRemainingMs||0)>0;
 export function syncDeathNight(s){
  if(isStory55(s)){
   s.day=Math.min(55,s.day);
+  // Recover old D55 saves previously stranded in an immediate 'off' phase.
+  // Preserve already-recovered saves and all authored phone content.
+  if(s.story55?.ended&&!s.story55?.finalTransition){
+   if(s.deathPhase==='recovered'){
+    s.story55.finalTransition={phase:'complete',startedAt:Date.now()};
+    s.story55.secondView=true;syncSecondClock55(s);
+   }else{
+    s.story55.finalTransition={phase:'off',startedAt:Date.now()-17000,fromMinute:22*60+49,fromBattery:20};
+    s.deathPhase='s55-off';s.batteryPercent=0;s.unlocked=false;
+    s.nav.current={appId:'home',route:'/',params:{}};s.nav.stack=[];
+   }
+  }
   if(secondView55(s)){s.deathPhase='recovered';s.batteryPercent=100;return;}
   if(finaleInProgress55(s))return;
   if(s.story55.ended&&s.deathPhase!=='recovered'){
