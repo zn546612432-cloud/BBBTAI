@@ -26,7 +26,7 @@ test('test snapshots survive day resets and keep the immutable original',()=>{
  assert.equal(listTestSnapshots(storage)[0].sourceVersion,first.sourceVersion);
 });
 test('same story version restores and backs up prior run first',()=>{
- const storage=memoryStorage(),current=state(45),saved=saveTestSnapshot(storage,current,'D45');
+ const storage=memoryStorage();let current=state(45);const saved=saveTestSnapshot(storage,current,'D45');
  const store={storage,get:()=>current,replace:s=>{current=s;}};
  current.day=12;
  restoreTestSnapshot(store,saved.id);
@@ -35,7 +35,7 @@ test('same story version restores and backs up prior run first',()=>{
  assert.equal(listTestSnapshots(storage)[0].day,12);
 });
 test('different story versions refuse silent restore and preserve both versions',()=>{
- const storage=memoryStorage(),current=state(45),saved=saveTestSnapshot(storage,current,'original');
+ const storage=memoryStorage();let current=state(45);const saved=saveTestSnapshot(storage,current,'original');
  current.story55.config.nodes[0].day=2;
  const version=storySourceVersion(current);
  const store={storage,get:()=>current,replace:s=>{current=s;}};
