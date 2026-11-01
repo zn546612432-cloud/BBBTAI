@@ -52,7 +52,7 @@ mountCallEvents({store});
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
-try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);});}catch(error){console.error('消息时间线恢复失败',error);}
+try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);});}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
 const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
 if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
