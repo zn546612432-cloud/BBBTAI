@@ -116,12 +116,12 @@ export function flowOnMirageEntry(s){
 }
 export function flowDraft(s){
  const p=flowState(s);
- if(!isStory55(s)||!p.asked||p.completed)return null;
+ if(!isStory55(s)||!p.asked||p.completed||p.replyPending)return null;
  return {id:'flow-d03',index:0,kind:'me',text:'很强。',channel:'mirage',conversationId:FLOW_CONTACT};
 }
 export function sendFlowReply(s,text){
  const p=flowState(s);
- if(!p.asked||p.completed||String(text).trim()!=='很强。')throw Error('请发送输入框里完整的预设台词');
+ if(!p.asked||p.completed||p.replyPending||String(text).trim()!=='很强。')throw Error('请发送输入框里完整的预设台词');
  const c=contact(s);
  push(c,'flow-d03-player','me','很强。',s.day,s.clock,date55(s.day));
  progress(s).replyDueAt=Date.now()+1200;
