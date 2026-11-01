@@ -74,6 +74,17 @@ test('all authored Moment images, cover photos, videos and historical chat media
  assert.match(renderMoments(s,'/moments'),/wx-moments/);
 });
 
+test('home icons, wallpapers, browser pictures and chess piece art are packaged',()=>{
+ for(const asset of [
+  'icons/glass-atlas.png','icons/glass-utilities.png',
+  'wallpapers/midnight-glass.png',
+  'apps/browser/macau.webp','apps/browser/cinema.webp','apps/browser/corporate.webp',
+  'apps/browser/snapshots/github.png','apps/browser/snapshots/ticketing.png',
+  'assets/story55/triplets-baby-photo.jpg',
+  ...['b','w'].flatMap(side=>['B','K','N','P','Q','R'].map(piece=>'apps/chess/pieces/'+side+piece+'.png'))
+ ])verifyPublicUrl('/'+asset);
+});
+
 test('all literal source-image paths resolve to public files (no silent broken references)',()=>{
  const scan=(dir,files=[])=>{
   for(const entry of readdirSync(dir,{withFileTypes:true})){
