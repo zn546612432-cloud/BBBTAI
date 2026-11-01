@@ -42,7 +42,7 @@ export function nextGhostRound(s,id){
  if(o.type==='veil')Object.assign(o.board,{code:b.code,input:''});
  return true;
 }
-export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const cfg=configFor(s,o.type,o.id);// Mistakes and timeouts restart this level; attempts are never exhausted.o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);o.moves=0;o.errors=0;return true;}
+export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);o.moves=0;o.errors=0;return true;}
 export function finish(s,id,success,now=Date.now()){
  const g=ensureGhost(s),o=g.orders[id];
  if(!o||o.status!=='running')return;
