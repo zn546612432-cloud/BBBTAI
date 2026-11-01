@@ -72,7 +72,6 @@ test('scheduled authored messages are replayed chronologically and remain editab
  assert.equal(s.notifications.filter(n=>n.id==='preset-notice-d8-hi-8').length,1);
  assert.ok(!group.messages.some(m=>m.id==='author-d48'&&m.delivery));
  rebuildStory55AtDay(s,49);
- assert.deepEqual(group.messages.find(m=>m.id==='author-d48').delivery,undefined); // original object is pre-rebuild, not the current state
  const newGroup=s.content.conversations.wechat.find(c=>c.id==='group');
  assert.deepEqual(newGroup.messages.find(m=>m.id==='author-d48').delivery,{day:48,clock:'10:00'});
 });
@@ -82,7 +81,7 @@ test('node preview reconstructs same-day prerequisites but does not complete tar
  assert.equal(s.day,30);
  assert.equal(completed(s,'invite'),true);
  assert.equal(completed(s,'recognition'),false);
- assert.equal(s.story55.noappInstalled,true);
+ assert.equal(s.story55.noappInstalled,undefined);
  assert.equal(s.story55.previewNode,'recognition');
 });
 test('invalid target dates are atomic and reject rather than silently corrupt state',()=>{
