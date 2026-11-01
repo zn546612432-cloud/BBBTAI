@@ -152,3 +152,24 @@ test('developer validator reports review finishing beyond D55 instead of lying a
  assert.match(result.error,/D55/);
  assert.equal(s.content.mirage.digitalBalance,0);
 });
+
+test('old successful GHOST-only submission is migrated without inventing a KIRA email or payout',()=>{
+ const s=create(),m=linkedMission(s,ID);
+ assert.equal(acceptLinkedMission(s,ID),true);
+ advanceLinkedMission(s,ID,2);advanceLinkedMission(s,ID,3);
+ const run=authorize(s,{orderId:ID,mailId:linkedMailId(ID),type:m.type});
+ advanceLinkedMission(s,ID,4);
+ run.status='settling';run.dueAt=Date.now()-10000;run.submittedAt=Date.now()-20000;
+ assert.equal(linkedNeedsWorldTick(s),true);
+ assert.equal(tickLinkedContracts(s),true);
+ assert.equal(run.status,'success');
+ assert.equal(m.stage,5);
+ assert.ok(linkedArtifacts(s).some(f=>f.id===linkedArtifactId(ID)));
+ assert.equal(s.content.mail.some(x=>x.id===linkedDeliveryId(ID)),false);
+ assert.equal(s.content.mirage.digitalBalance,0);
+ s.clock='10:00';
+ assert.equal(tickLinkedContracts(s),false);
+ deliverLinkedArtifact(s,ID,linkedArtifactId(ID));
+ s.clock='10:30';assert.equal(tickLinkedContracts(s),true);
+ assert.equal(s.content.mirage.digitalBalance,2500);
+});
