@@ -1,15 +1,18 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {secondView55,finaleInProgress55} from '../../services/story55/finale.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
 export const DEATH_START=90*1440-1; // D90 23:59
 export const DEATH_END=90*1440+180; // D91 03:00
 export const storyMinute=s=>(s.day-1)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3));
-export const deathLocked=s=>['draining','off','passcode'].includes(s.deathPhase);
+export const deathLocked=s=>['draining','off','passcode','s55-accelerating','s55-one-percent','s55-zero-percent','s55-off','s55-charging'].includes(s.deathPhase);
 export const phoneBlocked=s=>deathLocked(s)||(s.dayChargeRemainingMs||0)>0;
 
 export function syncDeathNight(s){
  if(isStory55(s)){
   s.day=Math.min(55,s.day);
+  if(secondView55(s)){s.deathPhase='recovered';s.batteryPercent=100;return;}
+  if(finaleInProgress55(s))return;
   if(s.story55.ended&&s.deathPhase!=='recovered'){
    s.day=55;s.batteryPercent=1;s.unlocked=false;
    if(s.deathPhase!=='passcode')s.deathPhase='off';
