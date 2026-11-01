@@ -7,7 +7,7 @@ import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from '
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
 import {deployment,projectCapacity,upgradeHardware} from './projects.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
-import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
+import {defaultProducts} from '../../apps/mirage/data.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -37,6 +37,9 @@ function preserveAuthoring(s){
   authoredMail:copy((s.content.mail||[]).filter(m=>m.authored===true&&!m.story55)),
   authoredOrders:copy((s.content.orders||[]).filter(o=>o.authored===true||!!s.content.mirage?.linkedMissions?.[o.id])),
   linkedMissions:copy(s.content.mirage?.linkedMissions||{}),
+  // Product definitions can be authored, but a previous test's shopping
+  // cart/owned assets and reduced shop stock must never leak backwards.
+  mirageProducts:copy((s.content.mirage?.products||[]).filter(p=>p.authored===true||!defaultProducts.some(d=>d.id===p.id))),
   editor:copy(s.editor||{}),nav:copy(s.nav),
  };
 }
@@ -68,6 +71,11 @@ function restoreAuthoring(s,source){
  for(const order of source.authoredOrders){
   if(!s.content.orders.some(o=>o.id===order.id))s.content.orders.push({...order,status:'OPEN'});
  }
+ s.content.mirage.balance=300000;
+ s.content.mirage.cart=[];
+ s.content.mirage.assets=[];
+ const custom=new Map(source.mirageProducts.map(p=>[p.id,p]));
+ s.content.mirage.products=[...defaultProducts.filter(p=>!custom.has(p.id)).map(copy),...custom.values()];
  s.content.mirage.linkedMissions=source.linkedMissions;
  for(const m of Object.values(s.content.mirage.linkedMissions))m.stage=0;
  s.editor=source.editor;
