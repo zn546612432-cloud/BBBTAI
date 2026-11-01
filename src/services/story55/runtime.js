@@ -111,6 +111,9 @@ export function tickStory55(s){
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
+ // Update only the former default line; never overwrite author-edited dialogue.
+ const finalLines=story55Config(s).scenes?.ending;
+ if(finalLines?.[6]?.[1]==='熙蒙？熙蒙？')finalLines[6][1]=ENDING_FINAL_REPLY;
  if(final55(s))return;
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
