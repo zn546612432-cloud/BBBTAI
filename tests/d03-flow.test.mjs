@@ -6,7 +6,7 @@ import {completeNode,story55ChargeGate} from '../src/services/story55/state.js';
 import {
  FLOW_CONTACT,FLOW_INVITE,FLOW_REWARD_ID,FLOW_KEY,ensureFlowHistory,
  tickFlowD03,openFlowTest,acceptFlowKey,installFlowTool,submitFlowScan,
- flowOnMirageEntry,flowDraft,sendFlowReply,flowState
+ flowOnMirageEntry,flowDraft,sendFlowReply,flushFlowReply,flowState
 } from '../src/services/story55/flow-d03.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {renderFlowD03} from '../src/apps/ghost/features/flow-d03/index.js';
@@ -72,6 +72,10 @@ test('Flow follow-up waits for Mirage entry and player Send, then unlocks D04',(
  assert.equal(flowDraft(s).text,'很强。');
  assert.throws(()=>sendFlowReply(s,'好用'),/预设台词/);
  assert.equal(sendFlowReply(s,'很强。'),true);
+ assert.equal(flowState(s).completed,undefined);
+ assert.equal(flowDraft(s),null);
+ assert.equal(flushFlowReply(s,flowState(s).replyDueAt-1),false);
+ assert.equal(flushFlowReply(s,flowState(s).replyDueAt),true);
  assert.equal(flowState(s).completed,true);
  assert.equal(story55ChargeGate(s),null);
  assert.equal(contact(s).messages.filter(m=>m.id==='flow-d03-finish').length,1);
