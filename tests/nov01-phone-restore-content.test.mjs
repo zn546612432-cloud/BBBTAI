@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState,PhoneStore} from '../src/services/storage.js';
+import {initialState} from '../src/services/storage.js';
+import {ensureAuthoredNotes} from '../src/apps/notes/data/seed.js';
 import {activateStory55,advanceScene55} from '../src/services/story55/runtime.js';
 import {allMoments} from '../src/apps/wechat/features/moments/model.js';
 import {momentImage,renderMoments} from '../src/apps/wechat/features/moments/index.js';
@@ -23,8 +24,10 @@ test('existing empty 55-day Notes saves are repaired but player notes survive',(
  const s=initialState();activateStory55(s);
  assert.ok(s.content.notes.some(n=>n.id==='xm-note-ledger'));
  s.content.notes.push({id:'my-note',text:'Do not lose'});
- const store=new PhoneStore({getItem:key=>key==='ximeng-phone-story55-v1'?JSON.stringify({...s,content:{...s.content,notes:[],notesSeedVersion:1,notesSeedRepairVersion:undefined}}):null,setItem(){}});
- assert.ok(store.get().content.notes.some(n=>n.id==='xm-note-ledger'));
+ const saved={...s,content:{...s.content,notes:[],notesSeedVersion:1,notesSeedRepairVersion:undefined}};
+ assert.equal(ensureAuthoredNotes(saved),true);
+ assert.ok(saved.content.notes.some(n=>n.id==='xm-note-ledger'));
+ assert.equal(ensureAuthoredNotes(saved),false);
  assert.ok(s.content.notes.some(n=>n.id==='my-note'));
 });
 test('WeChat shows full day separators and aliases xin to 小辛 rather than ghost avatar',()=>{
