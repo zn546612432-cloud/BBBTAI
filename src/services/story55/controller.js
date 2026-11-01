@@ -17,6 +17,7 @@ export async function handleStory55Action(a,t,c){
  const id=t.dataset.node,project=t.dataset.project;
  if(a==='s55-new-run'){archiveAndStart(c);return true;}
  if(a==='s55-save-snapshot'){const s=c.store.get();saveTestSnapshot(c.store.storage,s,'手动保存 · D'+s.day);c.toast?.('测试快照已单独保存');return true;}
+ if(a==='s55-rebuild-snapshot'){const saved=getTestSnapshot(c.store.storage,t.dataset.snapshot);saveTestSnapshot(c.store.storage,c.store.get(),'按新版重建前 · D'+c.store.get().day);c.store.update(s=>rebuildStory55AtDay(s,saved.entry.day,saved.entry.clock));c.toast?.('已使用当前剧情重建目标日期，旧快照保留');return true;}
  if(a==='s55-restore-snapshot'){const saved=getTestSnapshot(c.store.storage,t.dataset.snapshot),changed=saved.entry.sourceVersion!==storySourceVersion(c.store.get());if(changed&&!globalThis.confirm?.('这份快照使用不同的剧情版本。按旧版恢复会切换当前测试环境，系统将先备份当前状态。确定恢复吗？'))return true;restoreTestSnapshot(c.store,t.dataset.snapshot,{allowDifferentVersion:changed});c.toast?.('快照已恢复；恢复前状态已自动备份');return true;}
  if(a==='s55-delete-snapshot'){if(!globalThis.confirm?.('确定只删除这一份测试快照吗？剧情原始数据不会删除。'))return true;deleteTestSnapshot(c.store.storage,t.dataset.snapshot);c.toast?.('测试快照已删除');return true;}
  if(a==='s55-install-noapp'){
