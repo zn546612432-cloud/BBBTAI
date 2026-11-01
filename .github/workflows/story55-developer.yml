@@ -1,0 +1,30 @@
+name: Story55 developer regression
+
+on:
+  push:
+    branches:
+      - feat/story55-dev-snapshot-safety-20261101
+  pull_request:
+    paths:
+      - 'src/services/story55/**'
+      - 'src/apps/developer/**'
+      - 'src/services/storage.js'
+      - 'tests/**'
+      - '.github/workflows/story55-developer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
