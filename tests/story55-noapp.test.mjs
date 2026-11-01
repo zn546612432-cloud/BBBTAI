@@ -51,7 +51,9 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
  assert.match(show(s),/data-action="s55-final-audio"/);
  s.story55.finalAudioHeard=true;advanceScene55(s,'ending');
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.kind==='story55_final_audio'));
- assert.match(show(s),/最后的密钥录音/);
+ assert.match(show(s),/noapp-final-voice/);
+ assert.match(show(s),/aria-label="播放语音"/);
+ assert.doesNotMatch(show(s),/最后的密钥录音/);
  while(!completed(s,'ending'))advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
  assert.equal(s.batteryPercent,1);

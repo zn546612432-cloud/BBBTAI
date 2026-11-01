@@ -6,6 +6,7 @@ import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
+import {WorldTickBatch} from './system/time/tick-batch.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
@@ -145,6 +146,7 @@ function render(){
  lastLocation={...current};
 }
 let pendingMirageType=null;
+const completedStoryTyping=new WeakMap();
 function mountScriptedMirageDraft(){
  const input=$('#screen-layer .composer input[data-story-type]');
  if(!input){
@@ -155,6 +157,7 @@ function mountScriptedMirageDraft(){
  if(pendingMirageType?.identity===identity&&pendingMirageType.element===input)return;
  if(pendingMirageType)clearInterval(pendingMirageType.timer);
  const full=input.dataset.storyType;
+ if(completedStoryTyping.get(input)===identity)return;
  // Do not overwrite text that the player has already started entering.
  if(input.value&&input.value!==full)return;
  input.value='';let offset=0;
@@ -162,7 +165,7 @@ function mountScriptedMirageDraft(){
   if(!input.isConnected){clearInterval(pendingMirageType?.timer);pendingMirageType=null;return;}
   if(document.activeElement===input&&input.value!==full.slice(0,offset)){clearInterval(pendingMirageType?.timer);pendingMirageType=null;return;}
   input.value=full.slice(0,++offset);
-  if(offset>=full.length){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  if(offset>=full.length){completedStoryTyping.set(input,identity);clearInterval(pendingMirageType.timer);pendingMirageType=null;}
  };
  pendingMirageType={identity,element:input,timer:setInterval(step,105)};
 }
@@ -283,15 +286,18 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get()))retur
  if(!document.hidden&&!['ringing','dialing','connected'].includes(callState().state))void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
+const worldTickBatch=new WorldTickBatch();
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get()))return;
+ if(lockscreen.stage==='restart'||document.hidden||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
+ const tickOptions={focused:editing,taiChat:isTaiConversation(store.get())};
+ const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
  let outcome={};
  store.update(s=>{
-  outcome=tickWorld(s,elapsed,{focused:editing,taiChat:isTaiConversation(s)});
-  drainBattery(s,elapsed);
+  outcome=tickWorld(s,tickElapsed,tickOptions);
+  drainBattery(s,tickElapsed);
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
    ensureMirageStory(s);

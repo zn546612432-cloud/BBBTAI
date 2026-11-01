@@ -81,14 +81,15 @@ export function advanceGameMinutes(s,requested){
  return {minutes:advanced,event:stop.type};
 }
 export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId==='noapp'&&(n.route==='/chat/tai'||n.route==='/call'))||(n.appId==='mirage'&&/^\/chat\//.test(n.route)&&/ouroboros/i.test(n.route));}
+export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
+ const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
+ return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
+}
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
- const mode=s.powerMode||'idle';
- const normalRate=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
- const chatRate=isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS;
- const rate=s.deathPhase==='draining'?normalRate:taiChat?chatRate:focused?TYPING_MINUTES_PER_MS:mode==='charging'?CHARGING_MINUTES_PER_MS:mode==='sleeping'?SLEEPING_MINUTES_PER_MS:normalRate;
+ const rate=worldMinuteRate(s,{focused,taiChat});
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
  const whole=Math.floor(total);
  if(!whole){s.worldMinuteFraction=total;return {minutes:0};}

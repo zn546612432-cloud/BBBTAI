@@ -8,7 +8,14 @@ export const deathLocked=s=>['draining','off','passcode'].includes(s.deathPhase)
 export const phoneBlocked=s=>deathLocked(s)||(s.dayChargeRemainingMs||0)>0;
 
 export function syncDeathNight(s){
- if(isStory55(s)){s.day=Math.min(55,s.day);if(s.story55.ended){s.day=55;s.batteryPercent=1;s.deathPhase='off';s.unlocked=false;}return;}
+ if(isStory55(s)){
+  s.day=Math.min(55,s.day);
+  if(s.story55.ended&&s.deathPhase!=='recovered'){
+   s.day=55;s.batteryPercent=1;s.unlocked=false;
+   if(s.deathPhase!=='passcode')s.deathPhase='off';
+  }
+  return;
+ }
  if(s.deathPhase==='recovered'||s.day<DEATH_DAY)return;
  s.powerMode='idle';s.sleepWakeAt=null;s.emergencyCharge=false;s.poweredOff=false;
  const at=storyMinute(s);

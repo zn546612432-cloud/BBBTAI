@@ -4,7 +4,7 @@ import {authorizeProject,startDeploymentStep,upgradeHardware} from './projects.j
 import {validateStory55Config,importStory55Config,exportStory55Config} from './config.js';
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
-import {resolvePhoneAudioPath} from '../voice/asset-url.js';
+import {toggleFinalRecording} from './final-recording.js';
 import {beginScriptedCall,answerScriptedCall,retryScriptedCall} from './scripted-phone.js';
 import {selectStory55Pin} from '../../apps/maps/features/story55/index.js';
 import {voicePreview} from '../ai/gateway.js';
@@ -68,15 +68,12 @@ export async function handleStory55Action(a,t,c){
  }
  if(a==='s55-final-audio'){
   const src=story55Config(c.store.get()).finalAudio;if(!src)throw Error('终局音频尚未配置；可在运行台的配置中设置finalAudio资源路径');
-  const audio=createGestureAudio();if(!audio)throw Error('无法创建播放器');
-  // The same asset path must work under /BBBTAI/ and isolated review sites.
-  audio.src=resolvePhoneAudioPath(src);
-  audio.onerror=()=>c.toast?.('录音加载失败：请检查 '+src+' 的站内文件路径');
-  audio.onended=()=>{
-   if(c.store.get().story55.finalAudioHeard)return; // replay does not replay the ending
-   c.store.update(s=>{s.story55.finalAudioHeard=true;advanceScene55(s,id);});
-  };
-  try{await audio.play();}catch(err){c.toast?.('播放失败：'+(err?.message||'请在手机上重新点击播放'));}
+  const day=c.store.get().day,index=scene55(c.store.get(),id).index;
+  await toggleFinalRecording(c,()=>{
+   const s=c.store.get();
+   if(s.day!==day||s.story55.finalAudioHeard||scene55(s,id).index!==index||sceneLines(s,id)[index]?.[0]!=='watch')return;
+   c.store.update(next=>{next.story55.finalAudioHeard=true;advanceScene55(next,id);});
+  });
   return true;
  }
  return true;
