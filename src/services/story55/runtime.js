@@ -3,7 +3,7 @@ import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {tickFlowD03} from './flow-d03.js';
-import {stampEnding55,startFinale55,ENDING_FINAL_REPLY} from './finale.js';
+import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
@@ -52,6 +52,8 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
  if(line[0]==='watch'&&id==='ending'){
+  // Already in the actual 22:46 chat log; never create a second voice bubble.
+  revealEndingVoice55(s,Date.now(),{force:true});
   s.story55.endingVoiceSent=true;
   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
   if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
@@ -64,6 +66,7 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
  }
  r.index++;
+ if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
 }
