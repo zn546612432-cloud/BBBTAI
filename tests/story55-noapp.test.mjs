@@ -67,6 +67,26 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
  assert.equal(s.deathPhase,'s55-accelerating');
  assert.ok(story55Config(s).finalAudio.endsWith('.mp3'));
 });
+test('D55 NoApp composer is never removed for 22:25, 22:46, 22:49 or after the last reply',()=>{
+ const s=make();previewNode55(s,'ending');
+ for(let i=0;i<5;i++)advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,5);
+ assert.match(show(s),/data-form="send-chat"/);
+ assert.match(show(s),/class="composer"/);
+ revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS);
+ assert.match(show(s),/data-form="send-chat"/);
+ s.story55.finalAudioHeard=true;
+ advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,6);
+ assert.match(show(s),/data-form="send-chat"/);
+ advanceGameMinutes(s,3);advanceScene55(s,'ending');
+ assert.equal(s.story55.ended,true);
+ assert.match(show(s),/data-form="send-chat"/);
+ assert.match(show(s),/placeholder="发送消息…"/);
+ s.story55.secondView=true;s.deathPhase='recovered';
+ assert.match(show(s),/data-form="send-chat"/);
+});
+
 test('a previously bookmarked Calendar scene no longer renders D55 dialogue',()=>{
  const s=make();previewNode55(s,'ending');
  const html=registry.get('calendar').render({store:{get:()=>s}},{route:'/story55/scene',params:{node:'ending'}});
