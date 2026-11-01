@@ -1,3 +1,4 @@
+import {advanceGameMinutes} from '../src/system/time/clock.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -54,9 +55,11 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
  assert.match(show(s),/noapp-final-voice/);
  assert.match(show(s),/aria-label="播放语音"/);
  assert.doesNotMatch(show(s),/最后的密钥录音/);
- while(!completed(s,'ending'))advanceScene55(s,'ending');
+ assert.equal(scene55(s,'ending').index,6);
+ assert.equal(s.clock,'22:46');
+ advanceGameMinutes(s,3);advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
- assert.equal(s.batteryPercent,1);
+ assert.equal(s.deathPhase,'s55-accelerating');
  assert.ok(story55Config(s).finalAudio.endsWith('.mp3'));
 });
 test('a previously bookmarked Calendar scene no longer renders D55 dialogue',()=>{
