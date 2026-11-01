@@ -8,6 +8,8 @@ import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,
 import {deployment,projectCapacity,upgradeHardware} from './projects.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {defaultProducts} from '../../apps/mirage/data.js';
+import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
+import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -77,7 +79,12 @@ function restoreAuthoring(s,source){
  const custom=new Map(source.mirageProducts.map(p=>[p.id,p]));
  s.content.mirage.products=[...defaultProducts.filter(p=>!custom.has(p.id)).map(copy),...custom.values()];
  s.content.mirage.linkedMissions=source.linkedMissions;
- for(const m of Object.values(s.content.mirage.linkedMissions))m.stage=0;
+ s.ghost.missionTypes??={};s.ghost.orderConfigs??={};
+ for(const m of Object.values(s.content.mirage.linkedMissions)){
+  m.stage=0;m.submitted=false;delete m.deliveredAt;delete m.failed;
+  s.ghost.missionTypes[m.id]=m.type;
+  s.ghost.orderConfigs[m.id]={seconds:m.seconds,reward:m.reward};
+ }
  s.editor=source.editor;
  s.nav=source.nav;
 }
@@ -224,6 +231,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
    }
   }
+  // Include all published authored bounties before the target test day.
+  // They follow the same strict cross-App commands as real gameplay, but
+  // only inside this independently snapshotted developer reconstruction.
+  rebuildLinkedContractsForDay(s,day);
   // Catch up scheduled NPC messages on their original authored day. Never
   // manufacture replies that require an unrecorded player free-chat message.
   deliverMissedScheduled(s,{day,clock:'00:00'},{day,clock:'23:59'});
@@ -232,6 +243,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  s.deathPhase=null;s.poweredOff=false;s.emergencyCharge=false;
  s.story55.ended=false;s.story55.activeScene=null;s.story55.previewNode=null;
  tickStory55(s);
+ tickLinkedContracts(s);
  deliverAuthoredScheduled(s,targetDay,clock);
  // An authored message can have an earlier original timestamp than a newly
  // simulated mail. Reorder both history and banners by event time, not by
