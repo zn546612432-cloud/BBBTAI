@@ -124,10 +124,19 @@ export function sendFlowReply(s,text){
  if(!p.asked||p.completed||String(text).trim()!=='很强。')throw Error('请发送输入框里完整的预设台词');
  const c=contact(s);
  push(c,'flow-d03-player','me','很强。',s.day,s.clock,date55(s.day));
- push(c,'flow-d03-finish',FLOW_CONTACT,'哈哈。',s.day,s.clock,date55(s.day));
- progress(s).completed=true;
+ progress(s).replyDueAt=Date.now()+1200;
+ progress(s).replyPending=true;
  if(s.story55.config.nodes.some(n=>n.id==='flow-d03'))completeNode(s,'flow-d03');
  if(s.drafts)delete s.drafts[FLOW_CONTACT];
+ return true;
+}
+export function flushFlowReply(s,now=Date.now()){
+ const p=flowState(s);
+ if(!p.replyPending||now<p.replyDueAt)return false;
+ const c=contact(s);
+ push(c,'flow-d03-finish',FLOW_CONTACT,'哈哈。',s.day,s.clock,date55(s.day));
+ const state=progress(s);state.replyPending=false;state.completed=true;
+ if(s.story55.config.nodes.some(n=>n.id==='flow-d03'))completeNode(s,'flow-d03');
  return true;
 }
 // Developer date rebuilding may simulate completed preceding days, never a
@@ -140,4 +149,5 @@ export function simulateFlowD03(s){
  submitFlowScan(s);
  flowOnMirageEntry(s);
  sendFlowReply(s,'很强。');
+ flushFlowReply(s,Infinity);
 }
