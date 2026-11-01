@@ -257,6 +257,5 @@ export function prepareStory55NodeAtDay(s,id){
  for(const depId of current.requires)visit(depId,[id]);
  s.story55.previewNode=id;
  s.editor.story55Node=id;
- if(id==='recognition'&&completed(s,'invite'))s.story55.noappInstalled=true;
  return {node:id,day:current.day};
 }
