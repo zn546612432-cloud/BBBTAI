@@ -6,12 +6,20 @@ import {createGestureAudio} from '../voice/playback.js';
 import {TAI_PORTRAIT} from '../../apps/noapp/portrait.js';
 import {esc} from '../../system/ui.js';
 let active=null;
+function restoreFromSave(s){
+ if(valid(s,active))return active;
+ const saved=s?.story55?.lockedCall;
+ if(!saved||!Number.isInteger(saved.startIndex)||nodeStatus(s,saved.node).state!=='ready'||s.day!==saved.day)return null;
+ active={node:saved.node,day:saved.day,phase:'ringing',caption:'',speaker:'',error:'',audio:null,pending:null,running:false};
+ return active;
+}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const valid=(s,a)=>!!a&&isStory55(s)&&!s.story55.ended&&s.day===a.day&&nodeStatus(s,a.node).state==='ready';
 export const scriptedCallStatus=s=>valid(s,active)?{node:active.node,phase:active.phase}:null;
 export function beginScriptedCall(ctx,node){
  const s=ctx.store.get();
  if(nodeStatus(s,node).state!=='ready'||sceneLines(s,node)[scene55(s,node).index]?.[0]!=='call')throw Error('当前不是等待接听的剧情电话');
+ ctx.store.update(state=>{state.story55.lockedCall={node,day:state.day,startIndex:scene55(state,node).index};});
  active={node,day:s.day,phase:'ringing',caption:'',speaker:'',error:'',audio:null,pending:null,running:false};
  ctx.router.open({appId:'noapp',route:'/story-call',params:{node}});
  return true;
@@ -55,7 +63,10 @@ async function playScript(ctx,a){
    if(line[0]==='me')await wait(Math.min(6500,Math.max(1700,line[1].length*120)));
    else if(!await speak(ctx,a,line[1],index))break;
    if(active!==a||!valid(ctx.store.get(),a))break;
-   ctx.store.update(state=>advanceScene55(state,a.node));
+   ctx.store.update(state=>{
+    advanceScene55(state,a.node);
+    if(completed(state,a.node))delete state.story55.lockedCall;
+   });
    if(completed(ctx.store.get(),a.node)){
     a.phase='ended';a.caption='通话已结束';a.speaker='';ctx.refresh();
     await wait(750);if(active===a){active=null;ctx.router.back();}
@@ -67,9 +78,25 @@ async function playScript(ctx,a){
  finally{a.running=false;}
 }
 export function answerScriptedCall(ctx){
- const a=active,s=ctx.store.get();if(!valid(s,a)||a.phase!=='ringing')return false;
+ const s=ctx.store.get(),a=restoreFromSave(s);if(!valid(s,a)||a.phase!=='ringing')return false;
  a.audio=createGestureAudio(); // iOS user gesture.
- ctx.store.update(state=>advanceScene55(state,a.node,{acceptCall:true}));
+ ctx.store.update(state=>{
+  const marker=state.story55.lockedCall;
+  const position=scene55(state,a.node);
+  if(marker&&position.index>marker.startIndex){
+   // Interrupted calls restart from the opening ring; do not duplicate
+   // any line already played before browser reload.
+   for(const list of Object.values(state.content.conversations||{}))for(const chat of list){
+    chat.messages=(chat.messages||[]).filter(m=>{
+     const prefix='s55-'+a.node+'-';
+     const tail=String(m.id||'').startsWith(prefix)?Number(String(m.id).slice(prefix.length)):NaN;
+     return !Number.isInteger(tail)||tail<=marker.startIndex;
+    });
+   }
+   position.index=marker.startIndex;position.accepted=false;
+  }
+  advanceScene55(state,a.node,{acceptCall:true});
+ });
  a.phase='connected';ctx.refresh();void playScript(ctx,a);
  return true;
 }
@@ -78,7 +105,7 @@ export function retryScriptedCall(ctx){
  a.audio??=createGestureAudio();a.error='';a.phase='connected';ctx.refresh();void playScript(ctx,a);return true;
 }
 export function scriptedCallView(s){
- const a=active;
+ const a=restoreFromSave(s);
  if(!valid(s,a))return '<section class="tai-call-screen s55-locked-call">当前没有预设电话</section>';
  const ringing=a.phase==='ringing',failure=a.phase==='error',done=a.phase==='ended';
  const buttons=ringing?'<button type="button" data-action="s55-call-answer" class="s55-call-answer">☎ 接听</button>':

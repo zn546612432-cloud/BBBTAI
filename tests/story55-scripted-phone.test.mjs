@@ -13,3 +13,12 @@ test('forced story phone presents accept but never mic, type or hangup',()=>{
  const html=scriptedCallView(s);assert.match(html,/s55-call-answer/);
  assert.doesNotMatch(html,/tai-hangup|tai-mic|tai-call-turn|composer/);
 });
+
+test('interrupted fixed phone keeps a resumable marker in player state',()=>{
+ const s=initialState();activateStory55(s);previewNode55(s,'intrusion');
+ for(let i=0;i<100&&sceneLines(s,'intrusion')[scene55(s,'intrusion').index]?.[0]!=='call';i++)advanceScene55(s,'intrusion');
+ const ctx={store:{get:()=>s,update(fn){fn(s)}},router:{open(){}},refresh(){}};
+ beginScriptedCall(ctx,'intrusion');
+ assert.deepEqual(s.story55.lockedCall,{node:'intrusion',day:s.day,startIndex:scene55(s,'intrusion').index});
+ assert.match(scriptedCallView(s),/s55-call-answer/);
+});
