@@ -62,7 +62,7 @@ test('a newly delivered SMS creates an unread Dock badge until its chat is opene
  const delivered=new MessageDelivery(store).tick(1000);
  assert.equal(delivered.length,1);
  assert.equal(unreadAppCount(s,'messages'),1);
- assert.match(appButton(home(s),'messages'),/home-unread-badge"[^>]*>1<\\/span>/);
+ assert.match(appButton(home(s),'messages'),/home-unread-badge"[^>]*>1<\/span>/);
  assert.equal(readConversationInState(s,'messages','new-sms'),true);
  assert.equal(unreadAppCount(s,'messages'),0);
  assert.doesNotMatch(appButton(home(s),'messages'),/home-unread-badge/);
