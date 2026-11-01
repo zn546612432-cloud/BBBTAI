@@ -1,5 +1,5 @@
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
-import {defaultStory55Config} from './config.js';
+import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
@@ -100,6 +100,8 @@ export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {ap
  const map={project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 export function tickStory55(s){
  if(!isStory55(s))return;
+ // Repair old persisted build URLs without resetting the day or story progress.
+ normalizeStory55AudioAssets(story55Config(s));
  ensureNativeMirage55(s);
  if(final55(s))return;
  const c=story55Config(s);

@@ -2,7 +2,7 @@
 import {isStory55,nodeStatus,completed,story55Config} from './state.js';
 import {scene55,sceneLines,advanceScene55} from './runtime.js';
 import {voicePreview} from '../ai/gateway.js';
-import {resolvePhoneAudioPath} from '../voice/asset-url.js';
+import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../voice/asset-url.js';
 import {createGestureAudio} from '../voice/playback.js';
 import {TAI_PORTRAIT} from '../../apps/noapp/portrait.js';
 import {esc} from '../../system/ui.js';
@@ -26,8 +26,9 @@ export function beginScriptedCall(ctx,node){
  return true;
 }
 function assetUrl(s,node,index){
- const path=story55Config(s).voiceAssets?.[node]?.[index];
- if(!path)return null;
+ const source=story55Config(s).voiceAssets?.[node]?.[index];
+ if(!source)return null;
+ const path=canonicalPhoneAudioPath(source);
  if(typeof path!=='string'||!/^\/assets\/[a-z0-9_./-]+\.(mp3|wav|m4a|ogg)$/i.test(path))throw Error('音频必须放在 /assets/');
  return resolvePhoneAudioPath(path);
 }
