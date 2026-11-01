@@ -26,9 +26,9 @@ test('red numbered badges follow each real app unread count and cap at 99+',()=>
  const s=blank();
  s.content.conversations.wechat[0].unread=1;
  s.content.conversations.wechat[1].unread=2;
- s.content.conversations.messages[0].unread=4;
- s.content.conversations.noapp[0].unread=3;
- s.content.conversations.mirage[0].unread=102;
+ s.content.conversations.messages.push({id:'unread-sms',unread:4,messages:[]});
+ s.content.conversations.noapp.push({id:'unread-noapp',unread:3,messages:[]});
+ s.content.conversations.mirage.push({id:'unread-mirage',unread:102,messages:[]});
  s.content.mail=[
   {id:'new1',read:false},{id:'new2',read:false},
   {id:'old',read:true},{id:'sent',linkedDelivery:true,read:false}
