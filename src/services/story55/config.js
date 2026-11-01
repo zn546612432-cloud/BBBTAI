@@ -1,6 +1,6 @@
 import {STORY55_CONFIG} from '../../story/story55/catalog.js';
 import {canonicalPhoneAudioPath} from '../voice/asset-url.js';
-const kinds=new Set(['scene','project','file','mail','page','map','questions','payment']);
+const kinds=new Set(['scene','project','file','mail','page','map','questions','payment','flow']);
 const games=new Set(['cipher','route','extract','veil','verify']);
 export function normalizeStory55AudioAssets(c,{strict=false}={}){
  let changed=false;
