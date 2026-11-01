@@ -466,7 +466,9 @@ $('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefa
    // Clear before state-driven DOM patch, so the next authored line can type
    // immediately even if iOS keeps focus on the same input element.
    e.target.elements.text.value='';
-   store.update(s=>sendScriptedDraft55(s,channel,conversationId,text));return;
+   store.update(s=>sendScriptedDraft55(s,channel,conversationId,text));
+   if(pending.id==='flow-d03')setTimeout(()=>store.update(s=>flushFlowReply(s)),1200);
+   return;
   }
   const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
 $('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
