@@ -5,6 +5,7 @@ import {rubberBand,dragOffset,nearestPage,pageTarget,releaseVelocity} from '../s
 import {errorHaptic} from '../src/system/haptics.js';
 import {initialState} from '../src/services/storage.js';
 import {lock} from '../src/system/shell.js';
+import {LockScreen} from '../src/system/lock.js';
 
 const W=390,N=3;
 
@@ -59,6 +60,24 @@ test('wrong-passcode haptic: Vibration API first, iOS switch taps as fallback, s
 
  assert.equal(errorHaptic({nav:undefined,doc:undefined}),'none');
  assert.equal(errorHaptic({nav:{vibrate(){throw Error('blocked');}},doc:undefined}),'none');
+});
+
+test('legacy 0816 and authored 0119 unlock the first view; Xitai exclusively uses 6180',()=>{
+ const input=(digits,accepted)=>{
+  const l=new LockScreen();l.open();
+  for(const digit of digits)l.key(digit,accepted);
+  return l.stage;
+ };
+ const first=['0816','0119'],second='6180';
+ assert.equal(input('0816',first),'unlocking');
+ assert.equal(input('0119',first),'unlocking');
+ assert.equal(input('6180',first),'error');
+ assert.equal(input('6180',second),'unlocking');
+ assert.equal(input('0816',second),'error');
+ assert.equal(input('0119',second),'error');
+ assert.equal(input('0000',first),'restart');
+ assert.equal(input('0000',second),'restart');
+ assert.equal(input('1234',first),'error');
 });
 
 test('locked screen shows the iOS-style error only through the dots, with an accessible hidden alert',()=>{

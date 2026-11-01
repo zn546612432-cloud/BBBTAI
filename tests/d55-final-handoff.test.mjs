@@ -117,10 +117,10 @@ test('tap to charge to 100%, show lock, unlock with 6180 and preserve existing a
  assert.equal(s.content.notes.length,beforeNotes);
 });
 
-test('main uses pre-handoff 0119 and 6180 after, without adding a wipe screen',()=>{
+test('main preserves 0816 and 0119 before handoff; only 6180 after, without a wipe screen',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/secondView55\(store\.get\(\)\)/);
- assert.match(main,/'6180':'0119'/);
+ assert.match(main,/'6180':\['0816','0119'\]/);
  assert.match(main,/startSecondCharge55/);
  assert.doesNotMatch(main,/blood-wipe|wipe-blood|擦血/);
 });

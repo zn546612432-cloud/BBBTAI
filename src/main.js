@@ -222,7 +222,9 @@ function enterDigit(key){
   const recovery=store.get().deathPhase==='passcode';
   if(phoneBlocked(store.get())&&!recovery)return;
   if(recovery&&key==='cancel'){lockscreen.reset();store.update(s=>{s.deathPhase='off';});return;}
-  const result=lockscreen.key(key,recovery||secondView55(store.get())||store.get().deathPhase==='recovered'?'6180':'0119');
+  // Preserve the legacy 0816 lock code while accepting the authored first-view 0119.
+   // After the handoff, Xitai has a distinct 6180 lock; 0000 remains restart.
+   const result=lockscreen.key(key,recovery||secondView55(store.get())||store.get().deathPhase==='recovered'?'6180':['0816','0119']);
   if(result==='ignored')return;
   if(result==='restart'){render();return;}
   if(result==='cancelled'){pendingNoticeId=null;render();return;}
