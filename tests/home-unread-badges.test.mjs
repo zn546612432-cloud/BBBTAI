@@ -5,6 +5,7 @@ import {initialState} from '../src/services/storage.js';
 import {home} from '../src/system/shell.js';
 import {unreadAppCount,unreadBadge,badgeText} from '../src/services/unread-badges.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
+import {MessageDelivery} from '../src/services/messaging/delivery.js';
 import {PhoneRouter} from '../src/services/router.js';
 import {registry} from '../src/system/registry.js';
 
@@ -48,6 +49,23 @@ test('red numbered badges follow each real app unread count and cap at 99+',()=>
  }
  assert.doesNotMatch(appButton(html,'phone'),/home-unread-badge/);
  assert.doesNotMatch(appButton(html,'ghost'),/home-unread-badge/);
+});
+
+test('a newly delivered SMS creates an unread Dock badge until its chat is opened',()=>{
+ const s=blank();
+ s.day=1;s.clock='09:30';s.unlocked=true;
+ const chat={id:'new-sms',name:'澳门短信',messages:[
+  {id:'sms-unread-test',from:'service',text:'一条新信息',time:'09:20',sentDate:'2025-05-19',schedule:{mode:'game-time',day:1,clock:'09:20'}}
+ ],unread:0};
+ s.content.conversations.messages.push(chat);
+ const store={get:()=>s,update(fn){fn(s);}};
+ const delivered=new MessageDelivery(store).tick(1000);
+ assert.equal(delivered.length,1);
+ assert.equal(unreadAppCount(s,'messages'),1);
+ assert.match(appButton(home(s),'messages'),/home-unread-badge"[^>]*>1<\\/span>/);
+ assert.equal(readConversationInState(s,'messages','new-sms'),true);
+ assert.equal(unreadAppCount(s,'messages'),0);
+ assert.doesNotMatch(appButton(home(s),'messages'),/home-unread-badge/);
 });
 
 test('an icon has no red dot if all conversations and emails are read',()=>{
