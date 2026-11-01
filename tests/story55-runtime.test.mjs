@@ -42,7 +42,7 @@ test('Kira authorization, hardware and five actual games commit one 9% batch; re
  assert.throws(()=>startDeploymentStep(s,'base'),/设备/);s.bankData.balance=100000;upgradeHardware(s);
  const p=story55Config(s).projects.find(p=>p.id==='base');
  for(let i=0;i<4;i++){const run=startDeploymentStep(s,'base');solveRun(s,run);assert.equal(deploymentPercent(s,'base'),0);}
- const final=startDeploymentStep(s,'base');solveRun(s,final);assert.equal(deploymentPercent(s,'base'),9);assert.equal(Object.keys(s.story55.reports).length,1);
+ const final=startDeploymentStep(s,'base');solveRun(s,final);assert.equal(deploymentPercent(s,'base'),9);assert.equal(Object.keys(s.story55.reports).filter(id=>id.startsWith('base-')).length,1);assert.ok(s.story55.reports['wallet-0']);
  finish(s,final,true);assert.equal(deploymentPercent(s,'base'),9);assert.throws(()=>startDeploymentStep(s,'base'),/本日/);
  const payload=JSON.stringify(s),memory=new Map();const store=new PhoneStore({getItem:()=>payload,setItem:(k,v)=>memory.set(k,v)});
  assert.equal(deploymentPercent(store.get(),'base'),9);assert.equal(store.get().story55.projects.base.batches[0].steps.filter(Boolean).length,5);
@@ -51,7 +51,7 @@ test('base deployment catches up missed batches, ends at exactly100 and writes c
  const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=3;s.day=24;
  for(let i=0;i<11;i++)runBatch(s,'base');
  assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);assert.throws(()=>startDeploymentStep(s,'base'),/已完成/);
- assert.equal(s.ghost.history.filter(h=>h.success).length,55);assert.equal(s.bankData.balance,0);
+ assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,0);
 });
 test('failed game cannot increase progress; current batch remains resumable',()=>{
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;
@@ -101,7 +101,7 @@ test('developer location stays open while home widget keeps native reminders',as
 test('five questions become real MIRAGE history and NoApp installation precedes recognition',()=>{
  const s=fixture();previewNode55(s,'questions');
  for(let i=0;i<5;i++)sendQuestion55(s);
- const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.from==='me').length,5);assert.equal(chat.messages.filter(m=>m.from===chat.id).length,1);assert.throws(()=>sendQuestion55(s));
+ const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-question-')).length,5);assert.equal(chat.messages.filter(m=>m.id==='s55-questions-answer').length,1);assert.throws(()=>sendQuestion55(s));
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.text.includes('欢迎回家')));
 });
