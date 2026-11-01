@@ -14,7 +14,7 @@ function snapshotPanel(s){
   const status='<span>'+(x.sourceVersion===version?'当前剧情版本一致':'剧情版本不同，请核对')+'</span>';
   return '<article class="editor-trigger-row">'+fields+status+b('restore-snapshot','按旧剧情版本恢复','data-snapshot="'+esc(x.id)+'"')+b('rebuild-snapshot','用当前剧情重建此日','data-snapshot="'+esc(x.id)+'"')+b('delete-snapshot','删除快照','data-snapshot="'+esc(x.id)+'"')+'</article>';
  }).join('');
- return '<section class="card s55-test-snapshots"><h3>测试快照 · 独立保管</h3><p>日期跳转和节点测试前自动保存。恢复时自动备份当前手机。剧情版本校验码：'+version+'</p>'+b('save-snapshot','保存当前测试快照')+(rows||'<p>尚未保存快照。</p>')+'</section>';
+ return '<section class="card s55-test-snapshots"><h3>测试快照 · 独立保管</h3><p>日期跳转和节点测试前自动备份到浏览器 IndexedDB，不再把完整手机照片重复写进 localStorage；旧版测试快照仍可恢复。若仍提示失败，先导出 JSON 存档，勿清除网站数据。剧情版本校验码：'+version+'</p>'+b('save-snapshot','保存当前测试快照')+(rows||'<p>尚未保存快照。</p>')+'</section>';
 }
 
 export function story55Editor(s){const c=story55Config(s),n=c.nodes.find(n=>n.id===s.editor?.story55Node)||c.nodes[0],p=c.projects.find(p=>p.id===s.editor?.story55Project)||c.projects[1];return `<div class="editor-panel s55 s55-editor"><h2>55天 · 剧情运行台</h2><p>${isStory55(s)?`D${s.day} · ${date55(s.day)} · 已完成${Object.keys(s.story55.completed).length}个节点`:'当前是旧版周目；创建55天周目会先在本浏览器归档旧存档。'}</p>${b('new-run','创建55天新周目（归档当前存档）')}${snapshotPanel(s)}${isStory55(s)?`<form data-form="s55-time" class="card"><h3>时间线</h3><label>剧情日<input type="number" name="day" min="1" max="55" required value="${s.day}"></label><label>时间<input type="time" name="clock" required value="${s.clock}"></label><button class="s55-button">重建目标日手机状态（自动备份）</button></form><div class="s55-days">${STORY55_DAYS.map(d=>b('day',`D${d.day}`,`data-day="${d.day}" title="${esc(d.title)}"`,d.day===s.day?'active':'')).join('')}</div>`:''}
