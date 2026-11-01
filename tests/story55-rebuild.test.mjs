@@ -6,6 +6,7 @@ import {rebuildStory55AtDay,prepareStory55NodeAtDay} from '../src/services/story
 import {completed,story55Config,date55} from '../src/services/story55/state.js';
 import {storySourceVersion} from '../src/services/story55/test-snapshots.js';
 import {restartState} from '../src/system/restart/index.js';
+import {saveLinkedMission,linkedArtifactId,linkedDeliveryId,linkedReceiptId,linkedMissionVisible} from '../src/apps/mirage/linked-missions.js';
 
 function phone(){
  const s=initialState();
@@ -111,4 +112,40 @@ test('phone reset returns to D01 but preserves authored future story and pre-D01
  assert.equal(ids(reset).has('history-2024-0310'),true);
  assert.equal(ids(reset).has('author-d48'),true);
  assert.equal(storySourceVersion(reset),oldVersion);
+});
+
+test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wallet once',()=>{
+ const s=phone();
+ saveLinkedMission(s,{id:'d20-bounty',title:'D20测试委托',owner:'AMBER',subject:'订单D20',
+  body:'虚构的档案验证',type:'cipher',reward:5200,seconds:60,publishDay:20,expiryDay:29,
+  reviewMinutes:60,deadlineDay:21,deadlineClock:'18:00'});
+ const before=storySourceVersion(s);
+ rebuildStory55AtDay(s,45);
+ const order=s.content.orders.find(o=>o.id==='d20-bounty');
+ assert.equal(order.status,'COMPLETED');
+ assert.equal(s.content.mirage.digitalBalance,5200);
+ assert.equal(s.content.mirage.digitalTransactions.filter(t=>t.orderId==='d20-bounty').length,1);
+ assert.equal(s.content.mail.filter(m=>m.id===linkedDeliveryId('d20-bounty')).length,1);
+ assert.equal(s.content.mail.filter(m=>m.id===linkedReceiptId('d20-bounty')).length,1);
+ assert.equal(s.content.mail.find(m=>m.id===linkedDeliveryId('d20-bounty')).attachments[0],linkedArtifactId('d20-bounty'));
+ assert.equal(s.content.missionFiles.filter(f=>f.orderId==='d20-bounty').length,1);
+ assert.equal(storySourceVersion(s),before,'completing a test contract must not modify its authoring version');
+ rebuildStory55AtDay(s,12);
+ assert.equal(s.content.orders.find(o=>o.id==='d20-bounty').status,'OPEN');
+ assert.equal(linkedMissionVisible(s,'d20-bounty'),false);
+ assert.equal(s.content.mirage.digitalBalance,0);
+ assert.equal((s.content.missionFiles||[]).length,0);
+ assert.equal(s.content.mail.some(m=>m.id===linkedDeliveryId('d20-bounty')),false);
+ assert.equal(storySourceVersion(s),before);
+});
+test('D21 shows pending review for a D20 contract until the exact configured game minute',()=>{
+ const s=phone();
+ saveLinkedMission(s,{id:'d20-slow',title:'缓慢审核',owner:'AMBER',subject:'D20审核',
+  body:'请查收',type:'extract',reward:2000,publishDay:20,expiryDay:22,reviewMinutes:2000});
+ rebuildStory55AtDay(s,21,'08:00');
+ assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'REVIEWING');
+ assert.equal(s.content.mirage.digitalBalance,0);
+ rebuildStory55AtDay(s,22,'08:00');
+ assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'COMPLETED');
+ assert.equal(s.content.mirage.digitalBalance,2000);
 });
