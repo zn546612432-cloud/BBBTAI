@@ -194,6 +194,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
   throw Error('日期或时间无效');
  const author=preserveAuthoring(s);
  activateStory55(s);
+ // A previous late-game test may have renamed this thread after recognition.
+ // Do not leak the revealed identity when returning to an earlier date.
+ const taiChat=s.content.conversations.noapp?.find(chat=>chat.id==='tai');
+ if(taiChat&&!author.conversations.noapp?.some(chat=>chat.id==='tai'&&chat.authored===true))taiChat.name='Dr Ouroboros';
  restoreAuthoring(s,author);
  const nodes=story55Config(s).nodes;
  for(let day=1;day<targetDay;day++){
