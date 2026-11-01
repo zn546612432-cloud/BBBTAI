@@ -110,7 +110,7 @@ function ensureWeChatRoster(s){
  return true;
 }
 function normalizeTimeline(s){
- if(isStory55(s)){accrueMining(s);tickStory55(s);syncDeathNight(s);return;}
+ if(isStory55(s)){if(!s.story55?.ended)accrueMining(s);tickStory55(s);syncDeathNight(s);return;}
  if(s.timelineVersion!==1||!s.calendar)s.calendar=calendarAnchor(s.day);
  s.timelineVersion=1;s.storyChargeGates??=[];
  syncDeathNight(s);
