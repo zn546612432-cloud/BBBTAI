@@ -8,6 +8,7 @@ import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore} from './services/storage.js';
+import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
@@ -51,6 +52,8 @@ if(isStory55(store.get())){
 }
 mountCallEvents({store});
 try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
+// Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
+try{await primeTestSnapshots(store.storage);}catch(error){console.warn('测试快照目录读取失败，旧存档保持原状',error);}
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
@@ -483,7 +486,7 @@ $('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noti
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
-$('#root').addEventListener('submit',e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(submitStory55Form(e.target,ctx()))return;
+$('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(await submitStory55Form(e.target,ctx()))return;
   if(e.target.dataset.storyScene){
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
    if(!conversationId)throw Error('预设聊天尚未选中联系人');
