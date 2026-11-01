@@ -1,6 +1,7 @@
 import {s55Button} from '../../services/story55/views.js';
 import {scriptedCallView} from '../../services/story55/scripted-phone.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
+import {finalVoiceBubble} from './final-voice.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
@@ -68,9 +69,7 @@ function noappGate(s){
 function finalAudioBubble(s,line){
  if(!line||line.kind!=='watch')return '';
  return '<div class="message-row mine noapp-final-pending" role="group" aria-label="最后一段语音">'+
- '<div class="message-body"><div class="noapp-voice-bubble noapp-final-voice">'+
- '<button type="button" data-action="s55-final-audio" data-node="'+esc(line.id)+'" aria-label="播放熙蒙最后的录音">▶</button>'+
- '<span class="noapp-wave" aria-hidden="true">'+Array.from({length:22},(_,i)=>'<i style="--h:'+(5+(i*13%19))+'px"></i>').join('')+'</span><span class="noapp-voice-duration">23″</span><span class="noapp-voice-caption-label">最后的密钥录音</span></div></div></div>';
+ '<div class="message-body">'+finalVoiceBubble(s)+'</div></div>';
 }
 export function render({store},loc){
  const s=store.get();
@@ -88,7 +87,7 @@ export function render({store},loc){
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
  '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
- return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
+ return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:!s.story55?.ended}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;
