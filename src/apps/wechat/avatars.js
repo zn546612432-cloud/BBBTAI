@@ -23,6 +23,6 @@ export function resolveWeChatAvatar(name,source=''){
  if(rebased!==candidate)return rebased;
  if(/^\/(?:apps\/wechat\/)/.test(candidate))return publicWeChatAsset(candidate);
  // Preserve custom uploaded data images and intentional remote portraits.
- if(/^(?:\/|data:image\/(?:png|jpeg|webp);base64,|https:\/\/|blob:)/i.test(candidate))return candidate;
+ if(/^(?:\/|data:image\/|https:\/\/|blob:)/i.test(candidate))return candidate;
  return wechatAvatars[name]||candidate||name?.slice(0,1)||'?';
 }
