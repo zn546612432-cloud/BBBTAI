@@ -1,5 +1,5 @@
 import {isStory55,taiRecognized} from '../../services/story55/state.js';
-import {resolvePhoneAudioPath} from '../../services/voice/asset-url.js';
+import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
@@ -440,7 +440,8 @@ export async function playVoiceMessage(id,ctx){
     blob=await loadClip('tai-'+m.id).catch(()=>null);
    }
   }
-  const asset=typeof m.voiceSrc==='string'&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(m.voiceSrc)?resolvePhoneAudioPath(m.voiceSrc):null;
+  const source=typeof m.voiceSrc==='string'?canonicalPhoneAudioPath(m.voiceSrc):null;
+  const asset=source&&/^\/assets\/[a-z0-9_./-]+\.(mp3|m4a|ogg|wav)$/i.test(source)?resolvePhoneAudioPath(source):null;
   // An authored text-only bubble can be generated on first playback,
   // provided the developer has configured MiniMax. Cache it for next time.
   if(!blob&&!asset&&m.from==='tai'&&String(m.voiceCaption||m.text||'').trim()){
