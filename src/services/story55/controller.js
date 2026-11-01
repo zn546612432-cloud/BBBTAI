@@ -6,17 +6,11 @@ import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshot,getTestSnapshot,restoreTestSnapshot,deleteTestSnapshot,storySourceVersion} from './test-snapshots.js';
+import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
 const open=(c,appId,route='/',params={})=>c.router.open({appId,route,params});
 function archiveAndStart(c){const old=c.store.get(),nav=structuredClone(old.nav);if(isStory55(old))saveTestSnapshot(c.store.storage,old,'创建新周目前 · D'+old.day);if(!isStory55(old))c.store.storage?.setItem('ximeng-phone-before-story55',JSON.stringify(old));c.store.update(s=>{activateStory55(s);s.nav=nav;s.unlocked=true;});}
-export function previewNode55(s,id){
- const cfg=structuredClone(story55Config(s)),nav=structuredClone(s.nav);activateStory55(s);s.story55.config=cfg;s.nav=nav;
- const n=nodeById(s,id);if(!n)throw Error('节点不存在');s.day=n.day;s.clock='20:00';
- const apply=x=>{const node=nodeById(s,x);for(const p of node.requires)if(!s.story55.completed[p])apply(p);
-  if(node.kind==='project'){const p=cfg.projects.find(p=>p.id===node.project);s.story55.projects[p.id]={authorized:true,active:null,batches:p.gains.map(()=>({complete:true,test:true,steps:p.steps.map(()=>({test:true}))}))};}
-  completeNode(s,x,{test:true});
- };
- for(const parent of n.requires)apply(parent);s.story55.previewNode=id;s.editor.story55Node=id;s.unlocked=true;tickStory55(s);
-}
+export function previewNode55(s,id){return prepareStory55NodeAtDay(s,id);}
+
 function exportText(text,name){const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);}
 export async function handleStory55Action(a,t,c){
  if(!a.startsWith('s55-'))return false;
@@ -33,7 +27,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-select-project'){c.store.update(s=>s.editor.story55Project=project);return true;}
  if(!isStory55(c.store.get()))throw Error('请先在55天运行台创建周目');
  if(a==='s55-preview-node'){saveTestSnapshot(c.store.storage,c.store.get(),'节点预览前 · D'+c.store.get().day);c.store.update(s=>previewNode55(s,id));return true;}
- if(a==='s55-day'){saveTestSnapshot(c.store.storage,c.store.get(),'日期跳转前 · D'+c.store.get().day);c.store.update(s=>{s.day=Number(t.dataset.day);s.clock='20:00';s.poweredOff=false;s.emergencyCharge=false;s.deathPhase=null;s.story55.ended=false;tickStory55(s);});return true;}
+ if(a==='s55-day'){const day=Number(t.dataset.day);if(!Number.isInteger(day)||day<1||day>55)throw Error('目标剧情日无效');saveTestSnapshot(c.store.storage,c.store.get(),'日期跳转前 · D'+c.store.get().day);c.store.update(s=>rebuildStory55AtDay(s,day,'08:00'));return true;}
  if(a==='s55-node'){const state=nodeStatus(c.store.get(),id);if(state.state==='locked')throw Error(state.reason);if(id==='recognition')c.store.update(s=>s.story55.noappInstalled=true);c.router.open(nodeLink55(c.store.get(),id));return true;}
  if(a==='s55-anonymous-chat'){c.store.update(s=>{s.story55.anonymousWindows??={};if(s.day>=15&&s.day<=24)s.story55.anonymousWindows[s.day]??=Date.now();});open(c,'mirage','/chat/s55-ouroboros');return true;}
  if(a==='s55-objectives'){open(c,'reminders','/');return true;}
@@ -82,7 +76,7 @@ export function submitStory55Form(form,c){
  const kind=form.dataset.form;if(!kind?.startsWith('s55-'))return false;
  if(!isStory55(c.store.get()))throw Error('请先创建55天周目');const d=new FormData(form);
  if(kind==='s55-authorize'){c.store.update(s=>authorizeProject(s,String(d.get('project')),String(d.get('key'))));return true;}
- if(kind==='s55-time'){const day=Number(d.get('day')),clock=String(d.get('clock'));if(!Number.isInteger(day)||day<1||day>55||!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock))throw Error('日期或时间无效');saveTestSnapshot(c.store.storage,c.store.get(),'日期跳转前 · D'+c.store.get().day);c.store.update(s=>{s.day=day;s.clock=clock;tickStory55(s);});return true;}
+ if(kind==='s55-time'){const day=Number(d.get('day')),clock=String(d.get('clock'));if(!Number.isInteger(day)||day<1||day>55||!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock))throw Error('日期或时间无效');saveTestSnapshot(c.store.storage,c.store.get(),'日期跳转前 · D'+c.store.get().day);c.store.update(s=>rebuildStory55AtDay(s,day,clock));return true;}
  if(kind==='s55-config-import'){c.store.update(s=>{importStory55Config(s,String(d.get('json')));tickStory55(s);});return true;}
  if(kind==='s55-test-funds'){const amount=Number(d.get('amount'));if(!Number.isFinite(amount)||amount<=0||amount>100000000)throw Error('测试金额无效');c.store.update(s=>{s.bankData.balance+=amount;s.bankData.transactions.unshift({id:'s55-test-'+Date.now(),label:'TEST FUNDS',amount,test:true,time:s.clock});});return true;}
  const cfg=structuredClone(story55Config(c.store.get()));
