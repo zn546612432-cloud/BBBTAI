@@ -225,6 +225,12 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  s.story55.ended=false;s.story55.activeScene=null;s.story55.previewNode=null;
  tickStory55(s);
  deliverAuthoredScheduled(s,targetDay,clock);
+ // An authored message can have an earlier original timestamp than a newly
+ // simulated mail. Reorder both history and banners by event time, not by
+ // which reconciliation helper ran last.
+ const stamped=item=>minute(Number(item.day)||targetDay,String(item.clock||clock));
+ s.notifications.sort((a,b)=>stamped(b)-stamped(a));
+ s.events.sort((a,b)=>stamped(a)-stamped(b));
  s.story55.developerRebuild={day:targetDay,clock,simulatedThrough:targetDay-1,source:'completed-prior-days-v1'};
  // Restore original developer navigation; only runtime state was replayed.
  s.nav=author.nav;
