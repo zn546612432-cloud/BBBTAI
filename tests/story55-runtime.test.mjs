@@ -81,7 +81,7 @@ test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits
  previewNode55(s,'ending');assert.equal(s.day,55);syncDeathNight(s);assert.equal(s.deathPhase,null);assert.equal(chargingBlock(s),'death');
  advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);
  for(let i=0;i<100;i++){const state=s.story55.scenes.ending;const line=story55Config(s).scenes.ending[state?.index||0];if(line[0]==='watch')break;advanceScene55(s,'ending');}
- assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;playScene(s,'ending');assert.equal(s.batteryPercent,1);assert.equal(s.day,55);assert.equal(s.deathPhase,'off');
+ assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
 });
 test('game-clock mining accrues once, survives backwards inspection and caps at ten upgrade levels',()=>{
  const s=fixture();previewNode55(s,'mercenary');s.bankData.balance=100000000;installMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);accrueMining(s);assert.equal(s.story55.mining.btc,.05);
