@@ -1,4 +1,5 @@
 import {story55Editor} from './features/story55/index.js';
+import {setMirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {voicePanel,voiceAction,voiceSubmit} from './features/voice-authoring/index.js';
 import {isStory55} from '../../services/story55/state.js';
 import {diaryEditor,diaryEditorAction,diaryEditorChange,diaryEditorSubmit} from './features/diary/index.js';
@@ -72,6 +73,7 @@ export function handle(a,t,ctx){
  if(a==='export-content')ctx.download();
 }
 export function change(t,ctx){
+ if(t.dataset.mirageAi!==undefined){setMirageAIEnabled(ctx.store,!!t.checked);return;}
  if(diaryEditorChange(t,ctx))return;
  const {store}=ctx;
  if(changeMoments(t,ctx))return;

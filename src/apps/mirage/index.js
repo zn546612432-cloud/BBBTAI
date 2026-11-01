@@ -1,7 +1,6 @@
-import {anonymousPresence55} from '../../services/story55/runtime.js';
+import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
+import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55} from '../../services/story55/scripted-chat.js';
-import {taiRecognized} from '../../services/story55/state.js';
-import {taiBehavior,replyDelayMs} from '../../services/ai/behavior.js';
 import {isStory55} from '../../services/story55/state.js';
 import {STORY55_BOUNTY_ID} from './data.js';
 import {mirage55} from '../../services/story55/views.js';
@@ -10,9 +9,6 @@ import {linkedMission,linkedMissionVisible,linkedMailId,acceptLinkedMission} fro
 import {isMirageAuthenticated,setMirageAuthenticated} from './session.js';
 import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
-import {askTai,aiStatus} from '../../services/ai/gateway.js';
-import {unpackTaiReply} from '../../services/ai/format.js';
-import {dateParts} from '../../services/calendar.js';
 import {timestampLabel} from '../../services/messaging/timestamps.js';
 import {esc,btn} from '../../system/ui.js';
 import {sendMessage} from '../../services/messaging/index.js';
@@ -129,41 +125,6 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-logout'){setMirageAuthenticated(false);decrypted.clear();pendingDelete=null;goTab(ctx,'/');}
 }
 
-let pendingMirageAI=new Set();
-async function replyToOuroboros(ctx,contactId,sourceId){
- const initial=ctx.store.get();
- const c=initial.content.conversations.mirage?.find(x=>x.id===contactId);
- if(!c||!/(ouroboros|衔尾蛇)/i.test(c.name)||pendingMirageAI.has(contactId))return;
- if(isStory55(initial)&&!anonymousPresence55(initial).online){ctx.toast(anonymousPresence55(initial).reason);return;}
- // The D05 authored exchange must finish before free-form DeepSeek replies.
- if(isOuroborosScriptActive(ctx.store.get(),contactId))return;
- const last=c.messages.at(-1);if(last?.id!==sourceId||last.from!=='me')return;
- const status=await aiStatus();if(!status.deepseek)throw Error('请在 NoApp 的 AI 设置中填写 DeepSeek Key');
- pendingMirageAI.add(contactId);
- try{
-  const history=visibleMessages(c,initial).filter(m=>m.kind==='text'&&typeof m.text==='string'&&!m.demo).slice(-20).map(m=>({role:m.from==='me'?'user':'assistant',content:m.text.slice(0,2000)}));
-  if(history.at(-1)?.role!=='user')return;
-  const result=await askTai({day:initial.day,channel:'mirage',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:isStory55(initial)?taiRecognized(initial):undefined,messages:history,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  const chunks=unpackTaiReply(result,'mirage');
-  let inserted=0;
-  for(const item of chunks){
-   if(!isMirageAuthenticated())break;
-   const now=ctx.store.get().content.conversations.mirage?.find(x=>x.id===contactId);
-   if(!now||ctx.store.get().day!==initial.day||now.messages.filter(m=>m.from==='me').at(-1)?.id!==sourceId)break;
-   const msgId=uid();
-   ctx.store.update(s=>{
-    const target=s.content.conversations.mirage?.find(x=>x.id===contactId);if(!target)return;
-    target.messages.push({id:msgId,from:contactId,text:item.text,kind:'text',day:s.day,time:s.clock,sentDate:dateParts(s).iso,aiGenerated:true});
-    if(s.nav.current.appId!=='mirage'||s.nav.current.route!=='/chat/'+contactId){
-     target.unread=(Number(target.unread)||0)+1;
-     s.notifications.unshift({id:'mirage-ai-'+msgId,title:'MIRAGE',body:'NEW ENCRYPTED MESSAGE',link:{appId:'mirage',route:'/chat/'+contactId,params:{}}});
-    }
-   });
-   inserted++;if(chunks.length>1)await new Promise(r=>setTimeout(r,replyDelayMs(item.text,taiBehavior(initial))));
-  }
- }finally{pendingMirageAI.delete(contactId);}
-}
-
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
  if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;});setMirageAuthenticated(true);goTab(ctx,loc?.route?.startsWith('/chat/')?loc.route:'/');return;}
  if(!isMirageAuthenticated())return;
@@ -178,7 +139,7 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
    }
    const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
    const contact=ctx.store.get().content.conversations.mirage?.find(c=>c.id===id);
-   if(/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);
+   if(mirageAIEnabled(ctx.store.get())&&/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);
   }
  }
  if(f==='mc-record'){const kind=form.dataset.kind;let record;if(kind==='contacts'){record={name:val('name'),online:val('online')==='true'};if(draftAvatar!==undefined)record.avatar=draftAvatar;}else if(kind==='bounties')record={title:val('title'),owner:val('owner'),reward:val('reward'),category:val('category'),status:val('status'),description:val('description')};else {const price=Number(val('price')),stock=Number(val('stock'));if(!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0)throw Error('INVALID PRICE OR STOCK');record={name:val('name'),category:val('category').toUpperCase(),price,stock,art:val('art'),description:val('description')};}if(!String(record.name||record.title||'').trim())throw Error('A NAME IS REQUIRED');saveRecord(ctx.store,kind,form.dataset.id,record);draftAvatar=undefined;ctx.router.back();ctx.toast('CHANGES SAVED');}
