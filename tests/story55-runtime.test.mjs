@@ -31,7 +31,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
- assert.equal(validateStory55Config(story55Config(s)).nodes.length,33);assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
+ assert.equal(validateStory55Config(story55Config(s)).nodes.length,34);assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
  assert.equal(story55ChargeGate(s),'plot');assert.equal(nodeStatus(s,'code').state,'locked');
@@ -51,7 +51,7 @@ test('base deployment catches up missed batches, ends at exactly100 and writes c
  const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=3;s.day=24;
  for(let i=0;i<11;i++)runBatch(s,'base');
  assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);assert.throws(()=>startDeploymentStep(s,'base'),/已完成/);
- assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,0);
+ assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,story55Config(s).economics.openingBalance);assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
 });
 test('failed game cannot increase progress; current batch remains resumable',()=>{
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;
