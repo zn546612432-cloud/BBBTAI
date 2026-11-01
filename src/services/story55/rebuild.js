@@ -11,6 +11,7 @@ import {defaultProducts} from '../../apps/mirage/data.js';
 import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
+import {simulateFlowD03} from './flow-d03.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -150,6 +151,7 @@ function simulateScene(s,node){
 }
 function simulateNode(s,node){
  if(node.kind==='project')return simulateProjectBatch(s,node);
+ if(node.kind==='flow'){simulateFlowD03(s);return true;}
  if(node.kind==='scene')simulateScene(s,node);
  else if(node.kind==='mail'){
   tickStory55(s);
