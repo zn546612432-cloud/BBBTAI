@@ -5,6 +5,7 @@ import {activateStory55} from '../src/services/story55/runtime.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
 import {completed,story55Config,date55} from '../src/services/story55/state.js';
 import {storySourceVersion} from '../src/services/story55/test-snapshots.js';
+import {restartState} from '../src/system/restart/index.js';
 
 function phone(){
  const s=initialState();
@@ -88,4 +89,20 @@ test('invalid target dates are atomic and reject rather than silently corrupt st
  const s=phone(),before=JSON.stringify(s);
  assert.throws(()=>rebuildStory55AtDay(s,56),/日期或时间无效/);
  assert.equal(JSON.stringify(s),before);
+});
+
+test('phone reset returns to D01 but preserves authored future story and pre-D01 messages',()=>{
+ const s=phone(),oldVersion=storySourceVersion(s);
+ rebuildStory55AtDay(s,45);
+ const reset=restartState(s);
+ assert.equal(s.day,45);
+ assert.equal(reset.day,1);
+ assert.equal(reset.clock,'08:00');
+ assert.equal(reset.unlocked,false);
+ assert.equal(reset.nav.current.appId,'home');
+ assert.equal(Object.keys(reset.story55.completed).length,0);
+ assert.equal(reset.content.mail.some(m=>m.story55),false);
+ assert.equal(ids(reset).has('history-2024-0310'),true);
+ assert.equal(ids(reset).has('author-d48'),true);
+ assert.equal(storySourceVersion(reset),oldVersion);
 });
