@@ -58,6 +58,11 @@ jobs:
         with:
           ref: feature/ios-unread-home-badges-20261102
           path: badges-source
+      - name: Checkout alternative D01 cross-app review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-cross-app-story-20261102
+          path: d01cross-source
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -76,7 +81,8 @@ jobs:
             'story55-source:55-20261101' \
             'd03-source:d03-flow-20261101' \
             'd55-source:d55-finale-20261101' \
-            'badges-source:ios-badges-20261102'; do
+            'badges-source:ios-badges-20261102' \
+            'd01cross-source:d01-cross-app-20261102'; do
             folder="${spec%%:*}"; name="${spec#*:}"
             (cd "$folder"; npm ci; GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/$name/" npm run build:pages)
             mkdir -p "production-source/dist/review/$name"
