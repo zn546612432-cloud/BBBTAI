@@ -1,3 +1,4 @@
+import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
 import {isStory55} from '../../services/story55/state.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
@@ -19,12 +20,12 @@ export function tick(ctx){const s=ctx.store.get(),o=s.ghost?.orders[s.nav.curren
 export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
  if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
  else if(loc.route==='/contract'||loc.route==='/tool'){
-  body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.key||'')}" autocomplete="off" spellcheck="false" ${o?'readonly':''}/><p>${o?'已载入密钥':'需要密钥'}</p></div>${o?button('start',o.status==='running'?'继续':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
+  body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.key||'')}" autocomplete="off" spellcheck="false" ${o?'readonly':''}/><p>${o?'已载入密钥':'需要密钥'}</p></div>${o?button('start',o.status==='running'?'继续':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?'部署':'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
  }
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
   if(o.status!=='running'){
-   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p><div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
+   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p><div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'提交訂單':'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
    body=title('exit',tool.name,o.deadline!==null&&o.type!=='strike'?fmt(remaining):'')+`<div class="gh-game-head"><small>第 ${String(o.attempts).padStart(2,'0')} 次尝试</small><h1>${tool.name}</h1><p>${{cipher:'交换方块，还原上方参考图',route:'旋转管线，让起点连通终点',extract:'找出相同的数据块',veil:'按顺序输入数字代码',strike:'正在执行，请等待完成',verify:'依次选择正确的模块'}[o.type]}</p></div>`;
    const b=o.board;
@@ -46,7 +47,9 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='history')return nav(ctx,'/history');
  if(a==='tool')return nav(ctx,'/tool',{tool:t.dataset.tool});
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
- if(a==='start'){if(!o)return;if(o.status==='running'||['success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
+ if(a==='d01-next'&&id===D01_REPAIR){if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
+ if(a==='start'){if(!o)return;
+ if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(o.status==='running'||['success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
  if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){return nav(ctx,'/contract',{orderId:id});}
  if(!o||o.status!=='running')return;if(o.type!=='strike'&&o.deadline!==null&&Date.now()>=o.deadline){ctx.store.update(n=>finish(n,id,false));return;}
