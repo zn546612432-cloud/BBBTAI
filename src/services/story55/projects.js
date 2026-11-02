@@ -1,9 +1,27 @@
 import {isStory55,projectById,nodeStatus,completed,completeNode,story55Config} from './state.js';
+import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID} from '../../apps/mirage/data.js';
+export function settleStory55Wallet(s,{test=false}={}){
+ if(!isStory55(s)||!completed(s,'wallet'))return false;
+ const order=s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID);
+ if(order)order.status='COMPLETED';
+ const wallet=s.content.mirage;
+ wallet.transactions??=[];wallet.digitalTransactions??=[];
+ if(wallet.transactions.some(t=>t.id==='s55-wallet-10btc'))return false;
+ wallet.transactions.unshift({id:'s55-wallet-10btc',type:'REWARD',asset:'BTC',amount:10,day:s.day,time:s.clock,
+  description:'WALLET CHALLENGE',...(test?{test:true}:{})});
+ wallet.digitalBalance=(Number(wallet.digitalBalance)||0)+10;
+ wallet.digitalTransactions.unshift({orderId:STORY55_BOUNTY_ID,amount:10,day:s.day,clock:s.clock,
+  at:Date.now(),...(test?{test:true}:{})});
+ return true;
+}
 export function deployment(s,id){return s.story55?.projects?.[id]||{authorized:false,batches:[],active:null};}
 export function deploymentPercent(s,id){const p=projectById(s,id),r=deployment(s,id);if(!p)return 0;if(r.batches.length===p.batches&&r.batches.every(b=>b.complete))return 100;return Math.min(99.999,Number(r.batches.reduce((sum,b,i)=>sum+(b.complete?p.gains[i]:0),0).toFixed(3)));}
 export function projectCapacity(s,p){return Math.min(p.batches,Math.max(0,s.day-p.day+1));}
 export function authorizeProject(s,id,key){
  const p=projectById(s,id);if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
+ if(id==='wallet'&&(s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID)?.status!=='ACCEPTED'
+  ||!s.content.mail?.some(m=>m.id===STORY55_WALLET_MAIL_ID)))
+  throw Error('请先在 MIRAGE 接受钱包挑战，并在 KIRA 收取授权邮件');
  if(String(key||'').trim()!==p.key)throw Error('授权码不匹配');
  s.story55.projects[id]??={authorized:false,batches:[],active:null};s.story55.projects[id].authorized=true;
  return true;
@@ -40,7 +58,7 @@ export function completeDeploymentRun(s,run){
  if(p.steps.every((_,i)=>!!b.steps[i])){
   b.complete=true;b.day=s.day;
   s.story55.reports[`${p.id}-${run.batch}`]={title:`${p.title} / BATCH ${run.batch+1}`,project:p.id,percent:deploymentPercent(s,p.id),day:s.day};
-  if(deploymentPercent(s,p.id)===100)completeNode(s,p.node);
+  if(deploymentPercent(s,p.id)===100){completeNode(s,p.node);if(p.id==='wallet')settleStory55Wallet(s);}
  }
  return true;
 }
