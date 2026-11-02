@@ -60,7 +60,9 @@ export function unpackTaiReply(response,channel='noapp'){
   const split=mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
   const parts=split.length>1?(/[；;]/.test(display)?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):split):[display];
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
-  return pieces.map(text=>({text,mode,tone,...(mode==='voice'?{speechText}:{} )}));
+  // Short messenger bubbles need not end with a formal Chinese full stop.
+  // This never rewrites authored story lines or the TTS speech text.
+  return pieces.map(text=>({text:mode==='text'&&text.length<=40?text.replace(/。$/u,''):text,mode,tone,...(mode==='voice'?{speechText}:{} )}));
  }).slice(0,6).filter(x=>x.text);
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');
  return normalized;
