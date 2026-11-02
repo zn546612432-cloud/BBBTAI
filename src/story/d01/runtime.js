@@ -54,7 +54,7 @@ export function finishD01Round(s){
 export function submitD01Attachment(s){
  const d=s.story55?.d01;
  if(!d||d.completedRounds!==5||d.submitted)return false;
- d.submitted=true;return true;
+ d.submitted=true;d.submittedAt=Date.now();return true;
 }
 export function settleD01Repair(s){
  const d=s.story55?.d01;
@@ -66,4 +66,5 @@ export function settleD01Repair(s){
  mail(s,D01_DONE,'[MIRAGE] Order Completed','mirage001 項目訂單已完成。修復結果已驗收，0.04 BTC 已存入電子錢包。');
  return true;
 }
+export function tickD01(s,now=Date.now()){if(s.story55?.d01?.submitted&&!s.story55.d01.rewardPaid&&now>=Number(s.story55.d01.submittedAt||now)+2000)return settleD01Repair(s);return false;}
 export const d01Gate=s=>s.story55?.version===1&&s.day===1&&(!s.story55.d01?.bankClaimed||!s.story55.d01?.rewardPaid);
