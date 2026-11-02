@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  TAI_TURN_WEIGHTS,TAI_GUIDE_CHANCE,taiTurnProbabilities,taiGuideEligible,
- sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries
+ sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion
 } from '../src/services/ai/conversation-shape-v12.js';
 import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 
@@ -68,4 +68,22 @@ test('actual turn can request meaningful continuation without crossing boundary'
  assert.equal(taiTurnNeedsMore({plan:p,entries:[{text:'都讲完了'}],messages:player,action:'end_session'}),false);
  const result=mergeTaiTurnEntries([{text:'看了'}],[{text:'看了'},{text:'你改的是哪部分？'},{text:'算你厉害'}],3);
  assert.deepEqual(result.map(x=>x.text),['看了','你改的是哪部分？','算你厉害']);
+});
+
+test('30% guide is implemented with a concrete follow-up when the actor answered but forgot the question',()=>{
+ const plan={target:2,mode:'text',guide:true};
+ const response=[{text:'噢，你那个工具终于跑起来了？'}];
+ assert.equal(taiGuidanceNeedsRepair({plan,entries:response,messages:player}),false);
+ const blunt=[{text:'听上去还可以'}];
+ assert.equal(taiGuidanceNeedsRepair({plan,entries:blunt,messages:player}),true);
+ const guided=taiIntegrateGuidingQuestion(blunt,{text:'你是自己重写了那部分，还是改了我的原版？',mode:'text'},2);
+ assert.deepEqual(guided.map(x=>x.text),['听上去还可以','你是自己重写了那部分，还是改了我的原版？']);
+ const merged=taiIntegrateGuidingQuestion(guided,{text:'那还想改什么？',mode:'text'},2);
+ assert.equal(merged.length,2);
+ assert.match(merged[1].text,/自己重写了/);
+ assert.match(merged[1].text,/那还想改什么/);
+ const boundary=[{text:'这件事我不想聊，先挂了'}];
+ assert.equal(taiGuidanceNeedsRepair({plan,entries:boundary,messages:player}),false);
+ const generic=taiIntegrateGuidingQuestion(blunt,{text:'你在干什么？'},2);
+ assert.deepEqual(generic,blunt);
 });
