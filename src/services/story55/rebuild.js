@@ -5,9 +5,9 @@
  */
 import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from './state.js';
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
-import {deployment,projectCapacity,upgradeHardware} from './projects.js';
+import {deployment,projectCapacity,upgradeHardware,settleStory55Wallet} from './projects.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
-import {defaultProducts} from '../../apps/mirage/data.js';
+import {defaultProducts,acceptStory55Wallet} from '../../apps/mirage/data.js';
 import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
@@ -114,6 +114,13 @@ function hardware(s,minimum){
 function simulateProjectBatch(s,node){
  const p=story55Config(s).projects.find(x=>x.id===node.project);
  if(!p)throw Error('缺少GHOST项目：'+node.project);
+ if(node.id==='wallet'){
+  // Developer replay should leave the same visible MIRAGE and KIRA artifacts.
+  tickStory55(s);
+  if(s.content.orders.find(o=>o.id==='s55-mirage-wallet-bounty')?.status==='OPEN'
+     &&!acceptStory55Wallet(s))throw Error('无法重建 D06 钱包挑战接单与授权邮件');
+ }
+
  const run=s.story55.projects[p.id]??(s.story55.projects[p.id]={authorized:true,active:null,batches:[]});
  if(run.batches.length>=p.batches||run.batches.length>=projectCapacity(s,p))return false;
  hardware(s,p.minimumHardware);
@@ -133,13 +140,7 @@ function simulateProjectBatch(s,node){
  };
  if(run.batches.length===p.batches){
   completeNode(s,node.id,{test:true});
-  if(node.id==='wallet'){
-   const transactions=s.content.mirage.transactions??(s.content.mirage.transactions=[]);
-   if(!transactions.some(t=>t.id==='s55-wallet-10btc'))transactions.unshift({
-    id:'s55-wallet-10btc',type:'REWARD',asset:'BTC',amount:10,day:s.day,time:s.clock,test:true,
-    description:'WALLET CHALLENGE · DEVELOPER SIMULATION'
-   });
-  }
+  if(node.id==='wallet')settleStory55Wallet(s,{test:true});
  }
  return true;
 }
