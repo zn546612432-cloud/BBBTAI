@@ -1,11 +1,11 @@
-// TEMPORARY developer-only D01 test control.
-// Remove this folder and its Ghost imports/buttons before public release.
-// Never infer developer permission from saved game data or URL parameters.
+// D01 developer test control. Production access requires an explicit switch
+// in the in-game developer workspace; a URL parameter cannot enable it.
 import {D01_REPAIR} from '../../../../story/d01/runtime.js';
 import {startD01PipePreview} from '../../state.js';
 
-export function ghostDevSkipAvailable(doc=globalThis.document){
- return doc?.querySelector?.('meta[name="phone-preview"]')?.content==='true';
+export function ghostDevSkipAvailable(doc=globalThis.document,s=null){
+ return doc?.querySelector?.('meta[name="phone-preview"]')?.content==='true'
+   || s?.editor?.ghostSkipEnabled===true;
 }
 
 // Simulate a legitimate completed LINK board and reuse the exact 3-second
