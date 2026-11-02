@@ -7,6 +7,7 @@ import {taiActionExpressionPrompt} from './action-protocol-v10.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {taiHumanPrompt} from './humanize.js';
 import {taiMomentumPrompt} from './conversation-momentum-v11.js';
+import {taiTurnShapePrompt} from './conversation-shape-v12.js';
 
 export const canonicalTai2026=[
  '陈熙泰，被西方家庭收养，接受哈佛计算机博士教育，常居英国／葡萄牙；不沿用哈佛本科、英国住校读博的旧拼接。',
@@ -76,7 +77,7 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null}={}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null}={}){
  const seen=visibleTaiMemories(memories,day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
@@ -103,6 +104,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:'',
   XITAI_CONVERSATION_FOCUS_V8,
   approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):'',
-  taiMomentumPrompt(messages,{mode:effectiveMode})
+  taiMomentumPrompt(messages,{mode:effectiveMode}),
+  taiTurnShapePrompt(turnPlan)
  ].filter(Boolean).join('\n\n');
 }
