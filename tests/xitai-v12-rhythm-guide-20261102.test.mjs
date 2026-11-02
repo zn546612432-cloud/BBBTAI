@@ -4,7 +4,7 @@ import {
  TAI_TURN_WEIGHTS,TAI_GUIDE_CHANCE,taiTurnProbabilities,taiGuideEligible,
  sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion
 } from '../src/services/ai/conversation-shape-v12.js';
-import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
+import {buildTaiPrompt,defaultTaiDraft,ensureTaiDraft} from '../src/services/ai/tai-profile.js';
 import {combineTaiVoiceThoughts} from '../src/services/ai/voice-request-v11.js';
 
 const player=[{role:'user',content:'我把新的工具做了一半。'}];
@@ -104,4 +104,16 @@ test('a sampled four-phrase voice turn becomes one MP3 request rather than four 
  assert.match(audio[0].speechText,/把你写的东西给我看一眼。/);
  assert.equal(combineTaiVoiceThoughts([{text:'只有一句',mode:'voice'}]).length,1);
  assert.equal(combineTaiVoiceThoughts([{text:'电话',action:'phone'},{text:'再听',mode:'voice'}]).length,2);
+});
+
+test('v12 intro does not turn story chess into an unsolicited curiosity routine',()=>{
+ const prompt=buildTaiPrompt({day:37,channel:'noapp',recognized:true,messages:player,turnPlan:{target:3,guide:true,mode:'text'}});
+ assert.match(prompt,/国际象棋是固定剧情玩法/);
+ assert.match(prompt,/剧情结束后不要把棋局当成日常续聊话题/);
+ const draft=defaultTaiDraft();
+ assert.doesNotMatch(draft.profile.interaction,/棋局与烦恼/);
+ const old='独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、棋局与烦恼。熙蒙主动追问尤其反复询问时会适当松口，认真多讲几句，不能把话题一次次推回熙蒙；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。';
+ const s={aiDraft:defaultTaiDraft()};s.aiDraft.profile.interaction=old;
+ assert.equal(ensureTaiDraft(s),true);
+ assert.match(s.aiDraft.profile.interaction,/国际象棋只由固定剧情触发/);
 });
