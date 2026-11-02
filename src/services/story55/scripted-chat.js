@@ -4,6 +4,7 @@
 import {isStory55,nodeStatus,story55Config} from './state.js';
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
+import {activeD01,d01Draft,sendD01Draft} from './d01.js';
 import {endingReplyDue55} from './finale.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
@@ -15,6 +16,7 @@ export function threadForScene55(id){
 }
 export function currentScript55(s,channel,conversationId){
  if(!isStory55(s)||s.story55.ended)return null;
+ if(activeD01(s)&&channel==='wechat'&&conversationId==='group')return d01Draft(s,channel,conversationId);
  if(channel==='mirage'&&conversationId===FLOW_CONTACT)return flowDraft(s);
  if(channel==='mirage'&&conversationId==='s55-ouroboros'&&
      nodeStatus(s,'questions').state==='ready'&&
@@ -51,7 +53,8 @@ export function sendScriptedDraft55(s,channel,conversationId,text){
  const line=currentScript55(s,channel,conversationId);
  if(!line||line.kind!=='me')throw Error('当前没有等待熙蒙发送的预设消息');
  if(String(text||'').trim()!==line.text.trim())throw Error('请发送输入框里完整的预设台词');
- if(line.id==='flow-d03')sendFlowReply(s,text);
+ if(line.id==='d01-group')sendD01Draft(s,text);
+ else if(line.id==='flow-d03')sendFlowReply(s,text);
  else if(line.id==='questions')sendQuestion55(s);
  else advanceScene55(s,line.id);
  if(s.drafts)s.drafts[conversationId]='';
