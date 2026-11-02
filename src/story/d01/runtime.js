@@ -15,6 +15,8 @@ export function seedD01(s){
  if(!orders.some(o=>o.id===D01_REPAIR))orders.push({id:D01_REPAIR,title:'數據修復',owner:'匿名僱主',category:'數據修復',reward:'0.04 BTC',status:'OPEN',description:'硬碟損壞，需要修復數據。'});
  if(!orders.some(o=>o.id==='d01-hunt-view'))orders.push({id:'d01-hunt-view',title:'追殺令',owner:'匿名',category:'限制閱覽',reward:'未公開',status:'OPEN',d01ViewOnly:true,description:'目標：Arthur Bellwick，虛構澳大利亞州議員。僅供閱覽。'});
  s.content.mirage.digitalBalance??=0;
+ const reminders=s.content.reminders??(s.content.reminders=[]);
+ for(const [id,title,done] of [['d01-reminder-bank','查收訂單結款',!!s.story55.d01.bankClaimed],['d01-reminder-repair','完成數據修復',!!s.story55.d01.rewardPaid]]){const existing=reminders.find(r=>r.id===id);if(existing)existing.done=done;else reminders.push({id,title,done,storyD01:true});}
 }
 export function deliverD01Opening(s){
  if(!onD01(s))return false;
@@ -24,6 +26,7 @@ export function deliverD01Opening(s){
 export function claimD01Bank(s){
  if(!s.story55||!s.content.mail.some(m=>m.id===D01_OPENING)||s.story55.d01?.bankClaimed)return false;
  const d=s.story55.d01??={};d.bankClaimed=true;
+ const reminder=s.content.reminders?.find(r=>r.id==='d01-reminder-bank');if(reminder)reminder.done=true;
  s.bankData.balance=Math.round((Number(s.bankData.balance)||0)*100+200000)/100;
  s.bankData.transactions.unshift({id:'d01-bank-1846',label:'【币速达网安系统】',amount:2000,day:s.day,time:s.clock,date:s.calendar?.anchorDate});
  s.notifications.unshift({id:'d01-bank-notice',title:'太平洋銀行',body:'尾號1846卡5月19日'+s.clock+'收入2000美元',day:s.day,clock:s.clock,link:{appId:'bank',route:'/',params:{}}});
@@ -60,6 +63,7 @@ export function settleD01Repair(s){
  const d=s.story55?.d01;
  if(!d?.submitted||d.rewardPaid)return false;
  d.rewardPaid=true;
+ const reminder=s.content.reminders?.find(r=>r.id==='d01-reminder-repair');if(reminder)reminder.done=true;
  const w=s.content.mirage;w.digitalBalance=(Number(w.digitalBalance)||0)+0.04;
  w.digitalTransactions??=[];w.digitalTransactions.unshift({orderId:D01_REPAIR,amount:0.04,day:s.day,clock:s.clock,at:Date.now()});
  const order=s.content.orders.find(o=>o.id===D01_REPAIR);if(order)order.status='COMPLETED';
