@@ -17,7 +17,8 @@ test('curiosity extracts only player-authored visible facts and respects day',()
 });
 test('no future knowledge and no invented current activity',()=>{
  const a=extractTaiCuriosities(messages,{day:8});
- assert.equal(a[0].topic,'chess');
+ assert.ok(a.every(x=>x.topic!=='chess'));
+ assert.equal(a[0].topic,'family');
  const p=taiCuriosityPrompt(a,{day:8});
  assert.match(p,/不是熙蒙此刻正在做的事/);
  assert.match(p,/不主动报备自己的行程/);
@@ -26,4 +27,9 @@ test('no future knowledge and no invented current activity',()=>{
 test('private and deleted messages excluded',()=>{
  const a=extractTaiCuriosities([{from:'me',day:2,text:'改代码',deleted:true},{from:'me',day:2,text:'和熙旺见面',channel:'wechat'}],{day:3,channel:'noapp'});
  assert.equal(a.length,0);
+});
+
+test('chess is not a persistent follow-up trigger even after it is mentioned',()=>{
+ const a=extractTaiCuriosities([{id:'c1',from:'me',day:3,text:'国际象棋那局结束了',actual:true}],{day:15});
+ assert.deepEqual(a,[]);
 });
