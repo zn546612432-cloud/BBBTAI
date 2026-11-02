@@ -17,8 +17,10 @@ const fixture=()=>({
 });
 test('GHOST network puzzle grows 5×5 to 7×7, two fixed glowing terminals on separate cells',()=>{
  for(const n of [5,6,7]){
-  for(let i=0;i<32;i++){
-   const board=generatePipeNetwork({size:n});
+  for(let i=0;i<200;i++){
+   let seed=((i+1)*2654435761+n)>>>0;
+   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+   const board=generatePipeNetwork({size:n,random});
    assert.equal(board.size,n);
    assert.equal(board.masks.length,n*n);
    assert.equal(board.solvedMasks.length,n*n);
