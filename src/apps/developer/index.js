@@ -12,6 +12,7 @@ import {sms} from './features/sms/index.js';
 import {assets} from './features/assets/index.js';
 import {messageCard,newConversationForm,conversations} from './features/conversations/index.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
+import {ghostDevSkipAvailable} from '../ghost/features/dev-skip/index.js';
 import {ensureGhost,authorize,begin} from '../ghost/state.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {uid} from '../../services/id.js';
@@ -43,7 +44,7 @@ export function handle(a,t,ctx){
  if(a.startsWith('mission-')&&missionAction(a,t,ctx))return;
  if(a.startsWith('ai-')){handleAIVoice(a,t,ctx);return;}
  if(a==='editor-bank-rate'){const el=document.getElementById('gh-rate'),rate=el.value===''?null:Number(el.value);if(rate!==null&&(!Number.isFinite(rate)||rate<=0)){el.reportValidity();return;}store.update(s=>{s.bankData??={balance:0,transactions:[],rate:null};s.bankData.rate=rate;});return;}
- if(a==='editor-ghost-skip-toggle'){let enabled=false;store.update(s=>{s.editor??={};s.editor.ghostSkipEnabled=!s.editor.ghostSkipEnabled;enabled=s.editor.ghostSkipEnabled;});ctx.toast(enabled?'D01 LINK 跳关模式已开启':'D01 LINK 跳关模式已关闭');return;}
+ if(a==='editor-ghost-skip-toggle'){const enabled=!ghostDevSkipAvailable(globalThis.document,store.get());store.update(s=>{s.editor??={};s.editor.ghostSkipEnabled=enabled;});ctx.toast(enabled?'D01 LINK 跳关模式已开启':'D01 LINK 跳关模式已关闭');return;}
  if(a==='editor-ghost-save'){saveGhostConfig(t,ctx);return;}
  if(a==='editor-ghost-mission'){const type=document.getElementById('gh-mission-type').value,input=document.getElementById('gh-order-seconds'),seconds=input.value===''?null:Number(input.value);if(seconds!==null&&(!Number.isInteger(seconds)||seconds<10||seconds>600)){input.reportValidity();return;}store.update(s=>{const g=ensureGhost(s);g.missionTypes??={};g.orderConfigs??={};g.missionTypes['mirage-recruit-hacker']=type;g.orderConfigs['mirage-recruit-hacker']={seconds};});return;}
  if(a==='editor-ghost-test'){const type=t.dataset.tool,id=`developer-ghost-${type}`;store.update(s=>{const g=ensureGhost(s);delete g.orders[id];authorize(s,{orderId:id,mailId:null,type});begin(s,id);});router.open({appId:'ghost',route:'/run',params:{orderId:id}});return;}
