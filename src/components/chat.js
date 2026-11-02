@@ -23,4 +23,4 @@ export function sendChat(form,{store}){const text=new FormData(form).get('text')
  }
  form.elements.text.value='';return sendMessage(store,{channel:form.dataset.channel,conversationId:form.dataset.id,text});
  }return null;}
-export function attachChat(id,channel,{store,pickImage}){pickImage(src=>sendMessage(store,{channel,conversationId:id,text:src,kind:'image'}));}
+export function attachChat(id,channel,{store,pickImage}){if(channel==='wechat'&&store.get().story55?.version===1&&store.get().day===1)throw Error('D01 暫不支援傳送圖片');pickImage(src=>sendMessage(store,{channel,conversationId:id,text:src,kind:'image'}));}
