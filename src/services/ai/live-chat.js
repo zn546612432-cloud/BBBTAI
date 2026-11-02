@@ -11,7 +11,7 @@ import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {taiPlayerRequestedCall,taiShouldCallAfterText} from './call-intent.js';
+import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -58,7 +58,7 @@ function synthesizeVoiceNotes(store,jobs){
 
 export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now}={}){
  const initial=store.get(),c=conversation(initial);
- if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId))return {status:'scripted'};
+ if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
  if(!taiRecognized(initial)||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
  const presence=taiPresence(initial);
  if(!presence.contactable||presence.status==='away')return {status:'offline',message:'熙泰暂时不在线，消息已保存'};
@@ -145,7 +145,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // (phone) has priority over fragile sentence regexes. The old phrase
   // detector remains as compatibility for models that forget the marker.
   const alreadyCalled=store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId);
-  const shouldCall=!alreadyCalled&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
+  const shouldCall=!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
    !!phoneCommand||emitted>0&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered}));
   let called=false;
   if(shouldCall){
