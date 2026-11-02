@@ -61,7 +61,7 @@ test('typed request + AI marker starts one genuine ringing call with no visible 
  const {s,chat,result,ringing}=await simulatedReply();
  assert.equal(result.status,'replied');
  assert.equal(ringing,true);
- assert.equal(chat.messages.at(-1).text,'行，我现在打');
+ assert.equal(chat.messages.find(m=>m.replySourceId==='phone-tag-test')?.text,'行，我现在打');
  assert.equal(chat.messages.at(-1).kind,'text');
  assert.equal(s.events.filter(x=>x.type==='tai_text_call_trigger').length,1);
  assert.equal(s.notifications.some(x=>String(x.body).includes('(phone)')),false);
