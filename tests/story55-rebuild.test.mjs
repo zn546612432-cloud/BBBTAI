@@ -6,6 +6,7 @@ import {rebuildStory55AtDay,prepareStory55NodeAtDay} from '../src/services/story
 import {completed,story55Config,date55} from '../src/services/story55/state.js';
 import {storySourceVersion} from '../src/services/story55/test-snapshots.js';
 import {restartState} from '../src/system/restart/index.js';
+import {D01_REPAIR,D01_ATTACHMENT,D01_DONE} from '../src/story/d01/runtime.js';
 import {saveLinkedMission,linkedArtifactId,linkedDeliveryId,linkedReceiptId,linkedMissionVisible} from '../src/apps/mirage/linked-missions.js';
 
 function phone(){
@@ -18,6 +19,36 @@ function phone(){
  return s;
 }
 const ids=s=>new Set((s.content.conversations.wechat.find(c=>c.id==='group')?.messages||[]).map(m=>m.id));
+test('developer D01 is playable; jumping to D02 auto-settles every D01 app without duplicates',()=>{
+ const s=phone();
+ rebuildStory55AtDay(s,1);
+ assert.equal(s.day,1);
+ assert.equal(s.content.orders.find(o=>o.id===D01_REPAIR).status,'OPEN');
+ assert.equal(s.content.mirage.digitalBalance,0);
+ assert.equal(s.story55.d01?.rewardPaid,undefined);
+ rebuildStory55AtDay(s,2);
+ assert.equal(s.content.orders.find(o=>o.id===D01_REPAIR).status,'COMPLETED');
+ assert.equal(s.story55.d01.repairAccepted,true);
+ assert.equal(s.story55.d01.completedRounds,5);
+ assert.equal(s.story55.d01.developerCompleted,true);
+ assert.equal(s.story55.d01.rewardPaid,true);
+ assert.equal(s.story55.d01.bankClaimed,true);
+ assert.equal(s.bankData.transactions.filter(x=>x.id==='d01-bank-1846').length,1);
+ assert.equal(s.content.mirage.digitalBalance,0.04);
+ assert.equal(s.content.mirage.digitalTransactions.filter(x=>x.orderId===D01_REPAIR).length,1);
+ assert.equal(s.content.mail.filter(x=>x.id===D01_ATTACHMENT).length,1);
+ assert.equal(s.content.mail.filter(x=>x.id===D01_DONE).length,1);
+ assert.equal(s.ghost.orders[D01_REPAIR].status,'paid');
+ assert.equal(s.ghost.history.filter(x=>x.orderId===D01_REPAIR&&x.success).length,5);
+ rebuildStory55AtDay(s,2);
+ assert.equal(s.content.mirage.digitalTransactions.filter(x=>x.orderId===D01_REPAIR).length,1);
+ assert.equal(s.content.mail.filter(x=>x.id===D01_DONE).length,1);
+ rebuildStory55AtDay(s,1);
+ assert.equal(s.content.orders.find(o=>o.id===D01_REPAIR).status,'OPEN');
+ assert.equal(s.content.mirage.digitalBalance,0);
+ assert.equal(s.content.mail.some(x=>x.id===D01_DONE),false);
+ assert.equal(s.ghost.orders[D01_REPAIR],undefined);
+});
 test('D45 rebuild reconstructs storyline, inbox, wallet, NoApp and phased GHOST',()=>{
  const s=phone(),oldVersion=storySourceVersion(s);
  rebuildStory55AtDay(s,45,'08:00');
