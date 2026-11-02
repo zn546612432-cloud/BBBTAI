@@ -11,6 +11,8 @@ import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
+import {taiPlayerRequestedCall,taiShouldCallAfterText} from './call-intent.js';
+import {startIncoming} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -72,7 +74,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const unheard=source?.kind==='voice'&&!source?.voiceCaption;
   const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
-  const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
+  // A telephone request is not a request for one prerecorded voice bubble.
+  const requestedCall=taiPlayerRequestedCall(lastUser);
+  const voiceRequested=!requestedCall&&/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
   const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
@@ -82,7 +86,17 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
-  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+  // A bare mirrored greeting is a model-continuation artifact, not a choice
+  // rooted in Tai's personality. Repair it only when he replied with nothing
+  // but the exact same greeting; preserve other genuine one-line replies.
+  const greeting=s=>/^(?:hi|hello|hey|嗨|你好)[!！?.。\s]*$/i.test(String(s||'').trim());
+  if(!unheard&&greeting(lastUser)&&draftEntries.length===1&&
+    draftEntries[0].text.trim().toLowerCase().replace(/[!！?.。\s]/g,'')===
+    lastUser.trim().toLowerCase().replace(/[!！?.。\s]/g,'')){
+    const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
+    draftEntries=unpackTaiReply(retry,'noapp');
+  }
+  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
@@ -99,7 +113,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const target=conversation(s);if(!target)return;
     const msg={id,from:'tai',text:item.text,kind:'text',
       aiTone:item.tone,time:s.clock,day:s.day,sentDate:dateParts(s).iso,
-      aiGenerated:true,actual:true,receivedAt:now(),replySourceId:sourceMessageId,voiceRequested:item.mode==='voice'};
+      aiGenerated:true,actual:true,receivedAt:now(),replySourceId:sourceMessageId,voiceRequested:item.mode==='voice',...(item.translation?{translation:item.translation}:{})};
     target.messages.push(msg);
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=Math.max(0,Number(target.unread)||0)+1;
@@ -113,6 +127,13 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     // simultaneous MiniMax calls. Failed audio leaves the written bubble.
     voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    }
+  }
+  // Make an actual incoming call only after a current, explicit player request
+  // AND Tai's last emitted message commits to calling immediately.
+  const delivered=conversation(store.get())?.messages.filter(m=>m.replySourceId===sourceMessageId&&m.from==='tai')||[];
+  if(emitted&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered,alreadyCalled:store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId)})){
+   const started=startIncoming({store},'陈熙泰发起语音通话');
+   if(started)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock}));
   }
   if(voiceJobs.length){
    void synthesizeVoiceNotes(store,voiceJobs).catch(error=>{

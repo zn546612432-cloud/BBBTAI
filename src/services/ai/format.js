@@ -1,6 +1,7 @@
 // DeepSeek may return a JSON object, a JSON array, a double-encoded JSON
 // string, or a fenced JSON snippet. None of that syntax is a voice transcript.
 import {humanizeTaiText} from './humanize.js';
+import {safeTaiTranslation} from './portuguese.js';
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
 const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
 const structural=s=>/^\s*(?:```(?:json)?|\{\s*"(?:messages|text|reply|mode)"|\[\s*\{|\\"|\[\s*\")/i.test(s);
@@ -60,7 +61,9 @@ export function unpackTaiReply(response,channel='noapp'){
   const split=mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
   const parts=split.length>1?(/[；;]/.test(display)?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):split):[display];
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
-  return pieces.map(text=>({text,mode,tone,...(mode==='voice'?{speechText}:{} )}));
+  // Short messenger bubbles need not end with a formal Chinese full stop.
+  // This never rewrites authored story lines or the TTS speech text.
+  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
  }).slice(0,6).filter(x=>x.text);
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');
  return normalized;

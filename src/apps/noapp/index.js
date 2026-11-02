@@ -8,6 +8,7 @@ import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
+import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
 import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
 import {maybeSendProactive} from '../../services/ai/proactive.js';
@@ -50,6 +51,7 @@ const setting=(s)=>{
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
+ +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft)
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
  +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
@@ -127,7 +129,7 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)rememberTaiConversation(s,msg.text);});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg){rememberTaiConversation(s,msg.text);updateTaiBond(s,{messageId:id,text:msg.text});}});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-behavior'){
   const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));

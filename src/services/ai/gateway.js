@@ -1,4 +1,5 @@
 import {prepareXitaiSpeech} from '../voice/voice-regex.js';
+import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
 import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
@@ -69,7 +70,11 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.5,Math.min(2,Number(speed))):prepared.speed;
  // Code-switch to the provider's multilingual pronunciation mode only when
  // actual Latin words occur outside native Speech 2.8 sound tags.
- if(language==='Chinese'&&/\b[A-Za-z]{2,}\b/.test(text.replace(/\([a-z-]+\)/gi,'')))language='auto';
+ if(language==='Chinese'){
+  const spokenWithoutTags=text.replace(/\([a-z-]+\)/gi,'');
+  if(containsPortuguese(spokenWithoutTags)&&!/[\u3400-\u9fff]/u.test(spokenWithoutTags))language='Portuguese';
+  else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
+ }
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
