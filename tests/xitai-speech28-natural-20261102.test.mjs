@@ -74,5 +74,7 @@ test('direct MiniMax request sends HD tags to speech only, without hard-coded ca
   assert.equal(sent.language_boost,'auto');
   assert.equal(sent.voice_setting.speed,1);
   assert.equal('emotion' in sent.voice_setting,false);
+  await voicePreview({text:'Não, estás a brincar?'});
+  assert.equal(sent.language_boost,'Portuguese','pure Portuguese asks MiniMax to pronounce in Portuguese');
  }finally{clearApiConfig();globalThis.fetch=oldFetch;if(oldSession===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=oldSession;}
 });
