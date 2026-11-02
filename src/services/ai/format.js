@@ -64,6 +64,7 @@ export function unpackTaiReply(response,channel='noapp'){
   const speechText=humanizeTaiText(cleaned,{stripStage:false});
   const display=humanizeTaiText(cleanedText(speechText));
   const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
+  const vocalCue=['small_laugh','sigh','hesitate','tired','whisper'].includes(x?.vocal_cue)?x.vocal_cue:'none';
   if(!display&&!phone)return [];
   // Free text is sent as distinct chat bubbles at semicolons and line breaks;
   // audio remains one uninterrupted speech segment.
@@ -72,7 +73,7 @@ export function unpackTaiReply(response,channel='noapp'){
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
   // Short messenger bubbles need not end with a formal Chinese full stop.
   // This never rewrites authored story lines or the TTS speech text.
-  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(phone?{action:'phone'}:{}),...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
+  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,vocalCue,...(phone?{action:'phone'}:{}),...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
  }).slice(0,6).filter(x=>x.text||x.action==='phone');
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');
  return normalized;
