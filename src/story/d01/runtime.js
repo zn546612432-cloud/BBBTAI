@@ -38,7 +38,7 @@ export function acceptD01Repair(s){
  if(!onD01(s))return false;
  const o=s.content.orders.find(o=>o.id===D01_REPAIR);
  if(!o||o.status!=='OPEN')return false;
- o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;
+ o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;d.acceptedAt=Date.now();
  const list=s.content.conversations.mirage;
  if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Pale Vector',avatar:'PV',online:false,unread:1,storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
  return true;
@@ -47,6 +47,7 @@ export function deliverD01Attachment(s){
  if(!s.story55?.d01?.repairAccepted)return false;
  return mail(s,D01_ATTACHMENT,'[MIRAGE] 訂單附件已送達','尊敬的 Nyarlathotep，僱主已投遞附件密鑰 mirage001，請查收。');
 }
+export function revealD01Key(s){const d=s.story55?.d01;if(!d?.repairAccepted||!s.content.mail.some(m=>m.id===D01_ATTACHMENT))return false;d.keyRevealed=true;return true;}
 export function deployD01(s){
  if(!s.story55?.d01?.repairAccepted)return false;
  const d=s.story55.d01;d.deployed=true;d.completedRounds??=0;return true;
@@ -73,5 +74,10 @@ export function settleD01Repair(s){
  mail(s,D01_DONE,'[MIRAGE] Order Completed','mirage001 項目訂單已完成。修復結果已驗收，0.04 BTC 已存入電子錢包。');
  return true;
 }
-export function tickD01(s,now=Date.now()){if(s.story55?.d01?.submitted&&!s.story55.d01.rewardPaid&&now>=Number(s.story55.d01.submittedAt||now)+2000)return settleD01Repair(s);return false;}
+export function tickD01(s,now=Date.now()){
+ const d=s.story55?.d01;if(!d)return false;
+ if(d.repairAccepted&&!s.content.mail.some(m=>m.id===D01_ATTACHMENT)&&now>=Number(d.acceptedAt||now)+2000)return deliverD01Attachment(s);
+ if(d.submitted&&!d.rewardPaid&&now>=Number(d.submittedAt||now)+2000)return settleD01Repair(s);
+ return false;
+}
 export const d01Gate=s=>s.story55?.version===1&&s.day===1&&(!s.story55.d01?.bankClaimed||!s.story55.d01?.rewardPaid);
