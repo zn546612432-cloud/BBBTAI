@@ -18,11 +18,11 @@ const d01=s=>s.story55?.version===1&&s.day===1;
 const state=s=>(s.story55.d01??={});
 const chat=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
 const stamp=s=>({time:s.clock,sentDate:DAY_DATE,day:1,kind:'text',actual:true,storyD01:true});
-const visible=s=>s.unlocked&&s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/';
+const visible=(s,id)=>s.unlocked&&s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/'+id;
 const deliver=(s,id,from,text,messageId)=>{
  const c=chat(s,id);if(!c||c.messages.some(m=>m.id===messageId))return false;
  c.messages.push({id:messageId,from,text,...stamp(s)});
- if(from!=='me'&&!visible(s)||from!=='me'&&s.nav.current.route!=='/chat/'+id){
+ if(from!=='me'&&!visible(s,id)){
   c.unread=(Number(c.unread)||0)+1;
   const noticeId='d01-wechat-notice-'+messageId;
   if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({
@@ -33,7 +33,6 @@ const deliver=(s,id,from,text,messageId)=>{
  }
  return true;
 };
-const groupState=s=>state(s).group??=null;
 export function d01Draft(s,id){
  if(!d01(s)||id!==GROUP_ID)return null;
  const g=state(s).group;
@@ -87,7 +86,7 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
   if(b.locked){result.reason='熙旺現在不方便回覆';return;}
   result.messageId=pushMe(s,id,text);
   if(b.phase==='idle'&&text.includes('哥')){
-   b.phase='hello';b.helloAt=now+850;b.extra=0;
+   b.phase='hello';b.helloAt=now+850;b.helloDelivered=false;b.extra=0;
   }else if(['hello','counting','waiting'].includes(b.phase)){
    b.extra++;
    if(b.extra>=3){b.phase='waiting';b.dueGameMinute=gameMinute(s)+2;}
@@ -116,7 +115,7 @@ export function tickD01WeChat(s,now=Date.now()){
   }
  }
  const b=d.brother;
- if(b?.phase==='hello'&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺','嗯？','d01-wang-hello')||changed;b.phase='counting';}
+ if(b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺','嗯？','d01-wang-hello')||changed;b.helloDelivered=true;if(b.phase==='hello')b.phase='counting';}
  if(b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute){
   changed=deliver(s,BROTHER_ID,'熙旺','刚才在开车','d01-wang-driving')||changed;
   b.phase='replySecond';b.secondAt=now+1500;
@@ -131,4 +130,13 @@ export function closeD01WeChat(s){
  const d=s.story55?.d01;if(!d)return;
  if(d.group&&!d.group.completed){d.group.cancelled=true;d.group.dueAt=null;d.group.awaitingPlayer=false;}
  if(d.brother&&!d.brother.locked){d.brother.phase='cancelled';d.brother.dueGameMinute=null;}
+}
+
+export function d01WeChatDue(s,now=Date.now()){
+ if(!d01(s))return false;
+ const d=state(s),g=d.group,b=d.brother;
+ return !!(g?.started&&!g.completed&&!g.cancelled&&!g.awaitingPlayer&&g.dueAt!==null&&now>=g.dueAt
+  ||b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt
+  ||b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute
+  ||b?.phase==='replySecond'&&now>=b.secondAt);
 }
