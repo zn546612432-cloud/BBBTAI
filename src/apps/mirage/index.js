@@ -1,4 +1,4 @@
-import {D01_REPAIR,acceptD01Repair,deliverD01Attachment} from '../../story/d01/runtime.js';
+import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01ContactReply} from '../../story/d01/runtime.js';
 import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55} from '../../services/story55/scripted-chat.js';
@@ -146,6 +146,7 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
     return;
    }
    const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
+   if(id===D01_CONTACT)ctx.store.update(s=>queueD01ContactReply(s,id));
    const contact=ctx.store.get().content.conversations.mirage?.find(c=>c.id===id);
    if(mirageAIEnabled(ctx.store.get())&&/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);
   }
