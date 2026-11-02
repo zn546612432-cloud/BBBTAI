@@ -12,3 +12,26 @@ test('recently opened authored identity rises above the other contacts',async()=
 test('Mirage login keeps SIGN UP and prefills the fixed account, restored after three taps',async()=>{const {render,onEnter,accountTap}=await import('../src/apps/mirage/index.js');const store=new PhoneStore(memory());onEnter();const html=render({store},{route:'/'});assert.match(html,/value="NYARLATHOTEP"/);assert.match(html,/name="password"[^>]+value="miragecipheraccess"/);assert.match(html,/data-action="mc-sign-up"[^>]*>SIGN UP/);assert.match(html,/REGISTRATION IS TEMPORARILY UNAVAILABLE/);const input={value:''};accountTap(input);accountTap(input);assert.equal(input.value,'');accountTap(input);assert.equal(input.value,'NYARLATHOTEP');});
 test('completed bounties leave the active list and remain available in the completed archive',async()=>{const {bountyGroups}=await import('../src/apps/mirage/data.js');const store=new PhoneStore(memory());const id=store.get().content.orders[0].id;assert.deepEqual(bountyGroups(store.get().content.orders).open.map(o=>o.id),[id]);store.update(s=>{s.content.orders.find(o=>o.id===id).status='ACCEPTED';});assert.deepEqual(bountyGroups(store.get().content.orders).open.map(o=>o.id),[id]);store.update(s=>{s.content.orders.find(o=>o.id===id).status='COMPLETED';});assert.deepEqual(bountyGroups(store.get().content.orders).open,[]);assert.equal(bountyGroups(store.get().content.orders).completed[0].id,id);assert.equal(bountyGroups(new PhoneStore(store.storage).get().content.orders).completed[0].id,id);});
 test('hacker bounty migration is once-only, acceptance creates one KIRA mission and choices gate step three',async()=>{const {HACKER_BOUNTY_ID,HACKER_MAIL_ID,acceptHackerBounty,phishingThemes,advanceHackerMission}=await import('../src/apps/mirage/mission.js');const {render:renderKira,handle:handleKira}=await import('../src/apps/kira/index.js');const store=new PhoneStore(memory());initializeMirage(store);initializeMirage(store);assert.equal(store.get().content.orders.filter(o=>o.id===HACKER_BOUNTY_ID).length,1);const order=store.get().content.orders.find(o=>o.id===HACKER_BOUNTY_ID);assert.equal(order.title,'招募黑客');assert.equal(order.description,'窃取目标信息。');acceptHackerBounty(store);acceptHackerBounty(store);assert.equal(store.get().content.mail.filter(m=>m.id===HACKER_MAIL_ID).length,1);assert.match(renderKira({store},{route:'/mail/'+HACKER_MAIL_ID}),/【mirage】新订单/);const ctx={store,toast:()=>{},router:{open:()=>{}}};handleKira('kira-mission-theme',{dataset:{theme:'entertainment'}},ctx);assert.equal(store.get().content.mail.find(m=>m.id===HACKER_MAIL_ID).selectedTheme,undefined);advanceHackerMission(store,2);handleKira('kira-mission-theme',{dataset:{theme:phishingThemes.find(t=>t.correct).id}},ctx);handleKira('kira-mission-send',{dataset:{}},ctx);assert.equal(new PhoneStore(store.storage).get().content.mail.find(m=>m.id===HACKER_MAIL_ID).missionStep,3);});
+
+test('D01 repair button accepts on D01 and displays locked state after day one',async()=>{
+ const {activateStory55}=await import('../src/services/story55/runtime.js');
+ const {render,handle}=await import('../src/apps/mirage/index.js');
+ const {setMirageAuthenticated}=await import('../src/apps/mirage/session.js');
+ const store=new PhoneStore(memory()),messages=[];
+ store.update(s=>activateStory55(s));
+ const ctx={store,router:{open:()=>{}},toast:t=>messages.push(t),refresh:()=>{}};
+ setMirageAuthenticated(true);
+ try{
+  let html=render(ctx,{route:'/order/mirage001',params:{}});
+  assert.match(html,/data-action="mc-accept-bounty"[^>]*data-id="mirage001"/);
+  assert.match(html,/ACCEPT CONTRACT/);
+  handle('mc-accept-bounty',{dataset:{id:'mirage001'}},ctx,{route:'/order/mirage001'});
+  assert.equal(store.get().content.orders.find(o=>o.id==='mirage001').status,'ACCEPTED');
+  assert.equal(store.get().story55.d01.repairAccepted,true);
+  assert.ok(messages.includes('CONTRACT ACCEPTED · KIRA'));
+  store.update(s=>{s.day=2;s.content.orders.find(o=>o.id==='mirage001').status='OPEN';s.story55.d01={};});
+  html=render(ctx,{route:'/order/mirage001',params:{}});
+  assert.match(html,/D01 ONLY · UNAVAILABLE/);
+  assert.match(html,/data-action="mc-accept-bounty"[^>]*disabled/);
+ }finally{setMirageAuthenticated(false);}
+});
