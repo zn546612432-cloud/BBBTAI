@@ -119,7 +119,7 @@ test('stored deferred action can resume after reload-style poll but cannot defer
   await task;
   assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,1);
   assert.equal(chat.messages.at(-1).text,'我听到了');
-  assert.equal(calls.length,3,'v12 retries once to continue a 3-message turn; duplicate mock output is deduplicated');
+  assert.ok(calls.length>=2&&calls.length<=3,'deferred retry chooses its own fresh probabilistic text length, with at most one continuation attempt');
   assert.equal(maybeResumeTaiDeferred(store,{now:()=>1000000}),false);
  });
 });
