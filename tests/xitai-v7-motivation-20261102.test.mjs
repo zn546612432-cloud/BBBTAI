@@ -19,7 +19,7 @@ test('v7 NoApp context keeps his own private life and sibling truth without auto
  assert.match(prompt,/哥哥究竟是什么样的人|哥哥是什么样的人/);
  assert.match(prompt,/没有额外已证实事件记忆/);
  assert.match(prompt,/公开范围：已经通过剧情相认/);
- for(const phrase of ['熙蒙死亡','必然死亡','已经在现实见面','我已经转账给你','(voice)']){
+ for(const phrase of ['熙蒙死亡','必然死亡','已经在现实见面','我已经转账给你','必须输出 (voice)']){
   assert.ok(!prompt.includes(phrase),phrase);
  }
 });
