@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {sendD01WeChat,tickD01WeChat} from '../src/story/d01/wechat.js';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,advanceScene55,nodeLink55,scene55,sceneLines} from '../src/services/story55/runtime.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55,threadForScene55} from '../src/services/story55/scripted-chat.js';
@@ -11,34 +12,21 @@ import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {revealEndingVoice55,ENDING_VOICE_APPEAR_DELAY_MS} from '../src/services/story55/finale.js';
 
 const state=()=>{const s=initialState();activateStory55(s);return s;};
-test('D01 starts with an NPC message in the ORIGINAL WeChat group, and does not send the player text',()=>{
- const s=state();
- const start=currentScript55(s,'wechat','group');
- assert.equal(start.id,'intro');
- assert.equal(start.kind,'wang');
- assert.equal(nodeLink55(s,'intro').appId,'wechat');
- assert.equal(nodeLink55(s,'intro').route,'/chat/group');
- const group=s.content.conversations.wechat.find(c=>c.id==='group');
+test('D01 optional group uses original WeChat and waits for player to send before NPCs speak',()=>{
+ const s=state(),group=s.content.conversations.wechat.find(c=>c.id==='group');
+ assert.equal(currentScript55(s,'wechat','group'),null);
+ assert.equal(nodeLink55(s,'intro').route,'/chat/group'); // legacy routing stays compatible
  const before=group.messages.length;
- assert.equal(scriptedDraft55(s,'wechat','group'),null);
- advanceScene55(s,'intro');
- assert.equal(group.messages.length,before+1);
- assert.equal(group.messages.at(-1).from,'wang');
- const me=scriptedDraft55(s,'wechat','group');
- assert.equal(me.kind,'me');
- assert.ok(me.text.includes('给我带一份'));
  const html=renderWeChatChat(s,'group');
  assert.match(html,/class="composer wx-composer"/);
- assert.match(html,/data-story-scene="intro"/);
- assert.match(html,/data-story-type="/);
- assert.doesNotMatch(html,/s55-scene-next|s55-scene-lines/);
- assert.equal(group.messages.some(x=>x.text===me.text),false);
- assert.throws(()=>sendScriptedDraft55(s,'wechat','group','漏一个字'),/完整/);
- assert.equal(group.messages.some(x=>x.text===me.text),false);
- sendScriptedDraft55(s,'wechat','group',me.text);
+ assert.doesNotMatch(html,/data-story-scene="intro"/);
+ const store={get:()=>s,update:fn=>fn(s)};
+ sendD01WeChat(store,'group','早安',1000);
+ assert.equal(group.messages.length,before+1);
  assert.equal(group.messages.at(-1).from,'me');
- assert.equal(group.messages.at(-1).text,me.text);
- assert.equal(completed(s,'intro'),true);
+ tickD01WeChat(s,4000);
+ assert.equal(group.messages.at(-1).from,'小辛');
+ assert.match(group.messages.at(-1).text,/起得那么早/);
 });
 test('original MIRAGE private channel shows the incoming message and the own reply in composer',()=>{
  const s=state();previewNode55(s,'invitation');
