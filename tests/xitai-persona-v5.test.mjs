@@ -11,7 +11,7 @@ test('removed casual series cannot be loaded and all generation channels use v5'
  assert.deepEqual(Object.keys(ORIGINAL_WORLDBOOKS).sort(),['individuality','initiative','relationship']);
  for(const [channel,day] of [['mirage',15],['chess',29],['noapp',60]])for(const outputMode of ['text','voice','call']){
   const p=buildTaiPrompt({channel,day,outputMode,behavior:{verbosity:'brief'}});
-  for(const rule of ['专属系统底层设定 v5','禁止任何场景','完整语法结构','禁止网络用语','不设最低数量','当前阶段与公开范围'])assert.ok(p.includes(rule),channel+'/'+outputMode+' '+rule);
+  for(const rule of ['专属系统底层设定 v5','禁止任何场景','允许真实的短句','禁止过于文艺','不设最低数量','当前阶段与公开范围'])assert.ok(p.includes(rule),channel+'/'+outputMode+' '+rule);
   assert.doesNotMatch(p,/一条起步，两条封顶|一条消息 12 字以内|核心原则：话不说全|文字可极短|自然的短回复就停|聊天自然、简短、碎片化|D56 前不可揭露身份|D05 已发生的公开挑战/);
  }
 });
@@ -37,7 +37,7 @@ test('pre-v5 save migrates persona once without deleting memories, conversations
  const s={day:60,aiDraft:{profile:{speech:'聊天自然、简短、碎片化。',temperament:'旧版自定义'},memories,testTurns:[{content:'旧试聊'}],behavior:{maxMessages:4}},bankData:{balance:1234}};
  assert.equal(ensureTaiDraft(s),true);
  assert.equal(s.aiDraft.personaVersion,5);
- assert.match(s.aiDraft.profile.speech,/完整语法结构/);
+ assert.match(s.aiDraft.profile.speech,/自然短句/);
  assert.equal(s.aiDraft.previousPersona.profile.temperament,'旧版自定义');
  assert.strictEqual(s.aiDraft.memories,memories);assert.equal(s.aiDraft.behavior.maxMessages,4);assert.equal(s.bankData.balance,1234);
  s.aiDraft.profile.temperament='v5作者的新编辑';
@@ -51,7 +51,7 @@ test('PhoneStore reload uses v5 instead of the stale persona in persisted browse
  const data=new Map();const storage={getItem:()=>JSON.stringify(state),setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const store=new PhoneStore(storage);
  assert.equal(store.get().aiDraft.personaVersion,5);
- assert.match(store.get().aiDraft.profile.speech,/完整语法结构/);
+ assert.match(store.get().aiDraft.profile.speech,/自然短句/);
  assert.equal(defaultTaiDraft().personaVersion,5);
 });
 
