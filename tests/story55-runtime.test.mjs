@@ -51,7 +51,7 @@ test('base deployment catches up missed batches, ends at exactly100 and writes c
  const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=3;s.day=24;
  for(let i=0;i<11;i++)runBatch(s,'base');
  assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);assert.throws(()=>startDeploymentStep(s,'base'),/已完成/);
- assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,0); // D01 now begins with no USD, as authored.assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
+ assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,2000); // D01 historical KIRA bank credit is replayed before D24.assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
 });
 test('failed game cannot increase progress; current batch remains resumable',()=>{
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;
