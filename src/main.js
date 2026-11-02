@@ -23,6 +23,7 @@ import {processDemoReply,sendUnansweredChessReminders,dueChessReminders} from '.
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
+import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
@@ -317,6 +318,7 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||seco
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
  }
  if(!document.hidden&&callState().state==='connected')maybeAdvanceCall(ctx());
+ if(!document.hidden)maybeResumeTaiDeferred(store);
  if(!document.hidden&&!['ringing','dialing','connected'].includes(callState().state))void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
