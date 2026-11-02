@@ -55,8 +55,8 @@ test('Voice requires real TTS and read-no-reply needs a genuine receipt',()=>{
  assert.equal(authorizeTaiDecision(v,{channel:'noapp',recognized:true}).reason,'voice_not_available');
  assert.equal(authorizeTaiDecision(v,{channel:'noapp',recognized:true,voiceAvailable:true}).ok,true);
  const r=decodeTaiDecision(proposed('read_no_reply'),{sourceMessageId:'msg-001'});
- assert.equal(authorizeTaiDecision(r,{channel:'noapp',recognized:true}).reason,'read_not_confirmed');
- assert.equal(authorizeTaiDecision(r,{channel:'noapp',recognized:true,readConfirmed:true}).ok,true);
+ assert.equal(authorizeTaiDecision(r,{channel:'noapp',recognized:true}).reason,'read_receipt_unavailable');
+ assert.equal(authorizeTaiDecision(r,{channel:'noapp',recognized:true,canMarkRead:true}).ok,true);
 });
 test('Deferred replies require a real due time',()=>{
  assert.equal(decodeTaiDecision(proposed('defer_reply',{delay_seconds:0}),{sourceMessageId:'msg-001'}).reason,'defer_requires_time');
