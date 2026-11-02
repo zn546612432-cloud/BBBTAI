@@ -9,16 +9,18 @@ import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/mi
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
 export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
+export const XITAI_VOICE_OPTIONS=Object.freeze([[XITAI_VOICE_ID,'原音色'],['moss_audio_4e461be0-d6d5-11f1-9dac-d60bed5a35f4','新增音色']]);
+export const normalizeXitaiVoiceId=id=>XITAI_VOICE_OPTIONS.some(([value])=>value===id)?id:XITAI_VOICE_ID;
 export const AI_PREFERENCES='ximeng-ai-preferences-v2';
 function savedPreferences(){try{return JSON.parse(globalThis.localStorage?.getItem(AI_PREFERENCES)||'{}');}catch{return {};}}
 export function apiConfig(){
  let c={};try{c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');}catch{}
  const merged={...savedPreferences(),...c};
- return {...merged,...normalizeAiParameters(merged),...normalizeTtsSettings(merged),model:normalizeDeepSeekModel(merged.model),ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(merged.ttsModel)?merged.ttsModel:'speech-2.8-hd',voiceStyle:normalizeVoiceStyle(merged.voiceStyle),voiceId:XITAI_VOICE_ID};
+ return {...merged,...normalizeAiParameters(merged),...normalizeTtsSettings(merged),model:normalizeDeepSeekModel(merged.model),ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(merged.ttsModel)?merged.ttsModel:'speech-2.8-hd',voiceStyle:normalizeVoiceStyle(merged.voiceStyle),voiceId:normalizeXitaiVoiceId(merged.voiceId)};
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
- model:normalizeDeepSeekModel(config.model),region:config.region==='intl'?'intl':'cn',voiceId:XITAI_VOICE_ID,voiceStyle:normalizeVoiceStyle(config.voiceStyle),
+ model:normalizeDeepSeekModel(config.model),region:config.region==='intl'?'intl':'cn',voiceId:normalizeXitaiVoiceId(config.voiceId),voiceStyle:normalizeVoiceStyle(config.voiceStyle),
  ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd',
  ...normalizeAiParameters(config),...normalizeTtsSettings(config)};
  sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));
@@ -132,7 +134,7 @@ export async function voicePreview({text,voiceId,model,tone='neutral',...overrid
   if(minimaxUnavailableOnGithubPages(globalThis.location?.hostname))
    throw Error(explainMinimaxFailure(new Error('未配置 MiniMax API Key')));
   let r;
-  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,...settings,language})});}
+  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:normalizeXitaiVoiceId(voiceId||c.voiceId),model,...settings,language})});}
   catch{throw Error('MiniMax 语音接口未配置');}
   if(!r.ok){let v={};try{v=await r.json();}catch{}throw Error(v.error||'MiniMax 语音接口失败');}
   if(!r.headers.get('Content-Type')?.includes('audio/'))throw Error('未返回音频');
@@ -145,7 +147,7 @@ export async function voicePreview({text,voiceId,model,tone='neutral',...overrid
  try{audio=await directJSON(endpoint,c.minimax,{
   model,text:spoken,stream:false,output_format:'hex',
   ...ttsProviderSettings({...settings,language}),
-  voice_setting:{voice_id:XITAI_VOICE_ID,...ttsProviderSettings(settings).voice_setting}
+  voice_setting:{voice_id:normalizeXitaiVoiceId(voiceId||c.voiceId),...ttsProviderSettings(settings).voice_setting}
  });}
  catch(error){throw Error(explainMinimaxFailure(error,{region:c.region}));}
  const hex=audio.data?.audio;
