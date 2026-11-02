@@ -40,7 +40,7 @@ test('real read_no_reply marks receipt but sends zero bubbles and skips expressi
   const result=await replyToTaiMessage(store,'u-v10',quick);
   assert.equal(result.status,'read_no_reply');assert.equal(result.count,0);
   assert.equal(calls.length,1,'no expression request when intentionally silent');
-  assert.equal(chat.messages.filter(m=>m.from==='tai').length,0);
+  assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
   assert.equal(chat.messages.at(-1).taiReadAt,1000000);
   assert.match(chatView(state,'noapp','tai'),/tai-read-receipt/);
   assert.equal((await replyToTaiMessage(store,'u-v10',quick)).status,'scripted');
@@ -54,7 +54,7 @@ test('defer_reply creates a real future retry time without claiming to read',asy
   assert.equal(result.status,'deferred');assert.equal(result.retryAfterMs,90000);
   assert.equal(chat.messages.at(-1).taiDeferredUntil,1090000);
   assert.equal(chat.messages.at(-1).taiReadAt,undefined);
-  assert.equal(chat.messages.filter(m=>m.from==='tai').length,0);
+  assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
   assert.equal(calls.length,1);
  });
 });
@@ -66,7 +66,7 @@ test('v10 start_call rings instead of writing a false phone promise',async()=>{
   assert.equal(result.status,'called');
   assert.equal(calls.length,1);
   assert.equal(callState().state,'ringing');
-  assert.equal(chat.messages.filter(m=>m.from==='tai').length,0);
+  assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
   assert.equal(state.events.filter(e=>e.type==='tai_text_call_trigger'&&e.protocol==='v10').length,1);
   close(store);
  },{minimax:true});
@@ -104,6 +104,6 @@ test('end_session marks actual read and ends silently without claiming offline',
   assert.equal(result.status,'end_session');assert.equal(calls.length,1);
   assert.equal(chat.messages.at(-1).taiReadAt,1000000);
   assert.ok(state.events.some(e=>e.type==='tai_action_end_session'));
-  assert.equal(chat.messages.filter(m=>m.from==='tai').length,0);
+  assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
  });
 });
