@@ -37,3 +37,11 @@
 .gh-shell .gh-success-preview .gh-success-check{font-size:22px;line-height:1.2;text-shadow:0 0 15px #9cffe4}
 .gh-shell .gh-success-preview strong{font-size:13px;letter-spacing:2px;font-weight:500}
 .gh-shell .gh-success-preview small{color:#91bea9;font-size:10px}
+
+
+/* Temporary D01 developer preview control, visually separate from gameplay. */
+.gh-shell .gh-dev-skip-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:17px 0 8px;padding:10px 0;border-top:1px solid #22332e}
+.gh-shell button.gh-dev-skip{min-height:42px;padding:9px 14px;border-radius:9px;border:1px dashed #4f7770;background:#142520;color:#b3d5c7;font-size:11px;letter-spacing:.3px;text-align:center;white-space:nowrap}
+.gh-shell button.gh-dev-skip:active{background:#284f41}
+.gh-shell .gh-dev-skip-wrap>small{font-size:9px;line-height:1.5;color:#6d8981;text-align:right;max-width:110px}
+@media(max-width:350px){.gh-shell .gh-dev-skip-wrap{gap:7px}.gh-shell button.gh-dev-skip{font-size:10px;padding:8px}.gh-shell .gh-dev-skip-wrap>small{font-size:8px;max-width:87px}}
