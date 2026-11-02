@@ -15,6 +15,7 @@ import {unpackTaiReply,readableTaiVoiceText} from '../../services/ai/format.js';
 import {taiBehavior} from '../../services/ai/behavior.js';
 import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
+import {taiMomentumPrompt,needsTaiMomentumRepair} from '../../services/ai/conversation-momentum-v11.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -180,7 +181,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  call.busy=true;markTaiEngaged();ctx.refresh();
  try{
   const history=call.turns.slice(-20);
-  const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+' 本次电话台词要求：说得通、接得上、符合当前亲密程度。若熙蒙表达不理解，要针对刚才实际说过的话解释或收回，不要抽象争辩；不虚构他刚说了别的话。调戏是有情境的聪明打趣，不是无缘无故自恋、羞辱或堆砌攻击性。';
+  const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+' 本次电话台词要求：说得通、接得上、符合当前亲密程度。若熙蒙表达不理解，要针对刚才实际说过的话解释或收回，不要抽象争辩；不虚构他刚说了别的话。调戏是有情境的聪明打趣，不是无缘无故自恋、羞辱或堆砌攻击性。'+taiMomentumPrompt(history,{mode:'call'});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
   const decision=presetText||event==='unheard'?null:await chooseTaiAction({channel:'noapp',day:requestDay,
@@ -190,15 +191,23 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
   if(decision?.action==='listen'){endAfter=false;return;}
   if(decision){endAfter=decision.action==='hang_up';}
-  const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
+  const request={channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
    behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
    relationshipContext,
-   profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
+   profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories};
+  let data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:event==='unheard'?null:await askTai(request);
   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
-  const replies=event==='unheard'?[unheardReply(sessionId+':'+call.turns.length)]:unpackTaiReply(data,'call');
+  let replies=event==='unheard'?[unheardReply(sessionId+':'+call.turns.length)]:unpackTaiReply(data,'call');
+  // Only repair a repeated personal question met with another empty deflection.
+  // One concise answer, a real refusal, or a normal new topic remains untouched.
+  if(!presetText&&!event&&needsTaiMomentumRepair({messages:history,entries:replies,mode:'call'})){
+   const retry=await askTai({...request,scene:scene+' 上一稿只是再次反问/推开熙蒙：'+replies.map(r=>r.text).join(' ').slice(0,180)+'。熙蒙已经坚持要求听具体内容。请接着说出一点符合已知设定的真实私人细节、带刺的幽默或明确边界，不要让他独自维持对话。可以自然短长交错，不必凑固定条数。'});
+   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
+   replies=unpackTaiReply(retry,'call');
+  }
   // The telephone is a conversation, not a list of standalone voice snippets.
   // Keep only a manageable number of meaningful turns before listening again.
-  const turns=replies.slice(0,3);
+  const turns=replies.slice(0,4);
   for(const r of turns){
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)break;
    const speech=composeCallSpeech([r],taiBehavior(ctx.store.get()));
