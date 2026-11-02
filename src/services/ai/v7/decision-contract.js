@@ -28,7 +28,7 @@ export function decodeTaiDecision(raw,{sourceMessageId}={}){
 export function authorizeTaiDecision(parsed,{
  channel,recognized=false,storyLocked=false,phoneBusy=false,
  voiceAvailable=false,callAvailable=false,appRunning=true,
- userForbidsCall=false,callCooldownActive=false,readConfirmed=false
+ userForbidsCall=false,callCooldownActive=false,canMarkRead=false
 }={}){
  if(!parsed?.ok||!parsed.plan)return blocked(parsed?.reason||'malformed_plan');
  const {action}=parsed.plan;
@@ -37,6 +37,7 @@ export function authorizeTaiDecision(parsed,{
  if(channel!=='mirage'&&!recognized)return blocked('unrecognized_stage');
  if(action==='send_voice'&&(channel!=='noapp'||!recognized||!voiceAvailable))return blocked('voice_not_available');
  if(action==='start_call'&&(channel!=='noapp'||!recognized||!callAvailable||phoneBusy||!appRunning||userForbidsCall||callCooldownActive))return blocked('call_not_allowed');
- if(action==='read_no_reply'&&!readConfirmed)return blocked('read_not_confirmed');
+ // The executor must write a real read receipt before the UI shows '已读'.
+ if(action==='read_no_reply'&&!canMarkRead)return blocked('read_receipt_unavailable');
  return parsed;
 }
