@@ -82,15 +82,64 @@ export function taiTurnNeedsMore({plan,entries=[],messages=[],action='send_text'
  if(/(?:我不想聊|没空|不方便|先挂了|晚点说|明天再聊|我先忙了|不愿意谈这个|这是我的私事|到此为止|不谈这个)[。！？!?~\s]*$/.test(text.trim()))return false;
  return true;
 }
-export function mergeTaiTurnEntries(previous=[],extra=[],limit=5){
- const result=[...previous],seen=new Set(result.map(x=>String(x.text||'').replace(/\s+/g,'').toLowerCase()));
- for(const m of extra){
+// The model can repeat facts across a first response and its "continue" pass.
+// Compare *clauses* rather than only exact whole messages: e.g. "哈佛，计算机博士，
+// 早不上教室了" / "哈佛，计算机博士。不过早就不上教室了。你在意？"
+// must yield ONLY "你在意？" as the second bubble.
+const statementUnits=text=>[...String(text||'').matchAll(/([^，,。！？!?；;\n]+)([，,。！？!?；;\n]*)/g)]
+ .map(m=>({body:m[1].trim(),ending:m[2]})).filter(x=>x.body);
+const normalizedUnit=value=>String(value||'').normalize('NFKC').toLowerCase()
+ .replace(/^[\s]*(?:不过|但是|其实|说真的|老实说|嗯|哦)[，,\s]*/,'')
+ .replace(/[，,。！？!?；;：:、…“”‘’'"（）()\s]/g,'')
+ .replace(/就/g,'');
+function similarUnit(left,right){
+ const a=normalizedUnit(left),b=normalizedUnit(right);
+ if(!a||!b)return false;
+ if(a===b)return true;
+ if(Math.min(a.length,b.length)<4)return false;
+ if((a.includes(b)||b.includes(a))&&Math.min(a.length,b.length)>=5)return true;
+ // Dice similarity catches small variations without merging distinct claims.
+ const pairs=s=>Array.from({length:s.length-1},(_,i)=>s.slice(i,i+2));
+ const first=pairs(a),second=pairs(b);let shared=0;
+ const spare=[...second];
+ for(const x of first){const index=spare.indexOf(x);if(index>=0){shared++;spare.splice(index,1);}}
+ return 2*shared/(first.length+second.length)>=.79;
+}
+export function stripRepeatedTaiClauses(candidate,previous=[]){
+ const text=String(candidate||'').trim(),units=statementUnits(text);
+ if(!text||!units.length)return text;
+ const known=(Array.isArray(previous)?previous:[]).flatMap(x=>statementUnits(x?.text??x));
+ if(!known.length)return text;
+ const kept=units.filter(part=>!known.some(earlier=>similarUnit(part.body,earlier.body)));
+ if(kept.length===units.length)return text;
+ if(!kept.length)return '';
+ // Keep the original question/exclamation punctuation on genuine new clauses.
+ return kept.map(x=>x.body+x.ending).join('').replace(/^[，,。！？!?；;\s]+/,'').trim();
+}
+export function dedupeTaiTurnEntries(entries=[],limit=6){
+ const result=[];
+ for(const item of (Array.isArray(entries)?entries:[])){
   if(result.length>=Math.max(1,limit))break;
-  const text=String(m?.text||'').trim(),key=text.replace(/\s+/g,'').toLowerCase();
-  if(!text||seen.has(key)||m.action==='phone')continue;
-  seen.add(key);result.push(m);
+  if(!item||typeof item.text!=='string')continue;
+  if(item.action==='phone'){result.push(item);continue;} // executable game command is never rewritten
+  const original=item.text.trim();
+  const novel=stripRepeatedTaiClauses(original,result.filter(x=>x.action!=='phone'));
+  if(!novel)continue;
+  if(novel===original){result.push(item);continue;}
+  // Translated captions and speech text must match the actual filtered line.
+  const updated={...item,text:novel};
+  if(typeof item.speechText==='string')updated.speechText=novel;
+  delete updated.translation;
+  result.push(updated);
  }
  return result;
+}
+export function mergeTaiTurnEntries(previous=[],extra=[],limit=5){
+ // A continuation must not create a second executable phone command.
+ return dedupeTaiTurnEntries([
+  ...(Array.isArray(previous)?previous:[]),
+  ...(Array.isArray(extra)?extra:[]).filter(x=>x?.action!=='phone')
+ ],limit);
 }
 
 const genericQuestion=/^(?:你呢|还有呢|还有什么|你想听什么|你想知道什么|你在干什么|你在做什么|有问题吗|还有事吗|什么事)[呢啊么吧？！?!。\s]*$/;
