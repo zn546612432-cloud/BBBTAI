@@ -13,6 +13,8 @@ import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
+import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
+import {taiExplicitVoiceRequest,honorTaiVoiceRequest} from './voice-request-v11.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -65,7 +67,7 @@ export function synthesizeVoiceNotes(store,jobs){
     });
    }catch(error){
     console.warn('MiniMax voice failed; text remains:',error?.message);
-    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;}});
+    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;m.voiceError=String(error?.message||'语音生成失败').slice(0,120);}});
    }
   }
  };
@@ -97,19 +99,20 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const lastUser=source?.voiceCaption||source?.text||'';
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
-  const voiceRequested=!requestedCall&&/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
+  const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
-  const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
+  const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&(voiceRequested||(initial.day>=60&&hashed%19===0));
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,
-   scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。'+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+'+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
-  const decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
+  let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
    allowCall:availableCall&&!!status.minimax,allowVoice:!!status.minimax,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
+  decision=honorTaiVoiceRequest(decision,{text:lastUser,available:!!status.minimax});
   if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(decision.action==='start_call'){
@@ -143,6 +146,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     draftEntries[0].text.trim().toLowerCase().replace(/[!！?.。\s]/g,'')===
     lastUser.trim().toLowerCase().replace(/[!！?.。\s]/g,'')){
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
+    draftEntries=unpackTaiReply(retry,'noapp');
+  }
+  if(!unheard&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+    const retry=await askTai({...request,scene:request.scene+' 你上一稿又只用很短的反问或推脱把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。他已经反复追问你的私事。你可以嘴硬、打趣，但请在这一轮提供至少一点具体、可继续聊的内容，或认真说清不愿讲的原因，不要机械复读。'});
+    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=unpackTaiReply(retry,'noapp');
   }
   // Keep an explicit phone action even if the model returned the configured
