@@ -3,7 +3,7 @@ export const D01_REPAIR='mirage001';
 export const D01_OPENING='d01-vulnerability-paid';
 export const D01_ATTACHMENT='d01-mirage001-attachment';
 export const D01_DONE='d01-mirage001-completed';
-export const D01_CONTACT='mc-pale-vector-d01';
+export const D01_CONTACT='mc-rookery-13-d01';
 const onD01=s=>s.story55?.version===1&&s.day===1;
 const notify=(s,id,subject)=>{if(s.notifications.some(n=>n.id===id))return;s.notifications.unshift({id,title:'KIRA',body:subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+id,params:{}}});};
 const mail=(s,id,subject,body)=>{if(s.content.mail.some(m=>m.id===id))return false;s.content.mail.unshift({id,from:'MIRAGE',subject,body,read:false,day:s.day,time:s.clock,d01:true});notify(s,id,subject);return true;};
@@ -40,7 +40,7 @@ export function acceptD01Repair(s){
  if(!o||o.status!=='OPEN')return false;
  o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;d.acceptedAt=Date.now();
  const list=s.content.conversations.mirage;
- if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Pale Vector',avatar:'PV',online:false,unread:1,storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
+ if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Rookery 13',avatar:'R13',online:false,unread:1,storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
  return true;
 }
 export function deliverD01Attachment(s){
