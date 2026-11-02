@@ -46,7 +46,7 @@ export function advanceGameMinutes(s,requested){
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  const d01Clock=isStory55(s)&&s.day===1&&s.story55?.d01;
  if(d01Clock){if(from>=1620)return {minutes:0,event:'d01-gate'};target=Math.min(target,1620);}
- if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
+ if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(!d01Clock&&story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
  if(target<=from)return {minutes:0};
  if(s.deathPhase==='draining'){
   const at=Math.min(target,DEATH_END);setAbsoluteMinute(s,at);syncDeathNight(s);
@@ -90,7 +90,7 @@ export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
  if(endingAwaitingReply55(s))return STORY55_NORMAL_MINUTES_PER_MS;
- const chatting=isStory55(s)&&/\x5e\/chat\//.test(s.nav?.current?.route||'')&&['wechat','mirage','messages','noapp'].includes(s.nav.current.appId);
+ const chatting=isStory55(s)&&s.nav?.current?.route?.startsWith('/chat/')&&['wechat','mirage','messages','noapp'].includes(s.nav.current.appId);
  const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
  return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):chatting?STORY55_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
