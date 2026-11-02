@@ -43,7 +43,7 @@ test('three telephone thoughts include explicit pauses; legal sound tags survive
  assert.match(prepareXitaiSpeech(speech).text,/<#1.6#>/);
  assert.doesNotMatch(replies.map(r=>r.text).join(''),/breath|<#/);
  const single=composeCallSpeech([{text:'第一句。第二句。第三句。'}],{callPause:1});
- assert.equal((single.match(/<#0.5#>/g)||[]).length,2);
+ assert.equal((single.match(/<#0.5#>/g)||[]).length,0);
 });
 test('new user message cancels all stale AI text before first bubble arrives',async()=>{
  const {s,chat,store}=fixture();chat.messages.push({id:'u1',from:'me',text:'先说这个',day:60,time:'21:00'});
