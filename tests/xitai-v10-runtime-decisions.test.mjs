@@ -77,7 +77,7 @@ test('v10 text decision supplies expression prompt and controls tone without cha
  await withMockDirect('send_text',async calls=>{
   const result=await replyToTaiMessage(store,'u-v10',quick);
   assert.equal(result.status,'replied');assert.equal(result.count,1);
-  assert.equal(calls.length,2);
+  assert.equal(calls.length,3,'v12 retries once to continue a 3-message turn; duplicate mock output is deduplicated');
   assert.match(calls[1].system,/v10已批准行为/);
   assert.match(calls[1].system,/action=send_text/);
   assert.equal(chat.messages.at(-1).text,'我听到了');
@@ -93,7 +93,7 @@ test('missing MiniMax downgrades send_voice to text instead of fake playable aud
   assert.equal(result.status,'replied');
   assert.equal(chat.messages.at(-1).kind,'text');
   assert.equal(chat.messages.at(-1).voiceRequested,false);
-  assert.equal(calls.length,2);
+  assert.equal(calls.length,3,'v12 retries once to continue a 3-message turn; duplicate mock output is deduplicated');
  },{minimax:false});
 });
 
@@ -119,7 +119,7 @@ test('stored deferred action can resume after reload-style poll but cannot defer
   await task;
   assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,1);
   assert.equal(chat.messages.at(-1).text,'我听到了');
-  assert.equal(calls.length,2);
+  assert.equal(calls.length,3,'v12 retries once to continue a 3-message turn; duplicate mock output is deduplicated');
   assert.equal(maybeResumeTaiDeferred(store,{now:()=>1000000}),false);
  });
 });
