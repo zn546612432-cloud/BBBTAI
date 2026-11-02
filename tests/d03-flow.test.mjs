@@ -10,6 +10,7 @@ import {
 } from '../src/services/story55/flow-d03.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {renderFlowD03} from '../src/apps/ghost/features/flow-d03/index.js';
+import {contacts} from '../src/apps/mirage/data.js';
 
 const newPhone=()=>{const s=initialState();activateStory55(s);completeNode(s,'intro');return s;};
 const atInvite=s=>{s.day=3;s.clock='08:15';tickFlowD03(s);};
@@ -92,4 +93,12 @@ test('D04 developer reconstruction completes prior D03 without duplicating histo
  assert.equal(s.bankData.transactions.filter(t=>t.id===FLOW_REWARD_ID).length,1);
  assert.equal(contact(s).messages.filter(m=>m.id===FLOW_INVITE).length,1);
  assert.equal(contact(s).messages.filter(m=>m.sentDate==='2025-04-10').length,6);
+});
+
+test('D01 Mirage does not leak the later Ouroboros contact in existing saves',()=>{
+ const s=newPhone();
+ s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
+ assert.equal(contacts(s).some(c=>c.id==='s55-ouroboros'),false);
+ s.story55.completed.wallet=true;
+ assert.equal(contacts(s).some(c=>c.id==='s55-ouroboros'),true);
 });
