@@ -46,3 +46,13 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   assert.notEqual(JSON.parse(await read('dist/release.json')).version,release.version);
  }finally{await rm(folder,{recursive:true,force:true});}
 });
+
+test('main Pages deployment preserves every named isolated review alongside production',async()=>{
+ const workflow=await readFile(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');
+ assert.match(workflow,/Preserve isolated historical review sites/);
+ for(const name of [
+  '55-20261101','d03-flow-20261101','d55-finale-20261101',
+  'ios-badges-20261102','d01-cross-app-20261102','d01-20261102'
+ ])assert.ok(workflow.includes(name),'Missing review in main deployment: '+name);
+ assert.match(workflow,/test -s "dist\/review\/\$name\/index\.html"/);
+});

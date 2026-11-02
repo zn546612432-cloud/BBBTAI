@@ -1,0 +1,126 @@
+name: Publish D01 fixed LINK review (preserve production and older previews)
+on:
+  push:
+    branches:
+      - fix/d01-pipe-solved-dev-skip-20261102
+    paths:
+      - '.github/workflows/d01-linkfix-review-pages.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: d01-linkfix-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d01-linkfix-20261102/
+    steps:
+      - name: Checkout production unchanged
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production-source
+      - name: Checkout reviewed D01 commit
+        uses: actions/checkout@v4
+        with:
+          path: d01-source
+      - name: Checkout Story55 snapshot review
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55-source
+      - name: Checkout earlier D03 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d03-flow-ghost-kira-20261101
+          path: d03-source
+      - name: Checkout earlier D55 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d55-final-handoff-20261101
+          path: d55-source
+      - name: Checkout prior iOS badge review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/ios-unread-home-badges-20261102
+          path: badges-source
+      - name: Checkout prior D01 Files review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-file-open-flow-20261102
+          path: d01files-source
+      - name: Checkout original D01 playable review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-linked-story-20261102
+          path: d01old-source
+      - name: Checkout alternative D01 cross-app review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-cross-app-story-20261102
+          path: d01cross-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild production and its unchanged preview
+        working-directory: production-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist production-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist production-dist/preview
+          mv production-dist dist
+      - name: Rebuild existing isolated reviews
+        run: |
+          for spec in \
+            'story55-source:55-20261101' \
+            'd03-source:d03-flow-20261101' \
+            'd55-source:d55-finale-20261101' \
+            'badges-source:ios-badges-20261102' \
+            'd01cross-source:d01-cross-app-20261102' \
+            'd01old-source:d01-20261102' \
+            'd01files-source:d01-file-20261102'; do
+            folder="${spec%%:*}"; name="${spec#*:}"
+            (cd "$folder"; npm ci; GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/$name/" npm run build:pages)
+            mkdir -p "production-source/dist/review/$name"
+            cp -a "$folder/dist/." "production-source/dist/review/$name/"
+          done
+      - name: Test and build isolated D01 phone
+        working-directory: d01-source
+        run: |
+          npm ci
+          npm test
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d01-linkfix-20261102/" npm run build:pages
+          test -s dist/index.html
+          grep -q 'phone-preview' dist/index.html
+          test -s dist/release.json
+      - name: Stage D01 without replacing production
+        run: |
+          mkdir -p production-source/dist/review/d01-linkfix-20261102
+          cp -a d01-source/dist/. production-source/dist/review/d01-linkfix-20261102/
+          test -s production-source/dist/index.html
+          test -s production-source/dist/preview/index.html
+          test -s production-source/dist/review/d01-linkfix-20261102/index.html
+          test -s production-source/dist/review/d01-20261102/index.html
+          test -s production-source/dist/review/d01-file-20261102/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production-source/dist
+      - name: Publish unchanged production plus all isolated reviews
+        uses: actions/deploy-pages@v4

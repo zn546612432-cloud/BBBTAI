@@ -234,3 +234,11 @@
 .app-noapp .s55-call-uninterruptible{color:#bec6d4;font-size:12px;text-align:center}
 .app-mirage .mc-story-incoming{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#102e2e;color:#b5eadc;padding:11px}
 .app-mirage .mc-story-incoming button{border:0;border-radius:9px;background:#2c9a76;color:white;padding:11px}
+
+
+/* Portuguese gloss stays hidden until the player chooses to expand it. */
+.app-noapp .tai-translation{margin:4px 1px 2px;max-width:290px;font-size:12px;color:#b8c9d8}
+.app-noapp .tai-translation summary{width:max-content;cursor:pointer;font-size:11px;color:#8db1c7;padding:5px 2px;list-style:none;user-select:none}
+.app-noapp .tai-translation summary:before{content:"译";display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid #63879b;border-radius:5px;margin-right:6px;font-size:10px}
+.app-noapp .tai-translation p{background:#223242;color:#d5e5ef;font-size:12px;line-height:1.55;padding:10px 12px;margin:4px 0;border-radius:11px}
+.app-noapp .tai-bond-debug{margin:12px 4px;font-size:11px;line-height:1.6;color:#7c8e9f}

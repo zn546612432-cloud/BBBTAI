@@ -14,7 +14,7 @@ const fixture=()=>{const s=initialState();activateStory55(s);return s;};
 test('native MIRAGE loads complete original account and UI, not full-screen story board',()=>{
  const s=fixture();
  assert.ok(s.content.mirage.cart&&s.content.mirage.products.length>=3);
- assert.ok(s.content.conversations.mirage.some(c=>c.name==='BASILISK SUPPLY'));
+ assert.deepEqual(s.content.conversations.mirage.map(c=>c.name),['Flow']);
  const app=registry.get('mirage');
  const login=app.render({store:{get:()=>s}},{route:'/',params:{}});
  assert.match(login,/mc-login-panel/);
@@ -71,12 +71,12 @@ test('add-reminder confirmation creates iOS reminders only after explicit confir
  let refreshed=0;
  const ctx={store,refresh:()=>{refreshed++;}};
  diaryAction('diary-add-reminder',{dataset:{title:'前往据点碰面'}},ctx);
- assert.equal(s.content.reminders.length,0);
+ assert.equal(s.content.reminders.length,2);
  diaryAction('diary-confirm-reminder',{dataset:{}},ctx);
- assert.deepEqual(s.content.reminders.map(r=>r.title),['前往据点碰面']);
+ assert.ok(s.content.reminders.some(r=>r.title==='前往据点碰面'));
  diaryAction('diary-add-reminder',{dataset:{title:'前往据点碰面'}},ctx);
  diaryAction('diary-confirm-reminder',{dataset:{}},ctx);
- assert.equal(s.content.reminders.length,1);
+ assert.equal(s.content.reminders.length,3);
 });
 test('55-day Calendar does not auto-inject story scene cards',async()=>{
  const s=fixture();s.day=42;

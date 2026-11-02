@@ -51,7 +51,7 @@ test('base deployment catches up missed batches, ends at exactly100 and writes c
  const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=3;s.day=24;
  for(let i=0;i<11;i++)runBatch(s,'base');
  assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);assert.throws(()=>startDeploymentStep(s,'base'),/已完成/);
- assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,story55Config(s).economics.openingBalance);assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
+ assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.ok(s.ghost.history.some(h=>h.orderId.startsWith('s55:wallet:')));assert.equal(s.bankData.balance,0); // D01 authored opening balance is zero.assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
 });
 test('failed game cannot increase progress; current batch remains resumable',()=>{
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;
@@ -77,7 +77,7 @@ test('expenses, scene loans, direct commissions and mercenary payments settle on
  previewNode55(s,'mercenary');s.bankData.balance=9999999;assert.throws(()=>payNode55(s,'mercenary'),/不足/);assert.equal(completed(s,'mercenary'),false);s.bankData.balance=10000000;payNode55(s,'mercenary');assert.equal(s.bankData.balance,0);assert.throws(()=>payNode55(s,'mercenary'));assert.equal(s.bankData.transactions.filter(x=>x.id==='s55-payment-mercenary').length,1);
 });
 test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits for final audio',()=>{
- const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'23:59');assert.equal(chargingBlock(s),'plot');
+ const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(chargingBlock(s),'plot');
  previewNode55(s,'ending');assert.equal(s.day,55);syncDeathNight(s);assert.equal(s.deathPhase,null);assert.equal(chargingBlock(s),'death');
  advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);s.clock='20:00'; // New focused D55 scene rehearsal after the skip-limit test.
  for(let i=0;i<100;i++){const state=s.story55.scenes.ending;const line=story55Config(s).scenes.ending[state?.index||0];if(line[0]==='watch')break;advanceScene55(s,'ending');}

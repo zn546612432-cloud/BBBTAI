@@ -1,4 +1,6 @@
 import {isStory55} from './services/story55/state.js';
+import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './story/d01/runtime.js';
+import {d01WeChatDue,tickD01WeChat} from './story/d01/wechat.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
@@ -249,6 +251,7 @@ function enterDigit(key){
       if(phoneBlocked(store.get()))return;
       const link=lockscreen.pendingLink,noticeId=pendingNoticeId;pendingNoticeId=null;lockscreen.reset();setShade({progress:0});entryAnimation=true;
       store.update(s=>{s.unlocked=true;});
+      if(store.get().story55?.version===1&&store.get().day===1&&!store.get().content.mail.some(m=>m.id==='d01-vulnerability-paid'))setTimeout(()=>{if(store.get().unlocked&&store.get().day===1)store.update(s=>deliverD01Opening(s));},3000);
       if(link)router.open(link);
       if(noticeId)readNotification(store,noticeId);
     },260);
@@ -304,7 +307,10 @@ setInterval(()=>{
 
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(d01WeChatDue(store.get()))store.update(s=>tickD01WeChat(s));
+ const d01=store.get().story55?.d01;
+ if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
+ if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
@@ -343,6 +349,7 @@ $('#root').addEventListener('click',async e=>{
   if(e.target.matches('.mc-login [data-mirage-account]')){registry.get('mirage')?.accountTap?.(e.target);return;}
   const target=e.target.closest('[data-action]');if(!target)return;
   const action=target.dataset.action;
+  if(action==='kira-d01-bank')e.preventDefault(); // In-app mail link must not navigate to #.
   try{
     if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
     if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.replace(restartState(store.get()));location.reload();return;}

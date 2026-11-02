@@ -52,7 +52,7 @@ test('unanswered chess invitation follows up once after four game hours even if 
 });
 test('NoApp text bubbles and voice speech tags have separate serialization',()=>{
  const text=unpackTaiReply({text:JSON.stringify({messages:[{text:'(breath)终于上线。\n\n你这效率。',mode:'text'}]})},'noapp');
- assert.equal(text.length,2);assert.deepEqual(text.map(x=>x.text),['终于上线。','你这效率。']);
+ assert.equal(text.length,2);assert.deepEqual(text.map(x=>x.text),['终于上线','你这效率']);
  const audio=unpackTaiReply({text:JSON.stringify({messages:[{text:'(chuckle) 真有趣。<#0.3#> 嗯。',mode:'voice'}]})},'noapp');
  assert.equal(audio.length,1);
  assert.equal(audio[0].speechText.includes('(chuckle)'),true);

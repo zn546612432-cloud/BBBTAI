@@ -29,11 +29,12 @@ test('character prompt respects one-line reply and permits topic autonomy and co
  assert.match(taiHumanPrompt({messages:[{role:'user',content:'在吗'}]}),/不是客服|话题自主性/);
  assert.doesNotMatch(taiHumanPrompt({messages:[{role:'user',content:'在吗'}]}),/刚过隧道|下午陪人看了场秀/);
 });
-test('long MiniMax sample includes natural three-beat cadence without random three laughs',()=>{
+test('Speech 2.8 avoids forced pauses and random laughs when punctuation is already natural',()=>{
  const speech=prepareXitaiSpeech('刚从外面回来，楼下那家咖啡馆今天竟然关门了，我在路边站了好一会儿，结果还是回酒店了。',{tone:'playful'});
- assert.ok(speech.prosodyBeats>=2);
- assert.ok(['fluent','calm'].includes(speech.emotion));
+ assert.ok(speech.prosodyBeats>=1);
+ assert.equal(speech.emotion,null);
+ assert.match(speech.text,/\(breath\)/);
  assert.doesNotMatch(speech.text,/\{\s*"text"|\[\s*\{/);
- assert.equal(prepareXitaiSpeech('嗯。',{tone:'soft'}).text,'嗯。');
+ assert.equal(prepareXitaiSpeech('嗯。',{tone:'soft'}).text,'(breath)嗯。');
  assert.equal(prepareXitaiSpeech('你到底在想什么？',{tone:'angry'}).emotion,'angry');
 });

@@ -36,6 +36,55 @@ jobs:
           PHONE_PREVIEW=true GITHUB_PAGES_BASE="/${{ github.event.repository.name }}/preview/" npm run build:pages
           mv dist production-dist/preview
           mv production-dist dist
+      # Each main release must retain separate, cache-versioned previews. Without
+      # this, the upload-pages-artifact action would erase every /review/ URL.
+      - name: Check out isolated story55 review
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: .review-sources/story55
+      - name: Check out isolated d03 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d03-flow-ghost-kira-20261101
+          path: .review-sources/d03
+      - name: Check out isolated d55 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d55-final-handoff-20261101
+          path: .review-sources/d55
+      - name: Check out isolated badges review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/ios-unread-home-badges-20261102
+          path: .review-sources/badges
+      - name: Check out isolated d01cross review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-cross-app-story-20261102
+          path: .review-sources/d01cross
+      - name: Check out isolated d01 review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-linked-story-20261102
+          path: .review-sources/d01
+      - name: Preserve isolated historical review sites
+        run: |
+          for spec in \
+            'story55:55-20261101' \
+            'd03:d03-flow-20261101' \
+            'd55:d55-finale-20261101' \
+            'badges:ios-badges-20261102' \
+            'd01cross:d01-cross-app-20261102' \
+            'd01:d01-20261102'; do
+            key="${spec%%:*}"
+            name="${spec#*:}"
+            (cd ".review-sources/$key"; npm ci; GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/$name/" npm run build:pages)
+            mkdir -p "dist/review/$name"
+            cp -a ".review-sources/$key/dist/." "dist/review/$name/"
+            test -s "dist/review/$name/index.html"
+            test -s "dist/review/$name/release.json"
+          done
       - name: Verify packaged image assets and release URLs
         run: |
           node --input-type=module <<'NODE'

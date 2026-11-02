@@ -30,6 +30,7 @@ export function currentScript55(s,channel,conversationId){
  const order=[...prioritized.map(id=>all.find(n=>n.id===id)).filter(Boolean),
    ...all.filter(n=>!prioritized.includes(n.id)).sort((a,b)=>a.day-b.day)];
  for(const n of order){
+  if(n.id==='intro'&&s.day===1&&!s.story55?.previewNode)continue;
   const t=threadForScene55(n.id);
   if(t.channel!==channel||t.conversationId!==conversationId)continue;
   if(n.id==='recognition'&&!s.story55.noappInstalled)continue;

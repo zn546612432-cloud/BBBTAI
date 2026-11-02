@@ -1,9 +1,11 @@
+import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
 import {WALLET_CHALLENGE_ID,completeWalletChallenge} from '../mirage/contacts-seed.js';
 import {defaultConfig} from './catalog.js';
-import {createBoard} from './games/logic.js';
+import {createBoard,connected} from './games/logic.js';
+import {pipeSolved} from './games/pipe-network.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
 export function configFor(s,type,id){return {...defaultConfig,...s.ghost?.config?.[type],...s.ghost?.orders?.[id]?.settings};}
 export function authorize(s,{orderId,mailId,type}){const g=ensureGhost(s);const selected=type||g.missionTypes?.[orderId]||'cipher';if(!g.orders[orderId])g.orders[orderId]={id:orderId,mailId,type:selected,key:'GH-'+orderId.replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase(),status:'authorized',attempts:0,settings:{...defaultConfig,...g.config[selected],...g.orderConfigs?.[orderId],...(linkedMission(s,orderId)?{retries:Number.MAX_SAFE_INTEGER}:{})}};return g.orders[orderId];}
@@ -42,11 +44,19 @@ export function nextGhostRound(s,id){
  if(o.type==='veil')Object.assign(o.board,{code:b.code,input:''});
  return true;
 }
-export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);o.moves=0;o.errors=0;return true;}
+export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;
+ if(id===D01_REPAIR){o.settings??={};o.settings.pipeNetwork=true;o.settings.pipeSize=[5,5,6,6,7][Math.min(4,Math.max(0,Number(s.story55?.d01?.completedRounds)||0))];o.settings.seconds=null;}
+ const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);o.moves=0;o.errors=0;return true;}
 export function finish(s,id,success,now=Date.now()){
  const g=ensureGhost(s),o=g.orders[id];
- if(!o||o.status!=='running')return;
+ if(!o||!['running','preview-win'].includes(o.status))return;
+ if(o.status==='preview-win'&&(!success||now<o.previewUntil))return;
  o.status=success?'success':'failed';
+ if(success&&id===D01_REPAIR){
+  finishD01Round(s);
+  // The solved GHOST artifact is the actual submission. No second email CTA.
+  if(s.story55?.d01?.completedRounds===5)submitD01Attachment(s);
+ }
  if(success&&o.story55Project)completeDeploymentRun(s,o);
  if(success&&o.story55Commission){o.status='paid';s.bankData.balance+=20000;s.bankData.transactions.unshift({id:o.id,label:'MIRAGE COMMISSION',amount:20000,time:s.clock});}
  g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});
@@ -56,9 +66,32 @@ export function finish(s,id,success,now=Date.now()){
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }
+// D01's final connected network must remain visible for three full seconds.
+// The saved absolute deadline survives app switches and page reloads.
+export function startD01PipePreview(s,id,now=Date.now()){
+ if(id!==D01_REPAIR)return false;
+ const o=s.ghost?.orders?.[id];
+ if(!o||o.status!=='running'||o.type!=='route')return false;
+ if(!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
+ o.status='preview-win';o.previewUntil=now+3000;
+ return true;
+}
+export function exitD01Puzzle(s,{discard=false}={}){
+ const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;
+ if(discard){run.status='authorized';run.board=null;run.deadline=null;run.moves=0;}
+ // The completed 20% checkpoints are stored separately and never rolled back.
+ return true;
+}
 export function submit(s,id,now=Date.now()){if(linkedMission(s,id))return false; // Linked jobs require an attached KIRA reply.
  const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
 export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(linkedMission(s,o.id))continue;if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;advanceLinkedMission(s,o.id,6);recordLinkedMissionPayment(s,o.id,reward,now);changed=true;}}}return tickLinkedContracts(s)||changed;}
 
-export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward));}
-export function advanceGhost(s,now=Date.now()){for(const o of Object.values(s.ghost?.orders||{}))if(o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline))finish(s,o.id,o.type==='strike',now);settle(s,now);}
+export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>o.status==='preview-win'&&now>=o.previewUntil||o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board)||o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward));}
+export function advanceGhost(s,now=Date.now()){for(const o of Object.values(s.ghost?.orders||{})){
+ // Repair persisted D01 puzzles that visibly connected the endpoints before
+ // the corrected rule shipped; the player does not need to rotate again.
+ if(o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board))startD01PipePreview(s,o.id,now);
+ if(o.status==='preview-win'&&now>=o.previewUntil){finish(s,o.id,true,now);continue;}
+ if(o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline))finish(s,o.id,o.type==='strike',now);
+ }
+ settle(s,now);}

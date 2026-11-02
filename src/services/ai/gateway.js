@@ -1,4 +1,5 @@
-import {prepareXitaiSpeech} from '../voice/voice-regex.js';
+import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
+import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
 import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
@@ -7,13 +8,14 @@ import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
 export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
 export function apiConfig(){
- try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceId:XITAI_VOICE_ID};}
+ try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceStyle:normalizeVoiceStyle(c.voiceStyle),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceStyle:'calm',voiceId:XITAI_VOICE_ID};}
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
  model:normalizeDeepSeekModel(config.model),
  region:config.region==='intl'?'intl':'cn',
  voiceId:XITAI_VOICE_ID,
+ voiceStyle:normalizeVoiceStyle(config.voiceStyle),
  ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd'};
  sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));return out;
 }
@@ -64,9 +66,18 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
 }
 export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
- const prepared=prepareXitaiSpeech(text,{tone,autoTags:true});
+ const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
  text=prepared.text;
- speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.78,Math.min(0.92,Number(speed))):Math.max(0.78,Math.min(0.92,prepared.speed));
+ speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.5,Math.min(2,Number(speed))):prepared.speed;
+ // A permanent calm emotion is intentional: missing emotion lets MiniMax
+ // re-infer an unstable voice based on individual lines.
+ // Code-switch to the provider's multilingual pronunciation mode only when
+ // actual Latin words occur outside native Speech 2.8 sound tags.
+ if(language==='Chinese'){
+  const spokenWithoutTags=text.replace(/\([a-z-]+\)/gi,'');
+  if(containsPortuguese(spokenWithoutTags)&&!/[\u3400-\u9fff]/u.test(spokenWithoutTags))language='Portuguese';
+  else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
+ }
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
@@ -81,7 +92,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:prepared.emotion},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
