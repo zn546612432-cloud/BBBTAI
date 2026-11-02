@@ -66,7 +66,10 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const c=apiConfig();
  const prepared=prepareXitaiSpeech(text,{tone,autoTags:true});
  text=prepared.text;
- speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.78,Math.min(0.92,Number(speed))):Math.max(0.78,Math.min(0.92,prepared.speed));
+ speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.5,Math.min(2,Number(speed))):prepared.speed;
+ // Code-switch to the provider's multilingual pronunciation mode only when
+ // actual Latin words occur outside native Speech 2.8 sound tags.
+ if(language==='Chinese'&&/\b[A-Za-z]{2,}\b/.test(text.replace(/\([a-z-]+\)/gi,'')))language='auto';
  if(!c.minimax){
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
@@ -81,7 +84,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:prepared.emotion},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,...(prepared.emotion?{emotion:prepared.emotion}:{})},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
