@@ -4,7 +4,7 @@ import {humanizeTaiText} from './humanize.js';
 import {safeTaiTranslation} from './portuguese.js';
 // Only a leading (phone) is an executable call request; middle-of-sentence
 // mentions are plain text, not commands. Both forms are always removed from UI.
-const phonePrefix=/^\s*(?:\(phone\)|（phone）)\s*/i;
+const phonePrefix=/^\s*(?:\(phone\)|（phone）)\s*\+?\s*/i;
 const phoneMarks=/\(phone\)|（phone）/gi;
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
 const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
@@ -57,7 +57,7 @@ export function unpackTaiReply(response,channel='noapp'){
  const normalized=entries.slice(0,6).flatMap(x=>{
   const raw=String(x?.text||'').trim().slice(0,3000);
   const phone=channel==='noapp'&&phonePrefix.test(raw);
-  const cleaned=raw.replace(phoneMarks,'').trim();
+  const cleaned=raw.replace(phonePrefix,'').replace(phoneMarks,'').trim();
   // A phone event is not a voice message; text after the command is the
   // *first phone utterance*, delivered only when the player answers.
   const mode=phone?'text':channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
