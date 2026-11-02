@@ -14,10 +14,11 @@ export const STORY55_NORMAL_MINUTES_PER_MS=1/3000;
 export const STORY55_CHAT_MINUTES_PER_MS=2/60000;
 const DAY_MINUTES=1440;
 export const clockMinutes=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
-export const absoluteMinute=s=>(s.day-1)*DAY_MINUTES+clockMinutes(s.clock);
+export const absoluteMinute=s=>(s.day-1)*DAY_MINUTES+clockMinutes(s.clock)+(isStory55(s)&&s.day===1&&s.story55?.d01?.nightPhase?DAY_MINUTES:0);
 const isoTime=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
 export function setAbsoluteMinute(s,minute){
  const elapsed=Math.max(0,Math.floor(minute));
+ if(isStory55(s)&&s.day===1&&elapsed>=DAY_MINUTES&&elapsed<=DAY_MINUTES+180){s.story55.d01.nightPhase=true;s.day=1;s.clock=isoTime(elapsed%DAY_MINUTES);return;}
  s.day=Math.floor(elapsed/DAY_MINUTES)+1;
  s.clock=isoTime(elapsed%DAY_MINUTES);
 }
@@ -43,18 +44,20 @@ export function advanceGameMinutes(s,requested){
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
+ const d01Clock=isStory55(s)&&s.day===1&&s.story55?.d01;
+ if(d01Clock){if(from>=1620)return {minutes:0,event:'d01-gate'};target=Math.min(target,1620);}
  if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
  if(target<=from)return {minutes:0};
  if(s.deathPhase==='draining'){
   const at=Math.min(target,DEATH_END);setAbsoluteMinute(s,at);syncDeathNight(s);
   return {minutes:at-from,event:at===DEATH_END?'death-off':'none'};
  }
- let stop={at:target,type:'none'};
+ let stop={at:target,type:d01Clock&&target===1620?'d01-gate':'none'};
  const alarm=nextAlarm(s,from,target);
  if(alarm&&alarm.at<=stop.at)stop={...alarm,type:'alarm'};
  if(s.powerMode==='sleeping'&&Number.isFinite(s.sleepWakeAt)&&s.sleepWakeAt<stop.at)stop={at:s.sleepWakeAt,type:'wake'};
  // Only an unplugged phone is driven to an emergency 1% at 03:00.
- if(!chargingBlock(s)&&s.powerMode!=='charging'&&s.powerMode!=='sleeping'){
+ if(!d01Clock&&!chargingBlock(s)&&s.powerMode!=='charging'&&s.powerMode!=='sleeping'){
   const at=nextClockOccurrence(from,'03:00');
   if(at<=stop.at)stop={at,type:'emergency'};
  }
@@ -87,8 +90,9 @@ export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
  if(endingAwaitingReply55(s))return STORY55_NORMAL_MINUTES_PER_MS;
+ const chatting=isStory55(s)&&/\x5e\/chat\//.test(s.nav?.current?.route||'')&&['wechat','mirage','messages','noapp'].includes(s.nav.current.appId);
  const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
- return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
+ return s.deathPhase==='draining'?normal:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):chatting?STORY55_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
