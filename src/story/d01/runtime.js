@@ -2,6 +2,7 @@
 export const D01_REPAIR='mirage001';
 export const D01_OPENING='d01-vulnerability-paid';
 export const D01_ATTACHMENT='d01-mirage001-attachment';
+export const D01_ATTACHMENT_BODY='尊敬的 Nyarlathotep：\\n\\n僱主已透過加密通道傳送本次委託所需的接入憑證。請於工作環境中完成部署。\\n\\n此郵件由 MIRAGE 系統自動發送。';
 export const D01_DONE='d01-mirage001-completed';
 export const D01_CONTACT='mc-rookery-13-d01';
 const onD01=s=>s.story55?.version===1&&s.day===1;
@@ -46,7 +47,7 @@ export function acceptD01Repair(s){
 }
 export function deliverD01Attachment(s){
  if(!s.story55?.d01?.repairAccepted)return false;
- return mail(s,D01_ATTACHMENT,'[MIRAGE] 訂單附件已送達','尊敬的 Nyarlathotep，僱主已投遞附件密鑰 mirage001，請查收。');
+ return mail(s,D01_ATTACHMENT,'[MIRAGE] 訂單附件已送達',D01_ATTACHMENT_BODY);
 }
 export function revealD01Key(s){const d=s.story55?.d01;if(!d?.repairAccepted||!s.content.mail.some(m=>m.id===D01_ATTACHMENT))return false;d.keyRevealed=true;return true;}
 export function deployD01(s){
@@ -77,6 +78,8 @@ export function settleD01Repair(s){
 }
 export function tickD01(s,now=Date.now()){
  const d=s.story55?.d01;if(!d)return false;
+ // Upgrade saves completed under the old manual 'submit attachment' UI.
+ if(d.completedRounds===5&&d.deployed&&!d.submitted&&!d.rewardPaid)return submitD01Attachment(s);
  if(d.repairAccepted&&!s.content.mail.some(m=>m.id===D01_ATTACHMENT)&&now>=Number(d.acceptedAt||now)+2000)return deliverD01Attachment(s);
  if(d.submitted&&!d.rewardPaid&&now>=Number(d.submittedAt||now)+2000)return settleD01Repair(s);
  return false;

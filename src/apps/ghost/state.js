@@ -1,4 +1,4 @@
-import {D01_REPAIR,finishD01Round} from '../../story/d01/runtime.js';
+import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -52,7 +52,11 @@ export function finish(s,id,success,now=Date.now()){
  if(!o||!['running','preview-win'].includes(o.status))return;
  if(o.status==='preview-win'&&(!success||now<o.previewUntil))return;
  o.status=success?'success':'failed';
- if(success&&id===D01_REPAIR)finishD01Round(s);
+ if(success&&id===D01_REPAIR){
+  finishD01Round(s);
+  // The solved GHOST artifact is the actual submission. No second email CTA.
+  if(s.story55?.d01?.completedRounds===5)submitD01Attachment(s);
+ }
  if(success&&o.story55Project)completeDeploymentRun(s,o);
  if(success&&o.story55Commission){o.status='paid';s.bankData.balance+=20000;s.bankData.transactions.unshift({id:o.id,label:'MIRAGE COMMISSION',amount:20000,time:s.clock});}
  g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});
