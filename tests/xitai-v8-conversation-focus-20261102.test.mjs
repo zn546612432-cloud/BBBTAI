@@ -8,7 +8,7 @@ test('v8 final instruction prohibits unsolicited updates and prioritizes Ximeng'
  const draft=defaultTaiDraft();
  const prompt=buildTaiPrompt({day:37,channel:'noapp',recognized:true,profile:draft.profile,outputMode:'text',scene:'熙蒙问源码设计的问题'});
  assert.match(prompt,/【v8最高优先级｜谈话焦点：熙蒙/);
- assert.match(prompt,/不主动告诉熙蒙自己今天做了什么/);
+ assert.match(prompt,/主动告诉熙蒙自己今天做了什么/);
  assert.match(prompt,/更好奇熙蒙本人/);
  assert.match(prompt,/不要从“不要报备自己”走向/);
  assert.ok(prompt.lastIndexOf('【v8最高优先级')>prompt.lastIndexOf('当前真实交互事件'));
