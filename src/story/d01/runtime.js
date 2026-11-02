@@ -46,7 +46,7 @@ export function acceptD01Repair(s){
 }
 export function deliverD01Attachment(s){
  if(!s.story55?.d01?.repairAccepted)return false;
- return mail(s,D01_ATTACHMENT,'[MIRAGE] 訂單附件已送達','尊敬的 Nyarlathotep，僱主已投遞附件密鑰 mirage001，請查收。');
+ return mail(s,D01_ATTACHMENT,'[MIRAGE] 訂單附件已送達','尊敬的 Nyarlathotep：\\n\\n僱主已透過加密通道傳送本次委託所需的接入憑證。請於工作環境中完成部署。\\n\\n此郵件由 MIRAGE 系統自動發送。');
 }
 export function revealD01Key(s){const d=s.story55?.d01;if(!d?.repairAccepted||!s.content.mail.some(m=>m.id===D01_ATTACHMENT))return false;d.keyRevealed=true;return true;}
 export function deployD01(s){
