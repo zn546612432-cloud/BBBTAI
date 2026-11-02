@@ -53,7 +53,7 @@ export function unpackTaiReply(response,channel='noapp'){
   const mode=channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
   const speechText=humanizeTaiText(String(x?.text||'').trim().slice(0,3000),{stripStage:false});
   const display=humanizeTaiText(cleanedText(speechText));
-  const tone=['dry','playful','soft','serious','neutral'].includes(x?.tone)?x.tone:'neutral';
+  const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
   if(!display)return [];
   // Free text is sent as distinct chat bubbles at semicolons and line breaks;
   // audio remains one uninterrupted speech segment.
