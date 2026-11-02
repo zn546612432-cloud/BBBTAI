@@ -1,7 +1,7 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
-import {ensureNativeMirage55} from '../../apps/mirage/data.js';
+import {ensureNativeMirage55,acceptStory55Wallet,STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {tickFlowD03} from './flow-d03.js';
 import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
@@ -112,6 +112,10 @@ export function tickStory55(s){
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
  ensureNativeMirage55(s);
+ // Earlier builds accepted D06 directly into GHOST without ever delivering
+ // the mandatory KIRA key. Repair only accepted, unfinished saves.
+ if(s.content.orders.some(o=>o.id===STORY55_BOUNTY_ID&&o.status==='ACCEPTED')
+    &&!s.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))acceptStory55Wallet(s);
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
