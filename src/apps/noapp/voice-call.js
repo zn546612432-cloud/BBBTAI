@@ -16,6 +16,7 @@ import {taiBehavior} from '../../services/ai/behavior.js';
 import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from '../../services/ai/conversation-momentum-v11.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -191,8 +192,13 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
   if(decision?.action==='listen'){endAfter=false;return;}
   if(decision){endAfter=decision.action==='hang_up';}
+  // Calls use natural successive spoken thoughts. Scripted openings, unclear
+  // audio and genuine hang-ups never get extra quota-generated speech.
+  const turnPlan=!opening&&!event&&!presetText&&!endAfter?sampleTaiTurnPlan({
+   random:Math.random,maxMessages:Math.min(5,taiBehavior(ctx.store.get()).maxMessages),messages:history,mode:'call'
+  }):null;
   const request={channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
-   behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
+   behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,turnPlan,
    relationshipContext,
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories};
   let data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:event==='unheard'?null:await askTai(request);
@@ -205,9 +211,16 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
    replies=unpackTaiReply(retry,'call');
   }
+  if(turnPlan&&taiTurnNeedsMore({plan:turnPlan,entries:replies,messages:history,action:'speak'})){
+   const remaining=turnPlan.target-replies.length;
+   const continuation=await askTai({...request,turnPlan:{...turnPlan,target:remaining},
+    scene:scene+' 【电话连贯表达】你已经讲出：'+replies.map(r=>r.text).join(' / ').slice(0,620)+'。继续这个具体话题，补'+remaining+'段自然有内容的说话，不重复上一段，不反复问熙蒙“还想听什么”；如果确实不想说可以真实收住，不强凑。'+(turnPlan.guide?'本轮30%引导型人格触发，请在回答后自然问一个根据熙蒙刚刚说过的具体事情产生的问题。':'')});
+   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
+   replies=mergeTaiTurnEntries(replies,unpackTaiReply(continuation,'call'),turnPlan.target);
+  }
   // The telephone is a conversation, not a list of standalone voice snippets.
   // Keep only a manageable number of meaningful turns before listening again.
-  const turns=replies.slice(0,4);
+  const turns=replies.slice(0,turnPlan?.target||4);
   for(const r of turns){
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)break;
    const speech=composeCallSpeech([r],taiBehavior(ctx.store.get()));
