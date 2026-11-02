@@ -132,7 +132,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // AND Tai's last emitted message commits to calling immediately.
   const delivered=conversation(store.get())?.messages.filter(m=>m.replySourceId===sourceMessageId&&m.from==='tai')||[];
   if(emitted&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered,alreadyCalled:store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId)})){
-   const started=startIncoming({store},'陈熙泰发起语音通话');
+   const reason='【刚才的通话约定】熙蒙刚刚说「'+String(lastUser).slice(0,140)+'」，你在文字里明确答应「'+String(delivered.at(-1)?.text||'').slice(0,120)+'」。现在电话已经接通，请自然承接这个正在发生的话题，而不是重新开一场陌生人的对话。';
+   const started=startIncoming({store},'陈熙泰发起语音通话',{reason});
    if(started)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock}));
   }
   if(voiceJobs.length){
