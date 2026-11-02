@@ -12,6 +12,9 @@ export const TAI_TURN_WEIGHTS=Object.freeze([
  Object.freeze({count:'4-5',weight:30})
 ]);
 export const TAI_GUIDE_CHANCE=0.30;
+// 40% of non-scripted NoApp TEXT replies may be written as one semicolon-separated burst.
+// The program then splits the text into real, separately paced message bubbles.
+export const TAI_SEMICOLON_BURST_CHANCE=0.40;
 const total=TAI_TURN_WEIGHTS.reduce((sum,x)=>sum+x.weight,0);
 const stop=/^(?:不聊了|别说了|闭嘴|别烦我|别问了|先别聊|不想聊|不用回复|不用回|晚安|去睡了|再见|拜拜|挂了|我要挂了|先挂了)[！!。\s]*$/;
 const nowish=/^(?:在吗|hi|hello|hey|嗨|你好|嗯|哦|喂)[？！!?。\s]*$/i;
@@ -45,8 +48,13 @@ export function sampleTaiTurnPlan({
  // a long burst need not be a question, and a one-line question is valid.
  const eligible=taiGuideEligible(messages,{mode});
  const guide=clampRandom(random())<TAI_GUIDE_CHANCE&&eligible;
- return {target:Math.min(Math.max(1,Math.round(Number(maxMessages)||5)),count),guide,mode,eligible,
-  weight:chosen.weight,requested:chosen.count};
+ const cap=Math.min(5,Math.max(1,Math.round(Number(maxMessages)||5)));
+ // Draw independently of v12 length and guidance; the 40% branch genuinely
+ // permits a multi-bubble burst (even when the previous draw was one line).
+ // Respect a developer's explicit maxMessages=1 restriction.
+ const semicolonBurst=mode==='text'&&cap>=2&&clampRandom(random())<TAI_SEMICOLON_BURST_CHANCE;
+ return {target:Math.min(cap,semicolonBurst?Math.max(2,count):count),guide,mode,eligible,
+  semicolonBurst,weight:chosen.weight,requested:chosen.count};
 }
 export function taiTurnShapePrompt(plan,{continued=false}={}){
  if(!plan||plan.target<1)return '';
@@ -57,6 +65,7 @@ export function taiTurnShapePrompt(plan,{continued=false}={}){
   '每个 messages 元素只装一条独立内容；短句与有信息量的长句混合。避免同义重复、复制上一条的态度、一个完整句子机械切成许多无意义碎片。没被询问时不主动汇报行程。',
   '这是表达风格的抽签，不覆盖剧情锁、真实拒绝、紧急挂断、已读不回和“别再聊了”等边界；真正决定不回复时行为层根本不会进入这里。'
  ];
+ if(plan.semicolonBurst&&plan.mode==='text')parts.push('【v13｜40%分号连发模式已触发】这一轮请优先返回一个JSON对象，messages数组中只有一个元素，mode=text，text写成'+plan.target+'段有不同信息的自然口语，使用中文全角分号「；」连接。游戏会按分号分成'+plan.target+'条真正独立、依次出现的聊天气泡。段落要承上启下，长短交错，不要把同一句话换个说法再讲一遍；不需要在气泡里写角色名、JSON或动作标签。避免把一个正在讲的完整事实机械重复两次。不得把分号当做剧情触发标记。');
  if(plan.guide)parts.push('【本轮30%引导型人格已经触发】先接住熙蒙的真实提问或情绪，然后选一个令熙泰本人感兴趣、和对方刚才提供的真实事实有关的细节，主动抛出自然且具体的问题，引导哥哥接着谈。疑问可以带有毒舌、兴趣、好奇、挑衅或罕见的关心，但不能空泛地问“你在干什么”“还有呢”或重复对方已经回答的事。不要为了反问而忽略刚才的问题。');
  else parts.push('【本轮未触发主动引导】照样有温度、有主见、有趣，不用强制提出问题；可以自然补充观点、戏谑、讲完整事情或收尾。');
  if(continued)parts.push('本轮是补齐已有表达，不要重发已拟好的消息，不要新造无关话题。');
