@@ -22,7 +22,7 @@ test('D01 WeChat group remains silent until player sends, then shows timed NPC a
  tickD01(s,now+3000);
  assert.equal(group.messages.at(-1).from,'小辛');
  assert.match(group.messages.at(-1).text,/蒙蒙哥怎麼|蒙蒙哥怎么/);
- tickD01(s,now+4000);tickD01(s,now+7000);tickD01(s,now+9000);
+ tickD01(s,now+4000);tickD01(s,now+7000);tickD01(s,now+9000);tickD01(s,now+11000);
  const line=currentScript55(s,'wechat','group');
  assert.equal(line?.id,'d01-group');
  assert.equal(line?.kind,'me');
