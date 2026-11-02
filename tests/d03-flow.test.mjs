@@ -12,20 +12,22 @@ import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {renderFlowD03} from '../src/apps/ghost/features/flow-d03/index.js';
 
 const newPhone=()=>{const s=initialState();activateStory55(s);completeNode(s,'intro');return s;};
-const atInvite=s=>{s.day=3;s.clock='09:00';tickFlowD03(s);};
+const atInvite=s=>{s.day=3;s.clock='08:15';tickFlowD03(s);};
 const contact=s=>s.content.conversations.mirage.find(c=>c.id===FLOW_CONTACT);
 
-test('D01 history is visible; 09:00 D03 invite only once, with a deep-link notice',()=>{
+test('D01 history is visible; 08:15 D03 invite only once, with a deep-link notice',()=>{
  const s=newPhone();
  ensureFlowHistory(s);ensureFlowHistory(s);
  const older=contact(s).messages.filter(m=>m.sentDate==='2025-04-10');
  assert.equal(older.length,6);
  assert.match(older.at(-1).text,/开发个工具/);
- s.day=3;s.clock='08:59';assert.equal(tickFlowD03(s),false);
+ s.day=3;s.clock='08:14';assert.equal(tickFlowD03(s),false);
  assert.equal(contact(s).messages.some(m=>m.id===FLOW_INVITE),false);
  s.clock='09:00';assert.equal(tickFlowD03(s),true);
  assert.equal(tickFlowD03(s),false);
  assert.equal(contact(s).messages.filter(m=>m.id===FLOW_INVITE).length,1);
+ assert.equal(contact(s).messages.find(m=>m.id===FLOW_INVITE).time,'08:15');
+ assert.equal(s.notifications.find(n=>n.id==='flow-d03-mirage-invite').clock,'08:15');
  assert.equal(s.notifications.filter(n=>n.id==='flow-d03-mirage-invite').length,1);
  assert.equal(s.notifications.find(n=>n.id==='flow-d03-mirage-invite').link.route,'/chat/'+FLOW_CONTACT);
 });
