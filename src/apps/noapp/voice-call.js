@@ -97,13 +97,14 @@ export function callView(s){
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
    '</section>';
 }
-export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=''}={}){
+export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText=''}={}){
  if(!taiRecognized(ctx.store.get())||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
- call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,reason:reason||(/邀请你语音|语音通话/.test(preview)?'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事':preview)};
+ call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事':preview)};
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
+ ctx.refresh?.();
  const missedTimer=setTimeout(()=>{
   if(call.sessionId!==sessionId||call.state!=='ringing')return;
   call.state='missed';callSerial++;
@@ -170,7 +171,7 @@ export function callScene({opening=false,event='',direction='outgoing',reason=''
  if(event==='closing')return '追问之后对方仍很久没说话。自然问一句还有事吗，或说自己困了/先去忙、要挂了；说完才结束通话，不用长篇解释。';
  return '熙蒙刚在电话里讲了话，先准确理解他问了什么、吐槽了什么，承接上一句话的具体意思。先给有意义的回应，有兴致才补充或调戏；不要不断自夸、突然攻击或生硬装腔。每一轮是一个前后连贯的想法，可以只有一段，也可以自然分两段，但不要把完整一句硬拆成没头没尾的句子。';
 }
-async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}={}){
+async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,presetText=''}={}){
  if(call.state!=='connected'||call.busy)return;
  const sessionId=call.sessionId;
  const requestDay=ctx.store.get().day;
@@ -181,7 +182,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
   const history=call.turns.slice(-20);
   const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+' 本次电话台词要求：说得通、接得上、符合当前亲密程度。若熙蒙表达不理解，要针对刚才实际说过的话解释或收回，不要抽象争辩；不虚构他刚说了别的话。调戏是有情境的聪明打趣，不是无缘无故自恋、羞辱或堆砌攻击性。';
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
-  const data=event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
+  const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
    behavior:taiBehavior(ctx.store.get()),
    relationshipContext:xitaiRelationshipContext(ctx.store.get(),{mode:'call'}),
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
@@ -237,7 +238,7 @@ async function respond(text,ctx){return generateTurn(ctx,{text});}
 function startGreeting(ctx){
  if(call.state==='connected'&&!call.greeted){
   call.greeted=true;
-  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true});});
+  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.openingText||''});});
  }
 }
 export function submitCall(form,ctx){
