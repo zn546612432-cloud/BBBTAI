@@ -32,7 +32,7 @@ export function isCurrentTaiTurn(s,sourceMessageId,day){
 // Recover persisted deferrals after a page reload while the game is active.
 // Real time is persisted on the source message, but NO background web worker is used.
 const deferredResumes=new WeakSet(),deferredFailures=new WeakMap();
-export function maybeResumeTaiDeferred(store,{now=Date.now}={}){
+export function maybeResumeTaiDeferred(store,{now=Date.now,wait}={}){
  const current=store.get(),c=conversation(current);
  if(!c||deferredResumes.has(store)||pendingRequests.has(store)||now()<(deferredFailures.get(store)||0))return false;
  if(!taiRecognized(current)||deathLocked(current)||current.poweredOff||current.powerMode!=='idle')return false;
@@ -41,11 +41,11 @@ export function maybeResumeTaiDeferred(store,{now=Date.now}={}){
  const presence=taiPresence(current);
  if(!presence.contactable||presence.status==='away')return false;
  deferredResumes.add(store);
- void replyToTaiMessage(store,source.id,{retryDeferred:true,now}).catch(error=>{
+ const task=replyToTaiMessage(store,source.id,{retryDeferred:true,now,...(wait?{wait}:{})}).catch(error=>{
   deferredFailures.set(store,now()+60000);
   console.warn('Tai persisted deferred reply retry failed:',error?.message);
  }).finally(()=>deferredResumes.delete(store));
- return true;
+ return task;
 }
 
 let ttsQueue=Promise.resolve();
