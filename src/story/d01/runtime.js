@@ -36,7 +36,10 @@ export function claimD01Bank(s){
  return true;
 }
 export function acceptD01Repair(s){
- if(!onD01(s))return false;
+ // An OPEN D01 contract can remain in a player's saved phone after the day advances.
+ // Accept the existing contract during the 55-day campaign rather than silently
+ // rejecting taps solely because the current day is no longer D01.
+ if(s.story55?.version!==1)return false;
  const o=s.content.orders.find(o=>o.id===D01_REPAIR);
  if(!o||o.status!=='OPEN')return false;
  o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;d.acceptedAt=Date.now();
