@@ -58,6 +58,12 @@ export function finish(s,id,success,now=Date.now()){
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }
+export function exitD01Puzzle(s,{discard=false}={}){
+ const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;
+ if(discard){run.status='authorized';run.board=null;run.deadline=null;run.moves=0;}
+ // The completed 20% checkpoints are stored separately and never rolled back.
+ return true;
+}
 export function submit(s,id,now=Date.now()){if(linkedMission(s,id))return false; // Linked jobs require an attached KIRA reply.
  const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
 export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(linkedMission(s,o.id))continue;if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;advanceLinkedMission(s,o.id,6);recordLinkedMissionPayment(s,o.id,reward,now);changed=true;}}}return tickLinkedContracts(s)||changed;}
