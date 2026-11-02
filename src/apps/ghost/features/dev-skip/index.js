@@ -4,8 +4,9 @@ import {D01_REPAIR} from '../../../../story/d01/runtime.js';
 import {startD01PipePreview} from '../../state.js';
 
 export function ghostDevSkipAvailable(doc=globalThis.document,s=null){
- return doc?.querySelector?.('meta[name="phone-preview"]')?.content==='true'
-   || s?.editor?.ghostSkipEnabled===true;
+ // Explicit developer preference wins, including switching the preview OFF.
+ if(typeof s?.editor?.ghostSkipEnabled==='boolean')return s.editor.ghostSkipEnabled;
+ return doc?.querySelector?.('meta[name="phone-preview"]')?.content==='true';
 }
 
 // Simulate a legitimate completed LINK board and reuse the exact 3-second
