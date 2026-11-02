@@ -44,6 +44,9 @@ export function ensureTaiDraft(s){
  for(const field of taiProfileFields)if(typeof s.aiDraft.profile[field.key]!=='string'){s.aiDraft.profile[field.key]=field.text;changed=true;}
  // Migrate only the exact former default; do not silently overwrite custom edits.
  if(s.aiDraft.profile.speech==="纯文字台词，禁止动作、神态、心理旁白与舞台说明。每句话有完整语法结构，以连贯长句、复合句和有依据的反问表达，不用网络用语、缩字、碎片或三个字以内独立句。语音也只写可直接朗读台词，声音控制交给发声层。"){s.aiDraft.profile.speech=defaults.profile.speech;changed=true;}
+ // Migrate only the previous shipped default; preserve every author-customized interaction field.
+ const legacyInteraction='健身、学习、旅行、看秀、酒店、美食、小酌、电影与自己的判断都可以主动完整分享。承接当前生活记录与时区，不每轮谈代码，不照抄情境范例。若当下确实决定马上打电话，应给出明确的口头承诺，由程序进行来电；不能假称已成功拨号或替游戏执行转账与任务。';
+ if(s.aiDraft.profile.interaction===legacyInteraction){s.aiDraft.profile.interaction=defaults.profile.interaction;changed=true;}
  if(!Array.isArray(s.aiDraft.memories)){s.aiDraft.memories=[];changed=true;}
  if(!Array.isArray(s.aiDraft.testTurns)){s.aiDraft.testTurns=[];changed=true;}
  return changed;
