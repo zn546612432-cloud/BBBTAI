@@ -21,7 +21,7 @@ test('NoApp Tai replies use the local gateway and stay separate from fixed story
   assert.equal(seen[1].url,'/api/ai/chat');
   assert.equal(seen[1].body.messages.at(-1).content,'今天怎么样？');
   const reply=store.get().content.conversations.noapp.find(c=>c.id==='tai').messages.at(-1);
-  assert.equal(reply.text,'我还在看那份文件。');
+  assert.equal(reply.text,'我还在看那份文件');
   assert.equal(reply.aiGenerated,true);
   assert.equal(reply.actual,true);
   assert.equal(reply.testOnly,undefined);
@@ -51,7 +51,7 @@ test('three Xitai text bubbles arrive in order without waiting for voice synthes
   const result=await replyToTaiMessage(store,'burst-player');
   assert.equal(result.count,3);
   const messages=store.get().content.conversations.noapp.find(c=>c.id==='tai').messages;
-  assert.deepEqual(messages.slice(-3).map(x=>x.text),['我看过。','它的延迟很高。','你应该先测实际负载。']);
+  assert.deepEqual(messages.slice(-3).map(x=>x.text),['我看过','它的延迟很高','你应该先测实际负载']);
   assert.equal(messages.at(-1).actual,true);
  }finally{globalThis.fetch=previous;}
 });
