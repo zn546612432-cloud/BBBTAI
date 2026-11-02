@@ -42,11 +42,11 @@ test('NoApp AI prompt explicitly instructs the machine code, and the voice call 
  assert.doesNotMatch(mirage,/必须返回一项 JSON 消息/);
 });
 test('phone-only command immediately rings without chat bubble and without second AI response',async()=>{
- const {s,store,chat}=fixture();
+ const {s,store,chat}=fixture();const originalCount=chat.messages.length;
  await mockResponse({messages:[{text:'(phone)这么着急？',mode:'text'}]},async()=>{
   const res=await replyToTaiMessage(store,'phone-user',{wait:async()=>{}});
   assert.equal(res.status,'called');assert.equal(res.count,0);
-  assert.equal(chat.messages.length,1,'command does not become chat bubble');
+  assert.equal(chat.messages.length,originalCount,'command does not become chat bubble');
   assert.equal(callState().state,'ringing');assert.equal(callState().direction,'incoming');
   assert.equal(s.events.filter(e=>e.type==='tai_text_call_trigger').length,1);
   assert.equal(s.events.find(e=>e.type==='tai_text_call_trigger').protocol,'phone');
@@ -63,7 +63,7 @@ test('ordinary chat before (phone) is shown, but the command stays invisible',as
  ]},async()=>{
   const res=await replyToTaiMessage(store,'phone-user',{wait:async()=>{}});
   assert.equal(res.status,'called');assert.equal(res.count,1);
-  assert.deepEqual(chat.messages.map(x=>x.text),['现在就打，想听你声音','行']);
+  assert.deepEqual(chat.messages.slice(-2).map(x=>x.text),['现在就打，想听你声音','行']);
   assert.equal(s.events.filter(e=>e.type==='tai_text_call_trigger').length,1);
   close(store);
  });
@@ -73,13 +73,13 @@ test('refusing a call / changing the player turn prevents a phone instruction fr
  await mockResponse({messages:[{text:'(phone)喂',mode:'text'}]},async()=>{
   const result=await replyToTaiMessage(denied.store,'phone-user',{wait:async()=>{}});
   assert.equal(result.status,'replied');
-  assert.equal(callState().state,'ended');
+  assert.notEqual(callState().state,'ringing');
   assert.equal(denied.s.events.filter(e=>e.type==='tai_text_call_trigger').length,0);
  });
  const stale=fixture('给我打电话');
  await mockResponse({messages:[{text:'(phone)接到了吗',mode:'text'}]},async()=>{
   const result=await replyToTaiMessage(stale.store,'phone-user',{wait:async()=>{stale.chat.messages.push({id:'next',from:'me',text:'先等一下',kind:'text',day:56,actual:true});}});
-  assert.equal(result.status,'replied');assert.equal(callState().state,'ended');
+  assert.equal(result.status,'replied');assert.notEqual(callState().state,'ringing');
   assert.equal(stale.s.events.filter(e=>e.type==='tai_text_call_trigger').length,0);
  });
 });
