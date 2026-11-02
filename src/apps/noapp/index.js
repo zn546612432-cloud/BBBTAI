@@ -33,7 +33,7 @@ function queueTaiReply(ctx,messageId){
   pendingTai=null;
   try{
    showFeedback(ctx,'熙泰正在输入…');
-   const result=await replyToTaiMessage(ctx.store,messageId);
+   const result=await replyToTaiMessage(ctx.store,messageId,{refresh:()=>ctx.refresh()});
    if(version!==replyVersion)return;
    if(result.status==='busy'){pendingTai=setTimeout(run,500);return;}
    showFeedback(ctx,result.status==='offline'||result.status==='unavailable'?result.message:'');
