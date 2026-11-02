@@ -97,10 +97,10 @@ export function callView(s){
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
    '</section>';
 }
-export function startIncoming(ctx,preview='熙泰邀请你语音通话'){
+export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=''}={}){
  if(!taiRecognized(ctx.store.get())||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
- call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,reason:/邀请你语音|语音通话/.test(preview)?'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事':preview};
+ call={state:'ringing',sessionId,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,reason:reason||(/邀请你语音|语音通话/.test(preview)?'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事':preview)};
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · 陈熙泰',body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
@@ -161,13 +161,14 @@ async function playCallAudio(ctx,blob,sessionId){
  });
 }
 export function callScene({opening=false,event='',direction='outgoing',reason=''}={}){
+ if(opening&&direction==='incoming'&&reason.startsWith('【刚才的通话约定】'))return '你是陈熙泰，电话现在已接通。刚才是熙蒙主动请求听你说话，你也明确答应现在拨号。'+reason+' 这是你兑现承诺的第一句话，不要说自己又准备打电话、不问他为什么打给你，不要没来由地夸自己的声音或发明他刚说的话。可以先短短逗他一句，再关心他在做什么，留给他接话的空隙。';
  if(opening)return direction==='incoming'
   ?'电话刚接通，是你陈熙泰主动拨给熙蒙的。先说明自己为何找他：'+(reason||'从当前生活或未完话题里选一件具体想分享、想问或想听他回应的事')+'。不要反问他为什么给你打电话，不要说他这通电话打断了你。'
   :'电话刚接通，是熙蒙拨给你。按自己的当下状态开口，可以忙、困、好奇或高兴，别默认责备他打扰。';
  if(event==='unheard')return '刚才熙蒙试着说话，但这段语音未能识别，没有任何可用内容。你只知道没听清，不能猜他的话；简短问一句或两句让他再说一次，不谈ASR、权限、浏览器或技术接口。';
  if(event==='nudge')return '上一段已经说完，熙蒙在电话里一直安静。先依据前文问怎么了、是不是有事；如果刚在亲密调情，可带一点坏心思问是不是想你、怎么不肯说。不要默认他生气，不要催三遍。';
  if(event==='closing')return '追问之后对方仍很久没说话。自然问一句还有事吗，或说自己困了/先去忙、要挂了；说完才结束通话，不用长篇解释。';
- return '熙蒙刚在电话里讲了话，按关系、当前生活与前文自然回应。每个消息是一句或一小段能独立说完的话，留下轮流说话的空隙。';
+ return '熙蒙刚在电话里讲了话，先准确理解他问了什么、吐槽了什么，承接上一句话的具体意思。先给有意义的回应，有兴致才补充或调戏；不要不断自夸、突然攻击或生硬装腔。每一轮是一个前后连贯的想法，可以只有一段，也可以自然分两段，但不要把完整一句硬拆成没头没尾的句子。';
 }
 async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}={}){
  if(call.state!=='connected'||call.busy)return;
@@ -178,7 +179,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
  call.busy=true;markTaiEngaged();ctx.refresh();
  try{
   const history=call.turns.slice(-20);
-  const scene=callScene({opening,event,direction:call.direction,reason:call.reason});
+  const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+' 本次电话台词要求：说得通、接得上、符合当前亲密程度。若熙蒙表达不理解，要针对刚才实际说过的话解释或收回，不要抽象争辩；不虚构他刚说了别的话。调戏是有情境的聪明打趣，不是无缘无故自恋、羞辱或堆砌攻击性。';
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const data=event==='unheard'?null:await askTai({channel:'noapp',day:requestDay,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
    behavior:taiBehavior(ctx.store.get()),
