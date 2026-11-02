@@ -149,6 +149,12 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    expected=id;emitted++;
   }
   if(voiceJobs.length)void synthesizeVoiceNotes(store,voiceJobs).catch(error=>console.warn('Tai proactive voice failed:',error?.message));
+  if(emitted>0)store.update(s=>{
+   s.events??=[];
+   s.events.push({type:'tai_v12_turn_plan',channel:'text',day:s.day,clock:s.clock,
+    sourceId:source?.id||'proactive',target:turnPlan.target,guided:turnPlan.guide,
+    emitted,receivedAt:now(),proactive:true});
+  });
   return emitted>0;
  }catch(e){errors.set(store,now());if(force)throw e;console.warn('Xitai proactive message skipped:',e?.message);return false;}
  finally{inFlight.delete(store);}
