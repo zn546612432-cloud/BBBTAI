@@ -16,6 +16,7 @@ import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} fro
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest} from './voice-request-v11.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiTurnShapePrompt} from './conversation-shape-v12.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -138,6 +139,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const actualDecision=decision?.action==='start_call'?null:decision;
   if(actualDecision){request.approvedDecision=actualDecision;
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
+  // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
+  // a scripted message, an unheard voice, or an explicit call request.
+  const turnPlan=!unheard&&!requestedCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+   mode:request.outputMode==='voice'?'voice':'text'}):null;
+  if(turnPlan)request.turnPlan=turnPlan;
   if(!unheard)onTyping();
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
@@ -155,6 +161,17 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 你上一稿又只用很短的反问或推脱把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。他已经反复追问你的私事。你可以嘴硬、打趣，但请在这一轮提供至少一点具体、可继续聊的内容，或认真说清不愿讲的原因，不要机械复读。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=unpackTaiReply(retry,'noapp');
+  }
+  if(turnPlan&&taiTurnNeedsMore({plan:turnPlan,entries:draftEntries,messages,
+   action:actualDecision?.action==='send_voice'?'send_voice':'send_text'})){
+   // One meaningful continuation attempt. Avoid manufactured filler when the
+   // actor has drawn a boundary; don't make more than one extra provider call.
+   const remaining=turnPlan.target-draftEntries.length;
+   const already=draftEntries.map(x=>x.text).join(' / ').slice(0,650);
+   const continuation=await askTai({...request,turnPlan:{...turnPlan,target:remaining},
+    scene:request.scene+' 【本轮自然连发补充】已经拟好并保留的台词：'+already+'。接着这几句再补'+remaining+'条新内容，不重复旧句，不自发报备行程。'+(turnPlan.guide?'本轮引导型人格已触发；前面还没顺势问出具体问题的话，请把一条自然好奇的问题放在补充内容里。':'')+' 如果确实已经结束、需要保护隐私或熙蒙要求别聊，就只输出自然边界，无须凑数。'});
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
+   draftEntries=mergeTaiTurnEntries(draftEntries,unpackTaiReply(continuation,'noapp'),turnPlan.target);
   }
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
