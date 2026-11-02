@@ -157,7 +157,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    store.update(s=>{
     const target=conversation(s);if(!target)return;
     const msg={id,from:'tai',text:item.text,kind:'text',
-      aiTone:item.tone,vocalCue:item.vocalCue||actualDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
+      aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
       aiGenerated:true,actual:true,receivedAt:now(),replySourceId:sourceMessageId,voiceRequested:item.mode==='voice',...(item.translation?{translation:item.translation}:{})};
     target.messages.push(msg);
     if(!isConversationOpen(s,'noapp','tai')){
