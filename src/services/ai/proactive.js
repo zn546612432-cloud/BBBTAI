@@ -9,6 +9,7 @@ import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {taiPresence} from '../presence.js';
 import {visibleMessages,isConversationOpen} from '../messaging/delivery.js';
+import {combineTaiVoiceThoughts} from './voice-request-v11.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 export const TAI_OUTREACH_DAYS=[57,60,64,68,71,75,79,83,87];
 export const TAI_CALL_DAYS=[63,73,81];
@@ -122,6 +123,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    const candidate=unpackTaiReply(r3,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)items=taiIntegrateGuidingQuestion(items,candidate,turnPlan.target);
   }
+  if(approvedDecision?.action==='send_voice')items=combineTaiVoiceThoughts(items);
   let expected=history(initial).at(-1)?.id,emitted=0;
   const voiceJobs=[];
   for(const item of items){
