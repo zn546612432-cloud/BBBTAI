@@ -23,7 +23,7 @@ test('v8 high priority survives an old user-authored preference for autobiograph
 
 test('topic gate focuses on mentioned activities instead of inventing self updates',()=>{
  const p=taiTopicGate([{role:'user',content:'我把昨天的代码改好了'}]);
- assert.match(p,/熙蒙.*更好奇/);
+ assert.match(p,/更好奇熙蒙/);
  assert.match(p,/熙蒙最近提过代码和技术/);
  assert.match(p,/熙蒙明确问起熙泰的近况才酌情回答/);
  assert.doesNotMatch(p,/改聊自己的近况/);
