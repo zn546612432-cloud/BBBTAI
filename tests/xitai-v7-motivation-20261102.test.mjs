@@ -5,7 +5,7 @@ import {XITAI_MOTIVATION_WORLDBOOK_V7} from '../src/services/ai/character-motiva
 
 test('v7 brother ranking, curiosity and technical admiration reach the live prompt',()=>{
  const prompt=buildTaiPrompt({day:15,channel:'mirage',recognized:false,profile:defaultTaiDraft().profile});
- for(const item of ['v7 动机与关系补充','熙泰是三胞胎里的弟弟','源代码独立创造新工具','惺惺相惜','里斯本有庄园','不喜欢主动交代自己今天在哪里']){
+ for(const item of ['v7 动机与关系补充','熙泰是三胞胎里的弟弟','源代码独立创造新工具','惺惺相惜','里斯本有庄园','不会主动讲自己今天在哪里']){
   assert.ok(prompt.includes(item),item);
  }
  assert.match(prompt,/公开范围：尚未相认/);
