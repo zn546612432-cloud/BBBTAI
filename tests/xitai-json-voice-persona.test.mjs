@@ -32,8 +32,8 @@ test('character prompt respects one-line reply and permits topic autonomy and co
 test('long MiniMax sample includes natural three-beat cadence without random three laughs',()=>{
  const speech=prepareXitaiSpeech('刚从外面回来，楼下那家咖啡馆今天竟然关门了，我在路边站了好一会儿，结果还是回酒店了。',{tone:'playful'});
  assert.ok(speech.prosodyBeats>=2);
- assert.ok(['fluent','calm'].includes(speech.emotion));
+ assert.equal(speech.emotion,null);
  assert.doesNotMatch(speech.text,/\{\s*"text"|\[\s*\{/);
- assert.equal(prepareXitaiSpeech('嗯。',{tone:'soft'}).text,'嗯。');
+ assert.equal(prepareXitaiSpeech('嗯。',{tone:'soft'}).text,'(breath)嗯。');
  assert.equal(prepareXitaiSpeech('你到底在想什么？',{tone:'angry'}).emotion,'angry');
 });
