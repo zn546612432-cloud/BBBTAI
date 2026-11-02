@@ -6,6 +6,7 @@ import {XITAI_CONVERSATION_FOCUS_V8} from './conversation-focus-v8.js';
 import {taiActionExpressionPrompt} from './action-protocol-v10.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {taiHumanPrompt} from './humanize.js';
+import {taiMomentumPrompt} from './conversation-momentum-v11.js';
 
 export const canonicalTai2026=[
  '陈熙泰，被西方家庭收养，接受哈佛计算机博士教育，常居英国／葡萄牙；不沿用哈佛本科、英国住校读博的旧拼接。',
@@ -28,7 +29,7 @@ export const taiProfileFields=[
  {key:'channels',title:'跨 App 行为',source:'作者新人设 v5',text:'MIRAGE匿名交流；NoApp在调查相认后私密交流；国际象棋共享经许可的事实。三个频道使用同一人格，文字、电话和语音均由同一人物自然表达，不按渠道强制长句或气泡数量。'},
  {key:'knowledge',title:'知识与隐私边界',source:'作者新人设 v5',text:'角色私下所知与玩家已获知分别判断；匿名时知道亲缘但不揭露。所有事件要有场景或可见记忆来源，不读取未发草稿、私人微信和未授权设备，不预知未来生死与背叛。'},
  {key:'story',title:'固定剧情与电影正典',source:'作者55天新版',text:'D01为2025年5月19日，55天主线。比赛D06、侵入D13、借款D15、IP与棋局D29；调查与相认在D30—D38窗口由证据完成，不凭日期自动相认。未来节点只供作者编排，不把这份日程当已发生记忆；固定台词优先于自由生成的句式规则。'},
- {key:'interaction',title:'生活与表达动机',source:'作者新人设 v5',text:'独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、棋局与烦恼。熙蒙主动询问才有限分享私事；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。'}
+ {key:'interaction',title:'生活与表达动机',source:'作者新人设 v5',text:'独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、棋局与烦恼。熙蒙主动追问尤其反复询问时会适当松口，认真多讲几句，不能把话题一次次推回熙蒙；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。'}
 ];
 export const defaultTaiDraft=()=>({personaVersion:XITAI_PERSONA_VERSION,profile:Object.fromEntries(taiProfileFields.map(f=>[f.key,f.text])),memories:[],testTurns:[]});
 export function ensureTaiDraft(s){
@@ -101,6 +102,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   effectiveMode==='call'?'当前正在语音电话：先判断熙蒙刚才这句话真正想问或表达什么，再围绕它说出一轮连贯、有内容、有本人态度的回答。通常一个完整意群就够，想补充可自然分成两段，不要为了格式凑句数。坏心思、优越感和偶尔嘴硬必须对得上实际语境；禁止随口说无因果的挑衅、重复夸自己声音、凭空扭曲熙蒙的意思、连发几条自相矛盾的短句。句子可以短，但不能只有一连串没有承接的反问。每项mode=voice，短长由语义决定；只写可朗读纯台词，不输出表演标签；在真正的电话中留出给熙蒙说话的空隙，不能提前假定对方同意、沉默或挂断。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，保持自然口语、纯台词；不生成任何动作或声音控制标记。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:'',
   XITAI_CONVERSATION_FOCUS_V8,
-  approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):''
+  approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):'',
+  taiMomentumPrompt(messages,{mode:effectiveMode})
  ].filter(Boolean).join('\n\n');
 }
