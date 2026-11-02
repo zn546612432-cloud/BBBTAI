@@ -11,7 +11,8 @@ import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {taiPlayerRequestedCall,taiShouldCallAfterText} from './call-intent.js';
+import {taiPlayerRequestedCall} from './call-intent.js';
+import {mayStartTaggedCall} from './phone-directive.js';
 import {startIncoming} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -96,7 +97,14 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=unpackTaiReply(retry,'noapp');
   }
-  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+  // Preserve the action-bearing final message when the AI returns more
+  // bubbles than the current reply pacing limit.
+  const limited=draftEntries.slice(0,behavior.maxMessages);
+  if(draftEntries.length>limited.length){
+   const lastPhone=draftEntries.findLast(item=>item.phone);
+   if(lastPhone&&!limited.includes(lastPhone))limited[limited.length-1]=lastPhone;
+  }
+  const entries=limited.map(item=>item.phone||requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
@@ -128,11 +136,13 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    }
   }
-  // Make an actual incoming call only after a current, explicit player request
-  // AND Tai's last emitted message commits to calling immediately.
+  // Only a model-authored, leading (phone) control marker can initiate a call.
+  // Natural-language promise matching is intentionally no longer used.
   const delivered=conversation(store.get())?.messages.filter(m=>m.replySourceId===sourceMessageId&&m.from==='tai')||[];
-  if(emitted&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered,alreadyCalled:store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId)})){
-   const reason='【刚才的通话约定】熙蒙刚刚说「'+String(lastUser).slice(0,140)+'」，你在文字里明确答应「'+String(delivered.at(-1)?.text||'').slice(0,120)+'」。现在电话已经接通，请自然承接这个正在发生的话题，而不是重新开一场陌生人的对话。';
+  if(emitted===entries.length&&emitted>0&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&
+     mayStartTaggedCall(entries)&&
+     !store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId)){
+   const reason='【刚才的通话约定】熙蒙刚刚说「'+String(lastUser).slice(0,140)+'」，你明确决定拨号，最后回复「'+String(delivered.at(-1)?.text||'').slice(0,120)+'」。现在电话已经接通，请自然承接这个正在发生的话题。';
    const started=startIncoming({store},'陈熙泰发起语音通话',{reason});
    if(started)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock}));
   }

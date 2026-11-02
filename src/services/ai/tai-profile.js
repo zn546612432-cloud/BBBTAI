@@ -84,6 +84,9 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   taiBehaviorPrompt(behavior),taiHumanPrompt({messages,scene,outputMode:effectiveMode}),
   voice?'熙泰专用声音指导：\n'+XITAI_VOICE_DIRECTION:'',
   taiMultiMessageDirective,
+  channel==='noapp'&&effectiveMode==='text'?
+  '【NoApp 来电动作指令｜高优先级】本轮你如果决定立刻给熙蒙拨打电话（例如他要求现在打，且你愿意），在最后一条 messages 元素的 text 字符串最前面输出字面控制码 (phone)，后面紧接自然台词，如 {"messages":[{"text":"(phone)行，我现在打","mode":"text","tone":"neutral"}]}。程序会删除 (phone) 后展示文字，然后真正发起 NoApp 来电。这是程序控制信号，不是表演括号或语音 Sound Tag；这条仅有的特殊标记优先于世界书一般的禁括号规则，其他括号和表演标签仍禁止。不要把 (phone) 写在其他位置、独立输出或解释给玩家。决定稍后打、正在忙、不想打、只想发语音条时，绝对不要输出 (phone)。不要仅仅用“我现在打”代替控制码：没有 (phone) 系统不会发起电话。它只控制游戏内 NoApp，不代表现实设备拨号。不用为了触发电话而改变人物性格或无条件答应。':
+  '',
   effectiveMode==='call'?'当前正在语音电话：先判断熙蒙刚才这句话真正想问或表达什么，再围绕它说出一轮连贯、有内容、有本人态度的回答。通常一个完整意群就够，想补充可自然分成两段，不要为了格式凑句数。坏心思、优越感和偶尔嘴硬必须对得上实际语境；禁止随口说无因果的挑衅、重复夸自己声音、凭空扭曲熙蒙的意思、连发几条自相矛盾的短句。句子可以短，但不能只有一连串没有承接的反问。每项mode=voice，短长由语义决定；只写可朗读纯台词，不输出表演标签；在真正的电话中留出给熙蒙说话的空隙，不能提前假定对方同意、沉默或挂断。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，保持自然口语、纯台词；不生成任何动作或声音控制标记。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:''
  ].filter(Boolean).join('\n\n');
