@@ -7,7 +7,7 @@ import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 
 test('normal phone reply keeps one consistent voice without forcing dramatic emotion',()=>{
  assert.equal(normalizeVoiceStyle('unknown'),'stable');
- const angry=prepareTaiVoicePerformance('你说什么？我不是在跟你吵。我只是不喜欢这个决定。',{tone:'angry'});
+ const angry=prepareTaiVoicePerformance('你说什么？我不是在跟你吵。我只是不喜欢这个决定，因为你根本没有给我看过完整的资料。',{tone:'angry'});
  const happy=prepareTaiVoicePerformance('你居然做到了，我现在倒是有点想笑。',{tone:'happy'});
  assert.equal(angry.emotion,null);
  assert.equal(happy.emotion,null);
