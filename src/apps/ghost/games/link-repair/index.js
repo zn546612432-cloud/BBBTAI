@@ -50,7 +50,7 @@ export function createLinkPuzzle(round=0,random=Math.random){
 export function ensureLinkPuzzle(s,random=Math.random){
  const o=d01(s)?.order;
  if(!o?.deployed||o.completed>=5)return null;
- if(!o.board){o.board=createLinkPuzzle(o.completed,random);o.boardSaved=false;}
+ if(!o.board){o.board=createLinkPuzzle(o.completed,random);o.boardSaved=false;o.leaveApproved=false;}
  return o.board;
 }
 export function rotateLinkPuzzle(s,index){
@@ -69,7 +69,7 @@ export function startExitPrompt(s){
 }
 export function chooseExit(s,save){
  const o=d01(s)?.order;if(!o?.exitPrompt)return false;
- if(!save)o.board=null;
+ if(!save){o.board=null;o.boardSaved=false;}
  else o.boardSaved=true;
  o.exitPrompt=false;o.leaveApproved=true;
  return true;
