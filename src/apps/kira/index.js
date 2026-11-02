@@ -1,4 +1,4 @@
-import {claimD01Bank,revealD01Key,deployD01,submitD01Attachment,settleD01Repair,D01_REPAIR,D01_ATTACHMENT} from '../../story/d01/runtime.js';
+import {claimD01Bank,D01_ATTACHMENT} from '../../story/d01/runtime.js';
 import {mail55} from '../../services/story55/views.js';
 import {linkedMission,linkedMailId,linkedDeliveryId,advanceLinkedMission} from '../mirage/linked-missions.js';
 import {deliverLinkedArtifact} from '../mirage/linked-contract-runtime.js';
@@ -24,9 +24,12 @@ export function render({store},loc){
 }
 export function handle(a,t,c){
  if(a==='kira-d01-bank'){let paid=false;c.store.update(s=>{paid=claimD01Bank(s);});if(!paid)c.toast('款項已結算');return;}
- if(a==='kira-d01-key'){c.store.update(s=>revealD01Key(s));return;}
- if(a==='kira-d01-ghost'){if(!c.store.get().story55?.d01?.keyRevealed)return;c.store.update(s=>{const o=authorize(s,{orderId:D01_REPAIR,mailId:D01_ATTACHMENT,type:'route'});o.key='mirage001';o.settings.seconds=null;o.settings.randomRoute=true;});return c.router.open({appId:'ghost',route:'/contract',params:{orderId:D01_REPAIR}});}
- if(a==='kira-d01-submit'){let submitted=false;c.store.update(s=>{submitted=submitD01Attachment(s);});if(submitted)setTimeout(()=>c.store.update(s=>settleD01Repair(s)),2000);return;}
+ if(a==='kira-d01-open-file'){
+  const s=c.store.get();
+  if(!s.story55?.d01?.repairAccepted||!s.content.mail.some(m=>m.id===D01_ATTACHMENT))return;
+  c.store.update(s=>{const m=s.content.mail.find(m=>m.id===D01_ATTACHMENT);if(m)m.read=true;});
+  return c.router.open({appId:'files',route:'/attachment/d01-mirage001',params:{mailId:D01_ATTACHMENT}});
+ }
 
  if(a.startsWith('kira-linked-')){
   const id=t.dataset.order,mission=linkedMission(c.store.get(),id);
@@ -56,7 +59,10 @@ export function handle(a,t,c){
 
  if(a==='kira-back')c.router.open({appId:'kira',route:'/',params:{}});
  if(a==='kira-sent-list')c.router.open({appId:'kira',route:'/sent',params:{}});
- if(a==='kira-mail')c.router.open({appId:'kira',route:'/mail/'+t.dataset.id});
+ if(a==='kira-mail'){
+  c.store.update(s=>{const mail=s.content.mail.find(m=>m.id===t.dataset.id);if(mail)mail.read=true;});
+  return c.router.open({appId:'kira',route:'/mail/'+t.dataset.id});
+ }
  if(a==='kira-attachment')c.router.open({appId:'files',route:'/attachment',params:{mailId:t.dataset.id}});
  if(a==='kira-mission-browser')c.router.open({appId:'browser',route:'/mission-search',params:{orderId:HACKER_BOUNTY_ID}});
  if(a==='kira-mission-compose')c.router.open({appId:'kira',route:'/compose/'+HACKER_BOUNTY_ID});
