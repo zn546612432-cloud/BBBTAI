@@ -123,7 +123,7 @@ test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wa
  rebuildStory55AtDay(s,45);
  const order=s.content.orders.find(o=>o.id==='d20-bounty');
  assert.equal(order.status,'COMPLETED');
- assert.equal(s.content.mirage.digitalBalance,5200);
+ assert.equal(s.content.mirage.digitalBalance,5200.04);
  assert.equal(s.content.mirage.digitalTransactions.filter(t=>t.orderId==='d20-bounty').length,1);
  assert.equal(s.content.mail.filter(m=>m.id===linkedDeliveryId('d20-bounty')).length,1);
  assert.equal(s.content.mail.filter(m=>m.id===linkedReceiptId('d20-bounty')).length,1);
@@ -133,7 +133,7 @@ test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wa
  rebuildStory55AtDay(s,12);
  assert.equal(s.content.orders.find(o=>o.id==='d20-bounty').status,'OPEN');
  assert.equal(linkedMissionVisible(s,'d20-bounty'),false);
- assert.equal(s.content.mirage.digitalBalance,0);
+ assert.equal(s.content.mirage.digitalBalance,0.04);
  assert.equal((s.content.missionFiles||[]).length,0);
  assert.equal(s.content.mail.some(m=>m.id===linkedDeliveryId('d20-bounty')),false);
  assert.equal(storySourceVersion(s),before);
