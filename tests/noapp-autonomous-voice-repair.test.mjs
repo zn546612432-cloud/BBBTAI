@@ -6,7 +6,7 @@ import {replyToTaiMessage,synthesizeVoiceNotes} from '../src/services/ai/live-ch
 import {maybeSendProactive} from '../src/services/ai/proactive.js';
 import {convertTaiTextToVoice} from '../src/apps/noapp/voice-call.js';
 import {explainMinimaxFailure} from '../src/services/voice/minimax-diagnostics.js';
-import {loadClip,saveClip} from '../src/services/voice/audio-store.js';
+import {loadClip,saveClip,clipIsTemporary} from '../src/services/voice/audio-store.js';
 
 // Exercise the real transport -> queue -> IndexedDB -> chat path. The provider
 // and IndexedDB event source are the only substitutes; no real keys or charges.
@@ -86,10 +86,12 @@ test('provider failure retains HTTP and MiniMax error code and removes credentia
   });
  },{provider:()=>new Response(JSON.stringify({base_resp:{status_code:1004,status_msg:'invalid token sk-private123456789 eyJhbGciOiJIUzI1NiJ9.payload.signature'}}),{status:401})});
 });
-test('aborted Safari write with a null error settles with a concrete error and retry makes one request',async()=>{
+test('aborted Safari write retains playable audio and retry makes one request',async()=>{
  await environment(async({requests,state,chat,store})=>{
   abortWrite=true;
-  await assert.rejects(saveClip('abort',new Blob(['audio'])),/Safari.*写入被中止/);
+  assert.equal(await saveClip('abort',new Blob(['audio'])),'abort');
+  assert.equal(clipIsTemporary('abort'),true);
+  assert.equal(await (await loadClip('abort')).text(),'audio');
   abortWrite=false;
   chat.messages.push({id:'failed',from:'tai',text:'我听着呢。',kind:'text',voiceFailed:true,day:state.day,time:state.clock,actual:true});
   const ctx={store};
