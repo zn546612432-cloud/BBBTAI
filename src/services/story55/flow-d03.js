@@ -42,16 +42,16 @@ export function ensureFlowHistory(s){
 export function tickFlowD03(s){
  if(!isStory55(s))return false;
  ensureFlowHistory(s);
- if(s.day<3||(s.day===3&&s.clock<'09:00'))return false;
+ if(s.day<3||(s.day===3&&s.clock<'08:15'))return false;
  const c=contact(s),p=progress(s);
  if(p.invited)return false;
  p.invited=true;
- if(c.messages.some(m=>m.from==='me'&&m.day===1&&!m.story55))push(c,'flow-d03-late-reply',FLOW_CONTACT,'之前在忙，才看到你給我發信息。',3,'08:59',date55(3));
- push(c,FLOW_INVITE,FLOW_CONTACT,FLOW_INVITE_TEXT,3,'09:00',date55(3));
+ if(c.messages.some(m=>m.from==='me'&&m.day===1&&!m.story55))push(c,'flow-d03-late-reply',FLOW_CONTACT,'之前在忙，才看到你給我發信息。',3,'08:14',date55(3));
+ push(c,FLOW_INVITE,FLOW_CONTACT,FLOW_INVITE_TEXT,3,'08:15',date55(3));
  c.unread=(Number(c.unread)||0)+1;
  s.notifications.unshift({
   id:'flow-d03-mirage-invite',title:'MIRAGE',body:'Flow：'+FLOW_INVITE_TEXT,
-  day:3,clock:'09:00',conversationId:FLOW_CONTACT,
+  day:3,clock:'08:15',conversationId:FLOW_CONTACT,
   link:{appId:'mirage',route:'/chat/'+FLOW_CONTACT,params:{}}
  });
  return true;
