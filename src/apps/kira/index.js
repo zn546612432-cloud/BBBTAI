@@ -8,6 +8,8 @@ import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,phishingThemes,advanceHackerMission} fro
 import {kiraInbox} from './features/inbox/index.js';
 import {kiraDetail} from './features/detail/index.js';
 import {composeMission} from './features/mission/index.js';
+import {renderD01Mail} from './features/d01/index.js';
+import {D01_OPENING_MAIL,D01_ORDER_MAIL,D01_DONE_MAIL,claimD01Bank,openD01Key,submitD01Order,d01} from '../../services/story55/d01.js';
 export const manifest={id:'kira',name:'KIRA',icon:10,defaultRoute:'/',supportsDeepLink:true,kicker:'ENCRYPTED MAIL'};
 export function render({store},loc){
  const s=store.get();
@@ -16,12 +18,17 @@ export function render({store},loc){
  if(loc.route==='/sent')return '<div class="kira-inbox"><div class="kira-top">'+btn('kira-back','‹　收件箱')+'</div><h1>已发送</h1><div class="kira-mail-list">'+s.content.mail.filter(m=>m.linkedDelivery).map(m=>btn('kira-mail','<span class="kira-unread"></span><span><strong>'+esc(m.to)+'</strong><b>'+esc(m.subject)+'</b><small>'+esc(m.body)+'</small></span><time>D'+esc(m.day)+'</time>','kira-mail-row','data-id="'+esc(m.id)+'"')).join('')+'</div></div>';
  if(loc.route.startsWith('/mail/')){
   const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
+  if([D01_OPENING_MAIL,D01_ORDER_MAIL,D01_DONE_MAIL].includes(mailId))return renderD01Mail(s,mailId);
   if(mail?.story55&&mail.id!=='flow-d03-reward')return mail55(s,mail);
   return mail?.linkedReceipt?linkedReceiptView(s,mailId):mail?.linkedDelivery?linkedSentView(s,mailId):mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
  }
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a==='kira-d01-bank'){c.store.update(s=>claimD01Bank(s));return;}
+ if(a==='kira-d01-key'){c.store.update(s=>openD01Key(s));return;}
+ if(a==='kira-d01-ghost'){const o=d01(c.store.get())?.order;if(!o?.keyOpened)return;return c.router.open({appId:'ghost',route:o.deployed?'/d01-link':'/d01-deploy',params:{}});}
+ if(a==='kira-d01-submit'){c.store.update(s=>submitD01Order(s));return;}
  if(a.startsWith('kira-linked-')){
   const id=t.dataset.order,mission=linkedMission(c.store.get(),id);
   if(!mission)return;
