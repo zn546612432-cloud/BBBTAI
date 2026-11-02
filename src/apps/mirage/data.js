@@ -32,15 +32,9 @@ export function ensureNativeMirage55(s){
   balance:Number.isFinite(old.balance)?old.balance:300000,
   nativeSeedVersion:1,version:3
  };
- if(seed){
-  const contacts=s.content.conversations.mirage??(s.content.conversations.mirage=[]);
-  // Only the original visual identities, not their discarded D01-D90 messages.
-  for(const contact of ['BASILISK SUPPLY','Pale Vector','ECHO-41','SABLE ACCOUNT']){
-   if(contacts.some(x=>x.name===contact))continue;
-   const initial={id:'s55-contact-'+contact.toLowerCase().replace(/[^a-z0-9]+/g,'-'),name:contact,avatar:contact.slice(0,2),online:false,messages:[],unread:0};
-   contacts.push(initial);
-  }
- }
+ // D01 starts with Flow alone. Later contacts appear through authored
+ // story events; never pre-populate the four old UI fixture identities.
+ if(s.day===1){s.content.conversations.mirage=(s.content.conversations.mirage||[]).filter(c=>!/^s55-contact-(?:basilisk-supply|pale-vector|echo-41|sable-account)$/.test(c.id)||c.messages?.length||c.authored===true);}
  s.content.orders??=[];
  if(s.day>=6){
   const existing=s.content.orders.find(o=>o.id===STORY55_BOUNTY_ID);

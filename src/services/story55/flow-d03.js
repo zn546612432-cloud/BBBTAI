@@ -46,6 +46,7 @@ export function tickFlowD03(s){
  const c=contact(s),p=progress(s);
  if(p.invited)return false;
  p.invited=true;
+ if(s.story55.d01?.flowLeftMessage)push(c,'flow-d03-late-reply',FLOW_CONTACT,'之前在忙，才看到你給我發信息。',3,'08:59',date55(3));
  push(c,FLOW_INVITE,FLOW_CONTACT,FLOW_INVITE_TEXT,3,'09:00',date55(3));
  c.unread=(Number(c.unread)||0)+1;
  s.notifications.unshift({

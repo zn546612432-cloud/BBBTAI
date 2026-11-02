@@ -12,6 +12,7 @@ import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {simulateFlowD03} from './flow-d03.js';
+import {simulateD01} from './d01.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -223,6 +224,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  for(let day=1;day<targetDay;day++){
   s.day=day;s.clock='20:00';
   tickStory55(s);
+  if(day===1)simulateD01(s);
   // Multiple passes handle same-day nodes whose prerequisites occur later
   // in the catalog, without prematurely completing multi-day deployments.
   let changed=true,passes=0;
