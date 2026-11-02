@@ -29,7 +29,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
   if(o.status!=='running'&&o.status!=='preview-win'){
    const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}<div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA':'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
-   const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable()
+   const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
    body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,devSkipTop||(o.deadline!==null&&o.type!=='strike'?fmt(remaining):'')))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'第 '+String(o.attempts).padStart(2,'0')+' 次尝试'}</small><h1>${tool.name}</h1><p>${{cipher:'交换方块，还原上方参考图',route:'旋转管线，让起点连通终点',extract:'找出相同的数据块',veil:'按顺序输入数字代码',strike:'正在执行，请等待完成',verify:'依次选择正确的模块'}[o.type]}</p></div>`;
    const b=o.board;
@@ -38,10 +38,10 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
     const size=b.size||3,source=b.size?b.source:0,sink=b.size?b.sink:8;
     const lit=b.size?pipeFlow(b.masks,source,size):connected(b.masks);
     const linked=lit.has(sink),preview=o.status==='preview-win';
-    body+=`<div class="gh-port-label"><span><i class="gh-port-dot gh-source-dot"></i>源點 / ${String(Math.floor(source/size)+1).padStart(2,'0')}-${source%size+1}</span><span><i class="gh-port-dot gh-target-dot"></i>終點 / ${String(Math.floor(sink/size)+1).padStart(2,'0')}-${sink%size+1}</span></div><div class="gh-grid gh-pipes ${preview?'gh-network-complete':''}" style="--pipe-columns:${size}">${b.masks.map((mask,i)=>button('pipe',pipe(mask,lit.has(i),i===source?'source':i===sink?'target':''),`data-index="${i}" aria-label="${i===source?'源點（固定）':i===sink?'終點（固定）':'旋轉管線 '+(i+1)}" ${preview||b.size&&(i===source||i===sink)?'disabled':''}`,i===source?'gh-source-tile':i===sink?'gh-target-tile':'')).join('')}</div><div class="gh-progress-label"><span>${preview?'連線成功 · 正在驗收':linked?'終點已接通':'請接通高亮終點'}</span><span>${lit.size} / ${b.masks.length}</span></div><div class="gh-meter"><i style="width:${lit.size/b.masks.length*100}%"></i></div>${preview?'<div class="gh-success-preview" role="status"><span class="gh-success-check">✓</span><strong>連線已建立</strong><small>3 秒後完成本次修復</small></div>':''}`;
+    body+=`<div class="gh-port-label"><span><i class="gh-port-dot gh-source-dot"></i>源點 / ${String(Math.floor(source/size)+1).padStart(2,'0')}-${source%size+1}</span><span><i class="gh-port-dot gh-target-dot"></i>終點 / ${String(Math.floor(sink/size)+1).padStart(2,'0')}-${sink%size+1}</span></div><div class="gh-grid gh-pipes ${preview?'gh-network-complete':''}" style="--pipe-columns:${size}">${b.masks.map((mask,i)=>button('pipe',pipe(mask,lit.has(i),i===source?'source':i===sink?'target':''),`data-index="${i}" aria-label="${i===source?'源點（固定）':i===sink?'終點（固定）':'旋轉管線 '+(i+1)}" ${preview||b.size&&(i===source||i===sink)?'disabled':''}`,i===source?'gh-source-tile':i===sink?'gh-target-tile':'')).join('')}</div><div class="gh-progress-label"><span>${preview?'連線成功 · 正在驗收':linked?'終點已接通':'請接通高亮終點'}</span><span>${preview||linked?'✓ 起點已連至終點':'可達 '+lit.size+' 格 · 無最低格數'}</span></div><div class="gh-meter"><i style="width:${linked||preview?100:Math.max(4,lit.size/b.masks.length*100)}%"></i></div>${preview?'<div class="gh-success-preview" role="status"><span class="gh-success-check">✓</span><strong>連線已建立</strong><small>3 秒後完成本次修復</small></div>':''}`;
    }
-   if(o.type==='route'&&o.id===D01_REPAIR&&o.status==='running'&&ghostDevSkipAvailable()){
-    body+='<p class="gh-dev-skip-note">DEV PREVIEW · 仅供开发预览</p>';
+   if(o.type==='route'&&o.id===D01_REPAIR&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())){
+    body+='<p class="gh-dev-skip-note">开发者跳关已开启 · 成功仍需展示 3 秒</p>';
    }
    if(o.type==='extract')body+=`<div class="gh-target"><small>目标指纹</small><strong>${b.target.split('').join(' ')}</strong><div class="gh-bars">${b.target.split('').map(v=>`<i style="height:${12+Number(v)*3}px"></i>`).join('')}</div></div><div class="gh-options">${b.options.map((code,i)=>button('match',`<small>数据块 / 0${i+1}</small><b>${code.split('').join(' ')}</b><span>↗</span>`,`data-index="${i}"`)).join('')}</div><p class="gh-hint">${b.round+1} / ${cfg.rounds}</p>`;
    if(o.type==='veil')body+=`<div class="gh-code"><small>覆盖序列</small><strong>${b.code.split('').map((v,i)=>`<span class="${i<b.input.length?'typed':''}">${v}</span>`).join('')}</strong><div>${Array.from({length:cfg.codeLength},(_,i)=>`<i class="${i<b.input.length?'filled':''}"></i>`).join('')}</div></div><div class="gh-keypad">${['1','2','3','4','5','6','7','8','9','⌫','0','↵'].map(key=>button('key',key,`data-key="${key}" aria-label="${key}"`)).join('')}</div><p class="gh-hint">${b.round+1} / ${cfg.rounds}　·　错误 ${o.errors}</p>`;
@@ -61,7 +61,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='tool')return nav(ctx,'/tool',{tool:t.dataset.tool});
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
  if(a==='d01-dev-skip'){
-  if(!ghostDevSkipAvailable()||id!==D01_REPAIR)return;
+  if(!ghostDevSkipAvailable(globalThis.document,ctx.store.get())||id!==D01_REPAIR)return;
   let skipped=false;
   ctx.store.update(n=>{skipped=previewSkipD01(n,id);});
   if(!skipped)ctx.toast?.('当前关卡无法跳过');
