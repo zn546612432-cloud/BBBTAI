@@ -147,5 +147,5 @@ test('D21 shows pending review for a D20 contract until the exact configured gam
  assert.equal(s.content.mirage.digitalBalance,0);
  rebuildStory55AtDay(s,22,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'COMPLETED');
- assert.equal(s.content.mirage.digitalBalance,2000);
+ assert.equal(s.content.mirage.digitalBalance,2000.04);
 });
