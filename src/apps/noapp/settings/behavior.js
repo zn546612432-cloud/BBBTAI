@@ -11,7 +11,7 @@ export function behaviorSettings(saved,draft={}){
  return `<section class="tai-behavior-settings"><h3>熙泰怎么聊天</h3><form data-form="tai-save-behavior">
  ${select('verbosity','表达长度',[['brief','偏简短'],['balanced','自然，有话就多说'],['expansive','偏展开，多讲看法和细节']])}
  ${number('maxMessages','一次最多几条独立消息',1,6,'条')}
- ${select('initiative','主动带话题',[['off','顺着当前内容聊'],['natural','自然聊起自己的事'],['active','更主动分享和延续旧话题']])}
+ ${select('initiative','主动带话题',[['off','顺着当前内容聊'],['natural','自然关注熙蒙的近况'],['active','更主动追踪熙蒙真正说过的事']])}
  <details open><summary>回复速度</summary><p>连续发送新消息后等 3 秒再一起理解；首条等待会计入模型响应时间，后续逐条发出。</p>
  <div class="tai-setting-pair">${number('firstDelayMin','首条最短等待',0,60)}${number('firstDelayMax','首条最长等待',0,120)}</div>
  <div class="tai-setting-pair">${number('messageGapMin','连发最短间隔',.5,30)}${number('messageGapMax','连发最长间隔',.5,60)}</div></details>
