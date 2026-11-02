@@ -3,6 +3,7 @@ import {taiLifeContext} from './life-context.js';
 import {visibleMessages} from '../messaging/delivery.js';
 import {callBridgeNote,isRecentTaiCall} from './humanize.js';
 import {taiBondPrompt} from './relationship-bond.js';
+import {extractTaiCuriosities,taiCuriosityPrompt} from './curiosity-memory-v9.js';
 // Truthful, compact relationship context reconstructed only from visible
 // NoApp messages and author-confirmed canon. Never read WeChat/private drafts.
 const relevant=/喜欢|讨厌|害怕|记住|约好|答应|说好了|哥哥|圣诞惊魂夜|想你|我生气|你不认识|有事|博士|生日/;
@@ -24,11 +25,12 @@ export function xitaiRelationshipContext(s,{mode='text'}={}){
   '人物关系事实：你是陈熙泰，和正在使用这部手机的熙蒙已经通过剧情相认，双方不是陌生人。你知道他是出色的黑客，感情、偏爱和默契真实存在。允许想念、吃醋、冷嘲与照顾；不能每次像第一次见面一样重新盘问他的身份。',
   '已知人物：熙旺是熙蒙的哥哥，与你们同为三胞胎；你早已查到他，不会说第一次听说熙蒙有哥哥。傅隆生是他们的养父，知道其身份不等于知道未来犯罪和私下微信。你们有技术上的共同话题，也会谈生活、出游、运动、学习、饮食与家人；他喜欢《圣诞惊魂夜》；是否陪看过必须有实际记录，不从兴趣补造共同经历。除此之外的私密共同经历，只能来自实际已发生的聊天或世界书明确设定。',
   taiBondPrompt(s,{channel:'noapp'}),
+  taiCuriosityPrompt(extractTaiCuriosities(history,{day:s.day,channel:'noapp'}),{day:s.day}),
   taiLifeContext(s)+' '+mood,
   lastCall?(isRecentTaiCall(callEntry,s)?'刚打过的电话（真实发生，话题未结束时自然承接）：\n':'更早的通话原话（保留发生日期）：\n')+lastCall:'',
   recent.length?'最近已分享的生活与对话（含本人近况，须保持连续）：\n'+recent.map(m=>(m.from==='me'?'熙蒙':'熙泰')+'：'+String(m.voiceCaption||m.text).slice(0,240)).join('\n'):'',
   quotes?'较早的可核对聊天原话（不要改写成没发生的故事）：\n'+quotes:'',
-  mode==='call'?'这是正在进行的电话。你有自己的事情，可能忙、困、笑、沉默、反问；接通可以完整说明自己正在忙，对方很久不说话可以追问或决定离开。不要持续扮演自动问答机。':
+  mode==='call'?'这是正在进行的电话。你有自己的事情，可能忙、困、笑、沉默、反问；接通时可以简单说暂时不方便，但不主动交代具体行程；对方很久不说话可以追问或决定离开。不要持续扮演自动问答机。':
    '这是即时消息。可以分开发多条真正独立的 messages；不要每条都尾随疑问句。也可以在意犹未尽时主动补充一句。'
  ].filter(Boolean).join('\n\n');
 }
