@@ -228,6 +228,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   // The telephone is a conversation, not a list of standalone voice snippets.
   // Keep only a manageable number of meaningful turns before listening again.
   const turns=replies.slice(0,turnPlan?.target||4);
+  let actuallySpoken=0;
   for(const r of turns){
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)break;
    const speech=composeCallSpeech([r],taiBehavior(ctx.store.get()));
@@ -240,8 +241,17 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    call.caption=r.text;call.lastSpeech=r.text;ctx.refresh();
    await playCallAudio(ctx,blob,sessionId);
    if(call.sessionId!==sessionId||call.state!=='connected')break;
+   actuallySpoken++;
    call.caption='';ctx.refresh();
    await new Promise(resolve=>setTimeout(resolve,taiBehavior(ctx.store.get()).callPause*1000));
+  }
+  if(turnPlan&&actuallySpoken>0){
+   ctx.store.update(s=>{
+    s.events??=[];
+    s.events.push({type:'tai_v12_turn_plan',channel:'call',day:s.day,clock:s.clock,
+     sourceId:'call:'+sessionId,target:turnPlan.target,guided:turnPlan.guide,
+     emitted:actuallySpoken,receivedAt:Date.now()});
+   });
   }
  }catch(e){if(call.sessionId===sessionId&&call.state==='connected')ctx.toast('通话 AI：'+e.message);}
  finally{
