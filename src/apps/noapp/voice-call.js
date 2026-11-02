@@ -16,7 +16,7 @@ import {taiBehavior} from '../../services/ai/behavior.js';
 import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from '../../services/ai/conversation-momentum-v11.js';
-import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from '../../services/ai/conversation-shape-v12.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from '../../services/ai/conversation-shape-v12.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -203,13 +203,13 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories};
   let data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:event==='unheard'?null:await askTai(request);
   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
-  let replies=event==='unheard'?[unheardReply(sessionId+':'+call.turns.length)]:unpackTaiReply(data,'call');
+  let replies=event==='unheard'?[unheardReply(sessionId+':'+call.turns.length)]:dedupeTaiTurnEntries(unpackTaiReply(data,'call'));
   // Only repair a repeated personal question met with another empty deflection.
   // One concise answer, a real refusal, or a normal new topic remains untouched.
   if(!presetText&&!event&&needsTaiMomentumRepair({messages:history,entries:replies,mode:'call'})){
    const retry=await askTai({...request,scene:scene+' 上一稿只是再次反问/推开熙蒙：'+replies.map(r=>r.text).join(' ').slice(0,180)+'。熙蒙已经坚持要求听具体内容。请接着说出一点符合已知设定的真实私人细节、带刺的幽默或明确边界，不要让他独自维持对话。可以自然短长交错，不必凑固定条数。'});
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
-   replies=unpackTaiReply(retry,'call');
+   replies=dedupeTaiTurnEntries(unpackTaiReply(retry,'call'));
   }
   if(turnPlan&&taiTurnNeedsMore({plan:turnPlan,entries:replies,messages:history,action:'speak'})){
    const remaining=turnPlan.target-replies.length;
@@ -227,7 +227,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   }
   // The telephone is a conversation, not a list of standalone voice snippets.
   // Keep only a manageable number of meaningful turns before listening again.
-  const turns=replies.slice(0,turnPlan?.target||4);
+  const turns=dedupeTaiTurnEntries(replies,turnPlan?.target||4);
   let actuallySpoken=0;
   for(const r of turns){
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)break;

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
- TAI_TURN_WEIGHTS,TAI_GUIDE_CHANCE,taiTurnProbabilities,taiGuideEligible,
- sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion
+ TAI_TURN_WEIGHTS,TAI_GUIDE_CHANCE,TAI_SEMICOLON_BURST_CHANCE,taiTurnProbabilities,taiGuideEligible,
+ sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,stripRepeatedTaiClauses,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion
 } from '../src/services/ai/conversation-shape-v12.js';
 import {buildTaiPrompt,defaultTaiDraft,ensureTaiDraft} from '../src/services/ai/tai-profile.js';
 import {combineTaiVoiceThoughts} from '../src/services/ai/voice-request-v11.js';
@@ -34,19 +34,26 @@ test('guide roll is independent of chosen count and respects 30% threshold',()=>
  assert.equal(sampleTaiTurnPlan({random:randomSeq(.1,.001),messages:[{role:'user',content:'hi'}]}).guide,false);
  assert.equal(taiGuideEligible([{role:'user',content:'不要问我'}]),false);
 });
-test('seeded distribution over 25k turns is consistent with normalized weights and 30% guidance',()=>{
+test('seeded 25k turns preserve original relative weights, 30% guide and new 40% semicolon style',()=>{
  let seed=524288;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
- const histogram={1:0,2:0,3:0,4:0,5:0};let guided=0;
+ const histogram={1:0,2:0,3:0,4:0,5:0};
+ const original={1:0,2:0,3:0,'4-5':0};let guided=0,semicolon=0;
  for(let i=0;i<25000;i++){
   const s=sampleTaiTurnPlan({random:rand,messages:player});
-  histogram[s.target]++;if(s.guide)guided++;
+  histogram[s.target]++;original[s.requested]++;if(s.guide)guided++;if(s.semicolonBurst)semicolon++;
  }
- const probability=(c)=>histogram[c]/25000;
- assert.ok(Math.abs(probability(3)-45/135)<.017);
- assert.ok(Math.abs(probability(2)-30/135)<.017);
- assert.ok(Math.abs(probability(1)-30/135)<.017);
- assert.ok(Math.abs((probability(4)+probability(5))-30/135)<.017);
- assert.ok(Math.abs(guided/25000-.3)<.017);
+ const p=c=>histogram[c]/25000;
+ assert.ok(Math.abs(original[3]/25000-45/135)<.017);
+ assert.ok(Math.abs(original[2]/25000-30/135)<.017);
+ assert.ok(Math.abs(original[1]/25000-30/135)<.017);
+ assert.ok(Math.abs(original['4-5']/25000-30/135)<.017);
+ // 40% of originally single-line turns become two bubbles when the style hits.
+ assert.ok(Math.abs(p(2)-(30/135)*(1+.40))<.017);
+ assert.ok(Math.abs(p(1)-(30/135)*.60)<.017);
+ assert.ok(Math.abs(p(3)-45/135)<.017);
+ assert.ok(Math.abs(p(4)+p(5)-30/135)<.017);
+ assert.ok(Math.abs(guided/25000-.30)<.017);
+ assert.ok(Math.abs(semicolon/25000-.40)<.017);
 });
 test('guidance is a grounded question, not a formulaic daily check-in',()=>{
  const plan={target:3,mode:'text',guide:true};
@@ -116,4 +123,40 @@ test('v12 intro does not turn story chess into an unsolicited curiosity routine'
  const s={aiDraft:defaultTaiDraft()};s.aiDraft.profile.interaction=old;
  assert.equal(ensureTaiDraft(s),true);
  assert.match(s.aiDraft.profile.interaction,/国际象棋只由固定剧情触发/);
+});
+
+
+test('40% semicolon burst is independently sampled only for eligible text turns',()=>{
+ assert.equal(TAI_SEMICOLON_BURST_CHANCE,.4);
+ const yes=sampleTaiTurnPlan({random:randomSeq(.60,.9,.399),messages:player,mode:'text'});
+ assert.equal(yes.requested,1);
+ assert.equal(yes.target,2);
+ assert.equal(yes.semicolonBurst,true);
+ assert.equal(yes.guide,false);
+ const no=sampleTaiTurnPlan({random:randomSeq(.60,.9,.401),messages:player,mode:'text'});
+ assert.equal(no.requested,1);
+ assert.equal(no.target,1);
+ assert.equal(no.semicolonBurst,false);
+ assert.equal(sampleTaiTurnPlan({random:randomSeq(.1,.9,.01),messages:player,mode:'call'}).semicolonBurst,false);
+ assert.equal(sampleTaiTurnPlan({random:randomSeq(.1,.9,.01),messages:player,maxMessages:1,mode:'text'}).semicolonBurst,false);
+ assert.equal(sampleTaiTurnPlan({random:randomSeq(.1,.9,.01),messages:[{role:'user',content:'晚安'}]}).semicolonBurst,false);
+ assert.equal(sampleTaiTurnPlan({random:randomSeq(.1,.9,.01),messages:[{role:'user',content:'只说一句就好'}]}).semicolonBurst,false);
+ const prompt=taiTurnShapePrompt(yes);
+ assert.match(prompt,/40%分号连发模式已触发/);
+ assert.match(prompt,/全角分号「；」连接/);
+ assert.match(prompt,/messages数组中只有一个元素/);
+});
+test('repeated opening facts from screenshot are removed but the new curiosity survives',()=>{
+ const first={text:'哈佛，计算机博士，早不上教室了',tone:'dry',mode:'text'};
+ const second={text:'哈佛，计算机博士。不过早就不上教室了。你对我上不上学很在意？',tone:'playful',mode:'text'};
+ assert.equal(stripRepeatedTaiClauses(second.text,[first]),'你对我上不上学很在意？');
+ assert.deepEqual(dedupeTaiTurnEntries([first,second]).map(x=>x.text),
+ ['哈佛，计算机博士，早不上教室了','你对我上不上学很在意？']);
+ assert.deepEqual(mergeTaiTurnEntries([first],[second],3).map(x=>x.text),
+ ['哈佛，计算机博士，早不上教室了','你对我上不上学很在意？']);
+ assert.equal(stripRepeatedTaiClauses('哈佛，计算机博士，早就不上教室了',[first]),'');
+ const distinct=dedupeTaiTurnEntries([
+  {text:'你问的是我的童年？'},{text:'我在里斯本长大。'},{text:'那你呢，哥？'}
+ ]);
+ assert.equal(distinct.length,3);
 });

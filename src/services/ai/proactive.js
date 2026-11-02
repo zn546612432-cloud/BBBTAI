@@ -10,7 +10,7 @@ import {dateParts} from '../calendar.js';
 import {taiPresence} from '../presence.js';
 import {visibleMessages,isConversationOpen} from '../messaging/delivery.js';
 import {combineTaiVoiceThoughts} from './voice-request-v11.js';
-import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 export const TAI_OUTREACH_DAYS=[57,60,64,68,71,75,79,83,87];
 export const TAI_CALL_DAYS=[63,73,81];
 export const TAI_55_OUTREACH_DAYS=[32,34,37,41,44,47,50,53];
@@ -104,13 +104,13 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
    outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,approvedDecision,turnPlan,
    relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  let items=unpackTaiReply(r,'noapp').slice(0,turnPlan.target);
+  let items=dedupeTaiTurnEntries(unpackTaiReply(r,'noapp'),turnPlan.target);
   if(taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
    action:approvedDecision?.action==='send_voice'?'send_voice':'send_text'})){
    const remaining=turnPlan.target-items.length;
    const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
-    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:remaining},relationshipContext,
+    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
   }
@@ -118,11 +118,12 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    const r3=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',
     scene:scene+' 【本轮引导已触发】现有台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。只补一条对熙蒙已有事实具体好奇的自然问句，用问号结尾；不要空问“还在吗”“在干嘛”，不要突然谈棋局或自我报备。',
-    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true},relationshipContext,
+    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    const candidate=unpackTaiReply(r3,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)items=taiIntegrateGuidingQuestion(items,candidate,turnPlan.target);
   }
+  items=dedupeTaiTurnEntries(items,turnPlan.target);
   if(approvedDecision?.action==='send_voice')items=combineTaiVoiceThoughts(items);
   let expected=history(initial).at(-1)?.id,emitted=0;
   const voiceJobs=[];
@@ -152,7 +153,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   if(emitted>0)store.update(s=>{
    s.events??=[];
    s.events.push({type:'tai_v12_turn_plan',channel:'text',day:s.day,clock:s.clock,
-    sourceId:source?.id||'proactive',target:turnPlan.target,guided:turnPlan.guide,
+    sourceId:source?.id||'proactive',target:turnPlan.target,guided:turnPlan.guide,semicolonBurst:!!turnPlan.semicolonBurst,
     emitted,receivedAt:now(),proactive:true});
   });
   return emitted>0;

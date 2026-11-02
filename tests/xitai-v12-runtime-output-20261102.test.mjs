@@ -51,7 +51,7 @@ test('actual NoApp runtime sends 3 distinct bubbles when sampled and saves exact
 test('a sampled single-line guide can still ask a real question without fake extra bubbles',async()=>{
  const {s,conversation,store}=makeStore();
  let expression=0;
- const rand=()=>++expression===1?0.70:0.1; // selects one bubble and triggers guide
+ const rolls=[0.70,0.1,0.9];const rand=()=>rolls.shift()??0.6; // one bubble, guided, but no optional semicolon burst
  await withDeepSeekMock(({system})=>{
   if(system.includes('【本轮引导确实触发'))return [{text:'你把原来哪一部分重写了？'}];
   return [{text:'哦，真让你做成了。'}];
