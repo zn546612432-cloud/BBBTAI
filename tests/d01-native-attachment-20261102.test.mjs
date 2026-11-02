@@ -79,3 +79,17 @@ test('fifth valid GHOST success auto-submits once and settles after 2 seconds; n
  assert.equal(s.content.orders.find(x=>x.id===D01_REPAIR).status,'COMPLETED');
  assert.doesNotMatch(kiraDetail(s,D01_ATTACHMENT),/提交附件/);
 });
+
+
+test('legacy save with five finished rounds is automatically submitted; old mail gets new body',()=>{
+ const {state:s}=fixture(),d=s.story55.d01;
+ d.completedRounds=5;d.deployed=true;d.submitted=false;
+ const m=s.content.mail.find(x=>x.id===D01_ATTACHMENT);
+ m.body='舊郵件文字：直接点击按钮';
+ assert.match(kiraDetail(s,D01_ATTACHMENT),/僱主已透過加密通道/);
+ assert.doesNotMatch(kiraDetail(s,D01_ATTACHMENT),/直接点击按钮/);
+ assert.equal(tickD01(s,Date.now()),true);
+ assert.equal(d.submitted,true);
+ assert.equal(tickD01(s,d.submittedAt+2001),true);
+ assert.equal(s.content.mirage.digitalBalance,0.04);
+});
