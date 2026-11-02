@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {replyToTaiMessage} from '../src/services/ai/live-chat.js';
+import {replyToTaiMessage,maybeResumeTaiDeferred} from '../src/services/ai/live-chat.js';
 import {callState,callAction} from '../src/apps/noapp/voice-call.js';
 import {chatView} from '../src/components/chat.js';
 import {saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js';
@@ -105,5 +105,21 @@ test('end_session marks actual read and ends silently without claiming offline',
   assert.equal(chat.messages.at(-1).taiReadAt,1000000);
   assert.ok(state.events.some(e=>e.type==='tai_action_end_session'));
   assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
+ });
+});
+
+test('stored deferred action can resume after reload-style poll but cannot defer repeatedly',async()=>{
+ const {chat,store}=setup('昨天的工具我修好了');
+ const original=chat.messages.at(-1);
+ original.taiDeferredUntil=900000;
+ original.taiDeferredCount=1;
+ await withMockDirect('defer_reply',async calls=>{
+  const task=maybeResumeTaiDeferred(store,{now:()=>1000000,wait:async()=>{}});
+  assert.ok(task&&typeof task.then==='function');
+  await task;
+  assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,1);
+  assert.equal(chat.messages.at(-1).text,'我听到了');
+  assert.equal(calls.length,2);
+  assert.equal(maybeResumeTaiDeferred(store,{now:()=>1000000}),false);
  });
 });
