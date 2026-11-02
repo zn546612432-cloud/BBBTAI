@@ -109,7 +109,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    const voiceMode=approvedDecision?.action==='send_voice';
    store.update(s=>{
     const target=chat(s);if(!target)return;
-    target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue||approvedDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
+    target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
      aiGenerated:true,actual:true,receivedAt:now(),proactive:true,followup,followupSourceId:followup?source.id:undefined,
      voiceRequested:voiceMode});
     if(!isConversationOpen(s,'noapp','tai')){
