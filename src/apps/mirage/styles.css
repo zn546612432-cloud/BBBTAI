@@ -34,3 +34,6 @@
 
 /* Flow's D03 link lives inside the decrypted message, not in a generic dialog. */
 .mc-clear-text .mc-flow-link{border:0;background:none;padding:0;color:#84caff;text-decoration:underline;text-underline-offset:3px;font:inherit;display:inline;cursor:pointer;min-height:0;min-width:0;width:auto}.mc-clear-text .mc-flow-link:focus-visible{outline:2px solid #84caff;outline-offset:2px}
+
+
+.mc-detail-restricted{padding:14px 12px;background:rgba(180,74,75,.1);border:1px solid rgba(180,74,75,.4);border-radius:6px;color:#c28e8b;letter-spacing:1px;font-size:12px}
