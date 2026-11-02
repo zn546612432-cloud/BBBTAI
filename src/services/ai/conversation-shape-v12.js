@@ -15,7 +15,7 @@ export const TAI_GUIDE_CHANCE=0.30;
 const total=TAI_TURN_WEIGHTS.reduce((sum,x)=>sum+x.weight,0);
 const stop=/^(?:不聊了|别说了|闭嘴|别烦我|别问了|先别聊|不想聊|不用回复|不用回|晚安|去睡了|再见|拜拜|挂了|我要挂了|先挂了)[！!。\s]*$/;
 const nowish=/^(?:在吗|hi|hello|hey|嗨|你好|嗯|哦|喂)[？！!?。\s]*$/i;
-const personalLimit=/^(?:别问我|别再问|不许问|别追问|不想回答|不想聊这个)/;
+const personalLimit=/^(?:别问我|不要问我|别再问|不许问|别追问|不想回答|不想聊这个)/;
 const fromUser=m=>m&&(m.role==='user'||m.from==='me');
 const contentOf=m=>String(m?.content??m?.text??'').trim();
 const clampRandom=n=>Number.isFinite(Number(n))?Math.min(1-Number.EPSILON,Math.max(0,Number(n))):0.5;
@@ -67,7 +67,7 @@ export function taiTurnNeedsMore({plan,entries=[],messages=[],action='send_text'
  if(!Array.isArray(entries)||entries.length===0||entries.length>=plan.target)return false;
  // Respect real character boundaries and explicit conversation endings.
  const last=contentOf((Array.isArray(messages)?messages:[]).filter(fromUser).at(-1));
- if(stop.test(last)||personalLimit.test(last))return false;
+ if(stop.test(last)||personalLimit.test(last)||nowish.test(last))return false;
  if(entries.some(e=>e?.action==='phone'))return false;
  const text=entries.map(e=>String(e.text||'')).join(' ');
  if(/(?:我不想聊|没空|不方便|先挂了|晚点说|明天再聊|我先忙了|不愿意谈这个|这是我的私事|到此为止|不谈这个)[。！？!?~\s]*$/.test(text.trim()))return false;
