@@ -52,7 +52,7 @@ export function sampleTaiTurnPlan({
  // Draw independently of v12 length and guidance; the 40% branch genuinely
  // permits a multi-bubble burst (even when the previous draw was one line).
  // Respect a developer's explicit maxMessages=1 restriction.
- const semicolonBurst=mode==='text'&&cap>=2&&clampRandom(random())<TAI_SEMICOLON_BURST_CHANCE;
+ const semicolonBurst=mode==='text'&&cap>=2&&eligible&&!/(?:别发那么多|不要发那么多|只说一句|一句话就行|一句就够|少说点)/.test(contentOf(messages.filter(fromUser).at(-1)))&&clampRandom(random())<TAI_SEMICOLON_BURST_CHANCE;
  return {target:Math.min(cap,semicolonBurst?Math.max(2,count):count),guide,mode,eligible,
   semicolonBurst,weight:chosen.weight,requested:chosen.count};
 }
