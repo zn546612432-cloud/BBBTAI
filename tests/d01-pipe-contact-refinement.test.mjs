@@ -32,7 +32,7 @@ test('GHOST network puzzle grows 5×5 to 7×7, two fixed glowing terminals on se
 });
 test('GHOST D01 shows the solved board for three full real seconds before awarding progress',()=>{
  const s=fixture();seedD01(s);acceptD01Repair(s);
- s.story55.d01.deployed=true;
+ s.story55.d01.deployed=true;s.story55.d01.completedRounds=0;
  authorize(s,{orderId:D01_REPAIR,type:'route',mailId:D01_ATTACHMENT});
  assert.equal(begin(s,D01_REPAIR,1000),true);
  const o=s.ghost.orders[D01_REPAIR];
