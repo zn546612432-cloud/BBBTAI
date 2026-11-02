@@ -40,7 +40,8 @@ export function acceptD01Repair(s){
  if(!o||o.status!=='OPEN')return false;
  o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;d.acceptedAt=Date.now();
  const list=s.content.conversations.mirage;
- if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Rookery 13',avatar:'R13',online:false,unread:1,storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
+ if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Rookery 13',avatar:'R13',online:false,unread:1,lastMessageAt:Date.now(),storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
+ if(!s.notifications.some(n=>n.id==='d01-mirage-link-established'))s.notifications.unshift({id:'d01-mirage-link-established',title:'MIRAGE',body:'Rookery 13：通信已建立。',conversationId:D01_CONTACT,day:1,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
  return true;
 }
 export function deliverD01Attachment(s){
