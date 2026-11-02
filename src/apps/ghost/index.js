@@ -31,7 +31,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
   }else{
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable()
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
-   body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,devSkipTop||o.deadline!==null&&o.type!=='strike'?devSkipTop||fmt(remaining):''))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'第 '+String(o.attempts).padStart(2,'0')+' 次尝试'}</small><h1>${tool.name}</h1><p>${{cipher:'交换方块，还原上方参考图',route:'旋转管线，让起点连通终点',extract:'找出相同的数据块',veil:'按顺序输入数字代码',strike:'正在执行，请等待完成',verify:'依次选择正确的模块'}[o.type]}</p></div>`;
+   body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,devSkipTop||(o.deadline!==null&&o.type!=='strike'?fmt(remaining):'')))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'第 '+String(o.attempts).padStart(2,'0')+' 次尝试'}</small><h1>${tool.name}</h1><p>${{cipher:'交换方块，还原上方参考图',route:'旋转管线，让起点连通终点',extract:'找出相同的数据块',veil:'按顺序输入数字代码',strike:'正在执行，请等待完成',verify:'依次选择正确的模块'}[o.type]}</p></div>`;
    const b=o.board;
    if(o.type==='cipher')body+=`<div class="gh-reference">${circuit()}<small>参考图</small></div><div class="gh-grid" id="gh-puzzle">${b.tiles.map((tile,i)=>button('tile',circuit(tile),`data-index="${i}" aria-label="方块 ${i+1}"`,b.selected===i?'selected':'')).join('')}</div>`;
    if(o.type==='route'){
