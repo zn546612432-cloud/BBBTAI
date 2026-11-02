@@ -1,24 +1,19 @@
-// A consistent actor should keep the same timbre across dramatic turns.
-// MiniMax's emotion control is optional, so use natural phrasing as the default.
-// The expressive laboratory profile retains the full authored Speech 2.8
-// performance tags for deliberate A/B comparisons, not the live default.
+// The author prefers a single cool, recognisable Xitai voice over model-driven
+// acting. Always request MiniMax's explicit "calm" emotion; OMITTING emotion
+// allows auto-detection and can change the apparent speaker mid-call.
+// The experimental Speech 2.8 sound-tag implementation remains in voice-regex.js
+// for future offline research, but cannot leak into live calls or voice notes.
 import {prepareXitaiSpeech} from './voice-regex.js';
 
-export const VOICE_STYLES=Object.freeze(['stable','expressive']);
-export const normalizeVoiceStyle=value=>VOICE_STYLES.includes(value)?value:'stable';
+export const VOICE_STYLES=Object.freeze(['calm']);
+// Old preview saves can contain "expressive"; never let that override this
+// author's newer instruction. Safe to leave the API keys in sessionStorage.
+export const normalizeVoiceStyle=()=> 'calm';
 
-export function prepareTaiVoicePerformance(text,{tone='neutral',style='stable'}={}){
- const selected=normalizeVoiceStyle(style);
- if(selected==='expressive')
-  return {...prepareXitaiSpeech(text,{tone,autoTags:true}),voiceStyle:selected};
- // Preserve supported explicitly authored sound events while avoiding
- // obligatory breath before every sentence and per-bubble emotional shifts.
+export function prepareTaiVoicePerformance(text,{tone='neutral'}={}){
  const base=prepareXitaiSpeech(text,{tone:'neutral',autoTags:false});
- let spoken=base.text;
- const words=spoken.replace(/\([a-z-]+\)/gi,'').replace(/<#\d+(?:\.\d+)?#>/g,'').trim();
- // A single subtle lead-in breath for an actual longer utterance is enough;
- // the model already performs punctuation on shorter clauses naturally.
- if(words.length>=25&&!/^\s*\((?:breath|inhale|exhale|sighs|chuckle|laughs)\)/.test(spoken))
-  spoken='(breath)'+spoken;
- return {...base,text:spoken,voiceStyle:selected,speed:1,emotion:null,tagCount:(spoken.match(/\([a-z-]+\)/g)||[]).length};
+ // Do not force automatic breathing/laughing/gasping after each generated
+ // sentence: those marks can alter timbre for certain cloned voice IDs.
+ // Retain only previously authored valid tags, never add speculative ones.
+ return {...base,voiceStyle:'calm',speed:1,emotion:'calm',tone};
 }

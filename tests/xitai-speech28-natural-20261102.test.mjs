@@ -56,7 +56,7 @@ test('emotional DeepSeek tone survives reply normalization into voice synthesis'
  assert.deepEqual(results.map(x=>x.tone),['angry','playful']);
  assert.equal(prepareXitaiSpeech(results[0].text,{tone:results[0].tone}).emotion,'angry');
 });
-test('direct MiniMax request sends HD tags to speech only, without hard-coded calm and with multilingual auto',async()=>{
+test('direct MiniMax request explicitly fixes calm while keeping multilingual auto',async()=>{
  const oldFetch=globalThis.fetch,oldSession=globalThis.sessionStorage;
  const session=new Map();globalThis.sessionStorage={getItem:k=>session.get(k)||null,setItem:(k,v)=>session.set(k,v),removeItem:k=>session.delete(k)};
  saveApiConfig({minimax:'not-a-real-key',region:'cn',ttsModel:'speech-2.8-hd'});
@@ -73,7 +73,7 @@ test('direct MiniMax request sends HD tags to speech only, without hard-coded ca
   assert.equal(sent.text,'Claro，我知道了。','stable default does not force a breath for a short utterance');
   assert.equal(sent.language_boost,'auto');
   assert.equal(sent.voice_setting.speed,1);
-  assert.equal('emotion' in sent.voice_setting,false);
+  assert.equal(sent.voice_setting.emotion,'calm');
   await voicePreview({text:'Não, estás a brincar?'});
   assert.equal(sent.language_boost,'Portuguese','pure Portuguese asks MiniMax to pronounce in Portuguese');
  }finally{clearApiConfig();globalThis.fetch=oldFetch;if(oldSession===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=oldSession;}
