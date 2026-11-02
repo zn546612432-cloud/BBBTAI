@@ -28,15 +28,23 @@ function queueTaiReply(ctx,messageId){
  if(pendingTai)clearTimeout(pendingTai);
  ctx.store.update(s=>{const m=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===messageId);if(m&&!m.receivedAt)m.receivedAt=Date.now();});
  showFeedback(ctx,'已发送');
- const run=async()=>{
+ const run=async(retryDeferred=false)=>{
   if(version!==replyVersion)return;
   pendingTai=null;
   try{
-   showFeedback(ctx,'熙泰正在输入…');
-   const result=await replyToTaiMessage(ctx.store,messageId,{refresh:()=>ctx.refresh()});
+   showFeedback(ctx,'已送达');
+   const result=await replyToTaiMessage(ctx.store,messageId,{refresh:()=>ctx.refresh(),retryDeferred,
+     onTyping:()=>{if(version===replyVersion)showFeedback(ctx,'熙泰正在输入…');}});
    if(version!==replyVersion)return;
-   if(result.status==='busy'){pendingTai=setTimeout(run,500);return;}
-   showFeedback(ctx,result.status==='offline'||result.status==='unavailable'?result.message:'');
+   if(result.status==='busy'){pendingTai=setTimeout(()=>run(retryDeferred),500);return;}
+   if(result.status==='deferred'){
+    showFeedback(ctx,'已送达');
+    pendingTai=setTimeout(()=>run(true),Math.max(50,result.retryAfterMs||90000));
+    pendingTai.unref?.();
+    return;
+   }
+   showFeedback(ctx,['read_no_reply','end_session'].includes(result.status)?'已读':
+     result.status==='offline'||result.status==='unavailable'?result.message:'');
   }catch(error){if(version===replyVersion){showFeedback(ctx,error.message||'AI 回复失败');ctx.toast(error.message||'AI 回复失败');}}
  };
  pendingTai=setTimeout(run,3000);
