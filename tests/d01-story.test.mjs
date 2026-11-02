@@ -126,3 +126,27 @@ test('D01 delayed mail and BTC reward survive timers after refresh',async()=>{
  tickD01(s,payoutDue+2001);tickD01(s,payoutDue+3000);
  assert.equal(s.content.mirage.digitalTransactions.length,1);
 });
+
+test('D01 and D03 each settle an independent 2,000 USD exactly once',async()=>{
+ const {initialState}=await import('../src/services/storage.js');
+ const {activateStory55}=await import('../src/services/story55/runtime.js');
+ const {FLOW_REWARD_ID,FLOW_KEY,tickFlowD03,openFlowTest,acceptFlowKey,installFlowTool,submitFlowScan}=await import('../src/services/story55/flow-d03.js');
+ const s=initialState();
+ activateStory55(s);
+ const startingBalance=s.bankData.balance;
+ seedD01(s);
+ assert.equal(deliverD01Opening(s),true);
+ assert.equal(claimD01Bank(s),true);
+ assert.equal(s.bankData.balance,startingBalance+2000);
+ s.day=3;s.clock='09:00';
+ assert.equal(tickFlowD03(s),true);
+ assert.equal(openFlowTest(s),true);
+ assert.equal(acceptFlowKey(s,FLOW_KEY).ok,true);
+ assert.equal(installFlowTool(s),true);
+ assert.equal(submitFlowScan(s),true);
+ assert.equal(submitFlowScan(s),false);
+ assert.equal(claimD01Bank(s),false);
+ assert.equal(s.bankData.balance,startingBalance+4000);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='d01-bank-1846').length,1);
+ assert.equal(s.bankData.transactions.filter(t=>t.id===FLOW_REWARD_ID).length,1);
+});
