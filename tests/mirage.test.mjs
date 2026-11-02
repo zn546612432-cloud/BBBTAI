@@ -89,3 +89,25 @@ test('D06 MIRAGE -> KIRA authorization -> GHOST extraction settles 10 BTC only a
   assert.match(followup,/CONTRACT COMPLETED/);
  }finally{setMirageAuthenticated(false);}
 });
+
+test('legacy D06 save with accepted mission receives missing KIRA key on regular story tick',async()=>{
+ const {activateStory55,tickStory55}=await import('../src/services/story55/runtime.js');
+ const {rebuildStory55AtDay}=await import('../src/services/story55/rebuild.js');
+ const {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID}=await import('../src/apps/mirage/data.js');
+ const state=initialD06();
+ function initialD06(){
+  const st=new PhoneStore(memory()).get();
+  activateStory55(st);
+  rebuildStory55AtDay(st,6);
+  return st;
+ }
+ const order=state.content.orders.find(o=>o.id===STORY55_BOUNTY_ID);
+ order.status='ACCEPTED';
+ assert.equal(state.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID),false);
+ tickStory55(state);
+ tickStory55(state);
+ assert.equal(state.content.orders.find(o=>o.id===STORY55_BOUNTY_ID).status,'ACCEPTED');
+ assert.equal(state.content.mail.filter(m=>m.id===STORY55_WALLET_MAIL_ID).length,1);
+ assert.match(state.content.mail.find(m=>m.id===STORY55_WALLET_MAIL_ID).body,/MIRAGE-D06/);
+ assert.equal(state.notifications.filter(m=>m.id==='s55-wallet-d06-authorization-notice').length,1);
+});
