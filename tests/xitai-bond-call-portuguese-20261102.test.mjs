@@ -87,3 +87,30 @@ test('AI commitment after typed call request triggers a real ringing NoApp call'
   callAction('tai-decline',ctx);
  }finally{globalThis.fetch=oldFetch;if(oldSession===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=oldSession;}
 });
+
+
+test('pure hi mirror is repaired once by DeepSeek instead of saving an echo',async()=>{
+ const state=initialState();state.day=56;state.clock='22:00';
+ const c=state.content.conversations.noapp.find(c=>c.id==='tai');
+ c.messages.push({id:'hello-demo',from:'me',text:'hi',kind:'text',actual:true,day:56,time:'22:00'});
+ const store={get:()=>state,update(fn){fn(state)}};
+ const oldFetch=globalThis.fetch,oldSession=globalThis.sessionStorage;
+ const session=new Map();globalThis.sessionStorage={getItem:k=>session.get(k)||null,setItem:(k,v)=>session.set(k,v),removeItem:k=>session.delete(k)};
+ let calls=0;
+ globalThis.fetch=async(url)=>{
+  if(String(url).endsWith('/status'))return new Response(JSON.stringify({deepseek:true,minimax:false}),{status:200});
+  calls++;
+  return new Response(JSON.stringify({text:JSON.stringify({messages:[{text:calls===1?'hi':'你怎么突然想起我了？',mode:'text'}]})}),{status:200});
+ };
+ try{
+  const result=await replyToTaiMessage(store,'hello-demo',{wait:async()=>{}});
+  assert.equal(result.status,'replied');
+  assert.equal(calls,2);
+  assert.equal(c.messages.at(-1).text,'你怎么突然想起我了？');
+ }finally{globalThis.fetch=oldFetch;if(oldSession===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=oldSession;}
+});
+test('everyday non-keyword conversations grow slow familiarity after eight meaningful turns',()=>{
+ const s=initialState();s.day=56;
+ for(let i=0;i<8;i++)updateTaiBond(s,{messageId:'ordinary-'+i,text:'今天我跟你聊了一件日常的小事 '+i,now:1e6+i*1e5});
+ assert.equal(taiBond(s).score,31);
+});
