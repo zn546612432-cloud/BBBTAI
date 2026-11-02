@@ -3,6 +3,7 @@ import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {tickFlowD03} from './flow-d03.js';
+import {ensureD01,tickD01} from './d01.js';
 import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
@@ -26,8 +27,8 @@ export function activateStory55(s){
  s.content.moments={posts:structuredClone(moments.posts||[]),editedPosts:structuredClone(moments.editedPosts||{}),deletedIds:[...(moments.deletedIds||[])],profiles:structuredClone(moments.profiles||{}),likes:{},comments:{}};
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
- s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:c.economics.openingBalance,transactions:[]};
- tickStory55(s);return s;
+ s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:0,transactions:[]};
+ ensureD01(s);tickStory55(s);return s;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){return story55Config(s).scenes[id]||[];}
@@ -111,6 +112,8 @@ export function tickStory55(s){
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
  ensureNativeMirage55(s);
+ ensureD01(s);
+ tickD01(s);
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
