@@ -349,6 +349,7 @@ $('#root').addEventListener('click',async e=>{
   if(e.target.matches('.mc-login [data-mirage-account]')){registry.get('mirage')?.accountTap?.(e.target);return;}
   const target=e.target.closest('[data-action]');if(!target)return;
   const action=target.dataset.action;
+  if(action==='kira-d01-bank')e.preventDefault(); // In-app mail link must not navigate to #.
   try{
     if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
     if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.replace(restartState(store.get()));location.reload();return;}
