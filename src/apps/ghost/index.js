@@ -10,6 +10,7 @@ import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,aut
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
+import {ghostDevSkipAvailable,previewSkipD01} from './features/dev-skip/index.js';
 export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'工具程序'};
 const button=(action,label,attrs='',cls='')=>`<button class="gh-button ${cls}" data-action="gh-${action}" ${attrs}>${label}</button>`;
 const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params});
@@ -37,6 +38,9 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
     const linked=lit.has(sink),preview=o.status==='preview-win';
     body+=`<div class="gh-port-label"><span><i class="gh-port-dot gh-source-dot"></i>源點 / ${String(Math.floor(source/size)+1).padStart(2,'0')}-${source%size+1}</span><span><i class="gh-port-dot gh-target-dot"></i>終點 / ${String(Math.floor(sink/size)+1).padStart(2,'0')}-${sink%size+1}</span></div><div class="gh-grid gh-pipes ${preview?'gh-network-complete':''}" style="--pipe-columns:${size}">${b.masks.map((mask,i)=>button('pipe',pipe(mask,lit.has(i),i===source?'source':i===sink?'target':''),`data-index="${i}" aria-label="${i===source?'源點（固定）':i===sink?'終點（固定）':'旋轉管線 '+(i+1)}" ${preview||b.size&&(i===source||i===sink)?'disabled':''}`,i===source?'gh-source-tile':i===sink?'gh-target-tile':'')).join('')}</div><div class="gh-progress-label"><span>${preview?'連線成功 · 正在驗收':linked?'終點已接通':'請接通高亮終點'}</span><span>${lit.size} / ${b.masks.length}</span></div><div class="gh-meter"><i style="width:${lit.size/b.masks.length*100}%"></i></div>${preview?'<div class="gh-success-preview" role="status"><span class="gh-success-check">✓</span><strong>連線已建立</strong><small>3 秒後完成本次修復</small></div>':''}`;
    }
+   if(o.type==='route'&&o.id===D01_REPAIR&&o.status==='running'&&ghostDevSkipAvailable()){
+    body+=`<div class="gh-dev-skip-wrap">${button('d01-dev-skip','跳过本关 · 开发测试','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip')}<small>仅供开发预览 · 正式游戏不显示</small></div>`;
+   }
    if(o.type==='extract')body+=`<div class="gh-target"><small>目标指纹</small><strong>${b.target.split('').join(' ')}</strong><div class="gh-bars">${b.target.split('').map(v=>`<i style="height:${12+Number(v)*3}px"></i>`).join('')}</div></div><div class="gh-options">${b.options.map((code,i)=>button('match',`<small>数据块 / 0${i+1}</small><b>${code.split('').join(' ')}</b><span>↗</span>`,`data-index="${i}"`)).join('')}</div><p class="gh-hint">${b.round+1} / ${cfg.rounds}</p>`;
    if(o.type==='veil')body+=`<div class="gh-code"><small>覆盖序列</small><strong>${b.code.split('').map((v,i)=>`<span class="${i<b.input.length?'typed':''}">${v}</span>`).join('')}</strong><div>${Array.from({length:cfg.codeLength},(_,i)=>`<i class="${i<b.input.length?'filled':''}"></i>`).join('')}</div></div><div class="gh-keypad">${['1','2','3','4','5','6','7','8','9','⌫','0','↵'].map(key=>button('key',key,`data-key="${key}" aria-label="${key}"`)).join('')}</div><p class="gh-hint">${b.round+1} / ${cfg.rounds}　·　错误 ${o.errors}</p>`;
    if(o.type==='verify')body+=`<div class="gh-target"><small>模块正确顺序</small><strong>${b.target.map(moduleLabel).join(' · ')}</strong><p>${b.input.map(moduleLabel).join(' · ')||'—'}</p></div><div class="gh-options">${b.tokens.map((token,i)=>button('verify-token',esc(moduleLabel(token)),`data-index="${i}" ${b.used.includes(i)?'disabled':''}`)).join('')}</div>`;
@@ -54,6 +58,13 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='history')return nav(ctx,'/history');
  if(a==='tool')return nav(ctx,'/tool',{tool:t.dataset.tool});
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
+ if(a==='d01-dev-skip'){
+  if(!ghostDevSkipAvailable()||id!==D01_REPAIR)return;
+  let skipped=false;
+  ctx.store.update(n=>{skipped=previewSkipD01(n,id);});
+  if(!skipped)ctx.toast?.('当前关卡无法跳过');
+  return;
+ }
  if(a==='d01-cancel'){exitDialogFor=null;ctx.refresh();return;}
  if(a==='d01-save'&&id===D01_REPAIR){exitDialogFor=null;return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d01-discard'&&id===D01_REPAIR){exitDialogFor=null;ctx.store.update(n=>exitD01Puzzle(n,{discard:true}));return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
