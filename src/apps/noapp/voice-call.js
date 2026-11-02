@@ -501,9 +501,21 @@ export async function convertTaiTextToVoice(ctx,id){
  const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai'),m=c?.messages.find(x=>x.id===id);
  if(!m||m.from==='me')throw Error('只允许给熙泰的消息配音');
  const clean=readableTaiVoiceText(m.text);
- const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
- await saveClip('tai-'+id,clip);
- ctx.store.update(s=>{const c=s.content.conversations.noapp.find(x=>x.id==='tai');const m=c?.messages.find(x=>x.id===id);if(m){m.kind='voice';m.audioId='tai-'+id;m.voiceCaption=clean;m.text=clean;}});
+ try{
+  const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
+  await saveClip('tai-'+id,clip);
+  ctx.store.update(s=>{
+   const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
+   if(record){record.kind='voice';record.audioId='tai-'+id;record.voiceCaption=clean;record.text=clean;
+    delete record.voiceFailed;delete record.voiceError;delete record.voiceRequested;}
+  });
+ }catch(error){
+  ctx.store.update(s=>{
+   const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
+   if(record){record.voiceFailed=true;delete record.voiceRequested;record.voiceError=String(error?.message||'语音生成失败').slice(0,440);}
+  });
+  throw error;
+ }
 }
 
 /** iOS push-to-talk: request the microphone on the pointerdown gesture,
