@@ -16,7 +16,7 @@ import {taiBehavior} from '../../services/ai/behavior.js';
 import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from '../../services/ai/conversation-momentum-v11.js';
-import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from '../../services/ai/conversation-shape-v12.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -217,6 +217,13 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     scene:scene+' 【电话连贯表达】你已经讲出：'+replies.map(r=>r.text).join(' / ').slice(0,620)+'。继续这个具体话题，补'+remaining+'段自然有内容的说话，不重复上一段，不反复问熙蒙“还想听什么”；如果确实不想说可以真实收住，不强凑。'+(turnPlan.guide?'本轮30%引导型人格触发，请在回答后自然问一个根据熙蒙刚刚说过的具体事情产生的问题。':'')});
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
    replies=mergeTaiTurnEntries(replies,unpackTaiReply(continuation,'call'),turnPlan.target);
+  }
+  if(turnPlan&&taiGuidanceNeedsRepair({plan:turnPlan,entries:replies,messages:history})){
+   const followup=await askTai({...request,turnPlan:{...turnPlan,target:1,guide:true},
+    scene:scene+' 【通话30%引导型人格触发】此前已讲：'+replies.map(r=>r.text).join(' / ').slice(0,600)+'。再说一条可朗读、具体而自然的追问，用问号结尾，承接熙蒙刚才明确透露或问过的事情。不要问空泛的“你在干嘛”“还有呢”，不要复述自己刚才说过的话。'});
+   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
+   const candidate=unpackTaiReply(followup,'call').find(x=>/[？?]/.test(x.text));
+   if(candidate)replies=taiIntegrateGuidingQuestion(replies,candidate,turnPlan.target);
   }
   // The telephone is a conversation, not a list of standalone voice snippets.
   // Keep only a manageable number of meaningful turns before listening again.
