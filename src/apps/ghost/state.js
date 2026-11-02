@@ -1,3 +1,4 @@
+import {D01_REPAIR,finishD01Round} from '../../story/d01/runtime.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -47,6 +48,7 @@ export function finish(s,id,success,now=Date.now()){
  const g=ensureGhost(s),o=g.orders[id];
  if(!o||o.status!=='running')return;
  o.status=success?'success':'failed';
+ if(success&&id===D01_REPAIR)finishD01Round(s);
  if(success&&o.story55Project)completeDeploymentRun(s,o);
  if(success&&o.story55Commission){o.status='paid';s.bankData.balance+=20000;s.bankData.transactions.unshift({id:o.id,label:'MIRAGE COMMISSION',amount:20000,time:s.clock});}
  g.history.unshift({id:id+':'+o.attempts,orderId:id,type:o.type,success,at:now,moves:o.moves,attempt:o.attempts});
