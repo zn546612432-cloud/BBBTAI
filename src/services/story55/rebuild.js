@@ -12,6 +12,8 @@ import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {simulateFlowD03} from './flow-d03.js';
+import {D01_REPAIR,D01_ATTACHMENT,seedD01,deliverD01Opening,claimD01Bank,acceptD01Repair,deliverD01Attachment,revealD01Key,deployD01,finishD01Round,submitD01Attachment,settleD01Repair} from '../../story/d01/runtime.js';
+import {authorize} from '../../apps/ghost/state.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -141,6 +143,34 @@ function simulateProjectBatch(s,node){
  }
  return true;
 }
+// Only the developer's date reconstruction may simulate the D01 repair.
+// Player-initiated acceptance still requires s.day === 1.
+function simulateCompletedD01(s){
+ if(s.day!==1||s.story55?.version!==1)throw Error('仅能在开发者重建 D01 的前置进度');
+ seedD01(s);
+ deliverD01Opening(s);
+ if(!s.story55.d01?.bankClaimed&&!claimD01Bank(s))throw Error('无法重建 D01 银行结款');
+ if(!s.story55.d01?.repairAccepted&&!acceptD01Repair(s))throw Error('无法重建 D01 MIRAGE 接单');
+ if(!s.content.mail.some(m=>m.id===D01_ATTACHMENT)&&!deliverD01Attachment(s))throw Error('无法重建 D01 KIRA 附件');
+ if(!revealD01Key(s)||!deployD01(s))throw Error('无法重建 D01 GHOST 授权');
+ while((s.story55.d01.completedRounds||0)<5){
+  if(!finishD01Round(s))throw Error('无法重建 D01 的五轮数据修复');
+ }
+ if(!s.story55.d01.submitted&&!submitD01Attachment(s))throw Error('无法重建 D01 修复提交');
+ if(!s.story55.d01.rewardPaid&&!settleD01Repair(s))throw Error('无法重建 D01 0.04 BTC 结算');
+ // Show the completed five-round run in GHOST, not a fresh playable task.
+ const run=authorize(s,{orderId:D01_REPAIR,mailId:D01_ATTACHMENT,type:'route'});
+ Object.assign(run,{key:'mirage001',type:'route',status:'paid',attempts:5,paidAt:Date.parse('2025-05-19T20:00:00Z'),test:true});
+ for(let round=1;round<=5;round++){
+  const id=D01_REPAIR+':dev-'+round;
+  if(!s.ghost.history.some(h=>h.id===id))s.ghost.history.unshift({
+   id,orderId:D01_REPAIR,type:'route',success:true,at:Date.parse('2025-05-19T20:00:00Z')+round*1000,
+   attempt:round,day:1,test:true
+  });
+ }
+ s.story55.d01.developerCompleted=true;
+ return true;
+}
 function simulateScene(s,node){
  const lines=story55Config(s).scenes[node.id];
  if(!Array.isArray(lines)||!lines.length)throw Error('无法重建场景台词：'+node.id);
@@ -236,6 +266,9 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
    }
   }
+  // D01 is playable at the target date; when it is a prior date, simulate
+  // the complete MIRAGE → KIRA → GHOST → bank/wallet chain once.
+  if(day===1){simulateCompletedD01(s);tickStory55(s);}
   // Include all published authored bounties before the target test day.
   // They follow the same strict cross-App commands as real gameplay, but
   // only inside this independently snapshotted developer reconstruction.
