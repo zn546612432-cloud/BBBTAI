@@ -242,3 +242,48 @@
 .app-noapp .tai-translation summary:before{content:"译";display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid #63879b;border-radius:5px;margin-right:6px;font-size:10px}
 .app-noapp .tai-translation p{background:#223242;color:#d5e5ef;font-size:12px;line-height:1.55;padding:10px 12px;margin:4px 0;border-radius:11px}
 .app-noapp .tai-bond-debug{margin:12px 4px;font-size:11px;line-height:1.6;color:#7c8e9f}
+
+/* v11: the phone transcript must remain usable ABOVE the iOS software keyboard. */
+@media(max-width:600px){
+ #phone.keyboard-open .app-noapp .tai-call-screen{
+  height:100%;min-height:0;justify-content:flex-start;padding-bottom:8px;overflow:hidden;
+ }
+ #phone.keyboard-open .app-noapp .tai-call-identity,
+ #phone.keyboard-open .app-noapp .tai-call-bottom,
+ #phone.keyboard-open .app-noapp .tai-live-captions{display:none!important}
+ #phone.keyboard-open .app-noapp .tai-call-topbar{height:42px;min-height:42px}
+ #phone.keyboard-open .app-noapp .tai-call-caption-sheet{
+  position:relative!important;inset:auto!important;left:auto!important;right:auto!important;
+  top:auto!important;bottom:auto!important;
+  flex:1;min-height:0;max-height:none;width:100%;display:flex;flex-direction:column;
+  margin:3px 0 6px;overflow:hidden;padding:12px;
+ }
+ #phone.keyboard-open .app-noapp .tai-call-transcript{flex:1;min-height:0;max-height:none;overflow:auto}
+ #phone.keyboard-open .app-noapp .tai-call-caption-sheet form{flex:0 0 auto;margin-top:8px}
+}
+.app-noapp .noapp-voice-pending{
+ display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:45px;
+ padding:10px 13px;border-radius:14px;border:1px solid #7798ab66;
+ background:#2b4356;color:#e8f4ff;font-size:12px;
+}
+.app-noapp .noapp-voice-pending small{font-size:10px;color:#b7d0e3}
+.app-noapp .noapp-voice-pending.is-failed{border-color:#c78c8b88;color:#ffe2db}
+.app-noapp .noapp-voice-pending button{
+ border:1px solid #c3d9eb88;background:#d1e5f2;color:#213444;
+ border-radius:9px;padding:6px 10px;min-height:32px;font-size:12px;
+}
+.app-noapp .noapp-shell .composer .noapp-composer-mic{flex:0 0 38px;min-width:38px;padding:4px}
+.app-noapp .noapp-shell .composer input[name=text]{min-width:0}
+
+/* An iPhone has no hover tooltip: display the actual TTS error in the chat. */
+.app-noapp .noapp-voice-pending.is-failed{display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-width:min(320px,85vw)}
+.app-noapp .noapp-voice-pending.is-failed strong{font-size:13px;font-weight:650}
+.app-noapp .noapp-voice-error{color:#f8e9e5;font-size:12px;line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap;margin:0}
+.app-noapp .tai-voice-diagnostic{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #6b89a066;border-radius:14px;background:#263a4a;color:#e9f4ff}
+.app-noapp .tai-voice-diagnostic h3{margin:0;font-size:15px}
+.app-noapp .tai-voice-diagnostic p{margin:0;font-size:12px;line-height:1.6;color:#d2e1ef}
+.app-noapp .tai-voice-diagnostic button{background:#c2dbea;border:0;border-radius:11px;color:#1d3441;min-height:43px;padding:10px;font-size:14px;font-weight:600}
+.app-noapp .tai-voice-diagnostic button:disabled{opacity:.55}
+.app-noapp .tai-voice-diagnostic-result{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:10px;background:#172735}
+.app-noapp .tai-voice-diagnostic-result.failed{color:#ffdbcf}
+.app-noapp .tai-voice-diagnostic-result.success{color:#bbeddb}

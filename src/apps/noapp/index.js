@@ -12,7 +12,7 @@ import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
 import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
 import {maybeSendProactive} from '../../services/ai/proactive.js';
-import {apiConfig,saveApiConfig,clearApiConfig,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
+import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
 import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
@@ -20,6 +20,8 @@ import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRe
 
 export const manifest={id:'noapp',name:'NoApp',icon:12,unlockDay:56,defaultRoute:'/',supportsDeepLink:true,kicker:'PRIVATE CHANNEL'};
 let taiFeedback='',pendingTai=null,replyVersion=0;
+// Result contains no API keys or full provider responses; suitable for iPhone UI.
+let voiceDiagnosis={state:'idle',message:''};
 // Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
 let settingsDraft={};
 function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get().nav.current;if(nav.appId==='noapp'&&nav.route==='/chat/tai')ctx.refresh();}
@@ -28,21 +30,30 @@ function queueTaiReply(ctx,messageId){
  if(pendingTai)clearTimeout(pendingTai);
  ctx.store.update(s=>{const m=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===messageId);if(m&&!m.receivedAt)m.receivedAt=Date.now();});
  showFeedback(ctx,'已发送');
- const run=async()=>{
+ const run=async(retryDeferred=false)=>{
   if(version!==replyVersion)return;
   pendingTai=null;
   try{
-   showFeedback(ctx,'熙泰正在输入…');
-   const result=await replyToTaiMessage(ctx.store,messageId,{refresh:()=>ctx.refresh()});
+   showFeedback(ctx,'已送达');
+   const result=await replyToTaiMessage(ctx.store,messageId,{refresh:()=>ctx.refresh(),retryDeferred,
+     onTyping:()=>{if(version===replyVersion)showFeedback(ctx,'熙泰正在输入…');}});
    if(version!==replyVersion)return;
-   if(result.status==='busy'){pendingTai=setTimeout(run,500);return;}
-   showFeedback(ctx,result.status==='offline'||result.status==='unavailable'?result.message:'');
+   if(result.status==='busy'){pendingTai=setTimeout(()=>run(retryDeferred),500);return;}
+   if(result.status==='deferred'){
+    showFeedback(ctx,'已送达');
+    pendingTai=setTimeout(()=>run(true),Math.max(50,result.retryAfterMs||90000));
+    pendingTai.unref?.();
+    return;
+   }
+   showFeedback(ctx,['read_no_reply','end_session'].includes(result.status)?'已读':
+     result.status==='offline'||result.status==='unavailable'?result.message:'');
   }catch(error){if(version===replyVersion){showFeedback(ctx,error.message||'AI 回复失败');ctx.toast(error.message||'AI 回复失败');}}
  };
  pendingTai=setTimeout(run,3000);
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
+ const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan').at(-1);
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
  +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label><p>V4 Pro：明确关闭思考，temperature = 1.3。只影响新发送的 AI 回复；Flash 保持原有配置。</p>'
@@ -52,6 +63,8 @@ const setting=(s)=>{
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +'<p class="tai-voice-locked">熙泰声线：固定冷静（calm） · 原音色 ID · 音高 0 · 语速 1.0。电话和语音条共用，不再跟随 AI 情绪变声；以前存档里的「表现力」设置自动失效。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
+ +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
+ +'<section class="tai-voice-diagnostic"><h3>v12 聊天抽签验收</h3><p>3条权重45、2条30、1条30、4～5条30（总权重135，自动归一化）；引导型人格在可接话时另外独立30%抽签。这里只显示自由聊天，固定剧情不计算。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近'+(latestTurn.channel==='call'?'电话':'文字')+'：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft)
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
@@ -101,7 +114,18 @@ export async function handle(action,target,ctx){
  if(action==='open-invite-match'){const matchId=startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='attach-chat')attachChat(id,'noapp',ctx);
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
- if(action==='tai-clear-ai'){settingsDraft={};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
+ if(action==='tai-clear-ai'){settingsDraft={};voiceDiagnosis={state:'idle',message:''};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
+ if(action==='tai-check-minimax'){
+  voiceDiagnosis={state:'testing',message:'正在验证当前平台、固定音色与 MiniMax 合成接口…'};
+  ctx.refresh();
+  try{
+   const audio=await voicePreview({text:'嗯，听得见。',tone:'neutral'});
+   if(!(audio instanceof Blob)||!audio.size||!audio.type.includes('audio/'))throw Error('MiniMax 未返回可播放的音频');
+   voiceDiagnosis={state:'success',message:'MiniMax 连接正常，固定音色已成功生成 MP3。若聊天仍失败，请检查失败气泡中的具体原因（例如 Safari 存储空间）。'};
+  }catch(error){voiceDiagnosis={state:'failed',message:String(error?.message||'未知错误').slice(0,550)};}
+  ctx.refresh();
+  return;
+ }
  if(action==='tai-force-online'){
   setTaiForcedOnline(!taiForcedOnline());ctx.refresh();
   ctx.toast(taiForcedOnline()?'已为本标签页强制在线':'已恢复正常在线时间');
@@ -139,6 +163,7 @@ export const submit=(form,ctx)=>{
   ctx.refresh();ctx.toast('熙泰的聊天与通话设置已保存');return;
  }
  if(form.dataset.form==='tai-save-ai'){
+  voiceDiagnosis={state:'idle',message:''};
   const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel'),voiceStyle:'calm'});settingsDraft={};
   ctx.toast('已保存所选 DeepSeek 模型（NoApp / MIRAGE / 国际象棋共用）');return;
  }

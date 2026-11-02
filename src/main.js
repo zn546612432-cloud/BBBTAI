@@ -9,7 +9,8 @@ import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecon
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
-import {PhoneStore} from './services/storage.js';
+import {PhoneStore,isPreview} from './services/storage.js';
+import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
 import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {mountCallEvents} from './apps/noapp/index.js';
@@ -23,6 +24,7 @@ import {processDemoReply,sendUnansweredChessReminders,dueChessReminders} from '.
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
+import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
@@ -61,14 +63,16 @@ try{await primeTestSnapshots(store.storage);}catch(error){console.warn('测试�
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
 const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
+const taiV10MobileReview=isTaiV10MobilePreview(location.pathname,location.search,isPreview);
 if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
+if(taiV10MobileReview)store.update(s=>prepareTaiV10MobilePreview(s));
 mountShell();
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
-if(store.get().unlocked&&!story55Review)store.update(s=>{s.unlocked=false;});
+if(store.get().unlocked&&!story55Review&&!taiV10MobileReview)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
@@ -317,6 +321,7 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||seco
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
  }
  if(!document.hidden&&callState().state==='connected')maybeAdvanceCall(ctx());
+ if(!document.hidden)maybeResumeTaiDeferred(store);
  if(!document.hidden&&!['ringing','dialing','connected'].includes(callState().state))void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();

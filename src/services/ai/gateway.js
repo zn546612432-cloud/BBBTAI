@@ -2,6 +2,7 @@ import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-per
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
 import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
+import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
@@ -42,9 +43,9 @@ export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion}){
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,model:c.model};
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,model:c.model};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
  const base={...deepseekModelOptions(c.model),
@@ -64,6 +65,39 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
+// Phase 1 is available for the isolated GitHub Pages BYOK test runtime.
+// A proxy which has not implemented this endpoint stays on the legacy path,
+// rather than pretending it has executed a two-stage decision.
+export async function chooseTaiAction(args={}){
+ const c=apiConfig();
+ if(!c.deepseek)return null;
+ const {taiActionDecisionPrompt,validateTaiAction}=await import('./action-protocol-v10.js');
+ const {taiKnowledgeContext}=await import('./tai-profile.js');
+ const mode=args.outputMode==='call'?'call':'text';
+ const context={...args,mode,channel:args.channel||'noapp'};
+ const system=taiActionDecisionPrompt({...context,
+  relationshipContext:(taiKnowledgeContext({day:args.day,channel:context.channel,recognized:args.recognized})+'\\n'+String(args.relationshipContext||'')).slice(0,4100)});
+ let raw;
+ try{
+  const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
+   ...deepseekModelOptions(c.model),
+   messages:[{role:'system',content:system},...(Array.isArray(args.messages)?args.messages.slice(-16):[])],
+   response_format:{type:'json_object'},max_tokens:450,stream:false
+  });
+  raw=response.choices?.[0]?.message?.content;
+ }catch(error){
+  console.warn('Xitai decision phase unavailable; safe legacy response path:',error?.message);
+  return null;
+ }
+ const result=validateTaiAction(raw,{mode,channel:context.channel,
+  recognized:args.recognized===true,sourceMessageId:args.sourceMessageId||'',
+  allowCall:args.allowCall!==false,allowVoice:args.allowVoice!==false&&!!c.minimax,
+  allowDefer:args.allowDefer!==false,hasIncoming:args.hasIncoming!==false,
+  playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true});
+ if(!result.ok){console.warn('Xitai rejected invalid behavior decision:',result.reason);return null;}
+ return result.decision;
+}
+
 export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
  const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
@@ -79,6 +113,10 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
   else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
  }
  if(!c.minimax){
+  // GitHub Pages does not have a /api/voice/tts server route. Never mistake
+  // that HTML 404 for an audio-generation failure or a broken cloned voice.
+  if(minimaxUnavailableOnGithubPages(globalThis.location?.hostname))
+   throw Error(explainMinimaxFailure(new Error('未配置 MiniMax API Key')));
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
   catch{throw Error('MiniMax 语音接口未配置');}
@@ -89,12 +127,14 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const endpoint=c.region==='intl'?'https://api.minimax.io/v1/t2a_v2':'https://api.minimaxi.com/v1/t2a_v2';
  const spoken=String(text||'').trim().slice(0,3000);
  if(!spoken)throw Error('语音文字不能为空');
- const audio=await directJSON(endpoint,c.minimax,{
+ let audio;
+ try{audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
   voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
- });
+ });}
+ catch(error){throw Error(explainMinimaxFailure(error,{region:c.region}));}
  const hex=audio.data?.audio;
  if(typeof hex!=='string'||!hex.length||hex.length%2||!/^[0-9a-f]+$/i.test(hex))throw Error('MiniMax 没有返回有效的 MP3 数据');
  const bytes=new Uint8Array(hex.length/2);

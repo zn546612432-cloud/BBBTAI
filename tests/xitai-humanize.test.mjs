@@ -17,13 +17,14 @@ test('unpackTaiReply 输出没有破折号',()=>{
  assert.equal(out.length,2);
  for(const m of out)assert.doesNotMatch(m.text,/[—–－]/);
 });
-test('人物主动性：没有禁聊的话题闸门，熙泰可以主动分享真实近况',()=>{
+test('人物主动性：不自述日程，更好奇熙蒙的事情',()=>{
  const quiet=taiTopicGate([{role:'user',content:'给我发语音，我想听。'}]);
- assert.match(quiet,/话题自主性/);assert.match(quiet,/不是客服/);
- assert.doesNotMatch(quiet,/不要主动提/);
+ assert.match(quiet,/话题自主性/);
+ assert.match(quiet,/不主动汇报自己的行程/);
+ assert.match(quiet,/更好奇熙蒙/);
  const open=taiTopicGate([{role:'user',content:'你最近还在读麦克白吗'}]);
  assert.match(open,/莎士比亚/);
- assert.doesNotMatch(open,/不能主动/);
+ assert.doesNotMatch(open,/改聊自己的近况/);
 });
 test('真人口语可夹葡语英语，不把例句直接下发模型',()=>{
  const prompt=buildTaiPrompt({day:60,channel:'noapp',outputMode:'text',messages:[{role:'user',content:'在干嘛'}]});

@@ -7,7 +7,7 @@ import {unpackTaiReply} from '../src/services/ai/format.js';
 test('new worldbook includes human dialogue and respects the old character and timeline',()=>{
  const prompt=buildTaiPrompt({day:31,channel:'mirage',recognized:false,messages:[{role:'user',content:'hi'}]});
  assert.match(prompt,/v6 行为与表达补充/);
- assert.match(prompt,/不授权模型执行未知的新动作/);
+ assert.match(prompt,/有已批准的 v10 动作时，动作由程序验证执行/);
  assert.match(prompt,/衔尾蛇时期/);
  assert.match(prompt,/长短自然/);
  assert.match(prompt,/提前剧透/);
