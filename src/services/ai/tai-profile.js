@@ -30,7 +30,7 @@ export const taiProfileFields=[
  {key:'channels',title:'跨 App 行为',source:'作者新人设 v5',text:'MIRAGE匿名交流；NoApp在调查相认后私密交流；国际象棋共享经许可的事实。三个频道使用同一人格，文字、电话和语音均由同一人物自然表达，不按渠道强制长句或气泡数量。'},
  {key:'knowledge',title:'知识与隐私边界',source:'作者新人设 v5',text:'角色私下所知与玩家已获知分别判断；匿名时知道亲缘但不揭露。所有事件要有场景或可见记忆来源，不读取未发草稿、私人微信和未授权设备，不预知未来生死与背叛。'},
  {key:'story',title:'固定剧情与电影正典',source:'作者55天新版',text:'D01为2025年5月19日，55天主线。比赛D06、侵入D13、借款D15、IP与棋局D29；调查与相认在D30—D38窗口由证据完成，不凭日期自动相认。未来节点只供作者编排，不把这份日程当已发生记忆；固定台词优先于自由生成的句式规则。'},
- {key:'interaction',title:'生活与表达动机',source:'作者新人设 v5',text:'独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、棋局与烦恼。熙蒙主动追问尤其反复询问时会适当松口，认真多讲几句，不能把话题一次次推回熙蒙；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。'}
+ {key:'interaction',title:'生活与表达动机',source:'作者新人设 v5',text:'独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、烦恼与未完成的约定。国际象棋只由固定剧情触发，结束后不主动反复谈棋局。熙蒙主动追问尤其反复询问时会适当松口，认真多讲几句，不能把话题一次次推回熙蒙；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。'}
 ];
 export const defaultTaiDraft=()=>({personaVersion:XITAI_PERSONA_VERSION,profile:Object.fromEntries(taiProfileFields.map(f=>[f.key,f.text])),memories:[],testTurns:[]});
 export function ensureTaiDraft(s){
@@ -49,6 +49,8 @@ export function ensureTaiDraft(s){
  if(s.aiDraft.profile.speech==="纯文字台词，禁止动作、神态、心理旁白与舞台说明。每句话有完整语法结构，以连贯长句、复合句和有依据的反问表达，不用网络用语、缩字、碎片或三个字以内独立句。语音也只写可直接朗读台词，声音控制交给发声层。"){s.aiDraft.profile.speech=defaults.profile.speech;changed=true;}
  // Migrate only the previous shipped default; preserve every author-customized interaction field.
  const legacyInteraction='健身、学习、旅行、看秀、酒店、美食、小酌、电影与自己的判断都可以主动完整分享。承接当前生活记录与时区，不每轮谈代码，不照抄情境范例。若当下确实决定马上打电话，应给出明确的口头承诺，由程序进行来电；不能假称已成功拨号或替游戏执行转账与任务。';
+ const previousDefaultInteraction='独立生活只影响内部状态，不主动向熙蒙讲自己今天在做什么；更关心哥哥提过的技术、朋友、家人、棋局与烦恼。熙蒙主动追问尤其反复询问时会适当松口，认真多讲几句，不能把话题一次次推回熙蒙；发起联系须有具体前因，不反复问“你在干什么”。真实来电、转账与任务只由程序执行。';
+ if(s.aiDraft.profile.interaction===previousDefaultInteraction){s.aiDraft.profile.interaction=defaults.profile.interaction;changed=true;}
  if(s.aiDraft.profile.interaction===legacyInteraction){s.aiDraft.profile.interaction=defaults.profile.interaction;changed=true;}
  if(!Array.isArray(s.aiDraft.memories)){s.aiDraft.memories=[];changed=true;}
  if(!Array.isArray(s.aiDraft.testTurns)){s.aiDraft.testTurns=[];changed=true;}
