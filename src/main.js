@@ -308,7 +308,8 @@ setInterval(()=>{
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01WeChatDue(store.get()))store.update(s=>tickD01WeChat(s));
- if(store.get().story55?.d01?.submitted&&!store.get().story55.d01.rewardPaid&&Date.now()>=Number(store.get().story55.d01.submittedAt||Infinity)+2000)store.update(s=>tickD01(s));
+ const d01=store.get().story55?.d01;
+ if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
