@@ -23,12 +23,14 @@ export function deliverD01Opening(s){
  seedD01(s);
  return mail(s,D01_OPENING,'[MIRAGE] Order Completed','Dear Nyarlathotep,\\n\\nYour vulnerability scanning order has been completed. The payment has been transferred to your designated bank account. Please check your bank account for confirmation.\\n\\nBest regards,\\nMIRAGE Network');
 }
+const completeIntroWhenReady=s=>{if(s.story55?.d01?.bankClaimed&&s.story55.d01.rewardPaid&&!s.story55.completed?.intro){s.story55.completed??={};s.story55.completed.intro={day:1,clock:s.clock,by:'d01-mainline'};}};
 export function claimD01Bank(s){
  if(!s.story55||!s.content.mail.some(m=>m.id===D01_OPENING)||s.story55.d01?.bankClaimed)return false;
  const d=s.story55.d01??={};d.bankClaimed=true;
  const reminder=s.content.reminders?.find(r=>r.id==='d01-reminder-bank');if(reminder)reminder.done=true;
  s.bankData.balance=Math.round((Number(s.bankData.balance)||0)*100+200000)/100;
  s.bankData.transactions.unshift({id:'d01-bank-1846',label:'【币速达网安系统】',amount:2000,day:s.day,time:s.clock,date:s.calendar?.anchorDate});
+ completeIntroWhenReady(s);
  s.notifications.unshift({id:'d01-bank-notice',title:'太平洋銀行',body:'尾號1846卡5月19日'+s.clock+'收入2000美元',day:s.day,clock:s.clock,link:{appId:'bank',route:'/',params:{}}});
  return true;
 }
@@ -67,6 +69,7 @@ export function settleD01Repair(s){
  const w=s.content.mirage;w.digitalBalance=(Number(w.digitalBalance)||0)+0.04;
  w.digitalTransactions??=[];w.digitalTransactions.unshift({orderId:D01_REPAIR,amount:0.04,day:s.day,clock:s.clock,at:Date.now()});
  const order=s.content.orders.find(o=>o.id===D01_REPAIR);if(order)order.status='COMPLETED';
+ completeIntroWhenReady(s);
  mail(s,D01_DONE,'[MIRAGE] Order Completed','mirage001 項目訂單已完成。修復結果已驗收，0.04 BTC 已存入電子錢包。');
  return true;
 }
