@@ -2,7 +2,6 @@
 // This module never sends messages or reads other characters' private conversations.
 const TOPICS=[
  ['technical',/代码|源码|程序|工具|编译|修复|漏洞|项目|部署|测试/],
- ['chess',/国际象棋|棋局|下棋|开局|棋谱/],
  ['family',/熙旺|哥哥|家里|家人|孤儿院|仔仔|胡枫|小辛|阿威/],
  ['promise',/约好|答应|下次|改天|说好了|记得|别忘/],
  ['worry',/难过|烦|累|生气|担心|睡不着|害怕/],
@@ -17,6 +16,7 @@ export function extractTaiCuriosities(messages,{day=1,channel='noapp',limit=6}={
   if(m.channel&&m.channel!==channel&&m.visibility!=='shared')continue;
   const quote=m.text.trim().slice(0,180);
   if(!quote||/^\[.*系统事件/.test(quote))continue;
+  // Chess is a story-triggered activity, never a recurring curiosity topic.
   const topic=TOPICS.find(([,pattern])=>pattern.test(quote))?.[0];
   if(!topic||seen.has(topic))continue;
   seen.add(topic);
