@@ -2,6 +2,10 @@
 // string, or a fenced JSON snippet. None of that syntax is a voice transcript.
 import {humanizeTaiText} from './humanize.js';
 import {safeTaiTranslation} from './portuguese.js';
+// Only a leading (phone) is an executable call request; middle-of-sentence
+// mentions are plain text, not commands. Both forms are always removed from UI.
+const phonePrefix=/^\s*(?:\(phone\)|（phone）)\s*/i;
+const phoneMarks=/\(phone\)|（phone）/gi;
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
 const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
 const structural=s=>/^\s*(?:```(?:json)?|\{\s*"(?:messages|text|reply|mode)"|\[\s*\{|\\"|\[\s*\")/i.test(s);
@@ -51,20 +55,25 @@ export function unpackTaiReply(response,channel='noapp'){
   return [];
  });
  const normalized=entries.slice(0,6).flatMap(x=>{
-  const mode=channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
-  const speechText=humanizeTaiText(String(x?.text||'').trim().slice(0,3000),{stripStage:false});
+  const raw=String(x?.text||'').trim().slice(0,3000);
+  const phone=channel==='noapp'&&phonePrefix.test(raw);
+  const cleaned=raw.replace(phoneMarks,'').trim();
+  // A phone event is not a voice message; text after the command is the
+  // *first phone utterance*, delivered only when the player answers.
+  const mode=phone?'text':channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
+  const speechText=humanizeTaiText(cleaned,{stripStage:false});
   const display=humanizeTaiText(cleanedText(speechText));
   const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
-  if(!display)return [];
+  if(!display&&!phone)return [];
   // Free text is sent as distinct chat bubbles at semicolons and line breaks;
   // audio remains one uninterrupted speech segment.
-  const split=mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
+  const split=phone?[display]:mode==='text'?display.split(/[；;]|\n\s*\n|\n+/).map(v=>v.trim()).filter(Boolean):[display];
   const parts=split.length>1?(/[；;]/.test(display)?split.map(v=>v.replace(/[，,。．]+$/u,'').trim()).filter(Boolean):split):[display];
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
   // Short messenger bubbles need not end with a formal Chinese full stop.
   // This never rewrites authored story lines or the TTS speech text.
-  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
- }).slice(0,6).filter(x=>x.text);
+  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(phone?{action:'phone'}:{}),...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
+ }).slice(0,6).filter(x=>x.text||x.action==='phone');
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');
  return normalized;
 }
