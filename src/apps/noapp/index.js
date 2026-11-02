@@ -13,7 +13,7 @@ import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
 import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
 import {maybeSendProactive} from '../../services/ai/proactive.js';
-import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID} from '../../services/ai/gateway.js';
+import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID,XITAI_VOICE_OPTIONS} from '../../services/ai/gateway.js';
 import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
 import {taiPresence} from '../../services/presence.js';
 import {btn,demo,esc} from '../../system/ui.js';
@@ -60,7 +60,7 @@ const setting=(s)=>{
  +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label>'+aiParameterFields(c)
  +'<label>MiniMax API Key<input type="password" name="minimax" autocomplete="off" placeholder="输入 MiniMax API Key" value="'+esc(c.minimax||'')+'"></label>'
  +'<label>MiniMax 平台<select name="region"><option value="cn" '+(c.region!=='intl'?'selected':'')+'>中国站 · minimaxi.com</option><option value="intl" '+(c.region==='intl'?'selected':'')+'>国际站 · minimax.io</option></select></label>'
- +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
+ +'<label>熙泰音色<select name="voiceId">'+XITAI_VOICE_OPTIONS.map(([id,label])=>'<option value="'+esc(id)+'"'+(c.voiceId===id?' selected':'')+'>'+esc(label)+' · '+esc(id)+'</option>').join('')+'</select></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
  +ttsParameterFields(c)+'<p>这些参数用于之后新合成的电话与语音。默认冷静、原音调、1倍速；已生成的音频需重新合成才会改变。预设配音可单条覆盖。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
@@ -165,7 +165,7 @@ export const submit=(form,ctx)=>{
  }
  if(form.dataset.form==='tai-save-ai'){
   voiceDiagnosis={state:'idle',message:''};
-  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel'),voiceStyle:'calm',...readAiForm(data),...readTtsForm(data)});settingsDraft={};
+  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:data.get('voiceId'),ttsModel:data.get('ttsModel'),voiceStyle:'calm',...readAiForm(data),...readTtsForm(data)});settingsDraft={};
   ctx.toast('已保存 AI 与语音参数；所有聊天频道共用');return;
  }
 };
