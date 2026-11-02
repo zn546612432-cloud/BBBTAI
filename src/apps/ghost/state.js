@@ -86,8 +86,11 @@ export function submit(s,id,now=Date.now()){if(linkedMission(s,id))return false;
  const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
 export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(linkedMission(s,o.id))continue;if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;advanceLinkedMission(s,o.id,6);recordLinkedMissionPayment(s,o.id,reward,now);changed=true;}}}return tickLinkedContracts(s)||changed;}
 
-export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>o.status==='preview-win'&&now>=o.previewUntil||o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward));}
+export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>o.status==='preview-win'&&now>=o.previewUntil||o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board)||o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward));}
 export function advanceGhost(s,now=Date.now()){for(const o of Object.values(s.ghost?.orders||{})){
+ // Repair persisted D01 puzzles that visibly connected the endpoints before
+ // the corrected rule shipped; the player does not need to rotate again.
+ if(o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board))startD01PipePreview(s,o.id,now);
  if(o.status==='preview-win'&&now>=o.previewUntil){finish(s,o.id,true,now);continue;}
  if(o.status==='running'&&(o.type==='strike'?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline))finish(s,o.id,o.type==='strike',now);
  }
