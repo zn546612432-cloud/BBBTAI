@@ -2,6 +2,7 @@
 // string, or a fenced JSON snippet. None of that syntax is a voice transcript.
 import {humanizeTaiText} from './humanize.js';
 import {safeTaiTranslation} from './portuguese.js';
+import {parseTaiPhoneDirective} from './phone-directive.js';
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
 const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
 const structural=s=>/^\s*(?:```(?:json)?|\{\s*"(?:messages|text|reply|mode)"|\[\s*\{|\\"|\[\s*\")/i.test(s);
@@ -51,8 +52,12 @@ export function unpackTaiReply(response,channel='noapp'){
   return [];
  });
  const normalized=entries.slice(0,6).flatMap(x=>{
-  const mode=channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
-  const speechText=humanizeTaiText(String(x?.text||'').trim().slice(0,3000),{stripStage:false});
+  const directive=parseTaiPhoneDirective(String(x?.text||'').trim().slice(0,3000));
+  // A phone marker is an action on a text reply, not an audio message.
+  // Never pass the control token to humanize, chat rendering, TTS, or history.
+  const phone=channel==='noapp'&&directive.phone;
+  const mode=phone?'text':channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
+  const speechText=humanizeTaiText(directive.text,{stripStage:false});
   const display=humanizeTaiText(cleanedText(speechText));
   const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
   if(!display)return [];
@@ -63,7 +68,7 @@ export function unpackTaiReply(response,channel='noapp'){
   const pieces=parts.length>6?[...parts.slice(0,5),parts.slice(5).join('，')]:parts;
   // Short messenger bubbles need not end with a formal Chinese full stop.
   // This never rewrites authored story lines or the TTS speech text.
-  return pieces.map(text=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
+  return pieces.map((text,i)=>({text:channel==='noapp'&&mode==='text'&&text.length<=24?text.replace(/。$/u,''):text,mode,tone,...(phone&&i===0?{phone:true}:{}),...(mode==='voice'?{speechText}:{} ),...(safeTaiTranslation(text,x?.translation)?{translation:safeTaiTranslation(text,x.translation)}:{})}));
  }).slice(0,6).filter(x=>x.text);
  if(!normalized.length)throw Error('AI 没有返回可显示的消息');
  return normalized;
