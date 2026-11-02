@@ -11,6 +11,8 @@ import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
+import {taiShouldCallAfterText} from './call-intent.js';
+import {startIncoming} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -113,6 +115,13 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     // simultaneous MiniMax calls. Failed audio leaves the written bubble.
     voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    }
+  }
+  // Make an actual incoming call only after a current, explicit player request
+  // AND Tai's last emitted message commits to calling immediately.
+  const delivered=conversation(store.get())?.messages.filter(m=>m.replySourceId===sourceMessageId&&m.from==='tai')||[];
+  if(emitted&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered,alreadyCalled:store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId)})){
+   const started=startIncoming({store},'陈熙泰发起语音通话');
+   if(started)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock}));
   }
   if(voiceJobs.length){
    void synthesizeVoiceNotes(store,voiceJobs).catch(error=>{
