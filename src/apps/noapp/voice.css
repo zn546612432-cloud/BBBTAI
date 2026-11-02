@@ -242,3 +242,35 @@
 .app-noapp .tai-translation summary:before{content:"译";display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid #63879b;border-radius:5px;margin-right:6px;font-size:10px}
 .app-noapp .tai-translation p{background:#223242;color:#d5e5ef;font-size:12px;line-height:1.55;padding:10px 12px;margin:4px 0;border-radius:11px}
 .app-noapp .tai-bond-debug{margin:12px 4px;font-size:11px;line-height:1.6;color:#7c8e9f}
+
+/* v11: the phone transcript must remain usable ABOVE the iOS software keyboard. */
+@media(max-width:600px){
+ #phone.keyboard-open .app-noapp .tai-call-screen{
+  height:100%;min-height:0;justify-content:flex-start;padding-bottom:8px;overflow:hidden;
+ }
+ #phone.keyboard-open .app-noapp .tai-call-identity,
+ #phone.keyboard-open .app-noapp .tai-call-bottom,
+ #phone.keyboard-open .app-noapp .tai-live-captions{display:none!important}
+ #phone.keyboard-open .app-noapp .tai-call-topbar{height:42px;min-height:42px}
+ #phone.keyboard-open .app-noapp .tai-call-caption-sheet{
+  position:relative!important;inset:auto!important;left:auto!important;right:auto!important;
+  top:auto!important;bottom:auto!important;
+  flex:1;min-height:0;max-height:none;width:100%;display:flex;flex-direction:column;
+  margin:3px 0 6px;overflow:hidden;padding:12px;
+ }
+ #phone.keyboard-open .app-noapp .tai-call-transcript{flex:1;min-height:0;max-height:none;overflow:auto}
+ #phone.keyboard-open .app-noapp .tai-call-caption-sheet form{flex:0 0 auto;margin-top:8px}
+}
+.app-noapp .noapp-voice-pending{
+ display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:45px;
+ padding:10px 13px;border-radius:14px;border:1px solid #7798ab66;
+ background:#2b4356;color:#e8f4ff;font-size:12px;
+}
+.app-noapp .noapp-voice-pending small{font-size:10px;color:#b7d0e3}
+.app-noapp .noapp-voice-pending.is-failed{border-color:#c78c8b88;color:#ffe2db}
+.app-noapp .noapp-voice-pending button{
+ border:1px solid #c3d9eb88;background:#d1e5f2;color:#213444;
+ border-radius:9px;padding:6px 10px;min-height:32px;font-size:12px;
+}
+.app-noapp .noapp-shell .composer .noapp-composer-mic{flex:0 0 38px;min-width:38px;padding:4px}
+.app-noapp .noapp-shell .composer input[name=text]{min-width:0}
