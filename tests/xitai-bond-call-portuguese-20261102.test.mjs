@@ -4,6 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {updateTaiBond,taiBond,taiBondPrompt} from '../src/services/ai/relationship-bond.js';
 import {taiPlayerRequestedCall,taiShouldCallAfterText} from '../src/services/ai/call-intent.js';
 import {unpackTaiReply} from '../src/services/ai/format.js';
+import {chatView} from '../src/components/chat.js';
 import {containsPortuguese,safeTaiTranslation} from '../src/services/ai/portuguese.js';
 import {replyToTaiMessage} from '../src/services/ai/live-chat.js';
 import {callState,callAction} from '../src/apps/noapp/voice-call.js';
@@ -115,4 +116,15 @@ test('everyday non-keyword conversations grow slow familiarity after eight meani
  const s=initialState();s.day=56;
  for(let i=0;i<8;i++)updateTaiBond(s,{messageId:'ordinary-'+i,text:'今天我跟你聊了一件日常的小事 '+i,now:1e6+i*1e5});
  assert.equal(taiBond(s).score,31);
+});
+
+test('NoApp reveals Portuguese translation only upon expanding a native disclosure',()=>{
+ const s=initialState();s.day=56;s.clock='22:00';
+ const c=s.content.conversations.noapp.find(x=>x.id==='tai');
+ c.messages.push({id:'pt-1',from:'tai',text:'Não, estás a brincar?',translation:'你在开玩笑吗？',kind:'text',day:56,actual:true,time:'22:00'});
+ const html=chatView(s,'noapp','tai');
+ assert.match(html,/class="tai-translation"/);
+ assert.match(html,/<summary>翻译<\/summary>/);
+ assert.match(html,/你在开玩笑吗？/);
+ assert.ok(html.indexOf('你在开玩笑吗？')>html.indexOf('<details'));
 });
