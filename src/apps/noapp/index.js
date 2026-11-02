@@ -53,6 +53,7 @@ function queueTaiReply(ctx,messageId){
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
+ const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan').at(-1);
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
  +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label><p>V4 Pro：明确关闭思考，temperature = 1.3。只影响新发送的 AI 回复；Flash 保持原有配置。</p>'
@@ -63,6 +64,7 @@ const setting=(s)=>{
  +'<p class="tai-voice-locked">熙泰声线：固定冷静（calm） · 原音色 ID · 音高 0 · 语速 1.0。电话和语音条共用，不再跟随 AI 情绪变声；以前存档里的「表现力」设置自动失效。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
+ +'<section class="tai-voice-diagnostic"><h3>v12 聊天抽签验收</h3><p>3条权重45、2条30、1条30、4～5条30（总权重135，自动归一化）；引导型人格在可接话时另外独立30%抽签。这里只显示自由聊天，固定剧情不计算。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近'+(latestTurn.channel==='call'?'电话':'文字')+'：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft)
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
