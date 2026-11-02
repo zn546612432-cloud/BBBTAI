@@ -254,6 +254,14 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     console.warn('MiniMax voice conversion delayed, chat text preserved:',error?.message);
    });
   }
+  // Developer-only audit: the actual length may be lower than the sampled
+  // target when the actor refuses, the model repeats itself or the player
+  // intervenes. Never pretend the requested distribution is exact delivery.
+  if(turnPlan)store.update(s=>{
+   s.events??=[];
+   s.events.push({type:'tai_v12_turn_plan',channel:'text',sourceId:sourceMessageId,day:s.day,clock:s.clock,
+    target:turnPlan.target,guided:turnPlan.guide,emitted,receivedAt:now()});
+  });
   return {status:called?'called':'replied',count:emitted,text:entries.filter(x=>x.action!=='phone').map(x=>x.text).join('\n')};
  }finally{pendingRequests.delete(store);}
 }
