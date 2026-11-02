@@ -21,7 +21,7 @@ export const tabForRoute=route=>tabs.find(t=>t.route===route)?.id||'chats';
 function avatar(name='',source='',extra=''){
   const candidate=String(source||'');
   const hasImage=/^(?:\/|data:image\/(?:png|jpeg|webp);base64,|https:\/\/)/i.test(candidate);
-  return '<span class="wx-avatar '+extra+'">'+(hasImage?'<img src="'+esc(candidate)+'" alt="" loading="lazy">':'<span>'+esc((name||'?').slice(0,1))+'</span>')+'</span>';
+  return '<span class="wx-avatar '+extra+'">'+(hasImage?'<img src="'+esc(candidate)+'" alt="" loading="eager" decoding="async" width="48" height="48">':'<span>'+esc((name||'?').slice(0,1))+'</span>')+'</span>';
 }
 function featureIcon(id){
   return '<span class="wx-feature-icon wx-feature-'+id+'" style="--wx-feature-color:'+colors[id]+'">'+wxIcon(icons[id],25)+'</span>';
