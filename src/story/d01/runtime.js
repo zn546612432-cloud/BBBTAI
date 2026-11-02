@@ -81,4 +81,43 @@ export function tickD01(s,now=Date.now()){
  if(d.submitted&&!d.rewardPaid&&now>=Number(d.submittedAt||now)+2000)return settleD01Repair(s);
  return false;
 }
+// Rookery 13 is a lightweight film-contact Easter egg, never a mission gate.
+// Two authored replies, each sent at most once in response to a player bubble:
+// before payout -> key already sent; after payout -> "well done."; then silence.
+export function queueD01ContactReply(s,id,now=Date.now()){
+ const d=s.story55?.d01;
+ if(id!==D01_CONTACT||!d?.repairAccepted)return false;
+ const completed=!!d.rewardPaid;
+ const phase=completed?'done':'key';
+ const messageId=completed?'d01-rookery-well-done':'d01-rookery-key-confirmation';
+ const contact=s.content.conversations.mirage?.find(c=>c.id===D01_CONTACT);
+ if(!contact||contact.messages.some(m=>m.id===messageId)||d.contactReply?.phase===phase)return false;
+ // After the final acknowledgement, this account remains silent forever.
+ if(contact.messages.some(m=>m.id==='d01-rookery-well-done')||d.contactReply?.phase==='done')return false;
+ d.contactReply={phase,dueAt:now+2000};
+ return true;
+}
+export const d01ContactDue=(s,now=Date.now())=>!!s.story55?.d01?.contactReply&&now>=s.story55.d01.contactReply.dueAt;
+export function tickD01ContactReply(s,now=Date.now()){
+ const d=s.story55?.d01,pending=d?.contactReply;
+ if(!pending||now<pending.dueAt)return false;
+ d.contactReply=null;
+ const contact=s.content.conversations.mirage?.find(c=>c.id===D01_CONTACT);
+ if(!contact)return false;
+ const done=pending.phase==='done';
+ const messageId=done?'d01-rookery-well-done':'d01-rookery-key-confirmation';
+ if(contact.messages.some(m=>m.id===messageId))return false;
+ const text=done?'well done.':'密鑰已經發給你郵箱了。';
+ const day=Number(s.day)||1,stamp=new Date(Date.UTC(2025,4,19)+(day-1)*86400000).toISOString().slice(0,10);
+ contact.messages.push({id:messageId,from:D01_CONTACT,text,time:s.clock,sentDate:stamp,day,kind:'text',actual:true,storyD01:true});
+ contact.lastMessageAt=now;
+ const open=s.unlocked&&s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+D01_CONTACT;
+ if(!open){
+  contact.unread=(Number(contact.unread)||0)+1;
+  const noticeId='d01-rookery-notice-'+(done?'done':'key');
+  if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({id:noticeId,title:'MIRAGE',body:'Rookery 13：'+text,conversationId:D01_CONTACT,day,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
+ }
+ return true;
+}
+
 export const d01Gate=s=>s.story55?.version===1&&s.day===1&&(!s.story55.d01?.bankClaimed||!s.story55.d01?.rewardPaid);
