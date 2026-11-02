@@ -14,6 +14,15 @@ const groupSteps=branch=>[
  {after:2000,from:'小辛',text:'还不是我们太菜了，哈哈。'},
  {after:2000,from:'熙旺',text:'好'}
 ];
+// Two seconds more breathing room between every scripted group beat.
+// Add another 3 seconds whenever Xiao Xin and Xiwang speak consecutively.
+export function d01GroupWait(steps,index){
+ const next=steps[index],previous=steps[index-1];
+ if(!next)return 0;
+ const npc=new Set(['小辛','熙旺']);
+ const handoff=previous&&npc.has(previous.from)&&npc.has(next.from)&&previous.from!==next.from;
+ return next.after+2000+(handoff?3000:0);
+}
 const d01=s=>s.story55?.version===1&&s.day===1;
 const state=s=>(s.story55.d01??={});
 const chat=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
@@ -66,7 +75,8 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
    const g=d.group;
    if(!g){
     result.messageId=pushMe(s,id,text);
-    d.group={started:true,index:0,branch:beforeNoon(s)?'morning':'afternoon',dueAt:now+3000,awaitingPlayer:false,completed:false};
+    const branch=beforeNoon(s)?'morning':'afternoon';
+    d.group={started:true,index:0,branch,dueAt:now+d01GroupWait(groupSteps(branch),0),awaitingPlayer:false,completed:false};
     return;
    }
    if(g.completed){result.messageId=pushMe(s,id,text);return;}
@@ -76,7 +86,7 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
    result.messageId=pushMe(s,id,step.text);
    g.index++;g.awaitingPlayer=false;
    const next=groupSteps(g.branch)[g.index];
-   if(next)g.dueAt=now+next.after;
+   if(next)g.dueAt=now+d01GroupWait(groupSteps(g.branch),g.index);
    else {g.completed=true;g.dueAt=null;}
    return;
   }
@@ -111,7 +121,7 @@ export function tickD01WeChat(s,now=Date.now()){
    g.index++;
    const next=steps[g.index];
    if(!next){g.completed=true;g.dueAt=null;}
-   else g.dueAt=at+next.after;
+   else g.dueAt=at+d01GroupWait(steps,g.index);
   }
  }
  const b=d.brother;
