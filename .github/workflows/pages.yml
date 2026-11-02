@@ -85,6 +85,16 @@ jobs:
             test -s "dist/review/$name/index.html"
             test -s "dist/review/$name/release.json"
           done
+      - name: Set up Python for image optimization
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compress icon atlases in all production and preview builds
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/optimize-icon-atlases.py dist
+          test -s dist/icons/glass-atlas.webp
+          test -s dist/icons/glass-utilities.webp
       - name: Verify packaged image assets and release URLs
         run: |
           node --input-type=module <<'NODE'
