@@ -14,12 +14,12 @@ export function explainMinimaxFailure(error,{region='cn'}={}){
   return 'MiniMax 鉴权失败：请确认 Key 是否有效，并且在 '+site+' 创建；中国站与国际站 Key 不互通。'+(raw?'（'+raw+'）':'');
  if(/voice.{0,35}(invalid|not.?found|not.?exist|unauthori[sz]ed|permission)|(?:音色|声音|voice_id).{0,30}(无效|不存在|无权限|找不到|未授权)/i.test(original))
   return 'MiniMax 无法使用陈熙泰的固定音色：请确认该音色 ID 属于当前 Key 的账号，且未失效。不能擅自替换成陌生音色。'+(raw?'（'+raw+'）':'');
+ if(/indexeddb|浏览器未开放语音存储|语音过大|4mb|quotaexceeded|notallowederror|aborterror|本机空间不足/.test(original))
+  return 'MiniMax 可能已生成音频，但 Safari 无法保存到本机语音库：'+raw+'。请检查 Safari 非无痕模式及可用存储空间。';
  if(/insufficient|balance|quota|billing|payment|credits|余额|额度|欠费|扣费/.test(original))
   return 'MiniMax 账户额度或计费权限不足，请检查 '+site+' 的余额、套餐与 API 配额。'+(raw?'（'+raw+'）':'');
  if(/\b429\b|rate.?limit|too many request|频率|过于频繁/.test(original))
   return 'MiniMax 请求过于频繁（429）。不要连续点重试，请稍后再发一条。';
- if(/indexeddb|浏览器未开放语音存储|语音过大|4mb|quotaexceeded|notallowederror|aborterror|本机空间不足/.test(original))
-  return 'MiniMax 可能已生成音频，但 Safari 无法保存到本机语音库：'+raw+'。请检查 Safari 非无痕模式及可用存储空间。';
  if(/\b5\d\d\b|server error|internal server|timeout|超时/.test(original))
   return 'MiniMax 服务暂时异常或超时：'+(raw||'请稍后重试');
  if(/mini.?max|供应商 http|无效的 mp3|未返回音频|音频接口/.test(original))
