@@ -1,6 +1,6 @@
 import {ttsParameterFields,readTtsForm} from '../../../noapp/settings/parameters.js';
 import {btn,card,esc} from '../../../../system/ui.js';
-import {aiStatus,voicePreview,XITAI_VOICE_ID,apiConfig,saveApiConfig} from '../../../../services/ai/gateway.js';
+import {aiStatus,voicePreview,XITAI_VOICE_ID,XITAI_VOICE_OPTIONS,normalizeXitaiVoiceId,apiConfig,saveApiConfig} from '../../../../services/ai/gateway.js';
 import {taiReviewPanel,handleTaiReview,submitTaiReview} from '../ai-profile/index.js';
 import {mirageAIEnabled} from '../../../../services/ai/channel-controls.js';
 
@@ -18,7 +18,7 @@ export function aiVoicePanel(s){
     '<p id="ai-port-status" class="editor-help" role="status">尚未检测接口</p>')+
     '<form data-form="ai-voice-config" class="card">'+
     '<h3>MiniMax · 熙泰音色</h3>'+
-    '<label>熙泰固定音色（voice_id）</label><input name="voiceId" value="'+esc(XITAI_VOICE_ID)+'" readonly>'+
+    '<label>熙泰音色（voice_id）</label><select name="voiceId">'+XITAI_VOICE_OPTIONS.map(([id,label])=>opt(id,label+' · '+id,p.voiceId)).join('')+'</select>'+
     '<label>语音模型</label><select name="model">'+opt('speech-2.8-turbo','Speech 2.8 Turbo',p.model)+opt('speech-2.8-hd','Speech 2.8 HD',p.model)+'</select>'+
     '<label>语种增强</label><select name="language">'+opt('Chinese','普通话',p.language)+opt('Chinese,Yue','粤语',p.language)+opt('auto','自动判断',p.language)+'</select>'+
     ttsParameterFields(p)+
@@ -69,8 +69,8 @@ export function submitAIVoice(form,ctx){
   if(voiceId&&!/^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw Error('voice_id 只能包含字母、数字、下划线及短横线');
   if(!Number.isFinite(speed)||speed<.5||speed>2)throw Error('语速应在 0.5–2.0 之间');
   if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language))throw Error('不支持的语音设置');
-  ctx.store.update(s=>{s.aiVoiceSettings={voiceId:XITAI_VOICE_ID,model,...readTtsForm(values)};});
-  saveApiConfig({...apiConfig(),ttsModel:model,...readTtsForm(values)});
+  ctx.store.update(s=>{s.aiVoiceSettings={voiceId:normalizeXitaiVoiceId(voiceId),model,...readTtsForm(values)};});
+  saveApiConfig({...apiConfig(),voiceId:normalizeXitaiVoiceId(voiceId),ttsModel:model,...readTtsForm(values)});
   ctx.toast('熙泰声音参数已保存，NoApp 电话与语音共用');
   return true;
 }
