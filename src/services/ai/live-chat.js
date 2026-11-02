@@ -56,7 +56,7 @@ function synthesizeVoiceNotes(store,jobs){
  return queued;
 }
 
-export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{},retryDeferred=false}={}){
+export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{},retryDeferred=false,onTyping=()=>{}}={}){
  const initial=store.get(),c=conversation(initial);
  if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||c.messages.some(m=>m.id===sourceMessageId&&['read_no_reply','end_session','start_call'].includes(m.taiHandledAction))||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
  const pendingSource=c.messages.find(m=>m.id===sourceMessageId);
@@ -113,6 +113,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const actualDecision=decision?.action==='start_call'?null:decision;
   if(actualDecision){request.approvedDecision=actualDecision;
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
+  if(!unheard)onTyping();
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
   // A bare mirrored greeting is a model-continuation artifact, not a choice
