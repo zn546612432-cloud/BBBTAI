@@ -70,7 +70,7 @@ test('direct MiniMax request sends HD tags to speech only, without hard-coded ca
   const blob=await voicePreview({text:'Claro，我知道了。'});
   assert.equal(blob.type,'audio/mpeg');
   assert.equal(sent.model,'speech-2.8-hd');
-  assert.match(sent.text,/^\(breath\)Claro/);
+  assert.equal(sent.text,'Claro，我知道了。','stable default does not force a breath for a short utterance');
   assert.equal(sent.language_boost,'auto');
   assert.equal(sent.voice_setting.speed,1);
   assert.equal('emotion' in sent.voice_setting,false);
