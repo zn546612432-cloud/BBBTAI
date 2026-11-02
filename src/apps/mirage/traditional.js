@@ -8,8 +8,8 @@ const phrases=[
  ['打开','打開'],['检查','檢查'],['看到','看到']
 ];
 const simplified='测扫发复开数换条里现间机动对个会问没做获过经刚进试给说还时门别应来来样报线较张从处风';
-const traditional='測掃發復開數換條裡現間機動對個會問沒做獲過經剛進試給說還時門別應來來樣報線較張從處風';
-const charMap=new Map([...simplified].map((char,i)=>[char,[...traditional][i]]));
+const traditionalChars='測掃發復開數換條裡現間機動對個會問沒做獲過經剛進試給說還時門別應來來樣報線較張從處風';
+const charMap=new Map([...simplified].map((char,i)=>[char,[...traditionalChars][i]]));
 export function traditional(input){
  let value=String(input??'');
  for(const [from,to] of phrases)value=value.replaceAll(from,to);
