@@ -274,3 +274,16 @@
 }
 .app-noapp .noapp-shell .composer .noapp-composer-mic{flex:0 0 38px;min-width:38px;padding:4px}
 .app-noapp .noapp-shell .composer input[name=text]{min-width:0}
+
+/* An iPhone has no hover tooltip: display the actual TTS error in the chat. */
+.app-noapp .noapp-voice-pending.is-failed{display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-width:min(320px,85vw)}
+.app-noapp .noapp-voice-pending.is-failed strong{font-size:13px;font-weight:650}
+.app-noapp .noapp-voice-error{color:#f8e9e5;font-size:12px;line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap;margin:0}
+.app-noapp .tai-voice-diagnostic{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #6b89a066;border-radius:14px;background:#263a4a;color:#e9f4ff}
+.app-noapp .tai-voice-diagnostic h3{margin:0;font-size:15px}
+.app-noapp .tai-voice-diagnostic p{margin:0;font-size:12px;line-height:1.6;color:#d2e1ef}
+.app-noapp .tai-voice-diagnostic button{background:#c2dbea;border:0;border-radius:11px;color:#1d3441;min-height:43px;padding:10px;font-size:14px;font-weight:600}
+.app-noapp .tai-voice-diagnostic button:disabled{opacity:.55}
+.app-noapp .tai-voice-diagnostic-result{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:10px;background:#172735}
+.app-noapp .tai-voice-diagnostic-result.failed{color:#ffdbcf}
+.app-noapp .tai-voice-diagnostic-result.success{color:#bbeddb}
