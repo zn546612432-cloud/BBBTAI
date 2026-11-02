@@ -29,6 +29,25 @@ export function isCurrentTaiTurn(s,sourceMessageId,day){
  return !!c&&s.day===day&&!deathLocked(s)&&!s.poweredOff&&s.powerMode==='idle'&&
   taiPresence(s).status!=='away'&&visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.day<=s.day).at(-1)?.id===sourceMessageId;
 }
+// Recover persisted deferrals after a page reload while the game is active.
+// Real time is persisted on the source message, but NO background web worker is used.
+const deferredResumes=new WeakSet(),deferredFailures=new WeakMap();
+export function maybeResumeTaiDeferred(store,{now=Date.now}={}){
+ const current=store.get(),c=conversation(current);
+ if(!c||deferredResumes.has(store)||pendingRequests.has(store)||now()<(deferredFailures.get(store)||0))return false;
+ if(!taiRecognized(current)||deathLocked(current)||current.poweredOff||current.powerMode!=='idle')return false;
+ const source=visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.actual!==false&&m.day<=current.day).at(-1);
+ if(!source?.taiDeferredUntil||source.taiDeferredUntil>now()||source.taiHandledAction||replyAfter(c,source.id))return false;
+ const presence=taiPresence(current);
+ if(!presence.contactable||presence.status==='away')return false;
+ deferredResumes.add(store);
+ void replyToTaiMessage(store,source.id,{retryDeferred:true,now}).catch(error=>{
+  deferredFailures.set(store,now()+60000);
+  console.warn('Tai persisted deferred reply retry failed:',error?.message);
+ }).finally(()=>deferredResumes.delete(store));
+ return true;
+}
+
 let ttsQueue=Promise.resolve();
 export function synthesizeVoiceNotes(store,jobs){
  const work=async()=>{
@@ -88,7 +107,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   const decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:availableCall,allowVoice:!!status.minimax,
+   allowCall:availableCall&&!!status.minimax,allowVoice:!!status.minimax,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
