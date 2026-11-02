@@ -44,7 +44,15 @@ export function tickFlowD03(s){
  ensureFlowHistory(s);
  if(s.day<3||(s.day===3&&s.clock<'08:15'))return false;
  const c=contact(s),p=progress(s);
- if(p.invited)return false;
+ // Existing save files may have recorded the old 09:00 timestamp.
+ // Correct only this canonical story message, without replaying notifications.
+ if(p.invited){
+  const invite=c.messages.find(m=>m.id===FLOW_INVITE);
+  if(invite&&invite.story55&&invite.day===3&&invite.time==='09:00')invite.time='08:15';
+  const notice=s.notifications?.find(n=>n.id==='flow-d03-mirage-invite');
+  if(notice&&notice.day===3&&notice.clock==='09:00')notice.clock='08:15';
+  return false;
+ }
  p.invited=true;
  if(c.messages.some(m=>m.from==='me'&&m.day===1&&!m.story55))push(c,'flow-d03-late-reply',FLOW_CONTACT,'之前在忙，才看到你給我發信息。',3,'08:14',date55(3));
  push(c,FLOW_INVITE,FLOW_CONTACT,FLOW_INVITE_TEXT,3,'08:15',date55(3));
