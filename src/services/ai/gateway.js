@@ -2,6 +2,7 @@ import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-per
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
 import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
+import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
@@ -112,6 +113,10 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
   else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
  }
  if(!c.minimax){
+  // GitHub Pages does not have a /api/voice/tts server route. Never mistake
+  // that HTML 404 for an audio-generation failure or a broken cloned voice.
+  if(minimaxUnavailableOnGithubPages(globalThis.location?.hostname))
+   throw Error(explainMinimaxFailure(new Error('未配置 MiniMax API Key')));
   let r;
   try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
   catch{throw Error('MiniMax 语音接口未配置');}
@@ -122,12 +127,14 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const endpoint=c.region==='intl'?'https://api.minimax.io/v1/t2a_v2':'https://api.minimaxi.com/v1/t2a_v2';
  const spoken=String(text||'').trim().slice(0,3000);
  if(!spoken)throw Error('语音文字不能为空');
- const audio=await directJSON(endpoint,c.minimax,{
+ let audio;
+ try{audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
   voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
- });
+ });}
+ catch(error){throw Error(explainMinimaxFailure(error,{region:c.region}));}
  const hex=audio.data?.audio;
  if(typeof hex!=='string'||!hex.length||hex.length%2||!/^[0-9a-f]+$/i.test(hex))throw Error('MiniMax 没有返回有效的 MP3 数据');
  const bytes=new Uint8Array(hex.length/2);
