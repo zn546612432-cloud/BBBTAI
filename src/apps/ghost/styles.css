@@ -14,3 +14,26 @@
 .gh-exit-card p{font-size:11px;line-height:1.7;color:#94b0aa;margin:0 0 12px}
 .gh-exit-card .gh-button{display:block;width:100%;text-align:center;padding:15px;margin-top:10px}
 .gh-exit-card .gh-secondary{background:transparent;border:1px solid #3c5a52;color:#b4d0ca}
+
+/* D01 terminal network (ported MIT spanning-tree / flow mechanics).
+   Preserve the game's own understated GHOST dark circuit palette. */
+.gh-shell .gh-pipes{grid-template-columns:repeat(var(--pipe-columns,3),minmax(0,1fr));gap:2px;margin-top:13px;margin-bottom:20px}
+.gh-shell .gh-pipes .gh-button{position:relative;min-width:0;min-height:0;padding:0;aspect-ratio:1;border:1px solid #233c36;background:#081411;overflow:hidden}
+.gh-shell .gh-pipes .gh-button:disabled{opacity:1;cursor:default}
+.gh-shell .gh-pipes .gh-button.gh-source-tile{border:2px solid #9cf7e4;background:#12312b;box-shadow:inset 0 0 16px #74dcc250,0 0 9px #a2e9d466}
+.gh-shell .gh-pipes .gh-button.gh-target-tile{border:2px solid #ffe4a8;background:#2a2416;box-shadow:inset 0 0 14px #f2cb7a34,0 0 9px #e9cc9f4d}
+.gh-shell .gh-pipes .gh-endpoint-halo{fill:#4be9c510;stroke-width:3;stroke:#5decc2;filter:drop-shadow(0 0 9px #83f6d5)}
+.gh-shell .gh-pipes .gh-endpoint-halo.target{fill:#fbd78e1e;stroke:#ffe1a2;filter:drop-shadow(0 0 9px #ffcf83)}
+.gh-shell .gh-pipes .gh-endpoint-core.source{fill:#b2ffe6;stroke:#e1fff6;stroke-width:2}
+.gh-shell .gh-pipes .gh-endpoint-core.target{fill:#ffe0a3;stroke:#fff2c8;stroke-width:2}
+.gh-shell .gh-pipes .gh-endpoint-center{fill:#081411}
+.gh-shell .gh-port-label{font-size:10px;gap:10px;align-items:center;line-height:1.4}
+.gh-shell .gh-port-label span{display:inline-flex;gap:5px;align-items:center}
+.gh-shell .gh-port-dot{display:inline-block;flex:none;width:7px;height:7px;border-radius:50%;box-shadow:0 0 9px currentColor}
+.gh-shell .gh-source-dot{background:#8dfbe0;color:#8dfbe0}.gh-shell .gh-target-dot{background:#ffe0a3;color:#ffe0a3}
+.gh-shell .gh-network-complete .pipe-wire{stroke:#d1fff1;stroke-width:3;stroke-dasharray:9 4;animation:gh-flow .65s linear infinite}
+.gh-shell .gh-network-complete .gh-button{border-color:#73ac9a}
+.gh-shell .gh-success-preview{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;min-height:105px;margin:18px 0 8px;color:#c8ffec;border:1px solid #315f52;background:linear-gradient(180deg,#1b403d80,#0a1b19)}
+.gh-shell .gh-success-preview .gh-success-check{font-size:22px;line-height:1.2;text-shadow:0 0 15px #9cffe4}
+.gh-shell .gh-success-preview strong{font-size:13px;letter-spacing:2px;font-weight:500}
+.gh-shell .gh-success-preview small{color:#91bea9;font-size:10px}
