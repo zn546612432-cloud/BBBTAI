@@ -1,4 +1,4 @@
-import {D01_OPENING,D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
+import {D01_OPENING,D01_ATTACHMENT,D01_ATTACHMENT_BODY} from '../../../../story/d01/runtime.js';
 import {btn,esc,empty} from '../../../../system/ui.js';
 import {HACKER_MAIL_ID} from '../../../mirage/mission.js';
 import {missionSteps} from '../mission/index.js';
@@ -28,7 +28,7 @@ export function kiraDetail(s,id){
  if(!m)return empty('邮件不存在');
  const body=m.id===D01_OPENING
   ?lineBreaks(m.body).replaceAll('bank account','<a href="#" class="kira-d01-inline-link" data-action="kira-d01-bank">bank account</a>')
-  :lineBreaks(m.body);
+  :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.body);
  const d01File=m.id===D01_ATTACHMENT?attachmentCard(s):'';
  const otherAttachment=m.id===HACKER_MAIL_ID?missionSteps(m,s)
   :m.id==='flow-d03-reward'||m.d01?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
