@@ -78,3 +78,23 @@ test('HTML number constraints accept defaults and supported decimals in both set
  assert.equal(valid(ai.find(f=>f.name==='maxTokens'),1000),true);
  assert.equal(valid(ai.find(f=>f.name==='maxTokens'),1000.5),false);
 });
+
+test('additional MiniMax voice is selectable and honored by synthesis, without changing default',async()=>{
+ await configured(async({requests})=>{
+  const {XITAI_VOICE_ID,XITAI_VOICE_OPTIONS}=await import('../src/services/ai/gateway.js');
+  const extra='moss_audio_4e461be0-d6d5-11f1-9dac-d60bed5a35f4';
+  assert.ok(XITAI_VOICE_OPTIONS.some(([id])=>id===extra));
+  assert.equal(apiConfig().voiceId,XITAI_VOICE_ID);
+  const {saveApiConfig}=await import('../src/services/ai/gateway.js');
+  saveApiConfig({...apiConfig(),voiceId:extra});
+  assert.equal(apiConfig().voiceId,extra);
+  await voicePreview({text:'测试另一个音色'});
+  assert.equal(requests.at(-1).body.voice_setting.voice_id,extra);
+  await voicePreview({text:'临时换回原音色',voiceId:XITAI_VOICE_ID});
+  assert.equal(requests.at(-1).body.voice_setting.voice_id,XITAI_VOICE_ID);
+  assert.equal(apiConfig().voiceId,extra,'per-clip override does not change saved voice');
+  const html=render({store:{get:()=>activateStory55(initialState())}},{route:'/settings-ai'});
+  assert.match(html,/name="voiceId"/);
+  assert.match(html,/moss_audio_4e461be0-d6d5-11f1-9dac-d60bed5a35f4/);
+ });
+});
