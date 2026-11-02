@@ -1,3 +1,4 @@
+import {generatePipeNetwork} from './pipe-network.js';
 export function shuffle(a,random=Math.random){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 export function puzzleSolved(tiles){return tiles.every((v,i)=>v===i);}
 export function swap(tiles,a,b){const next=[...tiles];[next[a],next[b]]=[next[b],next[a]];return next;}
@@ -25,6 +26,7 @@ export function randomRouteSolution(random=Math.random){
 }
 export function createBoard(type,config,random=Math.random){
  if(type==='cipher'){let tiles=shuffle([0,1,2,3,4,5,6,7,8],random);if(puzzleSolved(tiles))tiles=swap(tiles,0,1);return {tiles,selected:null};}
+ if(type==='route'&&config?.pipeNetwork)return generatePipeNetwork({size:config.pipeSize||5,random});
  if(type==='route'){const masks=(config?.randomRoute?randomRouteSolution(random):routeSolution).map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
  if(type==='extract')return {...fingerprints(random),round:0};
  if(type==='veil')return {code:newCode(config.codeLength,random),input:'',round:0};
