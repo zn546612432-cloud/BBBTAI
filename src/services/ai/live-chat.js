@@ -84,6 +84,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
+  // A bare mirrored greeting is a model-continuation artifact, not a choice
+  // rooted in Tai's personality. Repair it only when he replied with nothing
+  // but the exact same greeting; preserve other genuine one-line replies.
+  const greeting=s=>/^(?:hi|hello|hey|嗨|你好)[!！?.。\s]*$/i.test(String(s||'').trim());
+  if(!unheard&&greeting(lastUser)&&draftEntries.length===1&&
+    draftEntries[0].text.trim().toLowerCase().replace(/[!！?.。\s]/g,'')===
+    lastUser.trim().toLowerCase().replace(/[!！?.。\s]/g,'')){
+    const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
+    draftEntries=unpackTaiReply(retry,'noapp');
+  }
   const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
