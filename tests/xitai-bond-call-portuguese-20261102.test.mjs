@@ -82,7 +82,7 @@ test('AI commitment after typed call request triggers a real ringing NoApp call'
   :{text:JSON.stringify({messages:[{text:'行，我现在打。',mode:'text',tone:'dry'}]})}),{status:200,headers:{'Content-Type':'application/json'}});
  try{
   const response=await replyToTaiMessage(store,'call-req-demo',{wait:async()=>{}});
-  assert.equal(response.status,'replied');
+  assert.equal(response.status,'called');
   assert.equal(chat.messages.at(-1).text,'行，我现在打');
   assert.equal(callState().state,'ringing');
   assert.equal(state.events.filter(e=>e.type==='tai_text_call_trigger').length,1);
