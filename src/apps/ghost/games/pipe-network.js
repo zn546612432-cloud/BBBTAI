@@ -59,10 +59,12 @@ export function pipeFlow(masks,source=0,size=Math.round(Math.sqrt(masks?.length|
  }
  return seen;
 }
+// Players win when the highlighted source really reaches the highlighted sink.
+// Requiring an arbitrary number of connected tiles caused "終點已接通" to
+// display for valid short paths while the victory handler refused to run.
 export function pipeSolved(board){
  if(!board?.size||board.source===board.sink)return false;
- const lit=pipeFlow(board.masks,board.source,board.size);
- return lit.has(board.sink)&&lit.size>=Math.max(9,board.size*2);
+ return pipeFlow(board.masks,board.source,board.size).has(board.sink);
 }
 export function generatePipeNetwork({size=5,random=Math.random}={}){
  const n=Math.max(5,Math.min(7,Math.floor(Number(size)||5)));
