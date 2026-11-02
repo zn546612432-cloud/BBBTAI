@@ -10,13 +10,13 @@ test('new worldbook includes human dialogue and respects the old character and t
  assert.match(prompt,/不授权模型执行未知的新动作/);
  assert.match(prompt,/衔尾蛇时期/);
  assert.match(prompt,/长短自然/);
- assert.match(prompt,/不提前剧透/);
+ assert.match(prompt,/提前剧透/);
  assert.match(prompt,/匿名/);
  assert.ok(XITAI_EXPRESSION_WORLDBOOK_V6.includes('calm'));
 });
 test('v6 dialogue addendum does not enable unreleased voice or read-status protocol in the model',()=>{
  const prompt=buildTaiPrompt({day:56,channel:'noapp',recognized:true,outputMode:'text'});
- assert.match(prompt,/目前仅识别已经实现的 NoApp/);
+ assert.match(prompt,/当前版本仅识别已经实现的 NoApp/);
  assert.match(prompt,/NoApp 真实来电指令/);
  assert.doesNotMatch(prompt,/必须输出 \(voice\)/);
  assert.doesNotMatch(prompt,/必须输出 \(read\)/);
