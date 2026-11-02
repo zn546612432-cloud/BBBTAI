@@ -25,7 +25,7 @@ export function randomRouteSolution(random=Math.random){
 }
 export function createBoard(type,config,random=Math.random){
  if(type==='cipher'){let tiles=shuffle([0,1,2,3,4,5,6,7,8],random);if(puzzleSolved(tiles))tiles=swap(tiles,0,1);return {tiles,selected:null};}
- if(type==='route'){const masks=randomRouteSolution(random).map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
+ if(type==='route'){const masks=(config?.randomRoute?randomRouteSolution(random):routeSolution).map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
  if(type==='extract')return {...fingerprints(random),round:0};
  if(type==='veil')return {code:newCode(config.codeLength,random),input:'',round:0};
  if(type==='verify'){const target=shuffle(['CORE','LINK','DATA','CHECK','AUTH','CACHE','IO','MAP','INDEX','WATCH','SYNC','FRAME','TRACE','ROUTE','LOCAL','KEY'],random).slice(0,4);return {target,tokens:shuffle(target,random),input:[],used:[]};}
