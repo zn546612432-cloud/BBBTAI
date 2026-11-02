@@ -108,7 +108,8 @@ test('D01 WeChat group delays are +2s per beat and an extra +3s between Xiaoxin 
 test('KIRA opening bank account is inline text and no phantom attachment button remains',()=>{
  const s=fixture();seedD01(s);deliverD01Opening(s);
  const html=kiraDetail(s,D01_OPENING);
- assert.match(html,/class="kira-d01-inline-link"/);
+ assert.match(html,/<a href="#" class="kira-d01-inline-link"/);
+ assert.doesNotMatch(html,/<button[^>]*class="kira-d01-inline-link"/);
  assert.match(html,/data-action="kira-d01-bank"/);
  assert.doesNotMatch(html,/kira-attachment|查看附件/);
  assert.doesNotMatch(html,/kira-d01-inline-link[^>]*button-quiet/);
