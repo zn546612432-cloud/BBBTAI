@@ -72,9 +72,11 @@ export function generatePipeNetwork({size=5,random=Math.random}={}){
   const solved=makeTree(n,random);
   const first=farthest(solved,n,int(random,n*n));
   const second=farthest(solved,n,first.at);
-  const candidate={solved,source:first.at,sink:second.at,steps:second.length};
-  if(!best||candidate.steps>best.steps)best=candidate;
-  if(candidate.steps>=Math.max(n*2+2,Math.floor(n*n*.48))){best=candidate;break;}
+  const sinkEdge=neighbors(second.at,n).find(e=>(solved[second.at]&e.bit)!==0);
+  const viable=!!sinkEdge&&solved[sinkEdge.at]!==15;
+  const candidate={solved,source:first.at,sink:second.at,steps:second.length,viable};
+  if(!best||viable&&!best.viable||(viable===best.viable&&candidate.steps>best.steps))best=candidate;
+  if(viable&&candidate.steps>=Math.max(n*2+2,Math.floor(n*n*.48))){best=candidate;break;}
  }
  const {solved,source,sink,steps}=best;
  const masks=solved.slice();
@@ -87,13 +89,30 @@ export function generatePipeNetwork({size=5,random=Math.random}={}){
  }
  // Ensure a playable, not pre-solved board (also robust for deterministic RNG).
  for(let retries=0;retries<64&&(pipeFlow(masks,source,n).has(sink)||changed<Math.floor(n*n*.38));retries++){
-  let pos=(retries*7+3)%(n*n);
+  let pos=(retries*11+3)%(n*n);
   if(pos===source||pos===sink)pos=(pos+1)%(n*n);
   if(pos===source||pos===sink)continue;
   const next=rotateMask(masks[pos]);
   if(next!==masks[pos])masks[pos]=next;
   changed=masks.reduce((sum,m,i)=>sum+(i!==source&&i!==sink&&m!==solved[i]?1:0),0);
  }
+ // Because the destination is a leaf of the generated tree, its solved
+ // mask has exactly one inbound port. Misalign that neighbouring pipe on
+ // purpose: the destination is provably disconnected at the first frame,
+ // even if other randomized rotations accidentally created shortcuts.
+ const terminal=neighbors(sink,n).find(e=>(solved[sink]&e.bit)!==0);
+ if(terminal&&solved[terminal.at]!==15){
+  for(let turns=0;turns<4&&(masks[terminal.at]&terminal.back);turns++)masks[terminal.at]=rotateMask(masks[terminal.at]);
+ }
+ if(pipeFlow(masks,source,n).has(sink)){
+  // Extremely rare backup if the picked terminal's neighbour is a cross.
+  // Re-scramble intermediates, not the two fixed endpoint tiles.
+  for(let attempt=0;attempt<160&&pipeFlow(masks,source,n).has(sink);attempt++){
+   const i=(attempt*11+1)%(n*n);
+   if(i!==source&&i!==sink)masks[i]=rotateMask(masks[i]);
+  }
+ }
+ if(pipeFlow(masks,source,n).has(sink))throw Error('無法產生未連通的線路，請重新生成');
  // Preserve the verified solution for deterministic tests and test snapshots.
  return {size:n,source,sink,masks,solvedMasks:solved,solutionSteps:steps};
 }
