@@ -104,7 +104,7 @@ export function tickD01(s,now=Date.now()){
    xin1:['xin2','小辛','小辛',afternoon?'蒙蒙哥，你不会现在才起吧？':'嗯？蒙蒙哥怎么今天起得那么早？',1000],
    xin2:['wang1','小辛','小辛',afternoon?'昨天和我打游戏打得那么晚，果然起不来床了，哈哈':'昨天和我打游戏打到那么晚…今天不到12点居然就醒了。',3000],
    wang1:['wang2','熙旺','wang','怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。',2000],
-   wang2:['player1','熙旺','wang','今天不忙的话，就再去睡会，我中午收车回来给你带午餐。',2000],
+   wang2:['player1Wait','熙旺','wang','今天不忙的话，就再去睡会，我中午收车回来给你带午餐。',2000],
    xinEnd:['wangEnd','小辛','小辛',groupLines[0][2],2000],
    wangEnd:['done','熙旺','wang',groupLines[1][2],0]
   };
@@ -112,10 +112,10 @@ export function tickD01(s,now=Date.now()){
   if(step){
    pushChat(s,'group',step[2],step[2],step[3],'d01-group-'+g.stage);
    g.stage=step[0];g.dueAt=step[4]?now+step[4]:null;
-   if(g.stage.startsWith('player'))g.dueAt=null;
+   if(/^player[123]$/.test(g.stage))g.dueAt=null;
    changed=true;
-  }else if(/^player[23]Wait$/.test(g.stage)){
-   g.stage='player'+(g.stage==='player2Wait'?'2':'3');g.dueAt=null;changed=true;
+  }else if(/^player[123]Wait$/.test(g.stage)){
+   g.stage='player'+(g.stage==='player1Wait'?'1':g.stage==='player2Wait'?'2':'3');g.dueAt=null;changed=true;
   }
  }
  const b=p.brother;
