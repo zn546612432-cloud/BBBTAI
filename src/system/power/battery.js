@@ -1,5 +1,6 @@
 import {chargingBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
 import {secondView55} from '../../services/story55/finale.js';
+import {isStory55} from '../../services/story55/state.js';
 // Battery and civil game clock evolve independently.
 // From 08:00 at 100%, ordinary use reaches 20% around 23:00.
 export const LOW_BATTERY_PERCENT=20;
@@ -22,7 +23,7 @@ export function plugIn(s){
  if(!canCharge(s))return false;
  // Midnight already advanced the civil date. Charging at 03:00 wakes on
  // that same date; charging before midnight starts the next date.
- if(Number(s.clock.slice(0,2))>=8)s.day+=1;
+ if(Number(s.clock.slice(0,2))>=8||isStory55(s)&&s.day===1&&s.story55?.d01?.nightPhase)s.day+=1;
  s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;
  s.powerMode='idle';s.emergencyCharge=false;s.poweredOff=false;s.powerActiveMs=0;s.worldMinuteFraction=0;s.chargeFraction=0;
  s.sleepWakeAt=null;s.alarmRinging=null;s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
