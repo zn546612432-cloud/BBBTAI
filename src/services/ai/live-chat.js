@@ -16,7 +16,7 @@ import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} fro
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
-import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -146,7 +146,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(turnPlan)request.turnPlan=turnPlan;
   if(!unheard)onTyping();
   const result=unheard?null:await askTai(request);
-  let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
+  let draftEntries=unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
   // A bare mirrored greeting is a model-continuation artifact, not a choice
   // rooted in Tai's personality. Repair it only when he replied with nothing
   // but the exact same greeting; preserve other genuine one-line replies.
@@ -155,12 +155,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     draftEntries[0].text.trim().toLowerCase().replace(/[!！?.。\s]/g,'')===
     lastUser.trim().toLowerCase().replace(/[!！?.。\s]/g,'')){
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
-    draftEntries=unpackTaiReply(retry,'noapp');
+    draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
   if(!unheard&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 你上一稿又只用很短的反问或推脱把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。他已经反复追问你的私事。你可以嘴硬、打趣，但请在这一轮提供至少一点具体、可继续聊的内容，或认真说清不愿讲的原因，不要机械复读。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
-    draftEntries=unpackTaiReply(retry,'noapp');
+    draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
   if(turnPlan&&taiTurnNeedsMore({plan:turnPlan,entries:draftEntries,messages,
    action:actualDecision?.action==='send_voice'?'send_voice':'send_text'})){
@@ -168,7 +168,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    // actor has drawn a boundary; don't make more than one extra provider call.
    const remaining=turnPlan.target-draftEntries.length;
    const already=draftEntries.map(x=>x.text).join(' / ').slice(0,650);
-   const continuation=await askTai({...request,turnPlan:{...turnPlan,target:remaining},
+   const continuation=await askTai({...request,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},
     scene:request.scene+' 【本轮自然连发补充】已经拟好并保留的台词：'+already+'。接着这几句再补'+remaining+'条新内容，不重复旧句，不自发报备行程。'+(turnPlan.guide?'本轮引导型人格已触发；前面还没顺势问出具体问题的话，请把一条自然好奇的问题放在补充内容里。':'')+' 如果确实已经结束、需要保护隐私或熙蒙要求别聊，就只输出自然边界，无须凑数。'});
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
    draftEntries=mergeTaiTurnEntries(draftEntries,unpackTaiReply(continuation,'noapp'),turnPlan.target);
@@ -177,12 +177,15 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    // Independent guide roll actually affects delivered words, not just a
    // prompt paragraph. Regenerate only one context-grounded question;
    // do not replace any substantive response or invent Ximeng's activities.
-   const followup=await askTai({...request,turnPlan:{...turnPlan,target:1,guide:true},
+   const followup=await askTai({...request,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},
     scene:request.scene+' 【本轮引导确实触发但上稿尚未问出具体问题】已经拟好的回答：'+draftEntries.map(m=>m.text).join(' / ').slice(0,600)+'。请只给出一条新的、完整且自然的追问，用问号结尾，紧贴熙蒙实际说过的内容，带一点聪明的好奇或调侃；不要问“在干什么”“还有呢”，也不要提国际象棋、自己的行程或不存在的事实。'});
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
    const candidate=unpackTaiReply(followup,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)draftEntries=taiIntegrateGuidingQuestion(draftEntries,candidate,turnPlan.target);
   }
+  // A second pass may accidentally repeat the answer in different words.
+  // Retain only genuinely new clauses before any text reaches the phone.
+  if(!unheard)draftEntries=dedupeTaiTurnEntries(draftEntries);
   // One v10 send_voice decision should be one playable MiniMax clip, not
   // five fragile calls. The selected 1-5 thoughts remain audible inside it.
   if(!unheard&&!requestedCall&&(actualDecision?.action==='send_voice'||!actualDecision&&voiceTurn)){
@@ -260,7 +263,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(turnPlan)store.update(s=>{
    s.events??=[];
    s.events.push({type:'tai_v12_turn_plan',channel:'text',sourceId:sourceMessageId,day:s.day,clock:s.clock,
-    target:turnPlan.target,guided:turnPlan.guide,emitted,receivedAt:now()});
+    target:turnPlan.target,guided:turnPlan.guide,semicolonBurst:!!turnPlan.semicolonBurst,emitted,receivedAt:now()});
   });
   return {status:called?'called':'replied',count:emitted,text:entries.filter(x=>x.action!=='phone').map(x=>x.text).join('\n')};
  }finally{pendingRequests.delete(store);}
