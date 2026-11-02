@@ -1,9 +1,10 @@
 import {isStory55,taiRecognized,final55} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
-import {aiStatus,askTai} from './gateway.js';
+import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
 import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {isTaiReplyPending} from './live-chat.js';
+import {isTaiReplyPending,synthesizeVoiceNotes} from './live-chat.js';
+import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {taiPresence} from '../presence.js';
@@ -29,7 +30,7 @@ function paused(s){
  return !!last&&/晚安|去睡|睡了|不聊了|别发|别理我|不要打扰|让我静|我在忙|先忙|先别聊/.test(last.voiceCaption||last.text);
 }
 function budget(s,c,now,{cooldown=true}={}){
- const events=(s.events||[]).filter(e=>['tai_proactive_sent','tai_proactive_followup'].includes(e.type));
+ const events=(s.events||[]).filter(e=>['tai_proactive_sent','tai_proactive_followup','tai_proactive_skipped','tai_proactive_call'].includes(e.type));
  if(events.filter(e=>e.day===s.day).length>=c.dailyLimit)return false;
  const last=events.at(-1);
  return !cooldown||!last||elapsed(s,last,c,now)>=c.cooldownMinutes;
@@ -51,12 +52,14 @@ export function isProactiveMessageDue(s,{now=Date.now()}={}){
  if(last?.from==='me'||last?.followup)return false; // never skip an unanswered player message
  const minutes=stamp(s)%1440;
  const scheduled=(isStory55(s)?TAI_55_OUTREACH_DAYS:TAI_OUTREACH_DAYS).includes(s.day)&&minutes>=19*60&&
-  !s.events.some(e=>e.type==='tai_proactive_sent'&&e.day===s.day)&&!messages.some(m=>m.day===s.day&&m.from==='me');
+  !s.events.some(e=>['tai_proactive_sent','tai_proactive_skipped','tai_proactive_call'].includes(e.type)&&e.day===s.day)&&!messages.some(m=>m.day===s.day&&m.from==='me');
  if(scheduled)return true;
  // A new topic needs a quiet gap, and never competes with a due follow-up.
  return !!last&&!isTaiFollowupDue(s,{now})&&elapsed(s,last,c,now)>=c.idleMinutes;
 }
 export function isProactiveCallDue(s){
+ // Story55 free calls belong to v10 independent action decisions, not calendar roulette.
+ if(isStory55(s))return false;
  const minutes=stamp(s)%1440;
  if(!taiBehavior(s).proactive||!eligible(s)||minutes<19*60||!(isStory55(s)?TAI_55_CALL_DAYS:TAI_CALL_DAYS).includes(s.day)||paused(s))return false;
  if(s.events.some(e=>e.type==='tai_proactive_call'&&e.day===s.day))return false;
@@ -73,23 +76,42 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
   const scene=followup
-   ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。按当时的语境决定补充没说完的话、分享之后的进展，或轻微困惑、担心、不满；沉默不等于生气，不模板化催促。这次只跟进一次。`
-   :'你主动想起熙蒙。从当前生活记录里的健身、学习、旅行、看展看秀、酒店、小酌、吃饭或真实旧话题里，选一件具体想说的事。可以多条，不泛泛问在不在，也不固定谈棋。不能虚构对方经历或擅自执行剧情。';
+   ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
+   :'熙泰考虑是否主动联系熙蒙。只关注熙蒙真实提过、尚有意义的具体经历、技术进展、困难、家人或约定；也可以决定不联系。不要主动汇报自己的行程、健身、酒店、研究或社交。不主动重提或邀请国际象棋，棋局只能由固定剧情触发。不能虚构对方经历或擅自执行剧情。';
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
-  const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:'text',scene,behavior:c,
-   relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+  const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
+  const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,
+   relationshipContext,sourceMessageId:'',hasIncoming:false,allowDefer:false,allowVoice:!!status.minimax,
+   allowCall:!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
+  if(decision?.action==='end_session'){
+   store.update(s=>s.events.push({type:'tai_proactive_skipped',day:s.day,clock:s.clock,receivedAt:now()}));
+   return false;
+  }
+  if(decision?.action==='start_call'){
+   if(!eligible(store.get())||store.get().day!==initial.day||isTaiReplyPending(store)||history(store.get()).at(-1)?.id!==history(initial).at(-1)?.id)return false;
+   const called=startIncoming({store},'陈熙泰发起语音通话',{reason:'【熙泰主动联系熙蒙】'+(decision.intent||'想听听熙蒙的近况')});
+   if(called)store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock,receivedAt:now(),protocol:'v10'}));
+   return called;
+  }
+  const approvedDecision=decision?.action==='send_voice'||decision?.action==='send_text'?decision:null;
+  const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
+   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,approvedDecision,
+   relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   const items=unpackTaiReply(r,'noapp').slice(0,c.maxMessages);
   let expected=history(initial).at(-1)?.id,emitted=0;
+  const voiceJobs=[];
   for(const item of items){
    if(emitted)await wait(replyDelayMs(item.text,c,{random}));
    const current=store.get();
    if(!eligible(current)||current.day!==initial.day||isTaiReplyPending(store)||history(current).at(-1)?.id!==expected)break;
    if(!emitted&&!force&&!(followup?isTaiFollowupDue(current,{now:now()}):isProactiveMessageDue(current,{now:now()})))break;
    const id=uid();
+   const voiceMode=approvedDecision?.action==='send_voice';
    store.update(s=>{
     const target=chat(s);if(!target)return;
-    target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,time:s.clock,day:s.day,sentDate:dateParts(s).iso,
-     aiGenerated:true,actual:true,receivedAt:now(),proactive:true,followup,followupSourceId:followup?source.id:undefined});
+    target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue||approvedDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
+     aiGenerated:true,actual:true,receivedAt:now(),proactive:true,followup,followupSourceId:followup?source.id:undefined,
+     voiceRequested:voiceMode});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=(target.unread||0)+1;
      s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:item.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
@@ -97,8 +119,10 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
     if(!emitted)s.events.push({type:followup?'tai_proactive_followup':'tai_proactive_sent',sourceId:source?.id,
      day:s.day,clock:s.clock,receivedAt:now(),testOnly:!!force});
    });
+   if(voiceMode)voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    expected=id;emitted++;
   }
+  if(voiceJobs.length)void synthesizeVoiceNotes(store,voiceJobs).catch(error=>console.warn('Tai proactive voice failed:',error?.message));
   return emitted>0;
  }catch(e){errors.set(store,now());if(force)throw e;console.warn('Xitai proactive message skipped:',e?.message);return false;}
  finally{inFlight.delete(store);}
