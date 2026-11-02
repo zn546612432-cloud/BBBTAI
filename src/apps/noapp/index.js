@@ -50,6 +50,7 @@ const setting=(s)=>{
  +'<label>MiniMax 平台<select name="region"><option value="cn" '+(c.region!=='intl'?'selected':'')+'>中国站 · minimaxi.com</option><option value="intl" '+(c.region==='intl'?'selected':'')+'>国际站 · minimax.io</option></select></label>'
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
+ +'<label>声线表现档<select name="voiceStyle"><option value="stable" '+(c.voiceStyle!=='expressive'?'selected':'')+'>稳定声线 · 推荐（不强制情绪）</option><option value="expressive" '+(c.voiceStyle==='expressive'?'selected':'')+'>表现力试验 · 强制情绪及音效</option></select></label><p>默认优先保持熙泰的原本音色。切换只影响新生成的语音，已存录音不变。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft)
@@ -138,7 +139,7 @@ export const submit=(form,ctx)=>{
   ctx.refresh();ctx.toast('熙泰的聊天与通话设置已保存');return;
  }
  if(form.dataset.form==='tai-save-ai'){
-  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel')});settingsDraft={};
+  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel'),voiceStyle:data.get('voiceStyle')});settingsDraft={};
   ctx.toast('已保存所选 DeepSeek 模型（NoApp / MIRAGE / 国际象棋共用）');return;
  }
 };
