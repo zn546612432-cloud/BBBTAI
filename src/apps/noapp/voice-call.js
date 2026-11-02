@@ -187,7 +187,10 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false}=
    profile:ctx.store.get().aiDraft?.profile,memories:ctx.store.get().aiDraft?.memories});
   if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)return;
   const replies=event==='unheard'?[unheardReply(sessionId+':'+call.turns.length)]:unpackTaiReply(data,'call');
-  for(const r of replies){
+  // The telephone is a conversation, not a list of standalone voice snippets.
+  // Keep only a manageable number of meaningful turns before listening again.
+  const turns=replies.slice(0,3);
+  for(const r of turns){
    if(call.sessionId!==sessionId||call.state!=='connected'||ctx.store.get().day!==requestDay)break;
    const speech=composeCallSpeech([r],taiBehavior(ctx.store.get()));
    if(!speech)continue;
