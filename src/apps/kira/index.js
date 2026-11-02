@@ -24,7 +24,7 @@ export function render({store},loc){
 }
 export function handle(a,t,c){
  if(a==='kira-d01-bank'){let paid=false;c.store.update(s=>{paid=claimD01Bank(s);});if(!paid)c.toast('款項已結算');return;}
- if(a==='kira-d01-ghost'){c.store.update(s=>{const o=authorize(s,{orderId:D01_REPAIR,mailId:D01_ATTACHMENT,type:'route'});o.key='mirage001';o.settings.seconds=null;});return c.router.open({appId:'ghost',route:'/contract',params:{orderId:D01_REPAIR}});}
+ if(a==='kira-d01-ghost'){c.store.update(s=>{const o=authorize(s,{orderId:D01_REPAIR,mailId:D01_ATTACHMENT,type:'route'});o.key='mirage001';o.settings.seconds=null;o.settings.randomRoute=true;});return c.router.open({appId:'ghost',route:'/contract',params:{orderId:D01_REPAIR}});}
  if(a==='kira-d01-submit'){let submitted=false;c.store.update(s=>{submitted=submitD01Attachment(s);});if(submitted)setTimeout(()=>c.store.update(s=>settleD01Repair(s)),2000);return;}
 
  if(a.startsWith('kira-linked-')){
