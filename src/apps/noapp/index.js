@@ -1,3 +1,4 @@
+import {aiParameterFields,ttsParameterFields,readAiForm,readTtsForm} from './settings/parameters.js';
 import {s55Button} from '../../services/story55/views.js';
 import {scriptedCallView} from '../../services/story55/scripted-phone.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
@@ -56,12 +57,12 @@ const setting=(s)=>{
  const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan').at(-1);
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
- +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label><p>V4 Pro：明确关闭思考，temperature = 1.3。只影响新发送的 AI 回复；Flash 保持原有配置。</p>'
+ +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label>'+aiParameterFields(c)
  +'<label>MiniMax API Key<input type="password" name="minimax" autocomplete="off" placeholder="输入 MiniMax API Key" value="'+esc(c.minimax||'')+'"></label>'
  +'<label>MiniMax 平台<select name="region"><option value="cn" '+(c.region!=='intl'?'selected':'')+'>中国站 · minimaxi.com</option><option value="intl" '+(c.region==='intl'?'selected':'')+'>国际站 · minimax.io</option></select></label>'
  +'<label>熙泰固定音色<input type="text" name="voiceId" readonly value="'+esc(XITAI_VOICE_ID)+'"></label>'
  +'<label>TTS 模型<select name="ttsModel"><option value="speech-2.8-turbo" '+(c.ttsModel!=='speech-2.8-hd'?'selected':'')+'>2.8 Turbo · 快</option><option value="speech-2.8-hd" '+(c.ttsModel==='speech-2.8-hd'?'selected':'')+'>2.8 HD · 音质</option></select></label>'
- +'<p class="tai-voice-locked">熙泰声线：固定冷静（calm） · 原音色 ID · 音高 0 · 语速 1.0。电话和语音条共用，不再跟随 AI 情绪变声；以前存档里的「表现力」设置自动失效。</p>'
+ +ttsParameterFields(c)+'<p>这些参数用于之后新合成的电话与语音。默认冷静、原音调、1倍速；已生成的音频需重新合成才会改变。预设配音可单条覆盖。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
  +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近'+(latestTurn.channel==='call'?'电话':'文字')+'：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
@@ -164,8 +165,8 @@ export const submit=(form,ctx)=>{
  }
  if(form.dataset.form==='tai-save-ai'){
   voiceDiagnosis={state:'idle',message:''};
-  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel'),voiceStyle:'calm'});settingsDraft={};
-  ctx.toast('已保存所选 DeepSeek 模型（NoApp / MIRAGE / 国际象棋共用）');return;
+  const data=new FormData(form);saveApiConfig({deepseek:data.get('deepseek'),minimax:data.get('minimax'),model:data.get('model'),region:data.get('region'),voiceId:XITAI_VOICE_ID,ttsModel:data.get('ttsModel'),voiceStyle:'calm',...readAiForm(data),...readTtsForm(data)});settingsDraft={};
+  ctx.toast('已保存 AI 与语音参数；所有聊天频道共用');return;
  }
 };
 export function mountCallEvents({store}){

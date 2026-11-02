@@ -1,5 +1,6 @@
+import {ttsParameterFields,readTtsForm} from '../../../noapp/settings/parameters.js';
 import {btn,card,esc} from '../../../../system/ui.js';
-import {aiStatus,voicePreview,XITAI_VOICE_ID} from '../../../../services/ai/gateway.js';
+import {aiStatus,voicePreview,XITAI_VOICE_ID,apiConfig,saveApiConfig} from '../../../../services/ai/gateway.js';
 import {taiReviewPanel,handleTaiReview,submitTaiReview} from '../ai-profile/index.js';
 import {mirageAIEnabled} from '../../../../services/ai/channel-controls.js';
 
@@ -7,11 +8,11 @@ const defaults={voiceId:XITAI_VOICE_ID,model:'speech-2.8-turbo',language:'Chines
 const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===value?' selected':'')+'>'+esc(label)+'</option>';
 
 export function aiVoicePanel(s){
-  const p={...defaults,...s.aiVoiceSettings};
+  const p={...defaults,...apiConfig(),model:apiConfig().ttsModel||defaults.model};
   return '<div class="editor-panel">'+
     card('<h3>MIRAGE · AI 回复</h3><label style="display:flex;align-items:center;gap:10px"><input type="checkbox" style="width:18px;height:18px;flex:none;padding:0" data-mirage-ai '+(mirageAIEnabled(s)?'checked':'')+'> 开启 MIRAGE AI 回复（开发测试）</label><p class="editor-help">默认关闭。关闭时不调用 AI，固定剧情照常运行；关闭开关后，尚未送达的 AI 回复会停止。此开关保存在当前手机存档，不影响 NoApp 和国际象棋。</p>')+
     card('<span class="eyebrow">DEEPSEEK × MINIMAX / LOCAL GATEWAY</span><h2>熙泰 · AI 接口与音色实验室</h2>'+
-    '<p class="editor-help">文字大脑：DeepSeek · 语音合成：MiniMax。接口仅在本机开发服务器启用；正式 GitHub Pages 无服务端。密钥只写入本机 .env.local，绝不填在游戏里。</p>'+
+    '<p class="editor-help">文字大脑：DeepSeek · 语音合成：MiniMax。GitHub Pages 可在 NoApp → AI 设置配置会话密钥；开发服务器也可使用环境变量。此处可调整声音并试听。</p>'+
     '<p>文字接口 <code>POST /api/ai/chat</code><br>语音接口 <code>POST /api/voice/tts</code><br>检查接口 <code>GET /api/ai/status</code></p>'+
     btn('ai-check-ports','检查 DeepSeek / MiniMax 连接','button-quiet wide')+
     '<p id="ai-port-status" class="editor-help" role="status">尚未检测接口</p>')+
@@ -20,12 +21,12 @@ export function aiVoicePanel(s){
     '<label>熙泰固定音色（voice_id）</label><input name="voiceId" value="'+esc(XITAI_VOICE_ID)+'" readonly>'+
     '<label>语音模型</label><select name="model">'+opt('speech-2.8-turbo','Speech 2.8 Turbo',p.model)+opt('speech-2.8-hd','Speech 2.8 HD',p.model)+'</select>'+
     '<label>语种增强</label><select name="language">'+opt('Chinese','普通话',p.language)+opt('Chinese,Yue','粤语',p.language)+opt('auto','自动判断',p.language)+'</select>'+
-    '<label>语速（0.5–2.0）</label><input name="speed" type="number" min=".5" max="2" step=".05" value="'+esc(p.speed)+'">'+
+    ttsParameterFields(p)+
     '<button class="button-primary wide" type="submit">保存音色设置</button></form>'+
     card('<h3>试听（会消耗 MiniMax 额度）</h3><textarea id="ai-voice-sample" rows="2" maxlength="800">别急。你把文件发我，我看看。</textarea>'+
     btn('ai-test-voice','生成并播放试听','button-primary wide')+
     '<audio id="ai-voice-player" controls hidden style="width:100%;margin-top:12px"></audio>')+
-    '<p class="editor-help">语音识别与实时通话尚未接入；付费接口只在本机服务端配置密钥后可调用。</p>'+
+    '<p class="editor-help">参数用于之后新合成的音频；预设配音页支持为每句保存独立参数。</p>'+
   '</div>'+taiReviewPanel(s);
 }
 function show(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
@@ -39,7 +40,7 @@ export async function handleAIVoice(action,t,ctx){
       show('ai-port-status','本地服务正常 · DeepSeek '+(status.deepseek?'已配置密钥':'未配置密钥')+' · MiniMax '+(status.minimax?'已配置密钥':'未配置密钥'));
     }
     if(action==='ai-test-voice'){
-      const config={...defaults,...ctx.store.get().aiVoiceSettings};
+      const config={...defaults,...apiConfig(),model:apiConfig().ttsModel||defaults.model};
       if(!config.voiceId)throw Error('请先填写音色 ID 并保存');
       const sample=document.getElementById('ai-voice-sample')?.value?.trim();
       if(!sample)throw Error('请填写试听文字');
@@ -68,7 +69,8 @@ export function submitAIVoice(form,ctx){
   if(voiceId&&!/^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw Error('voice_id 只能包含字母、数字、下划线及短横线');
   if(!Number.isFinite(speed)||speed<.5||speed>2)throw Error('语速应在 0.5–2.0 之间');
   if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language))throw Error('不支持的语音设置');
-  ctx.store.update(s=>{s.aiVoiceSettings={voiceId:XITAI_VOICE_ID,model,language,speed};});
-  ctx.toast('熙泰音色设置已保存在本机存档中');
+  ctx.store.update(s=>{s.aiVoiceSettings={voiceId:XITAI_VOICE_ID,model,...readTtsForm(values)};});
+  saveApiConfig({...apiConfig(),ttsModel:model,...readTtsForm(values)});
+  ctx.toast('熙泰声音参数已保存，NoApp 电话与语音共用');
   return true;
 }

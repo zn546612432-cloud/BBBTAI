@@ -7,7 +7,8 @@ import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
-import {askTai,chooseTaiAction,voicePreview,speechToText} from '../../services/ai/gateway.js';
+import {askTai,chooseTaiAction,voicePreview,speechToText,apiConfig} from '../../services/ai/gateway.js';
+import {explainMinimaxFailure} from '../../services/voice/minimax-diagnostics.js';
 import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
 import {dateParts} from '../../services/calendar.js';
@@ -478,7 +479,7 @@ export async function playVoiceMessage(id,ctx){
    const clean=readableTaiVoiceText(oldCaption);
    if(!clean||clean==='语音转写异常，原始数据已隐藏'){ctx.toast('旧语音格式异常，请重新生成');continue;}
    try{
-    blob=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
+    blob=await voicePreview({text:clean,tone:m.aiTone||'neutral',...m.voiceSettings});
     await saveClip(m.audioId||m.id,blob);
     ctx.store.update(state=>{
      const record=state.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(x=>x.id===m.id);
@@ -498,7 +499,7 @@ export async function playVoiceMessage(id,ctx){
   // provided the developer has configured MiniMax. Cache it for next time.
   if(!blob&&!asset&&m.from==='tai'&&String(m.voiceCaption||m.text||'').trim()){
    try{
-    blob=await voicePreview({text:m.voiceCaption||m.text,tone:m.aiTone||'neutral'});
+    blob=await voicePreview({text:m.voiceCaption||m.text,tone:m.aiTone||'neutral',...m.voiceSettings});
     await saveClip(m.audioId||m.id,blob);
    }catch(error){
     if(m===selected)ctx.toast('熙泰语音未生成：'+(error?.message||'请先配置 MiniMax'));
@@ -527,12 +528,25 @@ export async function playVoiceMessage(id,ctx){
   finally{if(blob)URL.revokeObjectURL(url);}
  }
 }
-export async function convertTaiTextToVoice(ctx,id){
+const voiceConversions=new WeakMap();
+export function convertTaiTextToVoice(ctx,id){
+ let pending=voiceConversions.get(ctx.store);
+ if(!pending){pending=new Map();voiceConversions.set(ctx.store,pending);}
+ if(pending.has(id))return pending.get(id);
+ const task=convertVoice(ctx,id).finally(()=>pending.delete(id));
+ pending.set(id,task);return task;
+}
+async function convertVoice(ctx,id){
  const c=ctx.store.get().content.conversations.noapp.find(x=>x.id==='tai'),m=c?.messages.find(x=>x.id===id);
  if(!m||m.from==='me')throw Error('只允许给熙泰的消息配音');
+ if(m.kind==='voice'&&m.audioId)return;
  const clean=readableTaiVoiceText(m.text);
+ ctx.store.update(s=>{
+  const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
+  if(record){record.voiceRequested=true;delete record.voiceFailed;delete record.voiceError;}
+ });
  try{
-  const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral'});
+  const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral',...m.voiceSettings});
   await saveClip('tai-'+id,clip);
   ctx.store.update(s=>{
    const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
@@ -542,7 +556,7 @@ export async function convertTaiTextToVoice(ctx,id){
  }catch(error){
   ctx.store.update(s=>{
    const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
-   if(record){record.voiceFailed=true;delete record.voiceRequested;record.voiceError=String(error?.message||'语音生成失败').slice(0,440);}
+   if(record){record.voiceFailed=true;delete record.voiceRequested;record.voiceError=explainMinimaxFailure(error,{region:apiConfig().region}).slice(0,550);}
   });
   throw error;
  }

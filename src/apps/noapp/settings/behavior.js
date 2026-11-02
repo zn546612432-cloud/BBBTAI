@@ -1,7 +1,7 @@
 import {esc} from '../../../system/ui.js';
 import {DEFAULT_TAI_BEHAVIOR} from '../../../services/ai/behavior.js';
 export function readBehaviorForm(form){
- return Object.fromEntries(Object.keys(DEFAULT_TAI_BEHAVIOR).map(k=>[k,k==='proactive'?form.has('behavior_'+k):form.get('behavior_'+k)]));
+ return Object.fromEntries(Object.keys(DEFAULT_TAI_BEHAVIOR).map(k=>[k,['proactive','autonomousVoice'].includes(k)?form.has('behavior_'+k):form.get('behavior_'+k)]));
 }
 export function behaviorSettings(saved,draft={}){
  const c={...saved};
@@ -12,6 +12,8 @@ export function behaviorSettings(saved,draft={}){
  ${select('verbosity','表达长度',[['brief','偏简短'],['balanced','自然，有话就多说'],['expansive','偏展开，多讲看法和细节']])}
  ${number('maxMessages','一次最多几条独立消息',1,6,'条')}
  ${select('initiative','主动带话题',[['off','顺着当前内容聊'],['natural','自然关注熙蒙的近况'],['active','更主动追踪熙蒙真正说过的事']])}
+ <label class="tai-test-toggle"><input type="checkbox" name="behavior_autonomousVoice" ${c.autonomousVoice?'checked':''}> 允许熙泰自行选择发语音（默认开启）</label>
+ <p>接通 MiniMax 后，熙泰可以按话题选择文字或一条语音，也可以主动发语音联系你；不用先要求他发，不受第60天限制。</p>
  <details open><summary>回复速度</summary><p>连续发送新消息后等 3 秒再一起理解；首条等待会计入模型响应时间，后续逐条发出。</p>
  <div class="tai-setting-pair">${number('firstDelayMin','首条最短等待',0,60)}${number('firstDelayMax','首条最长等待',0,120)}</div>
  <div class="tai-setting-pair">${number('messageGapMin','连发最短间隔',.5,30)}${number('messageGapMax','连发最长间隔',.5,60)}</div></details>

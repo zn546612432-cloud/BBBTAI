@@ -25,3 +25,9 @@ export function resolvePhoneAudioPath(path,{base=publicAssetBase(),origin=global
  if(repo&&name.startsWith(repo+'/assets/'))name=name.slice(repo.length+1);
  return new URL(prefix+name,origin).href;
 }
+
+// Release directories are replaced on deployment. Bundled recordings also
+// exist at the stable site root, so an open old tab can keep playing them.
+export function resolveStablePhoneAudioPath(path,{base=publicAssetBase(),...options}={}){
+ return resolvePhoneAudioPath(path,{...options,base:base.replace(/releases\/[^/]+\/$/,'')});
+}

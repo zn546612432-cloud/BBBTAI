@@ -287,3 +287,8 @@
 .app-noapp .tai-voice-diagnostic-result{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:10px;background:#172735}
 .app-noapp .tai-voice-diagnostic-result.failed{color:#ffdbcf}
 .app-noapp .tai-voice-diagnostic-result.success{color:#bbeddb}
+
+.tai-parameter-group{padding:12px 0;border-top:1px solid #425065;margin:12px 0}
+.tai-parameter-group>summary{font-weight:650;cursor:pointer;margin-bottom:12px}
+.tai-parameter-group>label{margin:10px 0}
+.app-noapp .tai-parameter-group input,.app-noapp .tai-parameter-group select{width:100%;box-sizing:border-box}

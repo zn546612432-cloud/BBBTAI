@@ -54,3 +54,12 @@ test('tapping the final voice bubble with a stale saved URL plays a canonical as
   audio.onended();assert.equal(s.story55.finalAudioHeard,true);
  }finally{globalThis.Audio=previous;}
 });
+
+test('an old open Pages release uses a stable recording path across new deployments',async()=>{
+ const {resolveStablePhoneAudioPath}=await import('../src/services/voice/asset-url.js');
+ for(const base of ['/BBBTAI/releases/old/','/BBBTAI/preview/releases/old/']){
+  const resolved=resolveStablePhoneAudioPath(stale,{base,origin:'https://example.test'});
+  assert.equal(resolved,'https://example.test'+base.replace(/releases\/old\/$/,'')+'assets/story55/ximeng-final-keywords.mp3');
+  assert.doesNotMatch(resolved,/releases/);
+ }
+});

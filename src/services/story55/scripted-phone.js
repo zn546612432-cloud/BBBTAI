@@ -1,3 +1,4 @@
+import {loadClip} from '../voice/audio-store.js';
 // Fixed story phone: only Xitai is voiced. Ximeng is subtitle only.
 import {isStory55,nodeStatus,completed,story55Config} from './state.js';
 import {scene55,sceneLines,advanceScene55} from './runtime.js';
@@ -35,10 +36,12 @@ function assetUrl(s,node,index){
 async function speak(ctx,a,content,index){
  let temp=null;
  try{
+  const cfg=story55Config(ctx.store.get()),clipId=cfg.voiceClipIds?.[a.node]?.[index];
+  const cached=clipId?await loadClip(clipId).catch(()=>null):null;
   const url=assetUrl(ctx.store.get(),a.node,index);
-  if(url)a.audio.src=url;
+  if(url&&!cached)a.audio.src=url;
   else{
-   const blob=a.pending?.index===index?a.pending.blob:await voicePreview({text:content,tone:'dry'});
+   const blob=cached||(a.pending?.index===index?a.pending.blob:await voicePreview({text:content,tone:'dry',...cfg.voiceSettings?.[a.node]?.[index]}));
    a.pending={index,blob};
    temp=URL.createObjectURL(blob);a.audio.src=temp;
   }

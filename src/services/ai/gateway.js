@@ -1,24 +1,30 @@
+import {normalizeTtsSettings,ttsProviderSettings,ttsCueText} from '../voice/tts-settings.js';
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
-import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
+import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
 // are sent directly to DeepSeek/MiniMax; never commit, log, or export these keys.
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
 export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
+export const AI_PREFERENCES='ximeng-ai-preferences-v2';
+function savedPreferences(){try{return JSON.parse(globalThis.localStorage?.getItem(AI_PREFERENCES)||'{}');}catch{return {};}}
 export function apiConfig(){
- try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceStyle:normalizeVoiceStyle(c.voiceStyle),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceStyle:'calm',voiceId:XITAI_VOICE_ID};}
+ let c={};try{c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');}catch{}
+ const merged={...savedPreferences(),...c};
+ return {...merged,...normalizeAiParameters(merged),...normalizeTtsSettings(merged),model:normalizeDeepSeekModel(merged.model),ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(merged.ttsModel)?merged.ttsModel:'speech-2.8-hd',voiceStyle:normalizeVoiceStyle(merged.voiceStyle),voiceId:XITAI_VOICE_ID};
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
- model:normalizeDeepSeekModel(config.model),
- region:config.region==='intl'?'intl':'cn',
- voiceId:XITAI_VOICE_ID,
- voiceStyle:normalizeVoiceStyle(config.voiceStyle),
- ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd'};
- sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));return out;
+ model:normalizeDeepSeekModel(config.model),region:config.region==='intl'?'intl':'cn',voiceId:XITAI_VOICE_ID,voiceStyle:normalizeVoiceStyle(config.voiceStyle),
+ ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd',
+ ...normalizeAiParameters(config),...normalizeTtsSettings(config)};
+ sessionStorage.setItem(BYOK_SESSION,JSON.stringify(out));
+ const {deepseek,minimax,...preferences}=out;
+ try{globalThis.localStorage?.setItem(AI_PREFERENCES,JSON.stringify(preferences));}catch{}
+ return out;
 }
 export function clearApiConfig(){sessionStorage.removeItem(BYOK_SESSION);}
 async function localJSON(path,body){
@@ -29,27 +35,34 @@ async function localJSON(path,body){
  try{obj=JSON.parse(text);}catch{throw Error('当前网页没有 AI 服务端，请先在 NoApp 配置个人 API Key');}
  if(!r.ok)throw Error(obj.error||'AI 服务请求失败');return obj;
 }
-async function directJSON(url,key,body){
+async function directJSON(url,key,body,{timeoutMs=60000}={}){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{
  let r;
- try{r=await fetch(url,{method:'POST',mode:'cors',credentials:'omit',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(body),referrerPolicy:'no-referrer'});}
- catch{throw Error('供应商请求被网络或浏览器跨域策略拦截；请使用同源安全网关');}
+ try{r=await fetch(url,{method:'POST',mode:'cors',credentials:'omit',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(body),referrerPolicy:'no-referrer',signal:controller.signal});}
+ catch{throw Error(controller.signal.aborted?'供应商请求超时（60秒）':'供应商请求被网络或浏览器跨域策略拦截；请使用同源安全网关');}
  const content=await r.text();let data;
  try{data=JSON.parse(content);}catch{throw Error('供应商未返回合法 JSON，HTTP '+r.status);}
- if(!r.ok||data.error)throw Error(data.error?.message||data.base_resp?.status_msg||'供应商 HTTP '+r.status);
- if(data.base_resp&&data.base_resp.status_code!==0)throw Error('MiniMax '+data.base_resp.status_code+'：'+data.base_resp.status_msg);
+ if(!data||typeof data!=='object'||Array.isArray(data))throw Error('供应商返回空响应，HTTP '+r.status);
+ const code=data.base_resp?.status_code;
+ if(!r.ok||data.error||code!=null&&Number(code)!==0){
+  const detail=data.error?.message||data.base_resp?.status_msg||'未返回错误说明';
+  throw Error('供应商 HTTP '+r.status+(code!=null?' · MiniMax '+code:'')+'：'+detail);
+ }
  return data;
+ }catch(error){if(controller.signal.aborted)throw Error('供应商请求超时（60秒）');throw error;}finally{clearTimeout(timer);}
 }
 export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null}){
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,model:c.model};
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,model:c.model,parameters:normalizeAiParameters(c)};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
- const base={...deepseekModelOptions(c.model),
-  messages:[{role:'system',content:system},...messages],max_tokens:4096,stream:false};
+ const base={...deepseekModelOptions(c.model,c),
+  messages:[{role:'system',content:system},...messages],max_tokens:c.maxTokens,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
  // Retry once without JSON response_format; never save empty chat bubbles.
  let result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,
@@ -75,12 +88,12 @@ export async function chooseTaiAction(args={}){
  const {taiKnowledgeContext}=await import('./tai-profile.js');
  const mode=args.outputMode==='call'?'call':'text';
  const context={...args,mode,channel:args.channel||'noapp'};
- const system=taiActionDecisionPrompt({...context,
+ const system=taiActionDecisionPrompt({...context,allowVoice:args.allowVoice!==false&&!!c.minimax,
   relationshipContext:(taiKnowledgeContext({day:args.day,channel:context.channel,recognized:args.recognized})+'\\n'+String(args.relationshipContext||'')).slice(0,4100)});
  let raw;
  try{
   const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
-   ...deepseekModelOptions(c.model),
+   ...deepseekModelOptions(c.model,c),
    messages:[{role:'system',content:system},...(Array.isArray(args.messages)?args.messages.slice(-16):[])],
    response_format:{type:'json_object'},max_tokens:450,stream:false
   });
@@ -98,13 +111,14 @@ export async function chooseTaiAction(args={}){
  return result.decision;
 }
 
-export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
- const c=apiConfig();
+export async function voicePreview({text,voiceId,model,tone='neutral',...overrides}){
+ const c=apiConfig(),settings=normalizeTtsSettings(overrides,c);
+ let language=settings.language;
+ model=model||c.ttsModel||'speech-2.8-hd';
  const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
- text=prepared.text;
- speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.5,Math.min(2,Number(speed))):prepared.speed;
- // A permanent calm emotion is intentional: missing emotion lets MiniMax
- // re-infer an unstable voice based on individual lines.
+ text=ttsCueText(prepared.text,settings.cue);
+ if(!String(prepared.text||'').trim())throw Error('语音文字不能为空');
+ // Calm remains the default; explicit user tuning overrides it.
  // Code-switch to the provider's multilingual pronunciation mode only when
  // actual Latin words occur outside native Speech 2.8 sound tags.
  if(language==='Chinese'){
@@ -118,7 +132,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
   if(minimaxUnavailableOnGithubPages(globalThis.location?.hostname))
    throw Error(explainMinimaxFailure(new Error('未配置 MiniMax API Key')));
   let r;
-  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,language,speed,emotion:prepared.emotion})});}
+  try{r=await fetch('/api/voice/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voiceId:XITAI_VOICE_ID,model,...settings,language})});}
   catch{throw Error('MiniMax 语音接口未配置');}
   if(!r.ok){let v={};try{v=await r.json();}catch{}throw Error(v.error||'MiniMax 语音接口失败');}
   if(!r.headers.get('Content-Type')?.includes('audio/'))throw Error('未返回音频');
@@ -129,10 +143,9 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  if(!spoken)throw Error('语音文字不能为空');
  let audio;
  try{audio=await directJSON(endpoint,c.minimax,{
-  model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
-  language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
-  audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
+  model,text:spoken,stream:false,output_format:'hex',
+  ...ttsProviderSettings({...settings,language}),
+  voice_setting:{voice_id:XITAI_VOICE_ID,...ttsProviderSettings(settings).voice_setting}
  });}
  catch(error){throw Error(explainMinimaxFailure(error,{region:c.region}));}
  const hex=audio.data?.audio;

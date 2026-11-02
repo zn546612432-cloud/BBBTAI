@@ -1,7 +1,7 @@
 // Persisted gameplay preferences, independent of session-only provider keys.
 export const DEFAULT_TAI_BEHAVIOR=Object.freeze({
  verbosity:'expansive',maxMessages:5,firstDelayMin:4,firstDelayMax:10,
- messageGapMin:3,messageGapMax:7,initiative:'natural',proactive:true,
+ messageGapMin:3,messageGapMax:7,initiative:'natural',proactive:true,autonomousVoice:true,
  triggerClock:'real',idleMinutes:10,followupMinutes:5,cooldownMinutes:30,dailyLimit:3,
  callPause:1.7,callNudgeSeconds:45,callCloseSeconds:125
 });
@@ -19,6 +19,7 @@ export function normalizeTaiBehavior(input={}){
  for(const [key,values] of Object.entries({verbosity:['brief','balanced','expansive'],initiative:['off','natural','active'],triggerClock:['real','game']}))
   if(values.includes(input[key]))out[key]=input[key];
  if(typeof input.proactive==='boolean')out.proactive=input.proactive;
+ if(typeof input.autonomousVoice==='boolean')out.autonomousVoice=input.autonomousVoice;
  out.firstDelayMax=Math.max(out.firstDelayMin,out.firstDelayMax);
  out.messageGapMax=Math.max(out.messageGapMin,out.messageGapMax);
  return out;

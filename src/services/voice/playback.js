@@ -12,7 +12,7 @@ export function primeAudio(audio){
  audio.src='data:audio/wav;base64,'+btoa(String.fromCharCode(...wav));
  try{audio.play()?.catch(()=>{audio._primed=false;});}catch{audio._primed=false;}
 }
-export function createGestureAudio(){
+export function createGestureAudio({prime=true}={}){
  if(typeof Audio==='undefined')return null;
- const audio=new Audio();audio.preload='auto';primeAudio(audio);return audio;
+ const audio=new Audio();audio.preload='auto';if(prime)primeAudio(audio);return audio;
 }

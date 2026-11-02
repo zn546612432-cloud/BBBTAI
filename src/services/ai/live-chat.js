@@ -104,16 +104,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
   const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
-  const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
-  const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&(voiceRequested||(initial.day>=60&&hashed%19===0));
+  const allowVoice=!!status.minimax&&(behavior.autonomousVoice||voiceRequested);
+  const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&voiceRequested;
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
-   behavior,
+   behavior,allowVoice,
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:availableCall&&!!status.minimax,allowVoice:!!status.minimax,
+   allowCall:availableCall&&!!status.minimax,allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:!!status.minimax});
@@ -188,7 +188,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(!unheard)draftEntries=dedupeTaiTurnEntries(draftEntries);
   // One v10 send_voice decision should be one playable MiniMax clip, not
   // five fragile calls. The selected 1-5 thoughts remain audible inside it.
-  if(!unheard&&!requestedCall&&(actualDecision?.action==='send_voice'||!actualDecision&&voiceTurn)){
+  if(!unheard&&!requestedCall&&(actualDecision?.action==='send_voice'||!actualDecision&&(voiceTurn||allowVoice&&draftEntries.every(m=>m.mode==='voice')))){
    draftEntries=combineTaiVoiceThoughts(draftEntries);
   }
   // Keep an explicit phone action even if the model returned the configured
@@ -201,7 +201,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     ({...item,action:undefined,mode:actualDecision.action==='send_voice'?'voice':'text',
       tone:item.tone==='neutral'&&actualDecision.tone!=='neutral'?actualDecision.tone:item.tone,
       ...(actualDecision.action==='send_voice'?{speechText:item.speechText||item.text}:{})}):
-    item.action==='phone'?{...item,mode:'text'}:requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+    item.action==='phone'?{...item,mode:'text'}:requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:!allowVoice?{...item,mode:'text'}:item);
   let emitted=0;
   let phoneCommand=null;
   const voiceJobs=[];

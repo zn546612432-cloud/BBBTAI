@@ -1,3 +1,5 @@
+import {normalizeTtsSettings,ttsProviderSettings} from '../src/services/voice/tts-settings.js';
+import {normalizeAiParameters} from '../src/services/ai/model-config.js';
 // Local-only AI gateway. Never publish this handler as an unauthenticated public API.
 import {normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {deepseekModelOptions} from '../src/services/ai/model-config.js';
@@ -74,26 +76,26 @@ export async function handleAIGateway(req,res,pathname) {
       const behavior=normalizeTaiBehavior(payload.behavior);
       const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
-        ...deepseekModelOptions(payload.model??process.env.DEEPSEEK_MODEL),
-        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized})},...messages],
-        stream:false,max_tokens:4096,response_format:{type:'json_object'}
+        ...deepseekModelOptions(payload.model??process.env.DEEPSEEK_MODEL,payload.parameters),
+        messages:[{role:'system',content:buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY})},...messages],
+        stream:false,max_tokens:normalizeAiParameters(payload.parameters).maxTokens,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;
       if(typeof text!=='string'||!text.trim())throw fail(502,'模型没有返回有效文字');
       reply(res,200,{text:text.trim(),channel,day});
     }else{
       if(!process.env.MINIMAX_API_KEY)throw fail(503,'请先在本地环境配置 MINIMAX_API_KEY');
-      const {text,voiceId,model='speech-2.8-hd',language='Chinese',speed=1,emotion=null}=payload;
+      const {text,voiceId,model='speech-2.8-hd'}=payload;
       if(typeof text!=='string'||!text.trim()||text.length>3000)throw fail(400,'试听文字须为 1–3000 字');
       if(typeof voiceId!=='string'||! /^[a-zA-Z0-9_-]{1,100}$/.test(voiceId))throw fail(400,'请填写有效的 MiniMax voice_id');
-      if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model)||!['Chinese','Chinese,Yue','auto'].includes(language)||!within(speed,.5,2)||!(emotion==null||['happy','sad','angry','fearful','disgusted','surprised','calm','fluent'].includes(emotion)))throw fail(400,'语音参数不合法');
+      if(!['speech-2.8-turbo','speech-2.8-hd'].includes(model))throw fail(400,'语音模型不合法');
+      const settings=ttsProviderSettings(normalizeTtsSettings(payload));
       const data=await provider(MINIMAX,process.env.MINIMAX_API_KEY,{
-        model,text,stream:false,output_format:'hex',language_boost:language,
-        voice_setting:{voice_id:voiceId,speed,vol:1,pitch:0,...(emotion?{emotion}:{})},
-        audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
+        model,text,stream:false,output_format:'hex',...settings,
+        voice_setting:{voice_id:voiceId,...settings.voice_setting}
       });
       const hex=data.data?.audio;
-      if(data.base_resp?.status_code!==0||typeof hex!=='string'||!hex||hex.length%2||!/^[a-f\d]+$/i.test(hex))throw fail(502,'MiniMax 未返回可播放音频，请检查音色 ID 与账户额度');
+      if(Number(data.base_resp?.status_code??0)!==0||typeof hex!=='string'||!hex||hex.length%2||!/^[a-f\d]+$/i.test(hex))throw fail(502,'MiniMax 未返回可播放音频，请检查音色 ID 与账户额度');
       const audio=Buffer.from(hex,'hex');
       if(audio.length>8_000_000)throw fail(502,'音频文件过大');
       res.writeHead(200,{'Content-Type':'audio/mpeg','Cache-Control':'no-store','Content-Length':audio.length,'X-Content-Type-Options':'nosniff'});

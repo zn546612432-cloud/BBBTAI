@@ -76,6 +76,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
  inFlight.add(store);
  try{
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
+  const allowVoice=!!status.minimax&&c.autonomousVoice;
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
   const scene=followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
@@ -83,7 +84,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
   const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,
-   relationshipContext,sourceMessageId:'',hasIncoming:false,allowDefer:false,allowVoice:!!status.minimax,
+   relationshipContext,sourceMessageId:'',hasIncoming:false,allowDefer:false,allowVoice,
    allowCall:!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
   if(decision?.action==='end_session'){
    store.update(s=>s.events.push({type:'tai_proactive_skipped',day:s.day,clock:s.clock,receivedAt:now()}));
@@ -102,7 +103,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   const turnPlan=sampleTaiTurnPlan({random,maxMessages:followup?2:c.maxMessages,messages:visibleHistory,
    mode:approvedDecision?.action==='send_voice'?'voice':'text'});
   const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
-   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,approvedDecision,turnPlan,
+   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,allowVoice,approvedDecision,turnPlan,
    relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   let items=dedupeTaiTurnEntries(unpackTaiReply(r,'noapp'),turnPlan.target);
   if(taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
@@ -110,7 +111,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    const remaining=turnPlan.target-items.length;
    const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
-    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,
+    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
   }
@@ -118,13 +119,13 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    const r3=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',
     scene:scene+' 【本轮引导已触发】现有台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。只补一条对熙蒙已有事实具体好奇的自然问句，用问号结尾；不要空问“还在吗”“在干嘛”，不要突然谈棋局或自我报备。',
-    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,
+    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    const candidate=unpackTaiReply(r3,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)items=taiIntegrateGuidingQuestion(items,candidate,turnPlan.target);
   }
   items=dedupeTaiTurnEntries(items,turnPlan.target);
-  if(approvedDecision?.action==='send_voice')items=combineTaiVoiceThoughts(items);
+  if(approvedDecision?.action==='send_voice'||!approvedDecision&&allowVoice&&items.every(m=>m.mode==='voice'))items=combineTaiVoiceThoughts(items);
   let expected=history(initial).at(-1)?.id,emitted=0;
   const voiceJobs=[];
   for(const item of items){
@@ -133,7 +134,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    if(!eligible(current)||current.day!==initial.day||isTaiReplyPending(store)||history(current).at(-1)?.id!==expected)break;
    if(!emitted&&!force&&!(followup?isTaiFollowupDue(current,{now:now()}):isProactiveMessageDue(current,{now:now()})))break;
    const id=uid();
-   const voiceMode=approvedDecision?.action==='send_voice';
+   const voiceMode=approvedDecision?approvedDecision.action==='send_voice':allowVoice&&item.mode==='voice';
    store.update(s=>{
     const target=chat(s);if(!target)return;
     target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,

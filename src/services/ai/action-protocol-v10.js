@@ -48,7 +48,7 @@ export function validateTaiAction(input,{mode='text',channel='noapp',recognized=
  };
  return {ok:true,reason,decision};
 }
-export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recognized=false,sourceMessageId='',scene='',relationshipContext='',hasIncoming=true,allowDefer=true}={}){
+export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recognized=false,sourceMessageId='',scene='',relationshipContext='',hasIncoming=true,allowDefer=true,allowVoice=true}={}){
  const actions=mode==='call'?TAI_CALL_ACTIONS:TAI_TEXT_ACTIONS;
  return [
   '你是互动叙事《熙蒙的手机》中陈熙泰的【行为决策层】，现在只决定是否行动。不要生成对白，不要输出思考过程，只输出一个JSON对象。',
@@ -59,6 +59,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   mode==='call'?'电话正在进行。speak=继续说话，hang_up=决定结束真实电话（可在挂断前生成一句告别），listen=本轮暂时安静等待；不要以文字假装已经挂断。':
    '文字交流：send_text=发文字，send_voice=在已解锁NoApp中发语音条，start_call=真正发起来电（不是语音条），read_no_reply=确实阅读但保持沉默，defer_reply=暂不读取并延迟处理，end_session=结束本轮话题（不假装离线）。',
   '本轮允许动作：'+actions.join(', ')+'。输出的action必须来自此列。',
+  mode!=='call'&&channel==='noapp'&&recognized?(allowVoice?'本轮语音可用：你可以自行选择 send_voice，不必等待熙蒙要求，也不受第60天限制。想让他听见语气、较长解释或觉得说话更自然时，可以直接发一条语音；主动联系也可以用语音。根据当前对话和本人意愿选择，不按固定概率轮换，不必每次发语音。':'本轮语音不可用或自主语音已关闭，请选择文字；不要声称自己已经发出了语音。'):'',
   '表述策略 strategy 仅可选：'+TAI_STRATEGIES.join(', ')+ '。情绪 tone 仅可选：'+TAI_EMOTIONS.join(', ')+ '。声线提示 vocal_cue 可选：'+TAI_VOCAL_CUES.join(', ')+'。情绪与声线提示是结构化元数据，不得变更 MiniMax 固定音色、calm声线、音高与语速，也不写进聊天内容。',
   'intensity: low/medium/high；intent: 180字以内简短内容方向，不是台词、详细推理或隐私；仅 defer_reply 可给 delay_seconds（30到3600秒）。',
   '输入来源：'+(hasIncoming?'熙蒙最近真实发送了消息。':'程序邀请你考虑是否主动联系；没有熙蒙的新消息。'),

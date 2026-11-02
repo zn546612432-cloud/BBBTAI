@@ -57,3 +57,24 @@ test('55-day ended saves can wake, reload the keypad and recover without being f
  assert.equal(powerFullscreen(reload.get()),'');assert.equal(reload.get().day,55);
  const loaded=new PhoneStore(storage);assert.equal(loaded.get().deathPhase,'recovered');
 });
+
+test('D55 immediately plays original MP3 without a priming source and recovers after media failure',async()=>{
+ const s=activateStory55(initialState());s.day=55;s.nav.current={appId:'noapp',route:'/chat/tai',params:{}};
+ const previous=globalThis.Audio;let player,completed=0,attempts=0,loads=0;const sources=[],toasts=[];
+ class FakeAudio{
+  constructor(){player=this;this.currentTime=0;}
+  set src(value){this._src=value;sources.push(value);}get src(){return this._src;}
+  play(){attempts++;return attempts===1?Promise.reject(Object.assign(Error('failed'),{name:'NotSupportedError'})):Promise.resolve();}
+  load(){loads++;}pause(){}
+ }
+ globalThis.Audio=FakeAudio;stopFinalRecording();
+ const ctx={store:{get:()=>s},toast:message=>toasts.push(message)};
+ try{
+  await toggleFinalRecording(ctx,()=>completed++);
+  assert.equal(finalRecordingStatus(s),'error');assert.match(toasts[0],/NotSupportedError/);
+  assert.equal(sources.some(x=>x.startsWith('data:')),false);
+  player.onended();assert.equal(completed,0,'failed/priming media cannot advance plot');
+  await toggleFinalRecording(ctx,()=>completed++);assert.equal(loads,1);assert.equal(finalRecordingStatus(s),'playing');
+  player.onended();assert.equal(completed,1);
+ }finally{stopFinalRecording();globalThis.Audio=previous;}
+});
