@@ -6,13 +6,13 @@ import {dateParts} from '../calendar.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
-import {aiStatus,askTai,voicePreview,apiConfig} from './gateway.js';
+import {aiStatus,askTai,chooseTaiAction,voicePreview,apiConfig} from './gateway.js';
 import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
-import {startIncoming} from '../../apps/noapp/voice-call.js';
+import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -56,9 +56,11 @@ function synthesizeVoiceNotes(store,jobs){
  return queued;
 }
 
-export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{}}={}){
+export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{},retryDeferred=false}={}){
  const initial=store.get(),c=conversation(initial);
- if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
+ if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||c.messages.some(m=>m.id===sourceMessageId&&['read_no_reply','end_session','start_call'].includes(m.taiHandledAction))||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
+ const pendingSource=c.messages.find(m=>m.id===sourceMessageId);
+ if(pendingSource?.taiDeferredUntil&&now()<pendingSource.taiDeferredUntil)return {status:'deferred',retryAfterMs:pendingSource.taiDeferredUntil-now()};
  if(!taiRecognized(initial)||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
  const presence=taiPresence(initial);
  if(!presence.contactable||presence.status==='away')return {status:'offline',message:'熙泰暂时不在线，消息已保存'};
@@ -84,6 +86,33 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。'+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
+  const availableCall=!['ringing','dialing','connected'].includes(callState().state);
+  const decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
+   allowCall:availableCall,allowVoice:!!status.minimax,
+   allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
+   playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
+  if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+   if(decision.action==='start_call'){
+    const called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason:'【熙泰本轮主动决定来电】'+(decision.intent||'想亲自听熙蒙说话')});
+    if(called){store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiReadAt=now();m.taiHandledAction='start_call';}
+      s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock,protocol:'v10'});});
+     return {status:'called',count:0,action:'start_call'};}
+    // A failed real call is NOT replaced by a false spoken promise.
+   }else if(decision.action==='defer_reply'){
+    const until=now()+decision.delay_seconds*1000;
+    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiDeferredUntil=until;m.taiDeferredCount=(m.taiDeferredCount||0)+1;}
+     s.events.push({type:'tai_deferred_reply',sourceId:sourceMessageId,day:s.day,clock:s.clock,dueAt:until});});
+    return {status:'deferred',retryAfterMs:decision.delay_seconds*1000};
+   }else{
+    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiReadAt=now();m.taiHandledAction=decision.action;}
+     s.events.push({type:'tai_action_'+decision.action,sourceId:sourceMessageId,day:s.day,clock:s.clock});});
+    return {status:decision.action,count:0};
+   }
+  }
+  const actualDecision=decision?.action==='start_call'?null:decision;
+  if(actualDecision){request.approvedDecision=actualDecision;
+   request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:unpackTaiReply(result,'noapp');
   // A bare mirrored greeting is a model-continuation artifact, not a choice
@@ -102,13 +131,17 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const limit=Math.max(1,behavior.maxMessages);
   const phoneAt=draftEntries.findIndex(item=>item.action==='phone');
   const selected=phoneAt>=limit?[...draftEntries.slice(0,limit-1),draftEntries[phoneAt]]:draftEntries.slice(0,limit);
-  const entries=selected.map(item=>item.action==='phone'?{...item,mode:'text'}:requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+  const entries=selected.map(item=>actualDecision?
+    ({...item,action:undefined,mode:actualDecision.action==='send_voice'?'voice':'text',
+      tone:item.tone==='neutral'&&actualDecision.tone!=='neutral'?actualDecision.tone:item.tone,
+      ...(actualDecision.action==='send_voice'?{speechText:item.speechText||item.text}:{})}):
+    item.action==='phone'?{...item,mode:'text'}:requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   let phoneCommand=null;
   const voiceJobs=[];
   for(const item of entries){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))break;
-   const delay=replyDelayMs(item.text,behavior,{first:emitted===0,random});
+   const delay=replyDelayMs(item.text,behavior,{first:emitted===0,random})+(emitted===0&&actualDecision?actualDecision.delay_seconds*1000:0);
    await wait(emitted===0?Math.max(0,delay-(now()-startedAt)):delay);
    const current=store.get(),chat=conversation(current);
    if(!isCurrentTaiTurn(current,sourceMessageId,initial.day))break;
@@ -145,7 +178,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // (phone) has priority over fragile sentence regexes. The old phrase
   // detector remains as compatibility for models that forget the marker.
   const alreadyCalled=store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId);
-  const shouldCall=!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
+  const shouldCall=!actualDecision&&!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
    !!phoneCommand||emitted>0&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered}));
   let called=false;
   if(shouldCall){
