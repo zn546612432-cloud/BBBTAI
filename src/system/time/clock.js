@@ -42,6 +42,17 @@ export function advanceGameMinutes(s,requested){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
+ // D01 is a story-day, not a midnight boundary. Only charging enters D02.
+ // Keep the phone fully operable if compulsory D01 settlements are unfinished
+ // at 03:00 instead of triggering an emergency battery overlay.
+ if(isStory55(s)&&s.day===1){
+  const d=s.story55.d01??={},from=clockMinutes(s.clock)+(d.nightAfterMidnight?1440:0);
+  const target=Math.min(1440+180,from+Math.max(0,Math.floor(requested)));
+  if(target<=from)return {minutes:0,event:'d01-hold'};
+  s.clock=isoTime(target%1440);d.nightAfterMidnight=target>=1440;
+  if(target===1440+180){d.frozenAt03=true;return {minutes:target-from,event:'d01-hold'};}
+  return {minutes:target-from,event:'none'};
+ }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
  if(target<=from)return {minutes:0};
