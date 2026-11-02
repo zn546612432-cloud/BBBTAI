@@ -4,6 +4,7 @@ import {prepareXitaiSpeech,XITAI_SUPPORTED_TAGS} from '../src/services/voice/voi
 import {buildTaiPrompt,ensureTaiDraft,defaultTaiDraft} from '../src/services/ai/tai-profile.js';
 import {voicePreview,saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js';
 import {composeCallSpeech} from '../src/services/voice/call-speech.js';
+import {unpackTaiReply} from '../src/services/ai/format.js';
 
 test('MiniMax 2.8 supports the exact official 19 event labels',()=>{
  assert.equal(XITAI_SUPPORTED_TAGS.length,19);
@@ -46,6 +47,14 @@ test('old default speech instruction migrates without rewriting author-customize
  const s2={aiDraft:defaultTaiDraft()};s2.aiDraft.profile.speech='我是用户写的自定义规则。';
  assert.equal(ensureTaiDraft(s2),false);
  assert.equal(s2.aiDraft.profile.speech,'我是用户写的自定义规则。');
+});
+test('emotional DeepSeek tone survives reply normalization into voice synthesis',()=>{
+ const results=unpackTaiReply({text:JSON.stringify({messages:[
+  {text:'你开什么玩笑？',mode:'voice',tone:'angry'},
+  {text:'这事情有意思。',mode:'voice',tone:'playful'}
+ ]})},'noapp');
+ assert.deepEqual(results.map(x=>x.tone),['angry','playful']);
+ assert.equal(prepareXitaiSpeech(results[0].text,{tone:results[0].tone}).emotion,'angry');
 });
 test('direct MiniMax request sends HD tags to speech only, without hard-coded calm and with multilingual auto',async()=>{
  const oldFetch=globalThis.fetch,oldSession=globalThis.sessionStorage;
