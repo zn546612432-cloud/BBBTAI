@@ -1,3 +1,4 @@
+import {d01Gate} from '../../story/d01/runtime.js';
 import {STORY55_CONFIG} from '../../story/story55/catalog.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
@@ -34,5 +35,6 @@ export function date55(day,start='2025-05-19'){
 export function story55ChargeGate(s){
  if(!isStory55(s))return null;
  if(s.day>=55)return 'death';
+ if(d01Gate(s))return 'plot';
  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
 }
