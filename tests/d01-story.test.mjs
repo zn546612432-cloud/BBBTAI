@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sendD01WeChat,tickD01WeChat,d01Draft,d01ComposerDisabled,closeD01WeChat} from '../src/story/d01/wechat.js';
+import {exitD01Puzzle} from '../src/apps/ghost/state.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {plugIn} from '../src/system/power/battery.js';
 import {randomRouteSolution,connected,createBoard} from '../src/apps/ghost/games/logic.js';
@@ -100,4 +101,28 @@ test('D01 03:00 freeze keeps all apps usable and charging alone switches to D02'
  submitD01Attachment(s);settleD01Repair(s);
  assert.equal(s.story55.completed.intro.day,1);
  assert.equal(plugIn(s),true);assert.equal(s.day,2);assert.equal(s.clock,'08:00');
+});
+
+test('GHOST save exit keeps current rotations; discard removes only unfinished level',()=>{
+ const s=fixture();s.story55.d01={deployed:true,completedRounds:2};
+ s.ghost={orders:{[D01_REPAIR]:{id:D01_REPAIR,type:'route',status:'running',board:{masks:[1,2,3,4,5,6,7,8,9]},moves:8,deadline:null}},history:[]};
+ const before=structuredClone(s.ghost.orders[D01_REPAIR].board);
+ assert.equal(exitD01Puzzle(s),true);
+ assert.deepEqual(s.ghost.orders[D01_REPAIR].board,before);
+ assert.equal(s.ghost.orders[D01_REPAIR].status,'running');
+ assert.equal(exitD01Puzzle(s,{discard:true}),true);
+ assert.equal(s.ghost.orders[D01_REPAIR].board,null);
+ assert.equal(s.ghost.orders[D01_REPAIR].status,'authorized');
+ assert.equal(s.story55.d01.completedRounds,2);
+});
+test('D01 delayed mail and BTC reward survive timers after refresh',async()=>{
+ const s=fixture();seedD01(s);acceptD01Repair(s);const when=s.story55.d01.acceptedAt;
+ assert.equal(s.content.mail.some(m=>m.id==='d01-mirage001-attachment'),false);
+ const {tickD01}=await import('../src/story/d01/runtime.js');
+ tickD01(s,when+2001);tickD01(s,when+2500);
+ assert.equal(s.content.mail.filter(m=>m.id==='d01-mirage001-attachment').length,1);
+ deployD01(s);for(let i=0;i<5;i++)finishD01Round(s);
+ submitD01Attachment(s);const payoutDue=s.story55.d01.submittedAt;
+ tickD01(s,payoutDue+2001);tickD01(s,payoutDue+3000);
+ assert.equal(s.content.mirage.digitalTransactions.length,1);
 });
