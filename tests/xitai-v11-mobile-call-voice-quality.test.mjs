@@ -41,7 +41,7 @@ test('explicit send a voice note is honored when text was chosen without refusal
  assert.equal(honorTaiVoiceRequest({...selected,strategy:'set_boundary'},{text:'给我发语音',available:true}).action,'send_text');
 });
 test('NoApp keeps Ximeng text-only while Tai voice shows TTS pending and retry',()=>{
- const s=initialState();s.day=56;
+ const s=initialState();s.day=56;s.clock='22:05';
  const c=s.content.conversations.noapp.find(x=>x.id==='tai');
  c.messages.push({id:'own-voice-test',day:56,time:'22:00',from:'me',actual:true,kind:'voice',audioId:'mic-test',duration:4,voiceCaption:'听得见吗',text:'语音消息'});
  c.messages.push({id:'pending-voice-test',day:56,time:'22:01',from:'tai',actual:true,kind:'text',voiceRequested:true,text:'马上录给你'});
