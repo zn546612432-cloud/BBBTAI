@@ -8,3 +8,15 @@
 .app-kira .kira-linked-progress span.complete{background:#d2e9e1;color:#176049}
 .app-kira .kira-linked-mail .button-quiet{margin:14px 18px;max-width:calc(100% - 36px);min-height:44px}
 .app-kira .kira-linked-state{padding:18px;font-size:13px;color:#426d72}
+
+/* The payment reference is a link inside the email sentence, not a CTA pill. */
+.app-kira .kira-mail-body .kira-d01-inline-link{
+ display:inline!important;vertical-align:baseline!important;min-width:0!important;min-height:0!important;
+ padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ color:#347fa8!important;-webkit-text-fill-color:#347fa8!important;
+ text-decoration:underline!important;text-underline-offset:3px!important;
+ font:inherit!important;font-weight:500!important;line-height:inherit!important;
+ letter-spacing:inherit!important;cursor:pointer!important;
+}
+.app-kira .kira-mail-body .kira-d01-inline-link:focus-visible{outline:2px solid #347fa8!important;outline-offset:3px!important}
