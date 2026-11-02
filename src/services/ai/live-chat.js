@@ -15,7 +15,7 @@ import {taiBehavior,replyDelayMs} from './behavior.js';
 import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
-import {taiExplicitVoiceRequest,honorTaiVoiceRequest} from './voice-request-v11.js';
+import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -182,6 +182,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
    const candidate=unpackTaiReply(followup,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)draftEntries=taiIntegrateGuidingQuestion(draftEntries,candidate,turnPlan.target);
+  }
+  // One v10 send_voice decision should be one playable MiniMax clip, not
+  // five fragile calls. The selected 1-5 thoughts remain audible inside it.
+  if(!unheard&&!requestedCall&&(actualDecision?.action==='send_voice'||!actualDecision&&voiceTurn)){
+   draftEntries=combineTaiVoiceThoughts(draftEntries);
   }
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
