@@ -131,6 +131,21 @@ test('developer skip mode can be toggled back off without losing the saved pipe 
  assert.deepEqual(o.board,before);
  assert.equal(ghostDevSkipAvailable(doc(false),s),false);
 });
+test('preview skip can be explicitly turned off and back on from developer mode',()=>{
+ const s=fixture(),original=globalThis.document;
+ const ctx={store:{get:()=>s,update:f=>f(s)},toast:()=>{},router:{open:()=>{}}};
+ try{
+  globalThis.document=doc(true);
+  assert.equal(ghostDevSkipAvailable(globalThis.document,s),true);
+  assert.match(ghostEditor(s),/关闭 D01 跳关模式/);
+  handleEditor('editor-ghost-skip-toggle',{dataset:{}},ctx);
+  assert.equal(s.editor.ghostSkipEnabled,false);
+  assert.equal(ghostDevSkipAvailable(globalThis.document,s),false);
+  assert.match(ghostEditor(s),/开启 D01 跳关模式/);
+  handleEditor('editor-ghost-skip-toggle',{dataset:{}},ctx);
+  assert.equal(ghostDevSkipAvailable(globalThis.document,s),true);
+ }finally{if(original===undefined)delete globalThis.document;else globalThis.document=original;}
+});
 test('skip all five test rounds uses normal single KIRA completion email and 0.04 BTC payout',()=>{
  const s=fixture();
  for(let i=0;i<5;i++){
