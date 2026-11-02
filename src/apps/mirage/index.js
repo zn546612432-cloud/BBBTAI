@@ -76,7 +76,7 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-open-linked-kira')return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(id==='d01-hunt-view')return;
-  if(action==='mc-accept-bounty'&&id===D01_REPAIR){let ok=false;ctx.store.update(s=>{ok=acceptD01Repair(s);});if(ok)setTimeout(()=>ctx.store.update(s=>deliverD01Attachment(s)),2000);return;}
+  if(action==='mc-accept-bounty'&&id===D01_REPAIR){let ok=false;ctx.store.update(s=>{ok=acceptD01Repair(s);});ctx.toast(ok?'CONTRACT ACCEPTED · KIRA':'無法接單：請確認目前為 55 天主線，且委託仍處於 OPEN');if(ok)setTimeout(()=>ctx.store.update(s=>deliverD01Attachment(s)),2000);return;}
   if(action==='mc-complete-bounty'&&linkedMission(s,id))return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
   if(isStory55(s)&&id===STORY55_BOUNTY_ID){
    ctx.store.update(next=>{const item=next.content.orders.find(o=>o.id===id);if(item&&item.status!=='COMPLETED')item.status='ACCEPTED';});
