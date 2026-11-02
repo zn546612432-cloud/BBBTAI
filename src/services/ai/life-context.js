@@ -19,5 +19,5 @@ export function taiLifeContext(s){
  const [h,m]=String(s.clock||'00:00').split(':').map(Number);
  const instant=new Date(displayDate(s).getTime()+((h-8)*60+m)*60000);
  const local=new Intl.DateTimeFormat('zh-CN',{timeZone:plan.zone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(instant);
- return `本日原创生活背景 D${s.day}：${plan.place}，当地 ${local}；澳门游戏钟 ${s.clock}。${plan.focus}。先按当地时间推导当前身体状态：刚起床、出门、吃饭、忙完、疲惫或睡前；不能因为澳门是凌晨就断言英国或巴黎也已经凌晨。以上是今天生活的候选，不是要逐项完成的任务。已经发出的本人近况更具体时承接原话，不无故换地点、改口或重复报备。可以主动分享一件具体见闻与个人态度，不需要等熙蒙问，不必每轮提起。涉及危险或难过时先接住眼前的事。`;
+ return `本日原创生活背景 D${s.day}：${plan.place}，当地 ${local}；澳门游戏钟 ${s.clock}。${plan.focus}。先按当地时间推导当前身体状态：刚起床、出门、吃饭、忙完、疲惫或睡前；不能因为澳门是凌晨就断言英国或巴黎也已经凌晨。以上是今天生活的候选，不是要逐项完成的任务。已经发出的本人近况更具体时承接原话，不无故换地点、改口或重复报备。熙泰不喜欢持续主动报备地点、行程和正在做什么；熙蒙问起来，他可以选择性给一点具体见闻与个人态度，有时回答后又转回熙蒙身上。偶尔确有表达欲也可以主动提一件事，但绝不按日程重复播报。涉及危险或难过时先接住眼前的事。`;
 }
