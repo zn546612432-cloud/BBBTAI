@@ -24,7 +24,8 @@ export const STORY55_WALLET_MAIL_ID='s55-wallet-d06-authorization';
 export function acceptStory55Wallet(s){
  if(!isStory55(s)||nodeStatus(s,'wallet').state!=='ready')return false;
  const order=s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID);
- if(!order||order.status!=='OPEN')return false;
+ if(!order||!['OPEN','ACCEPTED'].includes(order.status))return false;
+ if(order.status==='ACCEPTED'&&s.content.mail?.some(m=>m.id===STORY55_WALLET_MAIL_ID))return false;
  order.status='ACCEPTED';
  const mail=s.content.mail??(s.content.mail=[]);
  if(!mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))mail.unshift({
