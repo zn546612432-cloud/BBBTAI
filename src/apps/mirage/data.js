@@ -1,4 +1,4 @@
-import {isStory55,nodeStatus,story55Config} from '../../services/story55/state.js';
+import {isStory55,nodeStatus,story55Config,date55} from '../../services/story55/state.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID,completeWalletChallenge} from './contacts-seed.js';
 import {uid} from '../../services/id.js';
 import {hackerBounty,HACKER_BOUNTY_ID} from './mission.js';
@@ -32,7 +32,7 @@ export function acceptStory55Wallet(s){
   id:STORY55_WALLET_MAIL_ID,from:'MIRAGE / Dr Ouroboros',
   subject:'[MIRAGE] WALLET CHALLENGE · GHOST 授权',
   body:'Nyarlathotep：\\n\\n钱包挑战已接受。\\n请打开 GHOST 中的 WALLET CHALLENGE，输入以下一次性项目授权码：\\n'+story55Config(s).projects.find(p=>p.id==='wallet').key+'\\n\\n完成数据提取程序后，系统会记录挑战结果。\\n\\n— MIRAGE',
-  day:s.day,time:s.clock,date:s.calendar?.anchorDate,read:false,story55:true,storyWalletD06:true,project:'wallet'
+  day:s.day,time:s.clock,date:date55(s.day),read:false,story55:true,storyWalletD06:true,project:'wallet'
  });
  const id='s55-wallet-d06-authorization-notice';
  if(!s.notifications.some(n=>n.id===id))s.notifications.unshift({
