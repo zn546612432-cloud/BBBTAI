@@ -20,6 +20,15 @@ test('D01 bank claim requires email click and is idempotent',()=>{
  assert.equal(s.bankData.balance,2000);assert.equal(s.bankData.transactions.length,1);
  assert.equal(s.bankData.transactions[0].time,'08:15');
 });
+test('D01 repair cannot be accepted after D01, even if the order is still OPEN',()=>{
+ const s=fixture();seedD01(s);s.day=2;
+ assert.equal(acceptD01Repair(s),false);
+ assert.equal(s.content.orders.find(o=>o.id===D01_REPAIR).status,'OPEN');
+ assert.equal(s.story55.d01.repairAccepted,undefined);
+ s.day=1;
+ assert.equal(acceptD01Repair(s),true);
+ assert.equal(s.content.orders.find(o=>o.id===D01_REPAIR).status,'ACCEPTED');
+});
 test('D01 five LINK repairs settle exactly 0.04 BTC once',()=>{
  const s=fixture();seedD01(s);assert.equal(d01Gate(s),true);
  assert.equal(acceptD01Repair(s),true);assert.equal(acceptD01Repair(s),false);
