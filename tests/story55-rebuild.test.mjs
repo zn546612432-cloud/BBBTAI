@@ -154,7 +154,7 @@ test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wa
  rebuildStory55AtDay(s,45);
  const order=s.content.orders.find(o=>o.id==='d20-bounty');
  assert.equal(order.status,'COMPLETED');
- assert.equal(s.content.mirage.digitalBalance,5200.04); // D01 automatically paid 0.04 BTC in developer rebuild
+ assert.equal(s.content.mirage.digitalBalance,5210.04); // D01 0.04 BTC + D06 10 BTC + D20 5200
  assert.equal(s.content.mirage.digitalTransactions.filter(t=>t.orderId==='d20-bounty').length,1);
  assert.equal(s.content.mail.filter(m=>m.id===linkedDeliveryId('d20-bounty')).length,1);
  assert.equal(s.content.mail.filter(m=>m.id===linkedReceiptId('d20-bounty')).length,1);
@@ -164,7 +164,7 @@ test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wa
  rebuildStory55AtDay(s,12);
  assert.equal(s.content.orders.find(o=>o.id==='d20-bounty').status,'OPEN');
  assert.equal(linkedMissionVisible(s,'d20-bounty'),false);
- assert.equal(s.content.mirage.digitalBalance,0.04); // Only the already-completed D01 reward remains
+ assert.equal(s.content.mirage.digitalBalance,10.04); // D01 and D06 rewards remain after removing D20
  assert.equal((s.content.missionFiles||[]).length,0);
  assert.equal(s.content.mail.some(m=>m.id===linkedDeliveryId('d20-bounty')),false);
  assert.equal(storySourceVersion(s),before);
@@ -175,8 +175,8 @@ test('D21 shows pending review for a D20 contract until the exact configured gam
   body:'请查收',type:'extract',reward:2000,publishDay:20,expiryDay:22,reviewMinutes:2000});
  rebuildStory55AtDay(s,21,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'REVIEWING');
- assert.equal(s.content.mirage.digitalBalance,0.04); // D20 commission pending; D01 was completed
+ assert.equal(s.content.mirage.digitalBalance,10.04); // D20 pending; D01 and D06 completed
  rebuildStory55AtDay(s,22,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'COMPLETED');
- assert.equal(s.content.mirage.digitalBalance,2000.04); // D01 + D20 amounts tracked independently
+ assert.equal(s.content.mirage.digitalBalance,2010.04); // D01, D06 and D20 entries
 });
