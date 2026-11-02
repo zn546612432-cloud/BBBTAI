@@ -9,6 +9,7 @@ import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {taiPresence} from '../presence.js';
 import {visibleMessages,isConversationOpen} from '../messaging/delivery.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries} from './conversation-shape-v12.js';
 export const TAI_OUTREACH_DAYS=[57,60,64,68,71,75,79,83,87];
 export const TAI_CALL_DAYS=[63,73,81];
 export const TAI_55_OUTREACH_DAYS=[32,34,37,41,44,47,50,53];
@@ -94,10 +95,24 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    return called;
   }
   const approvedDecision=decision?.action==='send_voice'||decision?.action==='send_text'?decision:null;
+  // An unsolicited follow-up stays compact to avoid hounding the player.
+  // A substantive new outreach may use the full author-selected rhythm.
+  const visibleHistory=messages.filter(m=>!String(m.content||'').startsWith('[游戏系统事件'));
+  const turnPlan=sampleTaiTurnPlan({random,maxMessages:followup?2:c.maxMessages,messages:visibleHistory,
+   mode:approvedDecision?.action==='send_voice'?'voice':'text'});
   const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
-   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,approvedDecision,
+   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,approvedDecision,turnPlan,
    relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
-  const items=unpackTaiReply(r,'noapp').slice(0,c.maxMessages);
+  let items=unpackTaiReply(r,'noapp').slice(0,turnPlan.target);
+  if(taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
+   action:approvedDecision?.action==='send_voice'?'send_voice':'send_text'})){
+   const remaining=turnPlan.target-items.length;
+   const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
+    outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
+    behavior:c,approvedDecision,turnPlan:{...turnPlan,target:remaining},relationshipContext,
+    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+   items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
+  }
   let expected=history(initial).at(-1)?.id,emitted=0;
   const voiceJobs=[];
   for(const item of items){
