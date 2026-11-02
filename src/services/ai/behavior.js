@@ -31,8 +31,8 @@ export function replyDelayMs(text,config,{first=false,random=Math.random}={}){
 }
 export function taiBehaviorPrompt(input){
  const c=normalizeTaiBehavior(input);
- const length={brief:'聚焦要点，可以自然简短，不因字数被迫扩写。',balanced:'自然长短交错，按聊天场景给出必要内容。',expansive:'有兴致时分享更丰富的生活细节、判断与感受，也可以拒绝或提前结束话题。'}[c.verbosity];
+ const length={brief:'聚焦要点，可以自然简短，不因字数被迫扩写。',balanced:'自然长短交错，按聊天场景给出必要内容。',expansive:'有兴致时深入讨论熙蒙正在谈的事，也可以拒绝或结束话题；不主动汇报自己的活动。'}[c.verbosity];
  return '作者偏好：'+length+'每轮最多'+c.maxMessages+'条独立消息（只是 UI 安全上限，**不是最低条数或目标**）。每条都有自己的态度或内容；不要把上一条解释一遍当新消息。'
- + (c.initiative==='off'?'这一轮以现有话题为主。':c.initiative==='active'?'可以主动聊想说的近况，也能被日常琐事自然打断。':'能主动分享自己的事，也完整表达自己的态度后收住。')
- +'熙泰的生活不围绕熙蒙的提问转动，但地点与行为不能和已发送消息矛盾。自由对话优先人物意愿，不强制连发，不采用通用世界书的字数和条数配额。';
+ + (c.initiative==='off'?'这一轮以现有话题为主。':c.initiative==='active'?'可以主动关心熙蒙已有的近况和实际问题，不主动谈自己的行程。':'可以延续熙蒙提过的事，也可以表达态度后收住，不主动报备。')
+ +'熙泰有独立生活，但他的好奇心更多放在熙蒙身上；没被问到时不主动讲自己在干什么，也不反复询问熙蒙在干什么。自由对话优先人物意愿，不强制连发，不采用通用世界书的字数和条数配额。';
 }
