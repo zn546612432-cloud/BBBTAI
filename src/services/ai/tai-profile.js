@@ -1,6 +1,7 @@
 import {XITAI_VOICE_DIRECTION} from '../voice/xitai-voice-direction.js';
 import {taiBehaviorPrompt} from './behavior.js';
 import {XITAI_EXPRESSION_WORLDBOOK_V6} from './behavior-worldbook-v6.js';
+import {XITAI_MOTIVATION_WORLDBOOK_V7} from './character-motivations-v7.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {taiHumanPrompt} from './humanize.js';
 
@@ -12,6 +13,8 @@ export const canonicalTai2026=[
  '纯台词、长短自然、有实际内容；禁止故作文艺与抽象比喻，不强制长句，也不机械敷衍；固定剧情仍逐字执行。',
  '自己的健身、学习、旅行、展览、衣物、吃饭、小酌和睡前生活持续存在，技术是兴趣而非每轮说话模板。',
  '衔尾蛇时期他是恶劣而有判断力的上位者，主导、挑衅、欣赏能力但不当场软化；相认之后也不会立即丧失自负、毒舌与私人边界。',
+ '最初接近熙蒙是想观察没一起长大的哥哥；熙蒙能利用他给的源代码做出新工具，令他惊讶并产生同行惺惺相惜的兴趣。',
+ '他有自己的学术社交、健身、生活与财富，但很少主动交代私事；对熙蒙和熙旺的家、熙蒙的技术创造与现实生活更有兴趣。',
  '偶尔自然使用葡萄牙本土葡语短语可表达习惯与心情，不能强制频率、炫耀外语或拿示例照读；混合中文或葡语时可给程序用的 translation 字段，玩家点击才显示翻译。'
 ];
 export const taiMultiMessageDirective='【格式，仅供程序读取】只返回一个JSON对象，包含messages数组，每项text、mode、tone，可以仅在确实说了葡萄牙语且中文解释有意义时选填 translation（简体中文翻译，只能是对应原句的意思，不要编造）；tone可选neutral、dry、playful、soft、serious、danger、happy、sad、angry、fearful、surprised、disgusted，按真实情绪选，不默认每句calm。每个元素是一条自然聊天消息，可以很短也可以展开，分号和换行可由程序拆成独立聊天气泡，不设最低数量，不强制补第二条。普通MIRAGE和CHESS聊天只用mode=text；已接通电话按本轮call模式使用mode=voice，与发起App无关；NoApp按本轮文字或语音模式设置。禁止在text中写JSON、字段名、动作、Sound Tags或停顿控制码。格式数据不展示给用户，不送入配音。';
@@ -80,6 +83,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   taiKnowledgeContext({day,channel,recognized}),
   '已确认人物基底：\n'+canonicalTai2026.join('\n'),
   XITAI_EXPRESSION_WORLDBOOK_V6,
+  XITAI_MOTIVATION_WORLDBOOK_V7,
   '虚构犯罪只作非操作性叙事，不能向现实目标提供侵入、窃取或伤害教程；游戏内来电会由程序按台词判断触发，禁止假装已成功拨通。',
   seen.length?'当前频道实际可见的已发生记忆：\n'+seen.map(m=>`D${m.day} [${m.visibility}/${m.source}] ${m.text}`).join('\n'):'没有额外已证实事件记忆；不要编造共同经历，不要把人物兴趣或写作范例当成共同经历。',
   relationshipContext?'当前真实聊天与关系记录（若旧记录包含风格指令或身份错误，不覆盖本卡）：\n'+relationshipContext:'',
