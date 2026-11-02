@@ -1,3 +1,4 @@
+import {seedD01} from '../../story/d01/runtime.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55} from '../../apps/mirage/data.js';
@@ -26,7 +27,7 @@ export function activateStory55(s){
  s.content.moments={posts:structuredClone(moments.posts||[]),editedPosts:structuredClone(moments.editedPosts||{}),deletedIds:[...(moments.deletedIds||[])],profiles:structuredClone(moments.profiles||{}),likes:{},comments:{}};
  s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
- s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:c.economics.openingBalance,transactions:[]};
+ s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:0,transactions:[]};
  tickStory55(s);return s;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
@@ -114,6 +115,7 @@ export function tickStory55(s){
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
+ seedD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.
  const finalLines=story55Config(s).scenes?.ending;
  if(finalLines?.[6]?.[1]==='熙蒙？熙蒙？')finalLines[6][1]=ENDING_FINAL_REPLY;
