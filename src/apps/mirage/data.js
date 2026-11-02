@@ -1,4 +1,4 @@
-import {isStory55} from '../../services/story55/state.js';
+import {isStory55,nodeStatus,story55Config} from '../../services/story55/state.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID,completeWalletChallenge} from './contacts-seed.js';
 import {uid} from '../../services/id.js';
 import {hackerBounty,HACKER_BOUNTY_ID} from './mission.js';
@@ -18,6 +18,29 @@ export {WALLET_CHALLENGE_ID,completeWalletChallenge};
 // 55-day campaigns use the ORIGINAL MIRAGE design and complete native data
 // rather than the old prototype-only story dashboard or D05 mission script.
 export const STORY55_BOUNTY_ID='s55-mirage-wallet-bounty';
+export const STORY55_WALLET_MAIL_ID='s55-wallet-d06-authorization';
+// Player acceptance creates the missing KIRA authorization, once, without
+// granting a reward or bypassing the real GHOST validation/minigame.
+export function acceptStory55Wallet(s){
+ if(!isStory55(s)||nodeStatus(s,'wallet').state!=='ready')return false;
+ const order=s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID);
+ if(!order||order.status!=='OPEN')return false;
+ order.status='ACCEPTED';
+ const mail=s.content.mail??(s.content.mail=[]);
+ if(!mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))mail.unshift({
+  id:STORY55_WALLET_MAIL_ID,from:'MIRAGE / Dr Ouroboros',
+  subject:'[MIRAGE] WALLET CHALLENGE · GHOST 授权',
+  body:'Nyarlathotep：\\n\\n钱包挑战已接受。\\n请打开 GHOST 中的 WALLET CHALLENGE，输入以下一次性项目授权码：\\n'+story55Config(s).projects.find(p=>p.id==='wallet').key+'\\n\\n完成数据提取程序后，系统会记录挑战结果。\\n\\n— MIRAGE',
+  day:s.day,time:s.clock,date:s.calendar?.anchorDate,read:false,story55:true,storyWalletD06:true,project:'wallet'
+ });
+ const id='s55-wallet-d06-authorization-notice';
+ if(!s.notifications.some(n=>n.id===id))s.notifications.unshift({
+  id,title:'KIRA',body:'MIRAGE 钱包挑战授权邮件已送达',
+  day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+STORY55_WALLET_MAIL_ID,params:{}}
+ });
+ return true;
+}
+
 export function ensureNativeMirage55(s){
  if(!isStory55(s))return;
  const old=s.content.mirage||{};
