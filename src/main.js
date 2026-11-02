@@ -1,4 +1,5 @@
 import {isStory55} from './services/story55/state.js';
+import {deliverD01Opening} from './story/d01/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
@@ -249,6 +250,7 @@ function enterDigit(key){
       if(phoneBlocked(store.get()))return;
       const link=lockscreen.pendingLink,noticeId=pendingNoticeId;pendingNoticeId=null;lockscreen.reset();setShade({progress:0});entryAnimation=true;
       store.update(s=>{s.unlocked=true;});
+      if(store.get().story55?.version===1&&store.get().day===1&&!store.get().content.mail.some(m=>m.id==='d01-vulnerability-paid'))setTimeout(()=>{if(store.get().unlocked&&store.get().day===1)store.update(s=>deliverD01Opening(s));},3000);
       if(link)router.open(link);
       if(noticeId)readNotification(store,noticeId);
     },260);
