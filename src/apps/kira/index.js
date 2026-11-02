@@ -1,3 +1,4 @@
+import {claimD01Bank,deployD01,submitD01Attachment,settleD01Repair,D01_REPAIR,D01_ATTACHMENT} from '../../story/d01/runtime.js';
 import {mail55} from '../../services/story55/views.js';
 import {linkedMission,linkedMailId,linkedDeliveryId,advanceLinkedMission} from '../mirage/linked-missions.js';
 import {deliverLinkedArtifact} from '../mirage/linked-contract-runtime.js';
@@ -22,6 +23,10 @@ export function render({store},loc){
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a==='kira-d01-bank'){let paid=false;c.store.update(s=>{paid=claimD01Bank(s);});if(!paid)c.toast('款項已結算');return;}
+ if(a==='kira-d01-ghost')return c.router.open({appId:'ghost',route:'/contract',params:{orderId:D01_REPAIR}});
+ if(a==='kira-d01-submit'){let submitted=false;c.store.update(s=>{submitted=submitD01Attachment(s);});if(submitted)setTimeout(()=>c.store.update(s=>settleD01Repair(s)),2000);return;}
+
  if(a.startsWith('kira-linked-')){
   const id=t.dataset.order,mission=linkedMission(c.store.get(),id);
   if(!mission)return;
