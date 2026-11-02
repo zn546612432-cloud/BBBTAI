@@ -1,5 +1,6 @@
 import {isStory55} from './services/story55/state.js';
-import {deliverD01Opening} from './story/d01/runtime.js';
+import {deliverD01Opening,tickD01} from './story/d01/runtime.js';
+import {d01WeChatDue,tickD01WeChat} from './story/d01/wechat.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
@@ -306,7 +307,9 @@ setInterval(()=>{
 
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01WeChatDue(store.get()))store.update(s=>tickD01WeChat(s));
+ if(store.get().story55?.d01?.submitted&&!store.get().story55.d01.rewardPaid&&Date.now()>=Number(store.get().story55.d01.submittedAt||Infinity)+2000)store.update(s=>tickD01(s));
+ if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
  if(isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
