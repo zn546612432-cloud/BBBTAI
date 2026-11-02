@@ -1,9 +1,11 @@
 import {esc} from '../../../system/ui.js';
 import {normalizeTtsSettings,TTS_EMOTIONS,TTS_LANGUAGES,TTS_CUES,TTS_EFFECTS} from '../../../services/voice/tts-settings.js';
-const number=(name,label,value,min,max,step)=>`<label>${label}<input name="${esc(name)}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${esc(value)}"></label>`;
+// Decimal parameters accept any in-range decimal. HTML steps are offset from
+// min: min=0.01 with step=0.1 incorrectly rejects the normal volume value 1.
+const number=(name,label,value,min,max,step)=>`<label>${label}<input name="${esc(name)}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step<1?'any':step}" value="${esc(value)}"></label>`;
 const select=(name,label,value,options)=>`<label>${label}<select name="${esc(name)}">${options.map(([v,l])=>`<option value="${esc(v)}"${String(value)===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
 export function aiParameterFields(c){return '<details open class="tai-parameter-group"><summary>AI 生成参数</summary><p>温度越高表达越多变；top_p 控制候选范围。通常先调其中一个。保持非思考模式。</p>'+
- number('temperature','温度 temperature（0–2）',c.temperature??1.3,0,2,.05)+number('topP','核采样 top_p（0.01–1）',c.topP??1,.01,1,.01)+number('maxTokens','单次回复上限 max_tokens',c.maxTokens??4096,128,32768,128)+
+ number('temperature','温度 temperature（0–2）',c.temperature??1.3,0,2,.05)+number('topP','核采样 top_p（0.01–1）',c.topP??1,.01,1,.01)+number('maxTokens','单次回复上限 max_tokens',c.maxTokens??4096,128,32768,1)+
  '<p>Flash 的非思考模式会忽略 top_p；V4 Pro 可调。频率惩罚、存在惩罚已被 DeepSeek 停用，因此不显示无效旋钮。</p></details>';}
 export function ttsParameterFields(input={},prefix=''){
  const c=normalizeTtsSettings(input),n=(key,label,min,max,step)=>number(prefix+key,label,c[key],min,max,step),s=(key,label,opts)=>select(prefix+key,label,c[key],opts);

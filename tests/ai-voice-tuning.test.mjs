@@ -53,3 +53,28 @@ test('NoApp and per-line authoring expose real controls and cue shortcuts',async
   assert.doesNotMatch(html,/固定冷静.*音高 0.*语速 1.0/);
  });
 });
+
+test('HTML number constraints accept defaults and supported decimals in both settings and preset voice forms',async()=>{
+ const {aiParameterFields,ttsParameterFields}=await import('../src/apps/noapp/settings/parameters.js');
+ const fields=html=>[...html.matchAll(/<input\b[^>]*type="number"[^>]*>/g)].map(([tag])=>Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(m=>[m[1],m[2]])));
+ const valid=(f,value)=>{
+  const n=Number(value);if(!Number.isFinite(n)||n<Number(f.min)||n>Number(f.max))return false;
+  if(f.step==='any')return true;
+  const offset=(n-Number(f.min))/Number(f.step||1);
+  return Math.abs(offset-Math.round(offset))<1e-7;
+ };
+ for(const prefix of ['', 'clip7_']){
+  const controls=fields(ttsParameterFields({},prefix));
+  for(const field of controls)assert.equal(valid(field,field.value),true,field.name+' default must be submittable');
+  const volume=controls.find(f=>f.name===prefix+'volume');
+  for(const value of [.01,1,1.25,1.4,10])assert.equal(valid(volume,value),true,'volume '+value);
+  assert.equal(valid(volume,0),false);assert.equal(valid(volume,10.01),false);
+  assert.equal(valid(controls.find(f=>f.name===prefix+'speed'),.83),true);
+  assert.equal(valid(controls.find(f=>f.name===prefix+'pitch'),1.5),false,'pitch still requires whole semitones');
+ }
+ const ai=fields(aiParameterFields({}));
+ assert.equal(valid(ai.find(f=>f.name==='temperature'),1.37),true);
+ assert.equal(valid(ai.find(f=>f.name==='topP'),.925),true);
+ assert.equal(valid(ai.find(f=>f.name==='maxTokens'),1000),true);
+ assert.equal(valid(ai.find(f=>f.name==='maxTokens'),1000.5),false);
+});
