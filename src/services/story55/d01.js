@@ -161,7 +161,7 @@ export function claimD01Bank(s){
   s.bankData.balance=Number(s.bankData.balance||0)+2000;
   tx.unshift({id:D01_BANK_TX,label:'【幣速達網安系統】轉入',amount:2000,time:s.clock,date:date55(s.day),story55D01:true});
  }
- s.notifications.unshift({id:'notice-'+D01_BANK_TX,title:'太平洋銀行',body:'尾號1846卡5月19日'+s.clock+'收入2,000美元',day:s.day,clock:s.clock,link:links('bank','/')});
+ s.notifications.unshift({id:'notice-'+D01_BANK_TX,title:'太平洋銀行',body:'尾號1846卡5月19日'+s.clock.replace(':','時')+'分收入2,000美元',day:s.day,clock:s.clock,link:links('bank','/')});
  tickD01(s);
  return true;
 }
@@ -258,6 +258,7 @@ export function simulateD01(s){
   pushMail(s,{id:D01_OPENING_MAIL,from:'MIRAGE Network',subject:'[MIRAGE] Order Completed',body:'Archived payment.'},false);
  claimD01Bank(s);
  acceptD01Order(s,Date.now());
- p.order.mailDelivered=true;p.order.keyOpened=true;p.order.deployed=true;p.order.completed=5;p.order.submitAt=Date.now()-1;
+ p.order.mailAt=Date.now()-1;tickD01(s,Date.now());
+ p.order.keyOpened=true;p.order.deployed=true;p.order.completed=5;p.order.submitAt=Date.now()-1;
  tickD01(s,Date.now());
 }
