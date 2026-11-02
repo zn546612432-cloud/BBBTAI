@@ -16,7 +16,7 @@ import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} fro
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest} from './voice-request-v11.js';
-import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiTurnShapePrompt} from './conversation-shape-v12.js';
+import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -172,6 +172,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     scene:request.scene+' 【本轮自然连发补充】已经拟好并保留的台词：'+already+'。接着这几句再补'+remaining+'条新内容，不重复旧句，不自发报备行程。'+(turnPlan.guide?'本轮引导型人格已触发；前面还没顺势问出具体问题的话，请把一条自然好奇的问题放在补充内容里。':'')+' 如果确实已经结束、需要保护隐私或熙蒙要求别聊，就只输出自然边界，无须凑数。'});
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
    draftEntries=mergeTaiTurnEntries(draftEntries,unpackTaiReply(continuation,'noapp'),turnPlan.target);
+  }
+  if(turnPlan&&taiGuidanceNeedsRepair({plan:turnPlan,entries:draftEntries,messages})){
+   // Independent guide roll actually affects delivered words, not just a
+   // prompt paragraph. Regenerate only one context-grounded question;
+   // do not replace any substantive response or invent Ximeng's activities.
+   const followup=await askTai({...request,turnPlan:{...turnPlan,target:1,guide:true},
+    scene:request.scene+' 【本轮引导确实触发但上稿尚未问出具体问题】已经拟好的回答：'+draftEntries.map(m=>m.text).join(' / ').slice(0,600)+'。请只给出一条新的、完整且自然的追问，用问号结尾，紧贴熙蒙实际说过的内容，带一点聪明的好奇或调侃；不要问“在干什么”“还有呢”，也不要提国际象棋、自己的行程或不存在的事实。'});
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
+   const candidate=unpackTaiReply(followup,'noapp').find(x=>/[？?]/.test(x.text));
+   if(candidate)draftEntries=taiIntegrateGuidingQuestion(draftEntries,candidate,turnPlan.target);
   }
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
