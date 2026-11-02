@@ -1,5 +1,7 @@
 import {claimD01Bank,D01_ATTACHMENT} from '../../story/d01/runtime.js';
 import {mail55} from '../../services/story55/views.js';
+import {STORY55_WALLET_MAIL_ID} from '../mirage/data.js';
+import {story55Config,completed} from '../../services/story55/state.js';
 import {linkedMission,linkedMailId,linkedDeliveryId,advanceLinkedMission} from '../mirage/linked-missions.js';
 import {deliverLinkedArtifact} from '../mirage/linked-contract-runtime.js';
 import {linkedMailView,linkedComposeView,linkedSentView,linkedReceiptView} from './features/mission/linked.js';
@@ -17,12 +19,29 @@ export function render({store},loc){
  if(loc.route==='/sent')return '<div class="kira-inbox"><div class="kira-top">'+btn('kira-back','‹　收件箱')+'</div><h1>已发送</h1><div class="kira-mail-list">'+s.content.mail.filter(m=>m.linkedDelivery).map(m=>btn('kira-mail','<span class="kira-unread"></span><span><strong>'+esc(m.to)+'</strong><b>'+esc(m.subject)+'</b><small>'+esc(m.body)+'</small></span><time>D'+esc(m.day)+'</time>','kira-mail-row','data-id="'+esc(m.id)+'"')).join('')+'</div></div>';
  if(loc.route.startsWith('/mail/')){
   const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
+  if(mailId===STORY55_WALLET_MAIL_ID&&mail){
+   const project=story55Config(s).projects.find(p=>p.id==='wallet'),key=project?.key||'';
+   const done=completed(s,'wallet');
+   return '<div class="s55"><nav><button data-action="kira-back">‹ 收件箱</button><small>KIRA / MIRAGE</small></nav>'+
+    '<h1>'+esc(mail.subject)+'</h1><p>'+esc(mail.from)+' · D'+esc(mail.day)+'</p>'+
+    '<article class="s55-card s55-document"><p>钱包挑战已接取。请在 GHOST 验证授权码，并完成数据提取。</p>'+
+    '<p>项目授权码</p><h2>'+esc(key)+'</h2><p>完成挑战前不会获得奖励。</p></article>'+
+    '<button type="button" class="s55-button" data-action="kira-wallet-d06-ghost">'+
+    (done?'查看 GHOST 已完成项目':'打开 GHOST · WALLET CHALLENGE')+'</button></div>';
+  }
   if(mail?.story55&&mail.id!=='flow-d03-reward')return mail55(s,mail);
   return mail?.linkedReceipt?linkedReceiptView(s,mailId):mail?.linkedDelivery?linkedSentView(s,mailId):mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
  }
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a==='kira-wallet-d06-ghost'){
+  const st=c.store.get();
+  if(!st.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))return;
+  c.store.update(s=>{const m=s.content.mail.find(m=>m.id===STORY55_WALLET_MAIL_ID);if(m)m.read=true;});
+  return c.router.open({appId:'ghost',route:'/deployment',params:{project:'wallet'}});
+ }
+
  if(a==='kira-d01-bank'){let paid=false;c.store.update(s=>{paid=claimD01Bank(s);});if(!paid)c.toast('款項已結算');return;}
  if(a==='kira-d01-open-file'){
   const s=c.store.get();
