@@ -5,6 +5,7 @@ import {
  sampleTaiTurnPlan,taiTurnShapePrompt,taiTurnNeedsMore,mergeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion
 } from '../src/services/ai/conversation-shape-v12.js';
 import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
+import {combineTaiVoiceThoughts} from '../src/services/ai/voice-request-v11.js';
 
 const player=[{role:'user',content:'我把新的工具做了一半。'}];
 const randomSeq=(...values)=>()=>values.shift()??0.8;
@@ -86,4 +87,21 @@ test('30% guide is implemented with a concrete follow-up when the actor answered
  assert.equal(taiGuidanceNeedsRepair({plan,entries:boundary,messages:player}),false);
  const generic=taiIntegrateGuidingQuestion(blunt,{text:'你在干什么？'},2);
  assert.deepEqual(generic,blunt);
+});
+
+test('a sampled four-phrase voice turn becomes one MP3 request rather than four unrelated clips',()=>{
+ const src=[
+  {text:'你又熬夜了',mode:'voice',tone:'dry'},
+  {text:'昨天是怎么答应我的？',mode:'voice',tone:'serious'},
+  {text:'行了，先别忙着解释',mode:'voice',tone:'playful'},
+  {text:'把你写的东西给我看一眼。',mode:'voice',tone:'neutral'}
+ ];
+ const audio=combineTaiVoiceThoughts(src);
+ assert.equal(audio.length,1);
+ assert.equal(audio[0].mode,'voice');
+ assert.match(audio[0].speechText,/你又熬夜了。/);
+ assert.match(audio[0].speechText,/昨天是怎么答应我的？/);
+ assert.match(audio[0].speechText,/把你写的东西给我看一眼。/);
+ assert.equal(combineTaiVoiceThoughts([{text:'只有一句',mode:'voice'}]).length,1);
+ assert.equal(combineTaiVoiceThoughts([{text:'电话',action:'phone'},{text:'再听',mode:'voice'}]).length,2);
 });
