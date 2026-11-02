@@ -5,9 +5,27 @@ export function swap(tiles,a,b){const next=[...tiles];[next[a],next[b]]=[next[b]
 export const rotate=mask=>((mask<<1)&15)|(mask>>3);
 export const routeSolution=[2,10,12,6,10,9,3,10,8];
 export function connected(masks){const seen=new Set([0]),queue=[0],dirs=[[-3,1,4],[1,2,8],[3,4,1],[-1,8,2]];while(queue.length){const at=queue.shift();for(const [delta,port,back] of dirs){const next=at+delta;if(next<0||next>=9||Math.abs(next%3-at%3)>1)continue;if((masks[at]&port)&&(masks[next]&back)&&!seen.has(next)){seen.add(next);queue.push(next);}}}return seen;}
+// Generate a fresh, solvable 3x3 circuit via randomized depth-first spanning tree.
+// The solution exists by construction; only the orientations are scrambled.
+export function randomRouteSolution(random=Math.random){
+ const masks=Array(9).fill(0),seen=new Set([0]),stack=[0];
+ const edges=(i)=>[
+  ...(i>=3?[[i-3,1,4]]:[]),
+  ...(i%3<2?[[i+1,2,8]]:[]),
+  ...(i<6?[[i+3,4,1]]:[]),
+  ...(i%3>0?[[i-1,8,2]]:[])
+ ].filter(([j])=>!seen.has(j));
+ while(stack.length){
+  const at=stack[stack.length-1],options=edges(at);
+  if(!options.length){stack.pop();continue;}
+  const [to,out,back]=options[Math.floor(random()*options.length)];
+  masks[at]|=out;masks[to]|=back;seen.add(to);stack.push(to);
+ }
+ return masks;
+}
 export function createBoard(type,config,random=Math.random){
  if(type==='cipher'){let tiles=shuffle([0,1,2,3,4,5,6,7,8],random);if(puzzleSolved(tiles))tiles=swap(tiles,0,1);return {tiles,selected:null};}
- if(type==='route'){const masks=routeSolution.map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
+ if(type==='route'){const masks=randomRouteSolution(random).map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
  if(type==='extract')return {...fingerprints(random),round:0};
  if(type==='veil')return {code:newCode(config.codeLength,random),input:'',round:0};
  if(type==='verify'){const target=shuffle(['CORE','LINK','DATA','CHECK','AUTH','CACHE','IO','MAP','INDEX','WATCH','SYNC','FRAME','TRACE','ROUTE','LOCAL','KEY'],random).slice(0,4);return {target,tokens:shuffle(target,random),input:[],used:[]};}
