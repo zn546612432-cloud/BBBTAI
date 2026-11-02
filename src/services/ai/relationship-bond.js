@@ -25,6 +25,9 @@ export function updateTaiBond(s,{messageId,text,source='noapp',now=Date.now()}={
  if(b.ids.includes(messageId))return false;
  b.ids.push(messageId);if(b.ids.length>200)b.ids.shift();
  let delta=0;
+ // Familiarity also grows slowly from repeated, meaningful everyday talks;
+ // it is not restricted to saying a particular phrase or asking for help.
+ if(text.trim().length>=6){b.meaningfulTurns=(b.meaningfulTurns||0)+1;if(b.meaningfulTurns%8===0)delta++;}
  for(const [type,re] of Object.entries(patterns)){
   if(!re.test(text))continue;
   const last=b.lastByType[type];
