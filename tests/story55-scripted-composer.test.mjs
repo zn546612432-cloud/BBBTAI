@@ -24,7 +24,9 @@ test('D01 optional group uses original WeChat and waits for player to send befor
  sendD01WeChat(store,'group','早安',1000);
  assert.equal(group.messages.length,before+1);
  assert.equal(group.messages.at(-1).from,'me');
- tickD01WeChat(s,4000);
+ tickD01WeChat(s,5999);
+ assert.equal(group.messages.length,before+1);
+ tickD01WeChat(s,6000);
  assert.equal(group.messages.at(-1).from,'小辛');
  assert.match(group.messages.at(-1).text,/起得那么早/);
 });
