@@ -8,7 +8,7 @@ import {deepseekModelOptions,normalizeDeepSeekModel} from './model-config.js';
 export const BYOK_SESSION='ximeng-ai-session-keys-v1';
 export const XITAI_VOICE_ID='moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4';
 export function apiConfig(){
- try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceStyle:normalizeVoiceStyle(c.voiceStyle),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceStyle:'stable',voiceId:XITAI_VOICE_ID};}
+ try{const c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');return {...c,model:normalizeDeepSeekModel(c.model),voiceStyle:normalizeVoiceStyle(c.voiceStyle),voiceId:XITAI_VOICE_ID};}catch{return {model:normalizeDeepSeekModel(),voiceStyle:'calm',voiceId:XITAI_VOICE_ID};}
 }
 export function saveApiConfig(config){
  const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
@@ -69,6 +69,8 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
  text=prepared.text;
  speed=speed!==null&&Number.isFinite(Number(speed))?Math.max(0.5,Math.min(2,Number(speed))):prepared.speed;
+ // A permanent calm emotion is intentional: missing emotion lets MiniMax
+ // re-infer an unstable voice based on individual lines.
  // Code-switch to the provider's multilingual pronunciation mode only when
  // actual Latin words occur outside native Speech 2.8 sound tags.
  if(language==='Chinese'){
@@ -90,7 +92,7 @@ export async function voicePreview({text,voiceId,model='speech-2.8-hd',language=
  const audio=await directJSON(endpoint,c.minimax,{
   model:c.ttsModel||model,text:spoken,stream:false,output_format:'hex',
   language_boost:language,
-  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,...(prepared.emotion?{emotion:prepared.emotion}:{})},
+  voice_setting:{voice_id:XITAI_VOICE_ID,speed:Number(speed),vol:1,pitch:0,emotion:'calm'},
   audio_setting:{sample_rate:32000,bitrate:128000,format:'mp3',channel:1}
  });
  const hex=audio.data?.audio;
