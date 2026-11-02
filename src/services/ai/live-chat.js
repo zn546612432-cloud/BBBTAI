@@ -8,6 +8,7 @@ import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
 import {aiStatus,askTai,chooseTaiAction,voicePreview,apiConfig} from './gateway.js';
 import {saveClip} from '../voice/audio-store.js';
+import {explainMinimaxFailure} from '../voice/minimax-diagnostics.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
@@ -67,7 +68,9 @@ export function synthesizeVoiceNotes(store,jobs){
     });
    }catch(error){
     console.warn('MiniMax voice failed; text remains:',error?.message);
-    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;m.voiceError=String(error?.message||'语音生成失败').slice(0,120);}});
+    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;
+      const raw=String(error?.message||'语音生成失败');
+      m.voiceError=(/^(当前 iPhone|没有可用的 MiniMax|MiniMax (?:鉴权|无法|账户|请求|服务|合成))/.test(raw)?raw:explainMinimaxFailure(error,{region:apiConfig().region})).slice(0,440);}});
    }
   }
  };
