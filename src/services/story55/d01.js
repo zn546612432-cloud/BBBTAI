@@ -1,6 +1,6 @@
 // D01 (2025-05-19) cross-app story. All progress lives in the phone save.
 // Real seconds schedule mail/UI bubbles; game minutes schedule Wang's reply.
-import {isStory55,date55} from './state.js';
+import {isStory55,date55,completed,completeNode} from './state.js';
 
 export const D01_HISTORY='d01-vulnerability-archive';
 export const D01_ORDER='mirage001';
@@ -37,7 +37,7 @@ function pushChat(s,id,name,from,text,key,delayNotice=true){
  return true;
 }
 const groupLines=[
- ['小辛','小辛','還不是我們太菜了，哈哈。'],
+ ['小辛','小辛','还不是我们太菜了，哈哈。'],
  ['熙旺','wang','好']
 ];
 const reminder=(id,title,done=false)=>({id,title,done,story55D01:true,auto:true});
@@ -101,10 +101,10 @@ export function tickD01(s,now=Date.now()){
   const g=p.group;
   const afternoon=g.afternoon;
   const steps={
-   xin1:['xin2','小辛','小辛',afternoon?'蒙蒙哥，你不會現在才起吧？':'嗯？蒙蒙哥怎麼今天起得那麼早？',1000],
-   xin2:['wang1','小辛','小辛',afternoon?'昨天和我打遊戲打得那麼晚，果然起不來床了，哈哈':'昨天和我打遊戲打到那麼晚…今天不到12點居然就醒了。',3000],
-   wang1:['wang2','熙旺','wang','怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙。',2000],
-   wang2:['player1','熙旺','wang','今天不忙的話，就再去睡會，我中午收車回來給你帶午餐。',2000],
+   xin1:['xin2','小辛','小辛',afternoon?'蒙蒙哥，你不会现在才起吧？':'嗯？蒙蒙哥怎么今天起得那么早？',1000],
+   xin2:['wang1','小辛','小辛',afternoon?'昨天和我打游戏打得那么晚，果然起不来床了，哈哈':'昨天和我打游戏打到那么晚…今天不到12点居然就醒了。',3000],
+   wang1:['wang2','熙旺','wang','怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。',2000],
+   wang2:['player1','熙旺','wang','今天不忙的话，就再去睡会，我中午收车回来给你带午餐。',2000],
    xinEnd:['wangEnd','小辛','小辛',groupLines[0][2],2000],
    wangEnd:['done','熙旺','wang',groupLines[1][2],0]
   };
@@ -123,10 +123,10 @@ export function tickD01(s,now=Date.now()){
   pushChat(s,'wang','熙旺','wang','嗯？','d01-wang-hello');b.stage='waiting';b.dueAt=null;changed=true;
  }
  if(b.stage==='reply1'&&b.dueAt!==null&&now>=b.dueAt){
-  pushChat(s,'wang','熙旺','wang','剛才在開車','d01-wang-reply1');b.stage='reply2';b.dueAt=now+2000;changed=true;
+  pushChat(s,'wang','熙旺','wang','刚才在开车','d01-wang-reply1');b.stage='reply2';b.dueAt=now+2000;changed=true;
  }
  if(b.stage==='reply2'&&b.dueAt!==null&&now>=b.dueAt){
-  pushChat(s,'wang','熙旺','wang','怎麼發了那麼多消息？現在看不及時，不重要的話，有什麼話等我回家當面跟我講吧。','d01-wang-reply2');
+  pushChat(s,'wang','熙旺','wang','怎么发了那么多消息？现在看不及时，不重要的话，有什么话等我回家当面跟我讲吧。','d01-wang-reply2');
   b.stage='done';b.dueAt=null;changed=true;
  }
  if(b.stage==='waiting'&&b.sent>=3&&b.replyAt!==null&&nowMinute(s)>=b.replyAt){
@@ -136,6 +136,7 @@ export function tickD01(s,now=Date.now()){
   const r=s.content.reminders?.find(x=>x.id===id);
   if(r&&r.done!==value){r.done=value;changed=true;}
  }
+ if(d01Ready(s)&&!completed(s,'intro')){completeNode(s,'intro');changed=true;}
  return changed;
 }
 export function dueD01(s,now=Date.now()){
@@ -226,7 +227,7 @@ export function onD01Message(s,channel,id,text,now=Date.now()){
 export function d01Draft(s,channel,id){
  if(!activeD01(s)||channel!=='wechat'||id!=='group')return null;
  const g=d01(s)?.group;
- const lines=['不知道怎麼就醒了','還不是小辛說打贏boss才睡覺','謝謝哥，我要吃牛腩飯'];
+ const lines=['不知道怎么就醒了','还不是小辛说打赢boss才睡觉','谢谢哥，我要吃牛腩饭'];
  if(!g||!/^player[123]$/.test(g.stage))return null;
  const i=Number(g.stage.slice(-1))-1;
  return {id:'d01-group',index:i,kind:'me',text:lines[i],channel,conversationId:id};
