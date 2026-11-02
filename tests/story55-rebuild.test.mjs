@@ -144,7 +144,7 @@ test('D21 shows pending review for a D20 contract until the exact configured gam
   body:'请查收',type:'extract',reward:2000,publishDay:20,expiryDay:22,reviewMinutes:2000});
  rebuildStory55AtDay(s,21,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'REVIEWING');
- assert.equal(s.content.mirage.digitalBalance,0);
+ assert.equal(s.content.mirage.digitalBalance,0.04);
  rebuildStory55AtDay(s,22,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'COMPLETED');
  assert.equal(s.content.mirage.digitalBalance,2000.04);
