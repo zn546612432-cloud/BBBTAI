@@ -4,7 +4,7 @@ import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
 import {WALLET_CHALLENGE_ID,completeWalletChallenge} from '../mirage/contacts-seed.js';
 import {defaultConfig} from './catalog.js';
-import {createBoard} from './games/logic.js';
+import {createBoard,connected} from './games/logic.js';
 import {pipeSolved} from './games/pipe-network.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
 export function configFor(s,type,id){return {...defaultConfig,...s.ghost?.config?.[type],...s.ghost?.orders?.[id]?.settings};}
@@ -68,7 +68,7 @@ export function startD01PipePreview(s,id,now=Date.now()){
  if(id!==D01_REPAIR)return false;
  const o=s.ghost?.orders?.[id];
  if(!o||o.status!=='running'||o.type!=='route')return false;
- if(!pipeSolved(o.board))return false;
+ if(!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
  o.status='preview-win';o.previewUntil=now+3000;
  return true;
 }
