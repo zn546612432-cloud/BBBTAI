@@ -83,3 +83,36 @@ export function mergeTaiTurnEntries(previous=[],extra=[],limit=5){
  }
  return result;
 }
+
+const genericQuestion=/^(?:你呢|还有呢|还有什么|你想听什么|你想知道什么|你在干什么|你在做什么|有问题吗|还有事吗|什么事)[呢啊么吧？！?!。\s]*$/;
+export function taiContainsGroundedQuestion(entries=[]){
+ return (Array.isArray(entries)?entries:[]).some(m=>{
+  const t=String(m?.text||'').trim();
+  const clauses=t.split(/[。！!；;\n]/).map(x=>x.trim()).filter(Boolean);
+  return clauses.some(x=>/[？?]$/.test(x)&&x.length>=5&&!genericQuestion.test(x));
+ });
+}
+export function taiGuidanceNeedsRepair({plan,entries=[],messages=[]}={}){
+ if(!plan?.guide||!taiGuideEligible(messages,{mode:plan.mode})||!entries.length)return false;
+ if(entries.some(x=>x.action==='phone'))return false;
+ const text=entries.map(x=>String(x.text||'')).join(' ');
+ if(/我不想谈|我不想聊|先挂了|我先忙|稍后说|晚安|到此为止|别问了/.test(text))return false;
+ return !taiContainsGroundedQuestion(entries);
+}
+export function taiIntegrateGuidingQuestion(entries=[],candidate,limit=5){
+ const copied=entries.map(x=>({...x})),q=String(candidate?.text||'').trim();
+ if(!taiContainsGroundedQuestion([{text:q}])||!copied.length)return copied;
+ if(copied.length<Math.max(1,limit)){
+  if(copied.some(x=>x.text===q))return copied;
+  copied.push({...candidate,text:q});
+ }else{
+  const last=copied.at(-1);
+  if(last.text===q||last.text.includes(q))return copied;
+  last.text=String(last.text||'').replace(/\s+$/,'')+' '+q;
+  if(last.mode==='voice')last.speechText=last.text;
+  // A previously accurate Portuguese translation must not be attached to
+  // a new question in Chinese. Leave just the visible dialogue.
+  delete last.translation;
+ }
+ return copied;
+}
