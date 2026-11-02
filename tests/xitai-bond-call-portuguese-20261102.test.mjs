@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {updateTaiBond,taiBond,taiBondPrompt} from '../src/services/ai/relationship-bond.js';
-import {taiShouldCallAfterText} from '../src/services/ai/call-intent.js';
+import {taiPlayerRequestedCall,taiShouldCallAfterText} from '../src/services/ai/call-intent.js';
 import {unpackTaiReply} from '../src/services/ai/format.js';
 import {containsPortuguese,safeTaiTranslation} from '../src/services/ai/portuguese.js';
 import {replyToTaiMessage} from '../src/services/ai/live-chat.js';
@@ -46,6 +46,8 @@ test('text bubbles can be informal; serious text and voice keep punctuation',()=
 test('only explicit current call request + immediate commitment rings; future and no are not commitments',()=>{
  const entries=[{mode:'text',text:'这么想听？'},{mode:'text',text:'行，我现在打'}];
  assert.equal(taiShouldCallAfterText({lastUser:'现在给我打电话',entries}),true);
+ assert.equal(taiPlayerRequestedCall('给我打电话，我想听你说话'),true);
+ assert.equal(taiPlayerRequestedCall('不要给我打电话'),false);
  assert.equal(taiShouldCallAfterText({lastUser:'现在给我打电话',entries,alreadyCalled:true}),false);
  assert.equal(taiShouldCallAfterText({lastUser:'我想你了',entries}),false);
  assert.equal(taiShouldCallAfterText({lastUser:'不要给我打电话',entries}),false);
