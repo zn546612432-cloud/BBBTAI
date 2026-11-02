@@ -42,9 +42,9 @@ export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion}){
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,model:c.model};
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,model:c.model};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  const system=buildTaiPrompt(req);
  const base={...deepseekModelOptions(c.model),
@@ -64,6 +64,39 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
+// Phase 1 is available for the isolated GitHub Pages BYOK test runtime.
+// A proxy which has not implemented this endpoint stays on the legacy path,
+// rather than pretending it has executed a two-stage decision.
+export async function chooseTaiAction(args={}){
+ const c=apiConfig();
+ if(!c.deepseek)return null;
+ const {taiActionDecisionPrompt,validateTaiAction}=await import('./action-protocol-v10.js');
+ const {taiKnowledgeContext}=await import('./tai-profile.js');
+ const mode=args.outputMode==='call'?'call':'text';
+ const context={...args,mode,channel:args.channel||'noapp'};
+ const system=taiActionDecisionPrompt({...context,
+  relationshipContext:(taiKnowledgeContext({day:args.day,channel:context.channel,recognized:args.recognized})+'\\n'+String(args.relationshipContext||'')).slice(0,4100)});
+ let raw;
+ try{
+  const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
+   ...deepseekModelOptions(c.model),
+   messages:[{role:'system',content:system},...(Array.isArray(args.messages)?args.messages.slice(-16):[])],
+   response_format:{type:'json_object'},max_tokens:450,stream:false
+  });
+  raw=response.choices?.[0]?.message?.content;
+ }catch(error){
+  console.warn('Xitai decision phase unavailable; safe legacy response path:',error?.message);
+  return null;
+ }
+ const result=validateTaiAction(raw,{mode,channel:context.channel,
+  recognized:args.recognized===true,sourceMessageId:args.sourceMessageId||'',
+  allowCall:args.allowCall!==false,allowVoice:args.allowVoice!==false&&!!c.minimax,
+  allowDefer:args.allowDefer!==false,hasIncoming:args.hasIncoming!==false,
+  playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true});
+ if(!result.ok){console.warn('Xitai rejected invalid behavior decision:',result.reason);return null;}
+ return result.decision;
+}
+
 export async function voicePreview({text,voiceId,model='speech-2.8-hd',language='Chinese',speed=null,tone='neutral'}){
  const c=apiConfig();
  const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
