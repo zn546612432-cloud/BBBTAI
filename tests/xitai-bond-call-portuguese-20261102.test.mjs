@@ -79,11 +79,12 @@ test('AI commitment after typed call request triggers a real ringing NoApp call'
  globalThis.sessionStorage={getItem:k=>session.get(k)||null,setItem:(k,v)=>session.set(k,v),removeItem:k=>session.delete(k)};
  globalThis.fetch=async url=>new Response(JSON.stringify(String(url).endsWith('/status')
   ?{mode:'test',deepseek:true,minimax:false}
-  :{text:JSON.stringify({messages:[{text:'行，我现在打。',mode:'text',tone:'dry'}]})}),{status:200,headers:{'Content-Type':'application/json'}});
+  :{text:JSON.stringify({messages:[{text:'(phone)行，我现在打。',mode:'text',tone:'dry'}]})}),{status:200,headers:{'Content-Type':'application/json'}});
  try{
   const response=await replyToTaiMessage(store,'call-req-demo',{wait:async()=>{}});
   assert.equal(response.status,'replied');
   assert.equal(chat.messages.at(-1).text,'行，我现在打');
+  assert.ok(chat.messages.every(m=>!String(m.text||'').includes('(phone)')),'phone marker is internal, not visible');
   assert.equal(callState().state,'ringing');
   assert.equal(state.events.filter(e=>e.type==='tai_text_call_trigger').length,1);
   const ctx={store,refresh:()=>{},toast:()=>{},router:{open:()=>{}}};
