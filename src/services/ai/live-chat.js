@@ -11,7 +11,7 @@ import {saveClip} from '../voice/audio-store.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {taiShouldCallAfterText} from './call-intent.js';
+import {taiPlayerRequestedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming} from '../../apps/noapp/voice-call.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -74,7 +74,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const unheard=source?.kind==='voice'&&!source?.voiceCaption;
   const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
-  const voiceRequested=/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
+  // A telephone request is not a request for one prerecorded voice bubble.
+  const requestedCall=taiPlayerRequestedCall(lastUser);
+  const voiceRequested=!requestedCall&&/语音|录音|听听你的声音|听你说|说句话/.test(lastUser);
   const hashed=[...sourceMessageId].reduce((h,ch)=>(Math.imul(h,33)+ch.charCodeAt(0))>>>0,5381);
   const voiceTurn=unheard?!!apiConfig().minimax:voiceRequested||(initial.day>=60&&hashed%19===0);
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
@@ -94,7 +96,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=unpackTaiReply(retry,'noapp');
   }
-  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
+  const entries=draftEntries.slice(0,behavior.maxMessages).map(item=>requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:item);
   let emitted=0;
   const voiceJobs=[];
   for(const item of entries){
