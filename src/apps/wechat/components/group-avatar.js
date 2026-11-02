@@ -18,6 +18,6 @@ export function groupAvatar(conversation){
   return '<span class="wx-avatar wx-group-avatar" aria-label="群聊头像：'+esc(members.map(a=>a.name).join('、'))+'">'+
     members.map(member=>{
       const src=resolveWeChatAvatar(member.name);
-      return '<span class="wx-group-cell">'+(src.startsWith('/')?'<img src="'+esc(src)+'" alt="'+esc(member.name)+'" loading="lazy">':'<span>'+esc(member.name.slice(0,1))+'</span>')+'</span>';
+      return '<span class="wx-group-cell">'+(src.startsWith('/')?'<img src="'+esc(src)+'" alt="'+esc(member.name)+'" loading="eager" decoding="async" width="40" height="40">':'<span>'+esc(member.name.slice(0,1))+'</span>')+'</span>';
     }).join('')+'</span>';
 }
