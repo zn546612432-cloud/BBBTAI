@@ -27,8 +27,12 @@ export function seedD02(s){
  ]){
   if(!s.content.orders.some(o=>o.id===id))s.content.orders.push({id,title:id===D02_S?'S 级委托':'A 级委托',owner,category:id===D02_S?'S':'A',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD',status:s.day===2?'OPEN':'EXPIRED',description:desc,storyD02:true,storyDay:2});
  }
+ for(const [id,deadline] of [[D02_S,2],[D02_A,4]]){
+  const order=s.content.orders.find(o=>o.id===id);
+  if(s.day>deadline&&order&&['OPEN','ACCEPTED'].includes(order.status))order.status='EXPIRED';
+ }
  if(!d.noteSeeded&&!s.content.notes.some(n=>n.id===D02_NOTE))s.content.notes.unshift({
-  id:D02_NOTE,title:'电脑该换了',text:'服务器又不够用了。跑个任务风扇跟要起飞似的。\n想换台新电脑。CPU、显卡、内存、硬盘一块儿配好，别再东拼西凑。\n\n【添加提醒事项：攒一台新工作站】',
+  id:D02_NOTE,title:'电脑该换了',text:'服务器又不够用了。跑个任务风扇跟要起飞似的。\n想换台新电脑。CPU、显卡、内存、硬盘一块儿配好，别再东拼西凑。\n\n预算看看澳东商城五月八折的配置。',
   createdDay:2,updatedDay:2,updatedClock:'09:05',storyD02:true
  });
  d.noteSeeded=true;
@@ -111,7 +115,7 @@ function creditD02(s,id,amount,suffix=''){
  const d=s.story55.d02;if(amount<=0)return;
  s.bankData.balance=(Number(s.bankData.balance)||0)+amount;
  s.bankData.transactions??=[];
- s.bankData.transactions.unshift({id:'d02-payment-'+id+suffix,label:'MIRAGE '+id+(suffix?' BONUS':''),amount,day:s.day,time:s.clock,date:TODAY});
+ s.bankData.transactions.unshift({id:'d02-payment-'+id+suffix,label:'MIRAGE '+id+(suffix?' BONUS':''),amount,day:s.day,time:s.clock,date:new Date(Date.parse('2025-05-19T00:00:00Z')+(s.day-1)*86400000).toISOString().slice(0,10)});
  s.notifications.unshift({id:'d02-payment-notice-'+id+suffix,title:'太平洋銀行',body:'MIRAGE 赏金入账 '+amount.toLocaleString('en-US')+' USD',day:s.day,clock:s.clock,link:{appId:'bank',route:'/',params:{}}});
  d.paid[id]=(d.paid[id]||0)+amount;
 }
