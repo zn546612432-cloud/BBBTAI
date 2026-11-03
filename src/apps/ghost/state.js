@@ -1,4 +1,5 @@
 import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
+import {onD02GhostWin} from '../../story/d02/runtime.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -71,6 +72,7 @@ export function finish(s,id,success,now=Date.now()){
  // Trigger the scripted D05 conversation and 10 BTC credit ONLY after
  // the player successfully solves the challenge. This is idempotent.
  if(success&&id===WALLET_CHALLENGE_ID)completeWalletChallenge(s);
+  if(success)onD02GhostWin(s,id);
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }
