@@ -58,6 +58,54 @@ try{
     const imageRect=img.getBoundingClientRect();return {imageNaturalWidth:img.naturalWidth,imageNaturalHeight:img.naturalHeight,mapWidth:rect.width,mapHeight:rect.height,hasSearch:!!map.querySelector('.xm-map-search'),imageTopOffset:imageRect.top-rect.top,imageBottomOffset:imageRect.bottom-rect.bottom};
    });
    if(metrics.mapWidth<150||metrics.mapHeight<200||metrics.imageNaturalWidth<1000||!metrics.hasSearch||metrics.imageTopOffset>55||metrics.imageBottomOffset< -55)throw Error('Map raster failed to fill the screen: '+JSON.stringify(metrics));
+
+   // Exercise native Leaflet TouchEvents, not just zoom buttons. Events start
+   // on the actual map canvas and bubble through the whole iPhone shell.
+   const touchStats=await page.evaluate(async()=>{
+    const host=document.querySelector('xm-leaflet-map');
+    const map=host?.map, canvas=host?.querySelector('.xm-map-tiles.leaflet-container');
+    if(!map||!canvas||typeof Touch!=='function'||typeof TouchEvent!=='function')
+      throw Error('Mobile touch APIs or Leaflet are unavailable');
+    if(!map.dragging.enabled()||!map.touchZoom.enabled())
+      throw Error('Map dragging or pinch zoom handler is disabled');
+    const bounds=canvas.getBoundingClientRect(),cx=bounds.left+bounds.width/2,cy=bounds.top+bounds.height/2;
+    const touch=(id,x,y)=>new Touch({identifier:id,target:canvas,clientX:x,clientY:y,screenX:x,screenY:y,pageX:x,pageY:y});
+    const fire=(type,points)=>{
+     const list=points.map(p=>touch(...p));
+     return canvas.dispatchEvent(new TouchEvent(type,{
+      bubbles:true,cancelable:true,composed:true,
+      touches:type==='touchend'?[]:list,
+      targetTouches:type==='touchend'?[]:list,
+      changedTouches:list
+     }));
+    };
+    const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    map.options.inertia=false;
+    const start=map.getCenter();
+    fire('touchstart',[[1,cx,cy]]);
+    for(let step=1;step<=9;step++){
+     fire('touchmove',[[1,cx+step*12,cy+step*4]]);
+     await sleep(24);
+    }
+    fire('touchend',[[1,cx+108,cy+36]]);
+    await sleep(250);
+    const panned=map.getCenter();
+    const panDelta=Math.abs(panned.lat-start.lat)+Math.abs(panned.lng-start.lng);
+    const beforeZoom=map.getZoom();
+    fire('touchstart',[[2,cx-30,cy],[3,cx+30,cy]]);
+    for(let step=1;step<=9;step++){
+     const spread=30+step*8;
+     fire('touchmove',[[2,cx-spread,cy],[3,cx+spread,cy]]);
+     await sleep(28);
+    }
+    fire('touchend',[[2,cx-102,cy],[3,cx+102,cy]]);
+    await sleep(440);
+    const afterZoom=map.getZoom();
+    return {panDelta,beforeZoom,afterZoom,dragging:map.dragging.enabled(),touchZoom:map.touchZoom.enabled(),hasMap:!!document.querySelector('xm-leaflet-map .leaflet-container')};
+   });
+   console.log(name+' mobile pan and pinch',JSON.stringify(touchStats));
+   if(touchStats.panDelta<0.00001||touchStats.afterZoom-touchStats.beforeZoom<0.45)
+    throw Error(name+' mobile gestures did not move and zoom map: '+JSON.stringify(touchStats));
    await page.screenshot({path:`preview/browser-smoke/${name}-macau.png`});
    try{
     await page.locator('.xm-map-form input').fill('昌宁',{timeout:7000});
