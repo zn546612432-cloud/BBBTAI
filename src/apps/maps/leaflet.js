@@ -52,7 +52,16 @@ class XimengMap extends HTMLElement {
   this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
   this.querySelector('.xm-map-error button').addEventListener('click',()=>this.init());
   if(this.mode==='normal'){
-   this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
+   this.querySelector('.xm-map-form').addEventListener('submit',event=>{
+    event.preventDefault();
+    const input=this.querySelector('.xm-map-form input');
+    const match=searchPlaces(input?.value||'',this.getPlaces())[0];
+    if(match){
+     this.selectPlace(match.id);
+     this.querySelector('.xm-map-results').hidden=true;
+     input?.blur();
+    }else this.showSearch();
+   });
    this.querySelector('input').addEventListener('input',()=>this.showSearch());
    // Delegate clicks and keep matching result nodes stable across frequent
    // phone state updates; iOS WebKit cancels taps when buttons are replaced.
