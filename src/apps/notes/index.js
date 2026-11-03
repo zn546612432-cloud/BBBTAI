@@ -1,6 +1,7 @@
 import {uid} from '../../services/id.js';
 import {empty} from '../../system/ui.js';
 import {renderList} from './features/list/index.js';
+import {createD02Reminder} from '../../story/d02/runtime.js';
 import {renderFolders} from './features/folders/index.js';
 import {renderEditor,resetEditorUi} from './features/editor/index.js';
 import {handleNoteAction,saveNoteField} from './features/actions/index.js';
@@ -25,6 +26,7 @@ export function render({store},loc){
 }
 
 export function handle(action,target,ctx,loc){
+ if(action==='notes-d02-remind'){let created=false;ctx.store.update(s=>{created=createD02Reminder(s);});ctx.toast(created?'已加入提醒事项':'提醒事项已存在');return;}
  if(action==='new-note'){
   resetEditorUi();
   const id=uid();
