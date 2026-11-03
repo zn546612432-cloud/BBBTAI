@@ -1,6 +1,6 @@
 # 地图 App｜澳门真实底图 + 虚构剧情地点
 
-状态：独立测试分支，不合入 main。地图 UI 使用 Leaflet 1.9.4 (BSD-2-Clause) 和 OpenStreetMap 瓦片。仅地图模块有改动。
+状态：独立测试分支，不合入 main。地图 UI 使用本地打包的 Leaflet 1.9.4 (BSD-2-Clause) + 本地存储的 OpenStreetMap 矢量数据，运行时不请求在线地图瓦片。仅地图模块有改动。
 
 ## 数据与权限
 
@@ -42,10 +42,10 @@ router.open({appId:'maps',route:'/',params:{id:'orphanage'}});
 
 ## 渲染与部署约束
 
-- GitHub Pages 无后端也可显示地点数据；需要联网获取 Leaflet CDN JS/CSS 和 OSM 瓦片。
+- GitHub Pages 无后端也可显示完整澳门道路、建筑、水域等地图数据，Leaflet JS/CSS 存放在 public/vendor/leaflet/，底图位于 src/apps/maps/data/offline-macau-detail.js。地图组件没有地图服务/API/CDN请求。站点首次打开仍需要联网获取游戏页面代码，若要让整部手机游戏断网冷启动，需要另行设计全站缓存或安装包。
 - 真实地点和虚构地点采用两类标记。虚构地点的弹窗明确标注“非真实地址，不提供导航”。
 - 动态消息/日历更新不应该重建 Leaflet 实例；自定义元素只通过 `data-visible` 更新标记列表。DOM 视图被真正移除时注销地图和 ResizeObserver。
-- OSM 标注不可删除；遵守瓦片服务使用政策，不做批量下载；生产版建议自托管 Leaflet 依赖，避免 CDN 故障。
+- OSM 标注不可删除；遵守瓦片服务使用政策，不做批量下载；Leaflet 已自托管。禁止预下载 OSM 官方在线瓦片；几何数据来自开放 Geofabrik Macau extract，须显示 © OpenStreetMap contributors / ODbL。
 - 地图手势与系统左右滑动、手机上滑解锁须在真实 iPhone 测试。
 
 ## 验收范围
@@ -57,3 +57,12 @@ router.open({appId:'maps',route:'/',params:{id:'orphanage'}});
 5. `/place` 旧入口（英国线索）仍可操作“关联文件位置”，世界/澳门切换不丢内容。
 6. 地图返回再进入，保留缩放/中心；消息更新不应使地图闪白。
 7. GitHub Pages 子路径和在浏览器打开的 URL 符合构建规则。
+
+## 已实现的澳门离线数据构建和测试
+
+- 直接读取 Geofabrik Macau 的合法矢量数据 ZIP（不是地图图片），由 `scripts/build-offline-macau.py` 处理 OSM 道路、建筑、水域、绿地、铁路等图层，输出 `data/offline-macau-detail.js`。
+- `data/offline-macau.js` 保留不依赖在线数据的基础澳门行政区轮廓、轻轨和东望洋赛道。
+- `.github/workflows/offline-macau.yml` 仅对 `feat/leaflet-apple-maps-preview-1103` 生效，将约 4 MB 的离线地图模块写回该分支；不会部署或更改 main。
+- `scripts/build-offline-macau-preview.py` 将离线底图、Leaflet、CSS 合成单一 `preview/ximeng-macau-offline.html` 文件，无需网络、API key、瓦片服务器即可双指缩放、拖动和搜索测试标记。它是独立地图预览，不带微信或游戏存档。
+- GitHub Actions 自动运行 map test、JavaScript syntax checks 及完整 `npm run build:pages`，再发布预览 HTML 的 Actions artifact。
+- **离线范围说明**：独立 HTML 下载到本地后可以断网打开；在线 GitHub Pages 网站若从未打开过，其整个入口页面不保证断网加载。地图应用只要已加载，缩放、拖动和搜索全程不联网。
