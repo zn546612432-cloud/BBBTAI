@@ -6,7 +6,7 @@ export function dynamicIsland(s,{expanded=false,page='home'}={}){
  const select=!blocked&&!charging&&page==='select';
  const gained=short?Math.max(0,percent-Number(s.shortCharge?.startPercent??percent)):0;
  const title=select?'充电方式':short?'短充中':charging?'Charging':low?'Low Battery':`${percent}% Battery`;
- const subtitle=blocked?`${percent}%`:select?'选择一种方式，随时掌控游戏时间':short?`游戏时间 ×60 · 已补 ${gained}/10%`:charging?`${percent}%`:low?'Please charge.':'';
+ const subtitle=blocked?`${percent}%`:select?'选择一种方式，随时掌控游戏时间':short?`1 分钟 → 游戏 3 小时 · 已补 ${gained}/10%`:charging?`${percent}%`:low?'Please charge.':'';
  const actions=blocked?'':short?
   '<button data-action="power-unplug" class="battery-island-option is-primary">拔线 · 结束短充</button><button data-action="power-decline" class="battery-island-option">收起</button>':
   charging?
