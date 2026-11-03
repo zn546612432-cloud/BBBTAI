@@ -203,7 +203,7 @@ export function callScene({opening=false,event='',direction='outgoing',reason=''
  if(event==='unheard')return '刚才熙蒙试着说话，但这段语音未能识别，没有任何可用内容。你只知道没听清，不能猜他的话；简短问一句或两句让他再说一次，不谈ASR、权限、浏览器或技术接口。';
  if(event==='nudge')return '上一段已经说完，熙蒙在电话里一直安静。先依据前文问怎么了、是不是有事；如果刚在亲密调情，可带一点坏心思问是不是想你、怎么不肯说。不要默认他生气，不要催三遍。';
  if(event==='closing')return '对方很久没说话，你可以告别并真正结束通话。说一句符合当下情绪的告别，程序会执行挂断，而不是只说要挂。';
- return '熙蒙刚在实时电话里讲了话。先准确理解他问了什么，认真回答；如果他在分享、追问、愿意聊天，就展开讲几段有信息的新内容，顺着话题表达个人态度、具体见闻与有情境的调戏。不是文字聊天，不能假装电话已挂。避免无来由自夸、空洞问答和极短气泡式语音。';
+ return '熙蒙刚在实时电话里讲了话。先准确理解他问了什么，承接上一句话的具体意思，认真回答；如果他在分享、追问、愿意聊天，就展开讲几段有信息的新内容，顺着话题表达个人态度、具体见闻与有情境的调戏。不是文字聊天，不能假装电话已挂。避免无来由自夸、空洞问答和极短气泡式语音。';
 }
 async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,presetText=''}={}){
  if(call.state!=='connected'||call.busy)return;
