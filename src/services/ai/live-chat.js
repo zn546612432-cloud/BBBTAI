@@ -104,9 +104,14 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
   const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
-  const allowVoice=!!status.minimax&&(behavior.autonomousVoice||voiceRequested);
+  const lastCallIndex=c.messages.findLastIndex(m=>m.kind==='call'&&m.callStatus==='ended');
+  const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
+  const messagesAfterCall=lastCallIndex<0?[]:c.messages.slice(lastCallIndex+1).filter(m=>m.from==='me'&&m.actual!==false);
+  const firstTextAfterCall=!!lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)&&messagesAfterCall[0]?.id===sourceMessageId;
+  // After a real hangup, the first new line is TEXT unless the player
+  // explicitly asks for a fresh voice note or another phone call.
+  const allowVoice=!!status.minimax&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
   const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&voiceRequested;
-  const lastEndedCall=c.messages.filter(m=>m.kind==='call'&&m.callStatus==='ended').at(-1);
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
    (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':'系统已结束电话。')+
@@ -114,12 +119,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,
-   scene:postCallTextContext+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词调戏同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词调戏同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:availableCall&&!!status.minimax,allowVoice,
+   allowCall:availableCall&&!!status.minimax&&(!firstTextAfterCall||requestedCall),allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:!!status.minimax});
@@ -147,7 +152,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=!unheard&&!requestedCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const turnPlan=!unheard&&!requestedCall&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
   if(!unheard)onTyping();
