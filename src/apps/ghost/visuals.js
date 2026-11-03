@@ -7,4 +7,8 @@ export function pipe(mask,lit,terminal=''){
 }
 export function emblem(){return `<svg class="gh-emblem" viewBox="0 0 240 150" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="1">${[0,1,2,3,4].map(i=>`<path opacity="${.16+i*.12}" d="M${10+i*11} ${32+i*10}H${75+i*4}l${20-i*3} ${20-i*2}h${40-i*3}l${20-i*2} -${20-i*2}H230"/>`).join('')}<path d="M100 95V55a20 20 0 0 1 40 0v40l-10-7-10 7-10-7z"/><path d="M112 59v8m16-8v8" stroke-width="3"/><circle cx="45" cy="72" r="3"/><circle cx="195" cy="72" r="3"/></g></svg>`;}
 
-export function toolIcon(id){const paths={cipher:'M12 3l9 9-9 9-9-9z M8 12l4-4 4 4-4 4z',route:'M3 7h7v10h11 M3 17h3 M17 7h4',extract:'M4 4h16v16H4z M8 8h8v8H8z M12 1v3m0 16v3M1 12h3m16 0h3',veil:'M3 7h7l4-3h7M3 12h5l6-3h7M3 17h5l6-3h7',strike:'M14 2L5 14h6l-1 8 9-13h-6z'};return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="${paths[id]}"/></svg>`;}
+export function toolIcon(id){
+ // The same DEPLOY glyph is used in normal, story and standalone-preview modes.
+ // Previously this entry was missing, resulting in <path d="undefined"> in previews.
+ if(id==='verify')return '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M12 17l2 2 4-4"/></svg>';
+ const paths={cipher:'M12 3l9 9-9 9-9-9z M8 12l4-4 4 4-4 4z',route:'M3 7h7v10h11 M3 17h3 M17 7h4',extract:'M4 4h16v16H4z M8 8h8v8H8z M12 1v3m0 16v3M1 12h3m16 0h3',veil:'M3 7h7l4-3h7M3 12h5l6-3h7M3 17h5l6-3h7',strike:'M14 2L5 14h6l-1 8 9-13h-6z'};return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="${paths[id]||''}"/></svg>`;}
