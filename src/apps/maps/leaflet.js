@@ -54,6 +54,16 @@ class XimengMap extends HTMLElement {
   if(this.mode==='normal'){
    this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
    this.querySelector('input').addEventListener('input',()=>this.showSearch());
+   // Delegate clicks and keep matching result nodes stable across frequent
+   // phone state updates; iOS WebKit cancels taps when buttons are replaced.
+   this.querySelector('.xm-map-results').addEventListener('click',event=>{
+    const button=event.target.closest?.('button[data-place-id]');
+    if(!button)return;
+    this.selectPlace(button.dataset.placeId);
+    const results=this.querySelector('.xm-map-results');
+    if(results)results.hidden=true;
+    this.querySelector('input')?.blur();
+   });
    this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
    // Do not turn a map drag into the phone's horizontal page-swipe gesture.
    this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
@@ -76,12 +86,20 @@ class XimengMap extends HTMLElement {
   const input=this.querySelector('input');if(!input)return;
   const query=input.value.trim(),result=this.querySelector('.xm-map-results');
   const found=searchPlaces(query,this.getPlaces());
-  result.hidden=!query;result.replaceChildren();
+  const ids=found.map(p=>p.id).join('|');
+  if(result.dataset.query===query&&result.dataset.ids===ids){
+   result.hidden=!query;return;
+  }
+  result.dataset.query=query;
+  result.dataset.ids=ids;
+  result.hidden=!query;
+  result.replaceChildren();
   if(query&&!found.length)result.textContent='没有找到已解锁的地点';
   for(const p of found){
-   const button=document.createElement('button');button.type='button';
+   const button=document.createElement('button');
+   button.type='button';
+   button.dataset.placeId=p.id;
    button.textContent=p.name+(p.kind==='fictional'?' · 剧情地点':'');
-   button.addEventListener('click',()=>{this.selectPlace(p.id);result.hidden=true;input.blur();});
    result.append(button);
   }
  }
