@@ -34,6 +34,7 @@ jobs:
           node-version: "22"
       - name: Validate map JavaScript and plot rules
         run: |
+          node --check src/apps/maps/index.js
           node --check src/apps/maps/leaflet.js
           node --check src/apps/maps/data/places.js
           node --test tests/maps-places.test.mjs
