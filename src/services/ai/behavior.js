@@ -3,23 +3,27 @@ export const DEFAULT_TAI_BEHAVIOR=Object.freeze({
  verbosity:'expansive',maxMessages:5,firstDelayMin:4,firstDelayMax:10,
  messageGapMin:3,messageGapMax:7,initiative:'natural',proactive:true,autonomousVoice:true,
  triggerClock:'real',idleMinutes:10,followupMinutes:5,cooldownMinutes:30,dailyLimit:3,
- callPause:1.7,callNudgeSeconds:45,callCloseSeconds:125
+ callPause:1.7,callNudgeSeconds:45,callCloseSeconds:125,
+  callMaxSegments:3,callQuietSeconds:240,callDedupe:true,callInterrupt:true,callIdleMode:'natural'
 });
 const limits={maxMessages:[1,6],firstDelayMin:[0,60],firstDelayMax:[0,120],
  messageGapMin:[0.5,30],messageGapMax:[0.5,60],idleMinutes:[1,1440],
  followupMinutes:[1,1440],cooldownMinutes:[1,1440],dailyLimit:[1,12],
- callPause:[0.3,4],callNudgeSeconds:[10,300],callCloseSeconds:[20,600]};
+ callPause:[0.3,4],callNudgeSeconds:[10,300],callCloseSeconds:[20,600],
+  callMaxSegments:[1,5],callQuietSeconds:[30,900]};
 export function normalizeTaiBehavior(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))input={};
  const out={...DEFAULT_TAI_BEHAVIOR};
  for(const [key,[min,max]] of Object.entries(limits)){
   const n=Number(input[key]);if(input[key]!=null&&input[key]!==''&&Number.isFinite(n))out[key]=Math.min(max,Math.max(min,n));
  }
- out.maxMessages=Math.round(out.maxMessages);out.dailyLimit=Math.round(out.dailyLimit);
- for(const [key,values] of Object.entries({verbosity:['brief','balanced','expansive'],initiative:['off','natural','active'],triggerClock:['real','game']}))
+ out.maxMessages=Math.round(out.maxMessages);out.dailyLimit=Math.round(out.dailyLimit);out.callMaxSegments=Math.round(out.callMaxSegments);
+ for(const [key,values] of Object.entries({verbosity:['brief','balanced','expansive'],initiative:['off','natural','active'],triggerClock:['real','game'],callIdleMode:['active','natural','quiet']}))
   if(values.includes(input[key]))out[key]=input[key];
  if(typeof input.proactive==='boolean')out.proactive=input.proactive;
  if(typeof input.autonomousVoice==='boolean')out.autonomousVoice=input.autonomousVoice;
+  if(typeof input.callDedupe==='boolean')out.callDedupe=input.callDedupe;
+  if(typeof input.callInterrupt==='boolean')out.callInterrupt=input.callInterrupt;
  out.firstDelayMax=Math.max(out.firstDelayMin,out.firstDelayMax);
  out.messageGapMax=Math.max(out.messageGapMin,out.messageGapMax);
  return out;
