@@ -1,0 +1,70 @@
+// Real-browser regression for the exact symptom "地图是整张空白".
+import {chromium,webkit} from 'playwright';
+import {createServer} from 'node:http';
+import {readFile,stat,mkdir} from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve('dist');
+const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.jpeg':'image/jpeg','.jpg':'image/jpeg','.json':'application/json','.svg':'image/svg+xml','.mp3':'audio/mpeg'};
+const server=createServer(async(req,res)=>{
+ try{
+  let target=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(target.endsWith('/'))target+='index.html';
+  const file=path.resolve(root,'.'+target);
+  if(!file.startsWith(root+path.sep)&&file!==root)throw Error('bad path');
+  const body=await readFile(file);
+  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'public,max-age=31536000'}).end(body);
+ }catch(e){res.writeHead(404).end('not found '+e.message);}
+});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const url='http://127.0.0.1:'+server.address().port+'/';
+await mkdir('preview/browser-smoke',{recursive:true});
+try{
+ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+  const browser=await engine.launch({headless:true});
+  try{
+   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2});
+   const page=await context.newPage();
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
+   // The lock must be completely covered until preload has reported completion.
+   await page.locator('#xm-boot').waitFor({state:'attached',timeout:10000});
+   await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
+   await page.locator('.lock-screen').waitFor({timeout:10000});
+   await page.locator('.unlock-hint').click();
+   await page.locator('.passcode-grid').waitFor({timeout:8000});
+   for(const digit of '0816')await page.locator(`[data-action="passcode-key"][data-key="${digit}"]`).click();
+   await page.locator('.home-screen').waitFor({timeout:10000});
+   await page.locator('[data-action="open-app"][data-app="maps"]').click();
+   await page.locator('xm-leaflet-map .xm-map-search').waitFor({timeout:12000});
+   await page.waitForFunction(()=>{
+    const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
+    return !!img&&img.complete&&img.naturalWidth>0;
+   },null,{timeout:15000});
+   const metrics=await page.evaluate(()=>{
+    const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
+    const map=document.querySelector('xm-leaflet-map');
+    const rect=map.getBoundingClientRect();
+    return {imageNaturalWidth:img.naturalWidth,imageNaturalHeight:img.naturalHeight,mapWidth:rect.width,mapHeight:rect.height,hasSearch:!!map.querySelector('.xm-map-search')};
+   });
+   if(metrics.mapWidth<150||metrics.mapHeight<200||metrics.imageNaturalWidth<1000||!metrics.hasSearch)throw Error('Map failed to fill screen: '+JSON.stringify(metrics));
+   await page.screenshot({path:`preview/browser-smoke/${name}-macau.png`});
+   await page.locator('.xm-map-form input').fill('昌宁');
+   const found=page.locator('.xm-map-results button');
+   await found.first().waitFor({timeout:5000});
+   await found.first().click();
+   await page.locator('.app-nav [data-action="home"]').click();
+   await page.locator('.home-screen').waitFor();
+   await context.setOffline(true);
+   await page.locator('[data-action="open-app"][data-app="maps"]').click();
+   await page.waitForFunction(()=>{
+    const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
+    return !!img&&img.complete&&img.naturalWidth>0;
+   },null,{timeout:15000});
+   if(errors.length)throw Error('Browser pageerrors: '+errors.join(' | '));
+   console.log(name+' mobile OFFLINE map smoke OK',JSON.stringify(metrics));
+   await context.close();
+  }finally{await browser.close();}
+ }
+}finally{
+ server.close();
+}
