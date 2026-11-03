@@ -21,7 +21,7 @@ export function story55Map(s,loc={}){
  const pins=c.locations.filter(p=>p.area===area&&['ready','done'].includes(nodeStatus(s,p.node).state));
  const selected=pins.find(p=>p.id===(selectedByArea.get(selectionKey)||routePlace?.id));
  return '<div class="s55 s55-map" data-map-key="'+esc(selectionKey)+'" data-map-area="'+esc(area)+'"><nav><b>'+(area==='MACAU'?'澳门':'世界')+' / 离线地图</b><button data-action="s55-map-area" data-area="'+(area==='MACAU'?'WORLD':'MACAU')+'">'+(area==='MACAU'?'切换世界地图':'切换澳门地图')+'</button></nav>'+
- '<div class="s55-map-surface" role="group" aria-label="剧情地点示意图"><svg viewBox="0 0 400 420" preserveAspectRatio="none"><path class="land" d="M20 10 280 15 335 70 290 140 330 210 250 280 240 390 15 390Z"/><path class="road" d="M40 65 270 310M20 190 320 110M50 350 285 45M15 270 290 270M150 10 180 390"/></svg>'+
+ '<div class="s55-map-surface" role="group" aria-label="剧情地点示意图"><xm-leaflet-map mode="story"></xm-leaflet-map><svg viewBox="0 0 400 420" preserveAspectRatio="none"><path class="land" d="M20 10 280 15 335 70 290 140 330 210 250 280 240 390 15 390Z"/><path class="road" d="M40 65 270 310M20 190 320 110M50 350 285 45M15 270 290 270M150 10 180 390"/></svg>'+
  pins.map(pin=>'<button type="button" class="s55-pin '+(selected?.id===pin.id?'selected':'')+'" style="left:'+pin.x+'%;top:'+pin.y+'%" data-action="s55-map-pin" data-id="'+esc(pin.id)+'" aria-pressed="'+String(selected?.id===pin.id)+'"><i></i><span>'+esc(pin.name)+'</span></button>').join('')+
  '<span class="s55-map-scale">剧情地点 / 位置示意</span></div>'+
  '<p class="s55-muted s55-map-placeholder"'+(selected?' hidden':'')+'>点击地点查看资料</p>'+
