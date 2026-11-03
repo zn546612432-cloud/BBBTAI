@@ -68,6 +68,51 @@ jobs:
         with:
           ref: feature/d01-linked-story-20261102
           path: .review-sources/d01
+      - name: Check out isolated NoApp V2 review
+        uses: actions/checkout@v4
+        with:
+          ref: fix/noapp-call-v2-interrupt-dedupe-20261103
+          path: .review-sources/noapp-v2
+      - name: Check out isolated NoApp V3 review
+        uses: actions/checkout@v4
+        with:
+          ref: fix/noapp-v3-channel-hangup-longcall-20261103
+          path: .review-sources/noapp-v3
+      - name: Check out isolated Xitai v10 review
+        uses: actions/checkout@v4
+        with:
+          ref: xitai-v10-structured-action-protocol-20261102
+          path: .review-sources/xitai-v10
+      - name: Check out isolated Xitai bonding review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/xitai-bond-call-pt-20261102
+          path: .review-sources/xitai-bond
+      - name: Check out isolated Xitai callfix review
+        uses: actions/checkout@v4
+        with:
+          ref: fix/xitai-call-voice-natural-20261102
+          path: .review-sources/xitai-callfix
+      - name: Check out isolated Xitai calm review
+        uses: actions/checkout@v4
+        with:
+          ref: fix/xitai-fixed-calm-voice-20261102
+          path: .review-sources/xitai-calm
+      - name: Check out isolated Xitai phone review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/xitai-phone-command-20261102
+          path: .review-sources/xitai-phone
+      - name: Check out isolated D01 LINK review
+        uses: actions/checkout@v4
+        with:
+          ref: fix/d01-pipe-solved-dev-skip-20261102
+          path: .review-sources/d01linkfix
+      - name: Check out isolated D01 Files review
+        uses: actions/checkout@v4
+        with:
+          ref: feature/d01-file-open-flow-20261102
+          path: .review-sources/d01files
       - name: Preserve isolated historical review sites
         run: |
           for spec in \
@@ -76,7 +121,16 @@ jobs:
             'd55:d55-finale-20261101' \
             'badges:ios-badges-20261102' \
             'd01cross:d01-cross-app-20261102' \
-            'd01:d01-20261102'; do
+            'd01:d01-20261102' \
+            'd01files:d01-file-20261102' \
+            'd01linkfix:d01-linkfix-20261102' \
+            'xitai-bond:xitai-bond-20261102' \
+            'xitai-callfix:xitai-callfix-20261102' \
+            'xitai-calm:xitai-calm-20261102' \
+            'xitai-phone:xitai-phone-20261102' \
+            'xitai-v10:xitai-v10-20261102' \
+            'noapp-v2:noapp-v2-20261103' \
+            'noapp-v3:noapp-v3-20261103'; do
             key="${spec%%:*}"
             name="${spec#*:}"
             (cd ".review-sources/$key"; npm ci; GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/$name/" npm run build:pages)
