@@ -4,7 +4,7 @@ export const DEFAULT_TAI_BEHAVIOR=Object.freeze({
  messageGapMin:3,messageGapMax:7,initiative:'natural',proactive:true,autonomousVoice:true,
  triggerClock:'real',idleMinutes:10,followupMinutes:5,cooldownMinutes:30,dailyLimit:3,
  callPause:1.7,callNudgeSeconds:45,callCloseSeconds:125,
-  callMaxSegments:3,callQuietSeconds:240,callDedupe:true,callInterrupt:true,callIdleMode:'natural'
+  callMaxSegments:5,callQuietSeconds:240,callDedupe:true,callInterrupt:true,callIdleMode:'natural',callDetail:'detailed'
 });
 const limits={maxMessages:[1,6],firstDelayMin:[0,60],firstDelayMax:[0,120],
  messageGapMin:[0.5,30],messageGapMax:[0.5,60],idleMinutes:[1,1440],
@@ -18,7 +18,7 @@ export function normalizeTaiBehavior(input={}){
   const n=Number(input[key]);if(input[key]!=null&&input[key]!==''&&Number.isFinite(n))out[key]=Math.min(max,Math.max(min,n));
  }
  out.maxMessages=Math.round(out.maxMessages);out.dailyLimit=Math.round(out.dailyLimit);out.callMaxSegments=Math.round(out.callMaxSegments);
- for(const [key,values] of Object.entries({verbosity:['brief','balanced','expansive'],initiative:['off','natural','active'],triggerClock:['real','game'],callIdleMode:['active','natural','quiet']}))
+ for(const [key,values] of Object.entries({verbosity:['brief','balanced','expansive'],initiative:['off','natural','active'],triggerClock:['real','game'],callIdleMode:['active','natural','quiet'],callDetail:['brief','natural','detailed']}))
   if(values.includes(input[key]))out[key]=input[key];
  if(typeof input.proactive==='boolean')out.proactive=input.proactive;
  if(typeof input.autonomousVoice==='boolean')out.autonomousVoice=input.autonomousVoice;
