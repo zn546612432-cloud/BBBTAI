@@ -1,4 +1,5 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
+import {seedD02} from '../../story/d02/runtime.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,acceptStory55Wallet,STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID} from '../../apps/mirage/data.js';
@@ -120,6 +121,7 @@ export function tickStory55(s){
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
  seedD01(s);
+ seedD02(s);
  tickD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.
  const finalLines=story55Config(s).scenes?.ending;
