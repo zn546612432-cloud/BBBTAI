@@ -17,6 +17,6 @@ test('GHOST descriptions are Chinese and include instructions for puzzles',()=>{
  const s=initialState();activateStory55(s);
  const html=ghostRender({store:{get:()=>s},refresh(){}},{appId:'ghost',route:'/',params:{}});
  assert.match(html,/工具程序/);
- assert.match(html,/翻转 3×3 节点，关闭全部信号/);
+ assert.match(html,/拼图：交换方块/);
  assert.doesNotMatch(html,/PRIVATE TOOL LIBRARY|ACTION AUTHORIZATION/);
 });
