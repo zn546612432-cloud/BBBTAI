@@ -232,7 +232,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    hasIncoming:!opening&&!event&&!!text,callConnected:true,allowDefer:false
   });
   if(!current())return;
-  if(decision?.action==='listen'){call.lastTaiEndAt=Date.now();return;}
+  if(decision?.action==='listen'){endAfter=false;call.lastTaiEndAt=Date.now();return;}
   if(decision)endAfter=decision.action==='hang_up';
   const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
    event==='unheard'?null:await askTai({
@@ -358,19 +358,32 @@ export function callAction(action,ctx){
    if(recording?.call){
     const active=recording;recording=null;call.listening=false;active.recorder.stop();ctx.refresh();ctx.toast('正在识别这一段通话语音…');return true;
    }
-   const sessionId=call.sessionId;call.requestingMic=true;
+   const sessionId=call.sessionId,captureRevision=call.revision||0;call.requestingMic=true;
    (async()=>{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    if(call.sessionId!==sessionId||call.state!=='connected'){stream.getTracks().forEach(t=>t.stop());return;}
+    if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==captureRevision){stream.getTracks().forEach(t=>t.stop());return;}
     const chunks=[],recorder=new MediaRecorder(stream);
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
     recorder.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
-      if(recorder._cancelled||call.sessionId!==sessionId||call.state!=='connected')return;
-      call.listening=false;call.busy=true;ctx.refresh();
-      try{const text=await speechToText(new Blob(chunks,{type:recorder.mimeType||'audio/mp4'}));if(call.sessionId===sessionId&&call.state==='connected'){call.busy=false;await respond(text,ctx);}}
-      catch(e){if(call.sessionId===sessionId&&call.state==='connected'){call.busy=false;ctx.toast('这段话没能识别，可重说或用文字输入。');await generateTurn(ctx,{event:'unheard'});}}
-      finally{if(call.sessionId===sessionId){call.busy=false;ctx.refresh();}}
+      if(recorder._cancelled||call.sessionId!==sessionId||call.state!=='connected'||call.revision!==captureRevision)return;
+      call.listening=false;call.transcribing=true;call.busy=true;ctx.refresh();
+      try{
+       const text=await speechToText(new Blob(chunks,{type:recorder.mimeType||'audio/mp4'}));
+       if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){
+        call.transcribing=false;call.busy=false;await respond(text,ctx);
+       }
+      }catch(e){
+       if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){
+        call.transcribing=false;call.busy=false;ctx.toast('这段话没能识别，可重说或用文字输入。');
+        await generateTurn(ctx,{event:'unheard'});
+       }
+      }finally{
+       if(call.sessionId===sessionId&&call.revision===captureRevision){
+        if(call.transcribing){call.transcribing=false;call.busy=false;}
+        ctx.refresh();
+       }
+      }
     };
     recording={recorder,call:true};call.listening=true;recorder.start();ctx.refresh();ctx.toast('正在听，请再点一次麦克风结束。');
     setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;call.listening=false;recorder.stop();ctx.refresh();}},18000);
@@ -380,12 +393,12 @@ export function callAction(action,ctx){
   if(!Speech){ctx.toast('此设备未开放麦克风，请用文字输入。');void generateTurn(ctx,{event:'unheard'});return true;}
   try{
    if(activeRecognition){activeRecognition.stop();activeRecognition=null;call.listening=false;ctx.refresh();return true;}
-   const sessionId=call.sessionId,recognition=new Speech();recognition.lang='zh-CN';recognition.interimResults=false;recognition.maxAlternatives=1;
+   const sessionId=call.sessionId,captureRevision=call.revision||0,recognition=new Speech();recognition.lang='zh-CN';recognition.interimResults=false;recognition.maxAlternatives=1;
    let heard=false,failed=false;
    activeRecognition=recognition;call.listening=true;
-   recognition.onresult=e=>{heard=true;if(call.sessionId===sessionId&&call.state==='connected'){call.listening=false;void respond(e.results[0][0].transcript,ctx);}};
-   recognition.onend=()=>{if(activeRecognition===recognition)activeRecognition=null;if(call.sessionId===sessionId&&call.state==='connected'){call.listening=false;ctx.refresh();if(!heard&&!failed)void generateTurn(ctx,{event:'unheard'});}};
-   recognition.onerror=e=>{failed=true;if(call.sessionId===sessionId&&call.state==='connected'&&e.error!=='aborted'){call.listening=false;ctx.toast('这段语音没能识别，请重说或用文字输入。');void generateTurn(ctx,{event:'unheard'});}};
+   recognition.onresult=e=>{heard=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;void respond(e.results[0][0].transcript,ctx);}};
+   recognition.onend=()=>{const active=activeRecognition===recognition;if(active)activeRecognition=null;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;ctx.refresh();if(active&&!heard&&!failed)void generateTurn(ctx,{event:'unheard'});}};
+   recognition.onerror=e=>{failed=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision&&e.error!=='aborted'){call.listening=false;ctx.toast('这段语音没能识别，请重说或用文字输入。');void generateTurn(ctx,{event:'unheard'});}};
    recognition.start();ctx.refresh();
   }catch(e){ctx.toast(e.message);}
   return true;
