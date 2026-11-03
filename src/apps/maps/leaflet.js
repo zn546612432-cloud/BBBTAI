@@ -24,7 +24,11 @@ function pinIcon(kind){
 }
 class XimengMap extends HTMLElement {
  static get observedAttributes(){return ['data-visible','data-place','area'];}
- attributeChangedCallback(){if(this.map&&this.mode==='normal')this.refreshPlaces();}
+ attributeChangedCallback(name){
+  if(!this.map)return;
+  if(this.mode==='normal')this.refreshPlaces();
+  else if(name==='area')this.map.setView(this.getAttribute('area')==='WORLD'?[28,10]:MACAU,this.getAttribute('area')==='WORLD'?2:11,{animate:false});
+ }
  connectedCallback(){
   this.alive=true;this.mode=this.getAttribute('mode')||'normal';
   this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>轻扫地图探索地点</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
