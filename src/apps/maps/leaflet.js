@@ -42,7 +42,8 @@ class XimengMap extends HTMLElement {
    const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
    const tiles=this.querySelector('.xm-map-tiles');
    this.map=L.map(tiles,{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5});
-   this.map.setView(this.mode==='story'?MACAU:lastView.center,this.mode==='story'?11:lastView.zoom);
+   const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
+   this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
    }).addTo(this.map);
