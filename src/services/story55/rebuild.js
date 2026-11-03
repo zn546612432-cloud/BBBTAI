@@ -18,7 +18,7 @@ import {rebuildD02} from '../../story/d02/runtime.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
-const authoredMessage=m=>m&&!m.story55&&!m.demo&&!m.ouroborosScript&&!/^preset-/.test(m.id||'')&&(
+const authoredMessage=m=>m&&!m.storyD02&&!m.story55&&!m.demo&&!m.ouroborosScript&&!/^preset-/.test(m.id||'')&&(
   m.authored===true||m.storyImported===true||m.schedule?.mode==='game-time'||(typeof m.sentDate==='string'&&m.sentDate<'2025-05-19')
 );
 function preserveAuthoring(s){
@@ -38,7 +38,7 @@ function preserveAuthoring(s){
  return {
   config:copy(story55Config(s)),conversations,
   presets:copy(s.storyPresets||{}),
-  notes:copy(s.content.notes||[]),
+  notes:copy((s.content.notes||[]).filter(n=>!n.storyD02)),
   photos:copy(s.content.photos||[]),
   moments:{posts:copy(moments.posts||[]),editedPosts:copy(moments.editedPosts||{}),deletedIds:copy(moments.deletedIds||[]),profiles:copy(moments.profiles||{}),likes:{},comments:{}},
   authoredMail:copy((s.content.mail||[]).filter(m=>m.authored===true&&!m.story55)),
