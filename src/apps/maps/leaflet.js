@@ -74,9 +74,8 @@ class XimengMap extends HTMLElement {
     this.querySelector('input')?.blur();
    });
    this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
-   // Do not turn a map drag into the phone's horizontal page-swipe gesture.
-   this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
-   this.querySelector('.xm-map-tiles').addEventListener('pointermove',e=>e.stopPropagation());
+   // Do not stop touchmove propagation here: Leaflet tracks active touch
+   // gestures on document so both panning and pinch zoom require bubbling.
   }
   this.init();
  }
