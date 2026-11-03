@@ -1,9 +1,9 @@
 // Prewarm only assets needed immediately after unlocking. Never reset or mutate the saved game.
-// Heavy Macau vectors and Leaflet are downloaded/parsed while the lock cover is visible.
+// Lightweight offline Macau raster and Leaflet run before the lock cover becomes visible.
 import {publicAssetPath,rebaseBundledPublicAsset} from '../services/public-assets.js';
 import {wechatAvatars} from '../apps/wechat/avatars.js';
 
-const DEADLINE_MS=15000;
+const DEADLINE_MS=20000;
 
 function preloadImage(url) {
  return new Promise(resolve=>{
@@ -26,6 +26,7 @@ function preloadImage(url) {
 const dedupe=items=>[...new Set(items.filter(Boolean))];
 export function initialLockscreenImageUrls(wallpaper=''){
  return dedupe([
+  publicAssetPath('apps/maps/macau-offline.webp'),
   publicAssetPath('icons/glass-atlas.png'),
   publicAssetPath('icons/glass-utilities.png'),
   publicAssetPath('assets/aomi-icon.png'),
@@ -50,6 +51,6 @@ export function beginLockscreenPreload({wallpaper='',onProgress=()=>{}}={}){
  const settled=Promise.race([all.then(()=>'complete'),guard]).then(reason=>{
   clearTimeout(deadline);ready=true;report();return {reason,finished,total,failed};
  });
- // Continue preloading in the background if the deadline was reached.
+ // Continue preloading if the startup deadline was reached; the splash offers a skip.
  return {ready:settled,isReady:()=>ready,progress:()=>({finished,total,failed,ready})};
 }

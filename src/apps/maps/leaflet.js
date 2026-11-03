@@ -1,48 +1,37 @@
-import {OFFLINE_MACAU} from './data/offline-macau.js';
-import {OFFLINE_DETAILS} from './data/offline-macau-detail.js';
+import {publicAssetPath} from '../../services/public-assets.js';
 import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
 // Native phone navigation and save data remain owned by the existing system.
-const MACAU=[22.19875,113.54387];
+const MACAU=[22.19875,113.54387],OVERVIEW=[22.175,113.552];
 let loader;
-let lastView={center:MACAU,zoom:12};
+let lastView={center:OVERVIEW,zoom:13};
 function loadLeaflet(){
  if(window.L)return Promise.resolve(window.L);
  if(loader)return loader;
  loader=new Promise((resolve,reject)=>{
   if(!document.querySelector('link[data-xm-leaflet]')){
    const link=document.createElement('link');link.rel='stylesheet';
-   link.href='/vendor/leaflet/leaflet.css';
+   link.href=publicAssetPath('vendor/leaflet/leaflet.css');
    link.dataset.xmLeaflet='1';document.head.append(link);
   }
-  const script=document.createElement('script');script.src='/vendor/leaflet/leaflet.js';
+  const script=document.createElement('script');script.src=publicAssetPath('vendor/leaflet/leaflet.js');
   script.onload=()=>window.L?resolve(window.L):reject(Error('Leaflet unavailable'));
   script.onerror=()=>reject(Error('地图引擎加载失败'));document.head.append(script);
  }).catch(error=>{loader=null;throw error;});
  return loader;
 }
-// All geometry ships with the game: this renderer makes NO external tile requests.
+// Draw ONE locally generated geographic image, not 18,898 costly Leaflet
+// GeoJSON shapes. The raster is rendered from openly licensed OSM geometry
+// during the build and never accesses online tiles or CDN resources.
+const MACAU_IMAGE_BOUNDS=[[22.095,113.505],[22.235,113.612]];
 function drawOfflineBase(L,map,{world=false}={}){
- if(world)return;
- const source=[...(OFFLINE_MACAU.features||[]),...(OFFLINE_DETAILS.features||[])];
- const order=['land','water','park','landuse','building','rail','road','road_major'];
- const palette={
-  land:{color:'#c6d3c5',fillColor:'#f2f0e8',weight:1.3,fillOpacity:1},
-  water:{color:'#b5d4e5',fillColor:'#a9d4e8',weight:.5,fillOpacity:1},
-  park:{color:'#cde6c4',fillColor:'#d4e9c9',weight:.5,fillOpacity:.93},
-  landuse:{color:'#e5e8e3',fillColor:'#e9ece7',weight:.3,fillOpacity:.45},
-  building:{color:'#d4d8d5',fillColor:'#e0e2de',weight:.45,fillOpacity:.82},
-  rail:{color:'#91a3a0',weight:2,opacity:.85,dashArray:'4 4'},
-  road:{color:'#ffffff',weight:2.1,opacity:1},
-  road_major:{color:'#f7f1d8',weight:4.3,opacity:1}
- };
- const renderer=L.canvas({padding:.35});
- for(const kind of order){
-  const items=source.filter(feature=>feature?.properties?.kind===kind);
-  if(!items.length)continue;
-  const layer=L.geoJSON({type:'FeatureCollection',features:items},{interactive:false,renderer,style:()=>palette[kind]});
-  layer.addTo(map);
- }
+ if(world)return null;
+ const image=L.imageOverlay(publicAssetPath('apps/maps/macau-offline.webp'),MACAU_IMAGE_BOUNDS,{
+  alt:'澳门离线街道地图 · OpenStreetMap',
+  interactive:false,
+  opacity:1
+ }).addTo(map);
  map.attributionControl.addAttribution('<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a>');
+ return image;
 }
 // When called on the lock cover, all local Macau geometry is already parsed by this module import.
 // This also fetches the locally vendored Leaflet runtime before the keypad appears.
@@ -63,9 +52,28 @@ class XimengMap extends HTMLElement {
   this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
   this.querySelector('.xm-map-error button').addEventListener('click',()=>this.init());
   if(this.mode==='normal'){
-   this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
+   this.querySelector('.xm-map-form').addEventListener('submit',event=>{
+    event.preventDefault();
+    const input=this.querySelector('.xm-map-form input');
+    const match=searchPlaces(input?.value||'',this.getPlaces())[0];
+    if(match){
+     this.selectPlace(match.id);
+     this.querySelector('.xm-map-results').hidden=true;
+     input?.blur();
+    }else this.showSearch();
+   });
    this.querySelector('input').addEventListener('input',()=>this.showSearch());
-   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(MACAU,12,{duration:.6}));
+   // Delegate clicks and keep matching result nodes stable across frequent
+   // phone state updates; iOS WebKit cancels taps when buttons are replaced.
+   this.querySelector('.xm-map-results').addEventListener('click',event=>{
+    const button=event.target.closest?.('button[data-place-id]');
+    if(!button)return;
+    this.selectPlace(button.dataset.placeId);
+    const results=this.querySelector('.xm-map-results');
+    if(results)results.hidden=true;
+    this.querySelector('input')?.blur();
+   });
+   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
    // Do not turn a map drag into the phone's horizontal page-swipe gesture.
    this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
    this.querySelector('.xm-map-tiles').addEventListener('pointermove',e=>e.stopPropagation());
@@ -87,12 +95,20 @@ class XimengMap extends HTMLElement {
   const input=this.querySelector('input');if(!input)return;
   const query=input.value.trim(),result=this.querySelector('.xm-map-results');
   const found=searchPlaces(query,this.getPlaces());
-  result.hidden=!query;result.replaceChildren();
+  const ids=found.map(p=>p.id).join('|');
+  if(result.dataset.query===query&&result.dataset.ids===ids){
+   result.hidden=!query;return;
+  }
+  result.dataset.query=query;
+  result.dataset.ids=ids;
+  result.hidden=!query;
+  result.replaceChildren();
   if(query&&!found.length)result.textContent='没有找到已解锁的地点';
   for(const p of found){
-   const button=document.createElement('button');button.type='button';
+   const button=document.createElement('button');
+   button.type='button';
+   button.dataset.placeId=p.id;
    button.textContent=p.name+(p.kind==='fictional'?' · 剧情地点':'');
-   button.addEventListener('click',()=>{this.selectPlace(p.id);result.hidden=true;input.blur();});
    result.append(button);
   }
  }
@@ -127,7 +143,7 @@ class XimengMap extends HTMLElement {
    this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
    this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
-   drawOfflineBase(L,this.map,{world});
+   this.baseImage=drawOfflineBase(L,this.map,{world});
    if(this.mode==='normal')this.refreshPlaces();
    else{
     // Story55 screen buttons use original x/y positions and existing story actions.

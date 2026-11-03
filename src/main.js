@@ -298,14 +298,43 @@ function expandIsland(){
  islandExpanded=true;render();collapseIsland(8000);
 }
 store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
- // Show the lock cover first. Decode heavyweight local map and shared images
- // before the passcode can appear, without delaying the first lock-screen paint.
+ // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
+ // The game lock cover is mounted behind it so no gameplay or passcode changes.
+ const closeBoot=()=>{
+  const boot=$('#xm-boot');
+  if(!boot)return;
+  boot.classList.add('xm-boot-done');
+  setTimeout(()=>boot.remove(),450);
+ };
  lockAssets=beginLockscreenPreload({
   wallpaper:store.get().wallpaper,
   onProgress:({finished,total,ready})=>{
-   const hint=$('#screen-layer .unlock-hint');
-   if(hint?.dataset.preparing==='1'&&!ready)hint.textContent='正在准备手机资源… '+Math.floor(100*finished/total)+'%';
+   const percent=Math.round(finished/Math.max(1,total)*100);
+   const number=$('#xm-boot-percent');
+   const bar=$('#xm-boot-progress span');
+   const message=$('#xm-boot-message');
+   if(number)number.textContent=percent+'%';
+   if(bar)bar.style.width=percent+'%';
+   if(message&&!ready)message.textContent='正在准备离线地图、图标和照片… '+finished+'/'+total;
   }
+ });
+ lockAssets.ready.then(({reason,failed})=>{
+  const message=$('#xm-boot-message');
+  const next=$('#xm-boot-next');
+  if(reason==='timeout'){
+   if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
+   if(next){next.hidden=false;next.onclick=closeBoot;}
+   else closeBoot();
+   return;
+  }
+  if(message)message.textContent=failed?'已准备完成，部分素材将在使用时重试':'资源已就绪，正在进入锁屏…';
+  const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span');
+  if(number)number.textContent='100%';
+  if(bar)bar.style.width='100%';
+  setTimeout(closeBoot,300);
+ }).catch(error=>{
+  console.error('启动资源准备出错',error);
+  const next=$('#xm-boot-next');if(next){next.hidden=false;next.onclick=closeBoot;}else closeBoot();
  });
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
