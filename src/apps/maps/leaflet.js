@@ -139,7 +139,7 @@ class XimengMap extends HTMLElement {
   const error=this.querySelector('.xm-map-error');if(!error)return;error.hidden=true;
   try{
    const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
-   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
+   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:this.mode==='normal',dragging:this.mode==='normal',touchZoom:this.mode==='normal',doubleClickZoom:this.mode==='normal',tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
    this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
    this.baseImage=drawOfflineBase(L,this.map,{world});
