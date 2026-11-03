@@ -7,6 +7,12 @@ on:
     paths:
       - scripts/build-offline-macau.py
       - scripts/build-offline-macau-preview.py
+      - src/system/preload.js
+      - src/main.js
+      - src/apps/maps/leaflet.js
+      - src/apps/maps/index.js
+      - index.html
+      - tests/preload-lockscreen.test.mjs
       - .github/workflows/offline-macau.yml
 permissions:
   contents: write
@@ -37,10 +43,12 @@ jobs:
           node --check src/apps/maps/index.js
           node --check src/apps/maps/leaflet.js
           node --check src/apps/maps/data/places.js
+          node --check src/system/preload.js
           node --test tests/maps-places.test.mjs
       - name: Validate full phone Pages build (no main deployment)
         run: |
           npm ci
+          npm test
           npm run build:pages
       - uses: actions/upload-artifact@v4
         with:
