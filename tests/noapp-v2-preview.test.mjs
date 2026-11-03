@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {isNoAppV2Review,prepareNoAppV2Review} from '../src/apps/noapp/preview-v2.js';
+import {taiRecognized} from '../src/services/story55/state.js';
+test('NoApp V2 shortcut is not available on production, other reviews, or without an explicit panel query',()=>{
+ assert.equal(isNoAppV2Review('/BBBTAI/','?panel=noapp-v2',true),false);
+ assert.equal(isNoAppV2Review('/BBBTAI/review/noapp-v2-20261103/','?panel=noapp-v2',false),false);
+ assert.equal(isNoAppV2Review('/BBBTAI/review/xitai-v10-20261102/','?panel=noapp-v2',true),false);
+ assert.equal(isNoAppV2Review('/BBBTAI/review/noapp-v2-20261103/','',true),false);
+ assert.equal(isNoAppV2Review('/BBBTAI/review/noapp-v2-20261103/','?panel=noapp-v2',true),true);
+});
+test('NoApp V2 shortcut opens unlocked recognized chat in separate review save, preserves subsequent conversations',()=>{
+ const s=activateStory55(initialState());
+ const oldDay=s.day;
+ assert.equal(prepareNoAppV2Review(s),true);
+ assert.equal(s.day,37);
+ assert.equal(s.unlocked,true);
+ assert.equal(taiRecognized(s),true);
+ assert.equal(s.story55.noappInstalled,true);
+ assert.equal(s.nav.current.appId,'noapp');
+ assert.equal(s.nav.current.route,'/chat/tai');
+ assert.equal(s.events.filter(e=>e.type==='noapp_v2_review_ready').length,1);
+ s.day=38;s.clock='22:00';
+ assert.equal(prepareNoAppV2Review(s),true);
+ assert.equal(s.day,38,'reopening the review does not reset play progress');
+ assert.equal(s.clock,'22:00');
+ assert.equal(s.events.filter(e=>e.type==='noapp_v2_review_ready').length,1);
+ assert.notEqual(oldDay,37);
+});
