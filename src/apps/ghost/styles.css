@@ -45,3 +45,34 @@
 .gh-shell button.gh-dev-skip-top:active{background:#295247}
 .gh-shell .gh-dev-skip-note{padding:0;margin:12px 0 0;font-size:9px;color:#748a82;letter-spacing:.4px;text-align:center}
 @media(max-width:350px){.gh-shell button.gh-dev-skip-top{padding:9px 8px;min-width:70px;font-size:10px}}
+
+/* Ghost Arcade 2.0: isolated, dependency-free mobile puzzle surfaces. */
+.gh-arcade{border:1px solid #2e524b;background:linear-gradient(145deg,#0b1a17,#081210);padding:15px 12px 20px;margin-top:14px;border-radius:8px;box-shadow:inset 0 0 34px #23534715}
+.gh-arcade-status{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 12px;font:10px ui-monospace,monospace;color:#91aaa4}
+.gh-arcade-status strong{font-size:12px;letter-spacing:1px;color:#baf5df;font-weight:600}
+.gh-arcade-help{line-height:1.65;font-size:10px;color:#8ba9a0;margin:0 0 16px}
+.gh-arcade-matrix{display:grid;gap:6px;margin:0 auto 16px;max-width:350px}
+.gh-arcade-matrix .gh-arcade-cell,.gh-arcade-tile{display:grid;place-items:center;min-width:0;aspect-ratio:1;border:1px solid #2c4c44;background:#11231e;border-radius:5px;color:#7b9990;font-size:19px;transition:background .14s,border-color .14s,transform .14s}
+.gh-arcade-matrix .gh-arcade-cell:active{transform:scale(.95)}
+.gh-arcade-matrix .gh-arcade-cell:disabled{opacity:1;cursor:default}
+.gh-arcade-cipher{grid-template-columns:repeat(3,minmax(0,1fr));max-width:280px}
+.gh-arcade-cipher .active{background:#20534b;border-color:#a1e5d1;box-shadow:inset 0 0 20px #50e5c047,0 0 9px #3de3b528;color:#d6ffee}
+.gh-arcade-memory{grid-template-columns:repeat(5,minmax(0,1fr))}
+.gh-arcade-memory .gh-arcade-cell{font-size:14px;aspect-ratio:3/4}
+.gh-arcade-memory .revealed{background:#325046;color:#eefff3;border-color:#7ba89c}
+.gh-arcade-memory .matched{background:#1a4b3a;color:#b8f8d3;border-color:#4daa82}
+.gh-arcade-stealth{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.gh-arcade-stealth .gh-arcade-tile{font-size:16px}
+.gh-arcade-stealth .wall{background:#070e0d;color:#385850;border-color:#1b2b26}
+.gh-arcade-stealth .scanner{background:#4a211f;color:#ffc5b6;border-color:#b65a50;box-shadow:inset 0 0 10px #ff56412d}
+.gh-arcade-stealth .exit{color:#ffe8ac;border-color:#dec179;background:#3c3420}
+.gh-arcade-stealth .player{color:#d9ffee;border-color:#85ffe0;background:#195d4c;box-shadow:0 0 9px #86f3d36b}
+.gh-arcade-pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-width:255px;margin:14px auto 20px}
+.gh-arcade-pad .gh-arcade-cell{min-height:44px;aspect-ratio:auto;background:#153128;border:1px solid #376d59;border-radius:6px;color:#bdebd6;font-size:16px}
+.gh-arcade-pad .gh-arcade-cell[data-value="wait"]{font-size:11px}
+.gh-arcade-strike{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gh-arcade-strike .gh-arcade-cell{font-size:21px;aspect-ratio:1;background:#0c1815;color:#42635b}
+.gh-arcade-strike .target{border-color:#dcffac;background:#355d2b;color:#e6ffbd;box-shadow:0 0 14px #a9e66066,inset 0 0 13px #b0ff7b36;animation:gh-target-pulse .7s ease-in-out infinite alternate}
+@keyframes gh-target-pulse{to{box-shadow:0 0 24px #aeeb7da5,inset 0 0 18px #b0ff7b6b}}
+@media(max-width:370px){.gh-arcade{padding:12px 9px}.gh-arcade-matrix{gap:4px}.gh-arcade-memory .gh-arcade-cell{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.gh-arcade-strike .target{animation:none}}

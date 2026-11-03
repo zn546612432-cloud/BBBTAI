@@ -17,3 +17,17 @@ Developer editor → GHOST configures timings, retries, rounds, code length, ani
 All artwork and game implementation are original. The reviewed MIT pipe and puzzle repositories informed the design, but no third-party code or assets were incorporated.
 
 Checks: `npm test`; `npm run build`. New tests cover route solvability and traversal, exact fingerprint matching, puzzle reconstruction, authorization, retry isolation, idempotent reports and settlement, and absent reward configuration.
+
+## 2026-11-03 / Arcade 2.0 upgrade
+
+Fresh CIPHER, EXTRACT, VEIL and STRIKE attempts now create an additional serializable `board.arcade` object in `games/arcade.js` and render the redesigned mobile controls from `games/arcade-ui.js`. Original route-network integration remains unchanged.
+
+- CIPHER: solvable 3×3 Lights Out puzzle, toggle a node and its neighbors.
+- EXTRACT: five matching pairs, flip two cards per turn. Failed pairs close after 720 ms.
+- VEIL: 5×5 turn-based stealth maze with wall obstacles, cyclical scanners and touch D-pad.
+- STRIKE: 4×4 reactive target challenge, 6 hits and fewer than 3 misses, with a 30-second-or-configured timer. The old auto-win strike is retained only for persisted legacy boards.
+- Previous saved running games render their legacy boards instead of being reset.
+- Old contract handlers, D01 pipe previews, Flow D03, and historic email/settlement flows have not been replaced.
+- Module and integration tests: `tests/ghost-arcade.test.mjs`.
+
+See `src/apps/ghost/games/OPEN_SOURCE_CREDITS.md` for research references and provenance.
