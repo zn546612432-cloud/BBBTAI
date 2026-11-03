@@ -1,12 +1,11 @@
 /**
  * GHOST arcade mini-games. Original vanilla-JS implementations inspired by
- * MIT-licensed Lights Out, Memory, maze and reaction arcade examples.
+ * MIT-licensed Memory, maze and reaction arcade examples.
+ * CIPHER retains the older circuit-swap game in logic.js.
  * No external runtime, network access, or upstream visual assets.
  */
 const draw=(random,max)=>Math.max(0,Math.min(max-1,Math.floor(random()*max)));
 const mix=(values,random)=>{const a=[...values];for(let i=a.length-1;i>0;i--){const j=draw(random,i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
-const around=(index,size)=>[index,...(index>=size?[index-size]:[]),...(index<size*(size-1)?[index+size]:[]),...(index%size?[index-1]:[]),...(index%size<size-1?[index+1]:[])];
-export function toggleLights(cells,index,size=3){const copy=[...cells];if(!Number.isInteger(index)||index<0||index>=copy.length)return copy;for(const i of around(index,size))copy[i]=copy[i]?0:1;return copy;}
 const targetSymbols=['A1','B7','C3','D9','E4','F2','G8','H5','J6','K0','M3','N7'];
 const exits={up:-5,down:5,left:-1,right:1,wait:0};
 export function veilScanners(phase){return [5*(1+((phase+0)%3))+1,5*(1+((phase+1)%3))+3];}
@@ -40,13 +39,6 @@ function createVeil(random){
  return {kind:'veil',size:5,walls:[],player:0,phase:0,heat:0,steps:0,exit:24};
 }
 export function createArcadeBoard(type,random=Math.random){
- if(type==='cipher'){
-  let cells=Array(9).fill(0);
-  const touches=mix(Array.from({length:9},(_,i)=>i),random).slice(0,4+draw(random,2));
-  for(const index of touches)cells=toggleLights(cells,index,3);
-  if(cells.every(x=>!x))cells=toggleLights(cells,4,3);
-  return {kind:'cipher',size:3,cells,steps:0};
- }
  if(type==='extract'){
   const symbols=mix(targetSymbols,random).slice(0,5);
   return {kind:'extract',cards:mix([...symbols,...symbols],random),revealed:[],matched:[],lockUntil:0,errors:0};
@@ -62,11 +54,6 @@ export function arcadeTick(board,now=Date.now()){
 /** Updates a serializable board. Caller owns the success/failure transitions. */
 export function arcadeAction(board,action,value,now=Date.now(),random=Math.random){
  if(!board)return {changed:false};
- if(board.kind==='cipher'&&action==='tap'){
-  const index=Number(value);if(!Number.isInteger(index)||index<0||index>8)return {changed:false};
-  board.cells=toggleLights(board.cells,index,3);board.steps++;
-  return {changed:true,won:board.cells.every(x=>x===0)};
- }
  if(board.kind==='extract'&&action==='tap'){
   arcadeTick(board,now);
   const i=Number(value);
