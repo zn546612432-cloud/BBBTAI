@@ -14,7 +14,7 @@ export function storySourceVersion(s){
         id:c.id,
         ...(c.authored===true?{name:c.name,members:c.members}:{}),
         messages:(c.messages||[])
-         .filter(m=>!m.story55&&!m.demo&&!/^preset-/.test(m.id||'')&&
+         .filter(m=>!m.storyD02&&!m.story55&&!m.demo&&!/^preset-/.test(m.id||'')&&
            (m.authored===true||m.storyImported===true||m.schedule?.mode==='game-time'||typeof m.sentDate==='string'&&m.sentDate<'2025-05-19'))
          .map(m=>({id:m.id,from:m.from,text:m.text,sentDate:m.sentDate,schedule:m.schedule,kind:m.kind}))
       })).filter(c=>c.messages.length||c.name)
