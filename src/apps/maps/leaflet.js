@@ -98,7 +98,7 @@ class XimengMap extends HTMLElement {
    this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
    this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
-   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
    }).addTo(this.map);
    if(this.mode==='normal')this.refreshPlaces();
