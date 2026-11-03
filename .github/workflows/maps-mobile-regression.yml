@@ -8,9 +8,11 @@ on:
       - scripts/verify-offline-map-browser.mjs
       - src/apps/maps/**
       - src/system/preload.js
+      - src/system/dom.js
       - src/main.js
       - index.html
       - tests/map-startup-smoke.test.mjs
+      - tests/dom-map-ownership.test.mjs
       - .github/workflows/maps-mobile-regression.yml
   workflow_dispatch:
 permissions:
