@@ -8,5 +8,7 @@
 .xm-map-pending-status{position:absolute;left:12px;right:12px;top:14px;background:#fffffff5;color:#263c4e;padding:13px;border-radius:14px;box-shadow:0 3px 15px #162c3925;font-size:13px;text-align:center;}
 .xm-map-pending>small{position:absolute;bottom:5px;right:5px;background:#fffffff0;padding:3px 5px;color:#526572;font-size:9px;}
 .xm-maps-app .leaflet-image-layer{image-rendering:auto;}
+/* Yield touch control to Leaflet; never let Safari scroll or zoom the phone page. */
+.xm-maps-app .xm-map-tiles.leaflet-container{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 
 .xm-maps-app xm-leaflet-map,.xm-maps-app .xm-map-tiles{background:#b8d9e9}.xm-maps-app .leaflet-top.leaflet-left{top:77px}.xm-maps-app .leaflet-control-zoom{box-shadow:0 3px 12px #25415430;border:0;border-radius:12px;overflow:hidden}

@@ -74,9 +74,8 @@ class XimengMap extends HTMLElement {
     this.querySelector('input')?.blur();
    });
    this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
-   // Do not turn a map drag into the phone's horizontal page-swipe gesture.
-   this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
-   this.querySelector('.xm-map-tiles').addEventListener('pointermove',e=>e.stopPropagation());
+   // Do not stop touchmove propagation here: Leaflet tracks active touch
+   // gestures on document so both panning and pinch zoom require bubbling.
   }
   this.init();
  }
@@ -140,7 +139,7 @@ class XimengMap extends HTMLElement {
   const error=this.querySelector('.xm-map-error');if(!error)return;error.hidden=true;
   try{
    const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
-   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
+   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:this.mode==='normal',dragging:this.mode==='normal',touchZoom:this.mode==='normal',doubleClickZoom:this.mode==='normal',tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
    this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
    this.baseImage=drawOfflineBase(L,this.map,{world});
