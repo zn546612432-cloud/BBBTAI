@@ -10,11 +10,11 @@ const relevant=/喜欢|讨厌|害怕|记住|约好|答应|说好了|哥哥|圣�
 export function xitaiRelationshipContext(s,{mode='text'}={}){
  if(!taiRecognized(s))return '';
  const c=s.content.conversations.noapp?.find(x=>x.id==='tai');
- const history=visibleMessages(c||{messages:[]}).filter(m=>m?.actual!==false&&!m.demo&&m.day<=s.day&&m.kind!=='app_invitation'&&m.kind!=='image'&&(m.kind!=='call'||m.transcript)&&m.text);
+ const history=visibleMessages(c||{messages:[]}).filter(m=>m?.actual!==false&&!m.demo&&m.day<=s.day&&m.kind!=='app_invitation'&&m.kind!=='image'&&(m.kind!=='call'||m.transcript||m.callStatus==='ended')&&m.text);
  const recent=history.filter(m=>m.kind!=='call').slice(-16);
  const remembered=history.slice(0,-16).filter(m=>relevant.test(m.text)).slice(-8);
  const quotes=remembered.map(m=>'D'+m.day+' '+(m.from==='me'?'熙蒙':'熙泰')+'：'+String(m.voiceCaption||m.text).slice(0,140)).join('\n');
- const callEntry=history.filter(m=>m.kind==='call'&&m.transcript).at(-1);
+ const callEntry=history.filter(m=>m.kind==='call'&&(m.transcript||m.callStatus==='ended')).at(-1);
  const lastCall=callBridgeNote(callEntry,s);
  const lastUser=recent.filter(x=>x.from==='me').at(-1)?.text||'';
  let mood='基于对话自然选择反应，不强行提问。';
@@ -30,7 +30,7 @@ export function xitaiRelationshipContext(s,{mode='text'}={}){
   lastCall?(isRecentTaiCall(callEntry,s)?'刚打过的电话（真实发生，话题未结束时自然承接）：\n':'更早的通话原话（保留发生日期）：\n')+lastCall:'',
   recent.length?'最近已分享的生活与对话（含本人近况，须保持连续）：\n'+recent.map(m=>(m.from==='me'?'熙蒙':'熙泰')+'：'+String(m.voiceCaption||m.text).slice(0,240)).join('\n'):'',
   quotes?'较早的可核对聊天原话（不要改写成没发生的故事）：\n'+quotes:'',
-  mode==='call'?'这是正在进行的电话。你有自己的事情，可能忙、困、笑、沉默、反问；接通时可以简单说暂时不方便，但不主动交代具体行程；对方很久不说话可以追问或决定离开。不要持续扮演自动问答机。':
-   '这是即时消息。可以分开发多条真正独立的 messages；不要每条都尾随疑问句。也可以在意犹未尽时主动补充一句。'
+  mode==='call'?'这是正在进行的实时电话，当前所有玩家发言都来自正在连通的 NoApp 电话，不要说正在打字、刚挂电话或发文字消息。你可以多讲几段，也能真实决定结束通话。':
+   '这是即时文字消息，当前没有正在进行的电话。此前的通话已经真正结束，不可把玩家接着打字当成电话还在持续；只按真实挂断方和当前文字内容反应。可以多发有实际内容的消息，不必每句都反问。'
  ].filter(Boolean).join('\n\n');
 }
