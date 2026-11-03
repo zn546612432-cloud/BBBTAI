@@ -92,6 +92,7 @@ test('V2 call captions are not presented as delivered transcript until actual pl
   assert.equal(callState().turnCount,1,'only the new player message is committed before playback');
   players[0].finish();
   await waitFor(()=>callState().turnCount===2);
+  callAction('tai-expand',ctx);
   const transcript=callView(state);
   assert.match(transcript,/累了就先休息/);
   assert.doesNotMatch(transcript,/累了别费劲说话/);
