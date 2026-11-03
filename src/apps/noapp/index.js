@@ -54,7 +54,7 @@ function queueTaiReply(ctx,messageId){
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
- const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan').at(-1);
+ const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan'&&e.channel==='text').at(-1);
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
  +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label>'+aiParameterFields(c)
@@ -65,9 +65,9 @@ const setting=(s)=>{
  +ttsParameterFields(c)+'<p>这些参数用于之后新合成的电话与语音。默认冷静、原音调、1倍速；已生成的音频需重新合成才会改变。预设配音可单条覆盖。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
- +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近'+(latestTurn.channel==='call'?'电话':'文字')+'：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
+ +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近文字：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
- +behaviorSettings(taiBehavior(s),settingsDraft)
+ +behaviorSettings(taiBehavior(s),settingsDraft,s.events||[])
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
  +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
  +'<div class="tai-test-actions"><button type="button" data-action="tai-test-incoming">模拟熙泰来电</button><button type="button" data-action="tai-outgoing">给熙泰打电话</button></div>'
