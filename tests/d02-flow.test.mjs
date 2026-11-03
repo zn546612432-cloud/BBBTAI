@@ -42,7 +42,7 @@ test('D01 is unchanged; D02 seeds two ranked bounties, dated SMS and two WeChat 
  assert.match(sms.messages[0].text,/八折/);
  assert.equal(sms.messages[0].schedule.clock,'09:00');
  assert.equal(s.content.conversations.wechat.find(c=>c.id==='wang').messages.filter(m=>m.storyD02).length,6);
- assert.equal(s.content.conversations.wechat.find(c=>c.id==='xin').messages.filter(m=>m.storyD02).length,6);
+ assert.equal(s.content.conversations.wechat.find(c=>c.name==='小辛').messages.filter(m=>m.storyD02).length,6);
 });
 test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage submission and optional nonduplicating bonus',()=>{
  const s=phone(),opening=s.bankData.balance;
