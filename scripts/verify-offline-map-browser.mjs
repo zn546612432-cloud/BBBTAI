@@ -64,20 +64,23 @@ try{
    const touchStats=await page.evaluate(async()=>{
     const host=document.querySelector('xm-leaflet-map');
     const map=host?.map, canvas=host?.querySelector('.xm-map-tiles.leaflet-container');
-    if(!map||!canvas||typeof Touch!=='function'||typeof TouchEvent!=='function')
+    if(!map||!canvas||typeof Event!=='function')
       throw Error('Mobile touch APIs or Leaflet are unavailable');
     if(!map.dragging.enabled()||!map.touchZoom.enabled())
       throw Error('Map dragging or pinch zoom handler is disabled');
     const bounds=canvas.getBoundingClientRect(),cx=bounds.left+bounds.width/2,cy=bounds.top+bounds.height/2;
-    const touch=(id,x,y)=>new Touch({identifier:id,target:canvas,clientX:x,clientY:y,screenX:x,screenY:y,pageX:x,pageY:y});
+    // WebKit disallows constructing Touch objects from page JS. Use a
+    // standard bubbling Event with Touch-like properties; Leaflet consumes
+    // those same properties in its touch handler on every browser engine.
+    const touch=(id,x,y)=>({identifier:id,target:canvas,clientX:x,clientY:y,screenX:x,screenY:y,pageX:x,pageY:y});
     const fire=(type,points)=>{
      const list=points.map(p=>touch(...p));
-     return canvas.dispatchEvent(new TouchEvent(type,{
-      bubbles:true,cancelable:true,composed:true,
-      touches:type==='touchend'?[]:list,
-      targetTouches:type==='touchend'?[]:list,
-      changedTouches:list
-     }));
+     const active=type==='touchend'?[]:list;
+     const e=new Event(type,{bubbles:true,cancelable:true,composed:true});
+     Object.defineProperties(e,{
+      touches:{value:active},targetTouches:{value:active},changedTouches:{value:list}
+     });
+     return canvas.dispatchEvent(e);
     };
     const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     map.options.inertia=false;
