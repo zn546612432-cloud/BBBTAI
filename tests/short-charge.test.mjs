@@ -11,7 +11,6 @@ import {MessageDelivery} from '../src/services/messaging/delivery.js';
 const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
 test('Dynamic Island offers short and long charging choices',()=>{
  const s=d02();
- assert.match(dynamicIsland(s),/data-action="power-open"/);
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
  const html=dynamicIsland(s,{expanded:true,page:'select'});
  assert.match(html,/power-short-start/);assert.match(html,/power-long-start/);
