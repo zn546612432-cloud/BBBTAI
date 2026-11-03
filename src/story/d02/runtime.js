@@ -27,10 +27,11 @@ export function seedD02(s){
  ]){
   if(!s.content.orders.some(o=>o.id===id))s.content.orders.push({id,title:id===D02_S?'S 级委托':'A 级委托',owner,category:id===D02_S?'S':'A',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD',status:s.day===2?'OPEN':'EXPIRED',description:desc,storyD02:true,storyDay:2});
  }
- if(!s.content.notes.some(n=>n.id===D02_NOTE))s.content.notes.unshift({
+ if(!d.noteSeeded&&!s.content.notes.some(n=>n.id===D02_NOTE))s.content.notes.unshift({
   id:D02_NOTE,title:'电脑该换了',text:'服务器又不够用了。跑个任务风扇跟要起飞似的。\n想换台新电脑。CPU、显卡、内存、硬盘一块儿配好，别再东拼西凑。\n\n【添加提醒事项：攒一台新工作站】',
   createdDay:2,updatedDay:2,updatedClock:'09:05',storyD02:true
  });
+ d.noteSeeded=true;
  // SMS, brother and Xin conversations are real dated chat records, not global system popups.
  const sms=s.content.conversations.messages??(s.content.conversations.messages=[]);
  let shop=sms.find(c=>c.id==='sms-aodong-2025');if(!shop){shop={id:'sms-aodong-2025',name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
@@ -184,8 +185,17 @@ export function rebuildD02(s){
  seedD02(s);
  for(const master of [D02_S,D02_A]){
   const order=s.content.orders.find(o=>o.id===master);if(!order||order.status==='COMPLETED')continue;
-  order.status='COMPLETED';s.story55.d02.completed[master]=true;s.story55.d02.submitted[master]=true;
-  creditD02(s,master,D02_REWARDS[master],'-rebuild');
+  if(order.status==='OPEN'&&!acceptD02(s,master))throw Error('D02 委托重建接单失败：'+master);
+  if(master===D02_S&&!revealD02Key(s))throw Error('D02 委托重建密钥失败');
+  for(let i=0;i<D02_STAGES[master].length;i++){
+   const step=armD02Ghost(s,master,i);
+   if(!step)throw Error('D02 重建无法授权 GHOST 阶段');
+   s.ghost.orders[step].status='success';
+   s.ghost.orders[step].attempts=1;
+   s.ghost.orders[step].test=true;
+   s.ghost.history.unshift({id:step+':1',orderId:step,type:D02_STAGES[master][i],success:true,at:0,attempt:1,test:true,day:2});
+   onD02GhostWin(s,step);
+  }
+  if(!submitD02(s,master))throw Error('D02 重建无法提交委托：'+master);
  }
- s.story55.d02.keyOpened=true;
 }
