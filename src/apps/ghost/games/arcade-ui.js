@@ -1,12 +1,12 @@
 import {veilScanners} from './arcade.js';
-const action=(cmd,value,label,cls='',disabled=false)=>`<button type="button" class="gh-arcade-cell ${cls}" data-action="gh-arcade-${cmd}" data-value="${value}" aria-label="${label}" ${disabled?'disabled':''}>${label}</button>`;
+const action=(cmd,value,label,cls='',disabled=false,aria=label)=>`<button type="button" class="gh-arcade-cell ${cls}" data-action="gh-arcade-${cmd}" data-value="${value}" aria-label="${aria}" ${disabled?'disabled':''}>${label}</button>`;
 export function renderArcade(board,order,remaining){
  if(board.kind==='cipher'){
   const active=board.cells.filter(Boolean).length;
   return `<section class="gh-arcade" aria-label="破译网格">
     <div class="gh-arcade-status"><span>密钥矩阵 / 3×3</span><strong>${active} 个异常节点</strong></div>
     <p class="gh-arcade-help">点击节点会切换它和相邻四格的状态。将全部节点关闭即可破译。</p>
-    <div class="gh-arcade-matrix gh-arcade-cipher">${board.cells.map((v,i)=>action('tap',i,`节点 ${i+1} ${v?'开启':'关闭'}`,v?'active':'')).join('')}</div>
+    <div class="gh-arcade-matrix gh-arcade-cipher">${board.cells.map((v,i)=>action('tap',i,v?'●':'·',v?'active':'',false,`节点 ${i+1} ${v?'开启':'关闭'}`)).join('')}</div>
     <div class="gh-arcade-status"><span>已操作 ${board.steps} 次</span><span>目标：全部熄灭</span></div>
   </section>`;
  }
