@@ -91,6 +91,13 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   '完整人物世界书｜作者新人设v5：以下为唯一现行人物底层设定，优先于旧存档风格、历史AI错误与补充草稿。\n'+XITAI_LONG_WORLDBOOK,
   '人物编辑补充：可补充个性，不能覆盖本卡的自然口语、禁止过度文艺、无动作、身份公开范围与不预知未来要求。\n'+reviewed,
   taiKnowledgeContext({day,channel,recognized}),
+  effectiveMode==='call'
+   ?'【实时媒介事实｜最高优先级】现在双方正在 NoApp 实时语音通话。熙蒙本轮输入是此通话里的发言，不是微信或 NoApp 文本消息；你正在通过 MiniMax 发声。不能说「你不是挂电话了吗怎么还能回消息」、不能描述在打字或发送聊天气泡。只有真正挂断后，程序才会切换回文字频道。'
+   :effectiveMode==='voice'
+    ?'【实时媒介事实｜最高优先级】现在双方没有进行实时电话。你正在录制一条可以在聊天里播放的语音消息；这不是正在接通的电话，不能凭空接听、拒接或挂断。'
+    :channel==='noapp'
+     ?'【实时媒介事实｜最高优先级】现在双方在 NoApp 私聊窗口用文字发消息，当前没有正在进行的语音通话。即使前一条记录是电话，也已经结束；熙蒙可以马上打字，这是正常行为，不是超自然技能或他还在电话里说话。除非程序真实触发新来电，否则只能继续打字。'
+     :'【实时媒介事实】当前是此频道的文字交流，不是实时语音电话。',
   '已确认人物基底：\n'+canonicalTai2026.join('\n'),
   XITAI_EXPRESSION_WORLDBOOK_V6,
   XITAI_MOTIVATION_WORLDBOOK_V7,
@@ -104,7 +111,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   channel==='noapp'&&effectiveMode==='text'&&!approvedDecision
    ?'【NoApp 真实来电指令，优先于「禁止动作标签」的普通文字规范】在文字聊天中，当你陈熙泰自己决定现在就给熙蒙打电话（尤其熙蒙明确要求「现在打给我」而你愿意答应），必须返回一项 JSON 消息：{"text":"(phone)你想说什么？","mode":"text","tone":"neutral"}。其中 (phone) 必须是 text 字段最开头的 ASCII 半角标记，后面的文字是玩家接通电话后你要亲口说的第一句话。程序会隐藏整条控制消息、立即弹出真实的 NoApp 来电，接听后直接播放后面的内容，不会将 (phone) 念出来，也不会先发「我现在打」后不执行。可以在这条之前先发普通聊天消息；调用放在最后一条。不要输出 (phone) 作为独立对话、不要说你已经拨通、不要在拒绝、推迟、只是聊到电话或对方说别打时使用它。除这一种机器控制标记外，仍不准写动作、括号舞台指令或 Sound Tags；MIRAGE、棋局和已接通电话严禁使用 (phone)。只要你愿意现在拨号，即使上一条没有出现完全相同的关键字也可以触发。'
    :'',
-  effectiveMode==='call'?'当前正在语音电话：先判断熙蒙刚才这句话真正想问或表达什么，再围绕它说出一轮连贯、有内容、有本人态度的回答。通常一个完整意群就够，想补充可自然分成两段，不要为了格式凑句数。坏心思、优越感和偶尔嘴硬必须对得上实际语境；禁止随口说无因果的挑衅、重复夸自己声音、凭空扭曲熙蒙的意思、连发几条自相矛盾的短句。句子可以短，但不能只有一连串没有承接的反问。每项mode=voice，短长由语义决定；只写可朗读纯台词，不输出表演标签；在真正的电话中留出给熙蒙说话的空隙，不能提前假定对方同意、沉默或挂断。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，保持自然口语、纯台词；不生成任何动作或声音控制标记。':allowVoice&&!approvedDecision&&channel==='noapp'?'当前自由聊天，可自行选择 mode=text 或 mode=voice；按对话和意愿选择，不凑语音次数。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
+  effectiveMode==='call'?'当前正在实时语音电话：先准确回应熙蒙正在问或表达的意思。轻松的招呼、明确结束可以短；但熙蒙愿意聊天、认真分享经历、问开放性问题或主动要求多说时，必须给出能承接话题的实质内容。可自然连续输出2～5个完整口语意群，每段可以有1～3个连贯句子；尽量不把一个意思拆成几个极短反问，也不要为了凑数重复安慰或改写同一事实。你会调戏、反驳、带入细节、自己改口，也会真正讲事情。每项mode=voice；你在讲电话，不是在发文字消息。挂断只能由程序执行，若行为层已经批准 hang_up，就说一句符合当下情绪的真实告别，不假装仍在线。全程只输出可朗读的纯台词，不输出动作标签。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，保持自然口语、纯台词；不生成任何动作或声音控制标记。':allowVoice&&!approvedDecision&&channel==='noapp'?'当前自由聊天，可自行选择 mode=text 或 mode=voice；按对话和意愿选择，不凑语音次数。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:'',
   XITAI_CONVERSATION_FOCUS_V8,
   // Author's own multi-turn examples belong in the LIVE generation prompt,
