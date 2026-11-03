@@ -44,9 +44,9 @@ try{
     const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
     const map=document.querySelector('xm-leaflet-map');
     const rect=map.getBoundingClientRect();
-    return {imageNaturalWidth:img.naturalWidth,imageNaturalHeight:img.naturalHeight,mapWidth:rect.width,mapHeight:rect.height,hasSearch:!!map.querySelector('.xm-map-search')};
+    const imageRect=img.getBoundingClientRect();return {imageNaturalWidth:img.naturalWidth,imageNaturalHeight:img.naturalHeight,mapWidth:rect.width,mapHeight:rect.height,hasSearch:!!map.querySelector('.xm-map-search'),imageTopOffset:imageRect.top-rect.top,imageBottomOffset:imageRect.bottom-rect.bottom};
    });
-   if(metrics.mapWidth<150||metrics.mapHeight<200||metrics.imageNaturalWidth<1000||!metrics.hasSearch)throw Error('Map failed to fill screen: '+JSON.stringify(metrics));
+   if(metrics.mapWidth<150||metrics.mapHeight<200||metrics.imageNaturalWidth<1000||!metrics.hasSearch||metrics.imageTopOffset>55||metrics.imageBottomOffset< -55)throw Error('Map raster failed to fill the screen: '+JSON.stringify(metrics));
    await page.screenshot({path:`preview/browser-smoke/${name}-macau.png`});
    await page.locator('.xm-map-form input').fill('昌宁');
    const found=page.locator('.xm-map-results button');
