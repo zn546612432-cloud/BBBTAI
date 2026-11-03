@@ -3,6 +3,7 @@ import {taiBehaviorPrompt} from './behavior.js';
 import {XITAI_EXPRESSION_WORLDBOOK_V6} from './behavior-worldbook-v6.js';
 import {XITAI_MOTIVATION_WORLDBOOK_V7} from './character-motivations-v7.js';
 import {XITAI_CONVERSATION_FOCUS_V8} from './conversation-focus-v8.js';
+import {authorXitaiDialogueExamples} from './author-dialogue-examples.js';
 import {taiActionExpressionPrompt} from './action-protocol-v10.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {taiHumanPrompt} from './humanize.js';
@@ -106,6 +107,9 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   effectiveMode==='call'?'当前正在语音电话：先判断熙蒙刚才这句话真正想问或表达什么，再围绕它说出一轮连贯、有内容、有本人态度的回答。通常一个完整意群就够，想补充可自然分成两段，不要为了格式凑句数。坏心思、优越感和偶尔嘴硬必须对得上实际语境；禁止随口说无因果的挑衅、重复夸自己声音、凭空扭曲熙蒙的意思、连发几条自相矛盾的短句。句子可以短，但不能只有一连串没有承接的反问。每项mode=voice，短长由语义决定；只写可朗读纯台词，不输出表演标签；在真正的电话中留出给熙蒙说话的空隙，不能提前假定对方同意、沉默或挂断。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，保持自然口语、纯台词；不生成任何动作或声音控制标记。':allowVoice&&!approvedDecision&&channel==='noapp'?'当前自由聊天，可自行选择 mode=text 或 mode=voice；按对话和意愿选择，不凑语音次数。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:'',
   XITAI_CONVERSATION_FOCUS_V8,
+  // Author's own multi-turn examples belong in the LIVE generation prompt,
+  // not solely in human-readable docs; only post-recognition NoApp/Chess.
+  authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode}),
   approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):'',
   taiMomentumPrompt(messages,{mode:effectiveMode}),
   taiTurnShapePrompt(turnPlan)
