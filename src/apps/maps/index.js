@@ -1,5 +1,26 @@
 import {isStory55} from '../../services/story55/state.js';
 import {story55Map} from './features/story55/index.js';
-import {btn} from '../../system/ui.js';
+import {esc} from '../../system/ui.js';
+import {visiblePlaces} from './data/places.js';
 export const manifest={id:'maps',name:'地图',glyph:'⌖',tone:'#6c9f8d',defaultRoute:'/',supportsDeepLink:true,kicker:'MACAU'};
-export const render=({store}={},loc={})=>store&&isStory55(store.get())?story55Map(store.get(),loc):`<div class="page-pad"><div class="large-title">澳门</div><div class="map-canvas"><div class="water"></div><div class="road road-one"></div><div class="road road-two"></div><div class="map-label one">澳门半岛</div><div class="map-label two">氹仔</div><span class="map-marker">⌖</span></div><div class="muted-note">离线地图演示 · 暂无实时路线</div></div>`;
+
+// IMPORTANT: Do not import 4+ MB of map geometry until this app is opened.
+// Custom elements upgrade themselves when their module eventually loads.
+let mapLoading;
+function ensureMapLoaded(){
+ if(typeof window==='undefined'||customElements.get('xm-leaflet-map'))return;
+ mapLoading??=import('./leaflet.js').catch(error=>{mapLoading=null;console.error('离线地图加载失败',error);});
+}
+function mapFrame(places,loc={}){
+ const ids=places.map(p=>p.id).join(',');
+ const requested=loc?.params?.id||'';
+ const selected=places.some(p=>p.id===requested)?requested:'';
+ return '<section class="xm-maps-app" data-view-key="maps-normal"><xm-leaflet-map mode="normal" data-visible="'+esc(ids)+'" data-place="'+esc(selected)+'"></xm-leaflet-map></section>';
+}
+export const render=({store}={},loc={})=>{
+ const s=store?.get();
+ ensureMapLoaded();
+ // Preserve the D30 evidence card and prior Story55 /place route.
+ if(s&&isStory55(s)&&(loc.route==='/place'||loc.params?.area))return story55Map(s,loc);
+ return mapFrame(visiblePlaces(s),loc);
+};

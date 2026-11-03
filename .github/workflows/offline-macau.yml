@@ -1,0 +1,66 @@
+name: Generate offline Macau base map (preview branch only)
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/leaflet-apple-maps-preview-1103
+    paths:
+      - scripts/build-offline-macau.py
+      - scripts/build-offline-macau-preview.py
+      - src/system/preload.js
+      - src/main.js
+      - src/apps/maps/leaflet.js
+      - src/apps/maps/index.js
+      - index.html
+      - tests/preload-lockscreen.test.mjs
+      - .github/workflows/offline-macau.yml
+permissions:
+  contents: write
+concurrency:
+  group: offline-macau-preview
+  cancel-in-progress: false
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install offline vector converter
+        run: python -m pip install --disable-pip-version-check pyshp==2.3.1
+      - name: Fetch lawful vector extract and generate bundled GeoJSON
+        run: python scripts/build-offline-macau.py
+      - name: Generate one-file airplane-mode preview
+        run: python scripts/build-offline-macau-preview.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate map JavaScript and plot rules
+        run: |
+          node --check src/apps/maps/index.js
+          node --check src/apps/maps/leaflet.js
+          node --check src/apps/maps/data/places.js
+          node --check src/system/preload.js
+          node --test tests/maps-places.test.mjs
+      - name: Validate full phone Pages build (no main deployment)
+        run: |
+          npm ci
+          npm test
+          npm run build:pages
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Macau-offline-map-preview
+          path: preview/ximeng-macau-offline.html
+          retention-days: 14
+      - name: Commit only generated map data and test preview to preview branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/apps/maps/data/offline-macau-detail.js preview/ximeng-macau-offline.html
+          if ! git diff --cached --quiet; then
+            git commit -m "data(maps): update bundled Macau offline vectors [skip ci]"
+            git push origin HEAD:feat/leaflet-apple-maps-preview-1103
+          fi

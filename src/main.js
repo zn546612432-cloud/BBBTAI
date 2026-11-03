@@ -29,6 +29,7 @@ import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
+import {beginLockscreenPreload} from './system/preload.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
 import {dragOffset,nearestPage,pageTarget} from './system/pager.js';
@@ -67,6 +68,7 @@ const taiV10MobileReview=isTaiV10MobilePreview(location.pathname,location.search
 if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
 if(taiV10MobileReview)store.update(s=>prepareTaiV10MobilePreview(s));
 mountShell();
+let lockAssets=null;
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
@@ -208,6 +210,21 @@ function mountStory55Incoming(){
 }
 function requestUnlock(link=null){
  if(phoneBlocked(store.get())||lockscreen.stage!=='cover'||unlockingCover)return;
+ // Password keypad is deferred until the offline map engine and first-screen images
+ // are warm. Always release the gate after the startup deadline, even if an
+ // optional image failed: gameplay must never be permanently locked out.
+ if(lockAssets&&!lockAssets.isReady()){
+  unlockingCover=true;
+  const cover=$('.lock-screen');
+  if(cover){cover.style.transform='';cover.style.opacity='';}
+  const hint=$('#screen-layer .unlock-hint');
+  if(hint){hint.dataset.preparing='1';hint.textContent='正在准备地图和照片…';}
+  lockAssets.ready.then(()=>{
+   unlockingCover=false;
+   if(!store.get().unlocked&&lockscreen.stage==='cover'&&!phoneBlocked(store.get()))requestUnlock(link);
+  });
+  return;
+ }
  setShade({progress:0});
  const cover=$('.lock-screen');
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -281,6 +298,16 @@ function expandIsland(){
  islandExpanded=true;render();collapseIsland(8000);
 }
 store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
+ // Show the lock cover first. Decode heavyweight local map and shared images
+ // before the passcode can appear, without delaying the first lock-screen paint.
+ lockAssets=beginLockscreenPreload({
+  wallpaper:store.get().wallpaper,
+  onProgress:({finished,total,ready})=>{
+   const hint=$('#screen-layer .unlock-hint');
+   if(hint?.dataset.preparing==='1'&&!ready)hint.textContent='正在准备手机资源… '+Math.floor(100*finished/total)+'%';
+  }
+ });
+
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  const s=store.get();if(!phoneBlocked(s))return;
  const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off',finalOff=s.deathPhase==='s55-off';

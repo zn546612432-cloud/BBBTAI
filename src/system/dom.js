@@ -11,6 +11,8 @@ export function patchElement(old,fresh){
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
  if(old.tagName==='INPUT'){if(!focused&&!storyAnimating&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
  patchChildren(old,[...fresh.childNodes]);
+ // Leaflet owns its descendant DOM. Only synchronize host attributes.
+ if(old.tagName==='XM-LEAFLET-MAP')return;
  if(old.tagName==='SELECT'&&!focused)old.value=fresh.value;
 }
 function patchChildren(parent,children){

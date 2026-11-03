@@ -1,0 +1,147 @@
+import {OFFLINE_MACAU} from './data/offline-macau.js';
+import {OFFLINE_DETAILS} from './data/offline-macau-detail.js';
+import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
+// Native phone navigation and save data remain owned by the existing system.
+const MACAU=[22.19875,113.54387];
+let loader;
+let lastView={center:MACAU,zoom:12};
+function loadLeaflet(){
+ if(window.L)return Promise.resolve(window.L);
+ if(loader)return loader;
+ loader=new Promise((resolve,reject)=>{
+  if(!document.querySelector('link[data-xm-leaflet]')){
+   const link=document.createElement('link');link.rel='stylesheet';
+   link.href='/vendor/leaflet/leaflet.css';
+   link.dataset.xmLeaflet='1';document.head.append(link);
+  }
+  const script=document.createElement('script');script.src='/vendor/leaflet/leaflet.js';
+  script.onload=()=>window.L?resolve(window.L):reject(Error('Leaflet unavailable'));
+  script.onerror=()=>reject(Error('地图引擎加载失败'));document.head.append(script);
+ }).catch(error=>{loader=null;throw error;});
+ return loader;
+}
+// All geometry ships with the game: this renderer makes NO external tile requests.
+function drawOfflineBase(L,map,{world=false}={}){
+ if(world)return;
+ const source=[...(OFFLINE_MACAU.features||[]),...(OFFLINE_DETAILS.features||[])];
+ const order=['land','water','park','landuse','building','rail','road','road_major'];
+ const palette={
+  land:{color:'#c6d3c5',fillColor:'#f2f0e8',weight:1.3,fillOpacity:1},
+  water:{color:'#b5d4e5',fillColor:'#a9d4e8',weight:.5,fillOpacity:1},
+  park:{color:'#cde6c4',fillColor:'#d4e9c9',weight:.5,fillOpacity:.93},
+  landuse:{color:'#e5e8e3',fillColor:'#e9ece7',weight:.3,fillOpacity:.45},
+  building:{color:'#d4d8d5',fillColor:'#e0e2de',weight:.45,fillOpacity:.82},
+  rail:{color:'#91a3a0',weight:2,opacity:.85,dashArray:'4 4'},
+  road:{color:'#ffffff',weight:2.1,opacity:1},
+  road_major:{color:'#f7f1d8',weight:4.3,opacity:1}
+ };
+ const renderer=L.canvas({padding:.35});
+ for(const kind of order){
+  const items=source.filter(feature=>feature?.properties?.kind===kind);
+  if(!items.length)continue;
+  const layer=L.geoJSON({type:'FeatureCollection',features:items},{interactive:false,renderer,style:()=>palette[kind]});
+  layer.addTo(map);
+ }
+ map.attributionControl.addAttribution('<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a>');
+}
+// When called on the lock cover, all local Macau geometry is already parsed by this module import.
+// This also fetches the locally vendored Leaflet runtime before the keypad appears.
+export const prewarmOfflineMap=()=>loadLeaflet();
+const safeText=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function pinIcon(kind){
+ return window.L.divIcon({className:'xm-map-pin'+(kind==='fictional'?' is-fictional':''),html:'<span></span>',iconSize:[24,30],iconAnchor:[12,29]});
+}
+class XimengMap extends HTMLElement {
+ static get observedAttributes(){return ['data-visible','data-place','area'];}
+ attributeChangedCallback(name){
+  if(!this.map)return;
+  if(this.mode==='normal')this.refreshPlaces();
+  else if(name==='area')this.map.setView(this.getAttribute('area')==='WORLD'?[28,10]:MACAU,this.getAttribute('area')==='WORLD'?2:11,{animate:false});
+ }
+ connectedCallback(){
+  this.alive=true;this.mode=this.getAttribute('mode')||'normal';
+  this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
+  this.querySelector('.xm-map-error button').addEventListener('click',()=>this.init());
+  if(this.mode==='normal'){
+   this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
+   this.querySelector('input').addEventListener('input',()=>this.showSearch());
+   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(MACAU,12,{duration:.6}));
+   // Do not turn a map drag into the phone's horizontal page-swipe gesture.
+   this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+   this.querySelector('.xm-map-tiles').addEventListener('pointermove',e=>e.stopPropagation());
+  }
+  this.init();
+ }
+ disconnectedCallback(){
+  this.alive=false;this.observer?.disconnect();
+  if(this.map){
+   if(this.mode==='normal'){const p=this.map.getCenter();lastView={center:[p.lat,p.lng],zoom:this.map.getZoom()};}
+   this.map.remove();this.map=null;
+  }
+ }
+ getPlaces(){
+  const allowed=(this.getAttribute('data-visible')||'').split(',').filter(Boolean);
+  return MAP_PLACES.filter(p=>allowed.includes(p.id));
+ }
+ showSearch(){
+  const input=this.querySelector('input');if(!input)return;
+  const query=input.value.trim(),result=this.querySelector('.xm-map-results');
+  const found=searchPlaces(query,this.getPlaces());
+  result.hidden=!query;result.replaceChildren();
+  if(query&&!found.length)result.textContent='没有找到已解锁的地点';
+  for(const p of found){
+   const button=document.createElement('button');button.type='button';
+   button.textContent=p.name+(p.kind==='fictional'?' · 剧情地点':'');
+   button.addEventListener('click',()=>{this.selectPlace(p.id);result.hidden=true;input.blur();});
+   result.append(button);
+  }
+ }
+ selectPlace(id){
+  const p=this.getPlaces().find(place=>place.id===id);
+  if(!p||!this.map)return;
+  this.map.flyTo([p.lat,p.lng],Math.max(this.map.getZoom(),15),{duration:.6});
+  this.markers?.get(p.id)?.openPopup();
+  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(p.name)+'</b><span>'+(p.kind==='fictional'?'虚构剧情地点 · 位置仅为示意':safeText(p.description))+'</span>';
+ }
+ refreshPlaces(){
+  if(!this.map||this.mode!=='normal')return;
+  if(!this.markers)this.markers=new Map();
+  const available=this.getPlaces(),ids=new Set(available.map(p=>p.id));
+  for(const [id,marker] of this.markers)if(!ids.has(id)){marker.remove();this.markers.delete(id);}
+  for(const p of available){
+   if(this.markers.has(p.id))continue;
+   const title=safeText(p.name),note=p.kind==='fictional'?'虚构剧情地点 · 非真实地址 · 不提供导航':safeText(p.description);
+   const marker=window.L.marker([p.lat,p.lng],{icon:pinIcon(p.kind)}).addTo(this.map)
+    .bindPopup('<strong>'+title+'</strong><div>'+note+'</div>');
+   marker.on('click',()=>{this.querySelector('.xm-map-bottom').innerHTML='<b>'+title+'</b><span>'+note+'</span>';});
+   this.markers.set(p.id,marker);
+  }
+  const requested=this.getAttribute('data-place');
+  if(requested&&requested!==this.selectedId){this.selectedId=requested;requestAnimationFrame(()=>this.selectPlace(requested));}
+  this.showSearch();
+ }
+ async init(){
+  const error=this.querySelector('.xm-map-error');if(!error)return;error.hidden=true;
+  try{
+   const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
+   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
+   const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
+   this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
+   drawOfflineBase(L,this.map,{world});
+   if(this.mode==='normal')this.refreshPlaces();
+   else{
+    // Story55 screen buttons use original x/y positions and existing story actions.
+    this.map.dragging.disable();this.map.touchZoom.disable();this.map.doubleClickZoom.disable();this.map.boxZoom.disable();this.map.keyboard.disable();
+   }
+   this.observer=new ResizeObserver(()=>this.map?.invalidateSize({pan:false,animate:false}));
+   this.observer.observe(this);
+   requestAnimationFrame(()=>this.map?.invalidateSize({pan:false,animate:false}));
+  }catch(e){if(this.alive&&this.isConnected)error.hidden=false;console.warn('Ximeng map:',e);}
+ }
+}
+if(!customElements.get('xm-leaflet-map'))customElements.define('xm-leaflet-map',XimengMap);
+export function mapHtml(places,loc={}){
+ const ids=places.map(p=>p.id).join(',');
+ const selected=locationById(loc.params?.id)&&places.some(p=>p.id===loc.params.id)?loc.params.id:'';
+ return '<section class="xm-maps-app" data-view-key="maps-normal"><xm-leaflet-map mode="normal" data-visible="'+safeText(ids)+'" data-place="'+safeText(selected)+'"></xm-leaflet-map></section>';
+}
