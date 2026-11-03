@@ -13,7 +13,7 @@ export const AODONG_PRODUCTS=[
 ];
 const CATS={cpu:'处理器',motherboard:'主板',gpu:'显卡',ram:'内存',ssd:'固态硬盘',psu:'电源',cooler:'散热',case:'机箱'};
 export const aodongSale=s=>s.story55?.version===1&&s.day>=2&&s.day<=13;
-export const aodongPrice=(s,p)=>Math.round(p.price*(aodongSale(s)?.8:1)*100)/100;
+export const aodongPrice=(s,p)=>Math.round(p.price*(aodongSale(s) ? 0.8 : 1)*100)/100;
 const cash=v=>'$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const data=s=>s.story55?.d02||{};
 const cartRows=s=>(data(s).cart||[]).map(row=>({row,p:AODONG_PRODUCTS.find(p=>p.id===row.id)})).filter(x=>x.p);
