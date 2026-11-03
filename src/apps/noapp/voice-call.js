@@ -137,33 +137,61 @@ export function startOutgoing(ctx){
 // A blocked play keeps this segment pending. Only its completion allows the
 // next caption/track; hanging up resolves and cancels the pending segment.
 let finishSegment=null;
-async function playCallAudio(ctx,blob,sessionId){
- if(call.sessionId!==sessionId||call.state!=='connected')return;
+// Generated text is NOT a completed utterance until the audio ended event.
+async function playCallAudio(ctx,blob,sessionId,revision){
+ if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision)return 'interrupted';
  playback??=createGestureAudio();
  if(!playback)throw Error('此设备不能播放音频');
  const audio=playback;
  audio.pause();
- if(audio.src.startsWith('blob:'))URL.revokeObjectURL(audio.src);
- audio.src=URL.createObjectURL(blob);audio.muted=!call.speaker;
- await new Promise(resolve=>{
+ if(audio.src?.startsWith('blob:'))URL.revokeObjectURL(audio.src);
+ audio.src=URL.createObjectURL(blob);
+ audio.muted=!call.speaker;
+ return new Promise(resolve=>{
   let settled=false;
-  const finish=()=>{
+  const finish=(outcome='completed')=>{
    if(settled)return;settled=true;
-   audio.removeEventListener('ended',finish);audio.removeEventListener('error',failed);
+   audio.removeEventListener('ended',ended);
+   audio.removeEventListener('error',failed);
    if(finishSegment===finish)finishSegment=null;
-   if(call.sessionId===sessionId){call.audioReady=false;call.lastTaiEndAt=Date.now();}
-   resolve();
+   if(call.sessionId===sessionId){
+    call.audioReady=false;
+    if(outcome==='completed')call.lastTaiEndAt=Date.now();
+   }
+   resolve(outcome);
   };
-  const failed=()=>{ctx.toast('这段语音未能播放，请点「继续收听」重试。');call.audioReady=true;ctx.refresh();};
+  const ended=()=>finish('completed');
+  const failed=()=>{
+   if(settled||call.sessionId!==sessionId||call.revision!==revision)return;
+   call.audioReady=true;
+   ctx.toast?.('本段语音未能播放，请点「继续收听」重试。');
+   ctx.refresh?.();
+  };
   finishSegment=finish;
-  audio.addEventListener('ended',finish,{once:true});audio.addEventListener('error',failed);
-  Promise.resolve(audio.play()).then(()=>{
-   if(call.sessionId!==sessionId||call.state!=='connected'){audio.pause();finish();}
-  }).catch(()=>{
-   if(call.sessionId!==sessionId||call.state!=='connected'){finish();return;}
-   call.audioReady=true;ctx.refresh();
-  });
+  audio.addEventListener('ended',ended,{once:true});
+  audio.addEventListener('error',failed);
+  Promise.resolve().then(()=>audio.play()).then(()=>{
+   if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision){
+    audio.pause();finish('interrupted');
+   }
+  }).catch(failed);
  });
+}
+function interruptCallTurn(ctx,source='player'){
+ if(call.state!=='connected')return false;
+ const active=call.busy||!!call.audioReady||!!(playback&&!playback.paused);
+ if(!active||!taiBehavior(ctx.store.get()).callInterrupt)return false;
+ call.revision=(call.revision||0)+1;
+ playback?.pause();
+ finishSegment?.('interrupted');
+ call.caption='';call.audioReady=false;call.busy=false;
+ call.lastTaiEndAt=Date.now();call.nudgeCount=0;
+ ctx.store.update(s=>{
+  s.events??=[];
+  s.events.push({type:'tai_call_v2_interrupt',sessionId:call.sessionId,source,day:s.day,clock:s.clock,at:Date.now()});
+ });
+ ctx.refresh?.();
+ return true;
 }
 export function callScene({opening=false,event='',direction='outgoing',reason=''}={}){
  if(opening&&direction==='incoming'&&reason.startsWith('【刚才的通话约定】'))return '你是陈熙泰，电话现在已接通。刚才是熙蒙主动请求听你说话，你也明确答应现在拨号。'+reason+' 这是你兑现承诺的第一句话，不要说自己又准备打电话、不问他为什么打给你，不要没来由地夸自己的声音或发明他刚说的话。可以先短短逗他一句，再关心他在做什么，留给他接话的空隙。';
@@ -270,7 +298,14 @@ function startGreeting(ctx){
 }
 export function submitCall(form,ctx){
  if(form.dataset.form!=='tai-call-turn')return false;
- const text=String(new FormData(form).get('text')||'').trim();if(text)respond(text,ctx);
+ const text=String(new FormData(form).get('text')||'').trim();
+ if(text){
+  if(call.busy||call.audioReady||playback&&!playback.paused){
+   if(!taiBehavior(ctx.store.get()).callInterrupt){ctx.toast?.('等熙泰说完再输入');return true;}
+   interruptCallTurn(ctx,'text');
+  }
+  void respond(text,ctx);
+ }
  return true;
 }
 export function callAction(action,ctx){
@@ -287,7 +322,7 @@ export function callAction(action,ctx){
   callSerial++;call={state:'ended',sessionId:callSerial,direction:previous.direction,muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
   if(activeRecognition){activeRecognition.abort?.();activeRecognition=null;}
   if(recording?.call){recording.recorder._cancelled=true;recording.recorder.stop();recording=null;}
-  finishSegment?.();
+  finishSegment?.('interrupted');
   if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);playback=null;}
   ctx.store.update(s=>{
    if(previous.notificationId)s.notifications=s.notifications.filter(n=>n.id!==previous.notificationId);
@@ -311,8 +346,12 @@ export function callAction(action,ctx){
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
   // iOS lowers or interrupts remote audio when a new mic audio session opens.
-  // Keep the call half-duplex: no microphone capture until Xitai finishes.
-  if(call.busy||call.requestingMic||playback&&!playback.paused){ctx.toast('等熙泰说完，再按麦克风。');return true;}
+  // A microphone gesture interrupts the current reply before starting iOS half-duplex capture.
+  if(call.requestingMic){ctx.toast('正在请求麦克风权限');return true;}
+   if(call.busy||call.audioReady||playback&&!playback.paused){
+    if(!taiBehavior(ctx.store.get()).callInterrupt){ctx.toast('等熙泰说完，再按麦克风。');return true;}
+    interruptCallTurn(ctx,'microphone');
+   }
   if(call.muted){ctx.toast('解除静音后再说话');return true;}
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(navigator.mediaDevices?.getUserMedia&&globalThis.MediaRecorder){
