@@ -11,6 +11,7 @@ import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {PhoneStore,isPreview} from './services/storage.js';
 import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
+import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
 import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {mountCallEvents} from './apps/noapp/index.js';
@@ -65,8 +66,10 @@ try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
 const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
 const taiV10MobileReview=isTaiV10MobilePreview(location.pathname,location.search,isPreview);
+const noappV2Review=isNoAppV2Review(location.pathname,location.search,isPreview);
 if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
 if(taiV10MobileReview)store.update(s=>prepareTaiV10MobilePreview(s));
+if(noappV2Review)store.update(s=>prepareNoAppV2Review(s));
 mountShell();
 let lockAssets=null;
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
@@ -74,7 +77,7 @@ const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
-if(store.get().unlocked&&!story55Review&&!taiV10MobileReview)store.update(s=>{s.unlocked=false;});
+if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
