@@ -54,7 +54,7 @@ function queueTaiReply(ctx,messageId){
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft};
- const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan').at(-1);
+ const latestTurn=(s.events||[]).filter(e=>e.type==='tai_v12_turn_plan'&&e.channel==='text').at(-1);
  return '<div class="tai-api-setup"><h2>AI 接口 · 私人调试</h2><p>三个 App 共用 DeepSeek；只有 NoApp 能调用 MiniMax 配音。API Key 只保存在这个浏览器标签页的 sessionStorage；不会提交至 GitHub，不会导出到游戏存档。</p>'
  +'<form data-form="tai-save-ai"><label>DeepSeek API Key<input type="password" name="deepseek" autocomplete="off" placeholder="sk-…" value="'+esc(c.deepseek||'')+'"></label>'
  +'<label>DeepSeek 模型<select name="model">'+DEEPSEEK_MODELS.map(m=>'<option value="'+m.id+'"'+(c.model===m.id?' selected':'')+'>'+esc(m.label)+'</option>').join('')+'</select></label>'+aiParameterFields(c)
@@ -65,16 +65,16 @@ const setting=(s)=>{
  +ttsParameterFields(c)+'<p>这些参数用于之后新合成的电话与语音。默认冷静、原音调、1倍速；已生成的音频需重新合成才会改变。预设配音可单条覆盖。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
- +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近'+(latestTurn.channel==='call'?'电话':'文字')+'：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
+ +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近文字：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
- +behaviorSettings(taiBehavior(s),settingsDraft)
+ +behaviorSettings(taiBehavior(s),settingsDraft,s.events||[])
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
  +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
  +'<div class="tai-test-actions"><button type="button" data-action="tai-test-incoming">模拟熙泰来电</button><button type="button" data-action="tai-outgoing">给熙泰打电话</button></div>'
  +'<label>测试语音台词<textarea name="testSpeech" rows="3" placeholder="例如：嗯？你还没睡？">'+esc(settingsDraft.testSpeech||'嗯？你还没睡？我还以为你终于肯休息了。')+'</textarea></label>'
  +'<label>语音情绪<select name="testTone">'+['neutral','dry','playful','soft','serious'].map(v=>'<option value="'+v+'"'+(settingsDraft.testTone===v?' selected':'')+'>'+v+'</option>').join('')+'</select></label>'
  +'<button type="button" data-action="tai-test-voice">让熙泰发语音</button></section>'
- +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/fix/xitai-system-card-v5-20261031/docs/XITAI_CHARACTER_CARD_V5.md" target="_blank" rel="noopener noreferrer">阅读熙泰专属人设 v5 与接入说明</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
+ +'<button data-action="tai-clear-ai" type="button">清除当前会话 Key</button><div class="tai-worldbook-links"><strong>人物、示例与声音世界书 · 已接入</strong><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/fix/noapp-call-v2-interrupt-dedupe-20261103/src/services/ai/author-dialogue-examples.js" target="_blank" rel="noopener noreferrer">查看你提供的真实多轮对话示例 · 已注入 DeepSeek（相认后）</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/fix/xitai-system-card-v5-20261031/docs/XITAI_CHARACTER_CARD_V5.md" target="_blank" rel="noopener noreferrer">阅读熙泰专属人设 v5 与接入说明</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/apps/noapp/worldbook/voice-worldbook-v3-original.md" target="_blank" rel="noopener noreferrer">阅读你上传的 16 页语音世界书原文</a><a href="https://github.com/zn546612432-cloud/BBBTAI/blob/main/src/services/voice/voice-regex.js" target="_blank" rel="noopener noreferrer">查看运行中的正则与 Sound Tag 处理</a></div><p>浏览器平台若拒绝跨域请求，需要服务端代理。本页面不会为你把私钥写入公开代码；语音通话是 AI 轮流发言，不是系统电话或后台 VoIP。</p></div>';
 };
 function noappGate(s){
  const invited=completed(s,'invite');
