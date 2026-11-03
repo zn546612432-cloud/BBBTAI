@@ -33,10 +33,11 @@ export function behaviorSettings(saved,draft={},events=[]){
  ${number('callCloseSeconds','追问后再沉默多久，他可以告别挂断',20,600)}
  </details>
  <details open><summary>NoApp V2 · 动态通话</summary>
- <p>电话仅生成一轮完整答复，分段朗读，不再为凑足语音条数额外请求 AI。熙蒙按麦克风或发文字可打断；只将完整播放的段落记入正式通话记忆。</p>
+ <p>电话只生成一轮完整答复，按内容自然分 1–5 段朗读；较深入的话题可以讲几段，每段不必只有一句。明确要求熙泰挂断时，他会告别并真正结束通话。熙蒙按麦克风或发文字可打断，只记录实际说出的内容。</p>
  <label class="tai-test-toggle"><input type="checkbox" name="behavior_callDedupe" ${c.callDedupe?'checked':''}> 启用语义重复防护</label>
  <label class="tai-test-toggle"><input type="checkbox" name="behavior_callInterrupt" ${c.callInterrupt?'checked':''}> 允许文字与麦克风打断</label>
  ${number('callMaxSegments','每轮最多播放几段',1,5,'段')}
+ ${select('callDetail','通话表达深度',[['detailed','丰富（深入聊时 2–5 段）'],['natural','自然（适度展开）'],['brief','简短（主要 1–2 段）']])}
  ${select('callIdleMode','沉默模式',[['natural','自然判断（推荐）'],['active','更主动'],['quiet','更安静']])}
  ${number('callQuietSeconds','熙蒙要求安静后至少等待',30,900)}
  <p>仅当前通话有效；系统会阻止旧请求返回后继续播放。最近 ${recent.length} 轮通话里过滤了 ${count} 段重复或不完整内容。</p>
