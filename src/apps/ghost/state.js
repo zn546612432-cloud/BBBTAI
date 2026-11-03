@@ -50,7 +50,7 @@ export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id]
  const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);
  // Keep the old board fields for existing story contracts and saved fixtures.
  // New attempts use the playable arcade engine; pre-existing attempts resume their old UI.
- if(['cipher','extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false){
+ if(['extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false){
   o.board.arcade=createArcadeBoard(o.type);
   if(o.type==='strike')o.deadline=now+Math.max(30000,Number.isFinite(cfg.seconds)&&cfg.seconds>0?cfg.seconds*1000:cfg.attackMs*6);
  }
