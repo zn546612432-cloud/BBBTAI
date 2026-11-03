@@ -1,3 +1,5 @@
+import {OFFLINE_MACAU} from './data/offline-macau.js';
+import {OFFLINE_DETAILS} from './data/offline-macau-detail.js';
 import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
 // Native phone navigation and save data remain owned by the existing system.
 const MACAU=[22.19875,113.54387];
@@ -9,14 +11,38 @@ function loadLeaflet(){
  loader=new Promise((resolve,reject)=>{
   if(!document.querySelector('link[data-xm-leaflet]')){
    const link=document.createElement('link');link.rel='stylesheet';
-   link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+   link.href='/vendor/leaflet/leaflet.css';
    link.dataset.xmLeaflet='1';document.head.append(link);
   }
-  const script=document.createElement('script');script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  script.crossOrigin='anonymous';script.onload=()=>window.L?resolve(window.L):reject(Error('Leaflet unavailable'));
+  const script=document.createElement('script');script.src='/vendor/leaflet/leaflet.js';
+  script.onload=()=>window.L?resolve(window.L):reject(Error('Leaflet unavailable'));
   script.onerror=()=>reject(Error('地图引擎加载失败'));document.head.append(script);
  }).catch(error=>{loader=null;throw error;});
  return loader;
+}
+// All geometry ships with the game: this renderer makes NO external tile requests.
+function drawOfflineBase(L,map,{world=false}={}){
+ if(world)return;
+ const source=[...(OFFLINE_MACAU.features||[]),...(OFFLINE_DETAILS.features||[])];
+ const order=['land','water','park','landuse','building','rail','road','road_major'];
+ const palette={
+  land:{color:'#c6d3c5',fillColor:'#f2f0e8',weight:1.3,fillOpacity:1},
+  water:{color:'#b5d4e5',fillColor:'#a9d4e8',weight:.5,fillOpacity:1},
+  park:{color:'#cde6c4',fillColor:'#d4e9c9',weight:.5,fillOpacity:.93},
+  landuse:{color:'#e5e8e3',fillColor:'#e9ece7',weight:.3,fillOpacity:.45},
+  building:{color:'#d4d8d5',fillColor:'#e0e2de',weight:.45,fillOpacity:.82},
+  rail:{color:'#91a3a0',weight:2,opacity:.85,dashArray:'4 4'},
+  road:{color:'#ffffff',weight:2.1,opacity:1},
+  road_major:{color:'#f7f1d8',weight:4.3,opacity:1}
+ };
+ const renderer=L.canvas({padding:.35});
+ for(const kind of order){
+  const items=source.filter(feature=>feature?.properties?.kind===kind);
+  if(!items.length)continue;
+  const layer=L.geoJSON({type:'FeatureCollection',features:items},{interactive:false,renderer,style:()=>palette[kind]});
+  layer.addTo(map);
+ }
+ map.attributionControl.addAttribution('<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a>');
 }
 const safeText=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function pinIcon(kind){
@@ -31,7 +57,7 @@ class XimengMap extends HTMLElement {
  }
  connectedCallback(){
   this.alive=true;this.mode=this.getAttribute('mode')||'normal';
-  this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>轻扫地图探索地点</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
+  this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
   this.querySelector('.xm-map-error button').addEventListener('click',()=>this.init());
   if(this.mode==='normal'){
    this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
@@ -95,12 +121,10 @@ class XimengMap extends HTMLElement {
   const error=this.querySelector('.xm-map-error');if(!error)return;error.hidden=true;
   try{
    const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
-   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5});
+   this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:false,tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
    this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
-   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-   }).addTo(this.map);
+   drawOfflineBase(L,this.map,{world});
    if(this.mode==='normal')this.refreshPlaces();
    else{
     // Story55 screen buttons use original x/y positions and existing story actions.
