@@ -11,6 +11,7 @@ import {MessageDelivery} from '../src/services/messaging/delivery.js';
 const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
 test('Dynamic Island offers short and long charging choices',()=>{
  const s=d02();
+ assert.match(dynamicIsland(s),/data-action="power-open"/);
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
  const html=dynamicIsland(s,{expanded:true,page:'select'});
  assert.match(html,/power-short-start/);assert.match(html,/power-long-start/);
@@ -62,6 +63,8 @@ test('D01 cannot skip overnight with short charge and D55 ending is protected',(
  assert.equal(beginShortCharge(s),true);
  assert.equal(advanceGameMinutes(s,120).event,'short-charge-end');
  assert.equal(s.day,1);assert.equal(s.clock,'23:59');
+ s.story55.d01.nightAfterMidnight=true;s.clock='00:30';
+ assert.equal(beginShortCharge(s),false,'D01 after midnight remains under the original lock');
  const last=d02();last.day=55;last.story55.ended=true;
  assert.equal(beginShortCharge(last),false);
 });
