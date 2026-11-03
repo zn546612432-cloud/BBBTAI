@@ -9,7 +9,13 @@ export const AODONG_PRODUCTS=[
  {id:'ad-ssd',category:'ssd',name:'Samsung 990 PRO 4TB',spec:'NVMe · PCIe 4.0',price:339,icon:'▰'},
  {id:'ad-psu',category:'psu',name:'Corsair RM1000x 1000W',spec:'80 PLUS Gold',price:169,icon:'◉'},
  {id:'ad-cooler',category:'cooler',name:'Noctua NH-D15 G2',spec:'AM5 双塔风冷',price:149,icon:'❄'},
- {id:'ad-case',category:'case',name:'Fractal Design Define 7',spec:'ATX · 静音机箱',price:189,icon:'▧'}
+ {id:'ad-case',category:'case',name:'Fractal Design Define 7',spec:'ATX · 静音机箱',price:189,icon:'▧'},
+ {id:'ad-cpu-9900',category:'cpu',name:'AMD Ryzen 9 9900X',spec:'12核24线程 · AM5 · 性价比方案',price:399,icon:'◈'},
+ {id:'ad-gpu-5080',category:'gpu',name:'GeForce RTX 5080 16GB',spec:'16GB GDDR7 · 高端图形工作站',price:1399,icon:'▣'},
+ {id:'ad-ram-96',category:'ram',name:'DDR5 96GB 5600MHz (2×48)',spec:'大容量双通道 · 多虚拟机',price:299,icon:'▥'},
+ {id:'ad-ssd-2',category:'ssd',name:'WD BLACK SN850X 2TB',spec:'NVMe PCIe 4.0 · 2TB',price:189,icon:'▰'},
+ {id:'ad-psu-1200',category:'psu',name:'Seasonic VERTEX GX-1200',spec:'1200W 80 PLUS Gold',price:219,icon:'◉'},
+ {id:'ad-aio',category:'cooler',name:'Arctic Liquid Freezer III 360',spec:'360mm 水冷 · AM5',price:169,icon:'❄'}
 ];
 const CATS={cpu:'处理器',motherboard:'主板',gpu:'显卡',ram:'内存',ssd:'固态硬盘',psu:'电源',cooler:'散热',case:'机箱'};
 export const aodongSale=s=>s.story55?.version===1&&s.day>=2&&s.day<=13;
@@ -36,7 +42,7 @@ export function renderAodong(s,loc){
    (cartRows(s).length?cartRows(s).map(({p,row})=>'<div class="aod-row"><i>'+p.icon+'</i><div><strong>'+esc(p.name)+'</strong><p>'+esc(CATS[p.category])+'</p><b>'+cash(aodongPrice(s,p)*row.qty)+'</b></div><div class="aod-qty"><button data-action="browser-aodong-minus" data-id="'+p.id+'">−</button>'+row.qty+'<button data-action="browser-aodong-add" data-id="'+p.id+'">+</button></div></div>').join(''):'<p class="aod-empty">购物车还是空的</p>')+
    '<div class="aod-checkout"><p><span>折后合计</span><strong>'+cash(cartTotal(s))+'</strong></p><p><span>银行可用余额</span><span>'+cash(s.bankData?.balance)+'</span></p><button data-action="browser-aodong-pay">确认购买（游戏内交易）</button></div>';
  }else{
-  body=hdr()+'<div class="aod-hero"><small>MAY TECH FESTIVAL · 2025</small><h1>五月澳东<br>电脑数码打八折</h1><p>精选硬件 · 本地到货 · '+(aodongSale(s)?'活动进行中':'活动已结束')+'</p><p><strong>8折</strong>　电子产品专场</p></div><div class="aod-pills">'+Object.values(CATS).map(label=>'<span class="aod-pill">'+label+'</span>').join('')+'</div><div class="aod-progress">工作站配件已购齐 <b>'+owned.size+'/'+D02_PARTS.length+'</b>　'+(d02CompleteBuild(s)?'✓ 可以去提醒事项划掉任务':'还差 '+(D02_PARTS.length-owned.size)+' 类')+'</div><div class="aod-section">热门配置 <small>· 2025 年剧情价</small></div><div class="aod-products">'+AODONG_PRODUCTS.map(p=>'<article class="aod-card"><div class="aod-visual"><small>官方促销</small><b>'+p.icon+'</b></div><h3>'+esc(p.name)+'</h3><p>'+esc(p.spec)+'</p><div class="aod-pricing"><span class="aod-price">'+cash(aodongPrice(s,p))+'</span><s class="aod-was">'+cash(p.price)+'</s></div><button class="aod-buy '+(owned.has(p.category)?'aod-sold':'')+'" data-action="browser-aodong-add" data-id="'+p.id+'">'+(owned.has(p.category)?'已购买 · 再加购':'加入购物车 +')+'</button></article>').join('')+'</div><p class="aod-foot">虚构店铺 · 价格仅供游戏剧情使用<br>所有购买均为游戏模拟，不会发生真实付款。</p>';
+  body=hdr()+'<div class="aod-hero"><small>MAY TECH FESTIVAL · 2025</small><h1>五月澳东<br>电脑数码打八折</h1><p>精选硬件 · 本地到货 · '+(aodongSale(s)?'活动进行中':'活动已结束')+'</p><p><strong>8折</strong>　电子产品专场</p></div><div class="aod-pills">'+Object.values(CATS).map(label=>'<span class="aod-pill">'+label+'</span>').join('')+'</div><div class="aod-progress">工作站配件已购齐 <b>'+owned.size+'/'+D02_PARTS.length+'</b>　'+(d02CompleteBuild(s)?'✓ 可以去提醒事项划掉任务':'还差 '+(D02_PARTS.length-owned.size)+' 类')+'</div><div class="aod-progress"><b>推荐配置</b> · 平衡型：9950X / X870E / 5070 Ti / 64GB / 4TB，整机原价 $2,782，活动价 $2,225.60；性能型可选 RTX 5080 与 96GB 内存。所有处理器及主板均为 AM5 平台。</div><div class="aod-section">热门配置 <small>· 2025 年剧情价</small></div><div class="aod-products">'+AODONG_PRODUCTS.map(p=>'<article class="aod-card"><div class="aod-visual"><small>官方促销</small><b>'+p.icon+'</b></div><h3>'+esc(p.name)+'</h3><p>'+esc(p.spec)+'</p><div class="aod-pricing"><span class="aod-price">'+cash(aodongPrice(s,p))+'</span><s class="aod-was">'+cash(p.price)+'</s></div><button class="aod-buy '+(owned.has(p.category)?'aod-sold':'')+'" data-action="browser-aodong-add" data-id="'+p.id+'">'+(owned.has(p.category)?'已购买 · 再加购':'加入购物车 +')+'</button></article>').join('')+'</div><p class="aod-foot">虚构店铺 · 价格仅供游戏剧情使用<br>所有购买均为游戏模拟，不会发生真实付款。</p>';
  }
  return '<div class="aod">'+css+body+'</div>';
 }
