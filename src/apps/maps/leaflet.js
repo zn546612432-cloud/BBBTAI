@@ -44,6 +44,9 @@ function drawOfflineBase(L,map,{world=false}={}){
  }
  map.attributionControl.addAttribution('<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a>');
 }
+// When called on the lock cover, all local Macau geometry is already parsed by this module import.
+// This also fetches the locally vendored Leaflet runtime before the keypad appears.
+export const prewarmOfflineMap=()=>loadLeaflet();
 const safeText=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function pinIcon(kind){
  return window.L.divIcon({className:'xm-map-pin'+(kind==='fictional'?' is-fictional':''),html:'<span></span>',iconSize:[24,30],iconAnchor:[12,29]});
