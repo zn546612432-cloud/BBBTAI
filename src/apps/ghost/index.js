@@ -7,7 +7,7 @@ import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
 import {tools,stages,moduleLabel} from './catalog.js';
 import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound,exitD01Puzzle,startD01PipePreview} from './state.js';
-import {swap,puzzleSolved,rotate,connected,fingerprints,newCode} from './games/logic.js';
+import {swap,puzzleSolved,rotate,connected,fingerprints,newCode,createBoard} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
 import {arcadeAction,arcadeTick} from './games/arcade.js';
@@ -48,7 +48,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
    body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,devSkipTop||(o.deadline!==null?fmt(remaining):'')))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'第 '+String(o.attempts).padStart(2,'0')+' 次尝试'}</small><h1>${tool.name}</h1><p>${{cipher:'交换方块，还原上方参考图',route:'旋转管线，让起点连通终点',extract:'找出相同的数据块',veil:'按顺序输入数字代码',strike:'正在执行，请等待完成',verify:'依次选择正确的模块'}[o.type]}</p></div>`;
    const b=o.board;
-   if(o.type==='cipher'&&!b.arcade)body+=`<div class="gh-reference">${circuit()}<small>参考图</small></div><div class="gh-grid" id="gh-puzzle">${b.tiles.map((tile,i)=>button('tile',circuit(tile),`data-index="${i}" aria-label="方块 ${i+1}"`,b.selected===i?'selected':'')).join('')}</div>`;
+   if(o.type==='cipher')body+=`<p class="gh-cipher-tip">选中两个方块交换位置。按右下角编号 01–09 还原电路，普通关卡只需交换两次。</p><div class="gh-reference">${circuit()}<small>参考图</small></div><div class="gh-grid" id="gh-puzzle">${b.tiles.map((tile,i)=>button('tile',circuit(tile)+`<small class="gh-tile-id">${String(tile+1).padStart(2,'0')}</small>`,`data-index="${i}" aria-label="方块 ${tile+1}，当前位置 ${i+1}"`,b.selected===i?'selected':'')).join('')}</div>${b.arcade?button('cipher-easy-reset','重新开始简易破译','','gh-primary'):''}`;
    if(o.type==='route'){
     const size=b.size||3,source=b.size?b.source:0,sink=b.size?b.sink:8;
     const lit=b.size?pipeFlow(b.masks,source,size):connected(b.masks);
@@ -62,7 +62,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    if(o.type==='veil'&&!b.arcade)body+=`<div class="gh-code"><small>覆盖序列</small><strong>${b.code.split('').map((v,i)=>`<span class="${i<b.input.length?'typed':''}">${v}</span>`).join('')}</strong><div>${Array.from({length:cfg.codeLength},(_,i)=>`<i class="${i<b.input.length?'filled':''}"></i>`).join('')}</div></div><div class="gh-keypad">${['1','2','3','4','5','6','7','8','9','⌫','0','↵'].map(key=>button('key',key,`data-key="${key}" aria-label="${key}"`)).join('')}</div><p class="gh-hint">${b.round+1} / ${cfg.rounds}　·　错误 ${o.errors}</p>`;
    if(o.type==='verify')body+=`<div class="gh-target"><small>模块正确顺序</small><strong>${b.target.map(moduleLabel).join(' · ')}</strong><p>${b.input.map(moduleLabel).join(' · ')||'—'}</p></div><div class="gh-options">${b.tokens.map((token,i)=>button('verify-token',esc(moduleLabel(token)),`data-index="${i}" ${b.used.includes(i)?'disabled':''}`)).join('')}</div>`;
    if(o.type==='strike'&&!b.arcade){const p=Math.min(1,(Date.now()-o.startedAt)/cfg.attackMs);body+=`<div class="gh-strike">${emblem()}<small>会话 ${esc(b.signature||'—')}</small><div class="gh-stream">${stages.slice(0,Math.floor(p*4)+1).map((v,i)=>`<p><span>0${i+1}</span> ${v}<b>${i<Math.floor(p*4)?'OK':'…'}</b></p>`).join('')}</div><div class="gh-meter"><i style="width:${p*100}%"></i></div><small>${Math.round(p*100)}% / 执行中</small></div>`;}
-   if(b.arcade)body+=renderArcade(b.arcade,o,remaining);
+   if(b.arcade&&o.type!=='cipher')body+=renderArcade(b.arcade,o,remaining);
     body+=`<div class="gh-game-footer"><span>● 加密 会话</span><span>${o.moves.toString().padStart(2,'0')} 次操作</span></div>`;
   }
  }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${t.id==='verify'&&isStory55(s)?'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M12 17l2 2 4-4"/></svg>':toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
@@ -91,6 +91,13 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
  if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
+ if(a==='cipher-easy-reset'){
+  if(o?.type!=='cipher'||o.status!=='running'||!o.board?.arcade)return;
+  ctx.store.update(n=>{
+   const run=n.ghost.orders[id];run.board=createBoard('cipher',{cipherSwaps:2});run.moves=0;run.errors=0;
+  });
+  return;
+ }
  if(!o||o.status!=='running')return;
  if(o.deadline!==null&&Date.now()>=o.deadline){ctx.store.update(n=>finish(n,id,false));return;}
  if(a.startsWith('arcade-')&&o.board?.arcade){

@@ -25,7 +25,19 @@ export function randomRouteSolution(random=Math.random){
  return masks;
 }
 export function createBoard(type,config,random=Math.random){
- if(type==='cipher'){let tiles=shuffle([0,1,2,3,4,5,6,7,8],random);if(puzzleSolved(tiles))tiles=swap(tiles,0,1);return {tiles,selected:null};}
+ if(type==='cipher'){
+  // Restore the original swap-to-repair circuit. Only 1–2 disjoint swaps
+  // rather than scrambling every tile, so it is immediately legible.
+  const tiles=[0,1,2,3,4,5,6,7,8];
+  const places=shuffle([...tiles],random);
+  const requested=Math.floor(Number(config?.cipherSwaps??2));
+  const swapCount=Math.max(1,Math.min(2,Number.isFinite(requested)?requested:2));
+  for(let i=0;i<swapCount*2;i+=2){
+   const a=places[i],b=places[i+1];
+   [tiles[a],tiles[b]]=[tiles[b],tiles[a]];
+  }
+  return {tiles,selected:null};
+ }
  if(type==='route'&&config?.pipeNetwork)return generatePipeNetwork({size:config.pipeSize||5,random});
  if(type==='route'){const masks=(config?.randomRoute?randomRouteSolution(random):routeSolution).map(m=>{for(let i=Math.floor(random()*4);i>0;i--)m=rotate(m);return m;});if(connected(masks).has(8))masks[0]=rotate(masks[0]);return {masks};}
  if(type==='extract')return {...fingerprints(random),round:0};

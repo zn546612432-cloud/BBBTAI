@@ -1,23 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createArcadeBoard,toggleLights,arcadeAction,arcadeTick,veilScanners,veilReachable,veilNextCell} from '../src/apps/ghost/games/arcade.js';
+import {createArcadeBoard,arcadeAction,arcadeTick,veilScanners,veilReachable,veilNextCell} from '../src/apps/ghost/games/arcade.js';
 import {renderArcade} from '../src/apps/ghost/games/arcade-ui.js';
 import {authorize,begin,advanceGhost} from '../src/apps/ghost/state.js';
 
-test('cipher grids always have a solution and taps affect orthogonal neighbors',()=>{
- const changed=toggleLights(Array(9).fill(0),4);
- assert.deepEqual(changed,[0,1,0,1,1,1,0,1,0]);
- for(let n=0;n<30;n++){
-  const board=createArcadeBoard('cipher');
-  assert.ok(board.cells.some(Boolean));
-  let found=false;
-  for(let mask=0;mask<512&&!found;mask++){
-   let tiles=board.cells;
-   for(let i=0;i<9;i++)if(mask&(1<<i))tiles=toggleLights(tiles,i);
-   found=tiles.every(x=>x===0);
+test('restored circuit cipher is never fully scrambled: two swaps solve every new board',async()=>{
+ const {createBoard,swap,puzzleSolved}=await import('../src/apps/ghost/games/logic.js');
+ for(let n=0;n<100;n++){
+  const board=createBoard('cipher',{});
+  assert.equal(puzzleSolved(board.tiles),false);
+  const errors=board.tiles.flatMap((value,i)=>value===i?[]:[i]);
+  assert.equal(errors.length,4,'exactly two misplaced pairs');
+  let tiles=board.tiles;
+  for(let i=0;i<9;i++){
+   if(tiles[i]!==i)tiles=swap(tiles,i,tiles.indexOf(i));
   }
-  assert.equal(found,true,'all initial states must be solvable');
+  assert.equal(puzzleSolved(tiles),true);
  }
+ const single=createBoard('cipher',{cipherSwaps:1});
+ assert.equal(single.tiles.filter((value,i)=>value!==i).length,2);
 });
 test('memory extraction exposes pairs, rejects double taps, and clears mismatches after 720ms',()=>{
  const b=createArcadeBoard('extract');
@@ -70,7 +71,7 @@ test('strike requires six actual taps, three misses fail, timer alone never succ
  assert.equal(o.status,'failed');
 });
 test('all arcade games render touch controls; new attempts use arcade, old saved attempts are unaffected',()=>{
- for(const type of ['cipher','extract','veil','strike']){
+ for(const type of ['extract','veil','strike']){
   const b=createArcadeBoard(type);
   const html=renderArcade(b,{type},30000);
   assert.match(html,/gh-arcade/);
@@ -79,6 +80,39 @@ test('all arcade games render touch controls; new attempts use arcade, old saved
  const s={};
  authorize(s,{orderId:'new-cipher',type:'cipher'});
  begin(s,'new-cipher',1000);
- assert.equal(s.ghost.orders['new-cipher'].board.arcade.kind,'cipher');
- assert.ok(Array.isArray(s.ghost.orders['new-cipher'].board.tiles),'old board fields retained');
+ assert.equal(s.ghost.orders['new-cipher'].board.arcade,undefined,'new runs must use original circuit swap, not Lights Out');
+ assert.ok(Array.isArray(s.ghost.orders['new-cipher'].board.tiles),'original board retained');
+});
+
+test('cipher preview uses original numbered circuit tiles and can reset an active Lights Out save',async()=>{
+ const {render,handle}=await import('../src/apps/ghost/index.js');
+ const {createBoard,puzzleSolved}=await import('../src/apps/ghost/games/logic.js');
+ const s={};
+ authorize(s,{orderId:'preview-cipher',type:'cipher'});
+ begin(s,'preview-cipher',1000);
+ const o=s.ghost.orders['preview-cipher'];
+ const loc={appId:'ghost',route:'/run',params:{orderId:o.id}};
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
+ let html=render(ctx,loc);
+ assert.match(html,/gh-tile-id/);
+ assert.match(html,/gh-cipher-tip/);
+ assert.doesNotMatch(html,/gh-arcade-matrix gh-arcade-cipher/);
+ // Previous saved arcade sessions can be converted without touching Link or the order.
+ o.board.arcade={kind:'cipher',cells:Array(9).fill(1),steps:10};
+ o.board.tiles=[8,7,6,5,4,3,2,1,0];
+ html=render(ctx,loc);
+ assert.match(html,/gh-cipher-easy-reset/);
+ handle('gh-cipher-easy-reset',{dataset:{}},ctx,loc);
+ assert.equal(o.board.arcade,undefined);
+ assert.equal(o.status,'running');
+ assert.equal(o.board.tiles.filter((v,i)=>v!==i).length,4);
+ const tiles=o.board.tiles;
+ for(let i=0;i<tiles.length;i++){
+  if(o.board.tiles[i]===i)continue;
+  const partner=o.board.tiles.indexOf(i);
+  handle('gh-tile',{dataset:{index:String(i)}},ctx,loc);
+  handle('gh-tile',{dataset:{index:String(partner)}},ctx,loc);
+ }
+ assert.equal(o.status,'success');
+ assert.equal(puzzleSolved(o.board.tiles),true);
 });
