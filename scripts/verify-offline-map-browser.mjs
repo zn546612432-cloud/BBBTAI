@@ -59,7 +59,14 @@ try{
    });
    if(metrics.mapWidth<150||metrics.mapHeight<200||metrics.imageNaturalWidth<1000||!metrics.hasSearch||metrics.imageTopOffset>55||metrics.imageBottomOffset< -55)throw Error('Map raster failed to fill the screen: '+JSON.stringify(metrics));
    await page.screenshot({path:`preview/browser-smoke/${name}-macau.png`});
-   await page.locator('.xm-map-form input').fill('昌宁');
+   try{
+    await page.locator('.xm-map-form input').fill('昌宁',{timeout:7000});
+   }catch(error){
+    const diag=await page.evaluate(()=>({title:document.title,url:location.href,app:document.querySelector('.app-view')?.className,screen:document.querySelector('#screen-layer')?.innerHTML.slice(0,1200),count:document.querySelectorAll('xm-leaflet-map').length,leaflet:typeof window.L}));
+    console.error(name+' LOST MAP SEARCH '+JSON.stringify({diag,errors}));
+    await page.screenshot({path:`preview/browser-smoke/${name}-lost-map.png`});
+    throw error;
+   }
    const found=page.locator('.xm-map-results button');
    await found.first().waitFor({timeout:5000});
    await found.first().click();
