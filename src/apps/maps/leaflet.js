@@ -1,4 +1,4 @@
-import {visiblePlaces,searchPlaces,locationById} from './data/places.js';
+import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
 // Native phone navigation and save data remain owned by the existing system.
 const MACAU=[22.19875,113.54387];
 let loader;
@@ -48,7 +48,7 @@ class XimengMap extends HTMLElement {
  }
  getPlaces(){
   const allowed=(this.getAttribute('data-visible')||'').split(',').filter(Boolean);
-  return visiblePlaces({day:1}).filter(p=>allowed.includes(p.id));
+  return MAP_PLACES.filter(p=>allowed.includes(p.id));
  }
  showSearch(){
   const input=this.querySelector('input');if(!input)return;
