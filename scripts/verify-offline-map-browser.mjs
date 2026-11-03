@@ -36,10 +36,21 @@ try{
    await page.locator('.home-screen').waitFor({timeout:10000});
    await page.locator('[data-action="open-app"][data-app="maps"]').click();
    await page.locator('xm-leaflet-map .xm-map-search').waitFor({timeout:12000});
-   await page.waitForFunction(()=>{
-    const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
-    return !!img&&img.complete&&img.naturalWidth>0;
-   },null,{timeout:15000});
+   try{
+    await page.waitForFunction(()=>{
+     const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
+     return !!img&&img.complete&&img.naturalWidth>0;
+    },null,{timeout:15000});
+   }catch(error){
+    const diag=await page.evaluate(()=>{
+     const node=document.querySelector('xm-leaflet-map');
+     const image=node?.querySelector('img.leaflet-image-layer');
+     return {url:location.href,markup:node?.outerHTML.slice(0,1500),img:image?{src:image.src,complete:image.complete,naturalWidth:image.naturalWidth}:null,leaflet:typeof window.L,boot:!!document.querySelector('#xm-boot'),resources:performance.getEntriesByType('resource').filter(x=>x.name.includes('macau-offline')||x.name.includes('leaflet')).map(x=>({name:x.name,size:x.transferSize})).slice(-12)};
+    });
+    console.error(name+' MAP IMAGE LOAD DIAGNOSTIC '+JSON.stringify({diag,errors}));
+    await page.screenshot({path:`preview/browser-smoke/${name}-failed.png`});
+    throw error;
+   }
    const metrics=await page.evaluate(()=>{
     const img=document.querySelector('xm-leaflet-map img.leaflet-image-layer');
     const map=document.querySelector('xm-leaflet-map');
