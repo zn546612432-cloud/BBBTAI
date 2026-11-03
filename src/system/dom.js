@@ -10,9 +10,10 @@ export function patchElement(old,fresh){
  const focused=old===old.ownerDocument.activeElement;
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
  if(old.tagName==='INPUT'){if(!focused&&!storyAnimating&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
- patchChildren(old,[...fresh.childNodes]);
- // Leaflet owns its descendant DOM. Only synchronize host attributes.
+ // Leaflet owns its descendants. Never replace map controls/markers on tick.
+ // This guard MUST execute before patchChildren, not after it.
  if(old.tagName==='XM-LEAFLET-MAP')return;
+ patchChildren(old,[...fresh.childNodes]);
  if(old.tagName==='SELECT'&&!focused)old.value=fresh.value;
 }
 function patchChildren(parent,children){
