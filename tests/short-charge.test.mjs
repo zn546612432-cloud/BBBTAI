@@ -6,7 +6,9 @@ import {batteryPercent,beginShortCharge,endShortCharge,tickShortChargeBattery,dr
 import {tickWorld,advanceGameMinutes,worldMinuteRate,SHORT_CHARGE_MINUTES_PER_MS} from '../src/system/time/clock.js';
 import {dynamicIsland} from '../src/system/power/island.js';
 import {status} from '../src/system/shell.js';
-const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';return s;};
+import {seedD02} from '../src/story/d02/runtime.js';
+import {MessageDelivery} from '../src/services/messaging/delivery.js';
+const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
 test('Dynamic Island offers short and long charging choices',()=>{
  const s=d02();
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
@@ -54,9 +56,27 @@ test('long charge remains the original next-day 08:00 fully charged transition',
 });
 test('D01 cannot skip overnight with short charge and D55 ending is protected',()=>{
  const s=activateStory55(initialState());s.clock='23:50';
+ assert.equal(beginShortCharge(s),false,'must complete D01 before any charge');
+ s.story55.d01={bankClaimed:true,rewardPaid:true};
+ s.story55.completed.intro={day:1,clock:'12:00',test:true};
  assert.equal(beginShortCharge(s),true);
  assert.equal(advanceGameMinutes(s,120).event,'short-charge-end');
  assert.equal(s.day,1);assert.equal(s.clock,'23:59');
  const last=d02();last.day=55;last.story55.ended=true;
  assert.equal(beginShortCharge(last),false);
+});
+
+test('D02 sale SMS still delivers at its original game timestamp during acceleration',()=>{
+ const s=d02();s.batteryPercent=70;seedD02(s);
+ const store={get:()=>s,update:fn=>fn(s)},delivery=new MessageDelivery(store);
+ const c=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
+ assert.ok(c);assert.equal(c.messages.find(m=>m.id==='d02-aodong-sale').delivery,undefined);
+ assert.equal(beginShortCharge(s),true);
+ tickShortChargeBattery(s,20_000);tickWorld(s,20_000);
+ delivery.tick(1_000,true);
+ const promo=c.messages.find(m=>m.id==='d02-aodong-sale');
+ assert.deepEqual(promo.delivery,{day:2,clock:'09:00'});
+ assert.match(s.notifications.find(n=>n.messageId==='d02-aodong-sale')?.body||'',/八折/);
+ delivery.tick(2_000,true);
+ assert.equal(s.events.filter(e=>e.messageId==='d02-aodong-sale').length,1,'no duplicate alert');
 });

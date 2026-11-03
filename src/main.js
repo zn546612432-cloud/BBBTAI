@@ -397,9 +397,13 @@ setInterval(()=>{
  const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
  let outcome={};
  store.update(s=>{
-  tickShortChargeBattery(s,tickElapsed);
-  drainBattery(s,tickElapsed);
-  outcome=tickWorld(s,tickElapsed,tickOptions);
+  if(s.powerMode==='short-charging'){
+   tickShortChargeBattery(s,tickElapsed);
+   outcome=tickWorld(s,tickElapsed,tickOptions);
+  }else{
+   outcome=tickWorld(s,tickElapsed,tickOptions);
+   drainBattery(s,tickElapsed);
+  }
    if(endingReplyDue55(s))advanceScene55(s,'ending');
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
