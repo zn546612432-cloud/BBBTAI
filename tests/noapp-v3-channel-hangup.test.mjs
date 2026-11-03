@@ -154,6 +154,10 @@ test('player silently hangs up: the next text prompt knows the phone is disconne
    wait:async()=>{},random:()=>.99,now:Date.now,refresh:()=>{}
   });
   assert.equal(result.status,'replied');
+  const lastReply=chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='after-call-player-text').at(-1);
+  assert.ok(lastReply,'Tai must produce a real reply to post-call text');
+  assert.equal(lastReply.kind,'text','first text after hangup should not become an audio clip');
+  assert.ok(!state.events.some(e=>e.type==='tai_v12_turn_plan'&&e.sourceId==='after-call-player-text'),'no forced micro-bubble quotas on first post-call response');
   const modelRequests=requests.filter(x=>x.url.includes('chat/completions'));
   assert.ok(modelRequests.some(r=>r.body.messages[0].content.includes('现在双方在 NoApp 私聊窗口用文字发消息')));
   assert.ok(modelRequests.some(r=>r.body.messages[0].content.includes('熙蒙自己按了挂断键')));
