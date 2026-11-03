@@ -1,9 +1,9 @@
 import {publicAssetPath} from '../../services/public-assets.js';
 import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
 // Native phone navigation and save data remain owned by the existing system.
-const MACAU=[22.19875,113.54387];
+const MACAU=[22.19875,113.54387],OVERVIEW=[22.175,113.552];
 let loader;
-let lastView={center:MACAU,zoom:12};
+let lastView={center:OVERVIEW,zoom:13};
 function loadLeaflet(){
  if(window.L)return Promise.resolve(window.L);
  if(loader)return loader;
@@ -54,7 +54,7 @@ class XimengMap extends HTMLElement {
   if(this.mode==='normal'){
    this.querySelector('.xm-map-form').addEventListener('submit',event=>{event.preventDefault();this.showSearch();});
    this.querySelector('input').addEventListener('input',()=>this.showSearch());
-   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(MACAU,12,{duration:.6}));
+   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
    // Do not turn a map drag into the phone's horizontal page-swipe gesture.
    this.querySelector('.xm-map-tiles').addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
    this.querySelector('.xm-map-tiles').addEventListener('pointermove',e=>e.stopPropagation());
