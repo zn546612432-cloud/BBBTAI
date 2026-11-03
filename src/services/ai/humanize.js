@@ -70,6 +70,6 @@ export function callBridgeNote(entry,current={}){
  const ending=entry.endReason==='player_request'?'熙蒙明确要求熙泰结束电话，熙泰已经照做。':
   entry.endReason==='idle'?'因长时间沉默，熙泰告别后结束电话。':'';
  return '[系统可信通话回执：'+when+'。'+endedBy+'。'+ending+
-  (transcript?'\n双方实际上说过的内容：\n'+transcript.slice(0,900):'\n本次没有已确认播放完毕的语音对白，不要猜测没听到的话。')+
+  (transcript?'\n通话内容（双方实际上说过的话）：\n'+transcript.slice(0,900):'\n本次没有已确认播放完毕的语音对白，不要猜测没听到的话。')+
   '\n【当前频道事实】这通电话已经真正断开。现在熙蒙通过 NoApp 文字聊天框打字，你只能以文字聊天回复，不能说「你挂了怎么还能回消息」或假装还在听电话。可以依据当下语境自然回应对方刚才为何挂断，但不能随意指责他在玩弄电话。]';
 }
