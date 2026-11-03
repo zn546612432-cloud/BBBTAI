@@ -10,7 +10,7 @@ import {aiStatus,askTai,chooseTaiAction,voicePreview,apiConfig} from './gateway.
 import {saveClip} from '../voice/audio-store.js';
 import {explainMinimaxFailure} from '../voice/minimax-diagnostics.js';
 import {unpackTaiReply} from './format.js';
-import {callBridgeNote} from './humanize.js';
+import {callBridgeNote,isRecentTaiCall} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
@@ -106,9 +106,15 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
   const allowVoice=!!status.minimax&&(behavior.autonomousVoice||voiceRequested);
   const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&voiceRequested;
+  const lastEndedCall=c.messages.filter(m=>m.kind==='call'&&m.callStatus==='ended').at(-1);
+  const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
+   '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
+   (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':'系统已结束电话。')+
+   '熙蒙现在是在 NoApp 私聊框打字，而不是在电话里继续说话，更不是挂断后还能传输电话语音。你只通过文字回复，不要把通话中未听到的内容当作真实发言。':
+   '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,
-   scene:'熙蒙刚发来的真实消息：'+String(lastUser).slice(0,400)+'。根据对话自然接话，由你自己决定说几句、是否带起别的话题，不要凑条数，也不必时刻客气。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:postCallTextContext+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词调戏同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
