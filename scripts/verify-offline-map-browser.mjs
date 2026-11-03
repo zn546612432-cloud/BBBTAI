@@ -69,7 +69,11 @@ try{
    }
    const found=page.locator('.xm-map-results button');
    await found.first().waitFor({timeout:5000});
-   await found.first().click();
+   // On iPhone/WebKit the software keyboard shifts the visual viewport while
+   // tapping dropdowns. Verify the native keyboard Search action separately.
+   if(name==='webkit')await page.locator('.xm-map-form input').press('Enter');
+   else await found.first().click();
+   await page.waitForFunction(()=>document.querySelector('.xm-map-bottom b')?.textContent.includes('昌宁'),null,{timeout:6000});
    await page.locator('.app-nav [data-action="home"]').click();
    await page.locator('.home-screen').waitFor();
    await context.setOffline(true);
