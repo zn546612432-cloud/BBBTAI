@@ -39,7 +39,7 @@ import {isNativeTabSwitch} from './system/navigation.js';
 import {errorHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
-import {drainBattery,plugIn,unplug} from './system/power/battery.js';
+import {drainBattery,plugIn,unplug,beginShortCharge,tickShortChargeBattery} from './system/power/battery.js';
 import {advanceGameMinutes,tickWorld,isTaiConversation,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {powerFullscreen} from './system/power/controls.js';
@@ -75,7 +75,7 @@ if(noappV2Review)store.update(s=>prepareNoAppV2Review(s));
 if(noappV3Review)store.update(s=>prepareNoAppV3Review(s));
 mountShell();
 let lockAssets=null;
-let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
+let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandPage='home',islandTimer=null,alarmSound=null,pendingNoticeId=null;
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
@@ -134,7 +134,7 @@ function render(){
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
  const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
- patchHTML($('#status-layer'),status(s,{islandExpanded}));
+ patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
  patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s));
  $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
  patchHTML($('#shade-layer'),notifications(s));
@@ -297,11 +297,11 @@ function startAlarmSound(){
 function collapseIsland(delay=0){
  clearTimeout(islandTimer);
  if(delay){islandTimer=setTimeout(()=>collapseIsland(),delay);return;}
- islandExpanded=false;render();
+ islandExpanded=false;islandPage='home';render();
 }
-function expandIsland(){
+function expandIsland(page='home'){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
- islandExpanded=true;render();collapseIsland(8000);
+ islandPage=page;islandExpanded=true;render();collapseIsland(page==='select'?18000:8000);
 }
 store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
@@ -397,8 +397,9 @@ setInterval(()=>{
  const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
  let outcome={};
  store.update(s=>{
-  outcome=tickWorld(s,tickElapsed,tickOptions);
+  tickShortChargeBattery(s,tickElapsed);
   drainBattery(s,tickElapsed);
+  outcome=tickWorld(s,tickElapsed,tickOptions);
    if(endingReplyDue55(s))advanceScene55(s,'ending');
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
@@ -406,6 +407,7 @@ setInterval(()=>{
  });
  if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
  if(outcome.event==='emergency')collapseIsland();
+ if(outcome.event==='short-charge-end'){collapseIsland();toast('短充已在当天 23:59 自动结束。');}
  if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
  if(outcome.event==='wake'){collapseIsland();lockscreen.reset();}
 },800);
@@ -423,7 +425,20 @@ $('#root').addEventListener('click',async e=>{
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
-    if(action==='power-open'||action==='power-charge'){expandIsland();return;}
+    if(action==='power-open'){expandIsland();return;}
+    if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
+    if(action==='power-short-start'){
+      if(chargingBlock(store.get())){toast('当前剧情暂时无法充电。');collapseIsland();return;}
+      let ok=false;store.update(s=>{ok=beginShortCharge(s);});
+      if(!ok)toast('现在无法开启短充。');
+      collapseIsland();return;
+    }
+    if(action==='power-long-start'){
+      if(chargingBlock(store.get())){toast('当前剧情暂时无法充电。');collapseIsland();return;}
+      let ok=false;store.update(s=>{ok=plugIn(s);});
+      if(ok){lockscreen.reset();setShade({progress:0});}else toast('现在无法开启长充。');
+      collapseIsland();return;
+    }
     if(action==='power-decline'){collapseIsland();return;}
     if(action==='power-plug'){if(chargingBlock(store.get())){toast('充电口进水，稍后再试。');collapseIsland();return;}let charged=false;store.update(s=>{charged=plugIn(s);});if(charged){lockscreen.reset();setShade({progress:0});}collapseIsland();return;}
     if(action==='power-unplug'){let ok=false;store.update(s=>{ok=unplug(s);});if(ok)collapseIsland(320);return;}
