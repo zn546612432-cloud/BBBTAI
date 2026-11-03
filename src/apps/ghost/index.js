@@ -36,6 +36,9 @@ export function tick(ctx){
 }
 export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
  if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
+ else if(loc.route==='/deploy-info'){
+  body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>部署用于输入来自 KIRA 或联系人提供的密钥，安装工具后在「项目」中使用。部署本身不是小游戏。</p><p>请在对应剧情任务中获取授权密钥。</p></div>';
+ }
  else if(loc.route==='/contract'||loc.route==='/tool'){
   body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.key||'')}" autocomplete="off" spellcheck="false" ${o?'readonly':''}/><p>${o?'已载入密钥':'需要密钥'}</p></div>${o?button('start',(o.status==='running'||o.status==='preview-win')?'繼續':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?(s.story55?.d01?.deployed?'繼續修復':'部署'):'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
  }
@@ -65,7 +68,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    if(b.arcade&&o.type!=='cipher')body+=renderArcade(b.arcade,o,remaining);
     body+=`<div class="gh-game-footer"><span>● 加密 会话</span><span>${o.moves.toString().padStart(2,'0')} 次操作</span></div>`;
   }
- }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${t.id==='verify'&&isStory55(s)?'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M12 17l2 2 4-4"/></svg>':toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
+ }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
  const exitDialog=loc.route==='/run'&&o?.id===D01_REPAIR&&o.status==='running'&&exitDialogFor===o.id?`<div class="gh-exit-confirm" role="dialog" aria-modal="true" aria-label="保存修復進度"><div class="gh-exit-card"><h2>退出數據修復？</h2><p>已完成的修復進度不會丟失。你可以保留本關的線路，或重新生成本關。</p>${button('d01-save','保存並退出','','gh-primary')}${button('d01-discard','放棄並退出','','gh-secondary')}${button('d01-cancel','繼續修復','','gh-secondary')}</div></div>`:'';
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}</div>`;
 }
@@ -74,7 +77,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='deployments')return nav(ctx,'/deployments');
  if(a==='mining')return nav(ctx,'/mining');
  if(a==='history')return nav(ctx,'/history');
- if(a==='tool')return nav(ctx,'/tool',{tool:t.dataset.tool});
+ if(a==='tool'){if(t.dataset.tool==='verify')return isStory55(ctx.store.get())?nav(ctx,'/flow-deploy'):nav(ctx,'/deploy-info');return nav(ctx,'/tool',{tool:t.dataset.tool});}
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
  if(a==='d01-dev-skip'){
   if(!ghostDevSkipAvailable(globalThis.document,ctx.store.get())||id!==D01_REPAIR)return;

@@ -1,5 +1,5 @@
 export const tools=[
- {id:'verify',name:'部署',en:'DEPLOY',detail:'按顺序选择模块',glyph:'✓'},
+ {id:'verify',name:'部署',en:'DEPLOY',detail:'输入密钥并安装工具（不是小游戏）',glyph:'✓'},
  {id:'cipher',name:'破译',en:'CIPHER',detail:'拼图：交换方块，还原电路图',glyph:'◇'},
  {id:'route',name:'链接',en:'ROUTE',detail:'管线：旋转并连接起点终点',glyph:'⌁'},
  {id:'extract',name:'窃取',en:'EXTRACT',detail:'翻牌配对，找回五组数据',glyph:'⊡'},
