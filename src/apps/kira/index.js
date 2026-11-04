@@ -22,7 +22,7 @@ export function render({store},loc){
   const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
   if(mailId===D02_MAIL&&mail){
    const d=d02State(s),complete=!!d.completed?.[D02_S];
-   return '<div class="kira-mail-detail kira-d02-mail"><div class="kira-mail-top">'+btn('kira-back','‹　收件箱')+'</div><h1>'+esc(mail.subject)+'</h1><p>'+esc(mail.from)+' · D02</p><div class="kira-mail-body"><p>'+esc(mail.body)+'</p><div class="kira-d01-attachments"><div class="kira-d01-attachment-heading">1 个附件 · 点击读取密钥</div>'+btn('kira-d02-key','📄　talia-chip-0520.key　›','kira-d01-attachment')+'</div>'+(d.keyOpened?'<p>授权密钥已解密</p><h2 style="font-size:16px;color:#396d8c;word-break:break-all">TALIA-CHIP-0520</h2><p>此密钥仅用于本机虚构 GHOST 项目。</p>'+btn('kira-d02-ghost',complete?'查看已完成的 GHOST 任务':'打开 GHOST · 链接','button-quiet wide'):'<p>请先打开附件。</p>')+'</div></div>';
+   return '<div class="kira-mail-detail kira-d02-mail"><div class="kira-mail-top">'+btn('kira-back','‹　收件箱')+'</div><h1>'+esc(mail.subject)+'</h1><p>'+esc(mail.from)+' · D02</p><div class="kira-mail-body"><p>'+esc(mail.body)+'</p><div class="kira-d01-attachments"><div class="kira-d01-attachment-heading">1 个附件 · 点击读取密钥</div>'+btn('kira-d02-key','📄　talia-chip-0520.key　›','kira-d01-attachment')+'</div>'+(d.keyOpened?'<p>授权密钥已解密</p><h2 style="font-size:16px;color:#396d8c;word-break:break-all">TALIA-CHIP-0520</h2><p>此密钥仅用于本机虚构 GHOST 项目。</p>':'<p>请先打开附件。</p>')+'</div></div>';
   }
   if(mailId===STORY55_WALLET_MAIL_ID&&mail){
    const project=story55Config(s).projects.find(p=>p.id==='wallet'),key=project?.key||'';
@@ -41,7 +41,6 @@ export function render({store},loc){
 }
 export function handle(a,t,c){
  if(a==='kira-d02-key'){let ok=false;c.store.update(s=>{ok=revealD02Key(s);});if(!ok)c.toast('密钥尚未授权');return;}
- if(a==='kira-d02-ghost'){const d=d02State(c.store.get());if(!d.keyOpened)return c.toast('先打开附件获取密钥');c.store.update(s=>armD02Ghost(s,D02_S,0));return c.router.open({appId:'ghost',route:'/contract',params:{orderId:d02StepId(D02_S,0)}});}
  if(a==='kira-wallet-d06-ghost'){
   const st=c.store.get();
   if(!st.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))return;
