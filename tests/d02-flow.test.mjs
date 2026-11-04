@@ -10,9 +10,9 @@ import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.j
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {AODONG_PRODUCTS,aodongPrice} from '../src/apps/browser/aodong-shop.js';
 import {
- D02_S,D02_A,D02_MAIL,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
+ D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_BRIEFS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
  seedD02,acceptD02,revealD02Key,armD02Ghost,d02StepId,d02NextStep,
- submitD02,onD02TaliaMessage,d02TaliaDraft,createD02Reminder,d02CompleteBuild,toggleD02Build
+ submitD02,deployD02,tickD02Contracts,d02ReminderId,onD02TaliaMessage,d02TaliaDraft,createD02Reminder,d02CompleteBuild,toggleD02Build
 } from '../src/story/d02/runtime.js';
 
 const phone=()=>{
@@ -57,6 +57,8 @@ test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage 
  assert.equal(s.content.mail.filter(m=>m.id===D02_MAIL).length,1);
  assert.equal(armD02Ghost(s,D02_S,0),null);
  assert.equal(revealD02Key(s),true);
+ assert.equal(deployD02(s,D02_S,'not-the-key'),false);
+ assert.equal(deployD02(s,D02_S,D02_KEYS[D02_S]),true);
  win(s,D02_S);
  assert.equal(s.story55.d02.completed[D02_S],true);
  assert.equal(s.content.missionFiles.filter(f=>f.orderId===D02_S).length,1);
@@ -73,8 +75,16 @@ test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage 
  contact.messages.find(m=>m.id==='d02-talia-peace').delivery={day:2,clock:'13:00'};
  assert.equal(d02TaliaDraft(s,D02_TALIA),'哦？这份贡献值得再加一笔赏金吗？');
  assert.equal(onD02TaliaMessage(s,D02_TALIA,'哦？这份贡献值得再加一笔赏金吗？'),true);
- assert.equal(s.story55.d02.bonus,true);
+ assert.equal(s.story55.d02.bonusRequested,true);
+ assert.equal(s.bankData.balance,opening+D02_REWARDS[D02_S]);
+ contact.messages.find(m=>m.id==='d02-talia-worth').delivery={day:2,clock:'13:03'};
+ tickD02Contracts(s,1000);
+ tickD02Contracts(s,4999);
+ assert.equal(s.bankData.balance,opening+D02_REWARDS[D02_S]);
+ tickD02Contracts(s,5000);
  assert.equal(s.bankData.balance,opening+D02_REWARDS[D02_S]*2);
+ tickD02Contracts(s,10000);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='d02-payment-'+D02_S+'-talia').length,1);
  assert.equal(onD02TaliaMessage(s,D02_TALIA,'哦？这份贡献值得再加一笔赏金吗？'),false);
  assert.equal(contact.messages.filter(m=>m.id==='d02-talia-goodbye').length,1);
 });
