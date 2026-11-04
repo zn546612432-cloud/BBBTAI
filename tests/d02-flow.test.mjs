@@ -4,6 +4,13 @@ import {initialState} from '../src/services/storage.js';
 import {render as kiraRender,handle as kiraHandle} from '../src/apps/kira/index.js';
 import {render as filesRender,handle as filesHandle} from '../src/apps/files/index.js';
 import {render as ghostRender,handle as ghostHandle} from '../src/apps/ghost/index.js';
+import {render as smsRender,handle as smsHandle} from '../src/apps/messages/replica.js';
+import {render as browserRender,submit as browserSubmit} from '../src/apps/browser/index.js';
+import {render as mirageRender,handle as mirageHandle} from '../src/apps/mirage/index.js';
+import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
+import {kiraDetail} from '../src/apps/kira/features/detail/index.js';
+import {tools as ghostCatalog} from '../src/apps/ghost/catalog.js';
+import {renderArcade} from '../src/apps/ghost/games/arcade-ui.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {completeNode} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
@@ -13,7 +20,7 @@ import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.j
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {AODONG_PRODUCTS,aodongPrice} from '../src/apps/browser/aodong-shop.js';
 import {
- D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_BRIEFS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
+ D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_BRIEFS,D02_AODONG_URL,D02_AODONG_SMS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
  seedD02,acceptD02,revealD02Key,armD02Ghost,d02StepId,d02NextStep,
  submitD02,deployD02,tickD02Contracts,d02ReminderId,onD02TaliaMessage,d02TaliaDraft,createD02Reminder,d02CompleteBuild,toggleD02Build
 } from '../src/story/d02/runtime.js';
@@ -400,4 +407,115 @@ test('GHOST D02 retains the next step in-place, and legacy D01 reports without c
  }
  const home=ghostRender(ctx,{route:'/',params:{}});
  assert.doesNotMatch(home,/MIRAGE 委托|gh-d02-projects/);
+});
+
+test('D02 promotional SMS migrates old copy, shows one tappable virtual URL and opens the existing Safari shop',()=>{
+ const s=phone(),sms=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
+ const bubble=sms.messages.find(m=>m.id==='d02-aodong-sale');
+ assert.ok(bubble);
+ bubble.text='浏览器搜索「澳东商城」进入选购。';
+ seedD02(s);seedD02(s);
+ assert.equal(bubble.text,D02_AODONG_SMS);
+ assert.equal(sms.messages.filter(m=>m.id==='d02-aodong-sale').length,1);
+ assert.match(bubble.text,/https:\/\/aodong\.shop/);
+ bubble.delivery={day:2,clock:'09:00'};
+ s.clock='09:05';
+ const store={get:()=>s,update:fn=>fn(s)};
+ const smsHtml=smsRender({store},{route:'/chat/sms-aodong-2025',params:{}});
+ assert.match(smsHtml,/data-action="sms-aodong-link"/);
+ assert.match(smsHtml,/class="ios-msg-detected ios-msg-shop-link"/);
+ assert.match(smsHtml,/https:\/\/aodong\.shop/);
+ const routes=[],ctx={store,router:{open:link=>routes.push(link)}};
+ smsHandle('sms-aodong-link',{dataset:{}},ctx);
+ assert.deepEqual(routes.at(-1),{appId:'browser',route:'/aodong',params:{}});
+ const shop=browserRender({store},{route:'/aodong',params:{}});
+ assert.match(shop,/澳东商城/);
+ assert.match(shop,/购物车/);
+ assert.match(shop,/加入购物车/);
+});
+test('Safari direct search by Aodong name or virtual URL opens the same in-phone storefront',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)},routes=[];
+ const ctx={store,router:{open:link=>routes.push(link)}};
+ const OriginalFormData=globalThis.FormData;
+ try{
+  globalThis.FormData=class{constructor(form){this.form=form;}get(key){return key==='query'?this.form.query:null;}};
+  for(const query of ['澳东商城','澳東商城',D02_AODONG_URL]){
+   browserSubmit({dataset:{form:'browser-search'},query},ctx,{route:'/',params:{}});
+   assert.deepEqual(routes.at(-1),{appId:'browser',route:'/aodong',params:{}});
+  }
+ }finally{globalThis.FormData=OriginalFormData;}
+});
+test('Mirage READY D02 contract displays one actionable English submit CTA and settles once',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)},routes=[],notices=[];
+ const ctx={store,router:{open:link=>routes.push(link)},toast:line=>notices.push(line)};
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ win(s,D02_A);
+ const oldBalance=s.bankData.balance;
+ setMirageAuthenticated(true);
+ try{
+  const screen=mirageRender({store},{route:'/order/'+D02_A,params:{}});
+  assert.match(screen,/data-action="mc-d02-submit"[^>]*>READY TO SUBMIT/);
+  assert.equal((screen.match(/data-action="mc-d02-submit"/g)||[]).length,1);
+  assert.doesNotMatch(screen,/提交任务成果 · 领取赏金/);
+  assert.doesNotMatch(screen,/data-action="mc-accept-bounty"/);
+  mirageHandle('mc-d02-submit',{dataset:{id:D02_A}},ctx,{route:'/order/'+D02_A,params:{}});
+  assert.equal(s.bankData.balance,oldBalance+D02_REWARDS[D02_A]);
+  assert.equal(s.content.orders.find(o=>o.id===D02_A).status,'COMPLETED');
+  assert.equal(s.bankData.transactions.filter(t=>t.id==='d02-payment-'+D02_A).length,1);
+  assert.deepEqual(routes.at(-1),{appId:'mirage',route:'/my-orders/completed',params:{}});
+  const after=mirageRender({store},{route:'/order/'+D02_A,params:{}});
+  assert.match(after,/CONTRACT COMPLETED/);
+  assert.doesNotMatch(after,/READY TO SUBMIT/);
+  assert.doesNotMatch(after,/提交任务成果 · 领取赏金/);
+ }finally{setMirageAuthenticated(false);}
+});
+test('Kira D02 attachments show the exact D01 receipt only after successful submission and bank payout',()=>{
+ for(const [master,mailId] of [[D02_S,D02_MAIL],[D02_A,D02_A_MAIL]]){
+  const s=phone(),start=s.bankData.balance;
+  assert.equal(acceptD02(s,master),true);
+  s.content.mail.find(m=>m.id===mailId).read=true;
+  if(master===D02_S)assert.equal(revealD02Key(s),true);
+  assert.equal(deployD02(s,master,D02_KEYS[master]),true);
+  win(s,master);
+  const before=kiraDetail(s,mailId);
+  assert.match(before,/data-action="kira-d02-open-file"/);
+  assert.doesNotMatch(before,/文件已驗收 · 交易回執已寄送/);
+  assert.equal(submitD02(s,master),true);
+  assert.equal(s.bankData.balance,start+D02_REWARDS[master]);
+  const after=kiraDetail(s,mailId);
+  assert.match(after,/✓ 文件已驗收 · 交易回執已寄送/);
+  assert.equal((after.match(/文件已驗收 · 交易回執已寄送/g)||[]).length,1);
+  assert.match(after,/data-action="kira-d02-open-file"/);
+  assert.equal(submitD02(s,master),false);
+ }
+});
+test('Ghost retains all six tool names and uses tool-oriented help text without altering mechanics',()=>{
+ const expected=[
+  ['部署','导入授权凭证，安装并初始化工具'],
+  ['破译','解析加密结构，恢复可读取的数据'],
+  ['链接','建立节点连接，验证数据传输通路'],
+  ['窃取','定位目标文件，提取并校验数据'],
+  ['隐匿','分析监测路径，验证隐匿方案'],
+  ['攻击','执行定向测试，记录目标响应']
+ ];
+ assert.deepEqual(ghostCatalog.map(t=>[t.name,t.detail]),expected);
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)};
+ const home=ghostRender({store},{route:'/',params:{}});
+ for(const [name,description] of expected){assert.match(home,new RegExp(name));assert.ok(home.includes(description));}
+ assert.doesNotMatch(home,/不是小游戏|拼图：|翻牌配对|迷宫潜行|完成六次命中/);
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ const cipher=d02StepId(D02_A,0);
+ assert.equal(begin(s,cipher,1000),true);
+ const operational=ghostRender({store},{route:'/run',params:{orderId:cipher}});
+ assert.match(operational,/根据参考映射调整模块排列/);
+ assert.match(operational,/依据右下角编号 01–09 校准参考结构/);
+ assert.doesNotMatch(operational,/普通关卡|玩家|小游戏/);
+ const fakeStrike={kind:'strike',goal:6,maxMisses:3,target:1,hits:2,misses:0};
+ const strike=renderArcade(fakeStrike,{},10000);
+ assert.match(strike,/目标响应测试/);
+ assert.doesNotMatch(strike,/攻防反应挑战|任务失败/);
 });
