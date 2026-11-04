@@ -12,15 +12,16 @@ const DIALOGUES={
   ['熙旺','别担心'],
   ['熙旺','哥能养你一辈子']
  ],
- // Xiao Xin's follow-up lines are still under literary review. Only his
- // first, proactive message and player-send mechanics are approved.
  xin:[
   ['小辛','蒙蒙哥，澳东商城打八折诶！！！你看到没'],
-  ['me','你怎么比促销短信还准时。'],
-  ['小辛','你买显卡的话顺便帮我看看游戏能不能跑满帧？'],
-  ['me','不如我先给你买个闹钟，让你别熬夜打游戏。'],
-  ['小辛','不是吧蒙蒙哥，昨天是谁拉我打到两点的啊？？？'],
-  ['me','我失忆了。']
+  ['me','你怎么比促销短信还准时'],
+  ['小辛','那当然，我收藏的显卡终于降价了'],
+  ['小辛','对了，你不是也想换电脑吗？'],
+  ['me','你是帮我挑，还是想让我帮你付款？'],
+  ['小辛','……'],
+  ['小辛','我有这么明显？'],
+  ['me','你差把购物车截图贴我脸上了'],
+  ['小辛','那你先看看嘛！我保证这次不是乱推荐。']
  ]
 };
 const inDay=s=>s.story55?.version===1&&s.day===DAY;
@@ -33,7 +34,7 @@ function append(s,key,index,from,text,{clock=s.clock}={}){
  const id='d02-'+key+'-script-'+index;
  if(c.messages.some(m=>m.id===id))return id;
  c.messages.push({id,from,text,day:DAY,time:clock,sentDate:DATE,kind:'text',actual:true,storyD02:true});
- if(from!=='me'&&!visible(s,c.id)){
+ if(from!=='me'&&key==='xin'&&index===0&&!visible(s,c.id)){
   c.unread=Math.max(0,Number(c.unread)||0)+1;
   const notificationId='d02-wechat-notice-'+id;
   if(!s.notifications.some(n=>n.id===notificationId))s.notifications.unshift({
@@ -78,7 +79,7 @@ export function seedD02Wechat(s){
 export function d02Draft(s,id){
  if(!inDay(s))return null;
  const key=id==='wang'?'wang':(id==='xin'||chat(s,'xin')?.id===id)?'xin':null;
- if(!key||key==='wang'&&s.clock<'12:16')return null;
+ if(!key||key==='wang'&&s.clock<'12:16'&&s.story55?.d02?.wechat?.earlyAt==null)return null;
  const t=thread(s,key),step=DIALOGUES[key][t?.index||0];
  if(!t||t.completed||t.dueAt!=null||!step||step[0]!=='me')return null;
  return {text:step[1],stage:'d02:'+key+':'+t.index};
