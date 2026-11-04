@@ -457,14 +457,14 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-open'){expandIsland();return;}
     if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
     if(action==='power-short-start'){
-      if(chargingBlock(store.get())){collapseIsland();toast('充电口进水，稍后再试。');return;}
+      if(chargingBlock(store.get())||store.get().story55?.activeScene){collapseIsland();toast('充电口进水，稍后再试。');return;}
       let ok=false;store.update(s=>{ok=beginShortCharge(s);});
       collapseIsland();
       if(!ok)toast('现在无法短充');
       return;
     }
     if(action==='power-long-start'){
-      const block=chargingBlock(store.get());
+      const block=chargingBlock(store.get())||store.get().story55?.activeScene;
       if(block){collapseIsland();toast('充电口进水，稍后再试。');return;}
       let ok=false;store.update(s=>{ok=plugIn(s);});
       if(ok){lockscreen.reset();setShade({progress:0});}

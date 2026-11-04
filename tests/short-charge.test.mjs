@@ -133,7 +133,10 @@ test('a full 100% battery remains plugged in and charges only actually received 
  assert.equal(s.batteryPercent,100);assert.equal(shortChargeGainToday(s),4);
  assert.equal(s.powerMode,'short-charging');
  endShortCharge(s);
- s.day=3;s.batteryPercent=50;beginShortCharge(s,61_000);
+ // D03 has its own mandatory gate. Finish it in this quota-only fixture.
+ for(const node of s.story55.config.nodes)if(Number.isInteger(node.gateDay)&&node.gateDay<=3)
+  s.story55.completed[node.id]={day:3,clock:'08:00',test:true};
+ s.day=3;s.batteryPercent=50;assert.equal(beginShortCharge(s,61_000),true);
  tickShortChargeBattery(s,60_000,121_000);
  assert.equal(shortChargeGainToday(s),10);assert.equal(s.batteryPercent,60);
  endShortCharge(s);s.day=2;s.batteryPercent=50;
