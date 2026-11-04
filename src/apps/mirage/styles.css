@@ -34,3 +34,10 @@
 
 /* Flow's D03 link lives inside the decrypted message, not in a generic dialog. */
 .mc-clear-text .mc-flow-link{border:0;background:none;padding:0;color:#84caff;text-decoration:underline;text-underline-offset:3px;font:inherit;display:inline;cursor:pointer;min-height:0;min-width:0;width:auto}.mc-clear-text .mc-flow-link:focus-visible{outline:2px solid #84caff;outline-offset:2px}
+
+/* D02 review: keep public bounties separate from personal orders. */
+.mc-my-orders{width:100%;min-height:46px;margin-top:16px;padding:12px 14px;border:1px solid #9ecfa777;background:#1a594a77;color:#cfe9c7;text-align:left;font-size:12px;letter-spacing:.4px}
+.mc-my-orders:active{background:#34715c99}
+.mc-bounty-switch[aria-label="我的订单状态"] button{font-size:11px;gap:4px;min-width:0}
+.mc-bounty-switch[aria-label="我的订单状态"] button span{font-size:9px}
+.mc-detail .mc-brief{white-space:pre-line}
