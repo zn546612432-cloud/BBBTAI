@@ -117,7 +117,7 @@ export function revealD02Key(s){
 }
 export function armD02Ghost(s,master,index){
  if(!D02_STAGES[master]?.[index])return null;
- if(!s.story55?.d02?.deployed?.[master]||s.content.orders?.find(o=>o.id===master)?.status!=='ACCEPTED')return null;
+ if(!s.story55?.d02?.deployed?.[master]||expired(s,master)||s.content.orders?.find(o=>o.id===master)?.status!=='ACCEPTED')return null;
  const id=d02StepId(master,index),type=D02_STAGES[master][index];
  s.ghost??={orders:{},history:[],balance:0,config:{}};
  s.ghost.orders??={};
