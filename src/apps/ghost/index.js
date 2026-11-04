@@ -83,12 +83,29 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    if(b.arcade&&o.type!=='cipher')body+=renderArcade(b.arcade,o,remaining);
     body+=`<div class="gh-game-footer"><span>● 加密 会话</span><span>${o.moves.toString().padStart(2,'0')} 次操作</span></div>`;
   }
- }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
+ }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+(s.content.orders?.some(o=>[D02_S,D02_A].includes(o.id)&&['ACCEPTED','READY','COMPLETED'].includes(o.status))?button('d02-projects','MIRAGE 委托'):'')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
  const exitDialog=loc.route==='/run'&&o?.id===D01_REPAIR&&o.status==='running'&&exitDialogFor===o.id?`<div class="gh-exit-confirm" role="dialog" aria-modal="true" aria-label="保存修復進度"><div class="gh-exit-card"><h2>退出數據修復？</h2><p>已完成的修復進度不會丟失。你可以保留本關的線路，或重新生成本關。</p>${button('d01-save','保存並退出','','gh-primary')}${button('d01-discard','放棄並退出','','gh-secondary')}${button('d01-cancel','繼續修復','','gh-secondary')}</div></div>`:'';
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}</div>`;
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
  if(a==='home')return nav(ctx);
+ if(a==='d02-projects')return nav(ctx,'/d02-projects');
+ if(a==='d02-select')return nav(ctx,'/d02-projects',{orderId:t.dataset.id});
+ if(a==='d02-deploy'){
+  const input=document.getElementById('gh-d02-key'),key=input?.value||'';let ok=false;
+  ctx.store.update(next=>{ok=deployD02(next,t.dataset.id,key);});
+  if(!ok)return ctx.toast('密钥无效，或尚未在 KIRA 查看授权邮件');
+  ctx.toast('工具已部署');return nav(ctx,'/d02-projects',{orderId:t.dataset.id});
+ }
+ if(a==='d02-open'){
+  const master=t.dataset.id,d=s.story55?.d02;
+  if(!d?.deployed?.[master])return ctx.toast('请先部署');
+  const index=D02_STAGES[master].findIndex((_,i)=>s.ghost?.orders?.[master+'-stage-'+(i+1)]?.status!=='success');
+  if(index<0)return ctx.toast('成果已生成');
+  const id=master+'-stage-'+(index+1);
+  return nav(ctx,'/contract',{orderId:id});
+ }
+
  if(a==='deployments')return nav(ctx,'/deployments');
  if(a==='mining')return nav(ctx,'/mining');
  if(a==='history')return nav(ctx,'/history');
