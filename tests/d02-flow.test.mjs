@@ -5,6 +5,9 @@ import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {completeNode} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {begin,finish} from '../src/apps/ghost/state.js';
+import {d02Draft,d02WeChatDue,tickD02Wechat,sendD02WeChat,seedD02Wechat} from '../src/story/d02/wechat.js';
+import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.js';
+import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {AODONG_PRODUCTS,aodongPrice} from '../src/apps/browser/aodong-shop.js';
 import {
  D02_S,D02_A,D02_MAIL,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
@@ -37,12 +40,14 @@ test('D01 is unchanged; D02 seeds two ranked bounties, dated SMS and two WeChat 
  assert.equal(s.content.orders.filter(o=>[D02_S,D02_A].includes(o.id)).length,2);
  assert.equal(s.content.orders.find(o=>o.id===D02_S).category,'S');
  assert.equal(s.content.orders.find(o=>o.id===D02_A).category,'A');
- assert.equal(s.content.notes.filter(n=>n.id===D02_NOTE).length,1);
+ assert.equal(s.content.notes.filter(n=>n.id===D02_NOTE).length,0);
+ assert.match(entryFor(s,2).body,/机房/);
  const sms=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
  assert.match(sms.messages[0].text,/八折/);
  assert.equal(sms.messages[0].schedule.clock,'09:00');
- assert.equal(s.content.conversations.wechat.find(c=>c.id==='wang').messages.filter(m=>m.storyD02).length,6);
- assert.equal(s.content.conversations.wechat.find(c=>c.name==='小辛').messages.filter(m=>m.storyD02).length,6);
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='wang').messages.filter(m=>m.storyD02).length,0);
+ assert.equal(s.content.conversations.wechat.find(c=>c.name==='小辛').messages.filter(m=>m.storyD02).length,0);
+ assert.equal(s.story55.d02.wechat.version,2);
 });
 test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage submission and optional nonduplicating bonus',()=>{
  const s=phone(),opening=s.bankData.balance;
@@ -116,4 +121,92 @@ test('Developer D03 jump replays both bounties and Talia contact without doublin
  assert.equal(s.content.notes.some(n=>n.id===D02_NOTE),false);
  assert.equal(s.content.conversations.wechat.some(c=>c.messages.some(m=>m.storyD02)),false);
  assert.equal(s.content.orders.some(o=>o.id===D02_S),false);
+});
+
+test('D02 brother: no authored me bubbles before Send; real Send -> delayed NPC reply, two-bubble ending and no duplicates',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)},c=s.content.conversations.wechat.find(c=>c.id==='wang');
+ s.clock='12:15';tickStory55(s);assert.equal(d02Draft(s,'wang'),null);
+ s.clock='12:16';tickStory55(s);
+ assert.match(d02Draft(s,'wang').text,/电脑真该退休/);
+ assert.match(renderWeChatChat(s,'wang'),/data-story-type=/);
+ assert.equal(c.messages.filter(m=>m.storyD02).length,0);
+ assert.equal(sendD02WeChat(store,'wang','不匹配',1000).messageId,null);
+ assert.equal(c.messages.filter(m=>m.storyD02).length,0);
+ const first=d02Draft(s,'wang').text;
+ assert.ok(sendD02WeChat(store,'wang',first,1000).messageId);
+ assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,1);
+ assert.equal(d02Draft(s,'wang'),null);
+ assert.equal(d02WeChatDue(s,2799),false);
+ assert.equal(tickD02Wechat(s,2800),true);
+ assert.match(c.messages.at(-1).text,/又坏了吗/);
+ assert.ok(d02Draft(s,'wang'));
+ assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,3000).messageId);
+ assert.equal(tickD02Wechat(s,4800),true);
+ assert.match(c.messages.at(-1).text,/还差多少钱/);
+ assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,5000).messageId);
+ s.clock='12:25';
+ assert.equal(tickD02Wechat(s,6800),true);
+ assert.equal(c.messages.at(-1).text,'别担心');
+ assert.equal(tickD02Wechat(s,8999),false);
+ assert.equal(tickD02Wechat(s,9000),true);
+ assert.equal(c.messages.at(-1).text,'哥能养你一辈子');
+ assert.equal(s.story55.d02.wechat.wang.completed,true);
+ assert.equal(d02Draft(s,'wang'),null);
+ assert.equal(tickD02Wechat(s,10000),false);
+ assert.equal(c.messages.filter(m=>m.storyD02).length,7);
+ assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,3);
+ tickD02Diary(s);assert.equal(s.story55.d02.diary.due.brother,2*1440+12*60+45);
+ s.clock='12:44';tickD02Diary(s);assert.doesNotMatch(entryFor(s,2).body,/中午和哥聊/);
+ s.clock='12:45';tickD02Diary(s);assert.match(entryFor(s,2).body,/中午和哥聊/);
+ tickD02Diary(s);assert.equal(entryFor(s,2).body.match(/中午和哥聊/g).length,1);
+ assert.equal(s.content.calendarEvents.length,0);
+});
+
+test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not automatic',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)},c=s.content.conversations.wechat.find(c=>c.name==='小辛');
+ s.clock='16:07';tickStory55(s);
+ assert.equal(d02WeChatDue(s),false);
+ s.clock='16:08';
+ assert.equal(d02WeChatDue(s),true);
+ tickD02Wechat(s,1000);
+ assert.equal(c.messages.filter(m=>m.storyD02).length,1);
+ assert.equal(c.messages.at(-1).from,'小辛');
+ assert.equal(c.messages.at(-1).time,'16:08');
+ assert.match(d02Draft(s,c.id).text,/促销短信/);
+ tickD02Wechat(s,2000);
+ assert.equal(c.messages.filter(m=>m.storyD02).length,1);
+ assert.ok(sendD02WeChat(store,c.id,d02Draft(s,c.id).text,3000).messageId);
+ assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,1);
+ assert.equal(tickD02Wechat(s,4800),true);
+ assert.match(c.messages.at(-1).text,/游戏能不能跑满帧/);
+ assert.equal(s.content.notifications.filter(n=>n.id?.includes('d02-xin-script-0')).length,1);
+});
+
+test('D02 Schedule stages are independent of Calendar, preserve editor overrides and activate only after buying',()=>{
+ const s=phone();
+ assert.doesNotMatch(entryFor(s,2).body,/在澳东买了/);
+ s.story55.d02.purchased=[{category:'ssd',id:'ad-ssd'}];
+ tickD02Diary(s);
+ assert.equal(s.story55.d02.diary.due.purchase,2*1440+8*60+50);
+ s.clock='08:49';tickD02Diary(s);assert.doesNotMatch(entryFor(s,2).body,/在澳东买了/);
+ s.clock='08:50';tickD02Diary(s);assert.match(entryFor(s,2).body,/在澳东买了/);
+ saveDiaryEntry(s,2,{title:'测试日记',weather:'雨',body:'今天看看机器。',stages:{brother:'哥哥的事',purchase:'已经下单'}});
+ assert.equal(entryFor(s,2).title,'测试日记');
+ assert.equal(entryFor(s,2).body,'今天看看机器。\n\n已经下单');
+ assert.equal(s.content.calendarEvents.length,0);
+});
+
+test('D02 migration removes only legacy auto-sent chat bubbles and stale notices',()=>{
+ const s=phone(),c=s.content.conversations.wechat.find(c=>c.id==='wang');
+ delete s.story55.d02.wechat;
+ c.messages.push({id:'d02-wang-01',from:'me',storyD02:true,text:'旧自动发消息',day:2,sentDate:'2025-05-20'});
+ c.messages.push({id:'player-authored-example',from:'me',actual:true,text:'玩家原有记录',day:2,sentDate:'2025-05-20'});
+ c.messages.push({id:'d02-wang-02',from:'熙旺',storyD02:true,text:'旧自动回复',day:2,sentDate:'2025-05-20',delivery:{day:2,clock:'12:19'}});
+ s.notifications.push({id:'message-wechat-wang-d02-wang-02',messageId:'d02-wang-02',conversationId:'wang'});
+ c.unread=1;
+ assert.equal(seedD02Wechat(s),true);
+ assert.equal(c.messages.some(m=>m.id==='d02-wang-01'||m.id==='d02-wang-02'),false);
+ assert.equal(c.messages.some(m=>m.id==='player-authored-example'),true);
+ assert.equal(c.unread,0);
+ assert.equal(seedD02Wechat(s),false);
 });
