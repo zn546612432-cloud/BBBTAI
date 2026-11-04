@@ -25,7 +25,7 @@ const ico=(name,size=22)=>`<svg class="ios-msg-icon ios-msg-icon-${name}" viewBo
 const face=(large=false)=>`<span class="ios-msg-face ${large?'large':''}">${ico('person',large?38:31)}</span>`;
 const label=(m,s)=>m?.timeLabel|| (m?timestampLabel(m,s).replace(/\s+\d\d:\d\d$/,''):'');
 const linkify=t=>esc(t)
- .replace(/https:\/\/aodong\.shop\/?/gi,match=>`<button type="button" class="ios-msg-detected ios-msg-shop-link" data-action="sms-aodong-link" aria-label="在浏览器打开澳东商城">${match}</button>`)
+ .replace(/https:\/\/aodong\.shop\/?/gi,()=>`<button type="button" class="ios-msg-detected ios-msg-shop-link" data-action="sms-aodong-link" aria-label="在浏览器打开澳东商城">${D02_AODONG_URL}</button>`)
  .replace(/\b\d{1,2}-\d{1,2}-\d{4}\b/g,match=>`<span class="ios-msg-detected">${match}</span>`);
 let search='',menuOpen=false,unreadOnly=false,selectMode=false,confirmDelete=false,selected=new Set();
 
