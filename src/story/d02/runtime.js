@@ -74,7 +74,7 @@ export function seedD02(s){
   if(!o){
    o={id,title:id===D02_S?'S 级委托':'A 级委托',owner,category:id===D02_S?'S':'A',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD',status:'OPEN',description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',storyD02:true,storyDay:2};
    s.content.orders.push(o);
-  }else if(o.storyD02)Object.assign(o,{description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD'});
+  }else if(o.storyD02){Object.assign(o,{description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD'});if(['ACCEPTED','READY','COMPLETED'].includes(o.status))o.wasAccepted=true;}
  }
  tickD02Contracts(s);
  // D02's private record belongs in Schedule, not Notes.
