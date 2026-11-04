@@ -13,6 +13,8 @@ export const D02_KEYS={ [D02_S]:'TALIA-CHIP-0520',[D02_A]:'GHOST-A-0520' };
 export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
 export const D02_REMINDER='d02-pc-build-reminder';
+export const D02_AODONG_URL='https://aodong.shop';
+export const D02_AODONG_SMS='五月澳东打折月！澳东商城电子产品全场八折。\n\n显卡、处理器、电脑配件限时优惠。\n\n官网：'+D02_AODONG_URL;
 export const D02_REWARDS={ [D02_S]:12000,[D02_A]:4500 };
 export const D02_STAGES={
  [D02_S]:['route','veil','extract'],
@@ -103,7 +105,10 @@ export function seedD02(s){
  let shop=sms.find(c=>c.id==='sms-aodong-2025');
  if(!shop){shop={id:'sms-aodong-2025',name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
  if(!shop.messages.some(m=>m.id==='d02-aodong-sale'))
-  shop.messages.push({...msg('d02-aodong-sale','aodong','五月澳东打折月！澳东商城电子产品全场八折。浏览器搜索「澳东商城」进入选购。','09:00'),schedule:{mode:'game-time',day:2,clock:'09:00'}});
+  shop.messages.push({...msg('d02-aodong-sale','aodong',D02_AODONG_SMS,'09:00'),schedule:{mode:'game-time',day:2,clock:'09:00'}});
+  // Repair the one existing D02 promo bubble in older saves; never append duplicates.
+  const sale=shop.messages.find(m=>m.id==='d02-aodong-sale');
+  if(sale?.storyD02)sale.text=D02_AODONG_SMS;
  // The new WeChat engine only inserts an NPC message when it has genuinely
  // been delivered; player lines appear only after the user presses Send.
  seedD02Wechat(s);
