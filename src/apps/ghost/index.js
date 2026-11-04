@@ -47,7 +47,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    (chosen?'<div class="gh-keybox"><small>'+esc(chosen.category)+' · '+esc(chosen.owner)+'</small><p>进度 '+done+' / '+D02_STAGES[chosen.id].length+' · 截止 D'+D02_DEADLINES[chosen.id].day+' 23:59</p>'+
    (!deployed&&chosen.status==='ACCEPTED'?'<p>請在 KIRA 打開委託密鑰附件，並在「檔案」中選擇使用 GHOST 打開。</p>':'')+
    (deployed&&chosen.status==='ACCEPTED'&&current?button('d02-open','继续项目 · '+esc(D02_STAGES[chosen.id][done]),'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
-   (chosen.status==='READY'?'<p>成果已生成，等待玩家在 MIRAGE 提交</p>':'')+
+   (chosen.status==='READY'?'<p>项目完成</p>':'')+
    (chosen.status==='COMPLETED'?'<p>委托已结算</p>':'')+'</div>':'<div class="gh-empty">暂无已接取的委托</div>');
  }
  else if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
