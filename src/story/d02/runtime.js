@@ -137,24 +137,31 @@ export function onD02GhostWin(s,stepId){
    s.content.missionFiles??=[];
    s.content.missionFiles.push({id:'d02-target-intelligence.enc',orderId:master,title:'TARGET_DATA.enc',description:'Talia 芯片委托 · 已获取的虚构目标资料',source:'ghost',createdDay:2,createdTime:s.clock});
   }
-  s.notifications.unshift({id:'d02-'+master+'-ready',title:'MIRAGE',body:'任务成果已生成 · 请返回 MIRAGE 手动提交',day:s.day,clock:s.clock,link:{appId:'mirage',route:'/order/'+master,params:{}}});
+  else{
+   s.content.missionFiles??=[];
+   if(!s.content.missionFiles.some(f=>f.id==='d02-monitor-interruption-report'))s.content.missionFiles.push({id:'d02-monitor-interruption-report',orderId:master,title:'INTERRUPTION_REPORT',description:'模拟监控节点 01/02/03 · 中断与恢复验证记录',source:'ghost',createdDay:s.day,createdTime:s.clock});
+  }
  }
+ syncD02Reminder(s,master);
  return true;
 }
 function creditD02(s,id,amount,suffix=''){
  const d=s.story55.d02;if(amount<=0)return;
+ const txId='d02-payment-'+id+suffix;
+ if(s.bankData.transactions?.some(t=>t.id===txId))return;
  s.bankData.balance=(Number(s.bankData.balance)||0)+amount;
  s.bankData.transactions??=[];
- s.bankData.transactions.unshift({id:'d02-payment-'+id+suffix,label:'MIRAGE '+id+(suffix?' BONUS':''),amount,day:s.day,time:s.clock,date:new Date(Date.parse('2025-05-19T00:00:00Z')+(s.day-1)*86400000).toISOString().slice(0,10)});
+ s.bankData.transactions.unshift({id:txId,label:suffix?'TALIA · 追加赏金':'MIRAGE · 委托结算',amount,day:s.day,time:s.clock,date:new Date(Date.parse('2025-05-19T00:00:00Z')+(s.day-1)*86400000).toISOString().slice(0,10)});
  s.notifications.unshift({id:'d02-payment-notice-'+id+suffix,title:'太平洋銀行',body:'MIRAGE 赏金入账 '+amount.toLocaleString('en-US')+' USD',day:s.day,clock:s.clock,link:{appId:'bank',route:'/',params:{}}});
  d.paid[id]=(d.paid[id]||0)+amount;
 }
 export function submitD02(s,id){
  const d=s.story55?.d02,o=s.content.orders?.find(x=>x.id===id);
- if(!d?.completed?.[id]||!o||o.status!=='ACCEPTED')return false;
+ if(!d?.completed?.[id]||!o||!['READY','ACCEPTED'].includes(o.status)||d.submitted[id])return false;
  o.status='COMPLETED';d.submitted[id]=true;
- creditD02(s,id,D02_REWARDS[id]*(id===D02_S&&d.bonus?2:1));
- return true;
+ creditD02(s,id,D02_REWARDS[id]);
+ if(s.day===2&&d.wechat&&d.wechat.earlyAt==null)d.wechat.earlyAt=gameMinute(s);
+ syncD02Reminder(s,id);return true;
 }
 export function d02TaliaDraft(s,id){
  const d=s.story55?.d02;if(id!==D02_TALIA||!d?.completed?.[D02_S]||d.taliaStage>=2)return null;
