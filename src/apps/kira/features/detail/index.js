@@ -31,7 +31,7 @@ export function kiraDetail(s,id){
   :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.body);
  const d01File=m.id===D01_ATTACHMENT?attachmentCard(s):'';
  const otherAttachment=m.id===HACKER_MAIL_ID?missionSteps(m,s)
-  :m.id==='flow-d03-reward'||m.d01?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
+  :m.id==='flow-d03-reward'||m.d01||m.storyD02&&!m.attachments?.length?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
  return `<div class="kira-mail-detail${m.id===D01_ATTACHMENT?' kira-d01-mail':''}">
   <div class="kira-mail-toolbar">${btn('kira-back','‹　收件箱')}<span>‹　›　□</span></div>
   <div class="kira-detail-head"><h2>${esc(m.subject)}</h2><p>来自 ${esc(m.from)}　·　今天</p></div>
