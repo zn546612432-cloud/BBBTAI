@@ -1,3 +1,4 @@
+import {hardwareComplete,HARDWARE_GOAL} from './hardware.js';
 // D02 / 2025-05-20. All actions are fictional game state; never run external network commands.
 import {seedD02Wechat} from './wechat.js';
 export const D02_S='d02-chip-peace';
@@ -100,6 +101,8 @@ export function seedD02(s){
  // Remove only the old authored note; all user-created notes remain intact.
  s.content.notes=(s.content.notes||[]).filter(n=>n.id!==D02_NOTE);
  d.noteSeeded=true;
+ const hardwareReminder=s.content.reminders?.find(r=>r.id===D02_REMINDER);
+ if(hardwareReminder)hardwareReminder.title='机房升级：购齐工作站配置清单中的设备';
  // The Aodong advertisement remains a genuine scheduled incoming SMS.
  const sms=s.content.conversations.messages??(s.content.conversations.messages=[]);
  let shop=sms.find(c=>c.id==='sms-aodong-2025');
@@ -210,13 +213,12 @@ export function createD02Reminder(s){
  if(!onD02(s))return false;
  const list=s.content.reminders??(s.content.reminders=[]);
  if(list.some(r=>r.id===D02_REMINDER))return false;
- list.push({id:D02_REMINDER,title:'配齐新工作站：CPU / 主板 / 显卡 / 内存 / SSD / 电源 / 散热 / 机箱',done:false,storyD02:true});
+ list.push({id:D02_REMINDER,title:'机房升级：购齐工作站配置清单中的设备',done:false,storyD02:true});
  return true;
 }
-export const D02_PARTS=['cpu','motherboard','gpu','ram','ssd','psu','cooler','case'];
+export const D02_PARTS=HARDWARE_GOAL.map(p=>p.category);
 export function d02CompleteBuild(s){
- const purchased=new Set((s.story55?.d02?.purchased||[]).map(x=>x.category));
- return D02_PARTS.every(cat=>purchased.has(cat));
+ return hardwareComplete(s);
 }
 export function toggleD02Build(s){
  const r=s.content.reminders?.find(x=>x.id===D02_REMINDER);if(!r)return false;
@@ -229,7 +231,7 @@ export function toggleD02Build(s){
  const list=s.content.conversations.wechat??[],c=list.find(c=>c.id==='group');
  if(c){
   const lines=[
-   ['me','新电脑终于装好了，跑起来舒服多了。'],
+   ['me','机房这轮升级终于弄好了，跑起来舒服多了。'],
    ['小辛','？？？蒙蒙哥！新的显卡什么型号？快给我看看！'],
    ['胡枫','难怪你刚才传文件这么快。'],
    ['熙旺','能快点完成工作是好事。晚上记得关机睡觉。'],
