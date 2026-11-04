@@ -93,7 +93,7 @@ export function seedD02(s){
  return true;
 }
 export function acceptD02(s,id){
- if(s.story55?.version!==1||s.day!==2||!D02_STAGES[id])return false;
+ if(s.story55?.version!==1||s.day<2||!D02_STAGES[id])return false;
  const o=s.content.orders?.find(o=>o.id===id),d=ensureD02(s);
  if(!o||o.status!=='OPEN'||expired(s,id))return false;
  o.status='ACCEPTED';
@@ -128,7 +128,7 @@ export function onD02GhostWin(s,stepId){
  const master=d02OrderOfStep(stepId),d=s.story55?.d02;
  if(!master||!d)return false;
  const index=D02_STAGES[master].findIndex((_,i)=>d02StepId(master,i)===stepId);
- if(index<0||s.content.orders.find(o=>o.id===master)?.status!=='ACCEPTED')return false;
+ if(index<0||expired(s,master)||s.content.orders.find(o=>o.id===master)?.status!=='ACCEPTED')return false;
  if(index+1<D02_STAGES[master].length)armD02Ghost(s,master,index+1);
  else if(!d.completed[master]){
   d.completed[master]=true;d.completedAt??={};d.completedAt[master]={day:s.day,clock:s.clock};
