@@ -61,7 +61,7 @@ export function d02ContractDue(s,now=Date.now()){
 export function deployD02(s,id,key){
  if(!onD02(s)||!D02_STAGES[id])return false;
  const order=s.content.orders?.find(o=>o.id===id),mail=s.content.mail?.find(m=>m.id===(id===D02_S?D02_MAIL:D02_A_MAIL));
- if(!order||order.status!=='ACCEPTED'||!mail?.read||String(key||'').trim()!==D02_KEYS[id])return false;
+ if(!order||order.status!=='ACCEPTED'||expired(s,id)||!mail||String(key||'').trim()!==D02_KEYS[id])return false;
  const d=ensureD02(s);if(id===D02_S&&!d.keyOpened)return false;
  d.deployed[id]=true;armD02Ghost(s,id,0);return true;
 }
