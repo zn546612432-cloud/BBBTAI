@@ -9,7 +9,7 @@ export const D02_REMINDER='d02-pc-build-reminder';
 export const D02_REWARDS={ [D02_S]:12000,[D02_A]:4500 };
 export const D02_STAGES={
  [D02_S]:['route','veil','extract'],
- [D02_A]:['cipher','strike','strike','strike']
+ [D02_A]:['cipher','route','strike']
 };
 const TODAY='2025-05-20';
 const msg=(id,from,text,time)=>({id,from,text,kind:'text',day:2,time,sentDate:TODAY,actual:true,storyD02:true});
