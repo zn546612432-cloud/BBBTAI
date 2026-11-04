@@ -13,10 +13,12 @@ test('map pin selection works as local UI, not a navigation and clock change',()
  assert.match(html,/s55-map-placeholder/);
  assert.equal(selectStory55Pin(null),false);
 });
-test('GHOST descriptions are Chinese and include instructions for puzzles',()=>{
+test('GHOST descriptions use Chinese technical utility copy, not gameplay instructions',()=>{
  const s=initialState();activateStory55(s);
  const html=ghostRender({store:{get:()=>s},refresh(){}},{appId:'ghost',route:'/',params:{}});
  assert.match(html,/工具程序/);
- assert.match(html,/拼图：交换方块/);
+ assert.match(html,/解析加密结构，恢复可读取的数据/);
+ assert.match(html,/建立节点连接，验证数据传输通路/);
+ assert.doesNotMatch(html,/拼图：|翻牌配对|迷宫潜行|小游戏/);
  assert.doesNotMatch(html,/PRIVATE TOOL LIBRARY|ACTION AUTHORIZATION/);
 });

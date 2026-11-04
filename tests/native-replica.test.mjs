@@ -4,6 +4,7 @@ import {PhoneStore} from '../src/services/storage.js';
 import {registry} from '../src/system/registry.js';
 import * as phone from '../src/apps/phone/replica.js';
 import * as messages from '../src/apps/messages/replica.js';
+import * as originalMessages from '../src/apps/messages/index.js';
 import * as weather from '../src/apps/weather/replica.js';
 import * as editor from '../src/editor/index.js';
 import {addTestSMS} from './fixture-chat.mjs';
@@ -34,7 +35,7 @@ test('native phone replica has a functional 12-key dialer and reference-style co
 
 test('native Messages replica keeps conversations and real SMS form',()=>{
  const {store}=setup(),ctx={store};
- assert.equal(registry.get('messages'),messages);
+ assert.equal(registry.get('messages'),originalMessages);
  let html=messages.render(ctx,{route:'/',params:{}});
  assert.match(html,/ios-msg-floating-search/);
  assert.match(html,/ios-msg-row/);
