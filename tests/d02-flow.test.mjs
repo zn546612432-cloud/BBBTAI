@@ -179,7 +179,7 @@ test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not au
  assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,1);
  assert.equal(tickD02Wechat(s,4800),true);
  assert.match(c.messages.at(-1).text,/游戏能不能跑满帧/);
- assert.equal(s.content.notifications.filter(n=>n.id?.includes('d02-xin-script-0')).length,1);
+ assert.equal(s.notifications.filter(n=>n.id?.includes('d02-xin-script-0')).length,1);
 });
 
 test('D02 Schedule stages are independent of Calendar, preserve editor overrides and activate only after buying',()=>{
