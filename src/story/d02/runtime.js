@@ -4,6 +4,11 @@ export const D02_S='d02-chip-peace';
 export const D02_A='d02-commission-a';
 export const D02_MAIL='d02-talia-key-mail';
 export const D02_A_MAIL='d02-anonymous-key-mail';
+export const D02_KEY_FILES={[D02_S]:'talia-chip-0520.key',[D02_A]:'monitor-nodes-0520.key'};
+export const D02_KIRA_BODY={
+ [D02_S]:'加密芯片的项目凭证已同步，授权密钥见附件。',
+ [D02_A]:'委托已确认。\n\n本次项目的授权凭证已作为加密附件送达。不要用于其他订单。\n\n期限三天。我只接受完整的结果报告。不要分批提交，也不需要发进度邮件。'
+};
 export const D02_KEYS={ [D02_S]:'TALIA-CHIP-0520',[D02_A]:'GHOST-A-0520' };
 export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
@@ -80,8 +85,13 @@ export function seedD02(s){
  // Backfill its KIRA authorization once so the upgraded save is still playable.
  const legacyA=s.content.orders.find(o=>o.id===D02_A);
  if(legacyA?.status==='ACCEPTED'&&!s.content.mail.some(m=>m.id===D02_A_MAIL)){
-  s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:'委托已确认。\n\nPROJECT ACCESS KEY: '+D02_KEYS[D02_A]+'\n\n期限三天。我只接受完整的结果报告。',read:false,storyD02:true,day:s.day,time:s.clock});
+  s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:D02_KIRA_BODY[D02_A],attachments:[D02_KEY_FILES[D02_A]],read:false,storyD02:true,day:s.day,time:s.clock});
   if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
+ }
+ // D02 .key files use KIRA native attachments, including in older saves.
+ for(const [id,mailId] of [[D02_S,D02_MAIL],[D02_A,D02_A_MAIL]]){
+  const mail=s.content.mail.find(m=>m.id===mailId);
+  if(mail?.storyD02){mail.body=D02_KIRA_BODY[id];mail.attachments=[D02_KEY_FILES[id]];}
  }
  tickD02Contracts(s);
  // D02's private record belongs in Schedule, not Notes.
@@ -107,10 +117,10 @@ export function acceptD02(s,id){
  if(id===D02_S){
   const list=s.content.conversations.mirage;
   if(!list.some(c=>c.id===D02_TALIA))list.push({id:D02_TALIA,name:'Talia',avatar:'T',online:false,unread:1,storyD02:true,lastMessageAt:Date.now(),messages:[msg('d02-talia-connected',D02_TALIA,'通信已建立',s.clock)]});
-  if(!s.content.mail.some(m=>m.id===D02_MAIL))s.content.mail.unshift({id:D02_MAIL,from:'Talia · MIRAGE',subject:'[MIRAGE] CHIP ACCESS / KEY',body:'加密芯片的项目凭证已同步，授权密钥见附件。',read:false,storyD02:true,day:s.day,time:s.clock,attachments:['talia-chip-0520.key']});
+  if(!s.content.mail.some(m=>m.id===D02_MAIL))s.content.mail.unshift({id:D02_MAIL,from:'Talia · MIRAGE',subject:'[MIRAGE] CHIP ACCESS / KEY',body:D02_KIRA_BODY[D02_S],read:false,storyD02:true,day:s.day,time:s.clock,attachments:[D02_KEY_FILES[D02_S]]});
   s.notifications.unshift({id:'d02-talia-mail-notice',title:'KIRA',body:'[MIRAGE] CHIP ACCESS / KEY',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_MAIL,params:{}}});
  }else{
-  if(!s.content.mail.some(m=>m.id===D02_A_MAIL))s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:'委托已确认。\n\n这是本次项目的授权密钥。不要用于其他订单。\n\nPROJECT ACCESS KEY: '+D02_KEYS[D02_A]+'\n\n期限三天。我只接受完整的结果报告。不要分批提交，也不需要发进度邮件。',read:false,storyD02:true,day:s.day,time:s.clock});
+  if(!s.content.mail.some(m=>m.id===D02_A_MAIL))s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:D02_KIRA_BODY[D02_A],attachments:[D02_KEY_FILES[D02_A]],read:false,storyD02:true,day:s.day,time:s.clock});
   if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
  }
  const list=s.content.reminders??(s.content.reminders=[]);
