@@ -12,7 +12,7 @@ export class WorldTickBatch{
   const contextChanged=this.context!==null&&this.context!==context;
   this.anchor=anchor;this.context=context;this.elapsed+=Math.max(0,elapsed);
   const clockDue=(1-(s.worldMinuteFraction||0))/worldMinuteRate(s,options);
-  const batteryDue=['charging','sleeping'].includes(s.powerMode)?Infinity:BATTERY_DRAIN_INTERVAL_MS-(s.powerActiveMs||0);
+  const batteryDue=s.powerMode==='short-charging'?6000-((Number(s.shortCharge?.elapsedMs)||0)%6000):['charging','sleeping'].includes(s.powerMode)?Infinity:BATTERY_DRAIN_INTERVAL_MS-(s.powerActiveMs||0);
   const due=s.dayChargeRemainingMs>0?Math.min(800,s.dayChargeRemainingMs):Math.min(clockDue,batteryDue);
   if(!contextChanged&&this.elapsed+1e-6<due)return 0;
   const ready=this.elapsed;this.elapsed=0;return ready;

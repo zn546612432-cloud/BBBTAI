@@ -14,10 +14,11 @@ import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {simulateFlowD03} from './flow-d03.js';
 import {D01_REPAIR,D01_ATTACHMENT,seedD01,deliverD01Opening,claimD01Bank,acceptD01Repair,deliverD01Attachment,revealD01Key,deployD01,finishD01Round,submitD01Attachment,settleD01Repair} from '../../story/d01/runtime.js';
 import {authorize} from '../../apps/ghost/state.js';
+import {rebuildD02} from '../../story/d02/runtime.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
-const authoredMessage=m=>m&&!m.story55&&!m.demo&&!m.ouroborosScript&&!/^preset-/.test(m.id||'')&&(
+const authoredMessage=m=>m&&!m.storyD02&&!m.story55&&!m.demo&&!m.ouroborosScript&&!/^preset-/.test(m.id||'')&&(
   m.authored===true||m.storyImported===true||m.schedule?.mode==='game-time'||(typeof m.sentDate==='string'&&m.sentDate<'2025-05-19')
 );
 function preserveAuthoring(s){
@@ -37,7 +38,7 @@ function preserveAuthoring(s){
  return {
   config:copy(story55Config(s)),conversations,
   presets:copy(s.storyPresets||{}),
-  notes:copy(s.content.notes||[]),
+  notes:copy((s.content.notes||[]).filter(n=>!n.storyD02)),
   photos:copy(s.content.photos||[]),
   moments:{posts:copy(moments.posts||[]),editedPosts:copy(moments.editedPosts||{}),deletedIds:copy(moments.deletedIds||[]),profiles:copy(moments.profiles||{}),likes:{},comments:{}},
   authoredMail:copy((s.content.mail||[]).filter(m=>m.authored===true&&!m.story55)),
@@ -244,7 +245,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  if(!Number.isInteger(targetDay)||targetDay<1||targetDay>55||!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock))
   throw Error('日期或时间无效');
  const author=preserveAuthoring(s);
+ const dailyShortChargeQuota=structuredClone(s.shortChargeGains||{});
  activateStory55(s);
+ // Rebuilding dates unplugs the cable, but cannot refill previously spent daily quota.
+ s.shortChargeGains=dailyShortChargeQuota;
  // A previous late-game test may have renamed this thread after recognition.
  // Do not leak the revealed identity when returning to an earlier date.
  const taiChat=s.content.conversations.noapp?.find(chat=>chat.id==='tai');
@@ -270,6 +274,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
   // D01 is playable at the target date; when it is a prior date, simulate
   // the complete MIRAGE → KIRA → GHOST → bank/wallet chain once.
   if(day===1){simulateCompletedD01(s);tickStory55(s);}
+  if(day===2){rebuildD02(s);tickStory55(s);}
   // Include all published authored bounties before the target test day.
   // They follow the same strict cross-App commands as real gameplay, but
   // only inside this independently snapshotted developer reconstruction.

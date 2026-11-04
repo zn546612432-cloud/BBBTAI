@@ -17,6 +17,7 @@ export function renderEditor(note){
   <div class="nt-editor-main" data-key="notes-edit-scroll">
    <input class="nt-title-input" data-notes-title name="title" value="${esc(note.title||'')}" placeholder="" aria-label="备忘录标题" spellcheck="true">
    <textarea class="nt-body-input" data-notes-text name="text" placeholder="" aria-label="备忘录正文" spellcheck="true">${esc(note.text||'')}</textarea>
+   ${note.id==='d02-new-workstation-note'?'<button type="button" data-action="notes-d02-remind" style="display:block;border:0;background:none;color:#0879ee;text-decoration:underline;font-size:14px;text-align:left;margin:12px 0 20px;padding:0">添加提醒事项：攒一台新工作站 ↗</button>':''}
    ${renderAttachments(note)}
   </div>
   <div class="nt-editor-toolbar" aria-label="编辑工具栏">

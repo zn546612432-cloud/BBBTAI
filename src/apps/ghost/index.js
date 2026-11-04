@@ -1,4 +1,5 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
+import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {isStory55} from '../../services/story55/state.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
@@ -45,7 +46,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
   if(o.status!=='running'&&o.status!=='preview-win'){
-   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}<div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA':'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
+   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}<div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'进入下一关':d02OrderOfStep(o.id)==='d02-chip-peace'?'查看取得的目标资料':'完成 · 返回 GHOST',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
@@ -89,6 +90,9 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='d01-cancel'){exitDialogFor=null;ctx.refresh();return;}
  if(a==='d01-save'&&id===D01_REPAIR){exitDialogFor=null;return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d01-discard'&&id===D01_REPAIR){exitDialogFor=null;ctx.store.update(n=>exitD01Puzzle(n,{discard:true}));return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
+ if(a==='d02-next'&&id&&o?.status==='success'){
+  const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):d02OrderOfStep(id)==='d02-chip-peace'?ctx.router.open({appId:'files',route:'/linked/'+encodeURIComponent(d02OrderOfStep(id)),params:{}}):nav(ctx);
+ }
  if(a==='d01-next'&&id===D01_REPAIR){exitDialogFor=null;if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
  if(a==='start'){exitDialogFor=null;if(!o)return;
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}

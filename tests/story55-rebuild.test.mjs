@@ -165,7 +165,7 @@ test('D45 reconstructs authored D20 MIRAGE→KIRA→GHOST→sent attachment→wa
  assert.equal(s.content.orders.find(o=>o.id==='d20-bounty').status,'OPEN');
  assert.equal(linkedMissionVisible(s,'d20-bounty'),false);
  assert.equal(s.content.mirage.digitalBalance,10.04); // D01 and D06 rewards remain after removing D20
- assert.equal((s.content.missionFiles||[]).length,0);
+ assert.equal((s.content.missionFiles||[]).filter(f=>f.orderId==='d20-bounty').length,0); // D02 completed mission files persist
  assert.equal(s.content.mail.some(m=>m.id===linkedDeliveryId('d20-bounty')),false);
  assert.equal(storySourceVersion(s),before);
 });

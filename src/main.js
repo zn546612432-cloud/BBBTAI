@@ -39,7 +39,7 @@ import {isNativeTabSwitch} from './system/navigation.js';
 import {errorHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
-import {drainBattery,plugIn,unplug} from './system/power/battery.js';
+import {drainBattery,plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,tickShortChargeBattery,settleOfflineShortCharge} from './system/power/battery.js';
 import {advanceGameMinutes,tickWorld,isTaiConversation,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {powerFullscreen} from './system/power/controls.js';
@@ -47,6 +47,8 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// A closed browser does not advance the story clock. A plugged-in battery does.
+if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s));
 // Migrate bookmarks saved by the retired 55-day calendar dialogue panels.
 if(isStory55(store.get())){
  const legacy=loc=>loc?.appId==='calendar'&&loc.route==='/story55/scene';
@@ -75,7 +77,7 @@ if(noappV2Review)store.update(s=>prepareNoAppV2Review(s));
 if(noappV3Review)store.update(s=>prepareNoAppV3Review(s));
 mountShell();
 let lockAssets=null;
-let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandTimer=null,alarmSound=null,pendingNoticeId=null;
+let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandPage='home',islandTimer=null,alarmSound=null,pendingNoticeId=null;
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
@@ -83,6 +85,7 @@ const tasks=createTaskSwitcher({router,registry});
 if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
+let shortChargeNoticePausedUntil=0;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
@@ -134,7 +137,9 @@ function render(){
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
  const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
- patchHTML($('#status-layer'),status(s,{islandExpanded}));
+ patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
+  // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
+  $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
  patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s));
  $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
  patchHTML($('#shade-layer'),notifications(s));
@@ -297,13 +302,20 @@ function startAlarmSound(){
 function collapseIsland(delay=0){
  clearTimeout(islandTimer);
  if(delay){islandTimer=setTimeout(()=>collapseIsland(),delay);return;}
- islandExpanded=false;render();
+ islandExpanded=false;islandPage='home';render();
 }
-function expandIsland(){
+function expandIsland(page='home'){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
- islandExpanded=true;render();collapseIsland(8000);
+ islandPage=page;islandExpanded=true;render();collapseIsland(page==='select'?18000:8000);
 }
-store.subscribe(()=>{const s=store.get();const added=s.notifications.filter(n=>!seenNotices.has(n.id));seenNotices=new Set(s.notifications.map(n=>n.id));if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
+store.subscribe(()=>{
+ const s=store.get();
+ // A compulsory active scene or a newly imposed charge gate unplugs the cable.
+ if(shortChargeStoryInterrupted(s)){store.update(next=>endShortCharge(next));return;}
+ const added=s.notifications.filter(n=>!seenNotices.has(n.id));
+ seenNotices=new Set(s.notifications.map(n=>n.id));
+ if(isShortCharging(s)&&added.some(n=>n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
+ if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.
  const closeBoot=()=>{
@@ -388,17 +400,35 @@ setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||seco
 // The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 const worldTickBatch=new WorldTickBatch();
+// iOS may suspend all page timers in the background. Catch up battery only,
+// not NPC scenes or game time, when the player reopens the game.
+function settleResumedShortCharge(){
+ if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s));
+ lastPowerTick=performance.now();worldTickBatch.reset();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)settleResumedShortCharge();});
+window.addEventListener('pageshow',e=>{if(e.persisted)settleResumedShortCharge();});
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(lockscreen.stage==='restart'||document.hidden||endingAwaitingVoice55(store.get())||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())){worldTickBatch.reset();return;}
+ if(lockscreen.stage==='restart'||document.hidden||endingAwaitingVoice55(store.get())||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())&&!isShortCharging(store.get())){worldTickBatch.reset();return;}
  const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
- const tickOptions={focused:editing,taiChat:isTaiConversation(store.get())};
+ const current=store.get();
+ // Short charge is a waiting tool: fast only on the unlocked HOME screen.
+ // Apps, call ringing, lock screen, task switcher and notification shade use
+ // their normal clock pace, while the battery stays plugged in.
+ const fastForward=current.unlocked&&current.nav.current.appId==='home'&&!shade&&!tasks.visible&&!['ringing','dialing','connected'].includes(callState().state)&&Date.now()>=shortChargeNoticePausedUntil;
+ const tickOptions={focused:editing,taiChat:isTaiConversation(current),fastForward};
  const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
  let outcome={};
  store.update(s=>{
-  outcome=tickWorld(s,tickElapsed,tickOptions);
-  drainBattery(s,tickElapsed);
+  if(s.powerMode==='short-charging'){
+   tickShortChargeBattery(s,tickElapsed);
+   outcome=tickWorld(s,tickElapsed,tickOptions);
+  }else{
+   outcome=tickWorld(s,tickElapsed,tickOptions);
+   drainBattery(s,tickElapsed);
+  }
    if(endingReplyDue55(s))advanceScene55(s,'ending');
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
@@ -406,6 +436,7 @@ setInterval(()=>{
  });
  if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
  if(outcome.event==='emergency')collapseIsland();
+ if(outcome.event==='short-charge-end'||outcome.event==='short-charge-story')collapseIsland();
  if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
  if(outcome.event==='wake'){collapseIsland();lockscreen.reset();}
 },800);
@@ -423,7 +454,24 @@ $('#root').addEventListener('click',async e=>{
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
-    if(action==='power-open'||action==='power-charge'){expandIsland();return;}
+    if(action==='power-open'){expandIsland();return;}
+    if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
+    if(action==='power-short-start'){
+      if(chargingBlock(store.get())||store.get().story55?.activeScene){collapseIsland();toast('充电口进水，稍后再试。');return;}
+      let ok=false;store.update(s=>{ok=beginShortCharge(s);});
+      collapseIsland();
+      if(!ok)toast('现在无法短充');
+      return;
+    }
+    if(action==='power-long-start'){
+      const block=chargingBlock(store.get())||store.get().story55?.activeScene;
+      if(block){collapseIsland();toast('充电口进水，稍后再试。');return;}
+      let ok=false;store.update(s=>{ok=plugIn(s);});
+      if(ok){lockscreen.reset();setShade({progress:0});}
+      collapseIsland();
+      if(!ok)toast('现在无法长充');
+      return;
+    }
     if(action==='power-decline'){collapseIsland();return;}
     if(action==='power-plug'){if(chargingBlock(store.get())){toast('充电口进水，稍后再试。');collapseIsland();return;}let charged=false;store.update(s=>{charged=plugIn(s);});if(charged){lockscreen.reset();setShade({progress:0});}collapseIsland();return;}
     if(action==='power-unplug'){let ok=false;store.update(s=>{ok=unplug(s);});if(ok)collapseIsland(320);return;}

@@ -18,6 +18,7 @@ import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {uid} from '../../services/id.js';
 import {datePreset,messageDate,messageClock,setMessageDate} from '../../services/messaging/timestamps.js';
 import {dateParts,dateLabel,setPreviewDate} from '../../services/calendar.js';
+import {endShortCharge} from '../../system/power/battery.js';
 import {phoneData} from '../../services/phone-data.js';
 import {btn,card,demo,empty,esc} from '../../system/ui.js';
 import {conversations as allConversations,selectedConversation,actors,actorName,renameConversation,renameActor,setSchedule,newMessage,reorderMessage,moveMessageTo,clearDelivery,scheduleLabel,createConversation,chatApps,isGroup} from './features/conversations/model.js';
@@ -62,7 +63,7 @@ export function handle(a,t,ctx){
  if(a==='rearm-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
  if(a==='test-message'){
   const x=selectedConversation(store.get());
-  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
+  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;endShortCharge(s);clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
   router.open({appId:x.channel,route:'/chat/'+x.c.id});return;
  }
  if(a==='add-image-message'||a==='replace-message-image'){
@@ -132,7 +133,7 @@ export function submit(f,ctx){
  }
  if(form==='new-conversation'||form==='new-sms'){createConversation(store,{channel:form==='new-sms'?'messages':String(data.get('channel')),name:String(data.get('name')||''),type:form==='new-sms'?'direct':String(data.get('type')),members:String(data.get('members')||'')});const pane=document.querySelector('#app-content');if(pane)pane.scrollTop=0;toast('对话窗口已创建，可以添加消息');}
  if(form==='charge-gate'){const day=Number(data.get('day')),untilFlag=String(data.get('flag')||'').trim();if(!Number.isInteger(day)||day<1||day>89||!untilFlag)throw Error('请填写天数与完成标记');store.update(s=>{s.storyChargeGates=[...(s.storyChargeGates||[]).filter(g=>g.day!==day),{day,untilFlag}];});toast('已保存');return;}
- if(form==='preview'){let count=0;store.update(s=>{const previous={day:s.day,clock:s.clock};setPreviewDate(s,{day:Number(data.get('day')),clock:String(data.get('clock'))});count=deliverMissedScheduled(s,previous).length;});if(!count)toast('时间已更新；没有新的定时主动消息');}
+ if(form==='preview'){let count=0;store.update(s=>{endShortCharge(s);const previous={day:s.day,clock:s.clock};setPreviewDate(s,{day:Number(data.get('day')),clock:String(data.get('clock'))});count=deliverMissedScheduled(s,previous).length;});if(!count)toast('时间已更新；没有新的定时主动消息');}
 }
 export function mountInteractions(root,ctx){
  root.addEventListener('input',e=>updateTimelinePreview(e.target));
