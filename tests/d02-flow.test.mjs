@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
+import {render as kiraRender,handle as kiraHandle} from '../src/apps/kira/index.js';
+import {render as filesRender,handle as filesHandle} from '../src/apps/files/index.js';
+import {render as ghostRender} from '../src/apps/ghost/index.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {completeNode} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
@@ -10,7 +13,7 @@ import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.j
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {AODONG_PRODUCTS,aodongPrice} from '../src/apps/browser/aodong-shop.js';
 import {
- D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_BRIEFS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
+ D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_BRIEFS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
  seedD02,acceptD02,revealD02Key,armD02Ghost,d02StepId,d02NextStep,
  submitD02,deployD02,tickD02Contracts,d02ReminderId,onD02TaliaMessage,d02TaliaDraft,createD02Reminder,d02CompleteBuild,toggleD02Build
 } from '../src/story/d02/runtime.js';
@@ -295,4 +298,57 @@ test('D02 accepting either commission notifies through KIRA only',()=>{
   assert.equal(acceptD02(s,id),false);
   assert.equal(s.notifications.filter(n=>n.id===acceptanceNotices[0].id).length,1);
  }
+});
+
+test('D02 KIRA key attachments open through native Files preview and GHOST for both commissions',()=>{
+ for(const [id,mailId] of [[D02_S,D02_MAIL],[D02_A,D02_A_MAIL]]){
+  const s=phone(),routes=[],store={get:()=>s,update:fn=>fn(s)};
+  const ctx={store,router:{open:link=>routes.push(link)},toast:()=>{}};
+  assert.equal(acceptD02(s,id),true);
+  const mail=s.content.mail.find(m=>m.id===mailId);
+  assert.deepEqual(mail.attachments,[D02_KEY_FILES[id]]);
+  assert.doesNotMatch(mail.body,/PROJECT ACCESS KEY|TALIA-CHIP-0520|GHOST-A-0520/);
+  const email=kiraRender({store},{route:'/mail/'+mailId,params:{}});
+  assert.match(email,/data-action="kira-d02-open-file"/);
+  assert.match(email,/kira-d01-attachment/);
+  assert.match(email,new RegExp(D02_KEY_FILES[id].replace('.','\\.')));
+  assert.doesNotMatch(email,/kira-d02-key|PROJECT ACCESS KEY|直接显示密钥/);
+  kiraHandle('kira-d02-open-file',{dataset:{id:mailId}},ctx);
+  assert.deepEqual(routes.at(-1),{appId:'files',route:'/attachment/d02/'+mailId,params:{mailId}});
+  assert.equal(mail.read,true);
+  const preview=filesRender({store},{route:'/attachment/d02/'+mailId,params:{mailId}});
+  assert.match(preview,/files-d01-preview/);
+  assert.match(preview,/此加密檔案無法直接預覽/);
+  assert.match(preview,/data-action="files-d02-open-ghost"/);
+  assert.match(preview,/<strong>GHOST<\/strong>/);
+  assert.equal(armD02Ghost(s,id,0),null);
+  filesHandle('files-d02-open-ghost',{dataset:{id:mailId}},ctx);
+  assert.equal(s.story55.d02.deployed[id],true);
+  if(id===D02_S)assert.equal(s.story55.d02.keyOpened,true);
+  assert.equal(s.ghost.orders[d02StepId(id,0)].status,'authorized');
+  assert.deepEqual(routes.at(-1),{appId:'ghost',route:'/contract',params:{orderId:d02StepId(id,0)}});
+  const before=Object.keys(s.ghost.orders).length;
+  filesHandle('files-d02-open-ghost',{dataset:{id:mailId}},ctx);
+  assert.equal(Object.keys(s.ghost.orders).length,before);
+  const project=ghostRender(ctx,{route:'/d02-projects',params:{orderId:id}});
+  assert.doesNotMatch(project,/gh-d02-key|data-action="gh-d02-deploy"/);
+ }
+});
+test('D02 Files direct link rejects nonexistent or unread Kira attachment',()=>{
+ const s=phone(),routes=[],store={get:()=>s,update:fn=>fn(s)};
+ const ctx={store,router:{open:link=>routes.push(link)},toast:()=>{}};
+ assert.equal(acceptD02(s,D02_A),true);
+ const route='/attachment/d02/'+D02_A_MAIL;
+ assert.match(filesRender({store},{route,params:{mailId:D02_A_MAIL}}),/不可用/);
+ filesHandle('files-d02-open-ghost',{dataset:{id:D02_A_MAIL}},ctx);
+ assert.equal(s.story55.d02.deployed[D02_A],undefined);
+ assert.equal(routes.length,0);
+});
+test('old D02 key mail is converted back to a native attachment without revealing key in its body',()=>{
+ const s=phone();assert.equal(acceptD02(s,D02_A),true);
+ const mail=s.content.mail.find(m=>m.id===D02_A_MAIL);
+ mail.body='PROJECT ACCESS KEY: GHOST-A-0520';delete mail.attachments;
+ tickStory55(s);
+ assert.deepEqual(mail.attachments,[D02_KEY_FILES[D02_A]]);
+ assert.doesNotMatch(mail.body,/PROJECT ACCESS KEY/);
 });
