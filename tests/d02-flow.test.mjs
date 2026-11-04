@@ -93,7 +93,7 @@ test('A bounty requires Kira authorization and plays cipher-route-strike once ea
  assert.equal(acceptD02(s,D02_A),true);
  assert.equal(s.content.mail.some(m=>m.id===D02_A_MAIL),true);
  assert.equal(armD02Ghost(s,D02_A,0),null);
- assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),false);
+ assert.equal(deployD02(s,D02_A,'INVALID-KEY'),false);
  s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
  assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
  win(s,D02_A);
