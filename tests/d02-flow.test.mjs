@@ -352,3 +352,14 @@ test('old D02 key mail is converted back to a native attachment without revealin
  assert.deepEqual(mail.attachments,[D02_KEY_FILES[D02_A]]);
  assert.doesNotMatch(mail.body,/PROJECT ACCESS KEY/);
 });
+
+test('GHOST D02 finished project shows only in-world completion status',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(acceptD02(s,D02_S),true);
+ assert.equal(revealD02Key(s),true);
+ assert.equal(deployD02(s,D02_S,D02_KEYS[D02_S]),true);
+ win(s,D02_S);
+ const html=ghostRender({store},{route:'/d02-projects',params:{orderId:D02_S}});
+ assert.match(html,/项目完成/);
+ assert.doesNotMatch(html,/等待玩家|玩家在 MIRAGE 提交/);
+});
