@@ -88,12 +88,17 @@ test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage 
  assert.equal(onD02TaliaMessage(s,D02_TALIA,'哦？这份贡献值得再加一笔赏金吗？'),false);
  assert.equal(contact.messages.filter(m=>m.id==='d02-talia-goodbye').length,1);
 });
-test('A bounty plays cipher plus exactly three strike stages and has no Talia easter egg',()=>{
+test('A bounty requires Kira authorization and plays cipher-route-strike once each',()=>{
  const s=phone(),opening=s.bankData.balance;
  assert.equal(acceptD02(s,D02_A),true);
- assert.equal(s.content.mail.some(m=>m.id===D02_MAIL),false);
+ assert.equal(s.content.mail.some(m=>m.id===D02_A_MAIL),true);
+ assert.equal(armD02Ghost(s,D02_A,0),null);
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),false);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
  win(s,D02_A);
- assert.deepEqual(D02_STAGES[D02_A],['cipher','strike','strike','strike']);
+ assert.deepEqual(D02_STAGES[D02_A],['cipher','route','strike']);
+ assert.equal(s.content.orders.find(o=>o.id===D02_A).status,'READY');
  assert.equal(submitD02(s,D02_A),true);
  assert.equal(s.bankData.balance,opening+D02_REWARDS[D02_A]);
  assert.equal(s.story55.d02.bonus,false);
@@ -124,7 +129,7 @@ test('Developer D03 jump replays both bounties and Talia contact without doublin
  assert.equal(s.content.orders.find(o=>o.id===D02_S).status,'COMPLETED');
  assert.equal(s.content.orders.find(o=>o.id===D02_A).status,'COMPLETED');
  assert.equal(s.content.conversations.mirage.some(c=>c.id===D02_TALIA),true);
- assert.equal(s.ghost.history.filter(h=>h.orderId?.startsWith('d02-')).length,7);
+ assert.equal(s.ghost.history.filter(h=>h.orderId?.startsWith('d02-')).length,6);
  assert.equal(s.bankData.transactions.filter(x=>x.id==='d02-payment-'+D02_S).length,1);
  assert.equal(s.bankData.transactions.filter(x=>x.id==='d02-payment-'+D02_A).length,1);
  rebuildStory55AtDay(s,1,'08:00');
@@ -188,7 +193,7 @@ test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not au
  assert.ok(sendD02WeChat(store,c.id,d02Draft(s,c.id).text,3000).messageId);
  assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,1);
  assert.equal(tickD02Wechat(s,4800),true);
- assert.match(c.messages.at(-1).text,/游戏能不能跑满帧/);
+ assert.match(c.messages.at(-1).text,/收藏的显卡终于降价了/);
  assert.equal(s.notifications.filter(n=>n.id?.includes('d02-xin-script-0')).length,1);
 });
 
