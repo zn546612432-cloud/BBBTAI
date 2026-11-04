@@ -113,15 +113,15 @@ export function acceptD02(s,id){
 }
 export function revealD02Key(s){
  if(!s.story55?.d02||!s.content.mail.some(m=>m.id===D02_MAIL)||s.content.orders.find(o=>o.id===D02_S)?.status!=='ACCEPTED')return false;
- s.story55.d02.keyOpened=true;return true;
+ s.story55.d02.keyOpened=true;const mail=s.content.mail.find(m=>m.id===D02_MAIL);mail.read=true;return true;
 }
 export function armD02Ghost(s,master,index){
  if(!D02_STAGES[master]?.[index])return null;
- if(master===D02_S&&!s.story55?.d02?.keyOpened)return null;
+ if(!s.story55?.d02?.deployed?.[master]||s.content.orders?.find(o=>o.id===master)?.status!=='ACCEPTED')return null;
  const id=d02StepId(master,index),type=D02_STAGES[master][index];
  s.ghost??={orders:{},history:[],balance:0,config:{}};
  s.ghost.orders??={};
- s.ghost.orders[id]??={id,mailId:master===D02_S?D02_MAIL:null,type,key:master===D02_S?'TALIA-CHIP-0520':'GHOST-A-0520',status:'authorized',attempts:0,settings:{seconds:null,rounds:1,retries:99}};
+ s.ghost.orders[id]??={id,mailId:master===D02_S?D02_MAIL:D02_A_MAIL,type,key:D02_KEYS[master],status:'authorized',attempts:0,settings:{seconds:type==='strike'?30:null,rounds:1,retries:99,...(type==='route'?{pipeNetwork:true,pipeSize:5}:{})}};
  return id;
 }
 export function onD02GhostWin(s,stepId){
@@ -131,7 +131,8 @@ export function onD02GhostWin(s,stepId){
  if(index<0||s.content.orders.find(o=>o.id===master)?.status!=='ACCEPTED')return false;
  if(index+1<D02_STAGES[master].length)armD02Ghost(s,master,index+1);
  else if(!d.completed[master]){
-  d.completed[master]=true;
+  d.completed[master]=true;d.completedAt??={};d.completedAt[master]={day:s.day,clock:s.clock};
+  const order=s.content.orders.find(o=>o.id===master);if(order)order.status='READY';
   if(master===D02_S){
    s.content.missionFiles??=[];
    s.content.missionFiles.push({id:'d02-target-intelligence.enc',orderId:master,title:'TARGET_DATA.enc',description:'Talia 芯片委托 · 已获取的虚构目标资料',source:'ghost',createdDay:2,createdTime:s.clock});
