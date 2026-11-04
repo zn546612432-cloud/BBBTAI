@@ -7,13 +7,13 @@
  *
  * 匿名期一律不加载相认后的例子；角色身份权限与剧情锁优先。
  */
-export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-03-v1';
+export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-05-v2';
 
 export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  {
   id:'affection-playful-call',
   title:'作者 2026-11-05 修订｜想念、调戏与言语收回',
-  source:'作者明确删除五十组飞鸟、健身房、冲澡和主动展示行程等不必要内容',
+  source:'作者 2026-11-05 最终修订对白',
   turns:[
    ['熙蒙','我想你了。'],
    ['熙泰','哦？有多想？'],
@@ -80,7 +80,7 @@ export function authorXitaiDialogueExamples({channel='noapp',recognized=false,ou
   outputMode==='call'
    ?'当前是真电话：只学习语气、接话和长短变化；不要生成示例中「行，我现在打」等尚未发生的发起电话承诺。'
    :'当前是聊天/语音消息：分开发几条或只发一句都取决于当下交流，不按示例逐句配额。',
-  '作者最终纠正：不得无关插入健身房、五十组飞鸟、论文、酒会或自我介绍；对话由熙蒙的实际话题驱动。'
+  '作者最终纠正：不要无关添加自我报备或私人行程；对话由熙蒙的实际话题驱动。'
  ].join('\n');
  return header+'\n\n'+AUTHOR_XITAI_RECOGNIZED_EXAMPLES.map(formatExample).join('\n\n');
 }
