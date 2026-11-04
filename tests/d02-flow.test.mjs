@@ -282,3 +282,17 @@ test('first D02 commission submission unlocks Wang immediately and Xiao Xin afte
 });
 
 test('legacy accepted A order receives one missing Kira mail',()=>{const s=phone();const o=s.content.orders.find(o=>o.id===D02_A);o.status='ACCEPTED';tickStory55(s);tickStory55(s);assert.equal(s.content.mail.filter(m=>m.id===D02_A_MAIL).length,1);assert.equal(o.wasAccepted,true);});
+
+test('D02 accepting either commission notifies through KIRA only',()=>{
+ for(const id of [D02_S,D02_A]){
+  const s=phone();
+  assert.equal(acceptD02(s,id),true);
+  const acceptanceNotices=s.notifications.filter(n=>n.id?.startsWith('d02-')&&n.id?.includes('mail-notice'));
+  assert.equal(acceptanceNotices.length,1);
+  assert.equal(acceptanceNotices[0].title,'KIRA');
+  assert.equal(acceptanceNotices[0].link?.appId,'kira');
+  assert.equal(s.notifications.some(n=>n.title==='MIRAGE'&&/委托已接取/.test(n.body||'')),false);
+  assert.equal(acceptD02(s,id),false);
+  assert.equal(s.notifications.filter(n=>n.id===acceptanceNotices[0].id).length,1);
+ }
+});
