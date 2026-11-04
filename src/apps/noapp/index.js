@@ -23,6 +23,7 @@ export const manifest={id:'noapp',name:'NoApp',icon:12,unlockDay:56,defaultRoute
 let taiFeedback='',pendingTai=null,replyVersion=0;
 // Result contains no API keys or full provider responses; suitable for iPhone UI.
 let voiceDiagnosis={state:'idle',message:''};
+let personaDiagnosis={state:'idle',message:''};
 // Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
 let settingsDraft={};
 function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get().nav.current;if(nav.appId==='noapp'&&nav.route==='/chat/tai')ctx.refresh();}
@@ -65,6 +66,7 @@ const setting=(s)=>{
  +ttsParameterFields(c)+'<p>这些参数用于之后新合成的电话与语音。默认冷静、原音调、1倍速；已生成的音频需重新合成才会改变。预设配音可单条覆盖。</p>'
  +'<button class="button-primary" type="submit">保存本次会话的 API 设置</button></form>'
  +'<section class="tai-voice-diagnostic"><h3>MiniMax 语音排障</h3><p>先保存 Key 和所属平台，再点击检测。会实际合成一句短语音，可能产生少量 API 费用。</p><button type="button" data-action="tai-check-minimax"'+(voiceDiagnosis.state==='testing'?' disabled':'')+'>检测 MiniMax 连接与固定音色</button>'+(voiceDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(voiceDiagnosis.state)+'" role="status">'+esc(voiceDiagnosis.message)+'</p>':'')+'</section>'
+ +'<section class="tai-voice-diagnostic"><h3>V8 · Supabase 人设</h3><p>自由聊天从云端读取经作者批准的 V8-B 人物圣经；云端不可用时保留本地世界书，不会清空存档或聊天。</p><button type="button" data-action="tai-check-persona"'+(personaDiagnosis.state==='testing'?' disabled':'')+'>检测 V8 人设连接</button>'+(personaDiagnosis.message?'<p class="tai-voice-diagnostic-result '+esc(personaDiagnosis.state)+'" role="status">'+esc(personaDiagnosis.message)+'</p>':'')+'</section>'
  +'<section class="tai-voice-diagnostic"><h3>v13 聊天抽签验收</h3><p>自由文字每轮独立抽取 40% 分号连发，程序自动拆成气泡；另保留 v12 消息数量权重及 30% 引导型人格。遇到明确拒绝或玩家要求简短时不强制连发；固定剧情不参与。</p>'+(latestTurn?'<p class="tai-voice-diagnostic-result">最近文字：目标 '+Number(latestTurn.target||0)+' 条 / 实际 '+Number(latestTurn.emitted||0)+' 条 · 引导型 '+(latestTurn.guided?'已触发':'未触发')+(latestTurn.channel==='text'?' · 分号连发 '+(latestTurn.semicolonBurst?'已触发':'未触发'):'')+'</p>':'<p>还没有记录过新规则生成的对话。</p>')+'</section>'
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft,s.events||[])
@@ -116,6 +118,18 @@ export async function handle(action,target,ctx){
  if(action==='attach-chat')attachChat(id,'noapp',ctx);
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
  if(action==='tai-clear-ai'){settingsDraft={};voiceDiagnosis={state:'idle',message:''};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
+ if(action==='tai-check-persona'){
+  personaDiagnosis={state:'testing',message:'正在读取 Supabase 人物圣经…'};
+  ctx.refresh();
+  try{
+   const {loadApprovedTaiV8,TAI_V8_VERSION}=await import('../../services/ai/supabase-persona.js');
+   const data=await loadApprovedTaiV8();
+   personaDiagnosis=data?.version===TAI_V8_VERSION
+    ?{state:'success',message:'Supabase 已连接：'+TAI_V8_VERSION+'；聊天将优先采用云端 V8 人设。'}
+    :{state:'failed',message:'当前无法读取云端 V8，聊天仍使用本地 V8 世界书。'};
+  }catch(error){personaDiagnosis={state:'failed',message:'云端暂不可用，已保留本地人物规则。'};}
+  ctx.refresh();return;
+ }
  if(action==='tai-check-minimax'){
   voiceDiagnosis={state:'testing',message:'正在验证当前平台、固定音色与 MiniMax 合成接口…'};
   ctx.refresh();
