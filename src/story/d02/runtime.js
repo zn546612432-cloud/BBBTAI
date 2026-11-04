@@ -96,7 +96,7 @@ export function acceptD02(s,id){
  if(s.story55?.version!==1||s.day<2||!D02_STAGES[id])return false;
  const o=s.content.orders?.find(o=>o.id===id),d=ensureD02(s);
  if(!o||o.status!=='OPEN'||expired(s,id))return false;
- o.status='ACCEPTED';
+ o.status='ACCEPTED';o.wasAccepted=true;o.acceptedDay=s.day;o.acceptedClock=s.clock;
  if(id===D02_S){
   const list=s.content.conversations.mirage;
   if(!list.some(c=>c.id===D02_TALIA))list.push({id:D02_TALIA,name:'Talia',avatar:'T',online:false,unread:1,storyD02:true,lastMessageAt:Date.now(),messages:[msg('d02-talia-connected',D02_TALIA,'通信已建立',s.clock)]});
