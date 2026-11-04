@@ -1,5 +1,5 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
-import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
+import {D02_S,D02_A,D02_STAGES,D02_DEADLINES,deployD02,d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {isStory55} from '../../services/story55/state.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
@@ -36,7 +36,21 @@ export function tick(ctx){
  if(Object.values(s.ghost?.orders||{}).some(x=>x.status==='settling'&&now>=x.dueAt&&Number.isFinite(configFor(s,x.type,x.id).reward)))ctx.store.update(n=>settle(n));
 }
 export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
- if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
+ if(loc.route==='/d02-projects'){
+  const contracts=[D02_S,D02_A].map(id=>s.content.orders?.find(o=>o.id===id)).filter(o=>o&&['ACCEPTED','READY','COMPLETED'].includes(o.status));
+  const chosen=contracts.find(o=>o.id===loc.params?.orderId)||contracts[0];
+  const done=chosen?D02_STAGES[chosen.id].filter((_,i)=>g.orders[chosen.id+'-stage-'+(i+1)]?.status==='success').length:0;
+  const deployed=chosen&&!!s.story55?.d02?.deployed?.[chosen.id];
+  const current=chosen&&g.orders[chosen.id+'-stage-'+(done+1)];
+  body=title('home','GHOST / 项目')+'<h1>MIRAGE 委托</h1>'+
+   '<div class="gh-tools">'+contracts.map(o=>button('d02-select',esc(o.category+' · '+o.owner+' / '+o.status),'data-id="'+esc(o.id)+'"')).join('')+'</div>'+
+   (chosen?'<div class="gh-keybox"><small>'+esc(chosen.category)+' · '+esc(chosen.owner)+'</small><p>进度 '+done+' / '+D02_STAGES[chosen.id].length+' · 截止 D'+D02_DEADLINES[chosen.id].day+' 23:59</p>'+
+   (!deployed&&chosen.status==='ACCEPTED'?'<label>部署密钥<input id="gh-d02-key" aria-label="输入来自 KIRA 的密钥" autocomplete="off" spellcheck="false" placeholder="输入项目密钥"></label>'+button('d02-deploy','部署', 'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
+   (deployed&&chosen.status==='ACCEPTED'&&current?button('d02-open','继续项目 · '+esc(D02_STAGES[chosen.id][done]),'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
+   (chosen.status==='READY'?'<p>成果已生成，等待玩家在 MIRAGE 提交</p>':'')+
+   (chosen.status==='COMPLETED'?'<p>委托已结算</p>':'')+'</div>':'<div class="gh-empty">暂无已接取的委托</div>');
+ }
+ else if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
  else if(loc.route==='/deploy-info'){
   body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>部署用于输入来自 KIRA 或联系人提供的密钥，安装工具后在「项目」中使用。部署本身不是小游戏。</p><p>请在对应剧情任务中获取授权密钥。</p></div>';
  }
