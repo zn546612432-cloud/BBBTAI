@@ -1,5 +1,5 @@
 import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
-import {onD02GhostWin} from '../../story/d02/runtime.js';
+import {onD02GhostWin,d02OrderOfStep} from '../../story/d02/runtime.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -85,6 +85,12 @@ export function startD01PipePreview(s,id,now=Date.now()){
  if(!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
  o.status='preview-win';o.previewUntil=now+3000;
  return true;
+}
+export function startD02PipePreview(s,id,now=Date.now()){
+ if(!d02OrderOfStep(id))return false;
+ const run=s.ghost?.orders?.[id];
+ if(run?.type!=='route'||run.status!=='running'||!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
+ run.status='preview-win';run.previewUntil=now+3000;return true;
 }
 export function exitD01Puzzle(s,{discard=false}={}){
  const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;
