@@ -3,6 +3,8 @@ import {seedD02Wechat} from './wechat.js';
 export const D02_S='d02-chip-peace';
 export const D02_A='d02-commission-a';
 export const D02_MAIL='d02-talia-key-mail';
+export const D02_A_MAIL='d02-anonymous-key-mail';
+export const D02_KEYS={ [D02_S]:'TALIA-CHIP-0520',[D02_A]:'GHOST-A-0520' };
 export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
 export const D02_REMINDER='d02-pc-build-reminder';
@@ -11,6 +13,15 @@ export const D02_STAGES={
  [D02_S]:['route','veil','extract'],
  [D02_A]:['cipher','route','strike']
 };
+export const D02_BRIEFS={
+ [D02_S]:'我需要一枚加密芯片里的完整资料。\n\n数据不能有缺失，也不要擅自修改内容。至于里面是什么，我建议你不要太好奇。\n\n今天之内交给我，报酬不会少。\n\n哦，对了，希望你手脚够快。我不太喜欢等人。\n\n—— Talia',
+ [D02_A]:'有三个远程监控节点，我需要它们在指定时段内停止向主控端回传数据。\n\n我要中断记录和恢复记录。没有完整结果就不要提交。\n\n期限三天。报酬写在上面了。'
+};
+export const D02_DEADLINES={ [D02_S]:{day:2,clock:'23:59'},[D02_A]:{day:4,clock:'23:59'} };
+const ensureD02=s=>{const d=s.story55.d02??={};d.completed??={};d.submitted??={};d.paid??={};d.deployed??={};return d;};
+const gameMinute=s=>Number(s.day)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
+const expired=(s,id)=>s.day>D02_DEADLINES[id].day||s.day===D02_DEADLINES[id].day&&s.clock>D02_DEADLINES[id].clock;
+export const d02ReminderId=id=>'d02-order-reminder-'+id;
 const TODAY='2025-05-20';
 const msg=(id,from,text,time)=>({id,from,text,kind:'text',day:2,time,sentDate:TODAY,actual:true,storyD02:true});
 const onD02=s=>s.story55?.version===1&&s.day>=2;
