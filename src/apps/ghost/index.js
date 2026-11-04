@@ -7,7 +7,7 @@ import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
 import {tools,stages,moduleLabel} from './catalog.js';
-import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound,exitD01Puzzle,startD01PipePreview} from './state.js';
+import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound,exitD01Puzzle,startD01PipePreview,startD02PipePreview} from './state.js';
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode,createBoard} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
@@ -122,12 +122,12 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='d01-save'&&id===D01_REPAIR){exitDialogFor=null;return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d01-discard'&&id===D01_REPAIR){exitDialogFor=null;ctx.store.update(n=>exitD01Puzzle(n,{discard:true}));return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d02-next'&&id&&o?.status==='success'){
-  const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):d02OrderOfStep(id)==='d02-chip-peace'?ctx.router.open({appId:'files',route:'/linked/'+encodeURIComponent(d02OrderOfStep(id)),params:{}}):nav(ctx);
+  const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):nav(ctx,'/d02-projects',{orderId:d02OrderOfStep(id)});
  }
  if(a==='d01-next'&&id===D01_REPAIR){exitDialogFor=null;if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
  if(a==='start'){exitDialogFor=null;if(!o)return;
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
- if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
+ if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return nav(ctx,'/d02-projects',{orderId:d02OrderOfStep(id)});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
  if(a==='cipher-easy-reset'){
   if(o?.type!=='cipher'||o.status!=='running'||!o.board?.arcade)return;
@@ -154,7 +154,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  ctx.store.update(n=>{const run=n.ghost.orders[id],b=run.board,cfg=configFor(n,run.type,run.id);run.moves++;
   if(a==='verify-token'){const i=Number(t.dataset.index);if(b.used.includes(i)||!b.tokens[i])return;if(b.tokens[i]===b.target[b.input.length]){b.input.push(b.tokens[i]);b.used.push(i);if(b.input.length===b.target.length)finish(n,id,true);}else{run.errors++;b.input=[];b.used=[];}}
   if(a==='tile'){const index=Number(t.dataset.index);if(b.selected===null)b.selected=index;else{b.tiles=swap(b.tiles,b.selected,index);b.selected=null;if(puzzleSolved(b.tiles))finish(n,id,true);}}
-  if(a==='pipe'){const i=Number(t.dataset.index);if(b.size&&(i===b.source||i===b.sink)){run.moves--;return;}b.masks[i]=rotate(b.masks[i]);const solved=b.size?pipeSolved(b):connected(b.masks).has(8);if(solved){if(id===D01_REPAIR)startD01PipePreview(n,id);else finish(n,id,true);}}
+  if(a==='pipe'){const i=Number(t.dataset.index);if(b.size&&(i===b.source||i===b.sink)){run.moves--;return;}b.masks[i]=rotate(b.masks[i]);const solved=b.size?pipeSolved(b):connected(b.masks).has(8);if(solved){if(id===D01_REPAIR)startD01PipePreview(n,id);else if(d02OrderOfStep(id))startD02PipePreview(n,id);else finish(n,id,true);}}
   if(a==='match'){if(Number(t.dataset.index)===b.correct){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}else{run.errors++;}}
   if(a==='key'){const key=t.dataset.key;if(key==='⌫')b.input=b.input.slice(0,-1);else if(key!=='↵'){if(key===b.code[b.input.length])b.input+=key;else{run.errors++;b.input='';}if(b.input.length===b.code.length){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}}}
  });
