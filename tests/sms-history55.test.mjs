@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {hydrateBuiltInPresets} from '../src/story/presets/catalog.js';
+import {visibleMessages} from '../src/services/messaging/delivery.js';
+const fetcher=async url=>{try{const json=JSON.parse(await readFile(new URL(url),'utf8'));return {ok:true,json:async()=>json};}catch{return {ok:false};}};
+test('55-day new and existing saves recover all original SMS without overwriting edits or progress',async()=>{
+ const s=activateStory55(initialState());s.day=2;s.clock='10:12';
+ const store={get:()=>s,update:fn=>fn(s)};
+ await hydrateBuiltInPresets(store,fetcher);
+ const rows=s.content.conversations.messages;
+ const historical=()=>rows.flatMap(c=>visibleMessages(c,s)).filter(m=>m.id.startsWith('sms-user-'));
+ assert.equal(historical().length,7);
+ assert.equal(rows.filter(c=>visibleMessages(c,s).length).length,4);
+ const saved=historical()[0];saved.text='本机保存的修改';
+ rows[0].messages.push({id:'my-sms',from:'me',text:'我新写的短信',sentDate:'2025-05-20',time:'10:00',actual:true});
+ await hydrateBuiltInPresets(store,fetcher);
+ assert.equal(historical().length,7);
+ assert.equal(historical().find(m=>m.id===saved.id).text,'本机保存的修改');
+ assert.ok(rows[0].messages.some(m=>m.id==='my-sms'));
+ assert.equal(s.day,2);assert.equal(s.clock,'10:12');
+ assert.ok(rows.flatMap(c=>c.messages).some(m=>m.id.startsWith('sms-extra-')&&m.schedule));
+ assert.ok(!rows.flatMap(c=>visibleMessages(c,s)).some(m=>m.id.startsWith('sms-extra-')));
+});

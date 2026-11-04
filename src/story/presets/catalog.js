@@ -55,10 +55,28 @@ export async function loadPreD01Wechat(fetcher=fetch){
  return historical;
 }
 
+/** Restore the authored SMS catalog independently of the retired campaign.
+ * Keep scheduling from the source packs; do not import any reply/story rules. */
+export async function loadCampaignSMS(fetcher=fetch){
+ const folder=new URL('./days/',import.meta.url);
+ const response=await fetcher(new URL('manifest.json',folder));
+ if(!response.ok)throw Error('无法读取短信目录');
+ const manifest=await response.json();
+ const names=(manifest.files||[]).filter(name=>/^D\d{3}\/messages\.json$/.test(name)&&Number(name.slice(1,4))<=55);
+ return Promise.all(names.map(async name=>{
+  const response=await fetcher(new URL(name,folder));
+  if(!response.ok)throw Error('无法读取历史短信 '+name);
+  const [pack]=parsePresetPayload(await response.json());
+  if(pack.channel!=='messages')throw Error('短信文件类型错误');
+  return {...pack,rules:[]};
+ }));
+}
+
 /** Initial fixture loading is additive and idempotent; local authored edits win. */
 export async function hydrateBuiltInPresets(store,fetcher=fetch){
  if(isStory55(store.get())){
-  const historical=await loadPreD01Wechat(fetcher);
+  const [wechat,sms]=await Promise.all([loadPreD01Wechat(fetcher),loadCampaignSMS(fetcher)]);
+  const historical=[...wechat,...sms];
   store.update(s=>{
    const report=applyPresetImport(s,historical,{mode:'merge'});
    s.content.historicalWechat={loaded:true,count:(s.content.conversations.wechat||[]).reduce((n,c)=>n+c.messages.filter(m=>m.sentDate&&m.sentDate<'2025-05-19').length,0),source:'historical-pre-D01',newMessages:report.historyNew};
