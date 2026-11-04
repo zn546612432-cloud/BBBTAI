@@ -1,14 +1,92 @@
-.app-view.app-messages{padding-top:calc(60px + env(safe-area-inset-top,0px));background:#fff;color:#050505;backdrop-filter:none}.app-messages .app-nav{display:none}.app-messages .app-content{padding:0;overflow:hidden}.sms-screen{height:100%;display:flex;flex-direction:column;background:white;color:#070709;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;padding:10px 17px 0;position:relative}.sms-screen button{border:0;box-shadow:none;transform:none}.sms-screen header{display:flex;justify-content:space-between;align-items:center}.sms-pill{height:35px;min-width:44px;border-radius:22px!important;border:1px solid #e5e5e7!important;background:#fff;font-size:16px;padding:4px 10px}.sms-screen h1{font-size:34px;letter-spacing:-1px;margin:17px 0 10px}.sms-list{flex:1;overflow:auto;padding-bottom:60px;scrollbar-width:none}.sms-row{display:flex;align-items:center;text-align:left;gap:7px;width:100%;min-height:79px;border-bottom:1px solid #ececee!important;color:#060606;padding:8px 0}.sms-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(#adc9e4,#7a8bc0);display:grid;place-items:center;flex:none}.sms-avatar svg{width:38px}.sms-unread{width:6px;height:6px;border-radius:50%;flex:none}.sms-unread.on{background:#168bff}.sms-copy{flex:1;min-width:0}.sms-copy strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sms-copy small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:#929296;font-size:12px;line-height:1.55;margin-top:3px}.sms-row time{align-self:flex-start;margin-top:5px;font-size:11px;color:#a1a1a6;white-space:nowrap}.sms-chevron{color:#aaa;font-size:20px}.sms-search{height:47px;display:flex;align-items:center;gap:8px;border:1px solid #dedee0;border-radius:28px;padding:3px 10px;margin:0 5px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 0 12px #ccc6;font-size:23px}.sms-search input{flex:1;min-width:0;border:0;background:none;font-size:15px}.sms-search button{font-size:22px;background:none}.sms-empty{color:#999;text-align:center;margin:45px 0}.app-messages .chat-screen{height:100%;display:flex;flex-direction:column}.app-messages .chat-person{padding-top:17px}.app-messages .chat-messages{flex:1}.app-messages .composer{margin-bottom:calc(15px + env(safe-area-inset-bottom,0px))}
-.sms-chat{height:100%;display:flex;flex-direction:column;background:#fff}.sms-chat-back{align-self:flex-start;background:none;border:0;color:#168bff;font-size:17px;padding:10px 17px 2px}.app-messages .sms-chat .chat-screen{flex:1;min-height:0;height:auto;display:flex;flex-direction:column}.app-messages .sms-chat .chat-person{padding-top:8px}
+@import url('./vendor/foundphone-messages.css');
+/* Calibrated against the two supplied iPhone Messages screenshots. */
+.app-view.app-messages{background:#000;color:#f5f5f7;backdrop-filter:none;color-scheme:dark}
+.app-messages .app-nav{display:none}
+.app-messages .app-content{padding:0;overflow:hidden}
+#phone:has(.app-messages) #status-layer{background:#000;color:#fff}
+#phone:has(.app-messages) #homebar span{background:#fff}
+.ios-messages-page{height:100%;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden;background:#000;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','PingFang SC',sans-serif}
+.ios-messages-page button{border:0;background:none;box-shadow:none;transform:none;color:inherit;cursor:pointer}
+.ios-messages-page svg{display:block;flex:none}
+.ios-msg-top{display:flex;align-items:center;justify-content:space-between;padding:0 18px;min-height:44px;flex:none}
+.ios-msg-top-button,.ios-msg-round,.ios-msg-compose,.ios-chat-back,.ios-chat-plus{display:flex;align-items:center;justify-content:center;border:1px solid #ffffff19!important;background:linear-gradient(155deg,#333333df,#1b1b1be8)!important;box-shadow:inset 0 1px 1px #ffffff16,0 2px 9px #0005!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.ios-msg-top-button{height:40px;padding:0 14px;border-radius:24px;font-size:16px}
+.ios-msg-round{height:41px;width:41px;border-radius:50%}
+.app-messages .message-heading{padding:13px 18px 10px;flex:none}
+.app-messages .message-heading h1{margin:0;font-size:32px;line-height:1.25;letter-spacing:-.8px;font-weight:750}
+.ios-msg-scroll{flex:1;min-height:0;overflow:auto;padding:0 18px 80px 6px;scrollbar-width:none;overscroll-behavior:contain}
+.ios-msg-scroll::-webkit-scrollbar,.ios-chat-scroll::-webkit-scrollbar{display:none}
+.app-messages .ios-msg-row{position:relative;gap:7px;min-height:79px;padding:9px 0;border:0;align-items:center;background:none}
+.ios-msg-row:after{content:'';position:absolute;left:70px;right:0;bottom:0;height:1px;background:#303033}
+.ios-msg-unread{width:9px;height:9px;margin-right:0;flex:none;border-radius:50%;background:transparent}
+.ios-msg-unread.active{background:#0a94ff}
+.app-messages .ios-msg-face{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;flex:none;background:linear-gradient(155deg,#5f5976,#38314d);color:#fff;overflow:hidden}
+.app-messages .ios-msg-face.large{width:53px;height:53px;margin:0 auto}
+.ios-msg-icon-person{stroke:none}
+.app-messages .ios-msg-summary{flex:1;min-width:0;align-self:stretch;padding-top:1px}
+.app-messages .ios-msg-summary strong{display:block;font-size:16px;font-weight:650;line-height:21px;padding-right:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.25px}
+.app-messages .ios-msg-summary p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;white-space:normal;overflow-wrap:anywhere;color:#8e8e93;font-size:14px;line-height:1.45;margin:0;letter-spacing:-.15px}
+.ios-msg-summary p b{display:inline-block;vertical-align:1px;font-size:8px;line-height:11px;padding:0 2px;border-radius:2px;background:#8e8e93;color:#151517;font-weight:650}
+.app-messages .ios-msg-row time{position:absolute;right:22px;top:11px;color:#8e8e93;font-size:13px;line-height:20px;margin:0;max-width:78px;white-space:nowrap}
+.ios-msg-chevron{position:absolute;right:0;top:13px;color:#48484a}
+.ios-msg-bottom{position:absolute;left:24px;right:24px;bottom:calc(15px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;z-index:3}
+.ios-msg-floating-search{display:flex;align-items:center;gap:9px;flex:1;min-width:0;height:43px;padding:0 12px;border:1px solid #ffffff24;border-radius:28px;background:linear-gradient(145deg,#777580b8,#26262ac9);box-shadow:inset 0 1px 2px #ffffff3a,0 2px 14px #0006;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#eee}
+.ios-msg-floating-search input{width:0;min-width:0;flex:1;padding:0;background:none;border:0;border-radius:0;color:#fff;font-size:16px;outline:0;box-shadow:none}
+.ios-msg-floating-search input::placeholder{color:#aaa9b0}
+.ios-msg-compose{width:44px;height:44px;border-radius:50%;flex:none}
+.ios-msg-conversation .ios-chat-header{position:absolute;top:0;left:0;right:0;z-index:3;min-height:94px;padding:0 16px 12px;background:linear-gradient(#0009,#0003,transparent);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.ios-chat-topline{position:absolute;top:0;left:18px;right:18px;height:42px;display:flex;align-items:center;pointer-events:none}
+.ios-chat-back{height:40px;min-width:43px;border-radius:23px;padding:3px 10px 3px 6px;gap:4px;pointer-events:auto}
+.ios-chat-back span:not(:empty){display:grid;place-items:center;min-width:24px;height:20px;padding:0 5px;border-radius:14px;background:#fff;color:#555;font-size:12px;font-weight:650}
+.ios-chat-name{display:flex;align-items:center;gap:4px;max-width:85%;padding:5px 10px;margin-top:-3px;border:1px solid #ffffff26;border-radius:24px;background:linear-gradient(145deg,#77757bba,#39383ba8);box-shadow:inset 0 1px 1px #ffffff2a;backdrop-filter:blur(18px);font-size:17px;line-height:22px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ios-chat-name svg{width:12px;color:#a1a1a6}
+.app-messages .ios-chat-scroll{padding:99px 18px 14px;scrollbar-width:none;background:#000!important;overscroll-behavior:contain}
+.app-messages .ios-chat-date{display:block;font-size:11px;color:#8e8e93;text-align:center;line-height:1.5;margin:8px auto 13px}
+.app-messages .ios-chat-line{margin:0 0 6px;display:flex}
+.app-messages .ios-chat-line.inbound{justify-content:flex-start}
+.app-messages .ios-chat-line.outbound{justify-content:flex-end}
+.app-messages .ios-chat-line > .ios-chat-bubble{position:relative;display:block;max-width:83%;padding:9px 12px;border-radius:19px;background:#26252a;color:#f5f5f7;font-size:16px;line-height:1.25;letter-spacing:-.2px;white-space:pre-wrap;overflow-wrap:anywhere}
+.app-messages .ios-chat-line.inbound .ios-chat-bubble{border-bottom-left-radius:15px}
+.app-messages .ios-chat-line.inbound .ios-chat-bubble:before{content:'';position:absolute;bottom:0;left:-7px;width:15px;height:18px;background:#26252a;border-radius:0 0 13px 0}
+.app-messages .ios-chat-line.inbound .ios-chat-bubble:after{content:'';position:absolute;bottom:0;left:-10px;width:10px;height:21px;background:#000;border-radius:0 0 12px 0}
+.app-messages .ios-chat-line.outbound .ios-chat-bubble{background:#248a3d;color:#fff;border-radius:19px 19px 5px 19px}
+.ios-chat-bubble img{max-width:100%;height:auto;border-radius:12px}
+.ios-msg-detected,.app-messages .ios-msg-shop-link{display:inline!important;padding:0;margin:0;border:0;background:none!important;box-shadow:none;font:inherit;color:#0a84ff!important;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.app-messages .ios-chat-compose{flex:none;display:flex;align-items:center;gap:10px;min-height:64px;padding:8px 25px calc(20px + env(safe-area-inset-bottom,0px));border:0;background:#000;margin:0}
+.app-messages .ios-chat-compose>.ios-chat-plus{width:36px;height:36px;border-radius:50%;flex:none}
+.ios-chat-input{height:37px;display:flex;align-items:center;gap:5px;flex:1;min-width:0;padding:0 8px 0 13px;border:1px solid #ffffff24;border-radius:24px;background:linear-gradient(160deg,#232324,#1b1b1d);box-shadow:inset 0 1px 1px #ffffff13}
+.ios-chat-input input{flex:1;min-width:0;width:0;border:0;box-shadow:none;outline:none;padding:0;background:none;color:#fff;font-size:15px;border-radius:0}
+.ios-chat-input input::placeholder{color:#6b6b70}
+.ios-chat-wave{color:#737377;display:grid;place-items:center}
+.ios-chat-wave svg{height:20px}
+.ios-chat-send{display:none;width:27px;height:27px;flex:none;border-radius:50%;background:#30b64d!important;color:#fff;place-items:center}
+.ios-chat-input:has(input:not(:placeholder-shown)) .ios-chat-send{display:grid}
+.ios-chat-input:has(input:not(:placeholder-shown)) .ios-chat-wave{display:none}
+.ios-msg-popup{position:absolute;top:0;left:18px;z-index:11;width:min(280px,80%);border:1px solid #ffffff26;border-radius:22px;background:#29292ce8;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);overflow:hidden}
+.ios-msg-popup-row{width:100%;display:flex;align-items:center;gap:14px;padding:15px 18px;text-align:left;font-size:16px}
+.ios-msg-popup-row+.ios-msg-popup-row{border-top:1px solid #ffffff1a}
+.ios-msg-menu-veil{position:absolute;inset:0;z-index:10}
+.ios-msg-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 18px 30px;background:#171719;flex:none;font-size:14px;color:#8e8e93}
+.ios-msg-selection-actions{display:flex;align-items:center;gap:18px}
+.ios-msg-finish{color:#0a84ff!important}
+.ios-msg-trash{display:flex;align-items:center;gap:4px;color:#ff453a!important}
+.ios-msg-trash:disabled{opacity:.35;cursor:default}
+.ios-msg-selector{width:18px;height:18px;flex:none;border:1px solid #5b5b60;border-radius:50%;display:grid;place-items:center;font-size:12px}
+.ios-msg-selector.selected{background:#0a84ff;border-color:#0a84ff;color:#fff}
+.ios-msg-delete-veil{position:absolute;inset:0;z-index:12;display:flex;align-items:flex-end;background:#0008;padding:14px 12px 25px}
+.ios-msg-delete-dialog{width:100%;border-radius:22px;background:#29292c;text-align:center;padding:22px 16px 0}
+.ios-msg-delete-dialog strong{font-size:16px}.ios-msg-delete-dialog p{font-size:13px;line-height:1.4;color:#aaa;margin:10px 0 20px}
+.ios-msg-delete-dialog>div{display:flex;border-top:1px solid #ffffff1a}
+.ios-msg-delete-dialog button{flex:1;padding:16px 0;font-size:16px;color:#0a84ff}.ios-msg-delete-dialog button.danger{color:#ff453a}
+.ios-msg-no-results{text-align:center;color:#8e8e93;margin:40px 18px;font-size:15px}
+.ios-new-message header{display:flex;align-items:center;justify-content:space-between;min-height:50px;padding:0 18px;font-size:17px}
+.ios-msg-cancel{color:#0a84ff!important}
+.ios-new-message form{display:flex;flex-direction:column;gap:18px;padding:18px}
+.ios-new-message form label{display:flex;align-items:center;gap:10px;font-size:15px;color:#8e8e93;padding-bottom:12px;border-bottom:1px solid #303033}
+.ios-new-message input{flex:1;min-width:0;border:0;background:none;color:#fff;padding:0;font-size:16px}
+.ios-new-message textarea{background:#242426;color:#fff;border:1px solid #303033;min-height:110px;font-size:16px}
+.ios-new-message form>button{align-self:flex-end;padding:9px 22px;border-radius:22px;background:#248a3d;color:#fff}
+@media(max-width:360px){.app-messages .ios-msg-summary strong{font-size:15px}.app-messages .ios-msg-summary p{font-size:13px}.ios-msg-bottom{left:17px;right:17px}.app-messages .ios-chat-compose{padding-left:18px;padding-right:18px}}
 
-/* Original Messages layout remains the app UI. Only restore existing functional controls. */
-.sms-selection{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 5px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #ededf0;font-size:14px;color:#888}
-.sms-selection .sms-delete{border:0;background:none;color:#da3c47;padding:8px 12px;font-size:15px}
-.sms-selection .sms-delete:disabled{opacity:.4}
-.sms-selector{height:19px;width:19px;border:1.5px solid #b9b9bf;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#fff;flex:none}
-.sms-selector.selected{background:#2884fc;border-color:#2884fc}
-.sms-delete-confirm{position:absolute;inset:0;z-index:20;display:flex;align-items:flex-end;background:#0005;padding:14px}
-.sms-delete-confirm>div{width:100%;background:#f8f8fa;border-radius:18px;padding:22px 16px;text-align:center}
-.sms-delete-confirm p{color:#888;font-size:13px;margin:12px 0}
-.sms-delete-confirm .sms-delete{border:0;background:none;color:#d83c47;font-size:16px;padding:10px}
-.app-messages .sms-aodong-link{background:none;border:0;box-shadow:none;padding:0;margin:0;font:inherit;color:#2685ef;text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline;overflow-wrap:anywhere;vertical-align:baseline}
+.app-messages .ios-msg-row>span.ios-msg-unread,.app-messages .ios-msg-row>span.ios-msg-selector,.app-messages .ios-msg-row>span.ios-msg-chevron{flex:none;min-width:0}
+.app-messages .native-messages .ios-msg-face{background:linear-gradient(155deg,#5f5976,#38314d)}

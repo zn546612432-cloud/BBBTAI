@@ -121,7 +121,7 @@ test('D04 SMS does not leak early; at 11:22 it arrives with one notice, then sur
 test('iPhone SMS list says Macau, never shows future empty sender rows',()=>{
  const store=fakeStore(state());
  const atD01=nativeSmsRender({store},{route:'/',params:{}});
- assert.equal((atD01.match(/class="ios-msg-row"/g)||[]).length,4);
+ assert.equal((atD01.match(/class="catalog-chat ios-msg-row"/g)||[]).length,4);
  assert.match(atD01,/<b>澳门<\/b>/);
  assert.doesNotMatch(atD01,/<b>内地<\/b>|SFEXPO|CAINIAO/);
  store.update(s=>{s.day=12;s.clock='09:16';});

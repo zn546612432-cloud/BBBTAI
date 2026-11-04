@@ -521,26 +521,29 @@ test('Ghost retains all six tool names and uses tool-oriented help text without 
  assert.doesNotMatch(strike,/攻防反应挑战|任务失败/);
 });
 
-test('registered Messages restores its original list and shared chat without losing SMS actions',()=>{
+test('registered Messages uses the native source module while retaining SMS navigation and actions',()=>{
  const s=phone(),live=registry.get('messages'),store={get:()=>s,update:fn=>fn(s)},routes=[];
  const ctx={store,refresh:()=>{},toast:()=>{},router:{open:x=>routes.push(x)}};
  assert.ok(live);
  const list=live.render({store},{route:'/',params:{}});
- assert.match(list,/class="sms-screen"/);
- assert.doesNotMatch(list,/ios-messages-page|ios-msg-conversation|ios-chat-header/);
+ assert.match(list,/data-ui-source="foundphone-messages"/);
+ assert.doesNotMatch(list,/class="sms-screen"/);
  const sms=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
  const sale=sms.messages.find(m=>m.id==='d02-aodong-sale');
  sale.delivery={day:2,clock:'09:00'};s.clock='09:09';
+ assert.match(live.render({store},{route:'/',params:{}}),/catalog-chat ios-msg-row/);
  const chat=live.render({store},{route:'/chat/'+sms.id,params:{}});
- assert.match(chat,/class="sms-chat"/);
- assert.match(chat,/class="chat-screen"/);
- assert.doesNotMatch(chat,/ios-chat-header|ios-chat-back/);
+ assert.match(chat,/ios-chat-header/);
+ assert.match(chat,/catalog-bubbles sms-bubbles chat-messages/);
+ assert.doesNotMatch(chat,/class="chat-screen"/);
  assert.match(chat,/data-action="sms-aodong-link"/);
  live.handle('sms-aodong-link',{dataset:{}},ctx);
  assert.deepEqual(routes.at(-1),{appId:'browser',route:'/aodong',params:{}});
  live.handle('sms-compose',{dataset:{}},ctx);
  assert.deepEqual(routes.at(-1),{appId:'messages',route:'/compose'});
  assert.match(live.render({store},{route:'/compose',params:{}}),/data-form="sms-new"/);
+ live.handle('sms-back',{dataset:{}},ctx);
+ assert.deepEqual(routes.at(-1),{appId:'messages',route:'/'});
 });
 test('restored Messages keeps select/delete with confirmation without touching other messages',()=>{
  const s=phone(),live=registry.get('messages'),store={get:()=>s,update:fn=>fn(s)};
@@ -548,12 +551,12 @@ test('restored Messages keeps select/delete with confirmation without touching o
  const id=s.content.conversations.messages[0].id;
  const count=s.content.conversations.messages.length;
  live.handle('sms-edit',{dataset:{}},ctx);
- assert.match(live.render({store},{route:'/',params:{}}),/class="sms-selection"/);
+ assert.match(live.render({store},{route:'/',params:{}}),/class="ios-msg-selection-bar"/);
  live.handle('sms-pick',{dataset:{id}},ctx);
  live.handle('sms-delete',{dataset:{}},ctx);
  assert.match(live.render({store},{route:'/',params:{}}),/删除选中的 1 条信息/);
  live.handle('sms-confirm-delete',{dataset:{}},ctx);
  assert.equal(s.content.conversations.messages.length,count-1);
  assert.equal(s.content.conversations.messages.some(c=>c.id===id),false);
- assert.doesNotMatch(live.render({store},{route:'/',params:{}}),/class="sms-selection"/);
+ assert.doesNotMatch(live.render({store},{route:'/',params:{}}),/class="ios-msg-selection-bar"/);
 });
