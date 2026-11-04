@@ -1,5 +1,6 @@
 import {btn,esc} from '../../system/ui.js';
 import {visibleMessages} from '../../services/messaging/delivery.js';
+import {D02_AODONG_URL} from '../../story/d02/runtime.js';
 import {timestampLabel,timestampGroups} from '../../services/messaging/timestamps.js';
 import {sendChat} from '../../components/chat.js';
 import {sendMessage} from '../../services/messaging/index.js';
@@ -23,7 +24,9 @@ const symbols={
 const ico=(name,size=22)=>`<svg class="ios-msg-icon ios-msg-icon-${name}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${symbols[name]}</svg>`;
 const face=(large=false)=>`<span class="ios-msg-face ${large?'large':''}">${ico('person',large?38:31)}</span>`;
 const label=(m,s)=>m?.timeLabel|| (m?timestampLabel(m,s).replace(/\s+\d\d:\d\d$/,''):'');
-const linkify=t=>esc(t).replace(/\b\d{1,2}-\d{1,2}-\d{4}\b/g,match=>`<span class="ios-msg-detected">${match}</span>`);
+const linkify=t=>esc(t)
+ .replace(/https:\/\/aodong\.shop\/?/gi,match=>`<button type="button" class="ios-msg-detected ios-msg-shop-link" data-action="sms-aodong-link" aria-label="在浏览器打开澳东商城">${match}</button>`)
+ .replace(/\b\d{1,2}-\d{1,2}-\d{4}\b/g,match=>`<span class="ios-msg-detected">${match}</span>`);
 let search='',menuOpen=false,unreadOnly=false,selectMode=false,confirmDelete=false,selected=new Set();
 
 function listView(s){
@@ -53,6 +56,7 @@ function chatView(s,id){
 function composeView(){return `<div class="ios-messages-page ios-new-message"><header>${btn('sms-back','取消','ios-msg-cancel')}<strong>新信息</strong><span></span></header><form data-form="sms-new"><label>收件人：<input name="recipient" placeholder="电话号码或姓名" maxlength="60" required></label><textarea name="text" rows="3" placeholder="信息 · 短信" aria-label="短信内容" required></textarea><button type="submit">发送</button></form></div>`;}
 export function render({store},loc){const s=store.get();return loc.route.startsWith('/chat/')?chatView(s,loc.route.slice(6)):loc.route==='/compose'?composeView():listView(s);}
 export function handle(a,t,c){
+ if(a==='sms-aodong-link')return c.router.open({appId:'browser',route:'/aodong',params:{}});
  if(a==='open-chat'){c.router.open({appId:'messages',route:'/chat/'+t.dataset.id});c.store.update(s=>{const x=s.content.conversations.messages?.find(x=>x.id===t.dataset.id);if(x)x.unread=0;});}
  if(a==='sms-back')c.router.back();
  if(a==='sms-compose'){menuOpen=false;c.router.open({appId:'messages',route:'/compose'});}
