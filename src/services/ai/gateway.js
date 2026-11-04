@@ -62,7 +62,10 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,model:c.model,parameters:normalizeAiParameters(c)};
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
- const system=buildTaiPrompt(req);
+ // Cloud V8 is additive and read-only; offline or fetch failure uses current local rules.
+ const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
+ const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
+ const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
  const base={...deepseekModelOptions(c.model,c),
   messages:[{role:'system',content:system},...messages],max_tokens:c.maxTokens,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
@@ -90,8 +93,12 @@ export async function chooseTaiAction(args={}){
  const {taiKnowledgeContext}=await import('./tai-profile.js');
  const mode=args.outputMode==='call'?'call':'text';
  const context={...args,mode,channel:args.channel||'noapp'};
- const system=taiActionDecisionPrompt({...context,allowVoice:args.allowVoice!==false&&!!c.minimax,
+ const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
+ const approvedV8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:args.recognized===true,outputMode:mode});
+ const director=taiActionDecisionPrompt({...context,allowVoice:args.allowVoice!==false&&!!c.minimax,
   relationshipContext:(taiKnowledgeContext({day:args.day,channel:context.channel,recognized:args.recognized})+'\\n'+String(args.relationshipContext||'')).slice(0,4100)});
+ // Persona informs intent; the action protocol remains last and authoritative.
+ const system=(approvedV8?approvedV8+'\n\n':'')+director;
  let raw;
  try{
   const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
