@@ -280,3 +280,5 @@ test('first D02 commission submission unlocks Wang immediately and Xiao Xin afte
  assert.equal(s.content.conversations.wechat.find(c=>c.name==='小辛').messages.filter(m=>m.storyD02).length,1);
  assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,3000).messageId);
 });
+
+test('legacy accepted A order receives one missing Kira mail',()=>{const s=phone();const o=s.content.orders.find(o=>o.id===D02_A);o.status='ACCEPTED';tickStory55(s);tickStory55(s);assert.equal(s.content.mail.filter(m=>m.id===D02_A_MAIL).length,1);assert.equal(o.wasAccepted,true);});
