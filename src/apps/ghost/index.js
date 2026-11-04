@@ -1,5 +1,5 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
-import {D02_S,D02_A,D02_STAGES,D02_DEADLINES,deployD02,d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
+import {D02_S,D02_A,D02_STAGES,D02_DEADLINES,d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {isStory55} from '../../services/story55/state.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
@@ -45,7 +45,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
   body=title('home','GHOST / 项目')+'<h1>MIRAGE 委托</h1>'+
    '<div class="gh-tools">'+contracts.map(o=>button('d02-select',esc(o.category+' · '+o.owner+' / '+o.status),'data-id="'+esc(o.id)+'"')).join('')+'</div>'+
    (chosen?'<div class="gh-keybox"><small>'+esc(chosen.category)+' · '+esc(chosen.owner)+'</small><p>进度 '+done+' / '+D02_STAGES[chosen.id].length+' · 截止 D'+D02_DEADLINES[chosen.id].day+' 23:59</p>'+
-   (!deployed&&chosen.status==='ACCEPTED'?'<label>部署密钥<input id="gh-d02-key" aria-label="输入来自 KIRA 的密钥" autocomplete="off" spellcheck="false" placeholder="输入项目密钥"></label>'+button('d02-deploy','部署', 'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
+   (!deployed&&chosen.status==='ACCEPTED'?'<p>請在 KIRA 打開委託密鑰附件，並在「檔案」中選擇使用 GHOST 打開。</p>':'')+
    (deployed&&chosen.status==='ACCEPTED'&&current?button('d02-open','继续项目 · '+esc(D02_STAGES[chosen.id][done]),'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
    (chosen.status==='READY'?'<p>成果已生成，等待玩家在 MIRAGE 提交</p>':'')+
    (chosen.status==='COMPLETED'?'<p>委托已结算</p>':'')+'</div>':'<div class="gh-empty">暂无已接取的委托</div>');
@@ -91,12 +91,6 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='home')return nav(ctx);
  if(a==='d02-projects')return nav(ctx,'/d02-projects');
  if(a==='d02-select')return nav(ctx,'/d02-projects',{orderId:t.dataset.id});
- if(a==='d02-deploy'){
-  const input=document.getElementById('gh-d02-key'),key=input?.value||'';let ok=false;
-  ctx.store.update(next=>{ok=deployD02(next,t.dataset.id,key);});
-  if(!ok)return ctx.toast('密钥无效，或尚未在 KIRA 查看授权邮件');
-  ctx.toast('工具已部署');return nav(ctx,'/d02-projects',{orderId:t.dataset.id});
- }
  if(a==='d02-open'){
   const master=t.dataset.id,d=s.story55?.d02;
   if(!d?.deployed?.[master])return ctx.toast('请先部署');
