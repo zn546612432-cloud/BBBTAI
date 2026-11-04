@@ -21,7 +21,7 @@ export function formatApprovedTaiV8(payload,{recognized=false,outputMode='text'}
   '聊天主导原则：'+safe(s.primary_attention),
   lines('应该做到',s.do),
   lines('严格避免',s.avoid),
-  '作者最终纠正的示例：'+safe(s.example_correction),
+  recognized?'作者最终纠正的示例：'+safe(s.example_correction):'',
   '关系推进：'+safe(r.policy),
   lines('关系变化',r.change_rules),
   '故事与行为权限：'+safe(b.authority),
