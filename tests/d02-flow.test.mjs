@@ -225,3 +225,58 @@ test('D02 migration removes only legacy auto-sent chat bubbles and stale notices
  assert.equal(c.unread,0);
  assert.equal(seedD02Wechat(s),false);
 });
+
+test('D02 A contract uses the exact approved anonymous brief and two independent reminders',()=>{
+ const s=phone(),o=s.content.orders.find(o=>o.id===D02_A);
+ assert.equal(o.description,'有三个远程监控节点，我需要它们在指定时段内停止向主控端回传数据。\n\n我要中断记录和恢复记录。没有完整结果就不要提交。\n\n期限三天。报酬写在上面了。');
+ assert.equal(acceptD02(s,D02_A),true);
+ const r=s.content.reminders.find(x=>x.id===d02ReminderId(D02_A));
+ assert.ok(r);assert.equal(r.status,'进行中');assert.equal(r.progress,0);
+ assert.equal(r.deadlineDay,4);
+ assert.equal(s.notifications.filter(n=>n.id==='d02-anonymous-mail-notice').length,1);
+ assert.equal(acceptD02(s,D02_A),false);
+});
+test('unfinished accepted A commission expires, cannot be restarted and stays in reminder history',()=>{
+ const s=phone();
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ const step=d02StepId(D02_A,0);
+ assert.equal(begin(s,step),true);
+ finish(s,step,true);
+ s.day=5;s.clock='08:00';tickStory55(s);
+ assert.equal(s.content.orders.find(o=>o.id===D02_A).status,'EXPIRED');
+ assert.equal(s.content.reminders.find(r=>r.id===d02ReminderId(D02_A)).failed,true);
+ assert.equal(armD02Ghost(s,D02_A,1),null);
+ assert.equal(submitD02(s,D02_A),false);
+ assert.equal(acceptD02(s,D02_A),false);
+});
+test('completed A before D04 deadline remains submit-ready on D05 and pays exactly once',()=>{
+ const s=phone(),opening=s.bankData.balance;
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ s.day=4;s.clock='23:58';win(s,D02_A);
+ s.day=5;s.clock='08:00';tickStory55(s);
+ assert.equal(s.content.orders.find(o=>o.id===D02_A).status,'READY');
+ assert.equal(submitD02(s,D02_A),true);
+ assert.equal(s.content.reminders.find(r=>r.id===d02ReminderId(D02_A)).done,true);
+ assert.equal(submitD02(s,D02_A),false);
+ assert.equal(s.bankData.balance,opening+4500);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='d02-payment-'+D02_A).length,1);
+});
+test('first D02 commission submission unlocks Wang immediately and Xiao Xin after 15 game minutes',()=>{
+ const s=phone(),store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(d02Draft(s,'wang'),null);
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ win(s,D02_A);assert.equal(submitD02(s,D02_A),true);
+ assert.match(d02Draft(s,'wang').text,/电脑真该退休/);
+ assert.equal(d02WeChatDue(s),false);
+ s.clock='08:44';assert.equal(d02WeChatDue(s),false);
+ s.clock='08:45';assert.equal(d02WeChatDue(s),true);
+ tickD02Wechat(s,1000);
+ assert.equal(s.content.conversations.wechat.find(c=>c.name==='小辛').messages.filter(m=>m.storyD02).length,1);
+ assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,3000).messageId);
+});
