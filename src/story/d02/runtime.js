@@ -164,13 +164,13 @@ export function submitD02(s,id){
  syncD02Reminder(s,id);return true;
 }
 export function d02TaliaDraft(s,id){
- const d=s.story55?.d02;if(id!==D02_TALIA||!d?.completed?.[D02_S]||d.taliaStage>=2)return null;
+ const d=s.story55?.d02;if(id!==D02_TALIA||!d?.submitted?.[D02_S]||d.taliaStage>=2)return null;
  if(d.taliaStage===0)return '东西已经拿到手。';
  const c=s.content.conversations.mirage.find(x=>x.id===D02_TALIA),m=c?.messages.find(m=>m.id==='d02-talia-peace');
  return m?.delivery?'哦？这份贡献值得再加一笔赏金吗？':null;
 }
 export function onD02TaliaMessage(s,id,text){
- const d=s.story55?.d02;if(id!==D02_TALIA||!d?.completed?.[D02_S])return false;
+ const d=s.story55?.d02;if(id!==D02_TALIA||!d?.submitted?.[D02_S])return false;
  const c=s.content.conversations.mirage.find(x=>x.id===D02_TALIA);if(!c)return false;
  const push=(messageId,body,delay)=>{if(c.messages.some(m=>m.id===messageId))return;c.messages.push({...msg(messageId,D02_TALIA,body,s.clock),schedule:{mode:'chat-delay',seconds:delay}});};
  if(d.taliaStage===0&&text.trim()==='东西已经拿到手。'){
@@ -179,10 +179,7 @@ export function onD02TaliaMessage(s,id,text){
  }
  if(d.taliaStage===1&&text.trim()==='哦？这份贡献值得再加一笔赏金吗？'&&c.messages.some(m=>m.id==='d02-talia-peace'&&m.delivery)){
   d.taliaStage=2;push('d02-talia-worth','当然，完全值得。',2);push('d02-talia-goodbye','希望世界和平，我们不会再有见面的机会，再见，nya。',5);
-  d.bonus=true;
-  const already=d.paid[D02_S]||0;
-  if(already===D02_REWARDS[D02_S])creditD02(s,D02_S,D02_REWARDS[D02_S],'-talia');
-  const order=s.content.orders.find(o=>o.id===D02_S);if(order)order.reward=(D02_REWARDS[D02_S]*2).toLocaleString('en-US')+' USD';
+  d.bonusRequested=true; // Payment is processed after the response reaches the chat.
   return true;
  }
  return false;
@@ -228,6 +225,8 @@ export function rebuildD02(s){
   const order=s.content.orders.find(o=>o.id===master);if(!order||order.status==='COMPLETED')continue;
   if(order.status==='OPEN'&&!acceptD02(s,master))throw Error('D02 委托重建接单失败：'+master);
   if(master===D02_S&&!revealD02Key(s))throw Error('D02 委托重建密钥失败');
+  if(master===D02_A){const mail=s.content.mail.find(m=>m.id===D02_A_MAIL);if(mail)mail.read=true;}
+  if(!deployD02(s,master,D02_KEYS[master]))throw Error('D02 委托重建部署失败');
   for(let i=0;i<D02_STAGES[master].length;i++){
    const step=armD02Ghost(s,master,i);
    if(!step)throw Error('D02 重建无法授权 GHOST 阶段');
