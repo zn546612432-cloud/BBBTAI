@@ -1,5 +1,6 @@
 import {D01_OPENING,D01_ATTACHMENT,D01_ATTACHMENT_BODY} from '../../../../story/d01/runtime.js';
 import {btn,esc,empty} from '../../../../system/ui.js';
+import {D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEY_FILES,D02_KIRA_BODY} from '../../../../story/d02/runtime.js';
 import {HACKER_MAIL_ID} from '../../../mirage/mission.js';
 import {missionSteps} from '../mission/index.js';
 
@@ -23,17 +24,29 @@ function attachmentCard(s){
   ${status}
  </div>`;
 }
+function d02AttachmentCard(id){
+ const name=D02_KEY_FILES[id===D02_MAIL?D02_S:D02_A];
+ return `<div class="kira-d01-attachments" aria-label="郵件附件">
+  <div class="kira-d01-attachment-heading">1 個附件</div>
+  <button type="button" class="kira-d01-attachment" data-action="kira-d02-open-file" data-id="${esc(id)}" aria-label="打開附件 ${esc(name)}">
+   <span class="kira-d01-file-icon" aria-hidden="true"><svg viewBox="0 0 32 38" fill="none"><path d="M7 1.5h12l10 10V35a2 2 0 0 1-2 2H7a4 4 0 0 1-4-4V5.5a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M19 2v10h10" stroke="currentColor" stroke-width="1.5"/><path d="m13 22 3-3 3 3m-3-3v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+   <span class="kira-d01-attachment-copy"><strong>${esc(name)}</strong><small>加密憑證 · MIRAGE</small></span>
+   <span class="kira-d01-attachment-arrow" aria-hidden="true">›</span>
+  </button>
+ </div>`;
+}
 export function kiraDetail(s,id){
  const m=s.content.mail.find(m=>m.id===id);
  if(!m)return empty('邮件不存在');
  const body=m.id===D01_OPENING
   ?lineBreaks(m.body).replaceAll('bank account','<a href="#" class="kira-d01-inline-link" data-action="kira-d01-bank">bank account</a>')
-  :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.body);
+  :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.id===D02_MAIL?D02_KIRA_BODY[D02_S]:m.id===D02_A_MAIL?D02_KIRA_BODY[D02_A]:m.body);
  const d01File=m.id===D01_ATTACHMENT?attachmentCard(s):'';
+ const d02File=[D02_MAIL,D02_A_MAIL].includes(m.id)?d02AttachmentCard(m.id):'';
  const otherAttachment=m.id===HACKER_MAIL_ID?missionSteps(m,s)
-  :m.id==='flow-d03-reward'||m.d01||m.storyD02&&!m.attachments?.length?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
+  :m.id==='flow-d03-reward'||m.d01||[D02_MAIL,D02_A_MAIL].includes(m.id)||m.storyD02&&!m.attachments?.length?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
  return `<div class="kira-mail-detail${m.id===D01_ATTACHMENT?' kira-d01-mail':''}">
   <div class="kira-mail-toolbar">${btn('kira-back','‹　收件箱')}<span>‹　›　□</span></div>
   <div class="kira-detail-head"><h2>${esc(m.subject)}</h2><p>来自 ${esc(m.from)}　·　今天</p></div>
-  <div class="kira-mail-body">${body}${d01File}</div>${otherAttachment}</div>`;
+  <div class="kira-mail-body">${body}${d01File}${d02File}</div>${otherAttachment}</div>`;
 }
