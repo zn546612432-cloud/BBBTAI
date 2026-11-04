@@ -49,7 +49,7 @@ function myOrdersPage(s,view='active'){
  const groups={
   active:all.filter(o=>!['OPEN','COMPLETED','EXPIRED','FAILED','CANCELLED'].includes(o.status)),
   completed:all.filter(isCompletedBounty),
-  expired:all.filter(o=>['EXPIRED','FAILED','CANCELLED'].includes(o.status)&&o.status!=='OPEN')
+  expired:all.filter(o=>['EXPIRED','FAILED','CANCELLED'].includes(o.status)&&(!D02_STAGES[o.id]||o.wasAccepted===true))
  };
  const labels={active:'进行中',completed:'已完成',expired:'已失效'};
  const list=groups[view]||groups.active;
