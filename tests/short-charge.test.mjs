@@ -57,10 +57,8 @@ test('long charge remains the original next-day 08:00 fully charged transition',
 });
 test('D01 cannot skip overnight with short charge and D55 ending is protected',()=>{
  const s=activateStory55(initialState());s.clock='23:50';
- assert.equal(beginShortCharge(s),false,'must complete D01 before any charge');
- s.story55.d01={bankClaimed:true,rewardPaid:true};
- s.story55.completed.intro={day:1,clock:'12:00',test:true};
- assert.equal(beginShortCharge(s),true);
+ assert.equal(plugIn(s),false,'D01 overnight charge still requires the compulsory tasks');
+ assert.equal(beginShortCharge(s),true,'D01 can accelerate within the same day');
  assert.equal(advanceGameMinutes(s,120).event,'short-charge-end');
  assert.equal(s.day,1);assert.equal(s.clock,'23:59');
  s.story55.d01.nightAfterMidnight=true;s.clock='00:30';
