@@ -31,18 +31,16 @@ export const d02OrderOfStep=id=>[D02_S,D02_A].find(key=>String(id||'').startsWit
 export const d02NextStep=(s,id)=>{const master=d02OrderOfStep(id);if(!master)return null;const i=D02_STAGES[master].findIndex((_,index)=>d02StepId(master,index)===id);return i>=0&&i+1<D02_STAGES[master].length?d02StepId(master,i+1):null;};
 export function seedD02(s){
  if(!onD02(s))return false;
- const d=s.story55.d02??={completed:{},submitted:{},paid:{},taliaStage:0,bonus:false};
+ const d=ensureD02(s);
  s.content.orders??=[];s.content.mail??=[];s.content.conversations??={};s.content.conversations.mirage??=[];
- for(const [id,desc,owner] of [
-  [D02_S,'破解芯片 → GHOST 链接、隐匿、窃取 → 获取目标资料。S 级：接单当日完成。','Talia'],
-  [D02_A,'GHOST 破译 → 攻击（连续三关）。A 级：两至三天内完成。','ANONYMOUS']
- ]){
-  if(!s.content.orders.some(o=>o.id===id))s.content.orders.push({id,title:id===D02_S?'S 级委托':'A 级委托',owner,category:id===D02_S?'S':'A',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD',status:s.day===2?'OPEN':'EXPIRED',description:desc,storyD02:true,storyDay:2});
+ for(const [id,owner] of [[D02_S,'Talia'],[D02_A,'ANONYMOUS']]){
+  let o=s.content.orders.find(o=>o.id===id);
+  if(!o){
+   o={id,title:id===D02_S?'S 级委托':'A 级委托',owner,category:id===D02_S?'S':'A',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD',status:'OPEN',description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',storyD02:true,storyDay:2};
+   s.content.orders.push(o);
+  }else if(o.storyD02)Object.assign(o,{description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD'});
  }
- for(const [id,deadline] of [[D02_S,2],[D02_A,4]]){
-  const order=s.content.orders.find(o=>o.id===id);
-  if(s.day>deadline&&order&&['OPEN','ACCEPTED'].includes(order.status))order.status='EXPIRED';
- }
+ tickD02Contracts(s);
  // D02's private record belongs in Schedule, not Notes.
  // Remove only the old authored note; all user-created notes remain intact.
  s.content.notes=(s.content.notes||[]).filter(n=>n.id!==D02_NOTE);
