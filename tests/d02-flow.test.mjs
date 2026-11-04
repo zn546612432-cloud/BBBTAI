@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {render as kiraRender,handle as kiraHandle} from '../src/apps/kira/index.js';
 import {render as filesRender,handle as filesHandle} from '../src/apps/files/index.js';
-import {render as ghostRender} from '../src/apps/ghost/index.js';
+import {render as ghostRender,handle as ghostHandle} from '../src/apps/ghost/index.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {completeNode} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
@@ -330,8 +330,8 @@ test('D02 KIRA key attachments open through native Files preview and GHOST for b
   const before=Object.keys(s.ghost.orders).length;
   filesHandle('files-d02-open-ghost',{dataset:{id:mailId}},ctx);
   assert.equal(Object.keys(s.ghost.orders).length,before);
-  const project=ghostRender(ctx,{route:'/d02-projects',params:{orderId:id}});
-  assert.doesNotMatch(project,/gh-d02-key|data-action="gh-d02-deploy"/);
+  const home=ghostRender(ctx,{route:'/',params:{}});
+  assert.doesNotMatch(home,/MIRAGE 委托|gh-d02-projects|gh-d02-key|gh-d02-deploy/);
  }
 });
 test('D02 Files direct link rejects nonexistent or unread Kira attachment',()=>{
@@ -353,13 +353,51 @@ test('old D02 key mail is converted back to a native attachment without revealin
  assert.doesNotMatch(mail.body,/PROJECT ACCESS KEY/);
 });
 
-test('GHOST D02 finished project shows only in-world completion status',()=>{
- const s=phone(),store={get:()=>s,update:fn=>fn(s)};
- assert.equal(acceptD02(s,D02_S),true);
- assert.equal(revealD02Key(s),true);
- assert.equal(deployD02(s,D02_S,D02_KEYS[D02_S]),true);
- win(s,D02_S);
- const html=ghostRender({store},{route:'/d02-projects',params:{orderId:D02_S}});
- assert.match(html,/项目完成/);
- assert.doesNotMatch(html,/等待玩家|玩家在 MIRAGE 提交/);
+test('GHOST D02 shows the original execution report without counters or a separate commission page',()=>{
+ for(const [master,mailId] of [[D02_S,D02_MAIL],[D02_A,D02_A_MAIL]]){
+  const s=phone(),routes=[],store={get:()=>s,update:fn=>fn(s)};
+  const ctx={store,router:{open:link=>routes.push(link)},toast:()=>{}};
+  assert.equal(acceptD02(s,master),true);
+  s.content.mail.find(m=>m.id===mailId).read=true;
+  if(master===D02_S)assert.equal(revealD02Key(s),true);
+  assert.equal(deployD02(s,master,D02_KEYS[master]),true);
+  win(s,master);
+  assert.equal(s.content.orders.find(o=>o.id===master).status,'READY');
+  const lastStep=d02StepId(master,D02_STAGES[master].length-1);
+  const report=ghostRender(ctx,{route:'/run',params:{orderId:lastStep}});
+  assert.match(report,/执行报告/);
+  assert.match(report,/成功/);
+  assert.match(report,/项目完成/);
+  assert.match(report,/data-action="gh-d02-next"/);
+  assert.match(report,/返回 KIRA/);
+  assert.doesNotMatch(report,/尝试次数|操作次数|undefined|等待玩家|MIRAGE 委托/);
+  assert.equal(s.content.orders.find(o=>o.id===master).status,'READY');
+  filesHandle('files-d02-open-ghost',{dataset:{id:mailId}},ctx);
+  assert.deepEqual(routes.at(-1),{appId:'ghost',route:'/run',params:{orderId:lastStep}});
+  ghostHandle('gh-d02-next',{dataset:{}},ctx,{route:'/run',params:{orderId:lastStep}});
+  assert.deepEqual(routes.at(-1),{appId:'kira',route:'/mail/'+mailId,params:{}});
+ }
+});
+test('GHOST D02 retains the next step in-place, and legacy D01 reports without counters',()=>{
+ const s=phone(),routes=[],store={get:()=>s,update:fn=>fn(s)};
+ const ctx={store,router:{open:link=>routes.push(link)},toast:()=>{}};
+ assert.equal(acceptD02(s,D02_A),true);
+ s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
+ assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
+ const first=d02StepId(D02_A,0);
+ assert.equal(begin(s,first,1000),true);
+ finish(s,first,true,2000);
+ const report=ghostRender(ctx,{route:'/run',params:{orderId:first}});
+ assert.match(report,/执行报告/);
+ assert.match(report,/繼續處理/);
+ ghostHandle('gh-d02-next',{dataset:{}},ctx,{route:'/run',params:{orderId:first}});
+ assert.deepEqual(routes.at(-1),{appId:'ghost',route:'/contract',params:{orderId:d02StepId(D02_A,1)}});
+ const d01=s.ghost.orders.mirage001;
+ if(d01&&d01.status==='success'){
+  const historyReport=ghostRender(ctx,{route:'/run',params:{orderId:'mirage001'}});
+  assert.match(historyReport,/执行报告/);
+  assert.doesNotMatch(historyReport,/undefined|操作次数|尝试次数/);
+ }
+ const home=ghostRender(ctx,{route:'/',params:{}});
+ assert.doesNotMatch(home,/MIRAGE 委托|gh-d02-projects/);
 });
