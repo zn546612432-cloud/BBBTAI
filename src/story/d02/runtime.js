@@ -94,18 +94,21 @@ export function seedD02(s){
 }
 export function acceptD02(s,id){
  if(s.story55?.version!==1||s.day!==2||!D02_STAGES[id])return false;
- const o=s.content.orders?.find(o=>o.id===id),d=s.story55.d02??={};
- if(!o||o.status!=='OPEN')return false;
+ const o=s.content.orders?.find(o=>o.id===id),d=ensureD02(s);
+ if(!o||o.status!=='OPEN'||expired(s,id))return false;
  o.status='ACCEPTED';
  if(id===D02_S){
   const list=s.content.conversations.mirage;
-  if(!list.some(c=>c.id===D02_TALIA))list.push({id:D02_TALIA,name:'Talia',avatar:'T',online:false,unread:1,storyD02:true,lastMessageAt:Date.now(),messages:[msg('d02-talia-connected',D02_TALIA,'[通信已建立，密钥已同步到KIRA]',s.clock)]});
-  if(!s.content.mail.some(m=>m.id===D02_MAIL))s.content.mail.unshift({id:D02_MAIL,from:'Talia · MIRAGE',subject:'[MIRAGE] CHIP ACCESS / KEY',body:'加密芯片的项目凭证已同步。请打开附件读取授权密钥，随后进入 GHOST 完成链接、隐匿与窃取三个步骤。',read:false,storyD02:true,day:2,time:s.clock,attachments:['talia-chip-0520.key']});
+  if(!list.some(c=>c.id===D02_TALIA))list.push({id:D02_TALIA,name:'Talia',avatar:'T',online:false,unread:1,storyD02:true,lastMessageAt:Date.now(),messages:[msg('d02-talia-connected',D02_TALIA,'通信已建立',s.clock)]});
+  if(!s.content.mail.some(m=>m.id===D02_MAIL))s.content.mail.unshift({id:D02_MAIL,from:'Talia · MIRAGE',subject:'[MIRAGE] CHIP ACCESS / KEY',body:'加密芯片的项目凭证已同步，授权密钥见附件。',read:false,storyD02:true,day:2,time:s.clock,attachments:['talia-chip-0520.key']});
   s.notifications.unshift({id:'d02-talia-mail-notice',title:'KIRA',body:'[MIRAGE] CHIP ACCESS / KEY',day:2,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_MAIL,params:{}}});
  }else{
-  // A-grade contracts do not require a KIRA key or a contact.
-  armD02Ghost(s,D02_A,0);
+  if(!s.content.mail.some(m=>m.id===D02_A_MAIL))s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:'委托已确认。\n\n这是本次项目的授权密钥。不要用于其他订单。\n\nPROJECT ACCESS KEY: '+D02_KEYS[D02_A]+'\n\n期限三天。我只接受完整的结果报告。不要分批提交，也不需要发进度邮件。',read:false,storyD02:true,day:2,time:s.clock});
+  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:2,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
  }
+ const list=s.content.reminders??(s.content.reminders=[]);
+ if(!list.some(r=>r.id===d02ReminderId(id)))list.push({id:d02ReminderId(id),title:'MIRAGE · '+(id===D02_S?'S 级 Talia 委托':'A 级监控系统干扰'),done:false,storyD02Order:true,orderId:id,deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59'});
+ syncD02Reminder(s,id);
  return true;
 }
 export function revealD02Key(s){
