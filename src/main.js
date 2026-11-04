@@ -135,6 +135,8 @@ function render(){
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
  const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
+  // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
+  $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
  patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s));
  $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
  patchHTML($('#shade-layer'),notifications(s));
@@ -432,16 +434,19 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-open'){expandIsland();return;}
     if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
     if(action==='power-short-start'){
-      if(chargingBlock(store.get())){toast('当前剧情暂时无法充电。');collapseIsland();return;}
       let ok=false;store.update(s=>{ok=beginShortCharge(s);});
-      if(!ok)toast('现在无法开启短充。');
-      collapseIsland();return;
+      collapseIsland();
+      toast(ok?'短充已开始':'现在无法短充');
+      return;
     }
     if(action==='power-long-start'){
-      if(chargingBlock(store.get())){toast('当前剧情暂时无法充电。');collapseIsland();return;}
+      const block=chargingBlock(store.get());
+      if(block){collapseIsland();toast(block==='death'?'当前无法长充':'请先完成当天任务，再进行长充');return;}
       let ok=false;store.update(s=>{ok=plugIn(s);});
-      if(ok){lockscreen.reset();setShade({progress:0});}else toast('现在无法开启长充。');
-      collapseIsland();return;
+      if(ok){lockscreen.reset();setShade({progress:0});}
+      collapseIsland();
+      if(!ok)toast('现在无法长充');
+      return;
     }
     if(action==='power-decline'){collapseIsland();return;}
     if(action==='power-plug'){if(chargingBlock(store.get())){toast('充电口进水，稍后再试。');collapseIsland();return;}let charged=false;store.update(s=>{charged=plugIn(s);});if(charged){lockscreen.reset();setShade({progress:0});}collapseIsland();return;}

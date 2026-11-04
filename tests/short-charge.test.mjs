@@ -14,7 +14,8 @@ test('Dynamic Island offers short and long charging choices',()=>{
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
  const html=dynamicIsland(s,{expanded:true,page:'select'});
  assert.match(html,/power-short-start/);assert.match(html,/power-long-start/);
- assert.match(html,/1 分钟＝游戏 3 小时/);assert.match(html,/次日 08:00/);
+ assert.match(html,/>短充<\/button>/);assert.match(html,/>长充<\/button>/);
+ assert.doesNotMatch(html,/现实 1 分钟|次日 08:00|最多 \+10%/);
  assert.match(status(s,{islandExpanded:true,islandPage:'select'}),/is-charge-select/);
 });
 test('D02 short charging advances three game hours per real minute, even in chat',()=>{
@@ -81,4 +82,27 @@ test('D02 sale SMS still delivers at its original game timestamp during accelera
  assert.match(s.notifications.find(n=>n.messageId==='d02-aodong-sale')?.body||'',/八折/);
  delivery.tick(2_000,true);
  assert.equal(s.events.filter(e=>e.messageId==='d02-aodong-sale').length,1,'no duplicate alert');
+});
+
+test('short charging is allowed when a plot gate blocks overnight charging',()=>{
+ const s=activateStory55(initialState());s.day=2;s.clock='09:30';
+ assert.equal(plugIn(s),false,'unfinished D01 story still protects a long charge');
+ assert.equal(beginShortCharge(s),true,'same-day short charge cannot skip the story gate');
+ tickShortChargeBattery(s,20_000);
+ assert.equal(tickWorld(s,20_000).minutes,60);
+ assert.equal(s.day,2);assert.equal(s.clock,'10:30');
+ assert.equal(endShortCharge(s),true);
+});
+
+test('charge options keep a touchable surface below the compact status bar',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('../src/system/power/styles.css',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const gesture=readFileSync(new URL('../src/system/gestures.js',import.meta.url),'utf8');
+ assert.match(css,/#status-layer\.is-charge-expanded\{[^}]*pointer-events:auto/);
+ assert.match(main,/classList\.toggle\('is-charge-expanded',islandExpanded\)/);
+ assert.match(gesture,/\.battery-charge-choice/);
+ assert.match(main,/action==='power-short-start'/);
+ assert.match(main,/action==='power-long-start'/);
+ assert.doesNotMatch(main,/toast\('当前剧情暂时无法充电。'\)/);
 });

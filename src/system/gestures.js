@@ -3,7 +3,7 @@ import {releaseVelocity} from './pager.js';
 const DEAD_ZONE=9;
 // Leaflet owns map gestures, including one-finger panning and two-finger pinch.
 // The iPhone shell must not intercept a map touch as notification/home swipe.
-const BLOCKED='input,textarea,select,[data-drag-message],.composer,.passcode-panel,#task-layer,xm-leaflet-map';
+const BLOCKED='input,textarea,select,[data-drag-message],.composer,.passcode-panel,#task-layer,xm-leaflet-map,.battery-island-actions,.battery-charge-choice,.status-battery';
 export const isNativeScrollTarget = target => !!target?.closest?.('[data-native-scroll]');
 export function classifyGesture({dx,dy,home,locked,shade,top,bottom}){
  if(Math.max(Math.abs(dx),Math.abs(dy))<DEAD_ZONE)return null;

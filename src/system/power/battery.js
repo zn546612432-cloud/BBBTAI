@@ -25,7 +25,8 @@ export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&s.powerMode!
 // The phone stays usable while short charging. At most +10% per session
 // arrives gradually over the first real minute; time continues accelerating.
 export function beginShortCharge(s){
- if(!canCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
+ // Plot gates prevent skipping to tomorrow, not fast-forwarding WITHIN today.
+ if(!s||phoneBlocked(s)||deathLocked(s)||secondView55(s)||chargingBlock(s)==='death'||s.powerMode!=='idle'||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
  s.powerMode='short-charging';s.shortCharge={startPercent:batteryPercent(s),elapsedMs:0};
  s.worldMinuteFraction=0;
  return true;
