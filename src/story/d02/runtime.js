@@ -29,6 +29,42 @@ export const d02State=s=>s.story55?.d02||{};
 export const d02StepId=(id,i)=>id+'-stage-'+(i+1);
 export const d02OrderOfStep=id=>[D02_S,D02_A].find(key=>String(id||'').startsWith(key+'-stage-'))||null;
 export const d02NextStep=(s,id)=>{const master=d02OrderOfStep(id);if(!master)return null;const i=D02_STAGES[master].findIndex((_,index)=>d02StepId(master,index)===id);return i>=0&&i+1<D02_STAGES[master].length?d02StepId(master,i+1):null;};
+function syncD02Reminder(s,id){
+ const o=s.content.orders?.find(o=>o.id===id),r=s.content.reminders?.find(r=>r.id===d02ReminderId(id));
+ if(!o||!r)return;
+ r.done=o.status==='COMPLETED';r.failed=o.status==='EXPIRED';
+ r.progress=D02_STAGES[id].filter((_,i)=>s.ghost?.orders?.[d02StepId(id,i)]?.status==='success').length;
+ r.total=D02_STAGES[id].length;
+ r.status=r.done?'已完成':r.failed?'已失效':o.status==='READY'?'待提交':'进行中';
+}
+export function tickD02Contracts(s,now=Date.now()){
+ if(!onD02(s))return false;
+ const d=ensureD02(s);let changed=false;
+ for(const id of [D02_S,D02_A]){
+  const o=s.content.orders?.find(o=>o.id===id);if(!o)continue;
+  if(['OPEN','ACCEPTED'].includes(o.status)&&expired(s,id)&&!d.completed[id]){o.status='EXPIRED';changed=true;}
+  syncD02Reminder(s,id);
+ }
+ const chat=s.content.conversations.mirage?.find(c=>c.id===D02_TALIA);
+ const answer=chat?.messages.find(m=>m.id==='d02-talia-worth');
+ if(d.bonusRequested&&answer?.delivery&&!d.bonusPaid&&!d.bonusDueAt&&d.submitted[D02_S]){d.bonusDueAt=now+4000;changed=true;}
+ if(d.bonusDueAt&&now>=d.bonusDueAt&&!d.bonusPaid){
+  d.bonusPaid=true;d.bonus=true;d.bonusDueAt=null;
+  creditD02(s,D02_S,D02_REWARDS[D02_S],'-talia');changed=true;
+ }
+ return changed;
+}
+export function d02ContractDue(s,now=Date.now()){
+ const d=s.story55?.d02,chat=s.content.conversations.mirage?.find(c=>c.id===D02_TALIA);
+ return !!(onD02(s)&&((d?.bonusDueAt&&now>=d.bonusDueAt)||(d?.bonusRequested&&!d.bonusDueAt&&!d.bonusPaid&&chat?.messages.some(m=>m.id==='d02-talia-worth'&&m.delivery))));
+}
+export function deployD02(s,id,key){
+ if(!onD02(s)||!D02_STAGES[id])return false;
+ const order=s.content.orders?.find(o=>o.id===id),mail=s.content.mail?.find(m=>m.id===(id===D02_S?D02_MAIL:D02_A_MAIL));
+ if(!order||order.status!=='ACCEPTED'||!mail?.read||String(key||'').trim()!==D02_KEYS[id])return false;
+ const d=ensureD02(s);if(id===D02_S&&!d.keyOpened)return false;
+ d.deployed[id]=true;armD02Ghost(s,id,0);return true;
+}
 export function seedD02(s){
  if(!onD02(s))return false;
  const d=ensureD02(s);
