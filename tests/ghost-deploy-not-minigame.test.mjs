@@ -42,6 +42,7 @@ test('standalone game lab and developer test menu cannot generate a DEPLOY minig
  assert.doesNotMatch(editor,/随机开启 部署 \/ DEPLOY/);
  assert.match(editor,/随机开启 破译 \/ CIPHER/);
  const info=ghostRender({store:{get:()=>initialState()}},{route:'/deploy-info',params:{}});
- assert.match(info,/部署本身不是小游戏/);
+ assert.match(info,/验证后安装并初始化工具/);
+ assert.doesNotMatch(info,/小游戏|关卡|玩家/);
  assert.doesNotMatch(info,/data-action="gh-start"/);
 });
