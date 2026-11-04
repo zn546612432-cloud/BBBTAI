@@ -76,6 +76,13 @@ export function seedD02(s){
    s.content.orders.push(o);
   }else if(o.storyD02){Object.assign(o,{description:D02_BRIEFS[id],deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59',reward:D02_REWARDS[id].toLocaleString('en-US')+' USD'});if(['ACCEPTED','READY','COMPLETED'].includes(o.status))o.wasAccepted=true;}
  }
+ // Older saves could have an accepted A commission from the keyless prototype.
+ // Backfill its KIRA authorization once so the upgraded save is still playable.
+ const legacyA=s.content.orders.find(o=>o.id===D02_A);
+ if(legacyA?.status==='ACCEPTED'&&!s.content.mail.some(m=>m.id===D02_A_MAIL)){
+  s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:'委托已确认。\n\nPROJECT ACCESS KEY: '+D02_KEYS[D02_A]+'\n\n期限三天。我只接受完整的结果报告。',read:false,storyD02:true,day:s.day,time:s.clock});
+  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
+ }
  tickD02Contracts(s);
  // D02's private record belongs in Schedule, not Notes.
  // Remove only the old authored note; all user-created notes remain intact.
