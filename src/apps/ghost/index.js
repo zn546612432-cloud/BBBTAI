@@ -36,21 +36,7 @@ export function tick(ctx){
  if(Object.values(s.ghost?.orders||{}).some(x=>x.status==='settling'&&now>=x.dueAt&&Number.isFinite(configFor(s,x.type,x.id).reward)))ctx.store.update(n=>settle(n));
 }
 export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
- if(loc.route==='/d02-projects'){
-  const contracts=[D02_S,D02_A].map(id=>s.content.orders?.find(o=>o.id===id)).filter(o=>o&&['ACCEPTED','READY','COMPLETED'].includes(o.status));
-  const chosen=contracts.find(o=>o.id===loc.params?.orderId)||contracts[0];
-  const done=chosen?D02_STAGES[chosen.id].filter((_,i)=>g.orders[chosen.id+'-stage-'+(i+1)]?.status==='success').length:0;
-  const deployed=chosen&&!!s.story55?.d02?.deployed?.[chosen.id];
-  const current=chosen&&g.orders[chosen.id+'-stage-'+(done+1)];
-  body=title('home','GHOST / 项目')+'<h1>MIRAGE 委托</h1>'+
-   '<div class="gh-tools">'+contracts.map(o=>button('d02-select',esc(o.category+' · '+o.owner+' / '+o.status),'data-id="'+esc(o.id)+'"')).join('')+'</div>'+
-   (chosen?'<div class="gh-keybox"><small>'+esc(chosen.category)+' · '+esc(chosen.owner)+'</small><p>进度 '+done+' / '+D02_STAGES[chosen.id].length+' · 截止 D'+D02_DEADLINES[chosen.id].day+' 23:59</p>'+
-   (!deployed&&chosen.status==='ACCEPTED'?'<p>請在 KIRA 打開委託密鑰附件，並在「檔案」中選擇使用 GHOST 打開。</p>':'')+
-   (deployed&&chosen.status==='ACCEPTED'&&current?button('d02-open','继续项目 · '+esc(D02_STAGES[chosen.id][done]),'data-id="'+esc(chosen.id)+'"','gh-primary'):'')+
-   (chosen.status==='READY'?'<p>项目完成</p>':'')+
-   (chosen.status==='COMPLETED'?'<p>委托已结算</p>':'')+'</div>':'<div class="gh-empty">暂无已接取的委托</div>');
- }
- else if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
+ if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
  else if(loc.route==='/deploy-info'){
   body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>部署用于输入来自 KIRA 或联系人提供的密钥，安装工具后在「项目」中使用。部署本身不是小游戏。</p><p>请在对应剧情任务中获取授权密钥。</p></div>';
  }
@@ -60,7 +46,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
   if(o.status!=='running'&&o.status!=='preview-win'){
-   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${tool.name} / ${esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}<div class="gh-report-meta"><span>尝试次数<b>${String(o.attempts).padStart(2,'0')}</b></span><span>操作次数<b>${String(o.moves).padStart(2,'0')}</b></span></div>${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'进入下一关':d02OrderOfStep(o.id)==='d02-chip-peace'?'查看取得的目标资料':'完成 · 返回 GHOST',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
+   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 KIRA',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
@@ -83,23 +69,12 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    if(b.arcade&&o.type!=='cipher')body+=renderArcade(b.arcade,o,remaining);
     body+=`<div class="gh-game-footer"><span>● 加密 会话</span><span>${o.moves.toString().padStart(2,'0')} 次操作</span></div>`;
   }
- }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+(s.content.orders?.some(o=>[D02_S,D02_A].includes(o.id)&&['ACCEPTED','READY','COMPLETED'].includes(o.status))?button('d02-projects','MIRAGE 委托'):'')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
+ }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span><span>${String(tools.length).padStart(2,'0')} 可用</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-number">0${i+1}</span><span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}<small>第 ${String(i+1).padStart(2,'0')} 项</small></b><p>${t.detail}</p></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}<small>GHOST 系统 / 版本 01</small></div>`;
  const exitDialog=loc.route==='/run'&&o?.id===D01_REPAIR&&o.status==='running'&&exitDialogFor===o.id?`<div class="gh-exit-confirm" role="dialog" aria-modal="true" aria-label="保存修復進度"><div class="gh-exit-card"><h2>退出數據修復？</h2><p>已完成的修復進度不會丟失。你可以保留本關的線路，或重新生成本關。</p>${button('d01-save','保存並退出','','gh-primary')}${button('d01-discard','放棄並退出','','gh-secondary')}${button('d01-cancel','繼續修復','','gh-secondary')}</div></div>`:'';
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}</div>`;
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
  if(a==='home')return nav(ctx);
- if(a==='d02-projects')return nav(ctx,'/d02-projects');
- if(a==='d02-select')return nav(ctx,'/d02-projects',{orderId:t.dataset.id});
- if(a==='d02-open'){
-  const master=t.dataset.id,d=s.story55?.d02;
-  if(!d?.deployed?.[master])return ctx.toast('请先部署');
-  const index=D02_STAGES[master].findIndex((_,i)=>s.ghost?.orders?.[master+'-stage-'+(i+1)]?.status!=='success');
-  if(index<0)return ctx.toast('成果已生成');
-  const id=master+'-stage-'+(index+1);
-  return nav(ctx,'/contract',{orderId:id});
- }
-
  if(a==='deployments')return nav(ctx,'/deployments');
  if(a==='mining')return nav(ctx,'/mining');
  if(a==='history')return nav(ctx,'/history');
@@ -116,12 +91,12 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='d01-save'&&id===D01_REPAIR){exitDialogFor=null;return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d01-discard'&&id===D01_REPAIR){exitDialogFor=null;ctx.store.update(n=>exitD01Puzzle(n,{discard:true}));return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});}
  if(a==='d02-next'&&id&&o?.status==='success'){
-  const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):nav(ctx,'/d02-projects',{orderId:d02OrderOfStep(id)});
+  const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});
  }
  if(a==='d01-next'&&id===D01_REPAIR){exitDialogFor=null;if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
  if(a==='start'){exitDialogFor=null;if(!o)return;
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
- if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return nav(ctx,'/d02-projects',{orderId:d02OrderOfStep(id)});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
+ if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
  if(a==='cipher-easy-reset'){
   if(o?.type!=='cipher'||o.status!=='running'||!o.board?.arcade)return;
