@@ -18,7 +18,7 @@ export const D02_BRIEFS={
  [D02_A]:'有三个远程监控节点，我需要它们在指定时段内停止向主控端回传数据。\n\n我要中断记录和恢复记录。没有完整结果就不要提交。\n\n期限三天。报酬写在上面了。'
 };
 export const D02_DEADLINES={ [D02_S]:{day:2,clock:'23:59'},[D02_A]:{day:4,clock:'23:59'} };
-const ensureD02=s=>{const d=s.story55.d02??={};d.completed??={};d.submitted??={};d.paid??={};d.deployed??={};return d;};
+const ensureD02=s=>{const d=s.story55.d02??={};d.completed??={};d.submitted??={};d.paid??={};d.deployed??={};d.taliaStage??=0;d.bonus??=false;return d;};
 const gameMinute=s=>Number(s.day)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
 const expired=(s,id)=>s.day>D02_DEADLINES[id].day||s.day===D02_DEADLINES[id].day&&s.clock>D02_DEADLINES[id].clock;
 export const d02ReminderId=id=>'d02-order-reminder-'+id;
