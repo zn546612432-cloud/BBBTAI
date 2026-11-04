@@ -19,7 +19,7 @@ import {begin,finish} from '../src/apps/ghost/state.js';
 import {d02Draft,d02WeChatDue,tickD02Wechat,sendD02WeChat,seedD02Wechat} from '../src/story/d02/wechat.js';
 import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.js';
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
-import {AODONG_PRODUCTS,aodongPrice} from '../src/apps/browser/aodong-shop.js';
+import {AODONG_PRODUCTS,aodongPrice,HARDWARE_GOAL} from '../src/apps/browser/aodong-shop.js';
 import {
  D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_BRIEFS,D02_AODONG_URL,D02_AODONG_SMS,D02_TALIA,D02_NOTE,D02_REMINDER,D02_STAGES,D02_REWARDS,
  seedD02,acceptD02,revealD02Key,armD02Ghost,d02StepId,d02NextStep,
@@ -117,13 +117,13 @@ test('A bounty requires Kira authorization and plays cipher-route-strike once ea
 test('Aodong offers 8 categories with 20% May sale and completed hardware reminder triggers group chat once',()=>{
  const s=phone();
  assert.ok(AODONG_PRODUCTS.length>=8);
- assert.equal(new Set(AODONG_PRODUCTS.map(p=>p.category)).size,8);
+ assert.equal(new Set(HARDWARE_GOAL.map(p=>p.category)).size,11);
  const gpu=AODONG_PRODUCTS.find(p=>p.category==='gpu');
- assert.equal(aodongPrice(s,gpu),679.2);
+ assert.equal(aodongPrice(s,gpu),7840);
  assert.equal(createD02Reminder(s),true);
  assert.equal(createD02Reminder(s),false);
  assert.equal(toggleD02Build(s),false);
- s.story55.d02.purchased=AODONG_PRODUCTS.map(p=>({category:p.category,id:p.id}));
+ s.story55.d02.purchased=HARDWARE_GOAL.map(p=>({...p}));
  assert.equal(d02CompleteBuild(s),true);
  assert.equal(toggleD02Build(s),true);
  assert.equal(s.content.reminders.find(r=>r.id===D02_REMINDER).done,true);
@@ -132,7 +132,7 @@ test('Aodong offers 8 categories with 20% May sale and completed hardware remind
  assert.equal(toggleD02Build(s),true);
  assert.equal(toggleD02Build(s),true);
  assert.equal(group.messages.filter(m=>m.id?.startsWith('d02-newpc-group-')).length,7);
- s.day=14;assert.equal(aodongPrice(s,gpu),849);
+ s.day=14;assert.equal(aodongPrice(s,gpu),9800);
 });
 test('Developer D03 jump replays both bounties and Talia contact without doubling money or leaking D02 note into D01',()=>{
  const s=phone();
