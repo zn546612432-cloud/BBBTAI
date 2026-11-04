@@ -83,7 +83,12 @@ if(a==='files-d02-open-ghost'){
  }
  if(!authorized)return c.toast?.('委託未授權或已失效');
  const next=D02_STAGES[master].findIndex((_,i)=>state.ghost?.orders?.[d02StepId(master,i)]?.status!=='success');
- if(next<0||state.content.orders.find(o=>o.id===master)?.status!=='ACCEPTED')return c.router.open({appId:'ghost',route:'/d02-projects',params:{orderId:master}});
+ if(next<0||state.content.orders.find(o=>o.id===master)?.status!=='ACCEPTED'){
+  const finalId=d02StepId(master,D02_STAGES[master].length-1);
+  if(state.ghost?.orders?.[finalId]?.status==='success')
+   return c.router.open({appId:'ghost',route:'/run',params:{orderId:finalId}});
+  return c.toast?.('委託已失效');
+ }
  return c.router.open({appId:'ghost',route:'/contract',params:{orderId:d02StepId(master,next)}});
 }
 if(a==='d02-return')return c.router.open({appId:'mirage',route:'/order/d02-chip-peace',params:{}});
