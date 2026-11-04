@@ -1,4 +1,5 @@
 // D02 / 2025-05-20. All actions are fictional game state; never run external network commands.
+import {seedD02Wechat} from './wechat.js';
 export const D02_S='d02-chip-peace';
 export const D02_A='d02-commission-a';
 export const D02_MAIL='d02-talia-key-mail';
@@ -31,39 +32,19 @@ export function seedD02(s){
   const order=s.content.orders.find(o=>o.id===id);
   if(s.day>deadline&&order&&['OPEN','ACCEPTED'].includes(order.status))order.status='EXPIRED';
  }
- if(!d.noteSeeded&&!s.content.notes.some(n=>n.id===D02_NOTE))s.content.notes.unshift({
-  id:D02_NOTE,title:'电脑该换了',text:'服务器又不够用了。跑个任务风扇跟要起飞似的。\n想换台新电脑。CPU、显卡、内存、硬盘一块儿配好，别再东拼西凑。\n\n预算看看澳东商城五月八折的配置。',
-  createdDay:2,updatedDay:2,updatedClock:'09:05',storyD02:true
- });
+ // D02's private record belongs in Schedule, not Notes.
+ // Remove only the old authored note; all user-created notes remain intact.
+ s.content.notes=(s.content.notes||[]).filter(n=>n.id!==D02_NOTE);
  d.noteSeeded=true;
- // SMS, brother and Xin conversations are real dated chat records, not global system popups.
+ // The Aodong advertisement remains a genuine scheduled incoming SMS.
  const sms=s.content.conversations.messages??(s.content.conversations.messages=[]);
- let shop=sms.find(c=>c.id==='sms-aodong-2025');if(!shop){shop={id:'sms-aodong-2025',name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
- if(!shop.messages.some(m=>m.id==='d02-aodong-sale')){
+ let shop=sms.find(c=>c.id==='sms-aodong-2025');
+ if(!shop){shop={id:'sms-aodong-2025',name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
+ if(!shop.messages.some(m=>m.id==='d02-aodong-sale'))
   shop.messages.push({...msg('d02-aodong-sale','aodong','五月澳东打折月！澳东商城电子产品全场八折。浏览器搜索「澳东商城」进入选购。','09:00'),schedule:{mode:'game-time',day:2,clock:'09:00'}});
- }
- const wc=s.content.conversations.wechat??(s.content.conversations.wechat=[]);
- const write=(id,name,lines)=>{
-  let c=wc.find(x=>x.id===id||x.name===name);
-  if(!c){c={id,name,avatar:name.slice(0,1),unread:0,messages:[]};wc.push(c);}
-  for(const [n,from,text,time] of lines)if(!c.messages.some(m=>m.id===n))c.messages.push({...msg(n,from,text,time),schedule:{mode:'game-time',day:2,clock:time}});
- };
- write('wang','熙旺',[
-  ['d02-wang-01','me','哥，我那台电脑真的该退休了。','12:16'],
-  ['d02-wang-02','熙旺','上回不是才换过零件？','12:19'],
-  ['d02-wang-03','me','那叫抢救。它今天一开三个程序就开始喘。','12:20'],
-  ['d02-wang-04','熙旺','买新的就买新的，别又一连几天不睡觉装机器。','12:23'],
-  ['d02-wang-05','me','知道啦。你怎么比系统监控还勤快。','12:24'],
-  ['d02-wang-06','熙旺','系统监控会给你留饭吗？晚上回来吃。','12:27']
- ]);
- write('xin','小辛',[
-  ['d02-xin-01','小辛','蒙蒙哥，澳东商城打八折诶！！！你看到没','16:08'],
-  ['d02-xin-02','me','你怎么比促销短信还准时。','16:10'],
-  ['d02-xin-03','小辛','你买显卡的话顺便帮我看看游戏能不能跑满帧？','16:11'],
-  ['d02-xin-04','me','不如我先给你买个闹钟，让你别熬夜打游戏。','16:14'],
-  ['d02-xin-05','小辛','不是吧蒙蒙哥，昨天是谁拉我打到两点的啊？？？','16:15'],
-  ['d02-xin-06','me','我失忆了。','16:16']
- ]);
+ // The new WeChat engine only inserts an NPC message when it has genuinely
+ // been delivered; player lines appear only after the user presses Send.
+ seedD02Wechat(s);
  return true;
 }
 export function acceptD02(s,id){
