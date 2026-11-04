@@ -7,6 +7,10 @@ export const LOW_BATTERY_PERCENT=20;
 export const SHORT_CHARGE_MAX_GAIN=10;
 export const SHORT_CHARGE_FILL_MS=60_000;
 export const isShortCharging=s=>s?.powerMode==='short-charging';
+// Persist actual percentage points gained per story day. Unplugging/reloading
+// never grants a fresh 10%, including after a developer jumps back in time.
+export const shortChargeGainToday=s=>Math.max(0,Math.min(SHORT_CHARGE_MAX_GAIN,Number(s?.shortChargeGains?.[String(s?.day)])||0));
+export const shortChargeStoryInterrupted=s=>isShortCharging(s)&&!!(chargingBlock(s)||s?.story55?.activeScene||s?.story55?.ended);
 export const BATTERY_DRAIN_INTERVAL_MS=1_125_000/80;
 export const batteryPercent=s=>Number.isFinite(Number(s.batteryPercent))?Math.max(0,Math.min(100,Math.round(Number(s.batteryPercent)))):82;
 export const needsCharge=s=>batteryPercent(s)<=LOW_BATTERY_PERCENT;
@@ -22,12 +26,12 @@ export function drainBattery(s,ms){
  return before-s.batteryPercent;
 }
 export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping';
-// The phone stays usable while short charging. At most +10% per session
-// arrives gradually over the first real minute; time continues accelerating.
-export function beginShortCharge(s){
- // Plot gates prevent skipping to tomorrow, not fast-forwarding WITHIN today.
- if(!s||phoneBlocked(s)||deathLocked(s)||secondView55(s)||chargingBlock(s)==='death'||s.powerMode!=='idle'||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
- s.powerMode='short-charging';s.shortCharge={startPercent:batteryPercent(s),elapsedMs:0};
+// Short charge respects the original wet-port/story gate for BOTH modes.
+export function beginShortCharge(s,now=Date.now()){
+ if(!canCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
+ s.powerMode='short-charging';
+ s.shortCharge={startPercent:batteryPercent(s),elapsedMs:0,credited:0,lastAccruedAt:now};
+ s.shortChargeGains??={};
  s.worldMinuteFraction=0;
  return true;
 }
@@ -36,14 +40,38 @@ export function endShortCharge(s){
  s.powerMode='idle';s.shortCharge=null;s.worldMinuteFraction=0;
  return true;
 }
-export function tickShortChargeBattery(s,elapsedMs){
+// Charge for one real minute, but credit no more than the unused allowance
+// for this GAME day. When full, stay connected and keep any time acceleration.
+export function tickShortChargeBattery(s,elapsedMs,now=Date.now()){
  if(!isShortCharging(s)||!s.shortCharge||!Number.isFinite(elapsedMs)||elapsedMs<=0)return 0;
  const session=s.shortCharge;
+ s.shortChargeGains??={};
+ // Migration: a saved short session from the previous preview already
+ // consumed some of the quota, even without a ledger yet.
+ if(!Number.isFinite(Number(session.credited))){
+  session.credited=Math.max(0,Math.min(SHORT_CHARGE_MAX_GAIN,batteryPercent(s)-Number(session.startPercent||0)));
+  s.shortChargeGains[String(s.day)]=Math.max(shortChargeGainToday(s),session.credited);
+ }
+ session.lastAccruedAt=now;
  session.elapsedMs=Math.min(SHORT_CHARGE_FILL_MS,Math.max(0,Number(session.elapsedMs)||0)+elapsedMs);
- const before=batteryPercent(s);
- const points=Math.floor(session.elapsedMs*SHORT_CHARGE_MAX_GAIN/SHORT_CHARGE_FILL_MS+1e-9);
- s.batteryPercent=Math.min(100,Math.max(before,session.startPercent+points));
- return s.batteryPercent-before;
+ const potential=Math.floor(session.elapsedMs*SHORT_CHARGE_MAX_GAIN/SHORT_CHARGE_FILL_MS+1e-9);
+ const available=Math.max(0,SHORT_CHARGE_MAX_GAIN-shortChargeGainToday(s));
+ const gain=Math.max(0,Math.min(potential-session.credited,available,100-batteryPercent(s)));
+ if(gain>0){
+  s.batteryPercent=batteryPercent(s)+gain;
+  session.credited+=gain;
+  s.shortChargeGains[String(s.day)]=shortChargeGainToday(s)+gain;
+ }
+ return gain;
+}
+// Resuming a background tab or reopening a closed browser credits only
+// real charging time, never lost game minutes or a missed story event.
+export function settleOfflineShortCharge(s,now=Date.now()){
+ if(!isShortCharging(s)||!s.shortCharge)return 0;
+ const last=Number(s.shortCharge.lastAccruedAt);
+ if(!Number.isFinite(last)||last<=0){s.shortCharge.lastAccruedAt=now;return 0;}
+ if(now<=last)return 0;
+ return tickShortChargeBattery(s,Math.min(SHORT_CHARGE_FILL_MS,now-last),now);
 }
 export function plugIn(s){
  if(!canCharge(s))return false;

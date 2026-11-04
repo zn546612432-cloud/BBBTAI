@@ -245,7 +245,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  if(!Number.isInteger(targetDay)||targetDay<1||targetDay>55||!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock))
   throw Error('日期或时间无效');
  const author=preserveAuthoring(s);
+ const dailyShortChargeQuota=structuredClone(s.shortChargeGains||{});
  activateStory55(s);
+ // Rebuilding dates unplugs the cable, but cannot refill previously spent daily quota.
+ s.shortChargeGains=dailyShortChargeQuota;
  // A previous late-game test may have renamed this thread after recognition.
  // Do not leak the revealed identity when returning to an earlier date.
  const taiChat=s.content.conversations.noapp?.find(chat=>chat.id==='tai');

@@ -46,6 +46,7 @@ export function advanceGameMinutes(s,requested){
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  // Short charging never crosses midnight or skips into the next story day.
  const short=isShortCharging(s);
+ if(short&&chargingBlock(s)){endShortCharge(s);return {minutes:0,event:'short-charge-story'};}
  if(short&&s.clock==='23:59'){endShortCharge(s);return {minutes:0,event:'short-charge-end'};}
  // D01 is a story-day, not a midnight boundary. Only charging enters D02.
  // Keep the phone fully operable if compulsory D01 settlements are unfinished
@@ -103,19 +104,19 @@ export function advanceGameMinutes(s,requested){
  return {minutes:advanced,event:stop.type==='none'&&reachedShortEnd?'short-charge-end':stop.type};
 }
 export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId==='noapp'&&(n.route==='/chat/tai'||n.route==='/call'))||(n.appId==='mirage'&&/^\/chat\//.test(n.route)&&/ouroboros/i.test(n.route));}
-export function worldMinuteRate(s,{focused=false,taiChat=false}={}){
+export function worldMinuteRate(s,{focused=false,taiChat=false,fastForward=true}={}){
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
  if(endingAwaitingReply55(s))return STORY55_NORMAL_MINUTES_PER_MS;
  const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
- return s.deathPhase==='draining'?normal:isShortCharging(s)?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
+ return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
-export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false}={}){
+export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false,fastForward=true}={}){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
- const rate=worldMinuteRate(s,{focused,taiChat});
+ const rate=worldMinuteRate(s,{focused,taiChat,fastForward});
  const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
  // Decimal floating-point can put 2999ms + 1ms just below 1 minute.
  // Account for sub-nanominute rounding without fast-forwarding normal play.
