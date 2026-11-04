@@ -116,16 +116,17 @@ export function sendD02WeChat(store,id,text,now=Date.now()){
 export function d02WeChatDue(s,now=Date.now()){
  if(!inDay(s))return false;
  const w=thread(s,'wang'),x=thread(s,'xin');
- return !!(x&&!x.initialSent&&s.clock>='16:08'
+ return !!(x&&!x.initialSent&&(s.clock>='16:08'||Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15)
   ||[w,x].some(t=>t&&!t.completed&&Number.isFinite(t.dueAt)&&now>=t.dueAt));
 }
 export function tickD02Wechat(s,now=Date.now()){
  if(!inDay(s)||!s.story55?.d02?.wechat)return false;
  let changed=false;
  const x=thread(s,'xin');
- if(x&&!x.initialSent&&s.clock>='16:08'){
+ if(x&&!x.initialSent&&(s.clock>='16:08'||Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15)){
+  const publishedClock=s.clock>='16:08'?'16:08':s.clock;
   x.initialSent=true;x.index=1;
-  append(s,'xin',0,'小辛',DIALOGUES.xin[0][1],{clock:'16:08'});
+  append(s,'xin',0,'小辛',DIALOGUES.xin[0][1],{clock:publishedClock});
   changed=true;
  }
  for(const key of ['wang','xin']){
