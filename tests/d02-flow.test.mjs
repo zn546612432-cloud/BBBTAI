@@ -5,6 +5,7 @@ import {render as kiraRender,handle as kiraHandle} from '../src/apps/kira/index.
 import {render as filesRender,handle as filesHandle} from '../src/apps/files/index.js';
 import {render as ghostRender,handle as ghostHandle} from '../src/apps/ghost/index.js';
 import {render as smsRender,handle as smsHandle} from '../src/apps/messages/replica.js';
+import {registry} from '../src/system/registry.js';
 import {render as browserRender,submit as browserSubmit} from '../src/apps/browser/index.js';
 import {render as mirageRender,handle as mirageHandle} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
@@ -518,4 +519,41 @@ test('Ghost retains all six tool names and uses tool-oriented help text without 
  const strike=renderArcade(fakeStrike,{},10000);
  assert.match(strike,/目标响应测试/);
  assert.doesNotMatch(strike,/攻防反应挑战|任务失败/);
+});
+
+test('registered Messages restores its original list and shared chat without losing SMS actions',()=>{
+ const s=phone(),live=registry.get('messages'),store={get:()=>s,update:fn=>fn(s)},routes=[];
+ const ctx={store,refresh:()=>{},toast:()=>{},router:{open:x=>routes.push(x)}};
+ assert.ok(live);
+ const list=live.render({store},{route:'/',params:{}});
+ assert.match(list,/class="sms-screen"/);
+ assert.doesNotMatch(list,/ios-messages-page|ios-msg-conversation|ios-chat-header/);
+ const sms=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
+ const sale=sms.messages.find(m=>m.id==='d02-aodong-sale');
+ sale.delivery={day:2,clock:'09:00'};s.clock='09:09';
+ const chat=live.render({store},{route:'/chat/'+sms.id,params:{}});
+ assert.match(chat,/class="sms-chat"/);
+ assert.match(chat,/class="chat-screen"/);
+ assert.doesNotMatch(chat,/ios-chat-header|ios-chat-back/);
+ assert.match(chat,/data-action="sms-aodong-link"/);
+ live.handle('sms-aodong-link',{dataset:{}},ctx);
+ assert.deepEqual(routes.at(-1),{appId:'browser',route:'/aodong',params:{}});
+ live.handle('sms-compose',{dataset:{}},ctx);
+ assert.deepEqual(routes.at(-1),{appId:'messages',route:'/compose'});
+ assert.match(live.render({store},{route:'/compose',params:{}}),/data-form="sms-new"/);
+});
+test('restored Messages keeps select/delete with confirmation without touching other messages',()=>{
+ const s=phone(),live=registry.get('messages'),store={get:()=>s,update:fn=>fn(s)};
+ const ctx={store,refresh:()=>{},toast:()=>{},router:{open:()=>{}}};
+ const id=s.content.conversations.messages[0].id;
+ const count=s.content.conversations.messages.length;
+ live.handle('sms-edit',{dataset:{}},ctx);
+ assert.match(live.render({store},{route:'/',params:{}}),/class="sms-selection"/);
+ live.handle('sms-pick',{dataset:{id}},ctx);
+ live.handle('sms-delete',{dataset:{}},ctx);
+ assert.match(live.render({store},{route:'/',params:{}}),/删除选中的 1 条信息/);
+ live.handle('sms-confirm-delete',{dataset:{}},ctx);
+ assert.equal(s.content.conversations.messages.length,count-1);
+ assert.equal(s.content.conversations.messages.some(c=>c.id===id),false);
+ assert.doesNotMatch(live.render({store},{route:'/',params:{}}),/class="sms-selection"/);
 });
