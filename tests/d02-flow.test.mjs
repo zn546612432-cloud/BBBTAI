@@ -130,7 +130,7 @@ test('D02 brother: no authored me bubbles before Send; real Send -> delayed NPC 
  assert.match(d02Draft(s,'wang').text,/电脑真该退休/);
  assert.match(renderWeChatChat(s,'wang'),/data-story-type=/);
  assert.equal(c.messages.filter(m=>m.storyD02).length,0);
- assert.equal(sendD02WeChat(store,'wang','不匹配',1000).messageId,null);
+ assert.match(sendD02WeChat(store,'wang','不匹配',1000).reason,/完整的预设台词/);
  assert.equal(c.messages.filter(m=>m.storyD02).length,0);
  const first=d02Draft(s,'wang').text;
  assert.ok(sendD02WeChat(store,'wang',first,1000).messageId);
