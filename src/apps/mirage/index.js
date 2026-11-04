@@ -105,7 +105,7 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-d02-submit'){let ok=false;ctx.store.update(n=>{ok=submitD02(n,id);});ctx.toast(ok?'委托已提交，赏金到账':'先完成 GHOST 的所有关卡');if(ok)route(ctx,'/my-orders/completed');return;}
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(id==='d01-hunt-view')return;
-  if(action==='mc-accept-bounty'&&D02_STAGES[id]){let ok=false;ctx.store.update(n=>{ok=acceptD02(n,id);});if(!ok)return ctx.toast('该委托只可按 D02 规定接取');ctx.toast(id===D02_S?'Talia · 通信已建立，KIRA 收到密钥':'A级委托已接取，前往 GHOST');return route(ctx,'/order/'+id);}
+  if(action==='mc-accept-bounty'&&D02_STAGES[id]){let ok=false;ctx.store.update(n=>{ok=acceptD02(n,id);});if(!ok)return ctx.toast('该委托只可按 D02 规定接取');ctx.toast('委托已接取');return route(ctx,'/order/'+id);}
   if(action==='mc-accept-bounty'&&id===D01_REPAIR){let ok=false;ctx.store.update(s=>{ok=acceptD01Repair(s);});ctx.toast(ok?'CONTRACT ACCEPTED · KIRA':'仅限 D01 接单，且委托必须为 OPEN');if(ok)setTimeout(()=>ctx.store.update(s=>deliverD01Attachment(s)),2000);return;}
   if(action==='mc-complete-bounty'&&linkedMission(s,id))return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
   if(isStory55(s)&&id===STORY55_BOUNTY_ID){
