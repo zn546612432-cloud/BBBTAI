@@ -64,3 +64,14 @@ test('invalid or missing saved options fall back safely to 5',()=>{
  s.story55.minutesPerSecond=NaN;
  assert.equal(story55MinutesPerSecond(s),5);
 });
+
+test('developer new-run reset preserves the selected clock speed without preserving plot progress',()=>{
+ const s=start();
+ setStory55MinutesPerSecond(s,6.5);
+ s.day=3;s.clock='14:20';s.story55.completed.fake={day:3};
+ activateStory55(s);
+ assert.equal(s.day,1);
+ assert.equal(s.clock,'08:00');
+ assert.equal(story55MinutesPerSecond(s),6.5);
+ assert.equal(s.story55.completed.fake,undefined);
+});
