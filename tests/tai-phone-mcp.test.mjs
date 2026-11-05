@@ -39,6 +39,15 @@ test('phone MCP starts locked, only a positive grant unlocks and not while power
  assert.equal(taiPhoneAccessGranted(s),true);
  s.poweredOff=true;assert.equal(taiPhoneAccessGranted(s),false);
 });
+test('true story recognition unlocks phone access, but day alone and ending do not',()=>{
+ const s=fixture();
+ s.aiDraft.phoneMcp.developerEnabled=false;
+ assert.equal(taiPhoneAccessGranted(s),false);
+ s.story55={completed:{recognition:{day:30,clock:'21:00'}}};
+ assert.equal(taiPhoneAccessGranted(s),true);
+ s.story55.ended=true;
+ assert.equal(taiPhoneAccessGranted(s),false);
+});
 test('only allowlisted tools and channels exist; schedule never exposed',()=>{
  const s=fixture();
  assert.deepEqual(PHONE_MCP_CHANNELS,['wechat','messages','mirage','noapp']);
