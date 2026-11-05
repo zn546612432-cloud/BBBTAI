@@ -14,6 +14,7 @@ const fixture=()=>({
     {id:'today-wang',from:'wang',text:'别忘了熙旺昨天说的话',day:3,sentDate:'2025-05-21',time:'09:20',actual:true},
     {id:'later-today',from:'wang',text:'未来十点会议',day:3,sentDate:'2025-05-21',time:'10:00',actual:true},
     {id:'undelivered',from:'wang',text:'未来剧情，不能提前获知',day:3,sentDate:'2025-05-21',time:'07:00',schedule:{mode:'game-time',day:3,clock:'07:00'}},
+    {id:'delivery-future',from:'wang',text:'下午才送达的消息',day:3,sentDate:'2025-05-21',time:'07:01',delivery:{day:3,clock:'16:00'}},
     {id:'future-day',from:'wang',text:'未来日程绝密',day:4,sentDate:'2025-05-22',time:'08:00',actual:true},
     {id:'deleted',from:'wang',text:'已删除隐私',day:2,time:'08:00',deleted:true},
     {id:'demo',from:'wang',text:'演示语句',day:2,time:'08:00',demo:true},
@@ -53,7 +54,7 @@ test('actual delivered past chats only; future day, time, scheduled, deleted and
  const read=callTaiPhoneTool(s,'read_conversation',{channel:'wechat',conversation_id:'wang',limit:12});
  assert.equal(read.ok,true);
  assert.deepEqual(read.data.messages.map(x=>x.id),['past-wang','today-wang']);
- for(const forbidden of ['未来十点会议','未来剧情','未来日程绝密','已删除隐私','演示语句','内部草稿'])
+ for(const forbidden of ['未来十点会议','未来剧情','未来日程绝密','下午才送达的消息','已删除隐私','演示语句','内部草稿'])
   assert.ok(!JSON.stringify(read).includes(forbidden));
  const find=callTaiPhoneTool(s,'search_messages',{query:'熙旺',channel:'wechat'});
  assert.deepEqual(find.data.results.map(x=>x.id),['past-wang','today-wang']);
@@ -86,6 +87,9 @@ test('sparse curiosity: only relevant topics, 120-minute cooldown, daily cap and
  assert.equal(shouldTaiInvestigatePhone(s,{text:'熙旺怎么样？',random:()=>0}),true);
  assert.equal(shouldTaiInvestigatePhone(s,{text:'熙旺怎么样？',random:()=>0.99}),false);
  assert.equal(shouldTaiInvestigatePhone(s,{text:'我给你看微信聊天',random:()=>0.99}),true);
+ s.unlocked=false;
+ assert.equal(shouldTaiInvestigatePhone(s,{text:'我给你看微信聊天',random:()=>0.99}),true);
+ s.unlocked=true;
  s.aiDraft.phoneMcp.observations.push({day:3,gameMinute:3*1440+9*60,tool:'search_messages'});
  assert.equal(shouldTaiInvestigatePhone(s,{text:'我给你看微信聊天',random:()=>0}),false);
  s.aiDraft.phoneMcp.observations.push({day:3,gameMinute:3*1440+8*60,tool:'read_conversation'});
