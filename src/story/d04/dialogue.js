@@ -3,7 +3,7 @@
 const parse=body=>body.split('|').filter(Boolean).map(line=>{
  const at=line.indexOf('：');if(at<0)throw Error('D04 scripted line has no speaker');
  const who=line.slice(0,at),text=line.slice(at+1);
- return {who:who==='熙蒙'?'me':who,kind:text.startsWith('[圖:')?'image':'text',
+ return {who:who==='熙蒙'?'me':who==='胡楓'?'胡枫':who,kind:text.startsWith('[圖:')?'image':'text',
  text:text.startsWith('[圖:')?text.slice(3,-1):text};
 });
 const scene=(id,chat,at,body,extra={})=>({id,chat,at,lines:parse(body),...extra});
