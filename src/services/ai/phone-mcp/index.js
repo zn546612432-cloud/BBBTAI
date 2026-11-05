@@ -3,6 +3,7 @@
 // raw save exports, the schedule app, future story scripts or developer drafts.
 import {visibleMessages} from '../../messaging/delivery.js';
 import {dateParts} from '../../calendar.js';
+import {photoSourceFingerprint} from './source-key.js';
 
 export const PHONE_MCP_VERSION='ximeng-phone-tools/1';
 export const PHONE_MCP_CHANNELS=Object.freeze(['wechat','messages','mirage','noapp']);
@@ -124,9 +125,13 @@ export function callTaiPhoneTool(state,name,args={}){
   if(name==='inspect_photo'){
    const p=photos(state).find(x=>x.id===args.photo_id);
    if(!p)return err('photo_not_found');
+   const vision=state.aiDraft?.phoneMcp?.visionCache?.[p.id];
+   const validVision=vision&&vision.fingerprint===photoSourceFingerprint(p.src)&&vision.model==='deepseek-flash';
    return {ok:true,data:{id:text(p.id,120),title:text(p.title,140),
     description:text(p.description||p.caption,500),description_source:p.description||p.caption?'authored_metadata':'none',
-    image_available:!!p.src,visual_interpretation:'not_performed'}};
+    image_available:!!p.src,visual_interpretation:validVision?'deepseek_flash_vision':'not_performed',
+    ...(validVision?{vision_summary:text(vision.summary,680),visible_text:text(vision.visibleText,260),
+     uncertainty:text(vision.uncertainty,200)}:{})}};
   }
   return err('tool_not_allowed');
  }catch{
