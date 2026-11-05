@@ -9,7 +9,7 @@ export function patchElement(old,fresh){
  for(const a of fresh.attributes)if(old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);
  const focused=old===old.ownerDocument.activeElement;
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
- if(old.tagName==='INPUT'){if(!focused&&!storyAnimating&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
+ if(old.tagName==='INPUT'){const nativeWechat=!!old.closest('.wx-conversation');if(!focused&&(!storyAnimating||nativeWechat)&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
  // Leaflet owns its descendants. Never replace map controls/markers on tick.
  // This guard MUST execute before patchChildren, not after it.
  if(old.tagName==='XM-LEAFLET-MAP')return;
