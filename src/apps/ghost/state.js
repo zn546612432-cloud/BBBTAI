@@ -78,6 +78,7 @@ export function finish(s,id,success,now=Date.now()){
  if(success&&id===WALLET_CHALLENGE_ID)completeWalletChallenge(s);
   if(success)onD02GhostWin(s,id);
   if(success)onD03GhostWin(s,id);
+  if(success)onD04GhostWin(s,id);
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }

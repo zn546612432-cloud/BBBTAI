@@ -5,13 +5,15 @@ import {d01Draft,d01ComposerDisabled,sendD01WeChat} from '../../story/d01/wechat
 import {d02Draft,d02ComposerDisabled,sendD02WeChat} from '../../story/d02/wechat.js';
 import {d03Draft,d03ComposerDisabled,sendD03WeChat} from '../../story/d03/wechat.js';
 import {d04Draft,d04ComposerDisabled,sendD04WeChat} from '../../story/d04/wechat.js';
+import {d05Draft,d05ComposerDisabled,sendD05WeChat} from '../../story/d05/wechat.js';
 import {currentScript55,sendScriptedDraft55} from '../story55/scripted-chat.js';
 
 const providers=[
  {name:'d01',draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
  {name:'d02',draft:d02Draft,disabled:d02ComposerDisabled,send:sendD02WeChat},
  {name:'d03',draft:d03Draft,disabled:d03ComposerDisabled,send:sendD03WeChat},
- {name:'d04',draft:d04Draft,disabled:d04ComposerDisabled,send:sendD04WeChat}
+ {name:'d04',draft:d04Draft,disabled:d04ComposerDisabled,send:sendD04WeChat},
+ {name:'d05',draft:d05Draft,disabled:d05ComposerDisabled,send:sendD05WeChat}
 ];
 const locate=(s,id)=>{
  for(const provider of providers){

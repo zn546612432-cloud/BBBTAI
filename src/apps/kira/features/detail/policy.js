@@ -6,7 +6,7 @@ import {D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
 import {D02_MAIL,D02_A_MAIL} from '../../../../story/d02/runtime.js';
 import {HACKER_MAIL_ID} from '../../../mirage/mission.js';
 import {D03_MAIL} from '../../../../story/d03/contract.js';
-import {D04_CONTRACTS,D04_MAIL} from '../../../../story/d04/contract.js';
+import {DAILY_CONTRACTS as D04_CONTRACTS,D04_MAIL} from '../../../../story/d04/contract.js';
 
 const keyFiles=new Set([D01_ATTACHMENT,D02_MAIL,D02_A_MAIL]);
 const commissionFiles=new Set([D03_MAIL,...D04_CONTRACTS.map(c=>D04_MAIL(c.id))]);

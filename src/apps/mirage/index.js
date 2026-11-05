@@ -1,7 +1,7 @@
 import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01ContactReply} from '../../story/d01/runtime.js';
 import {D02_S,D02_A,D02_STAGES,D02_MAIL,D02_TALIA,acceptD02,submitD02,armD02Ghost,d02StepId,d02State,d02TaliaDraft,onD02TaliaMessage} from '../../story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,D03_STAGES,acceptD03Contract,submitD03Contract,armD03Ghost,d03StepId} from '../../story/d03/contract.js';
-import {D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
+import {DAILY_CONTRACTS as D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
 import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55} from '../../services/story55/scripted-chat.js';

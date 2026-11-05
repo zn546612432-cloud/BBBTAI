@@ -5,7 +5,7 @@
 import {D01_ATTACHMENT,D01_REPAIR} from '../../story/d01/runtime.js';
 import {D02_MAIL,D02_A_MAIL,D02_S,D02_A,D02_KEY_FILES} from '../../story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,D03_STAGES,d03StepId,armD03Ghost,markD03AttachmentOpened} from '../../story/d03/contract.js';
-import {D04_CONTRACTS,D04_MAIL,D04_STEP,armD04Ghost,markD04AttachmentOpened} from '../../story/d04/contract.js';
+import {DAILY_CONTRACTS as D04_CONTRACTS,D04_MAIL,D04_STEP,armD04Ghost,markD04AttachmentOpened} from '../../story/d04/contract.js';
 
 const D01_KEY='mirage001.key';
 export const D03_KEY_FILE='dataset_0521.enc';
