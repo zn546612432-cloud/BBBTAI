@@ -10,7 +10,7 @@ export class IncomingBannerQueue{
  }
  enqueue(notices){
   for(const n of notices||[]){
-   if(!n?.id||this.queuedIds.has(n.id))continue;
+   if(!n?.id||n.silent||this.queuedIds.has(n.id))continue;
    this.queuedIds.add(n.id);this.pending.push(n);
   }
   this.next();

@@ -94,7 +94,7 @@ let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
 const liveBanners=new IncomingBannerQueue({
  show:showBanner,
- stillUnread:n=>store.get().notifications.some(x=>x.id===n.id),
+ stillUnread:n=>store.get().notifications.some(x=>x.id===n.id&&!x.silent),
  eligible:n=>{
   const state=store.get(),channel=n.link?.appId,route=n.link?.route||'';
   const chat=route.startsWith('/chat/')?route.slice(6):null;
@@ -334,7 +334,9 @@ store.subscribe(()=>{
  if(shortChargeStoryInterrupted(s)){store.update(next=>endShortCharge(next));return;}
  const added=s.notifications.filter(n=>!seenNotices.has(n.id));
  seenNotices=new Set(s.notifications.map(n=>n.id));
- if(isShortCharging(s)&&added.some(n=>n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
+ const shown=$('#toast')?.dataset.noticeId;
+ if(shown&&s.notifications.some(n=>n.id===shown&&n.silent)){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
+ if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
  if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);});render();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.

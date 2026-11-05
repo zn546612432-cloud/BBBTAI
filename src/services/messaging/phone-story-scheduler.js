@@ -8,11 +8,10 @@ import {tickD04Chats,d04ChatDue} from '../../story/d04/wechat.js';
 import {tickD05Chats,d05ChatDue} from '../../story/d05/wechat.js';
 
 const tracks=[
- {name:'D01',day:1,tick:tickD01WeChat,due:d01WeChatDue},
- {name:'D02',day:2,tick:tickD02Wechat,due:d02WeChatDue},
- {name:'D03',day:3,tick:tickD03Chats,due:d03ChatDue},
- // D04 backlogs can continue after the calendar day without fabricating
- // missing player replies or emptying a saved conversation.
+ {name:'D01',day:1,tick:tickD01WeChat,due:d01WeChatDue,carryForward:true},
+ {name:'D02',day:2,tick:tickD02Wechat,due:d02WeChatDue,carryForward:true},
+ {name:'D03',day:3,tick:tickD03Chats,due:d03ChatDue,carryForward:true},
+ // Past tracks reconcile to silent history; only current valid scenes animate.
  {name:'D04',day:4,tick:tickD04Chats,due:d04ChatDue,carryForward:true},
  {name:'D05',day:5,tick:tickD05Chats,due:d05ChatDue,carryForward:true}
 ];

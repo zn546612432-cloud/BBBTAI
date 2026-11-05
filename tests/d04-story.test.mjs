@@ -51,15 +51,10 @@ test('D04 group delivers NPC bubbles one by one outside the group and counts eve
  assert.equal(s.notifications.filter(n=>n.conversationId==='group').length,2);
  assert.equal(byId(s,'group').filter(x=>x.from==='me').length,0);
 });
-test('overdue D04 scenes drain in authored order without batch inserts or fake dinner',()=>{
+test('overdue D04 scenes reconcile silently without fake dinner or player messages',()=>{
  const s=fixture('23:10');let now=0;
- let previous=0;
- for(let i=0;i<520;i++){
-  tickD04Chats(s,now);
-  const count=byId(s,'group').length;
-  assert.ok(count-previous<=1,'at most one grouped incoming bubble per tick');
-  previous=count;now+=2100;
- }
+ tickD04Chats(s,now);
+ assert.ok(s.notifications.filter(n=>n.conversationId==='group').every(n=>n.silent));
  const messages=byId(s,'group');
  assert.ok(messages.length>160);
  assert.ok(messages.some(m=>m.text==='晚安😡'));
@@ -193,11 +188,13 @@ test('the actual Story55 runtime naturally publishes D04 contracts, but not on D
  s.nav.current={appId:'wechat',route:'/chat/wang',params:{}};
  assert.equal(worldMinuteRate(s),STORY55_CHAT_MINUTES_PER_MS);
 });
-test('D04 backlog continues one bubble at a time after a fast day transition',()=>{
+test('D04 backlog becomes complete quiet history after a fast day transition',()=>{
  const s=fixture('10:00');tickD04Chats(s,0);
  s.day=5;s.clock='17:00';
  assert.equal(d04ChatDue(s,99999999),true);
  tickD04Chats(s,99999999);
- assert.equal(byId(s,'group').length,1);
+ assert.ok(byId(s,'group').length>160);
+ assert.ok(s.notifications.every(n=>n.silent));
+ assert.ok(byId(s,'group').every(m=>m.day===4&&m.sentDate==='2025-05-22'));
  assert.equal(byId(s,'hufeng').some(m=>m.from==='me'),false);
 });

@@ -78,13 +78,16 @@ test('D01 scripted group bubbles pause for real manual send, continue offscreen 
  assert.equal(s.content.conversations.wechat[0].messages.filter(m=>m.id==='d01-group-script-8').length,1);
  assert.equal(s.story55.d01.group.completed,true);
 });
-test('D01 afternoon group opening differs and unfinished scene is canceled without deleting sent bubbles',()=>{
+test('D01 afternoon group opening differs and unfinished scene reconciles only the earned NPC prefix at the next day',()=>{
  const s=fixture(),store={get:()=>s,update:fn=>fn(s)};
  s.clock='12:30';sendD01WeChat(store,'group','午安',1000);tickD01WeChat(s,6000);
  assert.equal(s.content.conversations.wechat[0].messages[1].text,'蒙蒙哥，你不会现在才起吧？');
  const count=s.content.conversations.wechat[0].messages.length;
  closeD01WeChat(s);s.day=2;tickD01WeChat(s,12000);
- assert.equal(s.content.conversations.wechat[0].messages.length,count);
+ assert.equal(s.content.conversations.wechat[0].messages.length,count+3);
+ assert.equal(s.content.conversations.wechat[0].messages.filter(m=>m.from==='me').length,1);
+ assert.ok(s.content.conversations.wechat[0].messages.slice(count).every(m=>m.historical&&m.time==='12:30'));
+ tickD01WeChat(s,13000);assert.equal(s.content.conversations.wechat[0].messages.length,count+3);
 });
 test('D01 brother private replies after 3 followup bubbles and 2 game minutes across apps',()=>{
  const s=fixture(),store={get:()=>s,update:fn=>fn(s)};

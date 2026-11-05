@@ -54,30 +54,34 @@ test('D05 midnight publishes only two new daily orders; D04 and D06 content rema
  assert.equal(s.bankData.balance,100);
 });
 test('group messages arrive separately across apps, preserve exact unread, and never write a player line',()=>{
- const s=fresh('23:00');let now=Date.now(),previous=0;
- for(let n=0;n<250;n++,now+=2100){
-  tickD05Chats(s,now);
-  const count=d05messages(s,'group').length;
-  assert.ok(count-previous<=1);previous=count;
+ const s=fresh('08:00');const initialUnread=chat(s,'group').unread;let now=Date.now(),previous=0;
+ for(const scene of D05_GROUP){
+  s.clock=scene.at;
+  for(let n=0;n<scene.lines.length+3;n++,now+=2100){
+   tickD05Chats(s,now);
+   const count=d05messages(s,'group').length;
+   assert.ok(count-previous<=1);previous=count;
+  }
  }
  const expected=D05_GROUP.reduce((n,x)=>n+x.lines.length,0);
  assert.equal(previous,expected);assert.equal(d05messages(s,'group').some(m=>m.from==='me'),false);
  assert.equal(s.notifications.filter(n=>String(n.messageId).startsWith('d05-')&&n.conversationId==='group').length,expected);
- assert.equal(chat(s,'group').unread,expected);
+ assert.equal(chat(s,'group').unread,initialUnread+expected);
  const loaded=JSON.parse(JSON.stringify(s));tickD05Chats(loaded,now+9999999);
  assert.equal(d05messages(loaded,'group').length,expected);
 });
-test('D05 does not interrupt a saved D04 group backlog',()=>{
- const s=fresh('23:00');s.story55.d04Chats.morning={started:true,index:3,nextAt:0,completed:false};
- const now=Date.now();tickD05Chats(s,now+1000);tickD05Chats(s,now+10000);
- assert.equal(d05messages(s,'group').length,0);
- s.story55.d04Chats.morning.completed=true;
- tickD05Chats(s,now+11000);tickD05Chats(s,now+12000);
+test('D05 live group is not blocked by an old D04 queue',()=>{
+ const s=fresh('08:15');s.story55.d04Chats.morning={started:true,index:3,nextAt:0,completed:false};
+ const now=Date.now();tickPhoneStoryMessages(s,now);tickPhoneStoryMessages(s,now+1000);
+ assert.equal(s.story55.d04Chats.morning.completed,true);
  assert.equal(d05messages(s,'group').length,1);
+ assert.ok(s.notifications.filter(n=>String(n.messageId).startsWith('d04-')).every(n=>n.silent));
 });
 test('native preset replies wait for Send, preserve consecutive me lines, and all private threads can finish',()=>{
- const s=fresh('23:00'),st=store(s);let now=Date.now();
- for(let n=0;n<200;n++,now+=2100){
+ const s=fresh('08:00'),st=store(s);let now=Date.now();
+ for(const scene of D05_PRIVATE){
+ s.clock=scene.at;
+ for(let n=0;n<70;n++,now+=2100){
   tickPhoneStoryMessages(s,now);
   for(const id of ['wang','hufeng','zaizai']){
    const draft=d05Draft(s,id);if(!draft)continue;
@@ -89,17 +93,21 @@ test('native preset replies wait for Send, preserve consecutive me lines, and al
    assert.ok(result.messageId);assert.equal(d05messages(s,id).at(-1).from,'me');
   }
  }
+ }
  for(const scene of D05_PRIVATE){
   assert.equal(s.story55.d05Chats[scene.id].completed,true,scene.id);
   assert.deepEqual(d05messages(s,scene.chat).filter(m=>m.id.startsWith('d05-'+scene.id+'-')).map(m=>m.text),scene.lines.map(l=>l.text));
  }
  assert.equal(d05messages(s,'xiaoxin').length,0);
 });
-test('skipping to D06 retains group backlog and never fabricates unfinished D05 private replies',()=>{
+test('skipping to D06 settles group history and only independent private NPC prefixes',()=>{
  const s=fresh('08:05'),now=Date.now();tickD05Chats(s,now+1000);tickD05Chats(s,now+3100);
  const count=d05messages(s,'wang').length;
  s.day=6;s.clock='08:00';for(let n=0;n<250;n++)tickD05Chats(s,now+10000+n*2100);
- assert.equal(d05messages(s,'wang').length,count);
+ assert.ok(d05messages(s,'wang').length>=count);
+ assert.equal(d05messages(s,'wang').some(m=>m.from==='me'),false);
+ assert.ok(d05messages(s,'wang').some(m=>m.id==='d05-wang-evening-0'));
+ assert.ok(s.notifications.filter(n=>String(n.messageId).startsWith('d05-')).every(n=>n.silent));
  assert.equal(d05messages(s,'group').length,D05_GROUP.reduce((n,x)=>n+x.lines.length,0));
  assert.ok(d05messages(s,'group').every(m=>m.day===5&&m.sentDate==='2025-05-23'));
 });

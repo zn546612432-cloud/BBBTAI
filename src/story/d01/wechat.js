@@ -1,3 +1,4 @@
+import {reconcileD01History} from '../../services/messaging/lifecycle/legacy-d01.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 // D01 optional WeChat scenes. Timers, message IDs and stages persist in the phone save.
 // Player bubbles are never auto-sent. This deliberately does not call AI.
@@ -67,7 +68,7 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
    if(!g){
     result.messageId=pushMe(s,id,text);
     const branch=beforeNoon(s)?'morning':'afternoon';
-    d.group={started:true,index:0,branch,dueAt:now+d01GroupWait(groupSteps(branch),0),awaitingPlayer:false,completed:false};
+    d.group={started:true,index:0,branch,startedClock:s.clock,dueAt:now+d01GroupWait(groupSteps(branch),0),awaitingPlayer:false,completed:false};
     return;
    }
    if(g.completed){result.messageId=pushMe(s,id,text);return;}
@@ -98,12 +99,13 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
  return result;
 }
 export function tickD01WeChat(s,now=Date.now()){
+ if(s.day>1||s.story55?.d01?.nightAfterMidnight)return reconcileD01History(s,groupSteps);
  if(!d01(s))return false;
  const d=state(s);let changed=false;
  const g=d.group;
  if(g?.started&&!g.completed&&!g.cancelled&&!g.awaitingPlayer&&g.dueAt!==null){
   // Catch up after a reload or another app; never send the player's dialogue.
-  for(let guard=0;guard<9&&g.dueAt!==null&&now>=g.dueAt;guard++){
+  for(let guard=0;guard<1&&g.dueAt!==null&&now>=g.dueAt;guard++){
    const steps=groupSteps(g.branch),step=steps[g.index];
    if(!step){g.completed=true;g.dueAt=null;break;}
    if(step.from==='me'){g.awaitingPlayer=true;g.dueAt=null;changed=true;break;}
@@ -112,7 +114,7 @@ export function tickD01WeChat(s,now=Date.now()){
    g.index++;
    const next=steps[g.index];
    if(!next){g.completed=true;g.dueAt=null;}
-   else g.dueAt=at+d01GroupWait(steps,g.index);
+   else g.dueAt=now+d01GroupWait(steps,g.index);
   }
  }
  const b=d.brother;
@@ -134,6 +136,7 @@ export function closeD01WeChat(s){
 }
 
 export function d01WeChatDue(s,now=Date.now()){
+ if(s.story55?.version===1&&(s.day>1||s.story55?.d01?.nightAfterMidnight))return !!s.story55.d01&&!s.story55.d01.lifecycleSettled;
  if(!d01(s))return false;
  const d=state(s),g=d.group,b=d.brother;
  return !!(g?.started&&!g.completed&&!g.cancelled&&!g.awaitingPlayer&&g.dueAt!==null&&now>=g.dueAt
