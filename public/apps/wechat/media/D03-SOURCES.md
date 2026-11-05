@@ -8,6 +8,6 @@ D03 = 2025-05-21。只使用來源頁已有的無水印原圖，不去除或遮�
 
 授權條款： https://www.pexels.com/license/ 及 https://unsplash.com/license/ 。
 
-以上圖片目前使用來源站 CDN。首次載入需要網絡；後續如需完全離線應另行下載授權原圖、優化 WEBP 並交由倉庫管理，不應聲稱 CDN 圖已經離線預載。
+上述照片已在本分支由 GitHub Actions 下載原圖、壓縮成 WEBP，放入 `public/apps/wechat/media/d03-computer.webp`、`d03-breakfast.webp` 和 `d03-street.webp`，遊戲採用本地打包路徑。來源 URL 保留作授權核查，不再當作遊戲運行時圖片 URL。首次載入由 Pages 靜態資源提供，無須向 Pexels 或 Unsplash 即時請求。
 
 文字：人物聊天、朋友圈及評論均採用繁體。玩家私聊發言和朋友圈點讚/評論都必須由玩家操作。
