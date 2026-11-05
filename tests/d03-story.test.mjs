@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {tickD03Chats,d03Draft,sendD03WeChat} from '../src/story/d03/wechat.js';
 import {D03_ORDER,D03_REWARD,D03_STAGES,d03StepId,seedD03Contract,acceptD03Contract,onD03GhostWin,submitD03Contract,tickD03Contract} from '../src/story/d03/contract.js';
 import {tickD03MomentReply} from '../src/story/d03/moments.js';
+import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
 import {addGameMomentComment} from '../src/apps/wechat/features/moments/model.js';
 
 function state(clock='08:00'){
@@ -61,6 +62,9 @@ test('B-class mission requires 3 successful games, manual submission, pays once'
  assert.equal(seedD03Contract(s),true);
  assert.equal(s.content.orders.find(o=>o.id===D03_ORDER).status,'OPEN');
  assert.equal(acceptD03Contract(s),true);
+ assert.deepEqual(s.content.mail.find(m=>m.id==='d03-intelligence-documents').attachments,['dataset_0521.enc']);
+ assert.equal(s.ghost.orders[d03StepId(0)],undefined);
+ assert.equal(openCommissionWithGhost(s,'d03-intelligence-documents'),d03StepId(0));
  assert.equal(s.bankData.balance,0);
  assert.equal(submitD03Contract(s),false);
  for(let i=0;i<D03_STAGES.length;i++){
