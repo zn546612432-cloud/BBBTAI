@@ -27,7 +27,11 @@ export function taiPhoneAccessGranted(state){
  if(!state||state.poweredOff||state.story55?.ended)return false;
  const storyGrant=Array.isArray(state.events)&&state.events.some(e=>
    e?.type==='tai_phone_access_granted'&&Number.isInteger(e.day)&&e.day<=state.day);
- return !!(storyGrant||state.aiDraft?.phoneMcp?.developerEnabled===true);
+ // User-authored premise: Tai has already gained phone access once his
+ // identity-reveal storyline completes. Do NOT infer access merely from day 30.
+ // An earlier explicit grant can still come from an authored story event.
+ const recognizedAccess=!!state.story55?.completed?.recognition;
+ return !!(storyGrant||recognizedAccess||state.aiDraft?.phoneMcp?.developerEnabled===true);
 }
 
 function safeChannel(value){return PHONE_MCP_CHANNELS.includes(value)?value:null;}
