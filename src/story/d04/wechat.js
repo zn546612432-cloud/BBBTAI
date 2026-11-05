@@ -6,8 +6,8 @@ import {publicWeChatAsset} from '../../apps/wechat/avatars.js';
 
 const DAY=4,DATE='2025-05-22',PAUSE=1900;
 export const D04_MEDIA={
- d04Cat:'https://images.unsplash.com/photo-1694088476707-b947e0516c76?auto=format&fit=crop&w=640&q=76',
- d04Jacket:'https://images.unsplash.com/photo-1649820942124-28b5d111a5d2?auto=format&fit=crop&w=640&q=76'
+ d04Cat:publicWeChatAsset('media/d04-cat.webp'),
+ d04Jacket:publicWeChatAsset('media/d04-jacket.webp')
 };
 const inTimeline=s=>s.story55?.version===1&&s.day>=DAY;
 const active=s=>s.story55?.version===1&&s.day===DAY;
@@ -49,7 +49,7 @@ function push(s,scene,index,{who,kind,text},notification=true){
  const c=convo(s,scene.chat);if(!c)return false;
  const id='d04-'+scene.id+'-'+index;
  if(c.messages.some(m=>m.id===id))return false;
- const time=sceneClock(scene,index);
+ const time=scene.chat==='group'?sceneClock(scene,index):s.clock;
  c.messages.push({id,from:who,kind,text:kind==='image'?D04_MEDIA[text]||publicWeChatAsset('media/fabric-swatches.webp'):text,
   day:DAY,time,sentDate:DATE,actual:true,storyD04:true});
  if(notification&&who!=='me'&&index===0&&!visible(s,c.id)){
@@ -99,6 +99,7 @@ export function tickD04Chats(s,now=Date.now()){
    }
   }
  }
+ if(!active(s))return changed;
  for(const scene of D04_PRIVATE){
   const q=progress[scene.id];
   if(q.completed||q.skipped||!sceneDue(s,scene))continue;
