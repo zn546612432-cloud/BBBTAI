@@ -15,7 +15,7 @@ export const d03StepId=(index)=>D03_ORDER+'-stage-'+(index+1);
 export const d03OrderOfStep=(id)=>/^d03-intelligence-analysis-stage-[123]$/.test(String(id||''))?D03_ORDER:null;
 const indexOfStep=id=>D03_STAGES.findIndex((_,i)=>d03StepId(i)===id);
 export const d03NextStep=(s,id)=>{const i=indexOfStep(id);return i>=0&&i<D03_STAGES.length-1?d03StepId(i+1):null;};
-const order=s=>s.content.orders?.find(o=>o.id===D03_ORDER);
+const order=s=>s.content?.orders?.find(o=>o.id===D03_ORDER);
 const progress=s=>s.story55.d03Contract??(s.story55.d03Contract={});
 export function seedD03Contract(s){
  if(!allowed(s)||s.day<3||s.day===3&&s.clock<'13:40')return false;
@@ -75,8 +75,10 @@ export function armD03Ghost(s,index){
  return id;
 }
 export function onD03GhostWin(s,stepId){
- const i=indexOfStep(stepId),o=order(s);
- if(i<0||!o||o.status!=='ACCEPTED'||expired(s))return false;
+ const i=indexOfStep(stepId);
+ if(i<0)return false;
+ const o=order(s);
+ if(!o||o.status!=='ACCEPTED'||expired(s))return false;
  if(i<D03_STAGES.length-1){armD03Ghost(s,i+1);return true;}
  if(s.ghost.orders[d03StepId(i)]?.status!=='success')return false;
  o.status='READY';progress(s).ready=true;
