@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -20,7 +20,6 @@ jobs:
     environment:
       name: d03-story-20261105-pages
       url: https://zn546612432-cloud.github.io/BBBTAI/review/d03-20261105/
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
