@@ -1,3 +1,4 @@
+import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
 // D01 optional WeChat scenes. Timers, message IDs and stages persist in the phone save.
 // Player bubbles are never auto-sent. This deliberately does not call AI.
 const DAY_DATE='2025-05-19';
@@ -31,15 +32,7 @@ const visible=(s,id)=>s.unlocked&&s.nav.current.appId==='wechat'&&s.nav.current.
 const deliver=(s,id,from,text,messageId)=>{
  const c=chat(s,id);if(!c||c.messages.some(m=>m.id===messageId))return false;
  c.messages.push({id:messageId,from,text,...stamp(s)});
- if(from!=='me'&&!visible(s,id)){
-  c.unread=(Number(c.unread)||0)+1;
-  const noticeId='d01-wechat-notice-'+messageId;
-  if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({
-   id:noticeId,title:'微信',body:(from==='熙旺'?'熙旺':from)+'：'+text,
-   conversationId:id,day:1,clock:s.clock,
-   link:{appId:'wechat',route:'/chat/'+id,params:{}}
-  });
- }
+ deliverAuthoredIncoming(s,{conversationId:id,from,text,messageId,day:1,clock:s.clock});
  return true;
 };
 export function d01Draft(s,id){
