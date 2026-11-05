@@ -40,7 +40,7 @@ export function removeMoment(s,id){
 }
 export function addGameMomentComment(s,id,text,to=null){
  const m=editableMoments(s),comments=m.comments[id]??(m.comments[id]=[]);
- comments.push({by:'熙蒙',text,...(to?{to}:{})});
+ comments.push({by:'熙蒙',text,day:s.day,time:s.clock,...(to?{to}:{})});
  for(const rule of findMoment(s,id)?.replyRules||[]){
   if(!rule.by||!rule.text||rule.trigger&&rule.trigger!==text)continue;
   if(rule.once&&comments.some(c=>c.ruleId===rule.id))continue;
