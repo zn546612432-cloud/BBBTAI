@@ -1,0 +1,44 @@
+name: Install licensed D04 local photos
+on:
+  push:
+    branches: [feature/d04-story-20261105]
+    paths:
+      - .github/workflows/d04-media.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/d04-story-20261105
+          persist-credentials: true
+      - name: Fetch original unwatermarked Unsplash photos
+        run: |
+          set -euo pipefail
+          mkdir -p public/apps/wechat/media
+          curl -fL --retry 4 --connect-timeout 20 --max-time 90 \
+            'https://images.unsplash.com/photo-1694088476707-b947e0516c76?fm=webp&w=720&q=78&fit=crop' \
+            -o public/apps/wechat/media/d04-cat.webp
+          curl -fL --retry 4 --connect-timeout 20 --max-time 90 \
+            'https://images.unsplash.com/photo-1649820942124-28b5d111a5d2?fm=webp&w=720&q=78&fit=crop' \
+            -o public/apps/wechat/media/d04-jacket.webp
+          python - <<'PY'
+          from pathlib import Path
+          for name in ['d04-cat.webp','d04-jacket.webp']:
+              path=Path('public/apps/wechat/media')/name
+              data=path.read_bytes()
+              assert len(data)>2000 and data[:4]==b'RIFF' and data[8:12]==b'WEBP',(name,len(data),data[:16])
+              print(name,len(data),'bytes')
+          PY
+      - name: Commit photos into independent branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/apps/wechat/media/d04-cat.webp public/apps/wechat/media/d04-jacket.webp
+          if ! git diff --staged --quiet; then
+            git commit -m 'assets(d04): bundle licensed original cat and clothing photos offline'
+            git push origin HEAD:feature/d04-story-20261105
+          fi
