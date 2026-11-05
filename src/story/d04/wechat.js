@@ -181,4 +181,13 @@ export function sendD04WeChat(store,id,text,now=Date.now()){
  });
  return {handled:true,messageId};
 }
+// A live group conversation slows only the civil game clock enough for its
+// authored NPC bubbles to arrive before the next scene's scheduled hour.
+export function d04GroupBroadcastActive(s){
+ if(s.story55?.version!==1||s.day!==DAY)return false;
+ return D04_GROUP.some(scene=>{
+  const q=s.story55?.d04Chats?.[scene.id];
+  return q?.started&&!q.completed&&!q.skipped;
+ });
+}
 export const D04_GROUP_SCENES=D04_GROUP.map(({id,at,condition})=>({id,at,condition}));
