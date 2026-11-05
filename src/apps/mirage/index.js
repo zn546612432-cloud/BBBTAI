@@ -1,6 +1,7 @@
 import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01ContactReply} from '../../story/d01/runtime.js';
 import {D02_S,D02_A,D02_STAGES,D02_MAIL,D02_TALIA,acceptD02,submitD02,armD02Ghost,d02StepId,d02State,d02TaliaDraft,onD02TaliaMessage} from '../../story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,D03_STAGES,acceptD03Contract,submitD03Contract,armD03Ghost,d03StepId} from '../../story/d03/contract.js';
+import {D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
 import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55} from '../../services/story55/scripted-chat.js';
@@ -74,7 +75,18 @@ function d03BountyActions(s,o){
  if(o.status==='COMPLETED')return '<p class="mc-brief">✓ 文件已驗收 · 交易回執已寄送</p>';
  return '';
 }
-function bountyDetail(s,id){const o=s.content.orders.find(o=>o.id===id);if(!o||!linkedMissionVisible(s,id))return `${header('CONTRACT NOT FOUND','',true)}`;const d01Expired=id===D01_REPAIR&&isStory55(s)&&s.day!==1&&o.status==='OPEN';const d02Expired=!!D02_STAGES[id]&&o.status==='EXPIRED';return `${header('CONTRACT / DETAIL',at('mc-edit-bounty','EDIT CONTRACT','edit',`data-id="${esc(id)}"`),true)}<div class="mc-scroll mc-detail"><small>${esc(o.id)}</small><h1>${esc(o.title)}</h1><div class="mc-detail-state">${esc(o.status||'OPEN')}</div><label>CLIENT</label><p>${esc(o.owner||'ANONYMOUS')}</p><label>REWARD</label><strong class="mc-reward">${esc(o.reward)}</strong><label>BRIEF</label><p class="mc-brief">${esc(o.description||'Contract details have not been provided.')}</p>${o.d01ViewOnly?'':id===D03_ORDER&&o.status==='READY'?btn('mc-d03-submit','READY TO SUBMIT','mc-primary',`data-id="${esc(id)}"`):D02_STAGES[id]&&o.status==='READY'?btn('mc-d02-submit','READY TO SUBMIT','mc-primary',`data-id="${esc(id)}"`):btn('mc-accept-bounty',d01Expired?'D01 ONLY · UNAVAILABLE':d02Expired?'EXPIRED':o.status==='READY'?'READY TO SUBMIT':o.status==='ACCEPTED'?'CONTRACT ACCEPTED':isCompletedBounty(o)?'CONTRACT COMPLETED':'ACCEPT CONTRACT','mc-primary',`data-id="${esc(id)}" ${d01Expired||d02Expired||o.status!=='OPEN'?'disabled':''}`)}${d01Expired?'<p class="mc-brief">此委托仅限 D01 接取；使用开发者入口重建后续日期时将自动标记已完成。</p>':''}${o.status==='ACCEPTED'&&linkedMission(s,id)?btn('mc-open-linked-kira','OPEN ORDER EMAIL · KIRA','mc-secondary',`data-id="${esc(id)}"`):o.status==='REVIEWING'&&linkedMission(s,id)?'<p>UNDER REVIEW · KIRA</p>':o.status==='ACCEPTED'&&id===HACKER_BOUNTY_ID?btn('mc-open-kira-mail','OPEN ORDER EMAIL · KIRA','mc-secondary'):o.status==='ACCEPTED'&&id===D01_REPAIR?btn('mc-open-d01-mail','打開 KIRA 附件郵件','mc-secondary'):o.status==='ACCEPTED'&&isStory55(s)&&id===STORY55_BOUNTY_ID?btn('mc-open-wallet-d06-mail','OPEN KIRA AUTHORIZATION','mc-secondary'):o.status==='ACCEPTED'&&!D02_STAGES[id]&&id!==D03_ORDER?btn('mc-complete-bounty',id===WALLET_CHALLENGE_ID?'TRY THE WALLET CHALLENGE':'MARK COMPLETED','mc-secondary',`data-id="${esc(id)}"`):''}${d02BountyActions(s,o)}${d03BountyActions(s,o)}</div>${tabs('/bounties',s)}`;}
+function d04BountyActions(s,o){
+ const def=D04_CONTRACTS.find(x=>x.id===o.id);if(!def)return '';
+ const done=def.stages.filter((_,i)=>s.ghost?.orders?.[D04_STEP(o.id,i)]?.status==='success').length;
+ if(o.status==='ACCEPTED')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · '+def.stages.join(' → ')+'</p>'
+  +btn('mc-d04-run','OPEN GHOST','mc-secondary','data-id="'+esc(o.id)+'"')
+  +btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
+ if(o.status==='READY')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · READY TO SUBMIT</p>';
+ if(o.status==='COMPLETED')return '<p class="mc-brief">✓ 文件已驗收 · 交易回執已寄送</p>';
+ if(o.status==='EXPIRED')return '<p class="mc-brief">委託已過期，無法再提交</p>';
+ return '';
+}
+function bountyDetail(s,id){const o=s.content.orders.find(o=>o.id===id);if(!o||!linkedMissionVisible(s,id))return `${header('CONTRACT NOT FOUND','',true)}`;const d01Expired=id===D01_REPAIR&&isStory55(s)&&s.day!==1&&o.status==='OPEN';const d02Expired=!!D02_STAGES[id]&&o.status==='EXPIRED';return `${header('CONTRACT / DETAIL',at('mc-edit-bounty','EDIT CONTRACT','edit',`data-id="${esc(id)}"`),true)}<div class="mc-scroll mc-detail"><small>${esc(o.id)}</small><h1>${esc(o.title)}</h1><div class="mc-detail-state">${esc(o.status||'OPEN')}</div><label>CLIENT</label><p>${esc(o.owner||'ANONYMOUS')}</p><label>REWARD</label><strong class="mc-reward">${esc(o.reward)}</strong><label>BRIEF</label><p class="mc-brief">${esc(o.description||'Contract details have not been provided.')}</p>${o.d01ViewOnly?'':id===D03_ORDER&&o.status==='READY'?btn('mc-d03-submit','READY TO SUBMIT','mc-primary',`data-id="${esc(id)}"`):D04_ORDER_IDS.includes(id)&&o.status==='READY'?btn('mc-d04-submit','READY TO SUBMIT','mc-primary',`data-id="${esc(id)}"`):D02_STAGES[id]&&o.status==='READY'?btn('mc-d02-submit','READY TO SUBMIT','mc-primary',`data-id="${esc(id)}"`):btn('mc-accept-bounty',d01Expired?'D01 ONLY · UNAVAILABLE':d02Expired?'EXPIRED':o.status==='READY'?'READY TO SUBMIT':o.status==='ACCEPTED'?'CONTRACT ACCEPTED':isCompletedBounty(o)?'CONTRACT COMPLETED':'ACCEPT CONTRACT','mc-primary',`data-id="${esc(id)}" ${d01Expired||d02Expired||o.status!=='OPEN'?'disabled':''}`)}${d01Expired?'<p class="mc-brief">此委托仅限 D01 接取；使用开发者入口重建后续日期时将自动标记已完成。</p>':''}${o.status==='ACCEPTED'&&linkedMission(s,id)?btn('mc-open-linked-kira','OPEN ORDER EMAIL · KIRA','mc-secondary',`data-id="${esc(id)}"`):o.status==='REVIEWING'&&linkedMission(s,id)?'<p>UNDER REVIEW · KIRA</p>':o.status==='ACCEPTED'&&id===HACKER_BOUNTY_ID?btn('mc-open-kira-mail','OPEN ORDER EMAIL · KIRA','mc-secondary'):o.status==='ACCEPTED'&&id===D01_REPAIR?btn('mc-open-d01-mail','打開 KIRA 附件郵件','mc-secondary'):o.status==='ACCEPTED'&&isStory55(s)&&id===STORY55_BOUNTY_ID?btn('mc-open-wallet-d06-mail','OPEN KIRA AUTHORIZATION','mc-secondary'):o.status==='ACCEPTED'&&!D02_STAGES[id]&&id!==D03_ORDER&&!D04_ORDER_IDS.includes(id)?btn('mc-complete-bounty',id===WALLET_CHALLENGE_ID?'TRY THE WALLET CHALLENGE':'MARK COMPLETED','mc-secondary',`data-id="${esc(id)}"`):''}${d02BountyActions(s,o)}${d03BountyActions(s,o)}${d04BountyActions(s,o)}</div>${tabs('/bounties',s)}`;}
 function market(s){const d=mirageData(s);const products=d.products.filter(p=>(filter==='ALL'||p.category===filter)&&(!query||`${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())));const cats=[...new Set(['ALL',...d.products.map(p=>p.category)])];return `${header('PRIVATE MARKET',at('mc-cart','VIEW CART','cart')+at('mc-manage-products','MANAGE PRODUCTS','settings'))}<div class="mc-market-search"><input aria-label="SEARCH INVENTORY" name="mc-search" value="${esc(query)}" placeholder="SEARCH INVENTORY…" autocomplete="off">${at('mc-add-product','ADD PRODUCT','plus')}</div><div class="mc-market-categories">${cats.map(c=>btn('mc-filter',esc(c),c===filter?'is-active':'',`data-category="${esc(c)}"`)).join('')}</div><div class="mc-scroll mc-market-scroll"><div class="mc-product-grid">${products.map(p=>btn('mc-product',`<div class="mc-product-picture"><span>${esc(p.category)}</span>${productArt(p.art)}</div><div class="mc-product-info"><strong>${esc(p.name)}</strong><small>STOCK / ${Number(p.stock)||0}</small><b>$ ${money(p.price)}</b></div>`,'mc-product',`data-id="${esc(p.id)}"`)).join('')}</div>${products.length?'':'<div class="mc-empty">NO MATCHING INVENTORY</div>'}<div class="mc-market-footer">PRIVATE INVENTORY / USD</div></div>${tabs('/market',s)}`;}
 function product(s,id){const p=mirageData(s).products.find(p=>p.id===id);if(!p)return `${header('ITEM NOT FOUND','',true)}`;return `${header('INVENTORY / DETAIL',at('mc-edit-product','EDIT ITEM','edit',`data-id="${esc(id)}"`),true)}<div class="mc-scroll mc-detail"><div class="mc-product-hero">${productArt(p.art)}</div><small>${esc(p.category)} / ${esc(p.id)}</small><h1>${esc(p.name)}</h1><strong class="mc-reward">$ ${money(p.price)}</strong><p class="mc-brief">${esc(p.description)}</p><div class="mc-stock">AVAILABLE STOCK <b>${Number(p.stock)||0}</b></div>${btn('mc-add-cart',Number(p.stock)>0?'ADD TO CART':'OUT OF STOCK','mc-primary',`data-id="${esc(id)}" ${Number(p.stock)>0?'':'disabled'}`)}${btn('mc-cart','VIEW CART','mc-secondary')}</div>${tabs('/market',s)}`;}
 function cart(s){const d=mirageData(s),rows=d.cart.map(row=>({row,p:d.products.find(p=>p.id===row.id)})).filter(x=>x.p),total=rows.reduce((a,{p,row})=>a+p.price*row.qty,0);return `${header('SHOPPING CART','',true)}<div class="mc-scroll mc-detail">${rows.map(({p,row})=>`<div class="mc-cart-row"><div>${productArt(p.art)}</div><section><strong>${esc(p.name)}</strong><span>$ ${money(p.price)}</span><div class="mc-qty">${btn('mc-cart-minus','−','',`data-id="${esc(p.id)}" aria-label="Decrease ${esc(p.name)}"`)}<b>${row.qty}</b>${btn('mc-add-cart','+','',`data-id="${esc(p.id)}" aria-label="Increase ${esc(p.name)}"`)}</div></section>${at('mc-cart-remove','REMOVE ITEM','trash',`data-id="${esc(p.id)}"`)}</div>`).join('')||'<div class="mc-empty">YOUR CART IS EMPTY</div>'}<div class="mc-total"><span>TOTAL / USD</span><strong>$ ${money(total)}</strong></div><p class="mc-cart-balance">AVAILABLE FUNDS / $ ${money(d.balance)}</p>${btn('mc-checkout','CONFIRM PURCHASE','mc-primary',rows.length?'':'disabled')}${d.assets.length?`<div class="mc-board-label">OWNED ASSETS (${d.assets.length})</div>${d.assets.map(a=>`<div class="mc-asset-row"><span>${esc(a.name)}</span><b>×${a.quantity}</b></div>`).join('')}`:''}</div>${tabs('/market',s)}`;}
@@ -113,6 +125,16 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-open-linked-kira')return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
  if(action==='mc-d02-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D02_MAIL,params:{}});
  if(action==='mc-d03-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D03_MAIL,params:{}});
+ if(action==='mc-d04-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D04_MAIL(id),params:{}});
+ if(action==='mc-d04-run'){
+  const st=ctx.store.get(),def=D04_CONTRACTS.find(c=>c.id===id);
+  if(!def||st.content.orders.find(o=>o.id===id)?.status!=='ACCEPTED')return;
+  const next=def.stages.findIndex((_,i)=>st.ghost?.orders?.[D04_STEP(id,i)]?.status!=='success');
+  if(next<0)return ctx.toast('請提交分析結果');
+  let step=null;ctx.store.update(n=>{step=armD04Ghost(n,id,next);});
+  if(step)ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});
+  return;
+ }
  if(action==='mc-d03-run'){
   const st=ctx.store.get(),o=st.content.orders.find(x=>x.id===D03_ORDER);
   if(o?.status!=='ACCEPTED')return;
@@ -123,6 +145,11 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
   return;
  }
  if(action==='mc-d02-run'){const st=ctx.store.get(),seq=D02_STAGES[id];if(!seq)return;const nextIndex=seq.findIndex((_,i)=>st.ghost?.orders?.[d02StepId(id,i)]?.status!=='success');if(nextIndex<0)return ctx.toast('请返回 MIRAGE 提交');let step=d02StepId(id,nextIndex);ctx.store.update(n=>armD02Ghost(n,id,nextIndex));return ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});}
+ if(action==='mc-d04-submit'){
+  let ok=false;ctx.store.update(s=>{ok=submitD04Contract(s,id);});
+  ctx.toast(ok?'✓ 文件已驗收 · 交易回執已寄送':'請先完成 GHOST 全部程序');
+  if(ok)route(ctx,'/my-orders/completed');return;
+ }
  if(action==='mc-d03-submit'){
   let ok=false;ctx.store.update(n=>{ok=submitD03Contract(n);});
   ctx.toast(ok?'✓ 文件已驗收 · 交易回執已寄送':'請先完成 GHOST 全部程序');
@@ -131,6 +158,11 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-d02-submit'){let ok=false;ctx.store.update(n=>{ok=submitD02(n,id);});ctx.toast(ok?'委托已提交，赏金到账':'先完成 GHOST 的所有关卡');if(ok)route(ctx,'/my-orders/completed');return;}
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(id==='d01-hunt-view')return;
+  if(action==='mc-accept-bounty'&&D04_ORDER_IDS.includes(id)){
+   let ok=false;ctx.store.update(n=>{ok=acceptD04Contract(n,id);});
+   ctx.toast(ok?'ORDER ACCEPTED · KIRA':'委託暫不可接取');
+   if(ok)route(ctx,'/order/'+id);return;
+  }
   if(action==='mc-accept-bounty'&&id===D03_ORDER){
    let ok=false;ctx.store.update(n=>{ok=acceptD03Contract(n);});
    ctx.toast(ok?'ORDER ACCEPTED · KIRA':'委託暫不可接取');
