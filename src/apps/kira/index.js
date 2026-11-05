@@ -89,7 +89,6 @@ export function handle(a,t,c){
   c.store.update(s=>{const mail=s.content.mail.find(m=>m.id===t.dataset.id);if(mail)mail.read=true;});
   return c.router.open({appId:'kira',route:'/mail/'+t.dataset.id});
  }
- if(a==='kira-attachment')c.router.open({appId:'files',route:'/attachment',params:{mailId:t.dataset.id}});
  if(a==='kira-mission-browser')c.router.open({appId:'browser',route:'/mission-search',params:{orderId:HACKER_BOUNTY_ID}});
  if(a==='kira-mission-compose')c.router.open({appId:'kira',route:'/compose/'+HACKER_BOUNTY_ID});
  if(a==='kira-mission-theme'){
