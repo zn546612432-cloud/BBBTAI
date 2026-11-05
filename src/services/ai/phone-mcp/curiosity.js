@@ -40,6 +40,20 @@ export function researchTaiPhone(store,{sourceMessageId='',text='',random=Math.r
    if(!result.ok)return null;
   }
   const data=result.data||{};
+  // A list only gives photo IDs; it never means the model saw the pixels.
+  // When the model explicitly showed curiosity about photos, inspect ONE
+  // real image at most (opt-in only) and keep the other photo entries metadata-only.
+  if(selected.name==='list_photos'&&current.aiDraft?.phoneMcp?.visionEnabled===true&&
+     /照片|相册|图片|合照/.test(text)&&Array.isArray(data.photos)&&data.photos.length){
+   const first=data.photos[0];
+   if(first?.id){
+    await analyzeTaiPhonePhoto(store,first.id);
+    const viewed=callTaiPhoneTool(store.get(),'inspect_photo',{photo_id:first.id});
+    if(viewed.ok&&viewed.data?.visual_interpretation==='deepseek_flash_vision'){
+     data.inspected_photo=viewed.data;
+    }
+   }
+  }
   const items=data.results||data.messages||data.photos||data.conversations||(selected.name==='inspect_photo'?[data]:[]);
   if(!Array.isArray(items)||!items.length)return null;
   // Persist only an audit record and IDs. Keep source text in the existing chat,
@@ -47,7 +61,9 @@ export function researchTaiPhone(store,{sourceMessageId='',text='',random=Math.r
   const record={type:'tai_phone_read',tool:selected.name,day:current.day,clock:current.clock,
    gameMinute:stamp(current),sourceMessageId:String(sourceMessageId||'').slice(0,120),
    sourceIds:items.slice(0,8).map(x=>String(x.id||x.conversation_id||'').slice(0,120)),
-   viewedCount:items.length,readAt:now()};
+   viewedCount:items.length,visionPhotoId:data.inspected_photo?.id||(
+    selected.name==='inspect_photo'&&data.visual_interpretation==='deepseek_flash_vision'?data.id:null),
+   readAt:now()};
   if(store.get().day!==initial.day||!taiPhoneAccessGranted(store.get()))return null;
   store.update(s=>{
    s.aiDraft??={};s.aiDraft.phoneMcp??={};
