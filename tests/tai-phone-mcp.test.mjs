@@ -10,7 +10,7 @@ const fixture=()=>({
  content:{
   conversations:{
    wechat:[{id:'wang',name:'熙旺',messages:[
-    {id:'past-wang',from:'wang',text:'熙蒙，今晚吃饭吗',day:2,sentDate:'2025-05-20',time:'08:00',actual:true},
+    {id:'past-wang',from:'wang',text:'熙旺说：熙蒙，今晚吃饭吗',day:2,sentDate:'2025-05-20',time:'08:00',actual:true},
     {id:'today-wang',from:'wang',text:'别忘了熙旺昨天说的话',day:3,sentDate:'2025-05-21',time:'09:20',actual:true},
     {id:'later-today',from:'wang',text:'未来十点会议',day:3,sentDate:'2025-05-21',time:'10:00',actual:true},
     {id:'undelivered',from:'wang',text:'未来剧情，不能提前获知',day:3,sentDate:'2025-05-21',time:'07:00',schedule:{mode:'game-time',day:3,clock:'07:00'}},
