@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,advanceScene55,scene55,sceneLines} from '../src/services/story55/runtime.js';
 import {previewNode55} from '../src/services/story55/controller.js';
-import {advanceGameMinutes,tickWorld,worldMinuteRate,STORY55_NORMAL_MINUTES_PER_MS} from '../src/system/time/clock.js';
+import {advanceGameMinutes,tickWorld,worldMinuteRate,STORY55_FINALE_REPLY_MINUTES_PER_MS} from '../src/system/time/clock.js';
 import {syncDeathNight,phoneBlocked} from '../src/system/power/story.js';
 import {drainBattery} from '../src/system/power/battery.js';
 import {powerFullscreen} from '../src/system/power/controls.js';
@@ -177,7 +177,7 @@ test('regression: after real audio ends, exactly 3 game minutes progress in 9 re
  s.story55.finalAudioHeard=true;
  advanceScene55(s,'ending');
  assert.equal(s.clock,'22:46');
- assert.equal(worldMinuteRate(s,{taiChat:true}),STORY55_NORMAL_MINUTES_PER_MS);
+ assert.equal(worldMinuteRate(s,{taiChat:true}),STORY55_FINALE_REPLY_MINUTES_PER_MS);
  assert.equal(endingReplyDue55(s),false);
  tickWorld(s,2999,{taiChat:true});
  assert.equal(s.clock,'22:46');

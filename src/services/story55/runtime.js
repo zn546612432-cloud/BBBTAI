@@ -1,6 +1,9 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickD02Wechat} from '../../story/d02/wechat.js';
+import {tickD03Chats} from '../../story/d03/wechat.js';
+import {tickD03Contract} from '../../story/d03/contract.js';
+import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
@@ -12,7 +15,8 @@ const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博�
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
  const c=defaultStory55Config();
- const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported};
+ const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,
+  ...(typeof s.story55?.minutesPerSecond==='number'&&Number.isFinite(s.story55.minutesPerSecond)&&s.story55.minutesPerSecond>=0&&s.story55.minutesPerSecond<=10?{minutesPerSecond:s.story55.minutesPerSecond}:{})};
  s.story55={version:1,config:c,completed:{},projects:{},reports:{},scenes:{},hardware:1,liabilities:0,livingDebt:0,expenseDays:[],questions:0,ended:false};
  Object.assign(s.story55,imported);
  Object.assign(s,{day:1,clock:'08:00',calendar:{anchorDay:1,anchorDate:c.startDate},deathPhase:null,powerMode:'idle',shortCharge:null,shortChargeGains:{},poweredOff:false,emergencyCharge:false,batteryPercent:100,dayChargeRemainingMs:0,worldMinuteFraction:0,powerActiveMs:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,events:[],notifications:[],invitations:[],matches:[],storyChargeGates:[]});
@@ -126,6 +130,9 @@ export function tickStory55(s){
  seedD02(s);
  tickD02Contracts(s);
  tickD02Wechat(s);
+ tickD03Contract(s);
+ tickD03Chats(s);
+ tickD03MomentReply(s);
  tickD02Diary(s);
  tickD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.

@@ -20,6 +20,7 @@ import {uid} from '../../services/id.js';
 import {datePreset,messageDate,messageClock,setMessageDate} from '../../services/messaging/timestamps.js';
 import {dateParts,dateLabel,setPreviewDate} from '../../services/calendar.js';
 import {endShortCharge} from '../../system/power/battery.js';
+import {STORY55_SPEED_DEFAULT,setStory55MinutesPerSecond} from '../../system/time/clock.js';
 import {phoneData} from '../../services/phone-data.js';
 import {btn,card,demo,empty,esc} from '../../system/ui.js';
 import {conversations as allConversations,selectedConversation,actors,actorName,renameConversation,renameActor,setSchedule,newMessage,reorderMessage,moveMessageTo,clearDelivery,scheduleLabel,createConversation,chatApps,isGroup} from './features/conversations/model.js';
@@ -32,6 +33,11 @@ function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=
 export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?(isStory55(s)?story55Editor(s):presetEditor(s)):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(a==='s55-speed-default'){
+  store.update(s=>setStory55MinutesPerSecond(s,STORY55_SPEED_DEFAULT));
+  ctx.toast('遊戲流速已恢復：1 秒＝5 分鐘');
+  return;
+ }
  if(voiceAction(a,t,ctx))return;
  if(taiPhoneAction(a,t,ctx))return;
  if(diaryEditorAction(a,t,ctx))return;
@@ -78,6 +84,10 @@ export function handle(a,t,ctx){
  if(a==='export-content')ctx.download();
 }
 export function change(t,ctx){
+ if(t.dataset.s55ClockSpeed!==undefined){
+  ctx.store.update(s=>setStory55MinutesPerSecond(s,t.value));
+  return;
+ }
  if(t.dataset.mirageAi!==undefined){setMirageAIEnabled(ctx.store,!!t.checked);return;}
  if(diaryEditorChange(t,ctx))return;
  const {store}=ctx;
@@ -93,6 +103,13 @@ export function change(t,ctx){
 }
 export const isTextEdit=t=>isMomentsTextEdit(t)||isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';
 export function input(t,ctx){
+ if(t.dataset.s55ClockSpeed!==undefined){
+  const n=Number(t.value),value=Number.isFinite(n)?n:STORY55_SPEED_DEFAULT;
+  const out=t.closest('.s55-time-speed')?.querySelector('#s55-clock-speed-value');
+  if(out)out.textContent=value===0?'暫停':value+' 分鐘／秒';
+  t.setAttribute('aria-valuetext',value===0?'暫停遊戲時間':'現實一秒等於遊戲'+value+'分鐘');
+  return;
+ }
  if(inputMoments(t,ctx))return;
  if(!isTextEdit(t))return;
  if(isPresetTextField(t)){changePresetField(t,ctx);return;}

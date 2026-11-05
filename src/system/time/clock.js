@@ -10,9 +10,32 @@ export const SHORT_CHARGE_MINUTES_PER_MS=180/60_000; // 1 real min = 3 game hour
 export const SLEEPING_MINUTES_PER_MS=60/1000;
 export const TYPING_MINUTES_PER_MS=2/60000;
 export const TAI_CHAT_MINUTES_PER_MS=1/60000; // real 1 min = game 1 min
-// Confirmed pacing for the current 55-day campaign; legacy saves keep their
-// original pacing so compatibility/recovery behavior does not change.
-export const STORY55_NORMAL_MINUTES_PER_MS=1/3000;
+// D01–D55 normal browsing / GHOST pace: 1 real second = 5 game minutes.
+// Typing and private conversation intentionally keep their slower readable pace.
+// The legacy campaign retains its original clock rate for compatibility.
+export const STORY55_NORMAL_MINUTES_PER_MS=5/1000;
+export const STORY55_SPEED_DEFAULT=5;
+export const STORY55_SPEED_MIN=0;
+export const STORY55_SPEED_MAX=10;
+export const STORY55_SPEED_STEP=0.5;
+// Only ordinary browsing and GHOST use this adjustable speed. A zero value
+// pauses civil game time, not battery drain, incoming messages or animations.
+export function story55MinutesPerSecond(s){
+ const value=s?.story55?.minutesPerSecond;
+ return typeof value==='number'&&Number.isFinite(value)&&value>=STORY55_SPEED_MIN&&value<=STORY55_SPEED_MAX
+  ?value:STORY55_SPEED_DEFAULT;
+}
+export function setStory55MinutesPerSecond(s,value){
+ if(!isStory55(s))return false;
+ const n=Number(value);
+ if(!Number.isFinite(n))return false;
+ const v=Math.max(STORY55_SPEED_MIN,Math.min(STORY55_SPEED_MAX,Math.round(n/STORY55_SPEED_STEP)*STORY55_SPEED_STEP));
+ if(story55MinutesPerSecond(s)===v&&s.story55.minutesPerSecond===v)return false;
+ s.story55.minutesPerSecond=v;
+ s.worldMinuteFraction=0; // old speed's sub-minute remainder must not leak.
+ return true;
+}
+export const STORY55_FINALE_REPLY_MINUTES_PER_MS=1/3000; // 3 game minutes take 9 seconds.
 export const STORY55_CHAT_MINUTES_PER_MS=2/60000;
 const DAY_MINUTES=1440;
 export const clockMinutes=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
@@ -107,8 +130,8 @@ export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId=
 export function worldMinuteRate(s,{focused=false,taiChat=false,fastForward=true}={}){
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
- if(endingAwaitingReply55(s))return STORY55_NORMAL_MINUTES_PER_MS;
- const normal=isStory55(s)?STORY55_NORMAL_MINUTES_PER_MS:NORMAL_MINUTES_PER_MS;
+ if(endingAwaitingReply55(s))return STORY55_FINALE_REPLY_MINUTES_PER_MS;
+ const normal=isStory55(s)?story55MinutesPerSecond(s)/1000:NORMAL_MINUTES_PER_MS;
  return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false,fastForward=true}={}){

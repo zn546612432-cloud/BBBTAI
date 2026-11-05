@@ -4,8 +4,29 @@ import {deploymentPercent} from '../../../../services/story55/projects.js';
 import {exportStory55Config} from '../../../../services/story55/config.js';
 import {s55Button as b} from '../../../../services/story55/views.js';
 import {esc} from '../../../../system/ui.js';
+import {STORY55_SPEED_DEFAULT,STORY55_SPEED_MAX,STORY55_SPEED_MIN,STORY55_SPEED_STEP,story55MinutesPerSecond} from '../../../../system/time/clock.js';
 import {listTestSnapshots,storySourceVersion} from '../../../../services/story55/test-snapshots.js';
 
+// Live range readout is updated on input; its committed value is persisted
+// on change so dragging never rewrites the entire phone on every pointer move.
+function timeSpeedPanel(s){
+ const speed=story55MinutesPerSecond(s);
+ return `<section class="card s55-time-speed"><h3>遊戲時間流速</h3>
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <label for="s55-clock-speed">普通瀏覽／GHOST</label>
+  <strong id="s55-clock-speed-value" aria-live="polite">${speed===0?'暫停':speed+' 分鐘／秒'}</strong>
+ </div>
+ <input id="s55-clock-speed" data-s55-clock-speed type="range"
+  min="${STORY55_SPEED_MIN}" max="${STORY55_SPEED_MAX}" step="${STORY55_SPEED_STEP}"
+  value="${speed}" aria-label="遊戲時間流速" aria-valuetext="${speed===0?'暫停遊戲時間':'現實一秒等於遊戲'+speed+'分鐘'}"
+  style="display:block;width:100%;min-height:48px;accent-color:#0a84ff;touch-action:pan-y;cursor:pointer">
+ <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.75">
+  <span>0 · 暫停</span><span>5 · 預設</span><span>10 · 最快</span>
+ </div>
+ <p class="editor-help">拖動滑桿，鬆手立即生效並自動儲存。只影響普通瀏覽和 GHOST 的時鐘；打字、熙泰聊天、充電和終章特殊計時保持原有規則。</p>
+ <button class="s55-button" type="button" data-action="s55-speed-default">恢復預設（${STORY55_SPEED_DEFAULT} 分鐘／秒）</button>
+ </section>`;
+}
 function snapshotPanel(s){
  if(!isStory55(s))return '';
  const version=storySourceVersion(s),snapshots=listTestSnapshots(globalThis.localStorage);
@@ -17,7 +38,7 @@ function snapshotPanel(s){
  return '<section class="card s55-test-snapshots"><h3>测试快照 · 独立保管</h3><p>日期跳转和节点测试前自动备份到浏览器 IndexedDB，不再把完整手机照片重复写进 localStorage；旧版测试快照仍可恢复。若仍提示失败，先导出 JSON 存档，勿清除网站数据。剧情版本校验码：'+version+'</p>'+b('save-snapshot','保存当前测试快照')+(rows||'<p>尚未保存快照。</p>')+'</section>';
 }
 
-export function story55Editor(s){const c=story55Config(s),n=c.nodes.find(n=>n.id===s.editor?.story55Node)||c.nodes[0],p=c.projects.find(p=>p.id===s.editor?.story55Project)||c.projects[1];return `<div class="editor-panel s55 s55-editor"><h2>55天 · 剧情运行台</h2><p>${isStory55(s)?`D${s.day} · ${date55(s.day)} · 已完成${Object.keys(s.story55.completed).length}个节点`:'当前是旧版周目；创建55天周目会先在本浏览器归档旧存档。'}</p>${b('new-run','创建55天新周目（归档当前存档）')}${snapshotPanel(s)}${isStory55(s)?`<form data-form="s55-time" class="card"><h3>时间线</h3><label>剧情日<input type="number" name="day" min="1" max="55" required value="${s.day}"></label><label>时间<input type="time" name="clock" required value="${s.clock}"></label><button class="s55-button">重建目标日手机状态（自动备份）</button></form><div class="s55-days">${STORY55_DAYS.map(d=>b('day',`D${d.day}`,`data-day="${d.day}" title="${esc(d.title)}"`,d.day===s.day?'active':'')).join('')}</div>`:''}
+export function story55Editor(s){const c=story55Config(s),n=c.nodes.find(n=>n.id===s.editor?.story55Node)||c.nodes[0],p=c.projects.find(p=>p.id===s.editor?.story55Project)||c.projects[1];return `<div class="editor-panel s55 s55-editor"><h2>55天 · 剧情运行台</h2><p>${isStory55(s)?`D${s.day} · ${date55(s.day)} · 已完成${Object.keys(s.story55.completed).length}个节点`:'当前是旧版周目；创建55天周目会先在本浏览器归档旧存档。'}</p>${b('new-run','创建55天新周目（归档当前存档）')}${snapshotPanel(s)}${isStory55(s)?timeSpeedPanel(s):''}${isStory55(s)?`<form data-form="s55-time" class="card"><h3>时间线</h3><label>剧情日<input type="number" name="day" min="1" max="55" required value="${s.day}"></label><label>时间<input type="time" name="clock" required value="${s.clock}"></label><button class="s55-button">重建目标日手机状态（自动备份）</button></form><div class="s55-days">${STORY55_DAYS.map(d=>b('day',`D${d.day}`,`data-day="${d.day}" title="${esc(d.title)}"`,d.day===s.day?'active':'')).join('')}</div>`:''}
  <h3>剧情树 · ${c.nodes.length}个节点</h3><p>点击节点编辑；状态来自真实前置与完成记录，未达条件时显示原因。</p><div class="s55-tree">${c.nodes.map(x=>{const status=nodeStatus(s,x.id);return `<article class="s55-tree-node ${status.state}"><small>D${x.day} · ${esc(x.kind)} · ${esc(x.id)}</small><b>${esc(x.title)}</b><span>${esc(status.reason)}</span><p>${x.requires.length?'↑ '+x.requires.map(id=>esc(c.nodes.find(n=>n.id===id)?.title||id)).join(' + '):'ROOT'}</p>${b('select-node','编辑',`data-node="${x.id}"`)}${isStory55(s)?b('preview-node','重建该日期并定位',`data-node="${x.id}"`):''}${isStory55(s)&&status.state!=='locked'?b('node','打开实际入口',`data-node="${x.id}"`):''}</article>`;}).join('')}</div>
  <form data-form="s55-node-config" class="card"><h3>节点 · ${esc(n.id)}</h3><input type="hidden" name="id" value="${n.id}"><label>标题<input name="title" required maxlength="150" value="${esc(n.title)}"></label><label>可用日<input name="day" type="number" min="1" max="55" required value="${n.day}"></label><label>完成期限（留空不锁跳日）<input name="gateDay" type="number" min="1" max="55" value="${n.gateDay||''}"></label><label>前置ID（逗号分隔）<input name="requires" value="${esc(n.requires.join(','))}"></label><label>场景全文（每行：角色ID | 台词）<textarea name="lines" rows="8">${esc((c.scenes[n.id]||[]).map(x=>x.join(' | ')).join('\n'))}</textarea></label><button class="s55-button">校验并保存节点</button></form>
  <h3>部署项目</h3><div class="s55-project-choices">${c.projects.map(x=>b('select-project',esc(x.title),`data-project="${x.id}"`)).join('')}</div><form data-form="s55-project-config" class="card"><input type="hidden" name="id" value="${p.id}"><h3>${esc(p.title)} · ${isStory55(s)?deploymentPercent(s,p.id):0}%</h3><label>项目授权码<input name="key" required maxlength="80" value="${esc(p.key)}"></label><label>每批完成值（合计100）<input name="gains" required value="${p.gains.join(',')}"></label><label>本批小游戏顺序<input name="steps" required value="${p.steps.join(',')}"></label><label>最低设备等级<input name="hardware" type="number" min="1" max="3" value="${p.minimumHardware}"></label><p>cipher / route / extract / veil / verify；一批全部成功后才结算，失败不加完成值。</p><button class="s55-button">保存项目与完成度规则</button></form>

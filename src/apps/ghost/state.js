@@ -1,5 +1,6 @@
 import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
 import {onD02GhostWin,d02OrderOfStep,D02_DEADLINES} from '../../story/d02/runtime.js';
+import {onD03GhostWin,d03OrderOfStep,d03CanRun} from '../../story/d03/contract.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -47,6 +48,7 @@ export function nextGhostRound(s,id){
  return true;
 }
 export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const d02=d02OrderOfStep(id);if(d02&&(s.content.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||!s.story55?.d02?.deployed?.[d02]||s.day>D02_DEADLINES[d02].day||s.day===D02_DEADLINES[d02].day&&s.clock>D02_DEADLINES[d02].clock))return false;
+ if(d03OrderOfStep(id)&&!d03CanRun(s,id))return false;
  if(id===D01_REPAIR){o.settings??={};o.settings.pipeNetwork=true;o.settings.pipeSize=[5,5,6,6,7][Math.min(4,Math.max(0,Number(s.story55?.d01?.completedRounds)||0))];o.settings.seconds=null;}
  const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);
  // Keep the old board fields for existing story contracts and saved fixtures.
@@ -73,6 +75,7 @@ export function finish(s,id,success,now=Date.now()){
  // the player successfully solves the challenge. This is idempotent.
  if(success&&id===WALLET_CHALLENGE_ID)completeWalletChallenge(s);
   if(success)onD02GhostWin(s,id);
+  if(success)onD03GhostWin(s,id);
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }
@@ -91,6 +94,13 @@ export function startD02PipePreview(s,id,now=Date.now()){
  const run=s.ghost?.orders?.[id];
  if(run?.type!=='route'||run.status!=='running'||!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
  run.status='preview-win';run.previewUntil=now+3000;return true;
+}
+// The D03 LINK level must also keep its solved circuit visible for 3 seconds.
+export function startD03PipePreview(s,id,now=Date.now()){
+ if(!d03OrderOfStep(id))return false;
+ const o=s.ghost?.orders?.[id];
+ if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
+ o.status='preview-win';o.previewUntil=now+3000;return true;
 }
 export function exitD01Puzzle(s,{discard=false}={}){
  const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;

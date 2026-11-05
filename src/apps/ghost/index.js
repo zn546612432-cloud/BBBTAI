@@ -1,5 +1,6 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
 import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
+import {d03OrderOfStep,d03NextStep} from '../../story/d03/contract.js';
 import {isStory55} from '../../services/story55/state.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
@@ -7,7 +8,7 @@ import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
 import {tools,stages,moduleLabel} from './catalog.js';
-import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound,exitD01Puzzle,startD01PipePreview,startD02PipePreview} from './state.js';
+import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,nextGhostRound,exitD01Puzzle,startD01PipePreview,startD02PipePreview,startD03PipePreview} from './state.js';
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode,createBoard} from './games/logic.js';
 import {circuit,pipe,emblem,toolIcon} from './visuals.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
@@ -46,7 +47,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
   if(o.status!=='running'&&o.status!=='preview-win'){
-   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 KIRA',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
+   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成'):d03OrderOfStep(o.id)?(d03NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 KIRA',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d03OrderOfStep(o.id)?button('d03-next',d03NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
@@ -93,6 +94,9 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='d02-next'&&id&&o?.status==='success'){
   const next=d02NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});
  }
+ if(a==='d03-next'&&d03OrderOfStep(id)&&o?.status==='success'){
+  const next=d03NextStep(s,id);return next?nav(ctx,'/contract',{orderId:next}):ctx.router.open({appId:'mirage',route:'/order/d03-intelligence-analysis',params:{}});
+ }
  if(a==='d01-next'&&id===D01_REPAIR){exitDialogFor=null;if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
  if(a==='start'){exitDialogFor=null;if(!o)return;
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
@@ -123,7 +127,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  ctx.store.update(n=>{const run=n.ghost.orders[id],b=run.board,cfg=configFor(n,run.type,run.id);run.moves++;
   if(a==='verify-token'){const i=Number(t.dataset.index);if(b.used.includes(i)||!b.tokens[i])return;if(b.tokens[i]===b.target[b.input.length]){b.input.push(b.tokens[i]);b.used.push(i);if(b.input.length===b.target.length)finish(n,id,true);}else{run.errors++;b.input=[];b.used=[];}}
   if(a==='tile'){const index=Number(t.dataset.index);if(b.selected===null)b.selected=index;else{b.tiles=swap(b.tiles,b.selected,index);b.selected=null;if(puzzleSolved(b.tiles))finish(n,id,true);}}
-  if(a==='pipe'){const i=Number(t.dataset.index);if(b.size&&(i===b.source||i===b.sink)){run.moves--;return;}b.masks[i]=rotate(b.masks[i]);const solved=b.size?pipeSolved(b):connected(b.masks).has(8);if(solved){if(id===D01_REPAIR)startD01PipePreview(n,id);else if(d02OrderOfStep(id))startD02PipePreview(n,id);else finish(n,id,true);}}
+  if(a==='pipe'){const i=Number(t.dataset.index);if(b.size&&(i===b.source||i===b.sink)){run.moves--;return;}b.masks[i]=rotate(b.masks[i]);const solved=b.size?pipeSolved(b):connected(b.masks).has(8);if(solved){if(id===D01_REPAIR)startD01PipePreview(n,id);else if(d02OrderOfStep(id))startD02PipePreview(n,id);else if(d03OrderOfStep(id))startD03PipePreview(n,id);else finish(n,id,true);}}
   if(a==='match'){if(Number(t.dataset.index)===b.correct){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}else{run.errors++;}}
   if(a==='key'){const key=t.dataset.key;if(key==='⌫')b.input=b.input.slice(0,-1);else if(key!=='↵'){if(key===b.code[b.input.length])b.input+=key;else{run.errors++;b.input='';}if(b.input.length===b.code.length){b.round++;if(b.round>=cfg.rounds)finish(n,id,true);else nextGhostRound(n,id);}}}
  });
