@@ -16,3 +16,11 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build:pages
+      - name: Check DeepSeek API browser CORS preflight (no keys)
+        run: |
+          echo "Testing whether an iPhone Pages browser may POST directly to DeepSeek"
+          curl -sSi --max-time 15 -X OPTIONS 'https://api.deepseek.com/chat/completions' \
+            -H 'Origin: https://zn546612432-cloud.github.io' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: authorization,content-type' \
+            | grep -Ei '^(HTTP/|access-control-|vary:|allow:)' || true
