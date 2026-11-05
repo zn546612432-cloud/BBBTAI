@@ -1,6 +1,9 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickD02Wechat} from '../../story/d02/wechat.js';
+import {tickD03Chats} from '../../story/d03/wechat.js';
+import {tickD03Contract} from '../../story/d03/contract.js';
+import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
@@ -126,6 +129,9 @@ export function tickStory55(s){
  seedD02(s);
  tickD02Contracts(s);
  tickD02Wechat(s);
+ tickD03Contract(s);
+ tickD03Chats(s);
+ tickD03MomentReply(s);
  tickD02Diary(s);
  tickD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.
