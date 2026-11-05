@@ -11,7 +11,7 @@ const safeText=s=>String(s||'').slice(0,400);
 export function shouldTaiInvestigatePhone(state,{text='',random=Math.random}={}){
  if(!taiPhoneAccessGranted(state)||!topics.test(text))return false;
  if(typeof document!=='undefined'&&document.hidden)return false;
- if(!state.unlocked||state.powerMode!=='idle'||state.poweredOff)return false;
+ if(state.powerMode!=='idle'||state.poweredOff)return false;
  const observations=state.aiDraft?.phoneMcp?.observations||[];
  const last=observations.at(-1);
  if(last&&stamp(state)-Number(last.gameMinute||0)<120)return false;
@@ -27,7 +27,7 @@ export function researchTaiPhone(store,{sourceMessageId='',text='',random=Math.r
   if(!selected||!['list_conversations','search_messages','read_conversation','check_new_messages','list_photos','inspect_photo'].includes(selected.name))return null;
   const current=store.get();
   if(!taiPhoneAccessGranted(current)||current.day!==initial.day||
-    !current.unlocked||current.poweredOff||typeof document!=='undefined'&&document.hidden)return null;
+    current.poweredOff||typeof document!=='undefined'&&document.hidden)return null;
   const result=callTaiPhoneTool(current,selected.name,selected.arguments||{});
   if(!result.ok)return null;
   const data=result.data||{};
