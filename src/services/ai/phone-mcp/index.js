@@ -39,6 +39,7 @@ function messageAllowed(state,message){
  if(message.schedule&&message.schedule.mode!=='immediate'&&!message.delivery)return false;
  if(Number.isInteger(message.day)&&message.day>state.day)return false;
  if(message.delivery&&Number.isInteger(message.delivery.day)&&message.delivery.day>state.day)return false;
+ if(message.delivery?.day===state.day&&/^([01]\\d|2[0-3]):[0-5]\\d$/.test(String(message.delivery.clock||''))&&message.delivery.clock>state.clock)return false;
  const today=dateParts(state).iso;
  const sent=typeof message.sentDate==='string'?message.sentDate.slice(0,10):'';
  if(sent&&sent>today)return false;
