@@ -49,6 +49,14 @@ export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
   store.update(next=>sendScriptedDraft55(next,'wechat',id,text));
   return {handled:true,messageId:'story55-'+line.id+'-'+line.index};
  }
+ // D01's first "hello" and certain legacy scenes start when the player
+ // types and presses Send, before any preset draft exists. Preserve that
+ // authored trigger; never fall through to a generic, unscripted send.
+ const dayProvider=providers.find(p=>p.name==='d0'+s.day);
+ if(s.story55?.version===1&&dayProvider){
+  const result=dayProvider.send(store,id,text,now);
+  if(result?.handled)return result;
+ }
  if(nativeWeChatComposer(s,id).disabled)return {
   handled:true,reason:'目前正在等待對方回覆，不能自行發送預設劇情'
  };
