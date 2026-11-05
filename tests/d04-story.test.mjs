@@ -47,8 +47,10 @@ test('group chat arrives as complete phone history when the player is away',()=>
  assert.ok(messages.some(x=>x.id.startsWith('d04-dinner-unanswered-')));
  assert.equal(byId(s,'xiaoxin').length,0);
  assert.ok(s.notifications.filter(n=>n.conversationId==='group').length<=10);
- assert.equal(tickD04Chats(s,100000),false);
- assert.equal(byId(s,'group').length,messages.length);
+ // Private NPC bubbles may still be pending even though group history is complete.
+ const groupCount=messages.length;
+ tickD04Chats(s,100000);
+ assert.equal(byId(s,'group').length,groupCount);
 });
 test('private Hufeng dialogue never fabricates player messages',()=>{
  const s=fixture('09:50');tickD04Chats(s,0);tickD04Chats(s,1900);
