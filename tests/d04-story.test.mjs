@@ -87,7 +87,8 @@ test('private Hufeng dialogue never fabricates player messages',()=>{
  assert.equal(byId(s,'hufeng').at(-1).text,'真的？！');
 });
 test('skipping all protagonist responses does not block family chatter',()=>{
- const s=fixture('23:10');tickD04Chats(s,0);
+ const s=fixture('23:10');
+ for(let now=0;now<1050000;now+=2100)tickD04Chats(s,now);
  assert.ok(byId(s,'group').some(x=>x.text==='晚安😡'));
  assert.equal(byId(s,'hufeng').some(x=>x.from==='me'),false);
  assert.equal(byId(s,'wang').some(x=>x.from==='me'),false);
@@ -109,7 +110,8 @@ test('dinner moment and family group require a real kiss reply by 18:30',()=>{
  assert.equal(sent,true);
  assert.equal(d04DinnerConfirmed(s),true);
  assert.ok(allMoments(s).some(x=>x.id==='xw-d04'));
- s.clock='20:45';tickD04Chats(s,now+10000);
+ s.clock='20:45';
+ for(let i=0;i<350;i++)tickD04Chats(s,now+10000+i*2100);
  assert.ok(byId(s,'group').some(x=>x.text==='哥你們出去吃飯不帶我'));
  assert.equal(byId(s,'group').filter(x=>x.text==='我跟阿蒙出去吃').length,1);
  assert.ok(!byId(s,'group').some(x=>x.id.startsWith('d04-dinner-unanswered-')));
@@ -187,8 +189,11 @@ test('the actual Story55 runtime naturally publishes D04 contracts, but not on D
  s.nav.current={appId:'wechat',route:'/chat/wang',params:{}};
  assert.equal(worldMinuteRate(s),STORY55_CHAT_MINUTES_PER_MS);
 });
-test('D04 update timer stops on D05 and never replays private replies',()=>{
+test('D04 backlog continues one bubble at a time after a fast day transition',()=>{
  const s=fixture('10:00');tickD04Chats(s,0);
  s.day=5;s.clock='17:00';
- assert.equal(d04ChatDue(s,99999999),false);
+ assert.equal(d04ChatDue(s,99999999),true);
+ tickD04Chats(s,99999999);
+ assert.equal(byId(s,'group').length,1);
+ assert.equal(byId(s,'hufeng').some(m=>m.from==='me'),false);
 });
