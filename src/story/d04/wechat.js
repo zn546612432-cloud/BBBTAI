@@ -3,7 +3,7 @@
 // without inventing messages the protagonist never sent.
 import {D04_GROUP,D04_PRIVATE} from './dialogue.js';
 import {publicWeChatAsset} from '../../apps/wechat/avatars.js';
-import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
+import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 
 const DAY=4,DATE='2025-05-22',PAUSE=1900;
 const VIDEO_EXTRA_LINES=['？','你看見什麼了','不是，你真看了？','阿蒙？？？'];
@@ -48,19 +48,13 @@ function ensure(s){
 }
 function push(s,scene,index,{who,kind,text},notification=true){
  const c=convo(s,scene.chat);if(!c)return false;
- const id='d04-'+scene.id+'-'+index;
- if(c.messages.some(m=>m.id===id))return false;
- // Never stamp a bubble with a future fictional time it has not reached.
- // The configured scene clock is a publishing threshold; delivery is real.
  const time=s.day===DAY?s.clock:sceneClock(scene,index);
- c.messages.push({id,from:who,kind,text:kind==='image'?D04_MEDIA[text]||publicWeChatAsset('media/fabric-swatches.webp'):text,
-  day:DAY,time,sentDate:DATE,actual:true,storyD04:true});
- if(notification)deliverAuthoredIncoming(s,{conversationId:c.id,from:who,text,kind,
-  messageId:id,day:DAY,clock:time});
- s.events??=[];
- s.events.push({type:who==='me'?'message_sent':'authored_message_delivered',
-  channel:'wechat',conversationId:c.id,messageId:id,day:DAY,clock:time});
- return true;
+ return !!appendAuthoredPhoneMessage(s,{
+  conversationId:c.id,messageId:'d04-'+scene.id+'-'+index,
+  from:who,kind,
+  text:kind==='image'?D04_MEDIA[text]||publicWeChatAsset('media/fabric-swatches.webp'):text,
+  day:DAY,clock:time,sentDate:DATE,storyTag:'storyD04',notify:notification
+ });
 }
 function finish(q){q.completed=true;q.nextAt=null;}
 function advance(s,scene,q,now){
