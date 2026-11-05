@@ -85,10 +85,10 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  const post=authoredMoments.find(p=>p.id==='hf-0519');assert.equal(post.comments.length,2);
 });
 
-test('45 authored posts span D01–D90 with 1–4 preset replies and mixed media',()=>{
- assert.equal(authoredMoments.length,45);
+test('46 authored posts span D01–D90 with optional zero-comment brother post and mixed media',()=>{
+ assert.equal(authoredMoments.length,46);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&p.comments.length>=1&&p.comments.length<=4));
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d03'?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
