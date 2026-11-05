@@ -69,7 +69,9 @@ test('one scheduler registers D01–D04 with no duplicate or missing day',()=>{
  assert.equal(cv(s,'group').messages.filter(m=>m.id==='d04-morning-0').length,1);
 });
 test('unified preset composer never fabricates D04 protagonist; native input shows the exact next line',()=>{
- const s=fresh(4,'09:50');tickStory55(s);
+ const s=fresh(4,'09:50');
+ // Start the simulated transcript with the injected monotonic clock. An extra
+ // tickStory55 here would stamp real Date.now() and invalidate this fake timer.
  tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,2000);
  s.nav.current={appId:'wechat',route:'/chat/hufeng',params:{}};
  assert.equal(nativeWeChatComposer(s,'hufeng').text,'有');
