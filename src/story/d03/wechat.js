@@ -1,9 +1,8 @@
 // D03 authored WeChat dialogue. The player's bubbles only exist after Send.
 // Each NPC scene has an early completion path and a clock-time fallback.
-import {FLOW_REWARD_ID} from '../../services/story55/flow-d03.js';
 import {D03_ORDER} from './contract.js';
 const DATE='2025-05-21', DAY=3;
-const pc='https://images.pexels.com/photos/28228018/pexels-photo-28228018.jpeg?auto=compress&cs=tinysrgb&w=900';
+const pc='/apps/wechat/media/d03-computer.webp';
 const t=(who,text)=>({who,text,kind:'text'});
 const image=(who,url)=>({who,text:url,kind:'image'});
 const SCENES=[
