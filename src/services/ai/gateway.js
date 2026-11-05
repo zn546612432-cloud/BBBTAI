@@ -83,6 +83,36 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
+// One optional model-directed read. We never send a whole phone save to DeepSeek.
+// The server-side/browse executor separately enforces the allowlist and day gates.
+export async function selectTaiPhoneTool({text='',channel='noapp'}={}){
+ const c=apiConfig();
+ if(!c.deepseek||channel!=='noapp')return null;
+ const system=[
+  '你在扮演陈熙泰的好奇心决策器。只决定此刻要不要使用一项工具查看已获权限的熙蒙虚拟手机，不输出对玩家的台词。',
+  '默认不查。只有话题确实与真实聊天或相册相关，或你有清楚的好奇、怀疑、担心动机时，才偶尔选择查询。不是持续监控。',
+  '可选工具：search_messages 参数 query(人名/话题关键词),channel可为wechat/messages/mirage/noapp；list_conversations 参数可选channel；',
+  'read_conversation 参数channel和conversation_id（必须明确已知，否则不要猜）；check_new_messages 无参数；list_photos无参数；inspect_photo参数photo_id（须有确切已知ID）。',
+  '禁止读取日程、日记、未来剧情、未发生对话、系统内部数据、银行或其他App；不因对方提到哥哥便必须查看。',
+  '以JSON对象返回 {"name":"search_messages","arguments":{"query":"熙旺"}} 或 {"name":"none","arguments":{}}，不要其他文字。',
+ ].join('\\n');
+ try{
+  const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
+   ...deepseekModelOptions(c.model,c),
+   messages:[{role:'system',content:system},{role:'user',content:String(text).slice(0,400)}],
+   response_format:{type:'json_object'},max_tokens:170,stream:false,
+  },{timeoutMs:15000});
+  const raw=String(response.choices?.[0]?.message?.content||'').trim();
+  const parsed=JSON.parse(raw);
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return null;
+  const valid=['search_messages','list_conversations','read_conversation','check_new_messages','list_photos','inspect_photo'];
+  if(!valid.includes(parsed.name))return null;
+  const args=parsed.arguments&&typeof parsed.arguments==='object'&&!Array.isArray(parsed.arguments)?parsed.arguments:{};
+  if(Object.keys(args).length>3)return null;
+  return {name:parsed.name,arguments:args};
+ }catch{return null;}
+}
+
 // Phase 1 is available for the isolated GitHub Pages BYOK test runtime.
 // A proxy which has not implemented this endpoint stays on the legacy path,
 // rather than pretending it has executed a two-stage decision.
