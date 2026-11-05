@@ -181,6 +181,12 @@ function mountScriptedMirageDraft(){
   if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
   return;
  }
+ // Native WeChat uses stable, fully visible authored drafts, not the Mirage
+ // typewriter. Repeated screen patches must never clear the player response.
+ if(input.closest('.wx-conversation')){
+  if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  return;
+ }
  const identity=input.dataset.storyStage+':'+input.dataset.storyType;
  if(pendingMirageType?.identity===identity&&pendingMirageType.element===input)return;
  if(pendingMirageType)clearInterval(pendingMirageType.timer);
