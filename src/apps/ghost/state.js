@@ -95,6 +95,13 @@ export function startD02PipePreview(s,id,now=Date.now()){
  if(run?.type!=='route'||run.status!=='running'||!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
  run.status='preview-win';run.previewUntil=now+3000;return true;
 }
+// The D03 LINK level must also keep its solved circuit visible for 3 seconds.
+export function startD03PipePreview(s,id,now=Date.now()){
+ if(!d03OrderOfStep(id))return false;
+ const o=s.ghost?.orders?.[id];
+ if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
+ o.status='preview-win';o.previewUntil=now+3000;return true;
+}
 export function exitD01Puzzle(s,{discard=false}={}){
  const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;
  if(discard){run.status='authorized';run.board=null;run.deadline=null;run.moves=0;}
