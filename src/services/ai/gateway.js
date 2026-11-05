@@ -83,6 +83,37 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(!text)throw Error('DeepSeek 两次均没有返回有效文字；消息未发送给熙蒙，请重试。');
  return {text,channel,day};
 }
+// Dedicated photo perception uses Flash regardless of the chat model.
+// A single validated local photo is the ONLY image. Never send other phone
+// apps, conversation history, schedule, or full save to this model.
+export async function describeTaiImage({dataUrl,authorLabel=''}={}){
+ if(typeof dataUrl!=='string'||!/^data:image\\/(?:jpeg|png|webp|gif);base64,[a-z0-9+/=]+$/i.test(dataUrl)||dataUrl.length>7_000_000)
+  throw Error('图片编码无效或过大');
+ const c=apiConfig();
+ if(!c.deepseek)throw Error('请先在 NoApp AI 设置中输入 DeepSeek API Key');
+ const instruction=[
+  '你是一个谨慎、客观的图片理解引擎。只描述实际看得见的画面，不基于外貌猜测真实姓名或人物关系。',
+  '以下作者标签仅作为可能的人物提示，不代表已经视觉验证：'+String(authorLabel).slice(0,100),
+  '不要假定这张照片发生在玩家今天、不要推断拍摄地点、秘密关系、未来剧情或人物心理。',
+  '看不清的细节明确说明不确定，照片里若有文字，仅摘录确实可辨认的部分。',
+  '必须输出 JSON 对象：{"summary":"可客观观察到的构图、人物数量、动作及环境，不超过150字","visibleText":"真正看清的图片中文字","uncertainty":"无法确定的地方"}。',
+  '只回复 JSON，不要markdown、身份识别或其他解释。'
+ ].join('\\n');
+ const body={model:'deepseek-flash',temperature:0.2,max_tokens:500,
+  messages:[{role:'user',content:[
+    {type:'text',text:instruction},
+    {type:'image_url',image_url:{url:dataUrl,detail:'low'}}
+  ]}],response_format:{type:'json_object'},stream:false};
+ const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,body,{timeoutMs:55000});
+ const raw=String(response.choices?.[0]?.message?.content||'').trim();
+ if(!raw)throw Error('视觉模型未返回图片描述；未保存结果');
+ let output;
+ try{output=JSON.parse(raw);}catch{throw Error('视觉模型返回格式错误；未保存结果');}
+ if(!output||typeof output!=='object'||Array.isArray(output)||typeof output.summary!=='string'||!output.summary.trim())throw Error('视觉模型没有返回可用描述');
+ return {summary:output.summary.slice(0,680),visibleText:String(output.visibleText||'').slice(0,260),
+  uncertainty:String(output.uncertainty||'').slice(0,200)};
+}
+
 // One optional model-directed read. We never send a whole phone save to DeepSeek.
 // The server-side/browse executor separately enforces the allowlist and day gates.
 export async function selectTaiPhoneTool({text='',channel='noapp'}={}){
