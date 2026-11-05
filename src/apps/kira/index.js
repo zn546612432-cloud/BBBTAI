@@ -11,6 +11,7 @@ import {authorize,submit as submitGhost} from '../ghost/state.js';
 import {HACKER_BOUNTY_ID,HACKER_MAIL_ID,phishingThemes,advanceHackerMission} from '../mirage/mission.js';
 import {kiraInbox} from './features/inbox/index.js';
 import {kiraDetail} from './features/detail/index.js';
+import {commissionAttachment,commissionPreviewAvailable} from '../../services/commissions/attachment-flow.js';
 import {composeMission} from './features/mission/index.js';
 export const manifest={id:'kira',name:'KIRA',icon:10,defaultRoute:'/',supportsDeepLink:true,kicker:'ENCRYPTED MAIL'};
 export function render({store},loc){
@@ -36,6 +37,14 @@ export function render({store},loc){
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a==='kira-open-commission-file'){
+  const mailId=t.dataset.id;
+  const file=commissionAttachment(c.store.get(),mailId);
+  if(!file||!['D03','D04'].includes(file.kind)||!commissionPreviewAvailable(c.store.get(),mailId))return c.toast?.('附件未授權');
+  c.store.update(s=>{const mail=s.content.mail.find(m=>m.id===mailId);if(mail)mail.read=true;});
+  return c.router.open({appId:'files',route:file.route,params:{mailId}});
+ }
+
  if(a==='kira-d02-open-file'){
   const id=t.dataset.id;
   if(![D02_MAIL,D02_A_MAIL].includes(id)||!c.store.get().content.mail.some(m=>m.id===id))return;
