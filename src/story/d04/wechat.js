@@ -118,7 +118,7 @@ export function tickD04Chats(s,now=Date.now()){
  return changed;
 }
 export function d04ChatDue(s,now=Date.now()){
- if(!inTimeline(s))return false;
+ if(!active(s))return false;
  const progress=s.story55?.d04Chats||{};
  return [...D04_GROUP,...D04_PRIVATE].some(scene=>{
   const q=progress[scene.id];
