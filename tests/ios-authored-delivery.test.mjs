@@ -8,6 +8,7 @@ import {tickD03Chats} from '../src/story/d03/wechat.js';
 import {unreadAppCount} from '../src/services/unread-badges.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
 import {IncomingBannerQueue} from '../src/services/messaging/incoming-banner-queue.js';
+import {worldMinuteRate,D04_BROADCAST_MINUTES_PER_MS} from '../src/system/time/clock.js';
 
 const store=s=>({get:()=>s,update:fn=>fn(s)});
 const conversation=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
@@ -85,4 +86,14 @@ test('banner queue serializes every unread event and skips banners read before d
  jobs.shift()();
  assert.deepEqual(shown,['a','b']); // c is skipped, no replays
  assert.equal(queue.running,false);
+});
+
+test('D04 group delivery temporarily caps clock speed so scenes do not outrun bubbles',()=>{
+ const s=state(4,'08:20');s.nav.current={appId:'home',route:'/',params:{}};
+ assert.equal(worldMinuteRate(s),5/1000);
+ tickD04Chats(s,0);
+ assert.equal(worldMinuteRate(s),D04_BROADCAST_MINUTES_PER_MS);
+ for(let now=2000;now<80000;now+=2000)tickD04Chats(s,now);
+ assert.ok(s.story55.d04Chats.morning.completed);
+ assert.equal(worldMinuteRate(s),5/1000);
 });
