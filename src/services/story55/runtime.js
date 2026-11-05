@@ -1,8 +1,6 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
-import {tickD02Wechat} from '../../story/d02/wechat.js';
-import {tickD03Chats} from '../../story/d03/wechat.js';
-import {tickD04Chats} from '../../story/d04/wechat.js';
+import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
@@ -131,10 +129,8 @@ export function tickStory55(s){
  seedD01(s);
  seedD02(s);
  tickD02Contracts(s);
- tickD02Wechat(s);
+ tickPhoneStoryMessages(s);
  tickD03Contract(s);
- tickD03Chats(s);
- tickD04Chats(s);
  tickD04Contracts(s);
  tickD03MomentReply(s);
  tickD02Diary(s);
