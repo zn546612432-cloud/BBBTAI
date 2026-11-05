@@ -42,7 +42,7 @@ test('Unplugging stops acceleration immediately, retains the earned charge and d
  assert.equal(endShortCharge(s),true);assert.equal(s.powerMode,'idle');
  assert.equal(s.shortCharge,null);assert.equal(s.day,2);
  assert.equal(endShortCharge(s),false);
- tickWorld(s,3_000);assert.equal(s.clock,'09:31');
+ tickWorld(s,3_000);assert.equal(s.clock,'09:45');
 });
 test('short charge stops at 23:59 instead of skipping to tomorrow',()=>{
  const s=d02();s.clock='23:50';s.batteryPercent=70;
@@ -156,14 +156,14 @@ test('background/closed browser credits battery without advancing story time',()
  assert.equal(shortChargeGainToday(s),10);
 });
 
-test('short charging runs at ordinary speed inside apps, then resumes home acceleration',()=>{
+test('short charging respects accelerated browsing and preserves its separate home charge rate',()=>{
  const s=d02();s.batteryPercent=70;beginShortCharge(s);
  assert.equal(worldMinuteRate(s,{fastForward:true}),SHORT_CHARGE_MINUTES_PER_MS);
- assert.equal(worldMinuteRate(s,{fastForward:false}),1/3000);
+ assert.equal(worldMinuteRate(s,{fastForward:false}),5/1000);
  tickWorld(s,9_000,{fastForward:false});
- assert.equal(s.clock,'08:03');
+ assert.equal(s.clock,'08:45');
  tickWorld(s,1_000,{fastForward:true});
- assert.equal(s.clock,'08:06');assert.equal(s.powerMode,'short-charging');
+ assert.equal(s.clock,'08:48');assert.equal(s.powerMode,'short-charging');
 });
 
 test('an active compulsory story scene forces a quiet unplug',()=>{
