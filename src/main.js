@@ -32,6 +32,7 @@ import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
+import {IncomingBannerQueue} from './services/messaging/incoming-banner-queue.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
@@ -93,6 +94,17 @@ let shortChargeNoticePausedUntil=0;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
+const liveBanners=new IncomingBannerQueue({
+ show:showBanner,
+ stillUnread:n=>store.get().notifications.some(x=>x.id===n.id),
+ eligible:n=>{
+  const state=store.get(),channel=n.link?.appId,route=n.link?.route||'';
+  const chat=route.startsWith('/chat/')?route.slice(6):null;
+  return state.unlocked&&!phoneBlocked(state)&&n.type!=='tai-incoming-call'
+   &&!(chat&&isConversationOpen(state,channel,chat));
+ }
+});
+
 const nonImmersive=/演示|下一阶段|开发者|暂未接入|尚未接入|尚未开放|后续功能阶段|剧情|游戏存档|仅本机模拟|DEMO|测试中/i;
 const toast=message=>{
  const s=store.get(),body=String(message);
@@ -325,7 +337,7 @@ store.subscribe(()=>{
  const added=s.notifications.filter(n=>!seenNotices.has(n.id));
  seenNotices=new Set(s.notifications.map(n=>n.id));
  if(isShortCharging(s)&&added.some(n=>n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
- if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
+ if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);});render();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.
  const closeBoot=()=>{
