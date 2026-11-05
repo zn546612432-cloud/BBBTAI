@@ -33,24 +33,46 @@ test('D04 group has all ten authored, independent daily scenes and no Xiaoxin DM
  assert.equal(D04_PRIVATE.filter(x=>x.chat==='xiaoxin').length,0);
  assert.ok(D04_GROUP.reduce((sum,x)=>sum+x.lines.length,0)>180);
 });
-test('group chat arrives as complete phone history when the player is away',()=>{
- const s=fixture('23:10');
- assert.equal(tickD04Chats(s,0),true);
+test('D04 group delivers NPC bubbles one by one outside the group and counts every unread',()=>{
+ const s=fixture('08:20');
+ assert.equal(tickD04Chats(s,0),true); // scene timer starts, but no bubble is preloaded
+ assert.equal(byId(s,'group').length,0);
+ tickD04Chats(s,500);
+ assert.equal(byId(s,'group').length,1);
+ assert.equal(s.content.conversations.wechat[0].unread,1);
+ assert.equal(s.notifications.filter(n=>n.conversationId==='group').length,1);
+ tickD04Chats(s,700);
+ assert.equal(byId(s,'group').length,1);
+ tickD04Chats(s,2500);
+ assert.equal(byId(s,'group').length,2);
+ assert.equal(s.content.conversations.wechat[0].unread,2);
+ assert.equal(s.notifications.filter(n=>n.conversationId==='group').length,2);
+ assert.equal(byId(s,'group').filter(x=>x.from==='me').length,0);
+});
+test('overdue D04 scenes drain in authored order without batch inserts or fake dinner',()=>{
+ const s=fixture('23:10');let now=0;
+ let previous=0;
+ for(let i=0;i<520;i++){
+  tickD04Chats(s,now);
+  const count=byId(s,'group').length;
+  assert.ok(count-previous<=1,'at most one grouped incoming bubble per tick');
+  previous=count;now+=2100;
+ }
  const messages=byId(s,'group');
- assert.ok(messages.length>150);
- assert.equal(messages.some(x=>x.from==='me'),false);
- assert.equal(messages.filter(x=>x.id==='d04-cat-1').length,1);
- assert.match(messages.find(x=>x.id==='d04-cat-1').text,/d04-cat.webp/);
- assert.match(messages.find(x=>x.id==='d04-outfit-0').text,/d04-jacket.webp/);
- assert.ok(!messages.some(x=>x.id.startsWith('d04-dinner-confirmed-')));
- assert.ok(!messages.some(x=>x.id.startsWith('d04-dinner-post-')));
- assert.ok(messages.some(x=>x.id.startsWith('d04-dinner-unanswered-')));
+ assert.ok(messages.length>160);
+ assert.ok(messages.some(m=>m.text==='晚安😡'));
+ assert.ok(!messages.some(m=>m.from==='me'));
+ assert.ok(messages.some(m=>m.id==='d04-cat-1'&&m.kind==='image'));
+ assert.match(messages.find(m=>m.id==='d04-outfit-0').text,/d04-jacket.webp/);
+ assert.ok(!messages.some(m=>m.id.startsWith('d04-dinner-confirmed-')));
+ assert.ok(!messages.some(m=>m.id.startsWith('d04-dinner-post-')));
+ assert.ok(messages.some(m=>m.id.startsWith('d04-dinner-unanswered-')));
  assert.equal(byId(s,'xiaoxin').length,0);
- assert.ok(s.notifications.filter(n=>n.conversationId==='group').length<=10);
- // Private NPC bubbles may still be pending even though group history is complete.
- const groupCount=messages.length;
- tickD04Chats(s,100000);
- assert.equal(byId(s,'group').length,groupCount);
+ assert.equal(s.content.conversations.wechat[0].unread,messages.length);
+ assert.equal(s.notifications.filter(n=>n.conversationId==='group').length,messages.length);
+ const previousCount=messages.length;
+ tickD04Chats(s,now+100000);
+ assert.equal(byId(s,'group').length,previousCount);
 });
 test('private Hufeng dialogue never fabricates player messages',()=>{
  const s=fixture('09:50');tickD04Chats(s,0);tickD04Chats(s,1900);
