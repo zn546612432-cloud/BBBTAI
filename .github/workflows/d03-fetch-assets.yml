@@ -1,0 +1,70 @@
+name: Bundle licensed D03 photos into feature branch
+on:
+  push:
+    branches:
+      - feature/d03-story-20261105
+    paths:
+      - .github/workflows/d03-fetch-assets.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bundle-d03:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Fetch original freely licensed photographs and bundle as local WEBP
+        run: |
+          python - <<'PY'
+          import io, pathlib, urllib.request, time
+          from PIL import Image, ImageOps
+          dst=pathlib.Path("public/apps/wechat/media")
+          dst.mkdir(parents=True,exist_ok=True)
+          assets={
+            "d03-computer.webp":[
+              "https://images.pexels.com/photos/28228018/pexels-photo-28228018.jpeg?auto=compress&cs=tinysrgb&w=1100",
+              "https://images.pexels.com/photos/4317157/pexels-photo-4317157.jpeg?auto=compress&cs=tinysrgb&w=1100"
+            ],
+            "d03-breakfast.webp":[
+              "https://images.pexels.com/photos/9658826/pexels-photo-9658826.jpeg?auto=compress&cs=tinysrgb&w=1100",
+              "https://images.pexels.com/photos/18762746/pexels-photo-18762746.jpeg?auto=compress&cs=tinysrgb&w=1100"
+            ],
+            "d03-street.webp":[
+              "https://images.unsplash.com/photo-1646812965105-87821655690f?auto=format&fit=max&w=1100&q=85"
+            ]
+          }
+          for name,urls in assets.items():
+            success=False
+            for url in urls:
+              try:
+                req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (compatible; BBBTAI D03 asset bundler)","Accept":"image/*"})
+                with urllib.request.urlopen(req,timeout=35) as response: raw=response.read()
+                with Image.open(io.BytesIO(raw)) as photo:
+                  photo=ImageOps.exif_transpose(photo).convert("RGB")
+                  if min(photo.size)<360: raise RuntimeError("photo is unexpectedly small")
+                  photo.thumbnail((1100,1100),Image.Resampling.LANCZOS)
+                  photo.save(dst/name,"WEBP",quality=83,method=6)
+                print(f"{name}: {url} {photo.size} {len(raw)} -> {(dst/name).stat().st_size} bytes")
+                success=True
+                break
+              except Exception as exc:
+                print(f"asset source fallback for {name}: {type(exc).__name__}: {exc}")
+            if not success: raise RuntimeError("Unable to bundle "+name+"; preserving source instead of substituting a watermarked photo")
+          PY
+          test -s public/apps/wechat/media/d03-computer.webp
+          test -s public/apps/wechat/media/d03-breakfast.webp
+          test -s public/apps/wechat/media/d03-street.webp
+      - name: Commit offline image assets to D03 branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/apps/wechat/media/d03-computer.webp public/apps/wechat/media/d03-breakfast.webp public/apps/wechat/media/d03-street.webp
+          git diff --cached --quiet && exit 0
+          git commit -m 'assets(d03): bundle license-free photos without watermarks'
+          git push origin HEAD:refs/heads/feature/d03-story-20261105
