@@ -4,6 +4,7 @@
 // become available to the model as untrusted evidence.
 import {callTaiPhoneTool,taiPhoneAccessGranted} from './index.js';
 import {selectTaiPhoneTool} from '../gateway.js';
+import {analyzeTaiPhonePhoto} from './vision.js';
 const topics=/微信|聊天|消息|群聊|群里|相册|照片|熙旺|大哥|哥哥|哥|傅隆生|干爹|胡枫|阿威|仔仔|小辛|看过|知道|记得|偷看|调查/i;
 const explicit=/微信|聊天记录|群聊|相册|照片|你看过|你怎么知道|偷看|翻过|读过/i;
 const stamp=s=>s.day*1440+Number((s.clock||'00:00').slice(0,2))*60+Number((s.clock||'00:00').slice(3,5));
@@ -28,10 +29,18 @@ export function researchTaiPhone(store,{sourceMessageId='',text='',random=Math.r
   const current=store.get();
   if(!taiPhoneAccessGranted(current)||current.day!==initial.day||
     current.poweredOff||typeof document!=='undefined'&&document.hidden)return null;
-  const result=callTaiPhoneTool(current,selected.name,selected.arguments||{});
+  let result=callTaiPhoneTool(current,selected.name,selected.arguments||{});
   if(!result.ok)return null;
+  if(selected.name==='inspect_photo'&&result.data?.image_available&&
+     result.data.visual_interpretation==='not_performed'&&current.aiDraft?.phoneMcp?.visionEnabled===true){
+   await analyzeTaiPhonePhoto(store,selected.arguments?.photo_id);
+   // The same tool output now includes a verified visual caption if possible.
+   // On error, the original metadata remains; never invent image details.
+   result=callTaiPhoneTool(store.get(),selected.name,selected.arguments||{});
+   if(!result.ok)return null;
+  }
   const data=result.data||{};
-  const items=data.results||data.messages||data.photos||data.conversations||[];
+  const items=data.results||data.messages||data.photos||data.conversations||(selected.name==='inspect_photo'?[data]:[]);
   if(!Array.isArray(items)||!items.length)return null;
   // Persist only an audit record and IDs. Keep source text in the existing chat,
   // not a second unreviewed permanent memory table.
