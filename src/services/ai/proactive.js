@@ -10,6 +10,7 @@ import {dateParts} from '../calendar.js';
 import {taiPresence} from '../presence.js';
 import {visibleMessages,isConversationOpen} from '../messaging/delivery.js';
 import {combineTaiVoiceThoughts} from './voice-request-v11.js';
+import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 export const TAI_OUTREACH_DAYS=[57,60,64,68,71,75,79,83,87];
 export const TAI_CALL_DAYS=[63,73,81];
@@ -78,9 +79,17 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
   const allowVoice=!!status.minimax&&c.autonomousVoice;
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
-  const scene=followup
+  let scene=followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
    :'熙泰考虑是否主动联系熙蒙。只关注熙蒙真实提过、尚有意义的具体经历、技术进展、困难、家人或约定；也可以决定不联系。不要主动汇报自己的行程、健身、酒店、研究或社交。不主动重提或邀请国际象棋，棋局只能由固定剧情触发。不能虚构对方经历或擅自执行剧情。';
+  // On an already-due proactive turn, he may very occasionally inspect a
+  // topic from actual past dialogue. No background polling or 24/7 watcher.
+  const userSource=history(initial).filter(m=>m.from==='me').at(-1);
+  const phoneEvidence=userSource?await researchTaiPhone(store,{
+   text:String(userSource.text||''),sourceMessageId:'proactive-'+String(userSource.id||''),
+   random,now
+  }):null;
+  if(phoneEvidence&&eligible(store.get())&&store.get().day===initial.day)scene+='\\n'+phoneEvidence;
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
   const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,

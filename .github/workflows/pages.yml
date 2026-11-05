@@ -36,6 +36,16 @@ jobs:
           PHONE_PREVIEW=true GITHUB_PAGES_BASE="/${{ github.event.repository.name }}/preview/" npm run build:pages
           mv dist production-dist/preview
           mv production-dist dist
+      - name: Build Tai Vision in isolated save namespace
+        run: |
+          mv dist stable-dist
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p stable-dist/review/tai-vision-20261105
+          cp -a dist/. stable-dist/review/tai-vision-20261105/
+          rm -rf dist
+          mv stable-dist dist
+          test -s dist/review/tai-vision-20261105/index.html
+          grep -q phone-preview dist/review/tai-vision-20261105/index.html
       # Each main release must retain separate, cache-versioned previews. Without
       # this, the upload-pages-artifact action would erase every /review/ URL.
       - name: Check out isolated story55 review

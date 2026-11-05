@@ -17,6 +17,7 @@ import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
+import {researchTaiPhone} from './phone-mcp/curiosity.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
@@ -155,6 +156,14 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const turnPlan=!unheard&&!requestedCall&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
+  // A real but rare tool lookup, scoped to the user's CURRENT visible save.
+  // It is not a background watcher and never reads schedule / future story data.
+  const observed=!unheard&&!firstTextAfterCall?await researchTaiPhone(store,{
+   text:lastUser,sourceMessageId,random,now
+  }):null;
+  if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
+   request.scene+='\\n'+observed;
+  }
   if(!unheard)onTyping();
   const result=unheard?null:await askTai(request);
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));

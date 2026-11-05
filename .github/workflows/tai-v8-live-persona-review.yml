@@ -1,0 +1,24 @@
+name: Verify Tai V8 Supabase live endpoint (review only)
+on:
+  push:
+    branches: [feat/tai-v8-supabase-persona-20261105]
+  workflow_dispatch:
+jobs:
+  live-persona:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify read-only V8 persona endpoint
+        run: |
+          python3 - <<'PY'
+          import json,urllib.request
+          url="https://zmnufhswpnreeseyamlv.supabase.co/functions/v1/tai-v8-persona"
+          req=urllib.request.Request(url,headers={"Accept":"application/json"})
+          with urllib.request.urlopen(req,timeout=15) as response:
+              data=json.load(response)
+          assert data.get("ok") is True, "Endpoint did not return success"
+          assert data.get("character_key")=="chen_xitai", "Incorrect character"
+          assert data.get("version")=="v8-b-2026-11-05", "Incorrect approved version"
+          assert isinstance(data.get("content",{}).get("examples"),list), "Examples missing"
+          assert "save" not in data and "messages" not in data, "Unexpected player data in public response"
+          print("Live approved V8 persona successfully fetched; examples:",len(data["content"]["examples"]))
+          PY

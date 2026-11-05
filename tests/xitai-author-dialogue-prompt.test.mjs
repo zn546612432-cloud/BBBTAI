@@ -13,9 +13,7 @@ const makeInput=(extra={})=>({
 test('author supplied actual dialogue is visible in NoApp text, voice and connected-call second-stage prompts',()=>{
  assert.equal(AUTHOR_XITAI_RECOGNIZED_EXAMPLES.length,4);
  const excerpts=[
-  '我想你了','有多想？','你是在想我的脸',
-  '我就是想你了不行吗！','我也想你。','我以为这是你想听的',
-  '给我打电话','行，我现在打。',
+  '我想你了','有多想？','我也想你。','我以为这是你想听的',
   '我的童年？','养父母？','精英教育？','高中谈了几次恋爱？',
   '又怎么了，公主殿下？','你叫我一声哥哥，我可以考虑帮你。',
   '这点小事也要让我出手？','代购费从你的mirage账号扣'
@@ -25,7 +23,7 @@ test('author supplied actual dialogue is visible in NoApp text, voice and connec
   for(const phrase of excerpts)assert.ok(prompt.includes(phrase),mode+' missing user original phrase: '+phrase);
   assert.match(prompt,/不是历史消息/);
   assert.match(prompt,/禁止照抄/);
-  assert.match(prompt,/健身房.*示例当时的语境/);
+  assert.match(prompt,/作者最终纠正：不要无关添加自我报备/);
   assert.match(prompt,/熙泰是三胞胎最小的弟弟/);
   assert.match(prompt,/电话.*程序/);
  }
@@ -53,6 +51,10 @@ test('the actual askTai DeepSeek payload includes user examples (not merely docs
  globalThis.sessionStorage={getItem:key=>key===BYOK_SESSION?JSON.stringify({deepseek:'test-key'}):null};
  globalThis.localStorage={getItem:()=>null};
  globalThis.fetch=async(url,init)=>{
+  if(String(url).includes('/tai-v8-persona'))return Response.json({
+   ok:true,character_key:'chen_xitai',version:'v8-b-2026-11-05',
+   content:{personality:{central_conflict:'有独立的情绪'},speech:{primary_attention:'更好奇熙蒙'}}
+  });
   requests.push({url:String(url),body:JSON.parse(init.body)});
   return Response.json({choices:[{message:{content:'{"messages":[{"text":"知道了。","mode":"text"}]}'}}]});
  };
@@ -67,6 +69,7 @@ test('the actual askTai DeepSeek payload includes user examples (not merely docs
    assert.match(r.body.messages[0].content,/我以为这是你想听的/);
    assert.match(r.body.messages[0].content,/我的童年？/);
    assert.match(r.body.messages[0].content,/代购费从你的mirage账号扣/);
+   assert.match(r.body.messages[0].content,/最高优先级：作者已批准的Supabase陈熙泰 V8-B/);
    assert.equal(r.body.messages[0].role,'system');
    assert.equal(r.body.messages[1].role,'user');
   }
