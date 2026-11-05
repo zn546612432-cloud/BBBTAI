@@ -1,5 +1,6 @@
 import {authoredMoments,profiles as originalProfiles} from './data.js';
 import {isStory55} from '../../../../services/story55/state.js';
+import {d04DinnerConfirmed} from '../../../../story/d04/wechat.js';
 
 const BASE=Date.UTC(2025,4,19);
 export const momentPeople=Object.keys(originalProfiles);
@@ -15,7 +16,8 @@ export function allMoments(s){
  // Retain the original authored D01–D55 posts, including all linked photographs.
  // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
  return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
-  .filter(p=>p&&p.id&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55)));
+  .filter(p=>p&&p.id&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
+   &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);
 export const momentProfiles=s=>Object.fromEntries(Object.entries(originalProfiles).map(([name,profile])=>[name,{...profile,...getMomentContent(s).profiles?.[name]}]));
