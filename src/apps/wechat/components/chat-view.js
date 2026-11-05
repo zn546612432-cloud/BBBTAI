@@ -79,7 +79,7 @@ export function renderWeChatChat(s,id){
       messageRow(m,s,c)).join('')+'</div>'+
     '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'"'+(script?' data-story-scene="'+esc(script.id)+'"':'')+'>'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(scriptedText??s.drafts?.[id]??'')+'"'+scriptedAttributes+((line&&!script)||d01Disabled||d02Disabled||d03Disabled||d04Disabled?' disabled':'')+'>'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(scriptedText??s.drafts?.[id]??'')+'"'+scriptedAttributes+((line&&!script&&!d01line&&!d02line&&!d03line&&!d04line)||d01Disabled||d02Disabled||d03Disabled||d04Disabled?' disabled':'')+'>'+
       action('wx-emoji','表情',smileIcon)+
       action('attach-chat','发送图片',plusIcon).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
       '<button type="submit" class="wx-composer-send" aria-label="发送消息">发送</button></form>'+
