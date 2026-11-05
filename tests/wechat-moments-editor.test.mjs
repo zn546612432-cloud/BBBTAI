@@ -23,7 +23,7 @@ test('Editing built-in Moments preserves original data, 90-day schedule and priv
 
 test('Moments editor renders all posts and profile / media / reply controls',()=>{
  const s=initialState();s.editor.momentsMode='overview';
- assert.match(momentsEditor(s),/45 条/);
+ assert.match(momentsEditor(s),/46 条/);
  assert.match(momentsEditor(s),/猜猜谁该减肥了。/);
  s.editor.momentsMode='edit';s.editor.momentsSelected='zz-d15';
  let html=momentsEditor(s);
