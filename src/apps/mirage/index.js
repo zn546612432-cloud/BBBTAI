@@ -69,7 +69,6 @@ function d03BountyActions(s,o){
  if(o.id!==D03_ORDER)return '';
  const done=D03_STAGES.filter((_,i)=>s.ghost?.orders?.[d03StepId(i)]?.status==='success').length;
  if(o.status==='ACCEPTED')return '<p class="mc-brief">程序 '+done+' / '+D03_STAGES.length+' · 破譯 → 連結 → 隱匿</p>'
-  +btn('mc-d03-run','OPEN GHOST','mc-secondary',`data-id="${esc(o.id)}"`)
   +btn('mc-d03-mail','OPEN ORDER EMAIL · KIRA','mc-secondary',`data-id="${esc(o.id)}"`);
  if(o.status==='READY')return '<p class="mc-brief">程序 3 / 3 · READY TO SUBMIT</p>';
  if(o.status==='COMPLETED')return '<p class="mc-brief">✓ 文件已驗收 · 交易回執已寄送</p>';
@@ -79,7 +78,6 @@ function d04BountyActions(s,o){
  const def=D04_CONTRACTS.find(x=>x.id===o.id);if(!def)return '';
  const done=def.stages.filter((_,i)=>s.ghost?.orders?.[D04_STEP(o.id,i)]?.status==='success').length;
  if(o.status==='ACCEPTED')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · '+def.stages.join(' → ')+'</p>'
-  +btn('mc-d04-run','OPEN GHOST','mc-secondary','data-id="'+esc(o.id)+'"')
   +btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
  if(o.status==='READY')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · READY TO SUBMIT</p>';
  if(o.status==='COMPLETED')return '<p class="mc-brief">✓ 文件已驗收 · 交易回執已寄送</p>';
@@ -126,24 +124,9 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-d02-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D02_MAIL,params:{}});
  if(action==='mc-d03-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D03_MAIL,params:{}});
  if(action==='mc-d04-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D04_MAIL(id),params:{}});
- if(action==='mc-d04-run'){
-  const st=ctx.store.get(),def=D04_CONTRACTS.find(c=>c.id===id);
-  if(!def||st.content.orders.find(o=>o.id===id)?.status!=='ACCEPTED')return;
-  const next=def.stages.findIndex((_,i)=>st.ghost?.orders?.[D04_STEP(id,i)]?.status!=='success');
-  if(next<0)return ctx.toast('請提交分析結果');
-  let step=null;ctx.store.update(n=>{step=armD04Ghost(n,id,next);});
-  if(step)ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});
-  return;
- }
- if(action==='mc-d03-run'){
-  const st=ctx.store.get(),o=st.content.orders.find(x=>x.id===D03_ORDER);
-  if(o?.status!=='ACCEPTED')return;
-  const next=D03_STAGES.findIndex((_,i)=>st.ghost?.orders?.[d03StepId(i)]?.status!=='success');
-  if(next<0)return ctx.toast('請提交分析結果');
-  let step=null;ctx.store.update(n=>{step=armD03Ghost(n,next);});
-  if(step)ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});
-  return;
- }
+ // Cached old buttons follow the one approved KIRA file flow.
+ if(action==='mc-d04-run')return ctx.router.open({appId:'kira',route:'/mail/'+D04_MAIL(id),params:{}});
+ if(action==='mc-d03-run')return ctx.router.open({appId:'kira',route:'/mail/'+D03_MAIL,params:{}});
  if(action==='mc-d02-run'){const st=ctx.store.get(),seq=D02_STAGES[id];if(!seq)return;const nextIndex=seq.findIndex((_,i)=>st.ghost?.orders?.[d02StepId(id,i)]?.status!=='success');if(nextIndex<0)return ctx.toast('请返回 MIRAGE 提交');let step=d02StepId(id,nextIndex);ctx.store.update(n=>armD02Ghost(n,id,nextIndex));return ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});}
  if(action==='mc-d04-submit'){
   let ok=false;ctx.store.update(s=>{ok=submitD04Contract(s,id);});
