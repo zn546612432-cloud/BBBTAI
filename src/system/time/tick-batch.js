@@ -1,20 +1,28 @@
 import {worldMinuteRate} from './clock.js';
+import {isStory55} from '../../services/story55/state.js';
 import {BATTERY_DRAIN_INTERVAL_MS} from '../power/battery.js';
 
-// Fractions stay transient between visible clock/battery changes. Do not clone,
-// serialize and rerender a phone full of historical messages every 800ms.
+// Aggregate until something visible changes. Keep real milliseconds (charging)
+// and already-scaled game minutes (clock/discharge) as separate quantities.
 export class WorldTickBatch{
- reset(){this.elapsed=0;this.anchor=null;this.context=null;}
+ reset(){this.elapsed=0;this.gameMinutes=0;this.anchor=null;this.context=null;}
  constructor(){this.reset();}
- take(s,elapsed,options){
-  const anchor=[s.day,s.clock,s.powerMode,s.deathPhase,s.dayChargeRemainingMs].join(':'),context=JSON.stringify(options);
-  if(this.anchor!==anchor)this.elapsed=0;
+ take(s,elapsed,options={}){
+  if(!Number.isFinite(elapsed)||elapsed<=0)return null;
+  const anchor=[s.day,s.clock,s.powerMode,s.deathPhase,s.dayChargeRemainingMs].join(':');
+  const rate=worldMinuteRate(s,options),context=JSON.stringify([rate,options]);
+  if(this.anchor!==anchor){this.elapsed=0;this.gameMinutes=0;}
   const contextChanged=this.context!==null&&this.context!==context;
-  this.anchor=anchor;this.context=context;this.elapsed+=Math.max(0,elapsed);
-  const clockDue=(1-(s.worldMinuteFraction||0))/worldMinuteRate(s,options);
-  const batteryDue=s.powerMode==='short-charging'?6000-((Number(s.shortCharge?.elapsedMs)||0)%6000):['charging','sleeping'].includes(s.powerMode)?Infinity:BATTERY_DRAIN_INTERVAL_MS-(s.powerActiveMs||0);
-  const due=s.dayChargeRemainingMs>0?Math.min(800,s.dayChargeRemainingMs):Math.min(clockDue,batteryDue);
-  if(!contextChanged&&this.elapsed+1e-6<due)return 0;
-  const ready=this.elapsed;this.elapsed=0;return ready;
+  this.anchor=anchor;this.context=context;
+  this.elapsed+=elapsed;this.gameMinutes+=elapsed*rate;
+  const clockDue=this.gameMinutes+(s.worldMinuteFraction||0)+1e-9>=1;
+  const chargeDue=s.powerMode==='short-charging'
+   &&this.elapsed+(Number(s.shortCharge?.elapsedMs)||0)%6000>=6000;
+  const legacyBatteryDue=!isStory55(s)&&!['charging','sleeping','short-charging'].includes(s.powerMode)
+   &&this.elapsed+(s.powerActiveMs||0)>=BATTERY_DRAIN_INTERVAL_MS;
+  const transitionDue=s.dayChargeRemainingMs>0&&this.elapsed>=Math.min(800,s.dayChargeRemainingMs);
+  if(!contextChanged&&!clockDue&&!chargeDue&&!legacyBatteryDue&&!transitionDue)return null;
+  const frame={elapsedMs:this.elapsed,gameMinutes:this.gameMinutes};
+  this.elapsed=0;this.gameMinutes=0;return frame;
  }
 }

@@ -6,7 +6,7 @@ import {story55MinutesPerSecond,setStory55MinutesPerSecond,worldMinuteRate,tickW
 import {story55Editor} from '../src/apps/developer/features/story55/index.js';
 import {change as developerChange,input as developerInput,handle as developerHandle} from '../src/apps/developer/index.js';
 
-const start=()=>activateStory55(initialState());
+const start=()=>{const s=activateStory55(initialState());s.unlocked=true;return s;};
 test('D03 slider UI is a real mobile range control with default 5 minutes per second',()=>{
  const s=start();
  const html=story55Editor(s);
@@ -44,11 +44,12 @@ test('speed persists across save/reload, clamps unsafe values, and zero pauses g
  tickWorld(restored,2000);
  assert.equal(restored.clock,'08:01');
 });
-test('private/typing time rates remain slow and the reset button restores 5',()=>{
+test('App time ignores home slider and keyboard focus; reset restores home 5',()=>{
  const s=start();
  setStory55MinutesPerSecond(s,9);
- assert.equal(worldMinuteRate(s,{taiChat:true}),2/60000);
- assert.equal(worldMinuteRate(s,{focused:true}),2/60000);
+ s.nav.current={appId:'mirage',route:'/chat/flow'};
+ assert.equal(worldMinuteRate(s,{taiChat:true}),5/60000);
+ assert.equal(worldMinuteRate(s,{focused:true}),5/60000);
  let message='';
  developerHandle('s55-speed-default',{dataset:{}},{
   store:{get:()=>s,update:fn=>fn(s)},toast:t=>{message=t;},router:{}

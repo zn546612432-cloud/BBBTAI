@@ -1,3 +1,4 @@
+import {PHONE_RUNTIME_POLICY} from '../../../../system/runtime/policy.js';
 import {STORY55_DAYS} from '../../../../story/story55/catalog.js';
 import {isStory55,story55Config,nodeStatus,completed,date55} from '../../../../services/story55/state.js';
 import {deploymentPercent} from '../../../../services/story55/projects.js';
@@ -13,7 +14,7 @@ function timeSpeedPanel(s){
  const speed=story55MinutesPerSecond(s);
  return `<section class="card s55-time-speed"><h3>遊戲時間流速</h3>
  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-  <label for="s55-clock-speed">普通瀏覽／GHOST</label>
+  <label for="s55-clock-speed">主畫面掛機</label>
   <strong id="s55-clock-speed-value" aria-live="polite">${speed===0?'暫停':speed+' 分鐘／秒'}</strong>
  </div>
  <input id="s55-clock-speed" data-s55-clock-speed type="range"
@@ -23,7 +24,7 @@ function timeSpeedPanel(s){
  <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.75">
   <span>0 · 暫停</span><span>5 · 預設</span><span>10 · 最快</span>
  </div>
- <p class="editor-help">拖動滑桿，鬆手立即生效並自動儲存。只影響普通瀏覽和 GHOST 的時鐘；打字、熙泰聊天、充電和終章特殊計時保持原有規則。</p>
+ <p class="editor-help">所有 App（含 GHOST、微信、Mirage）內、鎖屏、通知與通話：現實 1 分鐘＝手機 ${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘。滑桿只調整主畫面掛機；設為 0 時全局暫停時間與耗電。電量按實際經過的手機時間計算，滿電從 08:00 到 23:00 約剩 20%。短充仍按現實 1 分鐘最多補 10%，長充與終章保持既定流程。</p>
  <button class="s55-button" type="button" data-action="s55-speed-default">恢復預設（${STORY55_SPEED_DEFAULT} 分鐘／秒）</button>
  </section>`;
 }

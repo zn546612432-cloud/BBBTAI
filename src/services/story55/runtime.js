@@ -1,3 +1,4 @@
+import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
@@ -20,7 +21,7 @@ export function activateStory55(s){
   ...(typeof s.story55?.minutesPerSecond==='number'&&Number.isFinite(s.story55.minutesPerSecond)&&s.story55.minutesPerSecond>=0&&s.story55.minutesPerSecond<=10?{minutesPerSecond:s.story55.minutesPerSecond}:{})};
  s.story55={version:1,config:c,completed:{},projects:{},reports:{},scenes:{},hardware:1,liabilities:0,livingDebt:0,expenseDays:[],questions:0,ended:false};
  Object.assign(s.story55,imported);
- Object.assign(s,{day:1,clock:'08:00',calendar:{anchorDay:1,anchorDate:c.startDate},deathPhase:null,powerMode:'idle',shortCharge:null,shortChargeGains:{},poweredOff:false,emergencyCharge:false,batteryPercent:100,dayChargeRemainingMs:0,worldMinuteFraction:0,powerActiveMs:0,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,events:[],notifications:[],invitations:[],matches:[],storyChargeGates:[]});
+ Object.assign(s,{day:1,clock:'08:00',calendar:{anchorDay:1,anchorDate:c.startDate},deathPhase:null,powerMode:'idle',shortCharge:null,shortChargeGains:{},poweredOff:false,emergencyCharge:false,batteryPercent:100,dayChargeRemainingMs:0,worldMinuteFraction:0,powerActiveMs:0,powerGameMinuteFraction:0,powerClockVersion:PHONE_RUNTIME_POLICY.version,chargeFraction:0,sleepWakeAt:null,alarmRinging:null,events:[],notifications:[],invitations:[],matches:[],storyChargeGates:[]});
  s.nav={current:{appId:'home',route:'/',params:{}},stack:[]};
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
  s.content.orders=[];s.content.mail=[];s.content.missionFiles=[];s.content.reminders=[];s.content.calendarEvents=[];

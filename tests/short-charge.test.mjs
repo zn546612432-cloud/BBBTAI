@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {batteryPercent,beginShortCharge,endShortCharge,tickShortChargeBattery,settleOfflineShortCharge,shortChargeGainToday,shortChargeStoryInterrupted,drainBattery,plugIn,SHORT_CHARGE_MAX_GAIN} from '../src/system/power/battery.js';
-import {tickWorld,advanceGameMinutes,worldMinuteRate,SHORT_CHARGE_MINUTES_PER_MS} from '../src/system/time/clock.js';
+import {tickWorld,advanceGameMinutes,worldMinuteRate,STORY55_CHAT_MINUTES_PER_MS} from '../src/system/time/clock.js';
 import {dynamicIsland} from '../src/system/power/island.js';
 import {status} from '../src/system/shell.js';
 import {seedD02} from '../src/story/d02/runtime.js';
 import {MessageDelivery} from '../src/services/messaging/delivery.js';
-const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
+const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.unlocked=true;s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
 test('Dynamic Island offers short and long charging choices',()=>{
  const s=d02();
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
@@ -18,31 +18,31 @@ test('Dynamic Island offers short and long charging choices',()=>{
  assert.doesNotMatch(html,/现实 1 分钟|次日 08:00|最多 \+10%/);
  assert.match(status(s,{islandExpanded:true,islandPage:'select'}),/is-charge-select/);
 });
-test('D02 short charging advances three game hours per real minute only when allowed',()=>{
+test('D02 short charging uses unified home/App rates while charging by real time',()=>{
  const s=d02();s.batteryPercent=70;
  assert.equal(beginShortCharge(s),true);
- assert.equal(worldMinuteRate(s,{focused:true,taiChat:true}),SHORT_CHARGE_MINUTES_PER_MS);
- assert.equal(worldMinuteRate(s,{focused:true,taiChat:false,fastForward:false}),2/60000);
- assert.equal(worldMinuteRate(s,{focused:false,taiChat:true,fastForward:false}),2/60000);
+ assert.equal(worldMinuteRate(s,{focused:true,taiChat:true}),5/1000);
+ assert.equal(worldMinuteRate(s,{focused:true,taiChat:false,fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
+ assert.equal(worldMinuteRate(s,{focused:false,taiChat:true,fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
  tickShortChargeBattery(s,20_000);
- assert.equal(tickWorld(s,20_000,{focused:true,taiChat:true}).minutes,60);
- assert.equal(s.day,2);assert.equal(s.clock,'09:00');assert.equal(batteryPercent(s),73);
+ assert.equal(tickWorld(s,20_000,{focused:true,taiChat:true}).minutes,100);
+ assert.equal(s.day,2);assert.equal(s.clock,'09:40');assert.equal(batteryPercent(s),73);
  assert.equal(drainBattery(s,20_000),0);
  tickShortChargeBattery(s,40_000);tickWorld(s,40_000);
- assert.equal(s.clock,'11:00');assert.equal(batteryPercent(s),80);
+ assert.equal(s.clock,'13:00');assert.equal(batteryPercent(s),80);
  tickShortChargeBattery(s,60_000);tickWorld(s,60_000);
- assert.equal(s.clock,'14:00');assert.equal(batteryPercent(s),80);
+ assert.equal(s.clock,'18:00');assert.equal(batteryPercent(s),80);
  assert.equal(s.shortCharge.elapsedMs,60_000);assert.equal(SHORT_CHARGE_MAX_GAIN,10);
 });
 test('Unplugging stops acceleration immediately, retains the earned charge and day',()=>{
  const s=d02();s.batteryPercent=84;
  assert.equal(beginShortCharge(s),true);
  tickShortChargeBattery(s,30_000);tickWorld(s,30_000);
- assert.equal(s.clock,'09:30');assert.equal(s.batteryPercent,89);
+ assert.equal(s.clock,'10:30');assert.equal(s.batteryPercent,89);
  assert.equal(endShortCharge(s),true);assert.equal(s.powerMode,'idle');
  assert.equal(s.shortCharge,null);assert.equal(s.day,2);
  assert.equal(endShortCharge(s),false);
- tickWorld(s,3_000);assert.equal(s.clock,'09:45');
+ tickWorld(s,3_000);assert.equal(s.clock,'10:45');
 });
 test('short charge stops at 23:59 instead of skipping to tomorrow',()=>{
  const s=d02();s.clock='23:50';s.batteryPercent=70;
@@ -88,14 +88,14 @@ test('D02 sale SMS still delivers at its original game timestamp during accelera
 });
 
 test('original plot gate blocks BOTH long and short charging',()=>{
- const s=activateStory55(initialState());s.day=2;s.clock='09:30';
+ const s=activateStory55(initialState());s.day=2;s.clock='09:30';s.unlocked=true;
  assert.equal(plugIn(s),false,'unfinished D01 story still protects a long charge');
  assert.equal(beginShortCharge(s),false,'the same gate blocks short charge');
  s.story55.completed.intro={day:1,clock:'12:00',test:true};
  assert.equal(beginShortCharge(s),true);
  tickShortChargeBattery(s,20_000);
- assert.equal(tickWorld(s,20_000).minutes,60);
- assert.equal(s.day,2);assert.equal(s.clock,'10:30');
+ assert.equal(tickWorld(s,20_000).minutes,100);
+ assert.equal(s.day,2);assert.equal(s.clock,'11:10');
  assert.equal(endShortCharge(s),true);
 });
 
@@ -156,14 +156,14 @@ test('background/closed browser credits battery without advancing story time',()
  assert.equal(shortChargeGainToday(s),10);
 });
 
-test('short charging respects accelerated browsing and preserves its separate home charge rate',()=>{
+test('short charging has no separate clock: App slow, home fast',()=>{
  const s=d02();s.batteryPercent=70;beginShortCharge(s);
- assert.equal(worldMinuteRate(s,{fastForward:true}),SHORT_CHARGE_MINUTES_PER_MS);
- assert.equal(worldMinuteRate(s,{fastForward:false}),5/1000);
+ assert.equal(worldMinuteRate(s,{fastForward:true}),5/1000);
+ assert.equal(worldMinuteRate(s,{fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
  tickWorld(s,9_000,{fastForward:false});
- assert.equal(s.clock,'08:45');
+ assert.equal(s.clock,'08:00');
  tickWorld(s,1_000,{fastForward:true});
- assert.equal(s.clock,'08:48');assert.equal(s.powerMode,'short-charging');
+ assert.equal(s.clock,'08:05');assert.equal(s.powerMode,'short-charging');
 });
 
 test('an active compulsory story scene forces a quiet unplug',()=>{
@@ -178,7 +178,7 @@ test('foreground notification pauses and background resumption are wired without
  const {readFileSync}=await import('node:fs');
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/shortChargeNoticePausedUntil=Date\.now\(\)\+5000/);
- assert.match(main,/!shade&&!tasks\.visible/);
+ assert.match(main,/overlay:shade\|\|tasks\.visible/);
  assert.match(main,/settleResumedShortCharge/);
  assert.match(main,/\!ok\)toast\('现在无法短充'\)/);
  assert.doesNotMatch(main,/短充已开始/);

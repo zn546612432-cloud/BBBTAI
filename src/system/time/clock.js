@@ -1,9 +1,9 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
-import {d04GroupBroadcastActive} from '../../story/d04/wechat.js';
+import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
-import {endShortCharge,isShortCharging} from '../power/battery.js';
-// Civil game time, story day and battery are deliberately independent.
+import {endShortCharge,isShortCharging,drainGameBattery} from '../power/battery.js';
+// Legacy clock constants stay available for old saved campaigns.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
 export const NORMAL_MINUTES_PER_MS=1440/1_800_000;
 export const CHARGING_MINUTES_PER_MS=60/3000;
@@ -11,21 +11,13 @@ export const SHORT_CHARGE_MINUTES_PER_MS=180/60_000; // 1 real min = 3 game hour
 export const SLEEPING_MINUTES_PER_MS=60/1000;
 export const TYPING_MINUTES_PER_MS=2/60000;
 export const TAI_CHAT_MINUTES_PER_MS=1/60000; // real 1 min = game 1 min
-// D01–D55 normal browsing / GHOST pace: 1 real second = 5 game minutes.
-// Typing and private conversation intentionally keep their slower readable pace.
-// The legacy campaign retains its original clock rate for compatibility.
-export const STORY55_NORMAL_MINUTES_PER_MS=5/1000;
-export const STORY55_SPEED_DEFAULT=5;
+// The developer slider controls HOME only; zero pauses clock and discharge everywhere.
+export const STORY55_NORMAL_MINUTES_PER_MS=PHONE_RUNTIME_POLICY.homeMinutesPerRealSecond/1000;
+export const STORY55_SPEED_DEFAULT=PHONE_RUNTIME_POLICY.homeMinutesPerRealSecond;
 export const STORY55_SPEED_MIN=0;
 export const STORY55_SPEED_MAX=10;
 export const STORY55_SPEED_STEP=0.5;
-// Only ordinary browsing and GHOST use this adjustable speed. A zero value
-// pauses civil game time, not battery drain, incoming messages or animations.
-export function story55MinutesPerSecond(s){
- const value=s?.story55?.minutesPerSecond;
- return typeof value==='number'&&Number.isFinite(value)&&value>=STORY55_SPEED_MIN&&value<=STORY55_SPEED_MAX
-  ?value:STORY55_SPEED_DEFAULT;
-}
+export const story55MinutesPerSecond=phoneHomeSpeed;
 export function setStory55MinutesPerSecond(s,value){
  if(!isStory55(s))return false;
  const n=Number(value);
@@ -37,8 +29,7 @@ export function setStory55MinutesPerSecond(s,value){
  return true;
 }
 export const STORY55_FINALE_REPLY_MINUTES_PER_MS=1/3000; // 3 game minutes take 9 seconds.
-export const STORY55_CHAT_MINUTES_PER_MS=2/60000;
-export const D04_BROADCAST_MINUTES_PER_MS=1.2/1000; // delivery-paced, normal slider untouched
+export const STORY55_CHAT_MINUTES_PER_MS=PHONE_RUNTIME_POLICY.appMinutesPerRealMinute/60000;
 const DAY_MINUTES=1440;
 export const clockMinutes=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
 export const absoluteMinute=s=>(s.day-1)*DAY_MINUTES+clockMinutes(s.clock);
@@ -81,6 +72,7 @@ export function advanceGameMinutes(s,requested){
   const target=Math.min(short?1439:1440+180,from+Math.max(0,Math.floor(requested)));
   if(target<=from)return {minutes:0,event:'d01-hold'};
   s.clock=isoTime(target%1440);d.nightAfterMidnight=target>=1440;
+  if(!short)drainGameBattery(s,target-from);
   if(short&&target===1439)endShortCharge(s);
   if(target===1440+180){d.frozenAt03=true;return {minutes:target-from,event:'d01-hold'};}
   return {minutes:target-from,event:short&&target===1439?'short-charge-end':'none'};
@@ -104,6 +96,8 @@ export function advanceGameMinutes(s,requested){
  }
  if(!isStory55(s)&&s.deathPhase!=='recovered'&&from<DEATH_START&&target>=DEATH_START&&DEATH_START<=stop.at)stop={at:DEATH_START,type:'death-start'};
  const advanced=stop.at-from;
+ // Settle only the minutes actually reached, before alarm/emergency/charge transitions.
+ drainGameBattery(s,advanced);
  setAbsoluteMinute(s,stop.at);
  const reachedShortEnd=short&&clockMinutes(s.clock)===1439;
  if(reachedShortEnd)endShortCharge(s);
@@ -129,25 +123,26 @@ export function advanceGameMinutes(s,requested){
  return {minutes:advanced,event:stop.type==='none'&&reachedShortEnd?'short-charge-end':stop.type};
 }
 export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId==='noapp'&&(n.route==='/chat/tai'||n.route==='/call'))||(n.appId==='mirage'&&/^\/chat\//.test(n.route)&&/ouroboros/i.test(n.route));}
-export function worldMinuteRate(s,{focused=false,taiChat=false,fastForward=true}={}){
- // D55: after the 23-second recording actually finishes, 3 game minutes
- // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
+export function worldMinuteRate(s,options={}){
+ const {focused=false,taiChat=false,fastForward=true}=options;
  if(endingAwaitingReply55(s))return STORY55_FINALE_REPLY_MINUTES_PER_MS;
- // Scripted D04 WeChat needs human reading time, regardless of slider speed.
- if(isStory55(s)&&s.day===4&&s.nav?.current?.appId==='wechat'&&s.nav.current.route?.startsWith('/chat/'))return STORY55_CHAT_MINUTES_PER_MS;
- const normal=isStory55(s)?story55MinutesPerSecond(s)/1000:NORMAL_MINUTES_PER_MS;
- // During a busy scripted D04 group exchange, don't let a high clock-speed
- // slider skip the next scene before the 1.9s-per-bubble messages arrive.
- if(d04GroupBroadcastActive(s))return Math.min(normal,D04_BROADCAST_MINUTES_PER_MS);
- return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
+ if(isStory55(s))return phoneSceneMinuteRate(s,options);
+ // Compatibility for archived campaigns; current browser play always uses Story55.
+ const normal=NORMAL_MINUTES_PER_MS;
+ return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?TAI_CHAT_MINUTES_PER_MS:focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
-export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false,fastForward=true}={}){
+export function tickWorld(s,realMilliseconds,options={}){
+ if(!Number.isFinite(realMilliseconds)||realMilliseconds<=0)return {minutes:0};
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
- if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge)return {minutes:0};
- const rate=worldMinuteRate(s,{focused,taiChat,fastForward});
- const total=(Number(s.worldMinuteFraction)||0)+Math.max(0,realMilliseconds)*rate;
+ if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge||s.poweredOff||options.hidden||options.restarting)return {minutes:0};
+ const rate=worldMinuteRate(s,options);
+ if(rate===0)return {minutes:0};
+ // Batches carry already-scaled game minutes, so switching App/Home cannot
+ // re-price earlier reading time at the new speed.
+ const budget=Number.isFinite(options.elapsedGameMinutes)?Math.max(0,options.elapsedGameMinutes):realMilliseconds*rate;
+ const total=(Number(s.worldMinuteFraction)||0)+budget;
  // Decimal floating-point can put 2999ms + 1ms just below 1 minute.
  // Account for sub-nanominute rounding without fast-forwarding normal play.
  const whole=Math.floor(total+1e-9);
