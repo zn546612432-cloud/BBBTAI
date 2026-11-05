@@ -15,9 +15,9 @@ test('private chat commits visible time/battery changes rather than rewriting al
 });
 test('date jumps discard pending elapsed time; charging still completes its short transition',()=>{
  const s=activateStory55(initialState()),batch=new WorldTickBatch(),options={};
- assert.equal(batch.take(s,2000,options),0);
- s.clock='10:00';assert.equal(batch.take(s,1000,options),0);
- assert.equal(batch.take(s,2000,options),3000);
+ assert.equal(batch.take(s,100,options),0);
+ s.clock='10:00';assert.equal(batch.take(s,100,options),0);
+ assert.equal(batch.take(s,100,options),200);
  s.dayChargeRemainingMs=1200;assert.equal(batch.take(s,800,options),800);
  batch.reset();assert.equal(batch.take(s,800,options),800);
 });
