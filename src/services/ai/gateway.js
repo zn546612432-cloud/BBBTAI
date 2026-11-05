@@ -87,7 +87,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
 // A single validated local photo is the ONLY image. Never send other phone
 // apps, conversation history, schedule, or full save to this model.
 export async function describeTaiImage({dataUrl,authorLabel=''}={}){
- if(typeof dataUrl!=='string'||!/^data:image\\/(?:jpeg|png|webp|gif);base64,[a-z0-9+/=]+$/i.test(dataUrl)||dataUrl.length>7_000_000)
+ if(typeof dataUrl!=='string'||!/^data:image\/(?:jpeg|png|webp|gif);base64,[a-z0-9+/=]+$/i.test(dataUrl)||dataUrl.length>7_000_000)
   throw Error('图片编码无效或过大');
  const c=apiConfig();
  if(!c.deepseek)throw Error('请先在 NoApp AI 设置中输入 DeepSeek API Key');
