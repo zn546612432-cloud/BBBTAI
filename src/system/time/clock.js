@@ -131,6 +131,8 @@ export function worldMinuteRate(s,{focused=false,taiChat=false,fastForward=true}
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
  if(endingAwaitingReply55(s))return STORY55_FINALE_REPLY_MINUTES_PER_MS;
+ // Scripted D04 WeChat needs human reading time, regardless of slider speed.
+ if(isStory55(s)&&s.day===4&&s.nav?.current?.appId==='wechat'&&s.nav.current.route?.startsWith('/chat/'))return STORY55_CHAT_MINUTES_PER_MS;
  const normal=isStory55(s)?story55MinutesPerSecond(s)/1000:NORMAL_MINUTES_PER_MS;
  return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
