@@ -9,6 +9,7 @@ import {unreadAppCount} from '../src/services/unread-badges.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
 import {IncomingBannerQueue} from '../src/services/messaging/incoming-banner-queue.js';
 import {worldMinuteRate,D04_BROADCAST_MINUTES_PER_MS} from '../src/system/time/clock.js';
+import {patchElement} from '../src/system/dom.js';
 
 const store=s=>({get:()=>s,update:fn=>fn(s)});
 const conversation=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
@@ -108,4 +109,25 @@ test('D04 optional player answer appears in group composer, never auto-sent',()=
  assert.match(input,/data-story-type="看見了"/);
  assert.doesNotMatch(input,/ disabled/);
  assert.equal(conversation(s,'group').messages.some(m=>m.from==='me'&&m.storyD04),false);
+});
+
+test('native focused composer accepts next preset stage after a manual Send',()=>{
+ const element=(stage,value)=> {
+  const map=new Map([['name','text'],['data-story-type',value],['data-story-stage',stage],['value',value]]);
+  return {
+   nodeType:1,tagName:'INPUT',ownerDocument:{activeElement:null},value,checked:false,
+   get attributes(){return [...map].map(([name,value])=>({name,value}));},
+   getAttribute:name=>map.get(name)??null,
+   hasAttribute:name=>map.has(name),
+   setAttribute:(name,value)=>map.set(name,value),
+   removeAttribute:name=>map.delete(name),
+   closest:selector=>selector==='.wx-conversation'?{}:null
+  };
+ };
+ const old=element('d04:hufeng-am:2','');
+ const next=element('d04:hufeng-am:4','灰比你頭髮還多');
+ old.ownerDocument.activeElement=old; // Safari retains focus after Send
+ patchElement(old,next);
+ assert.equal(old.value,'灰比你頭髮還多');
+ assert.equal(old.getAttribute('data-story-stage'),'d04:hufeng-am:4');
 });
