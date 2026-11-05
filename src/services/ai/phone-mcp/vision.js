@@ -4,6 +4,7 @@
 // Descriptions are cached in the save, NOT full image data or raw provider replies.
 import {taiPhoneAccessGranted,callTaiPhoneTool} from './index.js';
 import {describeTaiImage} from '../gateway.js';
+import {photoSourceFingerprint} from './source-key.js';
 
 export const VISION_MODEL='deepseek-flash';
 export const VISION_DAILY_LIMIT=3;
@@ -11,14 +12,7 @@ const inFlight=new WeakMap();
 const safeText=(v,n=500)=>typeof v==='string'?v.slice(0,n):'';
 const localImage=/^data:image\/(?:jpeg|png|webp|gif);base64,[a-zA-Z0-9+/=]+$/i;
 
-export function fingerprintTaiPhoto(src){
- if(typeof src!=='string'||!src)return '';
- // Lightweight change detector: prevents using a cached caption after an
- // image has been replaced. Never interpreted as a security proof.
- let h=2166136261;
- for(let i=0;i<src.length;i++){h=Math.imul(h^src.charCodeAt(i),16777619);}
- return (h>>>0).toString(16)+'-'+src.length;
-}
+export const fingerprintTaiPhoto=photoSourceFingerprint;
 
 export function currentVisionPhoto(s,id){
  if(!taiPhoneAccessGranted(s)||!id||typeof id!=='string')return null;
@@ -100,7 +94,7 @@ export async function analyzeTaiPhonePhoto(store,id,{
    const summary=safeText(raw?.summary,680).trim();
    if(!summary)throw Error('视觉模型没有返回有效图片描述');
    const current=store.get();
-   if(current.day!==start.day||!canAnalyzeTaiPhoto(current,id).ok||
+   if(current.day!==start.day||!taiPhoneAccessGranted(current)||current.aiDraft?.phoneMcp?.visionEnabled!==true||
       fingerprintTaiPhoto(currentVisionPhoto(current,id)?.src)!==fingerprint)
     return {ok:false,error:'photo_changed_during_analysis'};
    const entry={fingerprint,model:VISION_MODEL,summary,
