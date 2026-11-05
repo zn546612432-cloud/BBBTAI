@@ -97,3 +97,15 @@ test('D04 group delivery temporarily caps clock speed so scenes do not outrun bu
  assert.ok(s.story55.d04Chats.morning.completed);
  assert.equal(worldMinuteRate(s),5/1000);
 });
+
+test('D04 optional player answer appears in group composer, never auto-sent',()=>{
+ const s=state(4,'11:00');
+ s.story55.d04Chats={video:{started:true,index:20,completed:true,nextAt:null},videoReplied:false};
+ s.nav.current={appId:'wechat',route:'/chat/group',params:{}};
+ const markup=renderWeChatChat(s,'group');
+ const input=markup.match(/<input name="text"[^>]*>/)?.[0]||'';
+ assert.match(input,/value="看見了"/);
+ assert.match(input,/data-story-type="看見了"/);
+ assert.doesNotMatch(input,/ disabled/);
+ assert.equal(conversation(s,'group').messages.some(m=>m.from==='me'&&m.storyD04),false);
+});
