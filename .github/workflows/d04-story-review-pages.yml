@@ -150,6 +150,7 @@ jobs:
           for spec in \
             'd03story:d03-20261105' \
             'd04story:d04-20261105' \
+            'd04story:d04-messaging-20261105' \
             'story55:55-20261101' \
             'd03:d03-flow-20261101' \
             'd55:d55-finale-20261101' \
@@ -229,6 +230,8 @@ jobs:
           test -s dist/review/d04-20261105/apps/wechat/media/d04-cat.webp
           test -s dist/review/d04-20261105/apps/wechat/media/d04-jacket.webp
           test -s dist/review/d04-20261105/index.html
+          test -s dist/review/d04-messaging-20261105/index.html
+          test -s dist/review/d04-messaging-20261105/release.json
           test -s dist/review/d04-20261105/release.json
       - name: Configure Pages
         uses: actions/configure-pages@v5
