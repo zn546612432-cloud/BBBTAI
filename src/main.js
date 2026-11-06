@@ -1,4 +1,5 @@
 import {isStory55} from './services/story55/state.js';
+import {wishEventsDue,tickWishes} from './services/wishes/index.js';
 import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './story/d01/runtime.js';
 import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging/phone-story-scheduler.js';
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
@@ -424,6 +425,7 @@ setInterval(()=>{
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+ if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
