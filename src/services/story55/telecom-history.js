@@ -13,7 +13,7 @@ export function restorePreviousSMSHistory(storage,state){
    if(typeof source?.id!=='string'||!Array.isArray(source.messages))continue;
    const historical=source.messages.filter(m=>
     typeof m?.id==='string'&&typeof m?.sentDate==='string'&&
-    m.sentDate<'2025-05-19'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(m.sentDate)&&
+    m.sentDate<'2025-05-19'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(m.sentDate)&&
     !m.demo&&!m.schedule&&typeof m.text==='string'
    );
    if(!historical.length)continue;
