@@ -48,7 +48,7 @@ export function nextGhostRound(s,id){
  if(o.type==='veil')Object.assign(o.board,{code:b.code,input:''});
  return true;
 }
-export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;const d02=d02OrderOfStep(id);if(d02&&(s.content.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||!s.story55?.d02?.deployed?.[d02]||s.day>D02_DEADLINES[d02].day||s.day===D02_DEADLINES[d02].day&&s.clock>D02_DEADLINES[d02].clock))return false;
+export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;if(o.requiresKeyEntry&&!o.keyVerified)return false;const d02=d02OrderOfStep(id);if(d02&&(s.content.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||!s.story55?.d02?.deployed?.[d02]||s.day>D02_DEADLINES[d02].day||s.day===D02_DEADLINES[d02].day&&s.clock>D02_DEADLINES[d02].clock))return false;
  if(d03OrderOfStep(id)&&!d03CanRun(s,id))return false;
  if(d04OrderOfStep(id)&&!d04CanRun(s,id))return false;
  if(id===D01_REPAIR){o.settings??={};o.settings.pipeNetwork=true;o.settings.pipeSize=[5,5,6,6,7][Math.min(4,Math.max(0,Number(s.story55?.d01?.completedRounds)||0))];o.settings.seconds=null;}
