@@ -47,12 +47,29 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
  }finally{await rm(folder,{recursive:true,force:true});}
 });
 
-test('main Pages deployment preserves every named isolated review alongside production',async()=>{
+test('main Pages packaging only retains 4 approved sites and never rebuilds 14 retired reviews',async()=>{
  const workflow=await readFile(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');
- assert.match(workflow,/Preserve isolated historical review sites/);
- for(const name of [
-  '55-20261101','d03-flow-20261101','d55-finale-20261101',
-  'ios-badges-20261102','d01-cross-app-20261102','d01-20261102'
- ])assert.ok(workflow.includes(name),'Missing review in main deployment: '+name);
- assert.match(workflow,/test -s "dist\/review\/\$name\/index\.html"/);
+ const audit=await readFile(new URL('../scripts/audit-pages-site.mjs',import.meta.url),'utf8');
+ // Production and its latest preview remain on the same Pages URL.
+ assert.match(workflow,/branches: \[main\]/);
+ assert.match(workflow,/npm run build:pages/);
+ assert.match(workflow,/production-dist\/preview/);
+ assert.match(workflow,/review\/tai-vision-20261105/);
+ assert.match(workflow,/review\/55-20261101/);
+ assert.match(workflow,/ref: feat\/story55-dev-snapshot-safety-20261101/);
+ assert.match(workflow,/audit-pages-site\.mjs dist/);
+ assert.match(workflow,/actions\/deploy-pages@v4/);
+ // Retired previews may still exist in git history; they must not be deployed.
+ const oldReviewNames=[
+  'd03-flow-20261101','d55-finale-20261101','ios-badges-20261102',
+  'd01-cross-app-20261102','d01-20261102','d01-file-20261102',
+  'd01-linkfix-20261102','xitai-bond-20261102','xitai-callfix-20261102',
+  'xitai-calm-20261102','xitai-phone-20261102','xitai-v10-20261102',
+  'noapp-v2-20261103','noapp-v3-20261103'
+ ];
+ assert.equal(oldReviewNames.length,14);
+ for(const name of oldReviewNames)assert.equal(workflow.includes(name),false,'Old preview still packaged: '+name);
+ assert.doesNotMatch(workflow,/Preserve isolated historical review sites/);
+ assert.match(audit,/allowedReviews=\['55-20261101','tai-vision-20261105'\]/);
+ assert.match(audit,/maxBytes=450\*1024\*1024/);
 });
