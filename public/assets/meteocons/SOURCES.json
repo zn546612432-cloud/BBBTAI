@@ -1,0 +1,205 @@
+{
+  "upstream": "https://github.com/basmilius/meteocons",
+  "version": "3.0.0-next.10",
+  "style": "fill",
+  "license": "MIT",
+  "attribution": "Meteocons weather icons by Bas Milius (MIT)",
+  "categories": [
+    "svg",
+    "svg-static"
+  ],
+  "files": [
+    {
+      "path": "fill/clear-day.svg",
+      "sha256": "4b1f6766e201163dfabfc8e1e73387c9e5bba09f1c468b35c7be68b6bce54169",
+      "bytes": 1096,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/clear-day.svg"
+    },
+    {
+      "path": "static/clear-day.svg",
+      "sha256": "2fea6c6287ddbd72f059ce6639cf0b2e43e76d0c657e9f7646dbdf5d1ce7417d",
+      "bytes": 957,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/clear-day.svg"
+    },
+    {
+      "path": "fill/clear-night.svg",
+      "sha256": "93b4d005ef1254eb502da514edd1664cb3e514125562f430719e64a1ea768535",
+      "bytes": 880,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/clear-night.svg"
+    },
+    {
+      "path": "static/clear-night.svg",
+      "sha256": "7e2f2042f5389af304c73880f013dfae7b45d7dfa13d1f167fe00e7fc4cf7d60",
+      "bytes": 673,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/clear-night.svg"
+    },
+    {
+      "path": "fill/mostly-clear-day.svg",
+      "sha256": "03095d076139e0bf49c4b2b0698ab8849d83ee12df8bab78c68b46547a3eda00",
+      "bytes": 2324,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/mostly-clear-day.svg"
+    },
+    {
+      "path": "static/mostly-clear-day.svg",
+      "sha256": "883ba3bccde20a6166392f120e47f224ce20b3bb6c229ce2b0d3e41f310bb046",
+      "bytes": 2000,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/mostly-clear-day.svg"
+    },
+    {
+      "path": "fill/mostly-clear-night.svg",
+      "sha256": "9868688ef4d52796c4d7a6cb8cb9bb44cd955381dcf92e0ab63a8b59060a5823",
+      "bytes": 2112,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/mostly-clear-night.svg"
+    },
+    {
+      "path": "static/mostly-clear-night.svg",
+      "sha256": "fc51eb02aad1cb44cdd9ed9bd40198542df2b44cb54c71792f745df9172de3ac",
+      "bytes": 1720,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/mostly-clear-night.svg"
+    },
+    {
+      "path": "fill/partly-cloudy-day.svg",
+      "sha256": "1ed1e019e205dfc88b884177c570c16ef4d8a8c36bbe2d6a120969e49de9454e",
+      "bytes": 2537,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/partly-cloudy-day.svg"
+    },
+    {
+      "path": "static/partly-cloudy-day.svg",
+      "sha256": "6fdaea20667eee93deadd3665329ba57ec848881786d4bd055662581b80d706f",
+      "bytes": 2213,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/partly-cloudy-day.svg"
+    },
+    {
+      "path": "fill/partly-cloudy-night.svg",
+      "sha256": "1c8b74c3455ee86e0f6439e7639ff0c7f3d4b72b214eadc1df674b064a929ff6",
+      "bytes": 2116,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/partly-cloudy-night.svg"
+    },
+    {
+      "path": "static/partly-cloudy-night.svg",
+      "sha256": "635859a1ebc6d82e61c96bedeb4a468ee15757687de1c724a0632660d952e2be",
+      "bytes": 1724,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/partly-cloudy-night.svg"
+    },
+    {
+      "path": "fill/partly-cloudy-day-rain.svg",
+      "sha256": "dd41b9fb207809a56a421c2ded222a934646e6e22ead33be1921aca1cf6791e7",
+      "bytes": 3985,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/partly-cloudy-day-rain.svg"
+    },
+    {
+      "path": "static/partly-cloudy-day-rain.svg",
+      "sha256": "5d4416fef714e82ad08d144d528ecf1361368a5763843df7e3487467077ab8fb",
+      "bytes": 2792,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/partly-cloudy-day-rain.svg"
+    },
+    {
+      "path": "fill/partly-cloudy-night-rain.svg",
+      "sha256": "86f1af5f20eadc320996211295dcbd52e367e72ed7aacbfdbc9898fe9d2e9b96",
+      "bytes": 3569,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/partly-cloudy-night-rain.svg"
+    },
+    {
+      "path": "static/partly-cloudy-night-rain.svg",
+      "sha256": "301725f578f989b9547e15db45cffae3404f7c446c18b4b8a76c777bb7c5f7d8",
+      "bytes": 2308,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/partly-cloudy-night-rain.svg"
+    },
+    {
+      "path": "fill/overcast.svg",
+      "sha256": "71f0b2dbae1df4278ca304f9b07938efe34eff8ae1be2cfd0a6f0a9c46097525",
+      "bytes": 2110,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/overcast.svg"
+    },
+    {
+      "path": "static/overcast.svg",
+      "sha256": "cea2ada6a8cee4b13e20b23df85f60729d9ac25e4f20cd883bc327b9aec3af30",
+      "bytes": 1739,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/overcast.svg"
+    },
+    {
+      "path": "fill/overcast-rain.svg",
+      "sha256": "0bf734ace9f2ea64bcc1648e561a3ee05de1bae312e829b5171bda97cca42ebb",
+      "bytes": 3508,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/overcast-rain.svg"
+    },
+    {
+      "path": "static/overcast-rain.svg",
+      "sha256": "e822d40d8b8f1f5b542678a9ac746216433eaf8168e682192fcce787a9404048",
+      "bytes": 2268,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/overcast-rain.svg"
+    },
+    {
+      "path": "fill/drizzle.svg",
+      "sha256": "69d81786287016e706258e988cd19857f299f1b62d93b97b9628a6455a8e6b76",
+      "bytes": 2509,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/drizzle.svg"
+    },
+    {
+      "path": "static/drizzle.svg",
+      "sha256": "725ddef941c8a1d9bb41004a76bff83797a8593ae5ec26bf1bcd28f2add2acc0",
+      "bytes": 1455,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/drizzle.svg"
+    },
+    {
+      "path": "fill/thunderstorms-day-rain.svg",
+      "sha256": "32ed8d13c4ddb20010e378c508818367ce523bc50c5cf9167ff3e8a9e3b1ec7e",
+      "bytes": 4677,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/thunderstorms-day-rain.svg"
+    },
+    {
+      "path": "static/thunderstorms-day-rain.svg",
+      "sha256": "9c89e7ce22d43bec2de84b32541efef43e431204f0d6be2f85641f12b81bc4ac",
+      "bytes": 3323,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/thunderstorms-day-rain.svg"
+    },
+    {
+      "path": "fill/thunderstorms-night-rain.svg",
+      "sha256": "1e2d605bcde59cf1e2c595cc90eece76c2f83ac354a650bbb2d741577577eb3d",
+      "bytes": 4269,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/thunderstorms-night-rain.svg"
+    },
+    {
+      "path": "static/thunderstorms-night-rain.svg",
+      "sha256": "a75b8eee38a148b385f4ecfe2174de6651c6ae0855a63ac5b212b8edbfcc1634",
+      "bytes": 2847,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/thunderstorms-night-rain.svg"
+    },
+    {
+      "path": "fill/fog-day.svg",
+      "sha256": "870b041a16376da3d59df240d009795ca97aa84e05f54d8ae503b483f7c3af9c",
+      "bytes": 2023,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/fog-day.svg"
+    },
+    {
+      "path": "static/fog-day.svg",
+      "sha256": "e99b153ca5c678eb91d247c5fd7d54e5e05c396c8ee6b58924606fe6a2725ef6",
+      "bytes": 1501,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/fog-day.svg"
+    },
+    {
+      "path": "fill/fog-night.svg",
+      "sha256": "d4d40ce6c6c5973baf26f38481cdea9f641fdafab8f978e20e68f16c33dcb899",
+      "bytes": 1817,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/fog-night.svg"
+    },
+    {
+      "path": "static/fog-night.svg",
+      "sha256": "d37e40a85aae0ad4a3dc0b13a67f13d70d0bdbca417fbf198a0f635a6c07a334",
+      "bytes": 1227,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/fog-night.svg"
+    },
+    {
+      "path": "fill/snow.svg",
+      "sha256": "f5c401d4793a6c5701d91aa0433d8c684a102f1df12f790bdd9932c90f8b2791",
+      "bytes": 4451,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/snow.svg"
+    },
+    {
+      "path": "static/snow.svg",
+      "sha256": "e9c4415d4110ce8a4cdc16a4af1d47adff8913cbf616784a56b84e18eedc6dec",
+      "bytes": 3391,
+      "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/snow.svg"
+    }
+  ]
+}
