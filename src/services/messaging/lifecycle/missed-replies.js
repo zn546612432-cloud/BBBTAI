@@ -5,7 +5,7 @@ import {appendAuthoredPhoneMessage} from '../phone-messages.js';
 import {AUTHORED_CHAT_TRACKS} from './registry.js';
 
 export const MISSED_REPLY_POLICY=Object.freeze({
- minDays:2, npcPauseMs:1900, nudgeDelayMs:2500, nudgeSpacingMs:10000,
+ minDays:3, npcPauseMs:1900, nudgeDelayMs:2500, nudgeSpacingMs:10000,
  maxNudgesPerDay:2
 });
 
