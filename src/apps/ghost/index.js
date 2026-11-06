@@ -43,7 +43,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
   body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>导入来自 KIRA 或授权联系人提供的接入凭证，验证后安装并初始化工具。</p><p>请选择已获授权的项目凭证。</p></div>';
  }
  else if(loc.route==='/contract'||loc.route==='/tool'){
-  body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.key||'')}" autocomplete="off" spellcheck="false" ${o?'readonly':''}/><p>${o?'已载入密钥':'需要密钥'}</p></div>${o?button('start',(o.status==='running'||o.status==='preview-win')?'繼續':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?(s.story55?.d01?.deployed?'繼續修復':'部署'):'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
+  body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.requiresKeyEntry&&!o.keyVerified?'':o?.key||'')}" autocomplete="off" spellcheck="false" ${o&&(!o.requiresKeyEntry||o.keyVerified)?'readonly':''}/><p>${o?.requiresKeyEntry&&!o.keyVerified?'請輸入 KIRA 郵件內的授權密鑰':o?'已載入密鑰':'需要密鑰'}</p></div>${o?button('start',(o.status==='running'||o.status==='preview-win')?'繼續':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?(s.story55?.d01?.deployed?'繼續修復':'部署'):'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
  }
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
@@ -104,6 +104,11 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  }
  if(a==='d01-next'&&id===D01_REPAIR){exitDialogFor=null;if((s.story55?.d01?.completedRounds||0)>=5)return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment'});ctx.store.update(n=>{n.ghost.orders[id].status='authorized';begin(n,id);});return nav(ctx,'/run',{orderId:id});}
  if(a==='start'){exitDialogFor=null;if(!o)return;
+ if(o.requiresKeyEntry&&!o.keyVerified){
+  const input=globalThis.document?.getElementById('gh-key');
+  if(!input||String(input.value||'').trim()!==o.key){ctx.toast?.('授權密鑰不匹配，請檢查 KIRA 郵件');return;}
+  ctx.store.update(n=>{n.ghost.orders[id].keyVerified=true;});
+ }
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
  if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
