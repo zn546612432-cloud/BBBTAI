@@ -49,7 +49,7 @@ test('existing old save with accidentally cleared calls recovers once; edits and
 });
 
 test('custom old pre-D01 SMS migrate additively and never import the obsolete post-D01 story',()=>{
- const s=initialState();
+ const s=activateStory55(initialState());
  const old={content:{conversations:{messages:[
   {id:'old-custom',name:'澳门短信',messages:[
    {id:'old-sms',from:'bank',text:'2024年保存的短信',time:'10:00',sentDate:'2024-03-12'},
@@ -67,7 +67,7 @@ test('custom old pre-D01 SMS migrate additively and never import the obsolete po
 });
 
 test('D01 SMS appear even if all the WeChat history file requests fail',async()=>{
- const s=initialState();
+ const s=activateStory55(initialState());
  const smsOnly=async url=>{
   if(!String(url).includes('manifest.json')&&!String(url).includes('/messages.json'))return {ok:false};
   return fetcher(url);
@@ -85,13 +85,13 @@ test('one bad later-day SMS file cannot erase the pre-D01 archive',async()=>{
  const packs=await loadCampaignSMS(withOneBad);
  assert.equal(packs.some(p=>p.day===1),true);
  assert.equal(packs.some(p=>p.day===4),false);
- const s=initialState();
+ const s=activateStory55(initialState());
  applyPresetImport(s,packs);
  assert.equal(s.content.conversations.messages.reduce((n,c)=>n+c.messages.filter(x=>x.id.startsWith('sms-user-')).length+n,0),7);
 });
 
 test('an intentionally deleted SMS thread is not recreated when presets load again',async()=>{
- const packs=await loadCampaignSMS(fetcher),s=initialState();
+ const packs=await loadCampaignSMS(fetcher),s=activateStory55(initialState());
  s.content.deletedSmsConversationIds=['sms-85388895566'];
  applyPresetImport(s,packs);
  assert.equal(s.content.conversations.messages.some(c=>c.id==='sms-85388895566'),false);
