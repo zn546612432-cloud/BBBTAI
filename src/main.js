@@ -16,6 +16,7 @@ import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
 import {isNoAppV3Review,prepareNoAppV3Review} from './apps/noapp/preview-v3.js';
 import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
+import {phoneRuntimePaused,tickPhoneRuntime} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
@@ -41,8 +42,8 @@ import {isNativeTabSwitch} from './system/navigation.js';
 import {errorHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
-import {drainBattery,plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,tickShortChargeBattery,settleOfflineShortCharge} from './system/power/battery.js';
-import {advanceGameMinutes,tickWorld,isTaiConversation,setSleeping,dismissAlarm} from './system/time/clock.js';
+import {plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,settleOfflineShortCharge} from './system/power/battery.js';
+import {advanceGameMinutes,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
@@ -404,7 +405,7 @@ setInterval(()=>{
 
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
@@ -430,24 +431,18 @@ window.addEventListener('pageshow',e=>{if(e.persisted)settleResumedShortCharge()
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
- if(lockscreen.stage==='restart'||document.hidden||endingAwaitingVoice55(store.get())||finaleInProgress55(store.get())||secondView55(store.get())||['off','passcode'].includes(store.get().deathPhase)||store.get().alarmRinging||store.get().emergencyCharge||store.get().poweredOff||store.get().nav.current.appId==='editor'&&!deathLocked(store.get())&&!isShortCharging(store.get())){worldTickBatch.reset();return;}
- const editing=document.activeElement?.matches?.('.composer input[name="text"],.composer textarea,[contenteditable="true"]')||false;
  const current=store.get();
- // Short charge is a waiting tool: fast only on the unlocked HOME screen.
- // Apps, call ringing, lock screen, task switcher and notification shade use
- // their normal clock pace, while the battery stays plugged in.
- const fastForward=current.unlocked&&current.nav.current.appId==='home'&&!shade&&!tasks.visible&&!['ringing','dialing','connected'].includes(callState().state)&&Date.now()>=shortChargeNoticePausedUntil;
- const tickOptions={focused:editing,taiChat:isTaiConversation(current),fastForward};
- const tickElapsed=worldTickBatch.take(store.get(),elapsed,tickOptions);if(!tickElapsed)return;
+ const tickOptions={
+  hidden:document.hidden,restarting:lockscreen.stage==='restart',
+  overlay:shade||tasks.visible||islandExpanded||$('#toast')?.classList.contains('visible')||false,
+  callActive:['ringing','dialing','connected'].includes(callState().state),
+  fastForward:Date.now()>=shortChargeNoticePausedUntil
+ };
+ if(phoneRuntimePaused(current,tickOptions)){worldTickBatch.reset();return;}
+ const frame=worldTickBatch.take(current,elapsed,tickOptions);if(!frame)return;
  let outcome={};
  store.update(s=>{
-  if(s.powerMode==='short-charging'){
-   tickShortChargeBattery(s,tickElapsed);
-   outcome=tickWorld(s,tickElapsed,tickOptions);
-  }else{
-   outcome=tickWorld(s,tickElapsed,tickOptions);
-   drainBattery(s,tickElapsed);
-  }
+   outcome=tickPhoneRuntime(s,frame,tickOptions);
    if(endingReplyDue55(s))advanceScene55(s,'ending');
   // Story release is time-gated even if MIRAGE was already open before 20:00.
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))

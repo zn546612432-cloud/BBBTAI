@@ -1,11 +1,13 @@
+import {isStory55} from '../../services/story55/state.js';
+import {PHONE_RUNTIME_POLICY} from '../runtime/policy.js';
 import {closeD01WeChat} from '../../story/d01/wechat.js';
 import {chargingBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
 import {secondView55} from '../../services/story55/finale.js';
-// Battery and civil game clock evolve independently.
+// Story55 discharge follows the accepted game minutes, never a second real-time timer.
 // From 08:00 at 100%, ordinary use reaches 20% around 23:00.
 export const LOW_BATTERY_PERCENT=20;
-export const SHORT_CHARGE_MAX_GAIN=10;
-export const SHORT_CHARGE_FILL_MS=60_000;
+export const SHORT_CHARGE_MAX_GAIN=PHONE_RUNTIME_POLICY.shortChargeMaxGain;
+export const SHORT_CHARGE_FILL_MS=PHONE_RUNTIME_POLICY.shortChargeFillMs;
 export const isShortCharging=s=>s?.powerMode==='short-charging';
 // Persist actual percentage points gained per story day. Unplugging/reloading
 // never grants a fresh 10%, including after a developer jumps back in time.
@@ -14,7 +16,26 @@ export const shortChargeStoryInterrupted=s=>isShortCharging(s)&&!!(chargingBlock
 export const BATTERY_DRAIN_INTERVAL_MS=1_125_000/80;
 export const batteryPercent=s=>Number.isFinite(Number(s.batteryPercent))?Math.max(0,Math.min(100,Math.round(Number(s.batteryPercent)))):82;
 export const needsCharge=s=>batteryPercent(s)<=LOW_BATTERY_PERCENT;
+// Lazy migration retains the displayed percentage and the old partial point.
+// Never recalculate a loaded battery from its clock/date or award charge on rewind.
+export function drainGameBattery(s,minutes){
+ if(!isStory55(s)||!Number.isFinite(minutes)||minutes<=0||secondView55(s)||deathLocked(s)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff||['charging','sleeping','short-charging'].includes(s.powerMode))return 0;
+ const unit=PHONE_RUNTIME_POLICY.batteryGameMinutesPerPoint;
+ if(s.powerClockVersion!==PHONE_RUNTIME_POLICY.version){
+  const old=Number.isFinite(s.powerActiveMs)?Math.max(0,s.powerActiveMs)%BATTERY_DRAIN_INTERVAL_MS:0;
+  s.powerGameMinuteFraction=old/BATTERY_DRAIN_INTERVAL_MS*unit;
+  s.powerClockVersion=PHONE_RUNTIME_POLICY.version;s.powerActiveMs=0;
+ }
+ const saved=Number.isFinite(s.powerGameMinuteFraction)?Math.max(0,s.powerGameMinuteFraction):0;
+ const total=saved+minutes,points=Math.floor(total/unit+1e-9),before=batteryPercent(s);
+ s.powerGameMinuteFraction=Math.max(0,total-points*unit);
+ // A story protection floor must never increase an already lower saved battery.
+ s.batteryPercent=Math.min(before,Math.max(chargingBlock(s)?20:2,before-points));
+ return before-s.batteryPercent;
+}
 export function drainBattery(s,ms){
+ // All Story55 callers settle inside advanceGameMinutes; prevent double debit.
+ if(isStory55(s))return 0;
  if(secondView55(s)||deathLocked(s)||s.dayChargeRemainingMs>0)return 0;
  if(!Number.isFinite(ms)||ms<=0||s.powerMode==='charging'||s.powerMode==='sleeping'||isShortCharging(s)||s.emergencyCharge)return 0;
  const before=batteryPercent(s),saved=Number.isFinite(s.powerActiveMs)?Math.max(0,s.powerActiveMs):0;
@@ -80,7 +101,7 @@ export function plugIn(s){
  if(s.story55?.version===1&&s.day===1){closeD01WeChat(s);s.day=2;s.story55.d01.nightAfterMidnight=false;}
  else if(Number(s.clock.slice(0,2))>=8)s.day+=1;
  s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;s.shortCharge=null;
- s.powerMode='idle';s.emergencyCharge=false;s.poweredOff=false;s.powerActiveMs=0;s.worldMinuteFraction=0;s.chargeFraction=0;
+ s.powerMode='idle';s.emergencyCharge=false;s.poweredOff=false;s.powerActiveMs=0;s.powerGameMinuteFraction=0;s.powerClockVersion=PHONE_RUNTIME_POLICY.version;s.worldMinuteFraction=0;s.chargeFraction=0;
  s.sleepWakeAt=null;s.alarmRinging=null;s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  syncDeathNight(s);
  return true;

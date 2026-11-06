@@ -1,3 +1,4 @@
+import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {story55Editor} from './features/story55/index.js';
 import {setMirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {voicePanel,voiceAction,voiceSubmit} from './features/voice-authoring/index.js';
@@ -35,7 +36,7 @@ export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(a==='s55-speed-default'){
   store.update(s=>setStory55MinutesPerSecond(s,STORY55_SPEED_DEFAULT));
-  ctx.toast('遊戲流速已恢復：1 秒＝5 分鐘');
+  ctx.toast(`主畫面掛機已恢復：1 秒＝${STORY55_SPEED_DEFAULT} 分鐘；App 內 1 分鐘＝${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘`);
   return;
  }
  if(voiceAction(a,t,ctx))return;
