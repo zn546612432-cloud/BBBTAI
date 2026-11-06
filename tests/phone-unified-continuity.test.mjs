@@ -111,11 +111,14 @@ test('D03 and D04 Mirage orders retain source description without an invented fi
  for(const id of [D03_MAIL,...D04_CONTRACTS.map(d=>D04_MAIL(d.id))]){
   const m=s.content.mail.find(x=>x.id===id);
   const html=kiraDetail(s,id);
-  assert.equal(kiraMailTreatment(m),'plain-mail');
+  assert.equal(kiraMailTreatment(m),'commission-file');
   assert.match(html,/執行程序/);
   assert.ok(html.includes('附件：'),'keep information in body');
   assert.ok(!html.includes('查看附件'));
   assert.ok(!html.includes('kira-attachment'));
+  assert.match(html,/1 個附件/);
+  assert.match(html,/data-action="kira-open-commission-file"/);
+  assert.equal((html.match(/class="kira-d01-attachment"/g)||[]).length,1);
   assert.equal(html.includes('data-action="kira-ghost-submit"'),false);
  }
  assert.match(kiraDetail(s,D03_MAIL),/昨天/);
@@ -124,7 +127,7 @@ test('explicitly approved D01/D02 credential files and HACKER task are unaffecte
  const s=fresh();
  for(const id of [D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,HACKER_MAIL_ID])
   s.content.mail.unshift(mail(id));
- assert.deepEqual(new Set(KIRA_INTERACTIVE_MAILS),new Set([D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,HACKER_MAIL_ID]));
+ assert.deepEqual(new Set(KIRA_INTERACTIVE_MAILS),new Set([D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,D03_MAIL,...D04_CONTRACTS.map(d=>D04_MAIL(d.id)),HACKER_MAIL_ID]));
  assert.equal(kiraMailTreatment(s.content.mail.find(x=>x.id===D01_ATTACHMENT)),'explicit-key-file');
  assert.match(kiraDetail(s,D01_ATTACHMENT),/data-action="kira-d01-open-file"/);
  assert.match(kiraDetail(s,D02_MAIL),/data-action="kira-d02-open-file"/);

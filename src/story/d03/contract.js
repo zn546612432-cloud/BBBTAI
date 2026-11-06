@@ -31,6 +31,14 @@ export function seedD03Contract(s){
 export function tickD03Contract(s){
  if(!allowed(s))return false;
  let changed=seedD03Contract(s);
+ const existing=s.content.mail?.find(m=>m.id===D03_MAIL);
+ if(existing?.storyD03){
+  if(existing.attachments?.length!==1||existing.attachments?.[0]!=='dataset_0521.enc'){
+   existing.attachments=['dataset_0521.enc'];changed=true;
+  }
+  const old='附件：dataset_0521.enc、manifest.json';
+  if(existing.body.includes(old)){existing.body=existing.body.replace(old,'附件：dataset_0521.enc（內含 manifest.json）');changed=true;}
+ }
  const o=order(s);
  if(o&&expired(s)&&['OPEN','ACCEPTED','READY'].includes(o.status)){
   o.status='EXPIRED';progress(s).expired=true;changed=true;
@@ -46,8 +54,8 @@ export function acceptD03Contract(s){
  if(!mail.some(m=>m.id===D03_MAIL))mail.unshift({
   id:D03_MAIL,orderId:D03_ORDER,from:'ANONYMOUS / MIRAGE',
   subject:'【mirage】委託資料已發送',
-  body:'您已接受委託。\n\n資料來源不需要你確認。我只要能用的結果。重複的刪掉，缺失的標記出來。不要問其他問題。\n\n所需資料已加密封裝，請於期限內完成分析並提交結果。\n\n附件：dataset_0521.enc、manifest.json\n\n執行程序：破譯 → 連結 → 隱匿。\n\n提交成功後，驗收結果及交易回執將寄送至此郵箱。',
-  attachments:['dataset_0521.enc','manifest.json'],read:false,storyD03:true,
+  body:'您已接受委託。\n\n資料來源不需要你確認。我只要能用的結果。重複的刪掉，缺失的標記出來。不要問其他問題。\n\n所需資料已加密封裝，請於期限內完成分析並提交結果。\n\n附件：dataset_0521.enc（內含 manifest.json）\n\n執行程序：破譯 → 連結 → 隱匿。\n\n提交成功後，驗收結果及交易回執將寄送至此郵箱。',
+  attachments:['dataset_0521.enc'],read:false,storyD03:true,
   day:s.day,time:s.clock,date:DATE
  });
  const nid='d03-intel-kira-notice';
@@ -55,12 +63,18 @@ export function acceptD03Contract(s){
   id:nid,title:'KIRA',body:'【mirage】委託資料已發送',
   day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D03_MAIL,params:{}}
  });
- armD03Ghost(s,0);
+ // GHOST is entered by opening KIRA's encrypted file; do not authorize
+ // a second shortcut in MIRAGE on acceptance.
  return true;
+}
+export function markD03AttachmentOpened(s){
+ if(!allowed(s)||!order(s)||order(s).status!=='ACCEPTED'||expired(s))return false;
+ progress(s).attachmentOpened=true;return true;
 }
 export function d03CanRun(s,stepId){
  const i=indexOfStep(stepId),o=order(s);
  return i>=0&&allowed(s)&&!expired(s)&&o?.status==='ACCEPTED'
+  &&(!!progress(s).attachmentOpened||D03_STAGES.some((_,j)=>s.ghost?.orders?.[d03StepId(j)]?.status==='success'))
   &&(i===0||s.ghost?.orders?.[d03StepId(i-1)]?.status==='success');
 }
 export function armD03Ghost(s,index){

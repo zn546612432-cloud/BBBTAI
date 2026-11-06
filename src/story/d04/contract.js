@@ -41,10 +41,21 @@ export function seedD04Contracts(s){
  }
  return changed;
 }
+export function markD04AttachmentOpened(s,id){
+ const c=cOf(id),o=order(s,id);
+ if(!c||!story(s)||o?.status!=='ACCEPTED'||expired(s,c))return false;
+ s.story55.d04Attachments??={};
+ s.story55.d04Attachments[id]=true;
+ return true;
+}
 export function tickD04Contracts(s){
  if(!story(s)||s.day<DAY)return false;
  let changed=seedD04Contracts(s);
  for(const c of D04_CONTRACTS){
+  const mail=s.content.mail?.find(m=>m.id===D04_MAIL(c.id));
+  if(mail?.storyD04&&(mail.attachments?.length!==1||mail.attachments?.[0]!==c.attachment)){
+   mail.attachments=[c.attachment];changed=true;
+  }
   const o=order(s,c.id);
   if(o&&expired(s,c)&&['OPEN','ACCEPTED','READY'].includes(o.status)){
    o.status='EXPIRED';changed=true;
@@ -69,14 +80,16 @@ export function acceptD04Contract(s,id){
   id:nid,title:'KIRA',body:'【mirage】委託資料已發送',day:s.day,clock:s.clock,
   link:{appId:'kira',route:'/mail/'+mailId,params:{}}
  });
- armD04Ghost(s,id,0);
+ // Only the single encrypted KIRA attachment may activate GHOST.
  return true;
 }
 export function d04CanRun(s,step){
  const id=d04OrderOfStep(step),c=cOf(id),o=order(s,id);
  if(!c||!story(s)||!o||o.status!=='ACCEPTED'||expired(s,c))return false;
  const i=c.stages.findIndex((_,n)=>D04_STEP(id,n)===step);
- return i>=0&&(i===0||s.ghost?.orders?.[D04_STEP(id,i-1)]?.status==='success');
+ return i>=0&&(!!s.story55?.d04Attachments?.[id]
+  ||c.stages.some((_,j)=>s.ghost?.orders?.[D04_STEP(id,j)]?.status==='success'))
+  &&(i===0||s.ghost?.orders?.[D04_STEP(id,i-1)]?.status==='success');
 }
 export function armD04Ghost(s,id,index){
  const c=cOf(id),step=c&&D04_STEP(id,index);

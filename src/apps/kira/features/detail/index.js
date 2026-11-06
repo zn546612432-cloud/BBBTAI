@@ -4,45 +4,9 @@ import {D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEY_FILES,D02_KIRA_BODY} from '../..
 import {HACKER_MAIL_ID} from '../../../mirage/mission.js';
 import {missionSteps} from '../mission/index.js';
 import {kiraMailTreatment,kiraMailDateLabel} from './policy.js';
+import {renderCommissionAttachment} from './attachment.js';
 
 const lineBreaks=content=>esc(content).replaceAll('\\n','<br>');
-const acceptedReceipt='<div class="kira-d01-file-status">✓ 文件已驗收 · 交易回執已寄送</div>';
-function attachmentCard(s){
- const state=s.story55?.d01||{},completed=state.completedRounds===5;
- const status=state.rewardPaid
-  ?acceptedReceipt
-  :completed||state.submitted
-  ?'<div class="kira-d01-file-status">✓ 修復完成 · 正在驗收結果</div>'
-  :state.deployed
-  ?'<div class="kira-d01-file-status">GHOST 已儲存修復進度 · '+Math.min(100,(state.completedRounds||0)*20)+'%</div>'
-  :'';
- return `<div class="kira-d01-attachments" aria-label="郵件附件">
-  <div class="kira-d01-attachment-heading">1 個附件</div>
-  <button type="button" class="kira-d01-attachment" data-action="kira-d01-open-file" aria-label="打開附件 mirage001.key">
-   <span class="kira-d01-file-icon" aria-hidden="true"><svg viewBox="0 0 32 38" fill="none"><path d="M7 1.5h12l10 10V35a2 2 0 0 1-2 2H7a4 4 0 0 1-4-4V5.5a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M19 2v10h10" stroke="currentColor" stroke-width="1.5"/><path d="m13 22 3-3 3 3m-3-3v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-   <span class="kira-d01-attachment-copy"><strong>mirage001.key</strong><small>加密憑證 · MIRAGE</small></span>
-   <span class="kira-d01-attachment-arrow" aria-hidden="true">›</span>
-  </button>
-  ${status}
- </div>`;
-}
-function d02AttachmentCard(s,id){
- const master=id===D02_MAIL?D02_S:D02_A;
- const name=D02_KEY_FILES[master];
- const order=s.content.orders?.find(o=>o.id===master);
- const paid=s.bankData?.transactions?.some(t=>t.id==='d02-payment-'+master);
- const verified=order?.status==='COMPLETED'&&!!s.story55?.d02?.submitted?.[master]&&paid;
- const status=verified?acceptedReceipt:'';
- return `<div class="kira-d01-attachments" aria-label="郵件附件">
-  <div class="kira-d01-attachment-heading">1 個附件</div>
-  <button type="button" class="kira-d01-attachment" data-action="kira-d02-open-file" data-id="${esc(id)}" aria-label="打開附件 ${esc(name)}">
-   <span class="kira-d01-file-icon" aria-hidden="true"><svg viewBox="0 0 32 38" fill="none"><path d="M7 1.5h12l10 10V35a2 2 0 0 1-2 2H7a4 4 0 0 1-4-4V5.5a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M19 2v10h10" stroke="currentColor" stroke-width="1.5"/><path d="m13 22 3-3 3 3m-3-3v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-   <span class="kira-d01-attachment-copy"><strong>${esc(name)}</strong><small>加密憑證 · MIRAGE</small></span>
-   <span class="kira-d01-attachment-arrow" aria-hidden="true">›</span>
-  </button>
-  ${status}
- </div>`;
-}
 export function kiraDetail(s,id){
  const m=s.content.mail.find(m=>m.id===id);
  if(!m)return empty('邮件不存在');
@@ -50,13 +14,12 @@ export function kiraDetail(s,id){
   ?lineBreaks(m.body).replaceAll('bank account','<a href="#" class="kira-d01-inline-link" data-action="kira-d01-bank">bank account</a>')
   :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.id===D02_MAIL?D02_KIRA_BODY[D02_S]:m.id===D02_A_MAIL?D02_KIRA_BODY[D02_A]:m.body);
  const treatment=kiraMailTreatment(m);
- const d01File=m.id===D01_ATTACHMENT?attachmentCard(s):'';
- const d02File=[D02_MAIL,D02_A_MAIL].includes(m.id)?d02AttachmentCard(s,m.id):'';
+ const commissionFile=renderCommissionAttachment(s,m.id);
  // No default attachment button. Only explicitly authorized mission or
  // credential mail types may show actions.
  const bodyAction=treatment==='mission'?missionSteps(m,s):'';
  return `<div class="kira-mail-detail${m.id===D01_ATTACHMENT?' kira-d01-mail':''}">
   <div class="kira-mail-toolbar">${btn('kira-back','‹　收件箱')}<span>‹　›　□</span></div>
   <div class="kira-detail-head"><h2>${esc(m.subject)}</h2><p>来自 ${esc(m.from)}　·　${esc(kiraMailDateLabel(s,m))}</p></div>
-  <div class="kira-mail-body">${body}${d01File}${d02File}</div>${bodyAction}</div>`;
+  <div class="kira-mail-body">${body}${commissionFile}</div>${bodyAction}</div>`;
 }

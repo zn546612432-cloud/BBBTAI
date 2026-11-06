@@ -6,6 +6,7 @@ import {linkedMission} from '../mirage/linked-missions.js';
 import {D01_REPAIR,D01_ATTACHMENT,revealD01Key} from '../../story/d01/runtime.js';
 import {D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_STAGES,d02StepId,revealD02Key,deployD02} from '../../story/d02/runtime.js';
 import {authorize} from '../ghost/state.js';
+import {commissionAttachment,commissionPreviewAvailable,commissionPendingGhostStep,openCommissionWithGhost} from '../../services/commissions/attachment-flow.js';
 function d01FileAvailable(s){
  return !!s.story55?.d01?.repairAccepted&&s.content.mail.some(m=>m.id===D01_ATTACHMENT);
 }
@@ -55,12 +56,48 @@ function d02FilePreview(s,mailId){
   </section>
  </div>`;
 }
+function commissionFilePreview(s,mailId){
+ const file=commissionAttachment(s,mailId);
+ if(!file||!['D03','D04'].includes(file.kind)||!commissionPreviewAvailable(s,mailId))
+  return '<div class="page-pad">無法打開附件 · 郵件或憑證不可用</div>';
+ const order=s.content.orders.find(o=>o.id===file.orderId);
+ const current=commissionPendingGhostStep(s,mailId);
+ const status=order?.status==='COMPLETED'?'已完成驗收':order?.status==='READY'?'待提交'
+   :order?.status==='EXPIRED'?'委託已過期':file.status==='RUNNING'?'處理中':'已加密';
+ const open=current?
+  '<section class="files-d01-open-with" aria-label="打開方式"><small>使用應用程式打開</small>'+
+  '<button type="button" class="files-d01-open-app" data-action="files-commission-open-ghost" data-id="'+esc(mailId)+'">'+
+  '<span class="files-d01-ghost-icon" aria-hidden="true">G</span><span><strong>GHOST</strong><small>'+
+  (file.status==='RUNNING'?'繼續委託':'加密檔案處理工具')+
+  '</small></span><span aria-hidden="true" class="files-d01-chevron">›</span></button></section>':'';
+ return '<div class="files-d01-preview">'+
+  '<header class="files-d01-nav"><button type="button" data-action="files-commission-back" data-id="'+esc(mailId)+'">‹　KIRA</button><span>檔案預覽</span><span aria-hidden="true">•••</span></header>'+
+  '<section class="files-d01-document" aria-label="加密密鑰檔案">'+
+   '<div class="files-d01-document-symbol" aria-hidden="true"><svg viewBox="0 0 64 80" fill="none"><path d="M14 2h28l19 19v50c0 4-3 7-7 7H14c-7 0-11-4-11-11V13C3 6 7 2 14 2Z" stroke="currentColor" stroke-width="3"/><path d="M42 3v19h19" stroke="currentColor" stroke-width="3"/><path d="M25 43h16m-16 9h12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>'+
+   '<h1>'+esc(file.name)+'</h1><p>加密憑證 · MIRAGE</p><span class="files-d01-status">'+esc(status)+'</span>'+
+   '<p class="files-d01-explanation">此加密檔案無法直接預覽。已找到可以處理此格式的應用程式。</p>'+
+  '</section>'+open+'</div>';
+}
 export const manifest={id:'files',name:'文件',icon:15,defaultRoute:'/',supportsDeepLink:true,kicker:'ON THIS PHONE'};
-export function render({store},loc){const state=store.get();if(loc.route==='/attachment/d01-mirage001')return d01FilePreview(state);if(loc.route.startsWith('/attachment/d02/'))return d02FilePreview(state,loc.route.slice('/attachment/d02/'.length));if(loc.route.startsWith('/linked/')){const id=decodeURIComponent(loc.route.slice('/linked/'.length)),files=linkedArtifacts(state).filter(f=>f.orderId===id),mission=linkedMission(state,id);
+export function render({store},loc){const state=store.get();if(loc.route.startsWith('/attachment/commission/'))return commissionFilePreview(state,decodeURIComponent(loc.route.slice('/attachment/commission/'.length)));if(loc.route==='/attachment/d01-mirage001')return d01FilePreview(state);if(loc.route.startsWith('/attachment/d02/'))return d02FilePreview(state,loc.route.slice('/attachment/d02/'.length));if(loc.route.startsWith('/linked/')){const id=decodeURIComponent(loc.route.slice('/linked/'.length)),files=linkedArtifacts(state).filter(f=>f.orderId===id),mission=linkedMission(state,id);
  const d02File=(state.content.missionFiles||[]).find(f=>f.orderId===id&&f.id==='d02-target-intelligence.enc');
  if(d02File)return '<div class="page-pad"><span class="eyebrow">ON THIS PHONE / GHOST · D02</span><div class="large-title">'+esc(d02File.title)+'</div>'+card('<strong>目标资料包 · 已完整提取</strong><p>芯片标识：TALIA-CHIP-0520</p><p>加密状态：DECRYPTED / VERIFIED</p><p>数据包类型：身份索引、通信摘要、访问日志（剧情虚构）</p><p>操作结果：链路已验证，痕迹已隐匿，资料已回收。</p><small>D'+esc(d02File.createdDay)+' · '+esc(d02File.createdTime)+'</small>')+btn('d02-return','‹ 返回 MIRAGE 查看委托','button-quiet wide')+'</div>';
  return '<div class="page-pad"><span class="eyebrow">ON THIS PHONE / GHOST</span><div class="large-title">'+esc(mission?.title||'加密成果')+'</div>'+files.map(f=>card('<strong>'+esc(f.title)+'</strong><p>'+esc(f.description)+'</p><small>D'+esc(f.createdDay)+' · '+esc(f.createdTime)+'</small>')).join('')+(files.length?'':'<p>尚无成果文件。完成 GHOST 后会自动生成。</p>')+btn('linked-return','‹ 返回 KIRA 选择附件','button-quiet wide','data-order="'+esc(id)+'"')+'</div>';}if(isStory55(state))return files55(state,loc);const mail=store.get().content.mail.find(m=>m.id===loc.params.mailId);if(loc.route==='/attachment'&&mail)return `<div class="page-pad"><span class="eyebrow">附件</span><div class="large-title">${esc(mail.subject)}</div>${card(`<p>${esc(mail.body)}</p>`)}${btn('open-map','打开邮件地点 → 地图','button-quiet wide')}</div>`;return `<div class="page-pad"><div class="large-title">文件</div><div class="surface-list">${btn('export-backup','<span class="file-symbol">▤</span><span class="list-copy"><strong>导出本机备份</strong><small>本机数据</small></span>','list-row')}${btn('open-photos','<span class="file-symbol">▧</span><span class="list-copy"><strong>图片</strong><small>本机相册</small></span>','list-row')}</div></div>`;}
-export function handle(a,t,c){if(a==='files-d01-back')return c.router.open({appId:'kira',route:'/mail/'+D01_ATTACHMENT,params:{}});
+export function handle(a,t,c){
+if(a==='files-commission-back'){
+ const id=t.dataset.id;
+ if(!commissionAttachment(c.store.get(),id))return;
+ return c.router.open({appId:'kira',route:'/mail/'+id,params:{}});
+}
+if(a==='files-commission-open-ghost'){
+ const id=t.dataset.id;
+ if(!commissionPreviewAvailable(c.store.get(),id))return c.toast?.('附件未授權');
+ let step=null;
+ c.store.update(s=>{step=openCommissionWithGhost(s,id);});
+ if(!step)return c.toast?.('委託已完成或已失效');
+ return c.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});
+}
+if(a==='files-d01-back')return c.router.open({appId:'kira',route:'/mail/'+D01_ATTACHMENT,params:{}});
 if(a==='files-d01-open-ghost'){
  const s=c.store.get();if(!d01FileAvailable(s))return c.toast?.('附件未授權');
  c.store.update(s=>{

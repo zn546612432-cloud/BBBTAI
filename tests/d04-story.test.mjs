@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {D04_GROUP,D04_PRIVATE} from '../src/story/d04/dialogue.js';
 import {D04_MEDIA,tickD04Chats,d04Draft,d04DinnerConfirmed,sendD04WeChat,d04ChatDue} from '../src/story/d04/wechat.js';
 import {D04_CONTRACTS,D04_STEP,seedD04Contracts,acceptD04Contract,onD04GhostWin,submitD04Contract,tickD04Contracts} from '../src/story/d04/contract.js';
+import {D04_MAIL} from '../src/story/d04/contract.js';
+import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
 import {allMoments,addGameMomentComment} from '../src/apps/wechat/features/moments/model.js';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
@@ -150,6 +152,8 @@ test('two commissions keep separate KIRA, GHOST steps, one-time bank settlement'
  for(const def of D04_CONTRACTS){
   assert.equal(acceptD04Contract(s,def.id),true);
   assert.equal(acceptD04Contract(s,def.id),false);
+  assert.equal(s.ghost.orders[D04_STEP(def.id,0)],undefined);
+  assert.equal(openCommissionWithGhost(s,D04_MAIL(def.id)),D04_STEP(def.id,0));
   assert.equal(submitD04Contract(s,def.id),false);
   const order=s.content.orders.find(o=>o.id===def.id);
   for(let i=0;i<def.stages.length;i++){
