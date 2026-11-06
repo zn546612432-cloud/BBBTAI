@@ -87,7 +87,7 @@ test('one bad later-day SMS file cannot erase the pre-D01 archive',async()=>{
  assert.equal(packs.some(p=>p.day===4),false);
  const s=activateStory55(initialState());
  applyPresetImport(s,packs);
- assert.equal(s.content.conversations.messages.reduce((n,c)=>n+c.messages.filter(x=>x.id.startsWith('sms-user-')).length,0),7);
+ assert.equal(s.content.conversations.messages.reduce((n,c)=>n+c.messages.filter(x=>x.id.startsWith('sms-user-')&&x.sentDate<'2025-05-19').length,0),7);
 });
 
 test('an intentionally deleted SMS thread is not recreated when presets load again',async()=>{
