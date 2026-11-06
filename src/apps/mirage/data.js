@@ -1,4 +1,5 @@
 import {isStory55,nodeStatus,story55Config,date55} from '../../services/story55/state.js';
+import {D06_ORDER_ID} from '../../story/d06/commission.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID,completeWalletChallenge} from './contacts-seed.js';
 import {uid} from '../../services/id.js';
 import {hackerBounty,HACKER_BOUNTY_ID} from './mission.js';
@@ -17,7 +18,7 @@ export function mirageData(s){return s.content.mirage||{account:MIRAGE_ACCOUNT,b
 export {WALLET_CHALLENGE_ID,completeWalletChallenge};
 // 55-day campaigns use the ORIGINAL MIRAGE design and complete native data
 // rather than the old prototype-only story dashboard or D05 mission script.
-export const STORY55_BOUNTY_ID='s55-mirage-wallet-bounty';
+export const STORY55_BOUNTY_ID=D06_ORDER_ID;
 export const STORY55_WALLET_MAIL_ID='s55-wallet-d06-authorization';
 // Player acceptance creates the missing KIRA authorization, once, without
 // granting a reward or bypassing the real GHOST validation/minigame.
@@ -59,16 +60,8 @@ export function ensureNativeMirage55(s){
  // Contact identities are introduced by authored story triggers, never all at once.
 
  s.content.orders??=[];
- if(s.day>=6){
-  const existing=s.content.orders.find(o=>o.id===STORY55_BOUNTY_ID);
-  if(!existing)s.content.orders.push({
-   id:STORY55_BOUNTY_ID,title:'10 BTC / WALLET CHALLENGE',owner:'Dr Ouroboros',reward:'10 BTC',
-   category:'CYBER',status:s.story55.completed.wallet?'COMPLETED':'OPEN',
-   description:'PRIVATE WALLET CHALLENGE — Complete the GHOST extraction workflow.',
-   story55:true
-  });
-  else if(s.story55.completed.wallet)existing.status='COMPLETED';
- }
+ // D06 is seeded only by the shared daily commission runner.
+ // Do not resurrect the prototype wallet order or its second KIRA email.
 }
 
 export function initializeMirage(store){
