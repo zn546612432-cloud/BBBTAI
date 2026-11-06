@@ -36,11 +36,12 @@ export const STORY55_CONFIG={
     {
       "id": "invitation",
       "day": 6,
-      "title": "拒绝团队邀请",
+      "title": "与 Dr Ouroboros 的第一次交锋",
       "kind": "scene",
       "requires": [
         "wallet"
       ],
+      "delivery": "queued",
       "gateDay": 6
     },
     {
@@ -761,18 +762,102 @@ export const STORY55_CONFIG={
       ]
     ],
     "invitation": [
-      [
-        "ouroboros",
-        "四十分钟就能完成这个挑战，你的能力确实值得我亲自联系；我希望你考虑加入我的团队，让自己的时间花在更有价值的事情上。"
-      ],
-      [
-        "me",
-        "我单干，没有加入团队的打算。"
-      ],
-      [
-        "ouroboros",
-        "我会记住你的回答，也希望以后还有合作的机会；我很想看看，你准备靠自己做到什么程度。"
-      ]
+          [
+                "ouroboros",
+                "恭喜你。"
+          ],
+          [
+                "ouroboros",
+                "我还以为至少要等到明天才有人拿走那十枚比特币。"
+          ],
+          [
+                "me",
+                "谢谢老板，奖金已经收到了。"
+          ],
+          [
+                "ouroboros",
+                "不用谢我。你靠本事拿的。"
+          ],
+          [
+                "ouroboros",
+                "不过，我有点好奇。"
+          ],
+          [
+                "ouroboros",
+                "你属于哪个组织？"
+          ],
+          [
+                "me",
+                "我单干。"
+          ],
+          [
+                "ouroboros",
+                "單幹？"
+          ],
+          [
+                "ouroboros",
+                "Interesting."
+          ],
+          [
+                "ouroboros",
+                "你知道吗，这次参加挑战的有不少人背后都有整支技术团队。"
+          ],
+          [
+                "ouroboros",
+                "而你一个人把他们全甩在后面了。"
+          ],
+          [
+                "me",
+                "因为我是天才。"
+          ],
+          [
+                "ouroboros",
+                "哈。"
+          ],
+          [
+                "ouroboros",
+                "我见过不少自称天才的人。通常他们连自己的代码出了什么问题都看不明白。"
+          ],
+          [
+                "ouroboros",
+                "不过你嘛……至少目前还算有资格这么说。"
+          ],
+          [
+                "me",
+                "只是还算？"
+          ],
+          [
+                "ouroboros",
+                "不然呢？你还指望我给你颁个奖？"
+          ],
+          [
+                "me",
+                "十个比特币不就是奖吗？"
+          ],
+          [
+                "ouroboros",
+                "呵呵，倒是挺会说话。"
+          ],
+          [
+                "ouroboros",
+                "行，拿好你的奖励饼干吧，黑客天才。"
+          ],
+          [
+                "ouroboros",
+                "希望以后还有合作的机会。"
+          ],
+          [
+                "me",
+                "有钱赚的话，可以考虑。"
+          ],
+          [
+                "ouroboros",
+                "你还真是一点都不客气。"
+          ],
+          [
+                "ouroboros",
+                "I like that."
+          ]
     ],
     "exhibition": [
       [
