@@ -18,7 +18,7 @@ const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博�
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
  const c=defaultStory55Config();
- const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,
+ const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,legacySMSImported:s.story55?.legacySMSImported,
   ...(typeof s.story55?.minutesPerSecond==='number'&&Number.isFinite(s.story55.minutesPerSecond)&&s.story55.minutesPerSecond>=0&&s.story55.minutesPerSecond<=10?{minutesPerSecond:s.story55.minutesPerSecond}:{})};
  s.story55={version:1,config:c,completed:{},projects:{},reports:{},scenes:{},hardware:1,liabilities:0,livingDebt:0,expenseDays:[],questions:0,ended:false};
  Object.assign(s.story55,imported);
@@ -31,7 +31,10 @@ export function activateStory55(s){
  s.content.notes=(s.content.notes||[]).filter(n=>n.authored===true).map(n=>structuredClone(n));
  s.content.notesSeedVersion=0;
  ensureAuthoredNotes(s);
- s.content.alarms=[];if(s.content.phone)s.content.phone.calls=[];
+ s.content.alarms=[];
+ // A new story run must keep authored pre-D01 phone history, just as it keeps
+ // old WeChat bubbles; clear only calls created during the previous run.
+ if(s.content.phone)s.content.phone.calls=(s.content.phone.calls||[]).filter(call=>call.authored===true||/^macau-call-[1-5]$/.test(call.id||''));
  // Reset player interactions, while retaining the author's photos and posts.
  const moments=s.content.moments||{};
  s.content.moments={posts:structuredClone(moments.posts||[]),editedPosts:structuredClone(moments.editedPosts||{}),deletedIds:[...(moments.deletedIds||[])],profiles:structuredClone(moments.profiles||{}),likes:{},comments:{}};

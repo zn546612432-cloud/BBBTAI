@@ -70,6 +70,8 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
   }
   const conversations=state.content.conversations[pack.channel]??(state.content.conversations[pack.channel]=[]);
   for(const h of pack.history){
+   // An explicitly deleted SMS conversation must not reappear at next boot.
+   if(pack.channel==='messages'&&state.content.deletedSmsConversationIds?.includes(h.conversationId))continue;
    let conversation=conversations.find(c=>c.id===h.conversationId);
    if(!conversation){conversation={id:h.conversationId,name:h.conversationName||h.conversationId,avatar:(h.conversationName||h.conversationId).slice(0,1),messages:[]};conversations.push(conversation);}
    const known=new Set(conversation.messages.map(m=>m.id));
