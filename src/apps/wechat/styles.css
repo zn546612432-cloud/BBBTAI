@@ -179,3 +179,17 @@
 #phone.keyboard-open .app-wechat .wx-composer{padding-bottom:6px}
 @media(max-width:370px){.app-wechat .wx-composer{gap:5px;padding-left:7px;padding-right:7px}.app-wechat .wx-composer-icon{width:28px;flex-basis:28px}.app-wechat .wx-bubble{font-size:15px}}
 
+
+
+/* D06-D55 native wish links and iOS-like confirmation sheet. */
+.wx-wish-link{color:#1677d2;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.wx-wish-story-controls{background:#f3f3f3;text-align:center;flex:none}
+.wx-wish-story-controls:empty{display:none}
+.wx-wish-share{margin:8px 12px;padding:9px 14px!important;border-radius:10px!important;background:#dbf2e2!important;color:#15733b!important;font-size:13px!important}
+.wx-wish-overlay{position:absolute;inset:0;z-index:50;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.32)}
+.wx-wish-panel{width:min(285px,100%);border-radius:14px;background:#f5f5f7;color:#1a1a1a;box-shadow:0 12px 45px #0003;text-align:center;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+.wx-wish-panel>strong{display:block;font-size:16px;padding:21px 14px 8px}
+.wx-wish-panel>p{font-size:13px;margin:0;padding:0 15px 17px;color:#666}
+.wx-wish-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #dadade}
+.wx-wish-actions button{padding:13px 8px;background:transparent;color:#007aff;border:0;font-size:16px}
+.wx-wish-actions button+button{border-left:1px solid #dadade;font-weight:600}
