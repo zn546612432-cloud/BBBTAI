@@ -1,4 +1,4 @@
-import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
+import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 // D03 authored WeChat dialogue. The player's bubbles only exist after Send.
 // Each NPC scene has an early completion path and a clock-time fallback.
 import {D03_ORDER} from './contract.js';
@@ -57,15 +57,13 @@ const sceneState=(s,id)=>s.story55?.d03Chats?.[id];
 const conversation=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
 const visible=(s,id)=>s.unlocked&&s.nav?.current?.appId==='wechat'&&s.nav.current.route==='/chat/'+id;
 const readable=who=>who==='me'?'熙蒙':who;
-function push(s,scene,index,part) {
+function push(s,scene,index,part){
  const c=conversation(s,scene.chat);if(!c)return false;
- const id='d03-'+scene.id+'-'+index;
- if(c.messages.some(m=>m.id===id))return false;
- c.messages.push({id,from:part.who,text:part.text,kind:part.kind,day:DAY,time:s.clock,sentDate:DATE,actual:true,storyD03:true});
- deliverAuthoredIncoming(s,{conversationId:c.id,from:readable(part.who),text:part.text,kind:part.kind,messageId:id,day:DAY,clock:s.clock});
- s.events??=[];
- s.events.push({type:part.who==='me'?'message_sent':'authored_message_delivered',channel:'wechat',conversationId:c.id,messageId:id,day:DAY,clock:s.clock});
- return true;
+ return !!appendAuthoredPhoneMessage(s,{
+  conversationId:c.id,messageId:'d03-'+scene.id+'-'+index,
+  from:part.who,text:part.text,kind:part.kind,
+  day:DAY,clock:s.clock,sentDate:DATE,storyTag:'storyD03'
+ });
 }
 function ensure(s) {
  const d=s.story55.d03Chats??(s.story55.d03Chats={});

@@ -1,8 +1,7 @@
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
-import {tickD02Wechat} from '../../story/d02/wechat.js';
-import {tickD03Chats} from '../../story/d03/wechat.js';
-import {tickD04Chats} from '../../story/d04/wechat.js';
+import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
+import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
@@ -66,14 +65,14 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   revealEndingVoice55(s,Date.now(),{force:true});
   s.story55.endingVoiceSent=true;
   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
-  if(chat&&!chat.messages.some(m=>m.id==='s55-ending-final-voice'))chat.messages.push({id:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  if(chat)appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  if(!['system','call','watch'].includes(line[0])){
   const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
   const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  c.messages.push({id:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,time:authoredTime||s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  r.index++;
  if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
@@ -99,11 +98,11 @@ export function sendQuestion55(s){
  if(nodeStatus(s,'questions').state!=='ready')throw Error(nodeStatus(s,'questions').reason);
  const i=s.story55.questions,chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  if(!chat)throw Error('MIRAGE联络记录尚未建立');
- chat.messages.push({id:'s55-question-'+i,from:'me',text:questions55[i],day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+ appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-question-'+i,from:'me',text:questions55[i],day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
  s.story55.questions=Math.min(5,i+1);
  if(s.story55.questions===5){
   const reply='你已经找到了我留下的线索，最后一个文件夹里还有一份孤儿院档案；破译它，你就会知道为什么我们的面孔如此相似。';
-  chat.messages.push({id:'s55-questions-answer',from:chat.id,text:reply,day:s.day,time:s.clock,sentDate:date55(s.day),actual:true,story55:true});
+  appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-questions-answer',from:chat.id,text:reply,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   completeNode(s,'questions');
  }
  tickStory55(s);
@@ -131,10 +130,8 @@ export function tickStory55(s){
  seedD01(s);
  seedD02(s);
  tickD02Contracts(s);
- tickD02Wechat(s);
+ tickPhoneStoryMessages(s);
  tickD03Contract(s);
- tickD03Chats(s);
- tickD04Chats(s);
  tickD04Contracts(s);
  tickD03MomentReply(s);
  tickD02Diary(s);

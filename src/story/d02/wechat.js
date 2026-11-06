@@ -1,4 +1,4 @@
-import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
+import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 // D02 WeChat: authored player turns require a real Send press.
 // NPC replies are timed separately; state, deadlines and message IDs survive reloads.
 const DATE='2025-05-20';
@@ -33,11 +33,8 @@ const thread=(s,key)=>s.story55?.d02?.wechat?.[key];
 function append(s,key,index,from,text,{clock=s.clock}={}){
  const c=chat(s,key);if(!c)return null;
  const id='d02-'+key+'-script-'+index;
- if(c.messages.some(m=>m.id===id))return id;
- c.messages.push({id,from,text,day:DAY,time:clock,sentDate:DATE,kind:'text',actual:true,storyD02:true});
- deliverAuthoredIncoming(s,{conversationId:c.id,from,text,messageId:id,day:DAY,clock});
- s.events??=[];
- s.events.push({type:from==='me'?'message_sent':'authored_message_delivered',channel:'wechat',conversationId:c.id,messageId:id,day:DAY,clock});
+ appendAuthoredPhoneMessage(s,{conversationId:c.id,messageId:id,from,text,
+  day:DAY,clock,sentDate:DATE,storyTag:'storyD02'});
  return id;
 }
 export function seedD02Wechat(s){

@@ -3,6 +3,7 @@ import {btn,esc,empty} from '../../../../system/ui.js';
 import {D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEY_FILES,D02_KIRA_BODY} from '../../../../story/d02/runtime.js';
 import {HACKER_MAIL_ID} from '../../../mirage/mission.js';
 import {missionSteps} from '../mission/index.js';
+import {kiraMailTreatment,kiraMailDateLabel} from './policy.js';
 
 const lineBreaks=content=>esc(content).replaceAll('\\n','<br>');
 const acceptedReceipt='<div class="kira-d01-file-status">✓ 文件已驗收 · 交易回執已寄送</div>';
@@ -48,12 +49,14 @@ export function kiraDetail(s,id){
  const body=m.id===D01_OPENING
   ?lineBreaks(m.body).replaceAll('bank account','<a href="#" class="kira-d01-inline-link" data-action="kira-d01-bank">bank account</a>')
   :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.id===D02_MAIL?D02_KIRA_BODY[D02_S]:m.id===D02_A_MAIL?D02_KIRA_BODY[D02_A]:m.body);
+ const treatment=kiraMailTreatment(m);
  const d01File=m.id===D01_ATTACHMENT?attachmentCard(s):'';
  const d02File=[D02_MAIL,D02_A_MAIL].includes(m.id)?d02AttachmentCard(s,m.id):'';
- const otherAttachment=m.id===HACKER_MAIL_ID?missionSteps(m,s)
-  :m.id==='flow-d03-reward'||m.d01||[D02_MAIL,D02_A_MAIL].includes(m.id)||m.storyD02&&!m.attachments?.length?'':btn('kira-attachment','查看附件　↗','button-quiet wide',`data-id="${esc(m.id)}"`);
+ // No default attachment button. Only explicitly authorized mission or
+ // credential mail types may show actions.
+ const bodyAction=treatment==='mission'?missionSteps(m,s):'';
  return `<div class="kira-mail-detail${m.id===D01_ATTACHMENT?' kira-d01-mail':''}">
   <div class="kira-mail-toolbar">${btn('kira-back','‹　收件箱')}<span>‹　›　□</span></div>
-  <div class="kira-detail-head"><h2>${esc(m.subject)}</h2><p>来自 ${esc(m.from)}　·　今天</p></div>
-  <div class="kira-mail-body">${body}${d01File}${d02File}</div>${otherAttachment}</div>`;
+  <div class="kira-detail-head"><h2>${esc(m.subject)}</h2><p>来自 ${esc(m.from)}　·　${esc(kiraMailDateLabel(s,m))}</p></div>
+  <div class="kira-mail-body">${body}${d01File}${d02File}</div>${bodyAction}</div>`;
 }

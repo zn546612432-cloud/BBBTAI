@@ -1,7 +1,8 @@
-import {d01Draft,d01ComposerDisabled} from '../../../story/d01/wechat.js';
-import {d02Draft,d02ComposerDisabled} from '../../../story/d02/wechat.js';
-import {d03Draft,d03ComposerDisabled} from '../../../story/d03/wechat.js';
-import {d04Draft,d04ComposerDisabled} from '../../../story/d04/wechat.js';
+import {nativeWeChatComposer} from '../../../services/messaging/preset-replies.js';
+
+
+
+
 import {esc,empty} from '../../../system/ui.js';
 import {visibleMessages} from '../../../services/messaging/delivery.js';
 import {timestampGroups,timestampLabel} from '../../../services/messaging/timestamps.js';
@@ -9,7 +10,7 @@ import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
 import {rebaseBundledPublicAsset} from '../../../services/public-assets.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
-import {currentScript55,scriptedDraft55} from '../../../services/story55/scripted-chat.js';
+
 import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
 
 const historyMediaById=new Map(historyMedia.assets.map(asset=>[asset.id,asset]));
@@ -69,17 +70,18 @@ function messageRow(m,s,c){
 export function renderWeChatChat(s,id){
   const c=wechatConversation(s,id);
   if(!c)return empty('对话不存在');
-  const line=currentScript55(s,'wechat',id),script=scriptedDraft55(s,'wechat',id),d01line=d01Draft(s,id),d01Disabled=d01ComposerDisabled(s,id),d02line=d02Draft(s,id),d02Disabled=d02ComposerDisabled(s,id),d03line=d03Draft(s,id),d03Disabled=d03ComposerDisabled(s,id),d04line=d04Draft(s,id),d04Disabled=d04ComposerDisabled(s,id);
-  const scriptedText=script?.text??d01line?.text??d02line?.text??d03line?.text??d04line?.text??null;
-  const scriptedAttributes=script?' data-story-stage="'+esc(script.id+':'+script.index)+'" data-story-type="'+esc(script.text)+'"':d01line?' data-story-stage="'+esc(d01line.stage)+'" data-story-type="'+esc(d01line.text)+'"':d02line?' data-story-stage="'+esc(d02line.stage)+'" data-story-type="'+esc(d02line.text)+'"':d03line?' data-story-stage="'+esc(d03line.stage)+'" data-story-type="'+esc(d03line.text)+'"':d04line?' data-story-stage="'+esc(d04line.stage)+'" data-story-type="'+esc(d04line.text)+'"':'';
+  const composer=nativeWeChatComposer(s,id);
+  const scriptedAttributes=composer.text!==null
+    ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
+    :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+
-    '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'"'+(script?' data-story-scene="'+esc(script.id)+'"':'')+'>'+
+    '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'">'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(scriptedText??s.drafts?.[id]??'')+'"'+scriptedAttributes+((line&&!script&&!d01line&&!d02line&&!d03line&&!d04line)||d01Disabled||d02Disabled||d03Disabled||d04Disabled?' disabled':'')+'>'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(composer.text??s.drafts?.[id]??'')+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
       action('wx-emoji','表情',smileIcon)+
       action('attach-chat','发送图片',plusIcon).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
       '<button type="submit" class="wx-composer-send" aria-label="发送消息">发送</button></form>'+

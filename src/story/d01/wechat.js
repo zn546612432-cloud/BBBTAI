@@ -1,4 +1,4 @@
-import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
+import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 // D01 optional WeChat scenes. Timers, message IDs and stages persist in the phone save.
 // Player bubbles are never auto-sent. This deliberately does not call AI.
 const DAY_DATE='2025-05-19';
@@ -29,12 +29,10 @@ const state=s=>(s.story55.d01??={});
 const chat=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id);
 const stamp=s=>({time:s.clock,sentDate:DAY_DATE,day:1,kind:'text',actual:true,storyD01:true});
 const visible=(s,id)=>s.unlocked&&s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/'+id;
-const deliver=(s,id,from,text,messageId)=>{
- const c=chat(s,id);if(!c||c.messages.some(m=>m.id===messageId))return false;
- c.messages.push({id:messageId,from,text,...stamp(s)});
- deliverAuthoredIncoming(s,{conversationId:id,from,text,messageId,day:1,clock:s.clock});
- return true;
-};
+const deliver=(s,id,from,text,messageId)=>!!appendAuthoredPhoneMessage(s,{
+ channel:'wechat',conversationId:id,messageId,from,text,
+ day:1,clock:s.clock,sentDate:DAY_DATE,storyTag:'storyD01'
+});
 export function d01Draft(s,id){
  if(!d01(s)||id!==GROUP_ID)return null;
  const g=state(s).group;
