@@ -1,4 +1,7 @@
 import {D05_CONTRACTS} from '../d05/commissions.js';
+import {D06_CONTRACT,D06_ORDER_ID} from '../d06/commission.js';
+import {completeNode,completed} from '../../services/story55/state.js';
+import {settleStory55Wallet} from '../../services/story55/projects.js';
 // Two original fictional D04 MIRAGE commissions. Published at 00:00 on
 // 2025-05-22, not when the player opens the app. Never auto-accept or pay.
 export const D04_CONTRACTS=[
@@ -15,7 +18,7 @@ export const D04_CONTRACTS=[
 ];
 const DAY=4;
 // Register daily definitions in the existing commission runner, with no new UI/steps.
-export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS];
+export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT];
 const publishDay=c=>c.day??DAY;
 const storyTag=c=>'storyD'+String(publishDay(c)).padStart(2,'0');
 const dateOf=day=>new Date(Date.UTC(2025,4,19)+(day-1)*86400000).toISOString().slice(0,10);
@@ -32,17 +35,45 @@ export const d04NextStep=(s,step)=>{
 const order=(s,id)=>s.content?.orders?.find(x=>x.id===id);
 const story=s=>s.story55?.version===1;
 const after=(s,at)=>s.day>at.day||s.day===at.day&&s.clock>at.clock;
-const expired=(s,c)=>after(s,c.deadline);
+const expired=(s,c)=>!!c.deadline&&after(s,c.deadline);
 const cOf=id=>DAILY_CONTRACTS.find(c=>c.id===id);
+const issueMail=(s,c)=>{
+ const mail=s.content.mail??(s.content.mail=[]),mailId=D04_MAIL(c.id);
+ if(mail.some(m=>m.id===mailId))return false;
+ mail.unshift({id:mailId,orderId:c.id,from:c.owner+' / MIRAGE',
+  subject:'【mirage】委託資料已發送',
+  body:'您已接取委託。\n\n'+c.letter+'\n\n完成後請在 MIRAGE 手動提交驗收。',
+  attachments:[c.attachment],read:false,[storyTag(c)]:true,
+  day:s.day,time:s.clock,date:dateOf(s.day)});
+ const nid='d04-order-mail-'+c.id;
+ if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
+  id:nid,title:'KIRA',body:'【mirage】委託資料已發送',day:s.day,clock:s.clock,
+  link:{appId:'kira',route:'/mail/'+mailId,params:{}}
+ });
+ return true;
+};
 export function seedD04Contracts(s){
  if(!story(s)||s.day<DAY)return false;
  let changed=false;
  s.content.orders??=[];
  for(const c of DAILY_CONTRACTS){
-  if(s.day<publishDay(c)||s.content.orders.some(o=>o.id===c.id))continue;
+  if(s.day<publishDay(c))continue;
+  const previous=s.content.orders.find(o=>o.id===c.id);
+  if(previous){
+   // Migrate the old prototype wallet listing without resetting saved progress.
+   if(c.id===D06_ORDER_ID&&previous.title==='10 BTC / WALLET CHALLENGE'){
+    Object.assign(previous,{title:c.title,owner:c.owner,category:c.grade,reward:c.reward,
+     description:c.description,storyD06:true,storyDay:6});changed=true;
+   }
+   if(c.id===D06_ORDER_ID&&completed(s,'wallet')&&previous.status!=='COMPLETED'){
+    previous.status='COMPLETED';changed=true;
+   }
+   continue;
+  }
   s.content.orders.push({id:c.id,title:c.title,owner:c.owner,category:c.grade,reward:c.reward,
-   status:'OPEN',description:c.description,[storyTag(c)]:true,storyDay:publishDay(c),publishedClock:'00:00',
-   deadlineDay:c.deadline.day,deadlineClock:c.deadline.clock});
+   status:completed(s,'wallet')&&c.id===D06_ORDER_ID?'COMPLETED':'OPEN',
+   description:c.description,[storyTag(c)]:true,storyDay:publishDay(c),publishedClock:'00:00',
+   ...(c.deadline?{deadlineDay:c.deadline.day,deadlineClock:c.deadline.clock}:{})});
   changed=true;
  }
  return changed;
@@ -63,6 +94,18 @@ export function tickD04Contracts(s){
    mail.attachments=[c.attachment];changed=true;
   }
   const o=order(s,c.id);
+  // Legacy accepted wallet saves had an authorization mail with no real file.
+  // Replace that obsolete mail with the canonical single attachment.
+  if(c.id===D06_ORDER_ID&&o?.status==='ACCEPTED'){
+   const before=s.content.mail.length;
+   s.content.mail=s.content.mail.filter(m=>m.id!=='s55-wallet-d06-authorization');
+   if(s.content.mail.length!==before)changed=true;
+   const notices=s.notifications.length;
+   s.notifications=s.notifications.filter(n=>n.id!=='s55-wallet-d06-authorization-notice');
+   if(s.notifications.length!==notices)changed=true;
+  }
+  if(o?.status==='ACCEPTED'&&!s.content.mail?.some(m=>m.id===D04_MAIL(c.id)))
+   changed=issueMail(s,c)||changed;
   if(o&&expired(s,c)&&['OPEN','ACCEPTED','READY'].includes(o.status)){
    o.status='EXPIRED';changed=true;
   }
@@ -73,19 +116,7 @@ export function acceptD04Contract(s,id){
  const c=cOf(id),o=order(s,id);
  if(!story(s)||!c||!o||o.status!=='OPEN'||s.day<publishDay(c)||expired(s,c))return false;
  o.status='ACCEPTED';o.wasAccepted=true;o.acceptedDay=s.day;o.acceptedClock=s.clock;
- const mail=s.content.mail??(s.content.mail=[]),mailId=D04_MAIL(id);
- if(!mail.some(m=>m.id===mailId))mail.unshift({
-  id:mailId,orderId:id,from:c.owner+' / MIRAGE',
-  subject:'【mirage】委託資料已發送',
-  body:'您已接取委託。\n\n'+c.letter+'\n\n完成後請在 MIRAGE 手動提交驗收。',
-  attachments:[c.attachment],read:false,[storyTag(c)]:true,
-  day:s.day,time:s.clock,date:publishDay(c)===DAY?'2025-05-22':dateOf(s.day)
- });
- const nid='d04-order-mail-'+id;
- if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-  id:nid,title:'KIRA',body:'【mirage】委託資料已發送',day:s.day,clock:s.clock,
-  link:{appId:'kira',route:'/mail/'+mailId,params:{}}
- });
+ issueMail(s,c);
  // Only the single encrypted KIRA attachment may activate GHOST.
  return true;
 }
@@ -105,6 +136,7 @@ export function armD04Ghost(s,id,index){
  s.ghost.orders[step]??={
   id:step,mailId:D04_MAIL(id),type:c.stages[index],key:c.key,
   status:'authorized',attempts:0,
+  requiresKeyEntry:c.id===D06_ORDER_ID&&index===0,keyVerified:c.id!==D06_ORDER_ID||index>0,
   settings:{seconds:null,rounds:1,retries:99,...(c.stages[index]==='route'?{pipeNetwork:true,pipeSize:5}:{})}
  };
  return step;
@@ -128,22 +160,28 @@ export function submitD04Contract(s,id){
  if(!c||!story(s)||!o||o.status!=='READY'||expired(s,c)
    ||c.stages.some((_,i)=>s.ghost?.orders?.[D04_STEP(id,i)]?.status!=='success'))return false;
  o.status='COMPLETED';
- const tx=s.bankData.transactions??(s.bankData.transactions=[]),receiptId=D04_RECEIPT(id);
- if(!tx.some(t=>t.id===receiptId)){
-  s.bankData.balance=(Number(s.bankData.balance)||0)+c.amount;
-  tx.unshift({id:receiptId,label:'MIRAGE · '+c.grade+' 級委託',amount:c.amount,
-   time:s.clock,date:new Date(Date.UTC(2025,4,19)+(s.day-1)*86400000).toISOString().slice(0,10),[storyTag(c)]:true});
+ const receiptId=D04_RECEIPT(id);
+ if(c.id===D06_ORDER_ID){
+  if(!completed(s,'wallet'))completeNode(s,'wallet');
+  settleStory55Wallet(s); // BTC ledger; do not credit fictitious USD.
+ }else{
+  const tx=s.bankData.transactions??(s.bankData.transactions=[]);
+  if(!tx.some(t=>t.id===receiptId)){
+   s.bankData.balance=(Number(s.bankData.balance)||0)+c.amount;
+   tx.unshift({id:receiptId,label:'MIRAGE · '+c.grade+' 級委託',amount:c.amount,
+    time:s.clock,date:dateOf(s.day),[storyTag(c)]:true});
+  }
  }
  const mail=s.content.mail??(s.content.mail=[]);
  if(!mail.some(m=>m.id===receiptId))mail.unshift({
   id:receiptId,orderId:id,from:'MIRAGE / SETTLEMENT',
   subject:'【mirage】委託已完成',
-  body:'分析結果已通過驗收。\n\n✓ 文件已驗收 · 交易回執已寄送\n\n報酬 US$ '+c.amount.toLocaleString('en-US')+' 已轉入您的指定帳戶。',
+  body:'分析結果已通過驗收。\n\n✓ 文件已驗收 · 交易回執已寄送\n\n'+(c.asset==='BTC'?'獎池 10 BTC 已轉入 MIRAGE 數位資產帳戶。':'報酬 US$ '+c.amount.toLocaleString('en-US')+' 已轉入您的指定帳戶。'),
   day:s.day,time:s.clock,read:false,[storyTag(c)]:true
  });
  const nid='d04-order-paid-'+id;
  if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-  id:nid,title:'KIRA',body:'【mirage】委託已完成 · US$ '+c.amount.toLocaleString('en-US'),
+  id:nid,title:'KIRA',body:'【mirage】委託已完成 · '+(c.asset==='BTC'?'10 BTC':'US$ '+c.amount.toLocaleString('en-US')),
   day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+receiptId,params:{}}
  });
  return true;
