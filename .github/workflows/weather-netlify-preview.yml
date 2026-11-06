@@ -47,8 +47,7 @@ jobs:
           const urls=[];
           const scan=(value)=>{
             if(typeof value==='string'){
-              const matches=value.match(/https:\/\/[^\\s"']+\\.netlify\\.app(?:\\/[^\\s"']*)?/g);
-              if(matches)urls.push(...matches);
+              if(value.startsWith('https://') && value.includes('.netlify.app'))urls.push(value);
               return;
             }
             if(Array.isArray(value))for(const item of value)scan(item);
