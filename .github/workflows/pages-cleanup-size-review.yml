@@ -6,6 +6,7 @@ on:
       - '.github/workflows/pages.yml'
       - '.github/workflows/pages-cleanup-size-review.yml'
       - 'scripts/audit-pages-site.mjs'
+      - 'tests/pages-release.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
