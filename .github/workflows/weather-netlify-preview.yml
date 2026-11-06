@@ -44,21 +44,13 @@ jobs:
           node --input-type=module <<'NODE'
           import {readFileSync,appendFileSync} from 'node:fs';
           const obj=JSON.parse(readFileSync('/tmp/weather-netlify-preview.json','utf8'));
-          const urls=[];
-          const scan=(value)=>{
-            if(typeof value==='string'){
-              if(value.startsWith('https://') && value.includes('.netlify.app'))urls.push(value);
-              return;
-            }
-            if(Array.isArray(value))for(const item of value)scan(item);
-            else if(value&&typeof value==='object')for(const item of Object.values(value))scan(item);
-          };
-          scan(obj);
-          const live=urls.find(u=>u.includes('.netlify.app'))||null;
-          if(!live){
-            console.log('Netlify output JSON fields: '+Object.keys(obj).join(', '));
-            throw Error('No safe public preview URL returned by Netlify CLI');
-          }
+          // Anonymous CLI uses site_url instead of the normal deploy_url.
+          // This is the PUBLIC visitor URL; never print claim_url, claim_command or password.
+          const raw=typeof obj.site_url==='string'?obj.site_url.trim():'';
+          const live=raw.startsWith('https://')?raw:'https://'+raw;
+          const parsed=new URL(live);
+          if(parsed.protocol!=='https:'||!parsed.hostname||raw.length<5)
+            throw Error('Invalid public anonymous preview URL');
           const summary='### Weather preview (temporary)\n\n'+live+'\n\nThis is a disposable one-hour anonymous deploy. It is separate from BBBTAI main and all existing Netlify projects.\n';
           appendFileSync(process.env.GITHUB_STEP_SUMMARY,summary);
           console.log('Weather phone preview: '+live);
