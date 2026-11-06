@@ -7,6 +7,7 @@ import {d03Track,d03Draft,d03ComposerDisabled,sendD03WeChat} from '../../story/d
 import {d04Track,d04Draft,d04ComposerDisabled,sendD04WeChat} from '../../story/d04/wechat.js';
 import {d05Track,d05Draft,d05ComposerDisabled,sendD05WeChat} from '../../story/d05/wechat.js';
 import {currentScript55,sendScriptedDraft55} from '../story55/scripted-chat.js';
+import {genericMissedReplyDraft,genericMissedReplyBusy,sendGenericMissedReply} from './lifecycle/missed-replies.js';
 
 const providers=[
  {name:'d01',draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
@@ -23,34 +24,52 @@ const locate=(s,id)=>{
  if(chosen&&(chosen.draft.priority??2)===0&&providers.some(p=>p.busy?.(s,id)))return null;
  return chosen||null;
 };
+// Today's live script always outranks missed-message acknowledgements.
+// A multi-day backlog is acknowledged once, never by sending individual old
+// 'late' player lines from D03/D04/D05 in succession.
 export function nativeWeChatComposer(s,id){
  const chosen=locate(s,id),line=currentScript55(s,'wechat',id);
- if(chosen&&!(line&&(chosen.draft.priority??2)===0))return {
-  text:chosen.draft.text,
-  stage:chosen.draft.stage,
-  source:chosen.provider.name,
-  disabled:false
+ const isCurrent=chosen&&(chosen.draft.priority??2)>0;
+ if(isCurrent)return {
+  text:chosen.draft.text,stage:chosen.draft.stage,
+  source:chosen.provider.name,disabled:false
  };
  if(line?.kind==='me')return {
   text:line.text,stage:line.id+':'+line.index,
   source:'story55',disabled:false
  };
+ if(genericMissedReplyBusy(s,id))return {text:null,stage:null,source:null,disabled:true};
+ const busy=providers.some(p=>p.busy?.(s,id));
+ const missed=!line&&!busy?genericMissedReplyDraft(s,id):null;
+ if(missed)return {text:missed.text,stage:missed.stage,source:missed.source,disabled:false};
+ if(chosen&&!line)return {
+  text:chosen.draft.text,stage:chosen.draft.stage,
+  source:chosen.provider.name,disabled:false
+ };
  return {
   text:null,stage:null,source:null,
-  disabled:!!(line&&line.kind!=='me')||providers.some(p=>p.disabled(s,id))
+  disabled:!!line||busy||providers.some(p=>p.disabled(s,id))
  };
 }
 
 // Authored player messages are only written from this path on a real submit.
 export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  const s=store.get(),chosen=locate(s,id),line=currentScript55(s,'wechat',id);
- if(chosen&&!(line&&(chosen.draft.priority??2)===0))return chosen.provider.send(store,id,text,now);
+ if(chosen&&(chosen.draft.priority??2)>0)return chosen.provider.send(store,id,text,now);
  if(line?.kind==='me'){
   if(String(text||'').trim()!==line.text.trim())
    return {handled:true,reason:'請發送輸入框裡完整的預設台詞'};
   store.update(next=>sendScriptedDraft55(next,'wechat',id,text));
   return {handled:true,messageId:'story55-'+line.id+'-'+line.index};
  }
+ // The one generic answer closes the whole historical optional backlog.
+ // Do not replace a newer active NPC exchange or a scripted plot instruction.
+ const busy=providers.some(p=>p.busy?.(s,id));
+ if(genericMissedReplyBusy(s,id))
+  return {handled:true,reason:'請等待對方回覆'};
+ if(!line&&!busy&&genericMissedReplyDraft(s,id))
+  return sendGenericMissedReply(store,id,text,now);
+ if(chosen&&!line)return chosen.provider.send(store,id,text,now);
  // D01's first "hello" and certain legacy scenes start when the player
  // types and presses Send, before any preset draft exists. Preserve that
  // authored trigger; never fall through to a generic, unscripted send.
