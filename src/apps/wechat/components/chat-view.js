@@ -1,4 +1,6 @@
 import {nativeWeChatComposer} from '../../../services/messaging/preset-replies.js';
+import {completed} from '../../../services/story55/state.js';
+import {wishDefinition,wishIdForMessage} from '../../../services/wishes/catalog.js';
 
 
 
@@ -56,8 +58,13 @@ function messageRow(m,s,c){
   const media=m.assetId?historyMediaById.get(m.assetId):null;
   const stickerSize=String(m.text).endsWith('/whitecat.webp')?' width="199" height="170"':
     String(m.text).endsWith('/dog.svg')?' width="88" height="88"':'';
+  const wishId=wishIdForMessage(m),wish=wishId&&wishDefinition(wishId);
+  const wishText=wish&&m.wishText&&String(m.text).includes(m.wishText)?String(m.text).split(m.wishText):null;
+  const highlightedWish=wishText&&wishText.length===2
+    ?esc(wishText[0])+'<span class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" role="button" tabindex="0" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</span>'+esc(wishText[1])
+    :esc(m.text);
   const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
-    m.kind==='app_invitation'?invite(m,s,c):esc(m.text);
+    m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
     portrait(name,s)+'<div class="wx-message-body">'+
@@ -75,6 +82,8 @@ export function renderWeChatChat(s,id){
     ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
+    '<div class="wx-wish-story-controls">'+(id==='group'&&s.day===6&&completed(s,'wallet')&&!s.story55?.wishes?.story?.started
+      ?'<button type="button" data-action="wx-share-d06-prize" class="wx-wish-share">把10 BTC的好消息告诉大家</button>':'')+'</div>'+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
