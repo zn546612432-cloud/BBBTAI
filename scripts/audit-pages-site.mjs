@@ -43,9 +43,15 @@ for(const root of roots){
  check((await lstat(path.join(root.folder,'releases',release.version,'src','main.js'))).isFile(),
   'missing versioned application at '+root.key);
  if(root.key!=='production')check(html.includes('phone-preview'),'preview banner missing: '+root.key);
- sizes[root.key]=await walk(root.folder);
+ if(root.key!=='production')sizes[root.key]=await walk(root.folder);
 }
 const total=await walk(dir);
+// The production tree is dist minus its nested preview trees; avoid
+// double-counting those nested bytes in the per-site breakdown.
+sizes.production={
+ bytes:total.bytes-sizes['latest-preview'].bytes-sizes.story55.bytes-sizes['tai-vision'].bytes,
+ files:total.files-sizes['latest-preview'].files-sizes.story55.files-sizes['tai-vision'].files
+};
 // Keep enough headroom for assets, but prohibit accidentally republishing the
 // 14 old snapshots (previous upload: ~828 MB compressed).
 const maxBytes=450*1024*1024;
