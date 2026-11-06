@@ -6,8 +6,8 @@ import {tickGenericMissedReplies,genericMissedRepliesDue} from './lifecycle/miss
 
 const tracks=[
  {name:'D01',day:1,tick:tickD01WeChat,due:d01WeChatDue,carryForward:true},
- ...AUTHORED_CHAT_TRACKS.map(({name,track})=>({
-  name,day:track.day,tick:track.tick,due:track.due,carryForward:true
+ ...AUTHORED_CHAT_TRACKS.map(({name,track,tick})=>({
+  name,day:track.day,tick:tick||track.tick,due:track.due,carryForward:true
  }))
 ];
 export const PHONE_CHAT_TRACKS=tracks.map(({name,day,carryForward})=>({name,day,carryForward:!!carryForward}));
