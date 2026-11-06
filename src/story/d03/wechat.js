@@ -1,3 +1,4 @@
+import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
 // D03 authored WeChat dialogue. The player's bubbles only exist after Send.
 // Each NPC scene has an early completion path and a clock-time fallback.
 import {D03_ORDER} from './contract.js';
@@ -61,15 +62,7 @@ function push(s,scene,index,part) {
  const id='d03-'+scene.id+'-'+index;
  if(c.messages.some(m=>m.id===id))return false;
  c.messages.push({id,from:part.who,text:part.text,kind:part.kind,day:DAY,time:s.clock,sentDate:DATE,actual:true,storyD03:true});
- if(part.who!=='me'&&index===0&&!visible(s,c.id)){
-  c.unread=(Number(c.unread)||0)+1;
-  const nid='d03-wechat-notice-'+scene.id;
-  if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-   id:nid,title:'微信',body:readable(part.who)+'：'+(part.kind==='image'?'[圖片]':part.text),
-   conversationId:c.id,day:DAY,clock:s.clock,
-   link:{appId:'wechat',route:'/chat/'+c.id,params:{}}
-  });
- }
+ deliverAuthoredIncoming(s,{conversationId:c.id,from:readable(part.who),text:part.text,kind:part.kind,messageId:id,day:DAY,clock:s.clock});
  s.events??=[];
  s.events.push({type:part.who==='me'?'message_sent':'authored_message_delivered',channel:'wechat',conversationId:c.id,messageId:id,day:DAY,clock:s.clock});
  return true;

@@ -1,6 +1,7 @@
 import {D01_REPAIR,finishD01Round,submitD01Attachment} from '../../story/d01/runtime.js';
 import {onD02GhostWin,d02OrderOfStep,D02_DEADLINES} from '../../story/d02/runtime.js';
 import {onD03GhostWin,d03OrderOfStep,d03CanRun} from '../../story/d03/contract.js';
+import {onD04GhostWin,d04OrderOfStep} from '../../story/d04/contract.js';
 import {completeDeploymentRun} from '../../services/story55/projects.js';
 import {linkedMission,advanceLinkedMission,recordLinkedMissionPayment} from '../mirage/linked-missions.js';
 import {createLinkedArtifact,tickLinkedContracts,linkedNeedsWorldTick} from '../mirage/linked-contract-runtime.js';
@@ -98,6 +99,13 @@ export function startD02PipePreview(s,id,now=Date.now()){
 // The D03 LINK level must also keep its solved circuit visible for 3 seconds.
 export function startD03PipePreview(s,id,now=Date.now()){
  if(!d03OrderOfStep(id))return false;
+ const o=s.ghost?.orders?.[id];
+ if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
+ o.status='preview-win';o.previewUntil=now+3000;return true;
+}
+// D04 LINK also displays the connected circuit for three seconds.
+export function startD04PipePreview(s,id,now=Date.now()){
+ if(!d04OrderOfStep(id))return false;
  const o=s.ghost?.orders?.[id];
  if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
  o.status='preview-win';o.previewUntil=now+3000;return true;

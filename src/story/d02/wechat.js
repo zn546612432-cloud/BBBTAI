@@ -1,3 +1,4 @@
+import {deliverAuthoredIncoming} from '../../services/messaging/authored-incoming.js';
 // D02 WeChat: authored player turns require a real Send press.
 // NPC replies are timed separately; state, deadlines and message IDs survive reloads.
 const DATE='2025-05-20';
@@ -34,15 +35,7 @@ function append(s,key,index,from,text,{clock=s.clock}={}){
  const id='d02-'+key+'-script-'+index;
  if(c.messages.some(m=>m.id===id))return id;
  c.messages.push({id,from,text,day:DAY,time:clock,sentDate:DATE,kind:'text',actual:true,storyD02:true});
- if(from!=='me'&&key==='xin'&&index===0&&!visible(s,c.id)){
-  c.unread=Math.max(0,Number(c.unread)||0)+1;
-  const notificationId='d02-wechat-notice-'+id;
-  if(!s.notifications.some(n=>n.id===notificationId))s.notifications.unshift({
-   id:notificationId,title:'微信',body:(key==='wang'?'熙旺':'小辛')+'：'+text,
-   conversationId:c.id,day:DAY,clock,
-   link:{appId:'wechat',route:'/chat/'+c.id,params:{}}
-  });
- }
+ deliverAuthoredIncoming(s,{conversationId:c.id,from,text,messageId:id,day:DAY,clock});
  s.events??=[];
  s.events.push({type:from==='me'?'message_sent':'authored_message_delivered',channel:'wechat',conversationId:c.id,messageId:id,day:DAY,clock});
  return id;

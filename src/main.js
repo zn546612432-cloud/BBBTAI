@@ -3,6 +3,7 @@ import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './sto
 import {d01WeChatDue,tickD01WeChat} from './story/d01/wechat.js';
 import {d02WeChatDue,tickD02Wechat} from './story/d02/wechat.js';
 import {d03ChatDue,tickD03Chats} from './story/d03/wechat.js';
+import {d04ChatDue,tickD04Chats} from './story/d04/wechat.js';
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
@@ -31,6 +32,7 @@ import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
+import {IncomingBannerQueue} from './services/messaging/incoming-banner-queue.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
@@ -92,6 +94,17 @@ let shortChargeNoticePausedUntil=0;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
 const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
+const liveBanners=new IncomingBannerQueue({
+ show:showBanner,
+ stillUnread:n=>store.get().notifications.some(x=>x.id===n.id),
+ eligible:n=>{
+  const state=store.get(),channel=n.link?.appId,route=n.link?.route||'';
+  const chat=route.startsWith('/chat/')?route.slice(6):null;
+  return state.unlocked&&!phoneBlocked(state)&&n.type!=='tai-incoming-call'
+   &&!(chat&&isConversationOpen(state,channel,chat));
+ }
+});
+
 const nonImmersive=/演示|下一阶段|开发者|暂未接入|尚未接入|尚未开放|后续功能阶段|剧情|游戏存档|仅本机模拟|DEMO|测试中/i;
 const toast=message=>{
  const s=store.get(),body=String(message);
@@ -177,6 +190,12 @@ const completedStoryTyping=new WeakMap();
 function mountScriptedMirageDraft(){
  const input=$('#screen-layer .composer input[data-story-type]');
  if(!input){
+  if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  return;
+ }
+ // Native WeChat uses stable, fully visible authored drafts, not the Mirage
+ // typewriter. Repeated screen patches must never clear the player response.
+ if(input.closest('.wx-conversation')){
   if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
   return;
  }
@@ -318,7 +337,7 @@ store.subscribe(()=>{
  const added=s.notifications.filter(n=>!seenNotices.has(n.id));
  seenNotices=new Set(s.notifications.map(n=>n.id));
  if(isShortCharging(s)&&added.some(n=>n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
- if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length){const n=added.find(n=>!isConversationOpen(s,n.link?.appId,n.link?.route?.startsWith('/chat/')?n.link.route.slice(6):''));if(n&&n.type!=='tai-incoming-call')showBanner(n);}});render();
+ if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);});render();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.
  const closeBoot=()=>{
@@ -388,7 +407,7 @@ setInterval(()=>{
 
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(d01WeChatDue(store.get()))store.update(s=>tickD01WeChat(s));if(d02WeChatDue(store.get()))store.update(s=>tickD02Wechat(s));if(d03ChatDue(store.get()))store.update(s=>tickD03Chats(s));
+setInterval(()=>{if(lockscreen.stage==='restart'||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(d01WeChatDue(store.get()))store.update(s=>tickD01WeChat(s));if(d02WeChatDue(store.get()))store.update(s=>tickD02Wechat(s));if(d03ChatDue(store.get()))store.update(s=>tickD03Chats(s));if(d04ChatDue(store.get()))store.update(s=>tickD04Chats(s));
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();

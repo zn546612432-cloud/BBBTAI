@@ -1,4 +1,5 @@
 import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {d04GroupBroadcastActive} from '../../story/d04/wechat.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
 import {endShortCharge,isShortCharging} from '../power/battery.js';
@@ -37,6 +38,7 @@ export function setStory55MinutesPerSecond(s,value){
 }
 export const STORY55_FINALE_REPLY_MINUTES_PER_MS=1/3000; // 3 game minutes take 9 seconds.
 export const STORY55_CHAT_MINUTES_PER_MS=2/60000;
+export const D04_BROADCAST_MINUTES_PER_MS=1.2/1000; // delivery-paced, normal slider untouched
 const DAY_MINUTES=1440;
 export const clockMinutes=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
 export const absoluteMinute=s=>(s.day-1)*DAY_MINUTES+clockMinutes(s.clock);
@@ -131,7 +133,12 @@ export function worldMinuteRate(s,{focused=false,taiChat=false,fastForward=true}
  // D55: after the 23-second recording actually finishes, 3 game minutes
  // take 9 real seconds. Do not use the normal 90-second NoApp chat pacing.
  if(endingAwaitingReply55(s))return STORY55_FINALE_REPLY_MINUTES_PER_MS;
+ // Scripted D04 WeChat needs human reading time, regardless of slider speed.
+ if(isStory55(s)&&s.day===4&&s.nav?.current?.appId==='wechat'&&s.nav.current.route?.startsWith('/chat/'))return STORY55_CHAT_MINUTES_PER_MS;
  const normal=isStory55(s)?story55MinutesPerSecond(s)/1000:NORMAL_MINUTES_PER_MS;
+ // During a busy scripted D04 group exchange, don't let a high clock-speed
+ // slider skip the next scene before the 1.9s-per-bubble messages arrive.
+ if(d04GroupBroadcastActive(s))return Math.min(normal,D04_BROADCAST_MINUTES_PER_MS);
  return s.deathPhase==='draining'?normal:isShortCharging(s)&&fastForward?SHORT_CHARGE_MINUTES_PER_MS:taiChat?(isStory55(s)?STORY55_CHAT_MINUTES_PER_MS:TAI_CHAT_MINUTES_PER_MS):focused?TYPING_MINUTES_PER_MS:s.powerMode==='charging'?CHARGING_MINUTES_PER_MS:s.powerMode==='sleeping'?SLEEPING_MINUTES_PER_MS:normal;
 }
 export function tickWorld(s,realMilliseconds,{focused=false,taiChat=false,fastForward=true}={}){
