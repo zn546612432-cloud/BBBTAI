@@ -63,9 +63,24 @@ if(isStory55(store.get())){
  });
 }
 mountCallEvents({store});
-try{await hydrateBuiltInPresets(store);}catch(error){console.error('内置剧情加载失败',error);}
+// Built-in narratives are fetched from local static files. A broken cache or
+// stalled request must not keep the entire phone behind the static 0% splash.
+// The original promise continues and its eventual merge preserves user data.
+const boundedBootTask=async(task,label,limit=7000)=>{
+ let timer;
+ try{
+  const result=await Promise.race([
+   Promise.resolve().then(task).then(()=>({status:'done'}),error=>({status:'error',error})),
+   new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'timeout'}),limit);})
+  ]);
+  if(result.status==='error')console.error(label,result.error);
+  if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
+ }finally{clearTimeout(timer);}
+};
+await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
+
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
-try{await primeTestSnapshots(store.storage);}catch(error){console.warn('测试快照目录读取失败，旧存档保持原状',error);}
+await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
@@ -346,7 +361,8 @@ store.subscribe(()=>{
   boot.classList.add('xm-boot-done');
   setTimeout(()=>boot.remove(),450);
  };
- lockAssets=beginLockscreenPreload({
+ globalThis.__xmBootStarted?.();
+  lockAssets=beginLockscreenPreload({
   wallpaper:store.get().wallpaper,
   onProgress:({finished,total,ready})=>{
    const percent=Math.round(finished/Math.max(1,total)*100);
