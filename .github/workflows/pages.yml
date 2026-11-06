@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -127,6 +128,11 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+      # Large, versioned phone builds sometimes remain in Pages syncing_files
+      # after the action's default 10-minute timeout. Permit GitHub to finish
+      # synchronizing without rebuilding/removing existing sites or player data.
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: '1800000'
