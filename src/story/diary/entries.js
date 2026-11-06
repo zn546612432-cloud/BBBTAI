@@ -2,6 +2,11 @@
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  5:{
+    weather:'多云',
+    title:'先把手边的事弄完',
+    body:'工房里的设备还能用。内存和硬盘的报价再看看，没必要一下全换。\n\n前几天的东西归一下档，备份也该整理了。有些委托还没交，先把手边的事弄完。\n\n天天都是这些，多少有点无聊。'
+  },
   1:{
     weather:'晴',
     title:'老狼归巢',
