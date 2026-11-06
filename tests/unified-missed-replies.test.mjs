@@ -77,11 +77,12 @@ test('NPC reminders are spaced, capped, persisted and never turn into player tex
  assert.deepEqual(after.map(m=>m.id),ids,'refresh does not duplicate or reroll notifications');
 });
 
-test('recent daily replies stay current; only multi-day forgotten messages use generic apology',()=>{
- const s=fresh(5,'08:00');tickPhoneStoryMessages(s,0);
- assert.equal(genericMissedReplyDraft(s,'wang'),null);
- const c=nativeWeChatComposer(s,'hufeng');
- assert.notEqual(c.source,'generic-missed','a one-day-old scene retains its original behavior');
+test('an active conversation today outranks a generic older backlog',()=>{
+ const s=fresh(5,'08:05');
+ tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,1000);
+ const c=nativeWeChatComposer(s,'wang');
+ assert.equal(c.text,'嗯','today authored player reply has priority');
+ assert.equal(c.source,'d05');
 });
 
 test('the shared engine excludes mandatory, unstarted and group history from batch closing',()=>{
