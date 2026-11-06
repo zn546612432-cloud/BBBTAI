@@ -2,19 +2,17 @@
 // The Day 1–5 dialogue modules remain content/progress providers; UI and
 // Send never pick a different story rule independently.
 import {d01Draft,d01ComposerDisabled,sendD01WeChat} from '../../story/d01/wechat.js';
-import {d02Track,d02Draft,d02ComposerDisabled,sendD02WeChat} from '../../story/d02/wechat.js';
-import {d03Track,d03Draft,d03ComposerDisabled,sendD03WeChat} from '../../story/d03/wechat.js';
-import {d04Track,d04Draft,d04ComposerDisabled,sendD04WeChat} from '../../story/d04/wechat.js';
-import {d05Track,d05Draft,d05ComposerDisabled,sendD05WeChat} from '../../story/d05/wechat.js';
+import {AUTHORED_CHAT_TRACKS} from './lifecycle/registry.js';
 import {currentScript55,sendScriptedDraft55} from '../story55/scripted-chat.js';
 import {genericMissedReplyDraft,genericMissedReplyBusy,sendGenericMissedReply} from './lifecycle/missed-replies.js';
 
+// Every new authored day registers its track only once in lifecycle/registry.
 const providers=[
- {name:'d01',draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
- {name:'d02',busy:d02Track.busy,draft:d02Draft,disabled:d02ComposerDisabled,send:sendD02WeChat},
- {name:'d03',busy:d03Track.busy,draft:d03Draft,disabled:d03ComposerDisabled,send:sendD03WeChat},
- {name:'d04',busy:d04Track.busy,draft:d04Draft,disabled:d04ComposerDisabled,send:sendD04WeChat},
- {name:'d05',busy:d05Track.busy,draft:d05Draft,disabled:d05ComposerDisabled,send:sendD05WeChat}
+ {name:'d01',day:1,draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
+ ...AUTHORED_CHAT_TRACKS.map(({name,track})=>({
+  name:name.toLowerCase(),day:track.day,busy:track.busy,
+  draft:track.draft,disabled:track.disabled,send:track.send
+ }))
 ];
 const locate=(s,id)=>{
  const choices=providers.map(provider=>({provider,draft:provider.draft(s,id)})).filter(c=>c.draft?.text);
@@ -73,7 +71,7 @@ export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  // D01's first "hello" and certain legacy scenes start when the player
  // types and presses Send, before any preset draft exists. Preserve that
  // authored trigger; never fall through to a generic, unscripted send.
- const dayProvider=providers.find(p=>p.name==='d0'+s.day);
+ const dayProvider=providers.find(p=>p.day===s.day);
  if(s.story55?.version===1&&dayProvider){
   const result=dayProvider.send(store,id,text,now);
   if(result?.handled)return result;
