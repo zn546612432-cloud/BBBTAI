@@ -1,6 +1,7 @@
 import {esc} from '../../../../system/ui.js';
 import {entryFor,diaryDate,allDiaryDays} from '../../../../story/diary/entries.js';
 import {addReminder,reminders} from '../../../../services/reminders.js';
+import {weatherSymbol} from '../../../../services/weather/world.js';
 
 let suggestion=null;
 const canOpen=(s,day)=>Number.isInteger(day)&&day>=1&&day<=Math.min(55,s.day);
@@ -32,7 +33,7 @@ export function diaryView(s,loc){
  const entry=entryFor(s,day);
  const previous=allDiaryDays(s).filter(d=>d<day).at(-1);
  const next=allDiaryDays(s).find(d=>d>day&&d<=s.day);
- return '<div class="diary-app">'+header('日程')+'<div class="diary-scroll diary-paper"><div class="diary-overline">DAY '+String(day).padStart(2,'0')+'</div><h1 class="diary-date">'+esc(dateLabel(day))+'</h1><div class="diary-weather"><span aria-hidden="true">☀</span> 天气 '+esc(entry?.weather||'暂无记录')+'</div>'+
+ return '<div class="diary-app">'+header('日程')+'<div class="diary-scroll diary-paper"><div class="diary-overline">DAY '+String(day).padStart(2,'0')+'</div><h1 class="diary-date">'+esc(dateLabel(day))+'</h1><div class="diary-weather"><span aria-hidden="true">'+weatherSymbol(entry?.weather)+'</span> 天气 '+esc(entry?.weather||'暂无记录')+'</div>'+
   (entry?'<h2 class="diary-entry-title">'+esc(entry.title||'日记')+'</h2><article class="diary-prose">'+journalText(entry.body)+'</article>':'<p class="diary-empty">这一天还没有日程记录。</p>')+
   '<div class="diary-page-nav"><button type="button" data-action="diary-open-day" data-day="'+previous+'" '+(previous?'':'disabled')+'>‹ 上一篇</button><button type="button" data-action="diary-archive">全部日程</button><button type="button" data-action="diary-open-day" data-day="'+next+'" '+(next?'':'disabled')+'>下一篇 ›</button></div></div>'+dialog()+'</div>';
 }
