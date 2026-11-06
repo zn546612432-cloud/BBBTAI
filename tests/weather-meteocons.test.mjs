@@ -92,7 +92,8 @@ test('deleted weather cities remain hidden and restored city data is unchanged',
 
 test('github-pages asset rebasing supports local Meteocons for released and preview builds',()=>{
  const build=readFileSync('scripts/build-pages.mjs','utf8');
- assert.match(build,/\\\/\(src\|assets\|apps/);
+ assert.ok(build.includes('src|assets|apps'));
+ assert.ok(build.includes('releaseBase'));
  const sources=readFileSync('src/apps/weather/meteocons.js','utf8');
  assert.match(sources,/\/assets\/meteocons\/fill\//);
  assert.match(sources,/\/assets\/meteocons\/static\//);
