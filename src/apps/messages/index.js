@@ -76,6 +76,7 @@ export function handle(a,t,c){
  if(a==='sms-confirm-delete'&&selected.size){
   const ids=new Set(selected),count=ids.size;
   c.store.update(s=>{
+   s.content.deletedSmsConversationIds=[...new Set([...(s.content.deletedSmsConversationIds||[]),...ids])];
    s.content.conversations.messages=s.content.conversations.messages.filter(x=>!ids.has(x.id));
    s.notifications=s.notifications.filter(n=>!ids.has(n.conversationId)||n.link?.appId!=='messages');
    for(const id of ids)delete s.drafts[id];
