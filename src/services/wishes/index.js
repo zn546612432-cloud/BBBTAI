@@ -131,8 +131,8 @@ export function beginD06Celebration(s,now=Date.now()){
   day:6,clock:s.clock,sentDate:today(s),storyTag:'storyD06'});
  if(!msg)return false;
  story.started=true;
- for(const line of celebration)queue(s,{...line,dueDay:6,dueClock:s.clock});
- for(const line of privateScenes)queue(s,{...line,dueDay:6,dueClock:s.clock,afterId:'d06-celebrate-11'});
+ for(const line of celebration)queue(s,{...line,dueDay:6,dueClock:s.clock,silentAfterDay:true});
+ for(const line of privateScenes)queue(s,{...line,dueDay:6,dueClock:s.clock,afterId:'d06-celebrate-11',silentAfterDay:true});
  story.nextAt=now+1800;
  s.events.push({type:'d06_celebration_started',day:s.day,clock:s.clock});
  return true;
@@ -159,6 +159,10 @@ export function tickWishes(s,now=Date.now()){
  if(!w)return false;
  let changed=false;
  for(const r of Object.values(w.records)){
+  if(r.status==='saved'&&wishExpired(s,r.id)){
+   r.status='expired';const item=s.content.reminders?.find(x=>x.wishId===r.id);
+   if(item)item.wishStatus='expired';changed=true;
+  }
   if(r.status!=='ordered'||s.day<r.deliveryDay||s.day===r.deliveryDay&&s.clock<'15:00')continue;
   r.status='delivered';
   const reminder=s.content.reminders?.find(x=>x.wishId===r.id);
