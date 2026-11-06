@@ -6,7 +6,7 @@ import {deliverAuthoredIncoming} from './authored-incoming.js';
 
 export function appendAuthoredPhoneMessage(s,{
  channel='wechat',conversationId,messageId,from,text,kind='text',
- day=s.day,clock=s.clock,sentDate,storyTag,notify=true
+ day=s.day,clock=s.clock,sentDate,storyTag,notify=true,silent=false,lifecycleId=null
 }){
  if(!messageId||!conversationId||typeof from!=='string'||typeof text!=='string')return null;
  const conversation=s.content?.conversations?.[channel]?.find(c=>c.id===conversationId);
@@ -16,16 +16,16 @@ export function appendAuthoredPhoneMessage(s,{
  const message={
   id:messageId,from,text,kind,
   day,time:clock,...(sentDate?{sentDate}:{}),
-  actual:true,...(storyTag?{[storyTag]:true}:{})
+  actual:true,...(storyTag?{[storyTag]:true}:{}),...(lifecycleId?{lifecycleId}:{}),...(silent?{historical:true}:{})
  };
  conversation.messages.push(message);
  if(notify&&from!=='me'){
-  deliverAuthoredIncoming(s,{channel,conversationId,from,text,kind,messageId,day,clock});
+  deliverAuthoredIncoming(s,{channel,conversationId,from,text,kind,messageId,day,clock,silent,lifecycleId});
  }
  s.events??=[];
  if(!s.events.some(e=>e.messageId===messageId&&e.channel===channel)){
   s.events.push({type:from==='me'?'message_sent':'authored_message_delivered',
-   channel,conversationId,messageId,day,clock});
+   channel,conversationId,messageId,day,clock,silent,lifecycleId});
  }
  return message;
 }

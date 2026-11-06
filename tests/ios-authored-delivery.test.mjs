@@ -36,13 +36,16 @@ test('D04 authored replies are present as literal native input values, not blank
  assert.equal(sendD04WeChat(store(s),'hufeng','有',4000).messageId,'d04-hufeng-am-2');
  assert.equal(conversation(s,'hufeng').messages.filter(m=>m.from==='me').length,1);
 });
-test('D04 old pending reply remains available even after next private scene reaches its timestamp',()=>{
+test('D04 next private scene supersedes stale morning draft and keeps a late alternative',()=>{
  const s=state(4,'09:50');
  tickD04Chats(s,0);tickD04Chats(s,2000);
  assert.equal(d04Draft(s,'hufeng')?.text,'有');
  s.clock='16:50';tickD04Chats(s,5000);
- assert.equal(d04Draft(s,'hufeng')?.text,'有');
- assert.ok(!conversation(s,'hufeng').messages.some(m=>m.text==='我買了兩杯咖啡'));
+ assert.equal(d04Draft(s,'hufeng'),null,"today's NPC turn takes priority");
+ tickD04Chats(s,7000);tickD04Chats(s,9000);
+ assert.equal(d04Draft(s,'hufeng')?.text,'什麼口味');
+ assert.ok(conversation(s,'hufeng').messages.some(m=>m.text==='我買了兩杯咖啡'));
+ assert.equal(s.story55.d04Chats['hufeng-am'].status,'waiting-late');
 });
 test('all authored D04 notifications count per bubble, each with author and group',()=>{
  const s=state(4,'08:20');
