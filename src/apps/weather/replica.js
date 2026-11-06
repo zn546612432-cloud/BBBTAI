@@ -1,4 +1,5 @@
 import {btn,esc} from '../../system/ui.js';
+import {meteoconMarkup} from './meteocons.js';
 import {manifest,weatherFor,weatherCities,render as originalRender,handle as originalHandle,change,submit} from './index.js';
 
 export {manifest,weatherFor,weatherCities,change,submit};
@@ -18,7 +19,7 @@ export function render(ctx,loc){
  if(loc.route!=='/')return originalRender(ctx,loc);
  const s=ctx.store.get(),cities=visibleWeatherCities(s),removed=hiddenCityIds(s);
  return `<div class="weather-screen weather-list ios-weather-list"><header><h1>天气</h1>${btn('weather-edit','•••','weather-more',`aria-label="编辑天气" data-city="${cities[0]?.id||weatherCities[0].id}"`)}</header>
- <div class="weather-city-scroll">${cities.map(c=>`<div class="weather-swipe-row" data-weather-city="${c.id}"><div class="weather-delete-underlay">${btn('weather-delete','删除','weather-delete-button',`data-city="${c.id}" aria-label="删除${esc(c.name)}天气"`)}</div><div class="weather-swipe-main">${btn('weather-city',`<span class="weather-city-name">${esc(c.name)}</span><span class="weather-city-sub">${esc(c.subtitle)}</span><span class="weather-city-temp">${c.temp}°</span><span class="weather-city-condition">${esc(c.condition)}</span><span class="weather-city-range">最高 ${c.high}°　最低 ${c.low}°`,'weather-card '+c.theme,`data-city="${c.id}" aria-label="${esc(c.name)}天气，左滑删除"`)}</div></div>`).join('')||'<div class="weather-none">还没有城市天气。<br>你可以恢复之前删除的城市。</div>'}
+ <div class="weather-city-scroll">${cities.map(c=>`<div class="weather-swipe-row" data-weather-city="${c.id}"><div class="weather-delete-underlay">${btn('weather-delete','删除','weather-delete-button',`data-city="${c.id}" aria-label="删除${esc(c.name)}天气"`)}</div><div class="weather-swipe-main">${btn('weather-city',`<span class="weather-city-name">${esc(c.name)}</span><span class="weather-city-sub">${esc(c.subtitle)}</span><span class="weather-city-temp">${c.temp}°</span><span class="weather-city-condition">${meteoconMarkup(c,{className:"weather-city-icon"})}${esc(c.condition)}</span><span class="weather-city-range">最高 ${c.high}°　最低 ${c.low}°`,'weather-card '+c.theme,`data-city="${c.id}" aria-label="${esc(c.name)}天气，左滑删除"`)}</div></div>`).join('')||'<div class="weather-none">还没有城市天气。<br>你可以恢复之前删除的城市。</div>'}
  <p class="weather-foot">${removed.length?`已移除 ${removed.length} 个城市　${btn('weather-restore','恢复城市','weather-restore-button')}`:'澳门历史天气：Open-Meteo ERA5 再分析 · 其他城市为预设'}</p></div>
  ${lastRemoved&&removed.includes(lastRemoved)?`<div class="weather-undo">城市已删除 ${btn('weather-undo','撤销','',`data-city="${lastRemoved}"`)}</div>`:''}</div>`;
 }
