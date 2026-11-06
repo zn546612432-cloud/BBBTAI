@@ -65,15 +65,16 @@ test('existing saved diary weather survives until a new canonical edit overrides
  assert.equal(s.content.storyDiary[6].body,'旧文字','weather edits do not rewrite history');
 });
 
-test('D07 and later have no invented historical readings; separate city and day edits stay independent',()=>{
+test('D07 onward uses real offline history while city and day edits remain isolated',()=>{
  const s=fresh();
  const seven=getWeather(s,{day:7,cityId:'macau'});
- assert.equal(seven.source,'placeholder');
- assert.equal(seven.condition,'晴朗无云');
+ assert.equal(seven.source,'historical');
+ assert.equal(seven.date,'2025-05-25');
+ assert.equal(seven.tempExact,24.2); // 08:00 game time, historical ERA5
  const london=getWeather(s,{day:7,cityId:'london'});
  setWeatherOverride(s,{day:7,cityId:'macau',values:{condition:'阵雨'}});
  assert.equal(getWeather(s,{day:7,cityId:'macau'}).condition,'阵雨');
- assert.equal(getWeather(s,{day:8,cityId:'macau'}).condition,'晴朗无云');
+ assert.equal(getWeather(s,{day:8,cityId:'macau'}).condition,'多云');
  assert.equal(getWeather(s,{day:7,cityId:'london'}).condition,london.condition);
  assert.deepEqual(weatherForDay(s,7).map(x=>x.id),['macau','london','paris']);
  assert.equal(getWeather(s,{day:91,cityId:'macau'}),null);

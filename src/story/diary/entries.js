@@ -1,5 +1,5 @@
 // Authored journal: narrative prose, not a task board or hidden progression UI.
-import {getWeather,setWeatherOverride} from '../../services/weather/world.js';
+import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.js';
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
@@ -65,7 +65,7 @@ export function entryFor(s,day){
   const complete=section.afterNode&&Object.hasOwn(s.story55?.completed||{},section.afterNode);
   if(complete)parts.push(overrides[section.id]??section.text);
  }
- return {...base,weather:getWeather(s,{day,cityId:'macau'})?.condition||'暂无记录',body:parts.filter(Boolean).join('\n\n')};
+ return {...base,weather:getDailyWeather(s,{day,cityId:'macau'})?.condition||'暂无记录',body:parts.filter(Boolean).join('\n\n')};
 }
 export function allDiaryDays(s){
  const days=new Set([...Object.keys(DEFAULT_DIARY_ENTRIES),...Object.keys(s.content?.storyDiary||{})]);
