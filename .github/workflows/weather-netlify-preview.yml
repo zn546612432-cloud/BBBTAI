@@ -47,7 +47,7 @@ jobs:
           // Anonymous CLI uses site_url instead of the normal deploy_url.
           // This is the PUBLIC visitor URL; never print claim_url, claim_command or password.
           const raw=typeof obj.site_url==='string'?obj.site_url.trim():'';
-          const live=raw.startsWith('https://')?raw:'https://'+raw;
+          const live=raw.startsWith('https://')?raw:raw.startsWith('http://')?'https://'+raw.slice(7):'https://'+raw;
           const parsed=new URL(live);
           if(parsed.protocol!=='https:'||!parsed.hostname||raw.length<5)
             throw Error('Invalid public anonymous preview URL');
