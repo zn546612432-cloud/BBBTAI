@@ -1,6 +1,8 @@
 // D03 Flow quest: all progress and one-time settlement live in the phone save.
 // This deliberately does not install real scanning software or contact networks.
 import {isStory55,completeNode,date55} from './state.js';
+import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
+import {D06_FLOW_AT,D06_FLOW_MESSAGE} from '../../story/d06/commission.js';
 
 export const FLOW_CONTACT='mc-flow-d03';
 export const FLOW_INVITE='flow-d03-invite';
@@ -64,6 +66,20 @@ export function tickFlowD03(s){
  });
  return true;
 }
+// D06 fixed plot: exactly ONE Flow bubble. It invites the player to open
+// the existing MIRAGE bounty exchange; no auto-navigation or auto-accept.
+export function tickFlowD06(s){
+ if(!isStory55(s)||s.day<6||s.day===6&&s.clock<D06_FLOW_AT)return false;
+ ensureFlowHistory(s);
+ const c=contact(s),id='flow-d06-wallet-bounty';
+ if(c.messages.some(m=>m.id===id))return false;
+ return !!appendAuthoredPhoneMessage(s,{
+  channel:'mirage',conversationId:FLOW_CONTACT,messageId:id,from:FLOW_CONTACT,
+  text:D06_FLOW_MESSAGE,day:6,clock:D06_FLOW_AT,sentDate:date55(6),
+  storyTag:'storyD06',silent:s.day>6,lifecycleId:'flow:d06-wallet'
+ });
+}
+
 export function openFlowTest(s){
  if(!isStory55(s)||!flowState(s).invited)return false;
  const p=progress(s);if(p.linkOpened)return false;
