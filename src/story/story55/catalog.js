@@ -363,6 +363,10 @@ export const STORY55_CONFIG={
         100
       ],
       "steps": [
+        "cipher",
+        "veil",
+        "route",
+        "route",
         "extract"
       ],
       "key": "MIRAGE-D06",
