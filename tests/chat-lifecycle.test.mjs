@@ -147,7 +147,10 @@ test('unstarted player-led D02 thread never becomes a fake conversation during d
  assert.equal(messages(s,'wang','d02-wang-script-').length,0);
  assert.equal(s.story55.d02.wechat.wang.status,'unstarted');
  assert.equal(s.story55.d02.wechat.wang.lateRun,undefined);
- assert.equal(phoneStoryMessagesDue(s,999999),false);
+ // A different contact's generic missed-reply reminder may now be due;
+ // the unstarted D02 scene itself must never join that backlog.
+ const episode=s.story55.genericMissedReplies?.episodes?.wang;
+ assert.equal(episode?.sourceKeys?.includes('d02:wang')??false,false);
 });
 
 test('a configured mandatory scene stays replyable across dates; unrelated history still settles',()=>{

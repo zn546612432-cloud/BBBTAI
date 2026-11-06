@@ -220,5 +220,27 @@ export function createConversationTrack(config){
   const locked=s.day===config.day&&(config.lockChats==='all'||config.lockChats?.includes(id));
   return !!(locked||busy(s,id))&&!draft(s,id);
  }
- return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure};
+ // Shared overdue acknowledgement inspects historical conversation state, not
+ // hard-coded text or per-day special cases. Player-led unstarted scenes and
+ // mandatory plot nodes are explicitly excluded.
+ function pendingCatchup(s,id){
+  if(!supported(s)||s.day<=config.day)return [];
+  const map=root(s);
+  return defs.filter(d=>{
+   if(d.mandatory||d.chat==='group'||id&&(chatId(s,d)!==id&&d.chat!==id))return false;
+   const q=map[d.id];
+   if(!q||!q.historySettled||q.completed||q.skipped||q.lateHandled||q.lateRun||q.status==='unstarted')return false;
+   return q.index>0&&s.day>d.day&&lines(s,d,q)[q.index]?.who==='me';
+  }).map(d=>({track:config.prefix,id:d.id,day:d.day,conversationId:chatId(s,d)}));
+ }
+ function settleCatchup(s,id){
+  const items=pendingCatchup(s,id),map=root(s);
+  for(const item of items){
+   const q=map[item.id];
+   q.lateHandled=true;q.status='closed';q.catchupSettled={day:s.day,clock:s.clock};
+   setDue(q,null);
+  }
+  return items;
+ }
+ return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure,pendingCatchup,settleCatchup};
 }
