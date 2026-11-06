@@ -6,13 +6,21 @@ import {recallWeChatMessage} from './features/recall/index.js';
 import {speakWeChatText} from './features/tts/index.js';
 import {selectEmojiCategory,editEmojiInput} from './features/emoji/index.js';
 import {esc} from '../../system/ui.js';
+import {beginD06Celebration,canAddWish,addWish,getWish,wishExpired} from '../../services/wishes/index.js';
+import {wishDefinition} from '../../services/wishes/catalog.js';
 import {renderMoments,handleMoment,submitMoment} from './features/moments/index.js';
 
 export const manifest={id:'wechat',name:'微信',icon:0,defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
-export const render=({store},location)=>location.route.startsWith('/chat/')
-  ?renderWeChatChat(store.get(),location.route.slice(6))
-  :location.route.startsWith('/moments')?renderMoments(store.get(),location.route)
-  :renderWeChatHome(store.get(),location.route);
+let pendingWish=null;
+export const render=({store},location)=>{
+  const state=store.get();
+  const body=location.route.startsWith('/chat/')
+    ?renderWeChatChat(state,location.route.slice(6))
+    :location.route.startsWith('/moments')?renderMoments(state,location.route)
+    :renderWeChatHome(state,location.route);
+  const w=pendingWish&&wishDefinition(pendingWish);
+  return body+(w?'<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="加入提醒事项"><div class="wx-wish-panel"><strong>加入提醒事项？</strong><p>'+esc(w.title)+'</p><div class="wx-wish-actions"><button type="button" data-action="wx-wish-cancel">取消</button><button type="button" data-action="wx-wish-confirm">添加</button></div></div></div>':'');
+};
 
 export function openMessageMenu(bubble){
   const conversation=bubble?.closest('.wx-conversation'),menu=conversation?.querySelector('.wx-message-menu');
@@ -55,6 +63,23 @@ export function dismissEmojiForKeyboard(input){
 }
 
 export function handle(action,target,ctx){
+  if(action==='wx-share-d06-prize'){
+    ctx.store.update(s=>beginD06Celebration(s));
+    return;
+  }
+  if(action==='wx-wish-open'){
+    const id=target.dataset.wishId;
+    if(getWish(ctx.store.get(),id)){ctx.toast?.('已经加入提醒事项');return;}
+    if(!canAddWish(ctx.store.get(),id)){ctx.toast?.(wishExpired(ctx.store.get(),id)?'这项心愿已经过期':'心愿暂不可添加');return;}
+    pendingWish=id;ctx.refresh();return;
+  }
+  if(action==='wx-wish-cancel'){pendingWish=null;ctx.refresh();return;}
+  if(action==='wx-wish-confirm'){
+    const id=pendingWish;pendingWish=null;
+    if(id)ctx.store.update(s=>addWish(s,id));
+    ctx.toast?.('已加入提醒事项');
+    return;
+  }
   if(handleMoment(action,target,ctx))return;
   if(action==='wx-message-options'){openMessageMenu(target);return;}
   if(action==='wx-message-menu-close'){const menu=target.closest('.wx-conversation')?.querySelector('.wx-message-menu');if(menu)menu.hidden=true;return;}
