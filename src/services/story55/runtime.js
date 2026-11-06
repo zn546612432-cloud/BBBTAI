@@ -1,4 +1,5 @@
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
+import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
@@ -156,6 +157,7 @@ export function tickStory55(s){
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
  tickFlowD06(s);
+ tickWishes(s);
  seedD01(s);
  seedD02(s);
  tickD02Contracts(s);
