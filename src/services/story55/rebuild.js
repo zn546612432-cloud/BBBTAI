@@ -5,9 +5,11 @@
  */
 import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from './state.js';
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
-import {deployment,projectCapacity,upgradeHardware,settleStory55Wallet} from './projects.js';
+import {deployment,projectCapacity,upgradeHardware} from './projects.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
-import {defaultProducts,acceptStory55Wallet} from '../../apps/mirage/data.js';
+import {defaultProducts} from '../../apps/mirage/data.js';
+import {D06_ORDER_ID,D06_CONTRACT} from '../../story/d06/commission.js';
+import {D04_STEP,D04_MAIL,acceptD04Contract,markD04AttachmentOpened,armD04Ghost,onD04GhostWin,submitD04Contract} from '../../story/d04/contract.js';
 import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
@@ -116,10 +118,28 @@ function simulateProjectBatch(s,node){
  const p=story55Config(s).projects.find(x=>x.id===node.project);
  if(!p)throw Error('缺少GHOST项目：'+node.project);
  if(node.id==='wallet'){
-  // Developer replay should leave the same visible MIRAGE and KIRA artifacts.
+  // Developer jumps replay the same FIVE-stage D06 commission as the player;
+  // no prototype GHOST-wallet shortcut and no extra authorization email.
   tickStory55(s);
-  if(s.content.orders.find(o=>o.id==='s55-mirage-wallet-bounty')?.status==='OPEN'
-     &&!acceptStory55Wallet(s))throw Error('无法重建 D06 钱包挑战接单与授权邮件');
+  const order=s.content.orders.find(o=>o.id===D06_ORDER_ID);
+  if(order?.status==='OPEN'&&!acceptD04Contract(s,D06_ORDER_ID))throw Error('无法重建 D06 公开挑战接单');
+  if(order?.status!=='ACCEPTED')throw Error('D06 公开挑战状态异常');
+  if(!markD04AttachmentOpened(s,D06_ORDER_ID))throw Error('无法重建 D06 单一授权附件');
+  const steps=[];
+  for(let i=0;i<D06_CONTRACT.stages.length;i++){
+   const id=armD04Ghost(s,D06_ORDER_ID,i);
+   if(id!==D04_STEP(D06_ORDER_ID,i))throw Error('D06 GHOST 顺序错误：'+i);
+   const run=s.ghost.orders[id];
+   Object.assign(run,{keyVerified:true,status:'success',attempts:1,test:true});
+   s.ghost.history.unshift({id:id+':dev',orderId:id,type:run.type,success:true,at:0,attempt:1,day:s.day,test:true});
+   if(!onD04GhostWin(s,id))throw Error('D06 GHOST 阶段验收失败：'+i);
+   steps.push({id,day:s.day,test:true});
+  }
+  if(!submitD04Contract(s,D06_ORDER_ID))throw Error('无法重建 D06 手动提交结算');
+  const progress=s.story55.projects.wallet??(s.story55.projects.wallet={authorized:true,active:null,batches:[]});
+  progress.authorized=true;progress.batches=[{complete:true,steps,day:s.day,test:true}];
+  s.story55.reports['wallet-0']={title:p.title+' / BATCH 1',project:'wallet',percent:100,day:s.day,test:true};
+  return true;
  }
 
  const run=s.story55.projects[p.id]??(s.story55.projects[p.id]={authorized:true,active:null,batches:[]});
@@ -141,7 +161,7 @@ function simulateProjectBatch(s,node){
  };
  if(run.batches.length===p.batches){
   completeNode(s,node.id,{test:true});
-  if(node.id==='wallet')settleStory55Wallet(s,{test:true});
+  // Wallet's reward is paid only by the unified D06 submission path.
  }
  return true;
 }

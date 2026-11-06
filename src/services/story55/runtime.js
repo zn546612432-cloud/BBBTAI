@@ -9,9 +9,9 @@ import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
-import {ensureNativeMirage55,acceptStory55Wallet,STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID} from '../../apps/mirage/data.js';
+import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
-import {tickFlowD03} from './flow-d03.js';
+import {tickFlowD03,tickFlowD06} from './flow-d03.js';
 import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
 const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
@@ -114,20 +114,19 @@ export function chatNodeLink55(s,id){
  const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
-export function nodeLink55(s,id){if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 export function tickStory55(s){
  if(!isStory55(s))return;
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
  ensureNativeMirage55(s);
- // Earlier builds accepted D06 directly into GHOST without ever delivering
- // the mandatory KIRA key. Repair only accepted, unfinished saves.
- if(s.content.orders.some(o=>o.id===STORY55_BOUNTY_ID&&o.status==='ACCEPTED')
-    &&!s.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID))acceptStory55Wallet(s);
+ // Legacy D06 accepted saves are repaired by the shared commission runner.
+ // Do not create a second prototype authorization email.
  // Migrate 55-day saves created before the D03 plot node existed.
  if(!story55Config(s).nodes.some(n=>n.id==='flow-d03'))s.story55.config.nodes.splice(1,0,defaultStory55Config().nodes.find(n=>n.id==='flow-d03'));
  tickFlowD03(s);
+ tickFlowD06(s);
  seedD01(s);
  seedD02(s);
  tickD02Contracts(s);

@@ -36,78 +36,126 @@ test('D01 repair button accepts on D01 and displays locked state after day one',
  }finally{setMirageAuthenticated(false);}
 });
 
-test('D06 MIRAGE -> KIRA authorization -> GHOST extraction settles 10 BTC only after success',async()=>{
- const {activateStory55}=await import('../src/services/story55/runtime.js');
+test('D06 Flow posts exactly one live message, then Mirage uses the shared single-file five-stage contract',async()=>{
+ const {activateStory55,tickStory55}=await import('../src/services/story55/runtime.js');
  const {rebuildStory55AtDay}=await import('../src/services/story55/rebuild.js');
- const {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID}=await import('../src/apps/mirage/data.js');
+ const {D06_CONTRACT,D06_ORDER_ID}=await import('../src/story/d06/commission.js');
+ const {FLOW_CONTACT}=await import('../src/services/story55/flow-d03.js');
+ const {D04_MAIL,D04_STEP,submitD04Contract}=await import('../src/story/d04/contract.js');
+ const {commissionAttachment,openCommissionWithGhost,commissionPendingGhostStep}=await import('../src/services/commissions/attachment-flow.js');
  const {render:renderMirage,handle:handleMirage}=await import('../src/apps/mirage/index.js');
  const {render:renderKira,handle:handleKira}=await import('../src/apps/kira/index.js');
- const {authorizeProject,startDeploymentStep}=await import('../src/services/story55/projects.js');
- const {begin}=await import('../src/apps/ghost/state.js');
- const {handle:handleGhost}=await import('../src/apps/ghost/index.js');
+ const {render:renderFiles,handle:handleFiles}=await import('../src/apps/files/index.js');
+ const {render:renderGhost,handle:handleGhost}=await import('../src/apps/ghost/index.js');
+ const {begin,finish}=await import('../src/apps/ghost/state.js');
  const {completed}=await import('../src/services/story55/state.js');
  const {setMirageAuthenticated}=await import('../src/apps/mirage/session.js');
  const store=new PhoneStore(memory()),routes=[],toasts=[];
- store.update(s=>{activateStory55(s);rebuildStory55AtDay(s,6,'09:00');});
+ store.update(s=>{activateStory55(s);rebuildStory55AtDay(s,6,'08:20');});
  const ctx={store,router:{open:r=>routes.push(r)},toast:x=>toasts.push(x),refresh:()=>{}};
- const order=()=>store.get().content.orders.find(o=>o.id===STORY55_BOUNTY_ID);
+ const o=()=>store.get().content.orders.find(x=>x.id===D06_ORDER_ID),mailId=D04_MAIL(D06_ORDER_ID);
+ const flow=()=>store.get().content.conversations.mirage.find(x=>x.id===FLOW_CONTACT).messages.filter(m=>m.id==='flow-d06-wallet-bounty');
  setMirageAuthenticated(true);
  try{
-  assert.equal(order().status,'OPEN');
-  assert.equal(store.get().content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID),false);
-  assert.throws(()=>authorizeProject(store.get(),'wallet','MIRAGE-D06'),/MIRAGE/);
-  const first=renderMirage(ctx,{route:'/order/'+STORY55_BOUNTY_ID,params:{}});
-  assert.match(first,/ACCEPT CONTRACT/);
-  handleMirage('mc-accept-bounty',{dataset:{id:STORY55_BOUNTY_ID}},ctx,{route:'/order/'+STORY55_BOUNTY_ID});
-  assert.equal(order().status,'ACCEPTED');
-  assert.equal(routes.at(-1).appId,'kira');
-  assert.equal(routes.at(-1).route,'/mail/'+STORY55_WALLET_MAIL_ID);
-  assert.equal(store.get().content.mail.filter(m=>m.id===STORY55_WALLET_MAIL_ID).length,1);
-  assert.equal(store.get().notifications.filter(m=>m.id==='s55-wallet-d06-authorization-notice').length,1);
-  const mailHtml=renderKira(ctx,{route:'/mail/'+STORY55_WALLET_MAIL_ID,params:{}});
-  assert.match(mailHtml,/MIRAGE-D06/);
-  assert.match(mailHtml,/data-action="kira-wallet-d06-ghost"/);
-  handleKira('kira-wallet-d06-ghost',{dataset:{}},ctx);
+  assert.equal(flow().length,1);
+  assert.match(flow()[0].text,/10 BTC/);
+  assert.equal(flow()[0].sentDate,'2025-05-24');
+  store.update(s=>{tickStory55(s);tickStory55(s);});
+  assert.equal(flow().length,1,'repeated ticks cannot resend Flow');
+  assert.equal(o().status,'OPEN');assert.equal(o().reward,'10 BTC');assert.equal(o().category,'S');
+  assert.deepEqual(D06_CONTRACT.stages,['cipher','veil','route','route','extract']);
+  assert.equal(store.get().content.mail.filter(m=>m.id===mailId).length,0);
+  assert.match(renderMirage(ctx,{route:'/order/'+D06_ORDER_ID,params:{}}),/ACCEPT CONTRACT/);
+  handleMirage('mc-accept-bounty',{dataset:{id:D06_ORDER_ID}},ctx,{route:'/order/'+D06_ORDER_ID});
+  assert.equal(o().status,'ACCEPTED');
+  const mail=store.get().content.mail.find(m=>m.id===mailId);
+  assert.deepEqual(mail.attachments,['wallet_challenge_0524.enc']);
+  assert.match(mail.body,/MIRAGE-D06/);
+  assert.equal(store.get().content.mail.filter(m=>m.id===mailId).length,1);
+  assert.match(renderKira(ctx,{route:'/mail/'+mailId,params:{}}),/kira-open-commission-file/);
+  handleKira('kira-open-commission-file',{dataset:{id:mailId}},ctx);
+  assert.equal(routes.at(-1).appId,'files');
+  assert.equal(routes.at(-1).route,'/attachment/commission/'+encodeURIComponent(mailId));
+  assert.match(renderFiles(ctx,{route:routes.at(-1).route,params:{}}),/files-commission-open-ghost/);
+  assert.equal(commissionAttachment(store.get(),mailId).name,'wallet_challenge_0524.enc');
+  handleFiles('files-commission-open-ghost',{dataset:{id:mailId}},ctx);
   assert.equal(routes.at(-1).appId,'ghost');
-  assert.equal(routes.at(-1).route,'/deployment');
-  assert.equal(store.get().content.mail.find(m=>m.id===STORY55_WALLET_MAIL_ID).read,true);
-  assert.equal(store.get().content.mirage.digitalBalance,0.04);
-  store.update(s=>authorizeProject(s,'wallet','MIRAGE-D06'));
-  let runId;store.update(s=>{runId=startDeploymentStep(s,'wallet');begin(s,runId);});
+  const first=D04_STEP(D06_ORDER_ID,0);
+  assert.equal(routes.at(-1).params.orderId,first);
+  assert.equal(commissionPendingGhostStep(store.get(),mailId),first);
+  assert.match(renderGhost(ctx,{route:'/contract',params:{orderId:first}}),/請輸入 KIRA 郵件內的授權密鑰/);
+  assert.equal(begin(store.get(),first),false,'GHOST must not start before manual key validation');
+  const priorDocument=globalThis.document;
+  const field={value:'wrong'};
+  globalThis.document={getElementById:()=>field};
+  try{
+   handleGhost('gh-start',{dataset:{}},ctx,{route:'/contract',params:{orderId:first}});
+   assert.equal(store.get().ghost.orders[first].status,'authorized');
+   assert.ok(toasts.some(x=>x.includes('密鑰不匹配')));
+   field.value='MIRAGE-D06';
+   handleGhost('gh-start',{dataset:{}},ctx,{route:'/contract',params:{orderId:first}});
+   assert.equal(store.get().ghost.orders[first].keyVerified,true);
+   assert.equal(store.get().ghost.orders[first].status,'running');
+  }finally{globalThis.document=priorDocument;}
   const before=store.get().content.mirage.digitalBalance;
+  for(let i=0;i<D06_CONTRACT.stages.length;i++){
+   const id=D04_STEP(D06_ORDER_ID,i);
+   if(i>0)store.update(s=>{assert.equal(begin(s,id),true);});
+   assert.equal(store.get().ghost.orders[id].type,D06_CONTRACT.stages[i]);
+   assert.equal(store.get().ghost.orders[id].status,'running');
+   store.update(s=>finish(s,id,true));
+   assert.equal(store.get().ghost.orders[id].status,'success');
+   if(i<4)assert.equal(commissionPendingGhostStep(store.get(),mailId),D04_STEP(D06_ORDER_ID,i+1));
+  }
+  assert.equal(o().status,'READY');
   assert.equal(completed(store.get(),'wallet'),false);
-  const correct=store.get().ghost.orders[runId].board.correct;
-  handleGhost('gh-match',{dataset:{index:String(correct)}},ctx,{route:'/run',params:{orderId:runId}});
-  assert.equal(completed(store.get(),'wallet'),true);
-  assert.equal(order().status,'COMPLETED');
+  assert.equal(store.get().content.mirage.digitalBalance,before);
+  assert.equal(commissionPendingGhostStep(store.get(),mailId),null);
+  assert.match(renderMirage(ctx,{route:'/order/'+D06_ORDER_ID,params:{}}),/READY TO SUBMIT/);
+  store.update(s=>assert.equal(submitD04Contract(s,D06_ORDER_ID),true));
+  assert.equal(o().status,'COMPLETED');assert.equal(completed(store.get(),'wallet'),true);
   assert.equal(store.get().content.mirage.digitalBalance,before+10);
   assert.equal(store.get().content.mirage.transactions.filter(t=>t.id==='s55-wallet-10btc').length,1);
-  assert.equal(store.get().content.mirage.digitalTransactions.filter(t=>t.orderId===STORY55_BOUNTY_ID).length,1);
-  handleGhost('gh-match',{dataset:{index:String(correct)}},ctx,{route:'/run',params:{orderId:runId}});
-  assert.equal(store.get().content.mirage.digitalBalance,before+10);
-  const followup=renderMirage(ctx,{route:'/order/'+STORY55_BOUNTY_ID,params:{}});
-  assert.match(followup,/CONTRACT COMPLETED/);
+  assert.equal(store.get().content.mirage.digitalTransactions.filter(t=>t.orderId===D06_ORDER_ID).length,1);
+  store.update(s=>{assert.equal(submitD04Contract(s,D06_ORDER_ID),false);tickStory55(s);});
+  assert.equal(store.get().content.mirage.digitalBalance,before+10,'no double reward');
+  assert.equal(store.get().content.mail.filter(m=>m.id===mailId).length,1);
+  const restored=new PhoneStore(store.storage).get();
+  assert.equal(restored.content.orders.find(x=>x.id===D06_ORDER_ID).status,'COMPLETED');
+  assert.equal(restored.content.mirage.digitalBalance,before+10);
+  assert.equal(restored.content.mail.filter(m=>m.orderId===D06_ORDER_ID&&m.attachments?.length===1).length,1);
  }finally{setMirageAuthenticated(false);}
 });
 
-test('legacy D06 save with accepted mission receives missing KIRA key on regular story tick',async()=>{
+test('D06 accepted legacy save upgrades to one proper KIRA attachment and never creates an obsolete wallet mail',async()=>{
  const {activateStory55,tickStory55}=await import('../src/services/story55/runtime.js');
  const {rebuildStory55AtDay}=await import('../src/services/story55/rebuild.js');
- const {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID}=await import('../src/apps/mirage/data.js');
- const state=initialD06();
- function initialD06(){
-  const st=new PhoneStore(memory()).get();
-  activateStory55(st);
-  rebuildStory55AtDay(st,6);
-  return st;
- }
- const order=state.content.orders.find(o=>o.id===STORY55_BOUNTY_ID);
- order.status='ACCEPTED';
- assert.equal(state.content.mail.some(m=>m.id===STORY55_WALLET_MAIL_ID),false);
- tickStory55(state);
- tickStory55(state);
- assert.equal(state.content.orders.find(o=>o.id===STORY55_BOUNTY_ID).status,'ACCEPTED');
- assert.equal(state.content.mail.filter(m=>m.id===STORY55_WALLET_MAIL_ID).length,1);
- assert.match(state.content.mail.find(m=>m.id===STORY55_WALLET_MAIL_ID).body,/MIRAGE-D06/);
- assert.equal(state.notifications.filter(m=>m.id==='s55-wallet-d06-authorization-notice').length,1);
+ const {D06_ORDER_ID}=await import('../src/story/d06/commission.js');
+ const {D04_MAIL}=await import('../src/story/d04/contract.js');
+ const s=new PhoneStore(memory()).get();activateStory55(s);rebuildStory55AtDay(s,6,'09:00');
+ const o=s.content.orders.find(x=>x.id===D06_ORDER_ID);
+ Object.assign(o,{status:'ACCEPTED',title:'10 BTC / WALLET CHALLENGE'});
+ s.content.mail.push({id:'s55-wallet-d06-authorization',from:'MIRAGE',body:'legacy',project:'wallet',read:false});
+ s.notifications.push({id:'s55-wallet-d06-authorization-notice',title:'KIRA',body:'legacy'});
+ tickStory55(s);tickStory55(s);
+ assert.equal(o.status,'ACCEPTED');
+ assert.equal(o.title,'S 級懸賞 · 公開錢包挑戰');
+ assert.equal(s.content.mail.some(m=>m.id==='s55-wallet-d06-authorization'),false);
+ assert.equal(s.notifications.some(n=>n.id==='s55-wallet-d06-authorization-notice'),false);
+ assert.equal(s.content.mail.filter(m=>m.id===D04_MAIL(D06_ORDER_ID)).length,1);
+ assert.equal(s.content.mail.find(m=>m.id===D04_MAIL(D06_ORDER_ID)).attachments.length,1);
+});
+
+test('D06 Flow message waits for 08:10 and is silent historical catch-up after the day passes',async()=>{
+ const {activateStory55,tickStory55}=await import('../src/services/story55/runtime.js');
+ const {FLOW_CONTACT}=await import('../src/services/story55/flow-d03.js');
+ const s=new PhoneStore(memory()).get();activateStory55(s);s.day=6;s.clock='08:09';tickStory55(s);
+ const chat=s.content.conversations.mirage.find(c=>c.id===FLOW_CONTACT);
+ assert.equal(chat.messages.some(m=>m.id==='flow-d06-wallet-bounty'),false);
+ s.clock='08:10';tickStory55(s);
+ assert.equal(chat.messages.filter(m=>m.id==='flow-d06-wallet-bounty').length,1);
+ const past=new PhoneStore(memory()).get();activateStory55(past);past.day=7;past.clock='08:00';tickStory55(past);
+ const history=past.content.conversations.mirage.find(c=>c.id===FLOW_CONTACT).messages.find(m=>m.id==='flow-d06-wallet-bounty');
+ assert.equal(history.historical,true);
+ assert.ok(past.notifications.some(n=>n.messageId===history.id&&n.silent));
 });

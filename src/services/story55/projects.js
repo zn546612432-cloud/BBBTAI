@@ -18,6 +18,7 @@ export function deployment(s,id){return s.story55?.projects?.[id]||{authorized:f
 export function deploymentPercent(s,id){const p=projectById(s,id),r=deployment(s,id);if(!p)return 0;if(r.batches.length===p.batches&&r.batches.every(b=>b.complete))return 100;return Math.min(99.999,Number(r.batches.reduce((sum,b,i)=>sum+(b.complete?p.gains[i]:0),0).toFixed(3)));}
 export function projectCapacity(s,p){return Math.min(p.batches,Math.max(0,s.day-p.day+1));}
 export function authorizeProject(s,id,key){
+ if(id==='wallet')throw Error('請從 MIRAGE 接單並打開 KIRA 附件，使用 GHOST 執行公開錢包挑戰');
  const p=projectById(s,id);if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
  if(id==='wallet'&&(s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID)?.status!=='ACCEPTED'
   ||!s.content.mail?.some(m=>m.id===STORY55_WALLET_MAIL_ID)))
@@ -34,6 +35,7 @@ export function upgradeHardware(s){
  s.bankData.transactions.unshift({id:'s55-hardware-'+(level+1),label:'LOCAL EQUIPMENT',amount:-cost,date:s.clock,time:s.clock});
 }
 export function startDeploymentStep(s,id){
+ if(id==='wallet')throw Error('D06 請從 KIRA 的單一加密附件開啟 GHOST');
  if(!isStory55(s))throw Error('不是55天周目');
  const p=projectById(s,id),r=deployment(s,id);
  if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
