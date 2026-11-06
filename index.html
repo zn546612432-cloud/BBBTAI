@@ -10,4 +10,34 @@
 #xm-boot-message{font-size:12px;color:#bdccd9;line-height:1.5;min-height:18px;}
 #xm-boot-next{border:1px solid #a8c8da66;border-radius:13px;padding:10px 20px;background:#d9edff;color:#203347;font-size:14px;margin-top:7px;}
 #xm-boot-next[hidden]{display:none;}
-</style></head><body><div id="xm-boot" role="status" aria-live="polite"><div id="xm-boot-panel"><div id="xm-boot-logo">⌖</div><div id="xm-boot-title">熙蒙的手机</div><div id="xm-boot-percent">0%</div><div id="xm-boot-progress"><span></span></div><div id="xm-boot-message">正在准备手机资源和离线地图…</div><button type="button" id="xm-boot-next" hidden>继续进入锁屏</button></div></div><div id="root"></div><script type="module" src="/src/main.js"></script></body></html>
+</style></head><body><div id="xm-boot" role="status" aria-live="polite"><div id="xm-boot-panel"><div id="xm-boot-logo">⌖</div><div id="xm-boot-title">熙蒙的手机</div><div id="xm-boot-percent">0%</div><div id="xm-boot-progress"><span></span></div><div id="xm-boot-message">正在准备手机资源和离线地图…</div><button type="button" id="xm-boot-next" hidden>继续进入锁屏</button></div></div><div id="root"></div><script>
+(function(){
+ var started=Date.now(),lastError='',stage='loading';
+ var timer=null;
+ function byId(id){return document.getElementById(id);}
+ function explain(reason){
+  var boot=byId('xm-boot');
+  if(!boot||boot.classList.contains('xm-boot-done'))return;
+  var percent=byId('xm-boot-percent'),msg=byId('xm-boot-message'),btn=byId('xm-boot-next');
+  if(percent&&percent.textContent==='0%')percent.textContent='加载中';
+  if(msg)msg.textContent=reason;
+  if(btn){btn.hidden=false;btn.textContent='重新加载手机';btn.onclick=function(){
+   var url=new URL(location.href);url.searchParams.set('boot-retry',String(Date.now()));location.replace(url.href);
+  };}
+ }
+ window.__xmBootStarted=function(){stage='started';clearTimeout(timer);};
+ window.__xmBootError=function(message){lastError=String(message||'');explain('手机程序尚未完成启动。'+(lastError?'错误：'+lastError.slice(0,115):'请检查网络连接。'))};
+ window.addEventListener('error',function(event){
+  if(stage==='started')return;
+  lastError=event.message||'资源加载失败';
+ });
+ window.addEventListener('unhandledrejection',function(event){
+  if(stage==='started')return;
+  lastError=event.reason&&event.reason.message||'模块加载中断';
+ });
+ timer=setTimeout(function(){
+  if(stage==='started')return;
+  explain('手机程序启动超时'+(lastError?'：'+lastError.slice(0,100):'，可能有资源无法加载。')+' 请重新加载。');
+ },12000);
+})();
+</script><script type="module" src="/src/main.js"></script></body></html>
