@@ -63,24 +63,40 @@ export async function loadCampaignSMS(fetcher=fetch){
  if(!response.ok)throw Error('无法读取短信目录');
  const manifest=await response.json();
  const names=(manifest.files||[]).filter(name=>/^D\d{3}\/messages\.json$/.test(name)&&Number(name.slice(1,4))<=55);
- return Promise.all(names.map(async name=>{
+ // A missing future-day file must not make all 2024 / pre-D01 SMS vanish.
+ // Keep each valid file, report missing files; require the D001 baseline.
+ const fetched=await Promise.allSettled(names.map(async name=>{
   const response=await fetcher(new URL(name,folder));
   if(!response.ok)throw Error('无法读取历史短信 '+name);
   const [pack]=parsePresetPayload(await response.json());
   if(pack.channel!=='messages')throw Error('短信文件类型错误');
   return {...pack,rules:[]};
  }));
+ const valid=fetched.filter(x=>x.status==='fulfilled').map(x=>x.value);
+ for(let i=0;i<fetched.length;i++)if(fetched[i].status==='rejected')
+  console.warn('部分短信资料暂不可用，已保留其他历史记录：'+names[i],fetched[i].reason);
+ if(!valid.some(p=>p.day===1))throw Error('D01之前的短信档案加载失败；不会用空历史覆盖');
+ return valid;
 }
 
 /** Initial fixture loading is additive and idempotent; local authored edits win. */
 export async function hydrateBuiltInPresets(store,fetcher=fetch){
  if(isStory55(store.get())){
-  const [wechat,sms]=await Promise.all([loadPreD01Wechat(fetcher),loadCampaignSMS(fetcher)]);
-  const historical=[...wechat,...sms];
-  store.update(s=>{
-   const report=applyPresetImport(s,historical,{mode:'merge'});
-   s.content.historicalWechat={loaded:true,count:(s.content.conversations.wechat||[]).reduce((n,c)=>n+c.messages.filter(m=>m.sentDate&&m.sentDate<'2025-05-19').length,0),source:'historical-pre-D01',newMessages:report.historyNew};
-  });
+  // WeChat and SMS are independent feeds into one canonical phone store.
+  // Don't let slow/missing WeChat assets block SMS, or vice versa.
+  const restored=await Promise.allSettled([
+   loadPreD01Wechat(fetcher).then(wechat=>store.update(s=>{
+    const report=applyPresetImport(s,wechat,{mode:'merge'});
+    s.content.historicalWechat={loaded:true,count:(s.content.conversations.wechat||[]).reduce((n,c)=>n+c.messages.filter(m=>m.sentDate&&m.sentDate<'2025-05-19').length,0),source:'historical-pre-D01',newMessages:report.historyNew};
+   })),
+   loadCampaignSMS(fetcher).then(sms=>store.update(s=>{
+    const report=applyPresetImport(s,sms,{mode:'merge'});
+    s.content.historicalSMS={loaded:true,count:(s.content.conversations.messages||[]).reduce((n,c)=>n+c.messages.filter(m=>m.sentDate&&m.sentDate<'2025-05-19').length,0),source:'historical-pre-D01',newMessages:report.historyNew};
+   }))
+  ]);
+  const failures=restored.filter(result=>result.status==='rejected');
+  for(const item of failures)console.warn('部分历史通讯资料未能加载，现有存档不变',item.reason);
+  if(failures.length===restored.length)throw Error('短信与微信历史文件均未能加载');
   return;
  }
  const packs=await loadBuiltInPresets(fetcher),s=store.get();
