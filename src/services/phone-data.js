@@ -11,21 +11,32 @@ export const defaultPhoneData=()=>({
     {id:'contact-zaizai',name:'仔仔',number:''},
     {id:'contact-hufeng',name:'胡枫',number:''}
   ],
+  historySeedVersion:1,
   calls:[
-    {id:'macau-call-1',number:'+853 6XXX 0741',place:'澳门',day:'昨天',missed:false},
-    {id:'macau-call-2',number:'+853 6XXX 0509',place:'澳门',day:'星期日',missed:true},
-    {id:'macau-call-3',number:'+853 6XXX 0690',place:'澳门',day:'星期六',missed:false},
-    {id:'macau-call-4',number:'+853 6XXX 6081',place:'澳门',day:'星期六',missed:false},
-    {id:'macau-call-5',number:'+853 6XXX 5581',place:'澳门',day:'星期四',missed:false}
+    {id:'macau-call-1',number:'+853 6XXX 0741',place:'澳门',day:'昨天',missed:false,authored:true},
+    {id:'macau-call-2',number:'+853 6XXX 0509',place:'澳门',day:'星期日',missed:true,authored:true},
+    {id:'macau-call-3',number:'+853 6XXX 0690',place:'澳门',day:'星期六',missed:false,authored:true},
+    {id:'macau-call-4',number:'+853 6XXX 6081',place:'澳门',day:'星期六',missed:false,authored:true},
+    {id:'macau-call-5',number:'+853 6XXX 5581',place:'澳门',day:'星期四',missed:false,authored:true}
   ]
 });
 
+// Migration: early Story55 startup accidentally erased the pre-D01 call log.
+// Recreate those five shipped historical entries ONCE, preserving any existing
+// player/editor calls and subsequent deliberate deletions (historySeedVersion).
 export function ensurePhoneData(state){
   if(!state.content.phone||!Array.isArray(state.content.phone.contacts)||!Array.isArray(state.content.phone.calls)){
     state.content.phone=defaultPhoneData();
     return true;
   }
-  return false;
+  const data=state.content.phone;
+  if(data.historySeedVersion===1)return false;
+  const known=new Set(data.calls.map(c=>c.id));
+  for(const original of defaultPhoneData().calls){
+    if(!known.has(original.id))data.calls.push(structuredClone(original));
+  }
+  data.historySeedVersion=1;
+  return true;
 }
 
 export const phoneData=state=>state.content.phone||defaultPhoneData();
