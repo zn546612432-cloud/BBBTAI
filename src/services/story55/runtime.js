@@ -31,7 +31,10 @@ export function activateStory55(s){
  s.content.notes=(s.content.notes||[]).filter(n=>n.authored===true).map(n=>structuredClone(n));
  s.content.notesSeedVersion=0;
  ensureAuthoredNotes(s);
- s.content.alarms=[];if(s.content.phone)s.content.phone.calls=[];
+ s.content.alarms=[];
+ // A new story run must keep authored pre-D01 phone history, just as it keeps
+ // old WeChat bubbles; clear only calls created during the previous run.
+ if(s.content.phone)s.content.phone.calls=(s.content.phone.calls||[]).filter(call=>call.authored===true||/^macau-call-[1-5]$/.test(call.id||''));
  // Reset player interactions, while retaining the author's photos and posts.
  const moments=s.content.moments||{};
  s.content.moments={posts:structuredClone(moments.posts||[]),editedPosts:structuredClone(moments.editedPosts||{}),deletedIds:[...(moments.deletedIds||[])],profiles:structuredClone(moments.profiles||{}),likes:{},comments:{}};
