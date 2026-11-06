@@ -1,0 +1,42 @@
+name: Vendor Meteocons assets once to weather phase 3
+on:
+  push:
+    branches:
+      - feature/unified-weather-phase3-meteocons-20261106
+    paths:
+      - scripts/vendor-meteocons.mjs
+      - .github/workflows/vendor-weather-icons.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/unified-weather-phase3-meteocons-20261106
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Import pinned animated and static SVG icons from Meteocons
+        run: node scripts/vendor-meteocons.mjs
+      - name: Check in exact local icons, provenance and MIT license
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/assets/meteocons/LICENSE
+          test -s public/assets/meteocons/SOURCES.json
+          git add public/assets/meteocons
+          if git diff --cached --quiet; then
+            echo 'Already vendored'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "assets(weather): bundle offline Meteocons fill animation and static fallbacks"
+          git push origin HEAD:feature/unified-weather-phase3-meteocons-20261106
