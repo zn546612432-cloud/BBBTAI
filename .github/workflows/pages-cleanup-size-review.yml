@@ -1,0 +1,128 @@
+name: Audit conservative Pages cleanup (build and upload only)
+on:
+  push:
+    branches: [chore/pages-conservative-cleanup-20261107]
+    paths:
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/pages-cleanup-size-review.yml'
+      - 'scripts/audit-pages-site.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-cleanup-size-review
+  cancel-in-progress: true
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --check public/voice-lab/panel.js
+      - run: npm test
+      - run: npm run build:pages
+      - name: Build isolated preview
+        run: |
+          mv dist production-dist
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/${{ github.event.repository.name }}/preview/" npm run build:pages
+          mv dist production-dist/preview
+          mv production-dist dist
+      - name: Build Tai Vision in isolated save namespace
+        run: |
+          mv dist stable-dist
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p stable-dist/review/tai-vision-20261105
+          cp -a dist/. stable-dist/review/tai-vision-20261105/
+          rm -rf dist
+          mv stable-dist dist
+          test -s dist/review/tai-vision-20261105/index.html
+          grep -q phone-preview dist/review/tai-vision-20261105/index.html
+      # The main Pages workflow builds only 4 independent entry points:
+      # production, /preview/, Story55 reference and Tai Vision.
+      # Retired review snapshots stay in their Git branches, not the deployed
+      # Pages artifact. DO NOT delete historical branches or gameplay assets.
+      - name: Check out Story55 comparison snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: .review-sources/story55
+      - name: Build Story55 comparison with isolated storage namespace
+        run: |
+          (
+            cd .review-sources/story55
+            npm ci
+            GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+          )
+          mkdir -p dist/review/55-20261101
+          cp -a .review-sources/story55/dist/. dist/review/55-20261101/
+          test -s dist/review/55-20261101/index.html
+          test -s dist/review/55-20261101/release.json
+      - name: Set up Python for image optimization
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compress icon atlases in all production and preview builds
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/optimize-icon-atlases.py dist
+          test -s dist/icons/glass-atlas.webp
+          test -s dist/icons/glass-utilities.webp
+      - name: Verify packaged image assets and release URLs
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,existsSync} from 'node:fs';
+          const release=JSON.parse(readFileSync('dist/release.json','utf8'));
+          const files=[
+            'dist/index.html',
+            'dist/apps/mirage/world-land.svg',
+            'dist/apps/mirage/skull.svg',
+            `dist/releases/${release.version}/src/apps/mirage/art.js`,
+            `dist/releases/${release.version}/apps/mirage/world-land.svg`,
+            `dist/releases/${release.version}/apps/mirage/skull.svg`
+          ];
+          const media=[
+            'apps/mirage/world-land.svg',
+            'apps/wechat/avatars/originals/ximeng.jpeg',
+            'apps/wechat/avatars/originals/xiwang.jpeg',
+            'apps/wechat/avatars/originals/awei.jpeg',
+            'apps/wechat/avatars/originals/hufeng.jpeg',
+            'apps/wechat/avatars/originals/xiaoxin.jpeg',
+            'apps/wechat/avatars/originals/zaizai.jpeg',
+            'apps/wechat/avatars/originals/fulongsheng.jpeg',
+            'apps/wechat/media/user-group-photo.webp',
+            'apps/wechat/media/user-food-rice.jpeg',
+            'apps/wechat/media/moment-cat-video.mp4'
+          ];
+          const preview=JSON.parse(readFileSync('dist/preview/release.json','utf8'));
+          for(const [root,version] of [['dist',release],['dist/preview',preview]]){
+            for(const item of media){
+              files.push(root+'/'+item);
+              files.push(root+'/releases/'+version.version+'/'+item);
+            }
+            const css=readFileSync(root+'/releases/'+version.version+'/src/apps/mirage/styles.css','utf8');
+            if(!css.includes(version.url+'apps/mirage/world-land.svg'))
+              throw new Error('MIRAGE map URL not versioned for '+root);
+          }
+          for(const file of files)if(!existsSync(file))throw new Error('Missing Pages asset: '+file);
+          const index=readFileSync('dist/index.html','utf8');
+          if(!index.includes(release.url+'src/main.js'))throw new Error('Main entry is not version-pinned');
+          console.log('Verified Pages resources:',release.version);
+          NODE
+      - name: Audit 4 retained site paths and enforce artifact size limit
+        run: node scripts/audit-pages-site.mjs dist
+      - name: Report output size before upload
+        run: |
+          du -sh dist
+          du -sb dist
+          echo "Baseline historical 2026-11-06 Pages artifact: 828345662 bytes."
+          echo "The reduced build must contain only 4 entry points."
+      - name: Upload actual dry-run Pages artifact WITHOUT deploying
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
