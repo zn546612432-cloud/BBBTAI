@@ -77,7 +77,7 @@ test('D01 SMS appear even if all the WeChat history file requests fail',async()=
  assert.equal(s.content.historicalSMS?.loaded,true);
  assert.equal(s.content.historicalSMS?.count,7);
  assert.equal(s.content.conversations.messages.length>=4,true);
- assert.match(smsUI(storeFor(s),{route:'/',params:{}}),/司警|中國銀行|SJM|澳娱/);
+ assert.match(smsUI({store:storeFor(s)},{route:'/',params:{}}),/司警|中國銀行|SJM|澳娱/);
 });
 
 test('one bad later-day SMS file cannot erase the pre-D01 archive',async()=>{
@@ -87,7 +87,7 @@ test('one bad later-day SMS file cannot erase the pre-D01 archive',async()=>{
  assert.equal(packs.some(p=>p.day===4),false);
  const s=activateStory55(initialState());
  applyPresetImport(s,packs);
- assert.equal(s.content.conversations.messages.reduce((n,c)=>n+c.messages.filter(x=>x.id.startsWith('sms-user-')).length+n,0),7);
+ assert.equal(s.content.conversations.messages.reduce((n,c)=>n+c.messages.filter(x=>x.id.startsWith('sms-user-')).length,0),7);
 });
 
 test('an intentionally deleted SMS thread is not recreated when presets load again',async()=>{
