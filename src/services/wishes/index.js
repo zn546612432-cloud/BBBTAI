@@ -2,6 +2,7 @@
 // All functions accept the existing PhoneStore state. No new storage or clock.
 import {WISH_CATALOG,wishDefinition} from './catalog.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
+import {celebration,privateScenes,nextDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
 import {completed,date55} from '../story55/state.js';
 
 const today=s=>date55(s.day);
@@ -56,62 +57,7 @@ function queue(s,entry){
 }
 function group(id,from,text,opts={}){return {id,channel:'wechat',chat:'group',from,text,...opts};}
 function dm(id,chat,from,text,opts={}){return {id,channel:'wechat',chat,from,text,...opts};}
-const celebration=[
- group('d06-celebrate-01','小辛','？？？？'),
- group('d06-celebrate-02','小辛','十个？！我去搜一下值多少钱'),
- group('d06-celebrate-03','胡枫','你先说清楚是发财了还是发癫了哈哈哈哈'),
- group('d06-celebrate-04','仔仔','真的假的，阿蒙？'),
- group('d06-celebrate-05','阿威','已经到账了？'),
- group('d06-celebrate-06','熙旺','阿蒙，先把资产保管好。别一下全换了。'),
- group('d06-celebrate-07','小辛','蒙哥我是不是可以申请一把机械键盘哈哈哈哈！我那个空格键都快坏了', {wishId:'d06-keyboard',wishText:'机械键盘'}),
- group('d06-celebrate-08','胡枫','小辛，你上一把不还说能用十年'),
- group('d06-celebrate-09','小辛','现在不能了！！'),
- group('d06-celebrate-10','仔仔','那晚上一起出去吃饭？大家好久没一起出去吃了', {wishId:'d06-dinner',wishText:'一起出去吃饭'}),
- group('d06-celebrate-11','熙旺','我今天收车后再看，不用为了庆祝乱花钱。')
-];
-const privateScenes=[
- dm('d06-shoes-01','hufeng','胡枫','说起来，我那双鞋底都快磨平了，准备过两天去看看新的。',{wishId:'d06-shoes',wishText:'新的'}),
- dm('d06-shoes-02','hufeng','胡枫','不用你给我买啊，刚才大家起哄闹着玩呢。')
-];
-const nextDay=[
- group('d07-chat-01','胡枫','今天谁有空？'),
- group('d07-chat-02','小辛','干嘛'),
- group('d07-chat-03','胡枫','出去走走啊'),
- group('d07-chat-04','小辛','昨天玩到三点了，饶了我吧'),
- group('d07-chat-05','熙旺','你们下午要是出去，顺路帮我买点东西回来'),
- group('d07-chat-06','仔仔','买什么？'),
- group('d07-chat-07','熙旺','我晚点发你清单。')
-];
-const extraDay=[
- dm('d07-awei-01','awei','阿威','我那副耳机接触不良，昨天开会又断了。准备换副无线耳机。',{wishId:'d07-headphones',wishText:'无线耳机'}),
- dm('d07-wang-01','wang','熙旺','家里吃饭的碗有几只都磕了口，过两天我去添一套新餐具。',{wishId:'d07-tableware',wishText:'新餐具'})
-];
-const rewardSets={
- 'd06-keyboard':[
-  dm('wish-keyboard-thanks-1','xiaoxin','小辛','蒙哥！！！！键盘到啦哈哈哈哈'),
-  dm('wish-keyboard-photo','xiaoxin','小辛','/assets/d06-wishes/keyboard-received.jpg',{kind:'image'}),
-  dm('wish-keyboard-thanks-2','xiaoxin','小辛','你下次打游戏可不许再说我设备差了！')
- ],
- 'd06-shoes':[
-  dm('wish-shoes-thanks-1','hufeng','胡枫','阿蒙，你真给我买了？我刚才还以为快递送错了。'),
-  dm('wish-shoes-photo','hufeng','胡枫','/assets/d06-wishes/shoes-received.jpg',{kind:'image'}),
-  dm('wish-shoes-thanks-2','hufeng','胡枫','这鞋穿着还挺舒服。谢了啊，改天请你喝东西。')
- ],
- 'd07-headphones':[
-  dm('wish-headphones-thanks-1','awei','阿威','耳机收到了。'),
-  dm('wish-headphones-thanks-2','awei','试过了，声音没问题。谢谢。')
- ],
- 'd07-tableware':[
-  dm('wish-tableware-thanks-1','wang','熙旺','阿蒙，家里送来一套餐具。你买的？'),
-  dm('wish-tableware-thanks-2','wang','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
- ],
- 'd06-dinner':[
-  group('wish-dinner-01','仔仔','地方我联系好了，今晚七点半。阿蒙你付款了？'),
-  group('wish-dinner-02','小辛','我宣布今天不减肥了！！'),
-  group('wish-dinner-03','胡枫','你什么时候减过哈哈哈哈'),
-  group('wish-dinner-photo','仔仔','/assets/d06-wishes/celebration-dinner.jpg',{kind:'image'})
- ]
-};
+
 function queueReward(s,id,isEvent){
  const r=record(s,id);
  if(!r||r.rewardQueued)return;
