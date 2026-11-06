@@ -15,6 +15,7 @@ export function diaryEditor(s){
   '<label>日记标题<input name="title" maxlength="150" value="'+esc(item.title||'')+'" placeholder="例如：老狼归巢"></label>'+
   '<label>当天的剧情记录<textarea name="body" rows="14" maxlength="6000" placeholder="写下这一天发生的事……">'+esc(item.body||'')+'</textarea></label>'+
   (day===2?'<label>完成熙旺私聊后追加（延迟 20 游戏分钟）<textarea name="stageBrother" rows="4" maxlength="3000">'+esc(item.stages?.brother??D02_DIARY_SECTIONS.brother)+'</textarea></label><label>澳东商城购买后追加（延迟 20 游戏分钟）<textarea name="stagePurchase" rows="4" maxlength="3000">'+esc(item.stages?.purchase??D02_DIARY_SECTIONS.purchase)+'</textarea></label>':'')+
+  (DEFAULT_DIARY_ENTRIES[day]?.sections||[]).map(section=>'<label>完成剧情「'+esc(section.afterNode)+'」后追加<textarea name="stage-'+esc(section.id)+'" rows="8" maxlength="3000">'+esc(item.stages?.[section.id]??section.text)+'</textarea></label>').join('')+
   '<p>需要玩家自行决定是否加入提醒事项的词，写作 <code>[[据点碰面|前往据点碰面]]</code>。游戏里只把「据点碰面」标成蓝色下划线，点击后才询问是否加入。</p>'+
   '<button class="button-primary" type="submit">保存这一天的日程</button></form>'+
   '<button type="button" data-action="diary-preview" data-day="'+day+'">在日程 App 中测试这一天</button>'+
@@ -45,7 +46,10 @@ export function diaryEditorSubmit(form,ctx){
   weather:String(data.get('weather')||'晴'),
   title:String(data.get('title')||''),
   body:String(data.get('body')||''),
-  ...(day===2?{stages:{brother:String(data.get('stageBrother')||''),purchase:String(data.get('stagePurchase')||'')}}:{})
+  ...(day===2||DEFAULT_DIARY_ENTRIES[day]?.sections?.length?{stages:{
+   ...(day===2?{brother:String(data.get('stageBrother')||''),purchase:String(data.get('stagePurchase')||'')}:{}) ,
+   ...Object.fromEntries((DEFAULT_DIARY_ENTRIES[day]?.sections||[]).map(section=>[section.id,String(data.get('stage-'+section.id)||'')]))
+  }}:{})
  }));
  ctx.toast('日程已保存');return true;
 }

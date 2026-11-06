@@ -3,6 +3,7 @@ import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
+import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
@@ -51,7 +52,7 @@ export function finishScene55(s,id){
  if(id==='ending')startFinale55(s);
  tickStory55(s);return true;
 }
-export function advanceScene55(s,id,{acceptCall=false}={}){
+export function advanceScene55(s,id,{acceptCall=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
@@ -76,6 +77,9 @@ export function advanceScene55(s,id,{acceptCall=false}={}){
   appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  r.index++;
+ // One shared pacing contract for queued native messaging scenes.
+ // The player must explicitly send their own line before any next NPC line.
+ if(n.delivery==='queued'&&r.index<lines.length)r.nextAt=now+CHAT_LIFECYCLE_POLICY.pauseMs;
  if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
@@ -116,6 +120,28 @@ export function chatNodeLink55(s,id){
 }
 export function nodeLink55(s,id){if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
+// Every scene with delivery:"queued" uses this common messaging scheduler.
+// Story content only supplies lines and node prerequisites: no D06-specific
+// timer, duplicate dialogue list, or automatic player-sent message.
+export function tickQueuedStoryScenes55(s,now=Date.now()){
+ if(!isStory55(s)||s.story55.ended)return false;
+ for(const n of story55Config(s).nodes){
+  if(n.kind!=='scene'||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready')continue;
+  if(s.story55.activeScene&&s.story55.activeScene!==n.id)continue;
+  const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
+  const next=lines[q.index];if(!next)continue;
+  // Do not enqueue NPC replies while the player owes a preset line.
+  if(next[0]==='me')continue;
+  if(!Number.isFinite(q.nextAt)){
+   q.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;
+   return true;
+  }
+  if(now<q.nextAt)continue;
+  advanceScene55(s,n.id,{now});
+  return true; // One incoming NPC bubble per scheduler tick.
+ }
+ return false;
+}
 export function tickStory55(s){
  if(!isStory55(s))return;
  // Repair old persisted build URLs without resetting the day or story progress.
@@ -143,6 +169,7 @@ export function tickStory55(s){
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
+ tickQueuedStoryScenes55(s);
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});

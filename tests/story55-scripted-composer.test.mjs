@@ -39,14 +39,15 @@ test('original MIRAGE private channel shows the incoming message and the own rep
  assert.ok(chat);
  setMirageAuthenticated(true);
  advanceScene55(s,'invitation');
+ advanceScene55(s,'invitation');
  const step=scriptedDraft55(s,'mirage','s55-ouroboros');
  assert.equal(step.kind,'me');
- assert.match(step.text,/我单干/);
+ assert.match(step.text,/奖金已经收到了/);
  const html=registry.get('mirage').render({store:{get:()=>s}},{route:'/chat/s55-ouroboros',params:{}});
  assert.match(html,/mc-cipher-scroll/);
  assert.match(html,/mc-composer composer/);
- assert.match(html,/data-story-stage="invitation:1"/);
- assert.match(html,/data-story-type="我单干，没有加入团队的打算。"/);
+ assert.match(html,/data-story-stage="invitation:2"/);
+ assert.match(html,/data-story-type="谢谢老板，奖金已经收到了。"/);
  assert.doesNotMatch(html,/s55-scene-next|s55-scene-lines/);
  assert.equal(chat.messages.filter(m=>m.from==='me').length,0);
  sendScriptedDraft55(s,'mirage','s55-ouroboros',step.text);

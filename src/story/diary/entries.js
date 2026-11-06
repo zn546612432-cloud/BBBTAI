@@ -2,6 +2,14 @@
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  6:{
+    weather:'多云',
+    title:'今天有点意思',
+    body:'昨天整理的东西还有一点没弄完，今天抽空处理一下。\n\n最近 MIRAGE 的单子还行，不过小委托做多了也挺烦的。看看今天有没有什么值得接的，最好来个奖金高一点的。\n\n哥昨天还叫我出去走走。再说吧，先把手里的事情忙完。',
+    // Generic diary stages use completed story nodes; D07-D55 can reuse this
+    // format without a new daily tick function or event dispatcher.
+    sections:[{id:'mirage-conversation',afterNode:'invitation',text:'今天运气不错。\n\nFlow 早上发来的那个钱包挑战，奖金居然有 10 BTC。原本还以为会有多麻烦，结果比想象中顺利。\n\n奖金到账了。\n\n发布挑战的那个 Dr Ouroboros 还专门找我聊了几句，问我属于哪个组织。\n\n我说我单干。\n\n他好像挺意外的。说话有点欠揍，不过技术应该不错。\n\n最后还叫我「黑客天才」，说以后有机会合作。\n\n行啊，有钱赚再说。'}]
+  },
   5:{
     weather:'多云',
     title:'先把手边的事弄完',
@@ -43,12 +51,23 @@ export function diaryDate(day,start=DIARY_START){
 }
 export function entryFor(s,day){
  const extra=s.content?.storyDiary?.[String(day)];
- const base=extra||DEFAULT_DIARY_ENTRIES[day];
- if(!base||day!==2)return base||null;
- const visible=s.story55?.d02?.diary?.visible||{};
- const stage=extra?.stages||{};
+ const authored=DEFAULT_DIARY_ENTRIES[day];
+ const base=extra||authored;
+ if(!base)return null;
+ const overrides=extra?.stages||{};
  const parts=[base.body];
- for(const key of ['brother','purchase'])if(visible[key])parts.push(stage[key]??D02_DIARY_SECTIONS[key]);
+ // Preserve the existing D02 delayed sections unchanged; only their source
+ // prose is editable, never the story timing or milestone.
+ if(day===2){
+  const visible=s.story55?.d02?.diary?.visible||{};
+  for(const key of ['brother','purchase'])if(visible[key])parts.push(overrides[key]??D02_DIARY_SECTIONS[key]);
+ }
+ // All future authored stages share this one diary renderer. No daily-specific
+ // application logic; never reveal private future facts before node completion.
+ for(const section of (authored?.sections||[])){
+  const complete=section.afterNode&&Object.hasOwn(s.story55?.completed||{},section.afterNode);
+  if(complete)parts.push(overrides[section.id]??section.text);
+ }
  return {...base,body:parts.filter(Boolean).join('\n\n')};
 }
 export function allDiaryDays(s){
@@ -60,6 +79,7 @@ export function saveDiaryEntry(s,day,data){
  if(typeof data.body!=='string'||data.body.length>6000||typeof data.title!=='string'||data.title.length>150||typeof data.weather!=='string'||data.weather.length>30)throw Error('日程内容超出长度限制');
  s.content.storyDiary??={};
  const existing=s.content.storyDiary[String(day)]||{};
- const stages=data.stages?Object.fromEntries(Object.entries(data.stages).filter(([key,val])=>['brother','purchase'].includes(key)&&typeof val==='string').map(([key,val])=>[key,val.trim()])):existing.stages;
+ const permitted=new Set([...(day===2?['brother','purchase']:[]),...(DEFAULT_DIARY_ENTRIES[day]?.sections||[]).map(section=>section.id)]);
+ const stages=data.stages?Object.fromEntries(Object.entries(data.stages).filter(([key,val])=>permitted.has(key)&&typeof val==='string'&&val.length<=3000).map(([key,val])=>[key,val.trim()])):existing.stages;
  s.content.storyDiary[String(day)]={title:data.title.trim(),weather:data.weather.trim()||'晴',body:data.body.trim(),...(stages?{stages}:{})};
 }

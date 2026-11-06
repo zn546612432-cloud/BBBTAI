@@ -4,7 +4,7 @@ import {D03_ORDER,D03_MAIL,D03_STAGES,acceptD03Contract,submitD03Contract,armD03
 import {DAILY_CONTRACTS as D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
 import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
-import {currentScript55,scriptedDraft55} from '../../services/story55/scripted-chat.js';
+import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {isStory55} from '../../services/story55/state.js';
 import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './data.js';
 import {mirage55} from '../../services/story55/views.js';
@@ -218,6 +218,16 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
   const text=val('text'),id=form.dataset.id;
   if(text){
    form.elements.text.value='';decrypted.add(id);
+   const scripted=scriptedDraft55(ctx.store.get(),'mirage',id);
+   if(scripted){
+    // Native story55 send gate: only player action creates the green bubble.
+    ctx.store.update(s=>sendScriptedDraft55(s,'mirage',id,text));
+    return;
+   }
+   if(currentScript55(ctx.store.get(),'mirage',id)){
+    ctx.toast('請等待對方的消息');
+    return;
+   }
    if(isOuroborosScriptActive(ctx.store.get(),id)){
     let completed=false;ctx.store.update(s=>{completed=sendOuroborosPreset(s,id,text);});
     if(!completed)ctx.toast('请先发送已经输入的内容');
