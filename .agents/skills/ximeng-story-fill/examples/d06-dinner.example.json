@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "day": 6,
+  "date": "2025-05-24",
+  "title": "D06 聚餐：付款后由熙蒙答应，朋友道谢，仔仔订餐",
+  "stage": "example",
+  "scope": "optional",
+  "systems": [
+    "story55",
+    "messaging",
+    "wishes",
+    "reminders",
+    "bank",
+    "assets"
+  ],
+  "assets": [
+    {
+      "id": "d06-dinner-photo",
+      "source": "supabase-public",
+      "path": "ximeng-assets/d06/celebration-dinner.jpg"
+    }
+  ],
+  "events": [
+    {
+      "id": "wish-dinner-payment",
+      "kind": "purchase",
+      "owner": "wishes",
+      "surface": "reminders",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "reminder-buy:d06-dinner"
+      },
+      "requires": [
+        "node:wallet"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "money": {
+        "operation": "payBankPurchase",
+        "currency": "USD",
+        "amount": -350,
+        "transactionId": "wish-purchase-d06-dinner"
+      },
+      "text": "已从 PACIFIC 银行扣除 350 USD。去微信群回复大家。"
+    },
+    {
+      "id": "wish-dinner-player",
+      "kind": "player-send",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "wish-dinner-payment"
+      },
+      "requires": [
+        "wish-dinner-payment"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "好啊，一起去吃饭！今晚我请客。"
+    },
+    {
+      "id": "wish-dinner-thanks-xin",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-player"
+      },
+      "requires": [
+        "wish-dinner-player"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "蒙哥万岁！！今晚我可不客气了"
+    },
+    {
+      "id": "wish-dinner-thanks-hufeng",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-thanks-xin"
+      },
+      "requires": [
+        "wish-dinner-thanks-xin"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "哈哈哈哈，谢了阿蒙。"
+    },
+    {
+      "id": "wish-dinner-thanks-awei",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-thanks-hufeng"
+      },
+      "requires": [
+        "wish-dinner-thanks-hufeng"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "谢了，晚上见。"
+    },
+    {
+      "id": "wish-dinner-wang",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-thanks-awei"
+      },
+      "requires": [
+        "wish-dinner-thanks-awei"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "好，那今晚大家一起吃顿饭。仔仔，你看看哪家还有位置。"
+    },
+    {
+      "id": "wish-dinner-ask",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-wang"
+      },
+      "requires": [
+        "wish-dinner-wang"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "行，我来订。你们有什么想吃的？"
+    },
+    {
+      "id": "wish-dinner-choice",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-ask"
+      },
+      "requires": [
+        "wish-dinner-ask"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "烧鹅！我想吃烧鹅！！"
+    },
+    {
+      "id": "wish-dinner-booking",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "wish-dinner-choice"
+      },
+      "requires": [
+        "wish-dinner-choice"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      },
+      "text": "订好了，晚上七点半。位置我一会儿发群里，大家别迟到。"
+    },
+    {
+      "id": "wish-dinner-photo",
+      "kind": "incoming-image",
+      "owner": "messaging",
+      "surface": "wechat",
+      "thread": "group",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "day-time",
+        "ref": "20:30"
+      },
+      "requires": [
+        "wish-dinner-booking"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "20:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "assetId": "d06-dinner-photo"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "accept-d06-trigger",
+      "type": "trigger",
+      "verify": "获奖并出现聚餐心愿后，提醒事项可从主屏或 App 内购买"
+    },
+    {
+      "id": "accept-d06-negative",
+      "type": "negative",
+      "verify": "未付款及付款后未点 Send 都没有朋友感谢和订餐"
+    },
+    {
+      "id": "accept-d06-idempotence",
+      "type": "idempotency",
+      "verify": "重复购买/重开窗口银行只扣350USD一次，消息每条只一份"
+    },
+    {
+      "id": "accept-d06-restore",
+      "type": "save-restore",
+      "verify": "旧存档已付费用仍保留，未发出的 NPC 消息等待玩家 Send"
+    },
+    {
+      "id": "accept-d06-cross-app",
+      "type": "cross-app",
+      "verify": "Reminder付款->银行真实流水->微信群预填->仔仔订位->提醒标完成"
+    },
+    {
+      "id": "accept-d06-late",
+      "type": "late-entry",
+      "verify": "不聚餐则D07不说昨晚吃撑；跨日消息采用静默/跳过规则"
+    },
+    {
+      "id": "accept-d06-assets",
+      "type": "assets",
+      "verify": "Supabase餐桌照片返回200/image/jpeg且在20:30后出现"
+    },
+    {
+      "id": "accept-d06-date",
+      "type": "date-clock",
+      "verify": "D06对应2025-05-24，19:30赴约，20:30之后才发合照"
+    },
+    {
+      "id": "accept-d06-mobile",
+      "type": "mobile",
+      "verify": "390x844手机模拟，真实点击主屏购买、微信发送、收货照片加载"
+    }
+  ]
+}
