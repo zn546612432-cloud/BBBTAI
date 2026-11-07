@@ -12,6 +12,22 @@ const ledger=s=>s.story55.wishes??=({records:{},story:{started:false,lines:[],ne
 const record=(s,id)=>ledger(s).records[id]||null;
 const hasPhrase=(s,id)=>Object.values(s.content?.conversations||{}).some(list=>list.some(c=>c.messages?.some(m=>m.wishId===id)));
 export const getWish=(s,id)=>s.story55?.wishes?.records?.[id]||null;
+// Repair reminders incorrectly marked complete by legacy home-widget taps.
+// Only the wish lifecycle may mark them fulfilled, never generic UI toggles.
+export function syncWishReminders(s){
+ if(!perDay(s))return false;
+ let changed=false;
+ for(const item of s.content?.reminders||[]){
+  if(!item.wishId)continue;
+  const r=s.story55?.wishes?.records?.[item.wishId];
+  if(!r)continue;
+  const done=r.status==='completed'||r.status==='delivered';
+  if(item.done!==done){item.done=done;changed=true;}
+  if(item.wishStatus!==r.status){item.wishStatus=r.status;changed=true;}
+ }
+ return changed;
+}
+
 export function wishExpired(s,id){
  const w=wishDefinition(id);
  return !!(w?.expires&&(s.day>w.expires.day||(s.day===w.expires.day&&s.clock>=w.expires.clock)));
@@ -59,7 +75,7 @@ function queueReward(s,id,isEvent){
  r.rewardQueued=true;
  for(const item of rewardSets[id]||[])queue(s,{...item,
    dueDay:isEvent?s.day:r.deliveryDay,
-   dueClock:isEvent?(item.kind==='image'?'20:30':'19:30'):'16:00',
+   dueClock:isEvent?(item.kind==='image'?'20:30':item.id==='wish-dinner-01'?r.purchasedClock:'19:30'):'16:00',
    silentAfterDay:true,
    wishRewardId:id});
 }
