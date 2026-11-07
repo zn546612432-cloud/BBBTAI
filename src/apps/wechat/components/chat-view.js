@@ -1,5 +1,4 @@
 import {nativeWeChatComposer} from '../../../services/messaging/preset-replies.js';
-import {completed} from '../../../services/story55/state.js';
 import {wishDefinition,wishIdForMessage} from '../../../services/wishes/catalog.js';
 
 
@@ -84,8 +83,7 @@ export function renderWeChatChat(s,id){
     ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
-    '<div class="wx-wish-story-controls">'+(id==='group'&&s.day===6&&completed(s,'wallet')&&!s.story55?.wishes?.story?.started
-      ?'<button type="button" data-action="wx-share-d06-prize" class="wx-wish-share">把10 BTC的好消息告诉大家</button>':'')+'</div>'+
+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
