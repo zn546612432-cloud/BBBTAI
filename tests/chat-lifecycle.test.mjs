@@ -177,7 +177,7 @@ test('new daily definitions share a conversation cooldown even when a late and c
 
 test('merely offering a player-led D02 draft does not start a conversation or manufacture a late reply',()=>{
  const s=fresh(2,'12:16');tickPhoneStoryMessages(s,0);
- assert.match(nativeWeChatComposer(s,'wang').text,/电脑真该退休/);
+ assert.match(nativeWeChatComposer(s,'wang').text,/電腦真該退休/);
  s.day=3;s.clock='08:00';tickPhoneStoryMessages(s,5000);
  assert.equal(s.story55.d02.wechat.wang.status,'unstarted');
  assert.equal(messages(s,'wang','d02-wang-script-').length,0);
