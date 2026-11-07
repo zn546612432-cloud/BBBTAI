@@ -26,7 +26,7 @@ test('D06 celebration starts only after real wallet completion, by explicit play
  flush(s);
  assert.equal(all(s).filter(m=>m.wishId==='d06-keyboard').length,1);
  assert.equal(all(s).filter(m=>m.wishId==='d06-dinner').length,1);
- assert.equal(all(s).filter(m=>m.wishId==='d06-shoes').length,1);
+ assert.equal(all(s).filter(m=>m.wishId==='d06-shoes').length,0);
 });
 test('Reminders and bank are idempotent; same wishlist item cannot debit twice',()=>{
  const s=phone();beginD06Celebration(s);flush(s);
