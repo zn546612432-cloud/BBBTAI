@@ -28,10 +28,10 @@ export function wishPurchaseOverlay(s){
  if(recentPurchase&&r.purchasedDay){
   const dinner=w.kind==='event';
   const caption=dinner
-   ?'今晚19:30和大家吃饭。仔仔会在群里确认，聚餐照片在晚餐结束后发来。'
+   ?'钱已经付了。去狼崽团回复大家，再由仔仔安排订餐。晚饭定在今晚19:30，照片会在饭后发来。'
    :'预计 D'+String(r.deliveryDay).padStart(2,'0')+' 下午送达。收货后会收到对应人物的微信和照片。';
   return '<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="购买成功"><div class="wx-wish-panel"><strong>'+
-    (dinner?'晚餐已预订':'订单已提交')+'</strong><p>已从 PACIFIC 银行扣除 '+w.price+' USD。'+caption+
+    (dinner?'聚餐费用已支付':'订单已提交')+'</strong><p>已从 PACIFIC 银行扣除 '+w.price+' USD。'+caption+
     '</p><div class="wx-wish-actions"><button type="button" data-action="reminder-wish-finish">完成</button>'+
     (dinner?'<button type="button" data-action="reminder-wish-chat">查看群聊</button>':'<button type="button" data-action="reminder-wish-bank">银行明细</button>')+
     '</div></div></div>';
