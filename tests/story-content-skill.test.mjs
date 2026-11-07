@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {storyDayPacket} from '../scripts/new-story-day.mjs';
-import {validateStoryPacket} from '../scripts/validate-story-packet.mjs';
+import {validateStoryPacket,APP_CAPABILITIES} from '../scripts/validate-story-packet.mjs';
 import {auditStorySkill} from '../scripts/audit-story-skill.mjs';
 
 const src=new URL('../.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json',import.meta.url);
@@ -168,4 +168,89 @@ test('Player send must explicitly declare the enabling event as a prerequisite',
  const d=sample();
  d.events.find(e=>e.id==='wish-dinner-player').requires=[];
  fail(d,'必须显式声明');
+});
+
+
+const crossAppSrc=new URL('../.agents/skills/ximeng-story-fill/examples/d23-cross-app-needs-adapters.example.json',import.meta.url);
+const crossApp=()=>JSON.parse(readFileSync(crossAppSrc,'utf8'));
+
+test('Skill v2: 25 installed App modules are accounted for, including hidden aliases',()=>{
+ assert.equal(Object.keys(APP_CAPABILITIES.apps).length,25);
+ assert.equal(APP_CAPABILITIES.apps.mail.hidden,true);
+ assert.equal(APP_CAPABILITIES.apps.developer.appId,'editor');
+ assert.equal(APP_CAPABILITIES.apps.phone.overriddenBy,'src/apps/phone/replica.js');
+ assert.equal(APP_CAPABILITIES.apps.weather.overriddenBy,'src/apps/weather/replica.js');
+ assert.equal(APP_CAPABILITIES.apps.instagram,undefined);
+ assert.equal(sample().schemaVersion,2);
+ assert.equal(draft().schemaVersion,2);
+});
+
+test('D23-D25 SMS -> browser -> aomi order -> WeChat is valid planning but not an executable feature',()=>{
+ const d=crossApp(),planning=validateStoryPacket(d),release=validateStoryPacket(d,{strict:true});
+ assert.equal(planning.ok,true,planning.errors.join('\n'));
+ assert.ok(planning.warnings.filter(x=>x.includes('尚无通用剧情适配器')).length>=4);
+ assert.equal(release.ok,false,'strict must fail until all generic adapters exist');
+ assert.ok(release.errors.filter(x=>x.includes('尚无通用剧情适配器')).length>=4);
+ assert.equal(release.summary.day,23);
+ assert.equal(release.summary.events,5);
+ assert.equal(release.summary.apps.length,4);
+});
+
+test('Reject D06 dedicated flow reused on D23 without actual new adapter',()=>{
+ const d=sample();
+ d.day=23;
+ d.date='2025-06-10';
+ for(const ev of d.events)ev.timing.day=23;
+ fail(d,'仅 D6 已接通');
+});
+
+test('Reject an app that exists as a folder but is not registered for phone story actions',()=>{
+ const d=sample();d.events[2].surface='instagram';
+ fail(d,'未在 src/system/registry.js 中注册');
+});
+
+test('Reject wrong operation on a registered App and wrong canonical owner',()=>{
+ const d=sample();d.events[1].capability='ledger.post';
+ fail(d,'没有声明此项能力');
+ const t=sample();t.events[2].owner='bank';
+ fail(t,'能力只能由统一权属');
+});
+
+test('Reject legacy surface alias sms for new v2 contract: use actual messages App ID',()=>{
+ const d=sample();d.events[2].surface='sms';
+ fail(d,'未在 src/system/registry.js 中注册');
+});
+
+test('Block fake publication through stage:approved while adapters are still required',()=>{
+ const d=crossApp();d.stage='approved';
+ fail(d,'尚无通用剧情适配器');
+});
+
+test('NoApp scripted scene needs explicit story gate even before adapter is available',()=>{
+ const d=crossApp();const e=d.events[0];
+ e.surface='noapp';e.owner='noapp';e.capability='ai.scripted-message';e.actor='熙泰';
+ fail(d,'fact:tai-recognized');
+ e.requires=['fact:tai-recognized'];
+ const next=validateStoryPacket(d);
+ assert.equal(next.ok,true,next.errors.join('\n'));
+ assert.ok(next.warnings.some(x=>x.includes('尚无通用剧情适配器')));
+});
+
+test('Reject the use of hidden aliases as a shortcut to bypass KIRA capabilities',()=>{
+ const d=crossApp();const e=d.events[0];
+ e.surface='mail';e.capability='mail.receive';e.owner='kira';
+ fail(d,'该 App 没有声明此项能力');
+});
+
+test('Reject v1 packet strict publication even if its old fields are otherwise valid',()=>{
+ const d=sample();d.schemaVersion=1;
+ const old=validateStoryPacket(d);
+ assert.equal(old.ok,true,old.errors.join('\n'));
+ assert.ok(old.warnings.some(x=>x.includes('旧v1')));
+ fail(d,'不可直接通过严格发布验收');
+});
+
+test('Reject events missing capability in v2 packets',()=>{
+ const d=sample();delete d.events[0].capability;
+ fail(d,'v2 每个事件必须声明');
 });
