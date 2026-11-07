@@ -16,6 +16,10 @@ export function openWishPurchase(id,c){
  const w=wishDefinition(id),r=getWish(c.store.get(),id);
  if(!w||!r)return false;
  if(r.status!=='saved'){
+  if(id==='d06-dinner'&&r.purchasedDay&&!r.confirmedByXimeng&&c.router){
+   c.router.open({appId:'wechat',route:'/chat/group',params:{}});
+   return false;
+  }
   c.toast?.(r.status==='ordered'?'已经购买，等待收货':r.status==='expired'?'这项安排已过期':'已经购买');
   return false;
  }
@@ -28,17 +32,17 @@ export function wishPurchaseOverlay(s){
  if(recentPurchase&&r.purchasedDay){
   const dinner=w.kind==='event';
   const caption=dinner
-   ?'钱已经付了。去狼崽团回复大家，再由仔仔安排订餐。晚饭定在今晚19:30，照片会在饭后发来。'
+   ?'钱已经付了。去狼崽团回复大家，再由仔仔安排订餐。如果订得到位子就今晚19:30见，照片会在饭后发来。'
    :'预计 D'+String(r.deliveryDay).padStart(2,'0')+' 下午送达。收货后会收到对应人物的微信和照片。';
   return '<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="购买成功"><div class="wx-wish-panel"><strong>'+
     (dinner?'聚餐费用已支付':'订单已提交')+'</strong><p>已从 PACIFIC 银行扣除 '+w.price+' USD。'+caption+
     '</p><div class="wx-wish-actions"><button type="button" data-action="reminder-wish-finish">完成</button>'+
-    (dinner?'<button type="button" data-action="reminder-wish-chat">查看群聊</button>':'<button type="button" data-action="reminder-wish-bank">银行明细</button>')+
+    (dinner?'<button type="button" data-action="reminder-wish-chat">去群聊回复</button>':'<button type="button" data-action="reminder-wish-bank">银行明细</button>')+
     '</div></div></div>';
  }
  if(pendingPurchase&&r.status==='saved'){
   return '<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="确认心愿购买"><div class="wx-wish-panel"><strong>是否花费 '+w.price+' USD 购买'+esc(w.item)+'？</strong><p>从银行余额中扣款。'+
-    (w.kind==='physical'?'到货后会收到微信。':'付款后预订今晚19:30的聚餐。')+
+    (w.kind==='physical'?'到货后会收到微信。':'付款后去微信群里答应，仔仔再安排订餐。')+
     '</p><div class="wx-wish-actions"><button type="button" data-action="reminder-wish-cancel">取消</button><button type="button" data-action="reminder-wish-buy">购买</button></div></div></div>';
  }
  return '';
