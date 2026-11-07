@@ -39,7 +39,7 @@ async function signInMirage(){
   const diagnostics=await page.evaluate(()=>({
    trace:window.__mirageLoginTrace,
    stillLogin:!!document.querySelector('.mc-login-panel'),
-   currentRoute:JSON.parse(localStorage.getItem((location.pathname.match(/\\/review\\/([a-z0-9-]+)\\//i)||[])[1]?'ximeng-phone-story55-review-'+(location.pathname.match(/\\/review\\/([a-z0-9-]+)\\//i)||[])[1]:'ximeng-phone-story55-v1'))?.nav?.current,
+   currentRoute:JSON.parse(localStorage.getItem(location.pathname.includes('/review/')?'ximeng-phone-story55-review-'+location.pathname.split('/review/')[1].split('/')[0]:'ximeng-phone-story55-v1'))?.nav?.current,
    notices:[...document.querySelectorAll('#toast,.mc-signup-warning')].map(x=>x.textContent.trim()).filter(Boolean)
   }));
   console.error('MIRAGE_LOGIN_DIAGNOSTIC',JSON.stringify({fields,...diagnostics}));
