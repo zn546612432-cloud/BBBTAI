@@ -22,13 +22,15 @@ jobs:
       - run: npm ci
       - run: node scripts/audit-story-skill.mjs
       - run: npm test
-      - run: GITHUB_PAGES_BASE=/ npm run build:pages
+      - run: npm run build:pages
       - run: npm install --no-save --no-package-lock playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - name: Click real mobile flow including reload and cross-app navigation
         run: |
-          PORT=5173 node server/dev.mjs > /tmp/d13-server.log 2>&1 &
-          node scripts/d13-wallet-call-mobile-smoke.mjs
+          mkdir -p /tmp/d13-site/BBBTAI
+          cp -a dist/. /tmp/d13-site/BBBTAI/
+          python3 -m http.server 5173 --bind 127.0.0.1 --directory /tmp/d13-site > /tmp/d13-server.log 2>&1 &
+          SMOKE_URL=http://127.0.0.1:5173/BBBTAI/ node scripts/d13-wallet-call-mobile-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
