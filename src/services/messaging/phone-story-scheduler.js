@@ -3,6 +3,7 @@
 import {tickD01WeChat,d01WeChatDue} from '../../story/d01/wechat.js';
 import {AUTHORED_CHAT_TRACKS} from './lifecycle/registry.js';
 import {tickGenericMissedReplies,genericMissedRepliesDue} from './lifecycle/missed-replies.js';
+import {reviseDeliveredStoryCopy} from './lifecycle/copy-revision.js';
 
 const tracks=[
  {name:'D01',day:1,tick:tickD01WeChat,due:d01WeChatDue,carryForward:true},
@@ -41,6 +42,7 @@ function retireHuFengPlot(s){
 export function tickPhoneStoryMessages(s,now=Date.now(),{dueOnly=false}={}){
  if(s.story55?.version!==1)return false;
  let changed=retireHuFengPlot(s);
+ changed=reviseDeliveredStoryCopy(s)||changed;
  for(const track of tracks){
   if(s.day!==track.day&&!(track.carryForward&&s.day>track.day))continue;
   if(dueOnly&&!track.due(s,now))continue;

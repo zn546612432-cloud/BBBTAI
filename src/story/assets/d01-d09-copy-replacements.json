@@ -1,0 +1,787 @@
+[
+  {
+    "id": "d02-wang-script-1",
+    "channel": "wechat",
+    "chat": "wang",
+    "from": "熙旺",
+    "before": "又坏了吗？你不是上回才买了屏幕？还是显卡来着",
+    "text": "又壞了嗎？你不是上回才買了螢幕？還是顯卡來著",
+    "kind": "text"
+  },
+  {
+    "id": "d02-wang-script-3",
+    "channel": "wechat",
+    "chat": "wang",
+    "from": "熙旺",
+    "before": "换新的就换新的。还差多少钱？晚上出车完我转你一些",
+    "text": "換新的就換新的。還差多少錢？晚上出車完我轉你一些",
+    "kind": "text"
+  },
+  {
+    "id": "d02-wang-script-5",
+    "channel": "wechat",
+    "chat": "wang",
+    "from": "熙旺",
+    "before": "别担心",
+    "text": "別擔心",
+    "kind": "text"
+  },
+  {
+    "id": "d02-wang-script-6",
+    "channel": "wechat",
+    "chat": "wang",
+    "from": "熙旺",
+    "before": "哥能养你一辈子",
+    "text": "哥能養你一輩子",
+    "kind": "text"
+  },
+  {
+    "id": "d02-xin-script-0",
+    "channel": "wechat",
+    "chat": "xin",
+    "from": "小辛",
+    "before": "蒙蒙哥，澳东商城打八折诶！！！你看到没",
+    "text": "蒙蒙哥，澳東商城打八折欸！！！你看到沒",
+    "kind": "text"
+  },
+  {
+    "id": "d02-xin-script-2",
+    "channel": "wechat",
+    "chat": "xin",
+    "from": "小辛",
+    "before": "那当然，我收藏的显卡终于降价了",
+    "text": "那當然，我收藏的顯卡終於降價了",
+    "kind": "text"
+  },
+  {
+    "id": "d02-xin-script-3",
+    "channel": "wechat",
+    "chat": "xin",
+    "from": "小辛",
+    "before": "对了，你不是也想换电脑吗？",
+    "text": "對了，你不是也想換電腦嗎？",
+    "kind": "text"
+  },
+  {
+    "id": "d02-xin-script-6",
+    "channel": "wechat",
+    "chat": "xin",
+    "from": "小辛",
+    "before": "我有这么明显？",
+    "text": "我有這麼明顯？",
+    "kind": "text"
+  },
+  {
+    "id": "d02-xin-script-8",
+    "channel": "wechat",
+    "chat": "xin",
+    "from": "小辛",
+    "before": "那你先看看嘛！我保证这次不是乱推荐。",
+    "text": "那你先看看嘛！我保證這次不是亂推薦。",
+    "kind": "text"
+  },
+  {
+    "id": "d04-video-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "我電腦裡是不是還有去年那個視頻",
+    "text": "去年那個訓練影片是不是還在群文件裡",
+    "kind": "text"
+  },
+  {
+    "id": "d04-video-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "什麼視頻",
+    "text": "什麼影片",
+    "kind": "text"
+  },
+  {
+    "id": "d04-video-9",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "你別亂翻啊阿蒙",
+    "text": "阿蒙你別點開啊",
+    "kind": "text"
+  },
+  {
+    "id": "d04-video-17",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "胡楓電腦裡有見不得人的東西",
+    "text": "胡楓是不是在影片裡摔了",
+    "kind": "text"
+  },
+  {
+    "id": "d04-caught-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "阿蒙在修我電腦？",
+    "text": "阿蒙在工作？",
+    "kind": "text"
+  },
+  {
+    "id": "d04-caught-13",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "你電腦要死了？",
+    "text": "你想拿去當屏保啊？",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "我耳機呢",
+    "text": "我真的服了",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "誰看見我耳機了",
+    "text": "放學回來耳機又找不到了",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "就是找不到了",
+    "text": "就是突然找不到",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-7",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "你昨天是不是戴著耳機來的",
+    "text": "你早上不是戴著去上課了？",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-8",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "對",
+    "text": "對啊",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-9",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "那你去昨天的褲子裡找找",
+    "text": "那先翻翻書包",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-10",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "找過了",
+    "text": "翻過了",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-11",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "耳朵上呢",
+    "text": "口袋呢",
+    "kind": "text"
+  },
+  {
+    "id": "d04-earbuds-16",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "車裡",
+    "text": "書包最裡面那層",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "我電腦好了",
+    "text": "教授突然說下週要交報告",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "感動",
+    "text": "我人都傻了",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "那今晚能打了？",
+    "text": "你前幾天不是說這學期很輕鬆嗎哈哈哈哈",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-7",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "修之前有多慢",
+    "text": "你報告寫了多少",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-8",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "開機夠我泡杯咖啡",
+    "text": "標題",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-9",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "現在呢",
+    "text": "然後呢",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-10",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "還沒想好喝什麼就開好了",
+    "text": "還沒想好第二行寫什麼",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-11",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "省咖啡了",
+    "text": "那確實挺輕鬆",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-12",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "蒙哥救了一條命",
+    "text": "楓哥加油 精神上支持你",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-13",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "救的是電腦",
+    "text": "謝謝 不如幫我寫兩頁",
+    "kind": "text"
+  },
+  {
+    "id": "d05-computer-14",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "你的比喻也沒好到哪去",
+    "text": "你這個要求也沒好到哪去",
+    "kind": "text"
+  },
+  {
+    "id": "d05-sunset-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "楓哥朋友圈那張天好看",
+    "text": "我要給你們看個東西",
+    "kind": "text"
+  },
+  {
+    "id": "d05-sunset-6",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "我自拍也這樣",
+    "text": "你們是不是在敷衍我",
+    "kind": "text"
+  },
+  {
+    "id": "d05-sunset-7",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "你是十幾張全留",
+    "text": "沒有",
+    "kind": "text"
+  },
+  {
+    "id": "d05-sunset-8",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "都有不同的帥法",
+    "text": "那快點誇我",
+    "kind": "text"
+  },
+  {
+    "id": "d08-keyboard-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "空格键又开始不理我了",
+    "text": "我店裡那台破收銀機又卡了",
+    "kind": "text"
+  },
+  {
+    "id": "d08-keyboard-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "刚才那份表格删了重填",
+    "text": "誰家開店還靠手寫小票啊",
+    "kind": "text"
+  },
+  {
+    "id": "d08-keyboard-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "你前几天不是说它还能用吗",
+    "text": "你家",
+    "kind": "text"
+  },
+  {
+    "id": "d08-keyboard-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "能用和好用是两回事啊",
+    "text": "？",
+    "kind": "text"
+  },
+  {
+    "id": "d08-keyboard-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "你是不是每天都在跟键盘吵架",
+    "text": "哈哈哈哈哈",
+    "kind": "text"
+  },
+  {
+    "id": "d08-delivery-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "今天下午大屋有人吗",
+    "text": "明天下午有人想去練一會嗎？",
+    "kind": "text"
+  },
+  {
+    "id": "d08-delivery-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "有个设备要送来，麻烦签收一下",
+    "text": "上次的護具到了，我順便帶過去。",
+    "kind": "text"
+  },
+  {
+    "id": "d08-delivery-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "知道了",
+    "text": "我明天要去看布料，可能晚點。",
+    "kind": "text"
+  },
+  {
+    "id": "d08-delivery-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "门口那盏灯有点闪",
+    "text": "行，我先去把場地收拾一下。",
+    "kind": "text"
+  },
+  {
+    "id": "d08-heat-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "外面好热",
+    "text": "救命 韓語課被點名了",
+    "kind": "text"
+  },
+  {
+    "id": "d08-games-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "晚一点",
+    "text": "我練完再說。",
+    "kind": "text"
+  },
+  {
+    "id": "d08-games-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "那我先去找耳机",
+    "text": "誰敢信你們說「打一把」。",
+    "kind": "text"
+  },
+  {
+    "id": "d08-games-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "我先开了",
+    "text": "你自己哪次不是先說最後一把？",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-call-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "下午三点训练，记得带水",
+    "text": "下午三點想練的過來，記得帶水",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-call-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "今天又练？",
+    "text": "今天又練？",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-call-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "昨天没练",
+    "text": "你上次就沒來",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-call-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "精神上练了算不算",
+    "text": "精神上參加了算不算",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-call-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "算你热身",
+    "text": "算你熱身",
+    "kind": "text"
+  },
+  {
+    "id": "d09-cola-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "冰箱里最后一罐可乐谁喝的",
+    "text": "我昨天畫的那件外套，早上看怎麼像個塑膠袋",
+    "kind": "text"
+  },
+  {
+    "id": "d09-cola-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "我",
+    "text": "你這叫前衛",
+    "kind": "text"
+  },
+  {
+    "id": "d09-cola-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "瓶子倒是留得挺整齐",
+    "text": "謝謝，我自己都不敢穿",
+    "kind": "text"
+  },
+  {
+    "id": "d09-cola-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "训练的绷带我拿了两卷",
+    "text": "https://www.tiktok.com/@randomdogclips/video/0000000000000000001",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "鞋带松了",
+    "text": "鞋帶鬆了",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "你第三趟之前不是刚系过",
+    "text": "你剛才不是才繫過？",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "那可能是地的问题",
+    "text": "那可能是地的問題",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-4",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "休息十分钟，先喝水",
+    "text": "休息十分鐘，先喝水",
+    "kind": "text"
+  },
+  {
+    "id": "d09-training-6",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "阿威",
+    "before": "记了",
+    "text": "你先把氣喘勻吧",
+    "kind": "text"
+  },
+  {
+    "id": "d09-laundry-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "训练服放洗衣篮，别又扔椅子上",
+    "text": "/apps/wechat/stickers/zoggy-stars.png",
+    "kind": "image"
+  },
+  {
+    "id": "d09-shopping-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "明天下午谁能陪我采购",
+    "text": "明天下午誰能陪我去買材料？",
+    "kind": "text"
+  },
+  {
+    "id": "d09-shopping-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "我有空",
+    "text": "我人在韓國，只能當線上軍師。",
+    "kind": "text"
+  },
+  {
+    "id": "d09-shopping-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "明天不用训练，你们自己休息",
+    "text": "我明天出車，你們自己安排。",
+    "kind": "text"
+  },
+  {
+    "id": "d06-celebrate-10",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "那晚上一起出去吃饭？大家好久没一起出去吃了",
+    "text": "那晚上我們幾個出去吃飯？好久沒聚了",
+    "kind": "text"
+  },
+  {
+    "id": "wish-dinner-thanks-02",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "哈哈哈哈，谢了阿蒙。",
+    "text": "我只能在韓國看你們吃了😭",
+    "kind": "text"
+  },
+  {
+    "id": "d07-chat-03",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "出去走走啊",
+    "text": "陪我打把遊戲啊，今天沒課，無聊死了",
+    "kind": "text"
+  },
+  {
+    "id": "d07-errand-02",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "仔仔",
+    "before": "收到，我和胡枫出去的时候顺手带。",
+    "text": "收到，我下午出去的時候順手帶。",
+    "kind": "text"
+  },
+  {
+    "id": "d07-errand-03",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "胡枫",
+    "before": "走吧。小辛你确定不来？",
+    "text": "小辛你確定不去？",
+    "kind": "text"
+  },
+  {
+    "id": "d07-errand-04",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "我负责看家。谢谢。",
+    "text": "我負責精神支持，謝謝。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "嗯？蒙蒙哥怎么今天起得那么早？",
+    "text": "嗯？蒙蒙哥怎麼今天起得那麼早？",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "昨天和我打游戏打到那么晚…今天不到12点居然就醒了。",
+    "text": "昨天和我打遊戲打到那麼晚…今天不到12點居然就醒了。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。",
+    "text": "怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "今天不忙的话，就再去睡会，我中午收车回来给你带午餐。",
+    "text": "今天不忙的話，就再去睡會，我中午收車回來給你帶午餐。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-7",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "还不是我们太菜了，哈哈。",
+    "text": "還不是我們太菜了，哈哈。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-0",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "蒙蒙哥，你不会现在才起吧？",
+    "text": "蒙蒙哥，你不會現在才起吧？",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-1",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "昨天和我打游戏打得那么晚，果然起不来床了，哈哈",
+    "text": "昨天和我打遊戲打得那麼晚，果然起不來床了，哈哈",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-2",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。",
+    "text": "怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-3",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "熙旺",
+    "before": "今天不忙的话，就再去睡会，我中午收车回来给你带午餐。",
+    "text": "今天不忙的話，就再去睡會，我中午收車回來給你帶午餐。",
+    "kind": "text"
+  },
+  {
+    "id": "d01-group-script-7",
+    "channel": "wechat",
+    "chat": "group",
+    "from": "小辛",
+    "before": "还不是我们太菜了，哈哈。",
+    "text": "還不是我們太菜了，哈哈。",
+    "kind": "text"
+  },
+  {
+    "id": "s55-invitation-19",
+    "channel": "mirage",
+    "chat": "s55-ouroboros",
+    "from": "s55-ouroboros",
+    "before": "行，拿好你的奖励饼干吧，黑客天才。",
+    "text": "行，獎金收好吧，黑客天才。",
+    "kind": "text",
+    "scene": "invitation",
+    "index": 19
+  }
+]

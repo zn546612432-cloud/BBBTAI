@@ -93,7 +93,7 @@
       "capability": "chat.d08-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "空格键又开始不理我了",
+      "text": "我店裡那台破收銀機又卡了",
       "trigger": {
         "type": "day-time",
         "ref": "09:12"
@@ -117,7 +117,7 @@
       "capability": "chat.d08-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "刚才那份表格删了重填",
+      "text": "誰家開店還靠手寫小票啊",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-keyboard-01"
@@ -143,7 +143,7 @@
       "capability": "chat.d08-group",
       "actor": "胡枫",
       "thread": "group",
-      "text": "你前几天不是说它还能用吗",
+      "text": "你家",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-keyboard-02"
@@ -169,7 +169,7 @@
       "capability": "chat.d08-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "能用和好用是两回事啊",
+      "text": "？",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-keyboard-03"
@@ -195,7 +195,7 @@
       "capability": "chat.d08-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "你是不是每天都在跟键盘吵架",
+      "text": "哈哈哈哈哈",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-keyboard-04"
@@ -221,7 +221,7 @@
       "capability": "chat.d08-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "今天下午大屋有人吗",
+      "text": "明天下午有人想去練一會嗎？",
       "trigger": {
         "type": "day-time",
         "ref": "11:45"
@@ -243,9 +243,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "仔仔",
+      "actor": "阿威",
       "thread": "group",
-      "text": "我在",
+      "text": "我去。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-delivery-01"
@@ -271,7 +271,7 @@
       "capability": "chat.d08-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "有个设备要送来，麻烦签收一下",
+      "text": "上次的護具到了，我順便帶過去。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-delivery-02"
@@ -297,7 +297,7 @@
       "capability": "chat.d08-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "知道了",
+      "text": "我明天要去看布料，可能晚點。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-delivery-03"
@@ -323,7 +323,7 @@
       "capability": "chat.d08-group",
       "actor": "阿威",
       "thread": "group",
-      "text": "门口那盏灯有点闪",
+      "text": "行，我先去把場地收拾一下。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-delivery-04"
@@ -349,7 +349,7 @@
       "capability": "chat.d08-group",
       "actor": "胡枫",
       "thread": "group",
-      "text": "外面好热",
+      "text": "救命 韓語課被點名了",
       "trigger": {
         "type": "day-time",
         "ref": "15:40"
@@ -371,9 +371,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "阿威",
+      "actor": "胡枫",
       "thread": "group",
-      "text": "刚跑完一趟，汗都没干",
+      "text": "卡了十秒一個字都沒蹦出來",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-heat-01"
@@ -397,9 +397,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "小辛",
+      "actor": "阿威",
       "thread": "group",
-      "text": "我今天不出去了",
+      "text": "你有好好預習嗎",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-heat-02"
@@ -423,9 +423,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "仔仔",
+      "actor": "胡枫",
       "thread": "group",
-      "text": "你本来也没打算出门",
+      "text": "不要問了：）",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-heat-03"
@@ -449,9 +449,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "胡枫",
+      "actor": "小辛",
       "thread": "group",
-      "text": "今晚有人打游戏吗",
+      "text": "今晚誰上線？我關店以後來。",
       "trigger": {
         "type": "day-time",
         "ref": "18:42"
@@ -473,9 +473,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "小辛",
+      "actor": "胡枫",
       "thread": "group",
-      "text": "我可以",
+      "text": "我還有報告，打一把最多。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-games-01"
@@ -501,7 +501,7 @@
       "capability": "chat.d08-group",
       "actor": "阿威",
       "thread": "group",
-      "text": "晚一点",
+      "text": "我練完再說。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-games-02"
@@ -527,7 +527,7 @@
       "capability": "chat.d08-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "那我先去找耳机",
+      "text": "誰敢信你們說「打一把」。",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-games-03"
@@ -553,7 +553,7 @@
       "capability": "chat.d08-group",
       "actor": "胡枫",
       "thread": "group",
-      "text": "我先开了",
+      "text": "你自己哪次不是先說最後一把？",
       "trigger": {
         "type": "previous-event",
         "ref": "d08-games-04"
@@ -577,9 +577,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d08-group",
-      "actor": "熙旺",
+      "actor": "阿威",
       "thread": "group",
-      "text": "明早冰箱里留了汤，谁先起谁热一下",
+      "text": "最近好無聊，我有點想老頭子了。",
       "trigger": {
         "type": "day-time",
         "ref": "22:09"

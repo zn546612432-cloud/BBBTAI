@@ -227,20 +227,9 @@ export function toggleD02Build(s){
  r.done=true;
  const d=s.story55.d02;
  if(d.buildCelebrated)return true;
- d.buildCelebrated=true;
- const list=s.content.conversations.wechat??[],c=list.find(c=>c.id==='group');
- if(c){
-  const lines=[
-   ['me','机房这轮升级终于弄好了，跑起来舒服多了。'],
-   ['小辛','？？？蒙蒙哥！新的显卡什么型号？快给我看看！'],
-   ['胡枫','难怪你刚才传文件这么快。'],
-   ['熙旺','能快点完成工作是好事。晚上记得关机睡觉。'],
-   ['me','哥，你就不能先夸我一下吗？'],
-   ['仔仔','我夸，显卡记得借我测试一下。'],
-   ['小辛','不对啊怎么还要排队？？']
-  ];
-  lines.forEach(([from,text],i)=>c.messages.push({...msg('d02-newpc-group-'+i,from,text,s.clock),day:s.day,sentDate:new Date(Date.parse('2025-05-19T00:00:00Z')+(s.day-1)*86400000).toISOString().slice(0,10),schedule:from==='me'?undefined:{mode:'chat-delay',seconds:2+i*3}}));
- }
+ // Finishing the shopping list only makes a draft available. The shared
+ // conversation lifecycle delivers replies after the real native Send action.
+ if(!d.buildReady){d.buildReady=true;d.buildReadyClock=s.clock;}
  return true;
 }
 export function rebuildD02(s){

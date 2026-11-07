@@ -21,3 +21,14 @@ export const D02_DIALOGUES={
   ['小辛','那你先看看嘛！我保證這次不是亂推薦。']
  ]
 };
+
+// Optional purchase follow-up. Both protagonist turns use native WeChat Send.
+export const D02_BUILD_DIALOGUE=[
+ ['me','機房這輪升級終於弄好了，跑起來舒服多了。'],
+ ['小辛','？？？蒙蒙哥！新的顯卡什麼型號？快給我看看！'],
+ ['胡枫','難怪你剛才傳文件這麼快。'],
+ ['熙旺','能快點完成工作是好事。晚上記得關機睡覺。'],
+ ['me','哥，你就不能先誇我一下嗎？'],
+ ['仔仔','我誇，顯卡記得借我測試一下。'],
+ ['小辛','不對啊怎麼還要排隊？？']
+];

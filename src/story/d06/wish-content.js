@@ -13,7 +13,7 @@ export const celebration=[
  group('d06-celebrate-07','小辛','蒙哥我是不是可以申请一把机械键盘哈哈哈哈！我那个空格键都快坏了', {wishId:'d06-keyboard',wishText:'机械键盘'}),
  group('d06-celebrate-08','胡枫','小辛，你上一把不还说能用十年'),
  group('d06-celebrate-09','小辛','现在不能了！！'),
- group('d06-celebrate-10','仔仔','那晚上我們幾個出去吃飯？好久沒聚了', {wishId:'d06-dinner',wishText:'一起出去吃饭'}),
+ group('d06-celebrate-10','仔仔','那晚上我們幾個出去吃飯？好久沒聚了', {wishId:'d06-dinner',wishText:'出去吃飯'}),
  group('d06-celebrate-11','熙旺','我今天收车后再看，不用为了庆祝乱花钱。')
 ];
 // Hu Feng's shoe wish and private reward were retired.

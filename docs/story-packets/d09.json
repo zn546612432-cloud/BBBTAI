@@ -14,7 +14,14 @@
     "kira",
     "bank"
   ],
-  "assets": [],
+  "assets": [
+    {
+      "id": "zoggy-stars",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/zoggy-stars.png",
+      "mime": "image/png"
+    }
+  ],
   "events": [
     {
       "id": "d09-mute-records-published",
@@ -93,7 +100,7 @@
       "capability": "chat.d09-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "下午三点训练，记得带水",
+      "text": "下午三點想練的過來，記得帶水",
       "trigger": {
         "type": "day-time",
         "ref": "08:46"
@@ -117,7 +124,7 @@
       "capability": "chat.d09-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "今天又练？",
+      "text": "今天又練？",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-call-01"
@@ -143,7 +150,7 @@
       "capability": "chat.d09-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "昨天没练",
+      "text": "你上次就沒來",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-call-02"
@@ -169,7 +176,7 @@
       "capability": "chat.d09-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "精神上练了算不算",
+      "text": "精神上參加了算不算",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-call-03"
@@ -195,7 +202,7 @@
       "capability": "chat.d09-group",
       "actor": "胡枫",
       "thread": "group",
-      "text": "算你热身",
+      "text": "算你熱身",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-call-04"
@@ -221,7 +228,7 @@
       "capability": "chat.d09-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "冰箱里最后一罐可乐谁喝的",
+      "text": "我昨天畫的那件外套，早上看怎麼像個塑膠袋",
       "trigger": {
         "type": "day-time",
         "ref": "11:27"
@@ -245,7 +252,7 @@
       "capability": "chat.d09-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "我",
+      "text": "你這叫前衛",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-cola-01"
@@ -271,7 +278,7 @@
       "capability": "chat.d09-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "瓶子倒是留得挺整齐",
+      "text": "謝謝，我自己都不敢穿",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-cola-02"
@@ -297,7 +304,7 @@
       "capability": "chat.d09-group",
       "actor": "阿威",
       "thread": "group",
-      "text": "训练的绷带我拿了两卷",
+      "text": "https://www.tiktok.com/@randomdogclips/video/0000000000000000001",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-cola-03"
@@ -321,7 +328,7 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d09-group",
-      "actor": "胡枫",
+      "actor": "阿威",
       "thread": "group",
       "text": "第三趟比第一趟慢了八秒",
       "trigger": {
@@ -347,7 +354,7 @@
       "capability": "chat.d09-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "鞋带松了",
+      "text": "鞋帶鬆了",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-01"
@@ -373,7 +380,7 @@
       "capability": "chat.d09-group",
       "actor": "阿威",
       "thread": "group",
-      "text": "你第三趟之前不是刚系过",
+      "text": "你剛才不是才繫過？",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-02"
@@ -399,7 +406,7 @@
       "capability": "chat.d09-group",
       "actor": "小辛",
       "thread": "group",
-      "text": "那可能是地的问题",
+      "text": "那可能是地的問題",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-03"
@@ -425,7 +432,7 @@
       "capability": "chat.d09-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "休息十分钟，先喝水",
+      "text": "休息十分鐘，先喝水",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-04"
@@ -449,9 +456,9 @@
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d09-group",
-      "actor": "胡枫",
+      "actor": "小辛",
       "thread": "group",
-      "text": "阿威你那边记了没",
+      "text": "哥，我下次絕對贏他",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-05"
@@ -477,7 +484,7 @@
       "capability": "chat.d09-group",
       "actor": "阿威",
       "thread": "group",
-      "text": "记了",
+      "text": "你先把氣喘勻吧",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-training-06"
@@ -497,13 +504,12 @@
     },
     {
       "id": "d09-laundry-01",
-      "kind": "incoming-text",
+      "kind": "incoming-image",
       "owner": "messaging",
       "surface": "wechat",
       "capability": "chat.d09-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "训练服放洗衣篮，别又扔椅子上",
       "trigger": {
         "type": "day-time",
         "ref": "18:20"
@@ -517,7 +523,8 @@
       "delivery": {
         "late": "silent",
         "delaySeconds": 0
-      }
+      },
+      "assetId": "zoggy-stars"
     },
     {
       "id": "d09-shopping-01",
@@ -527,7 +534,7 @@
       "capability": "chat.d09-group",
       "actor": "仔仔",
       "thread": "group",
-      "text": "明天下午谁能陪我采购",
+      "text": "明天下午誰能陪我去買材料？",
       "trigger": {
         "type": "day-time",
         "ref": "20:14"
@@ -551,7 +558,7 @@
       "capability": "chat.d09-group",
       "actor": "胡枫",
       "thread": "group",
-      "text": "我有空",
+      "text": "我人在韓國，只能當線上軍師。",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-shopping-01"
@@ -577,7 +584,7 @@
       "capability": "chat.d09-group",
       "actor": "熙旺",
       "thread": "group",
-      "text": "明天不用训练，你们自己休息",
+      "text": "我明天出車，你們自己安排。",
       "trigger": {
         "type": "previous-event",
         "ref": "d09-shopping-02"
@@ -630,7 +637,7 @@
     {
       "id": "check-assets",
       "type": "assets",
-      "verify": "不新增图片；D06/D07既有收货照片仍按购买条件触发"
+      "verify": "D09单条ZOGGY原图使用包内资源，D06/D07既有收货照片仍按购买条件触发"
     },
     {
       "id": "check-date-clock",

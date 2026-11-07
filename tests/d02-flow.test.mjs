@@ -17,6 +17,8 @@ import {completeNode} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {begin,finish} from '../src/apps/ghost/state.js';
 import {d02Draft,d02WeChatDue,tickD02Wechat,sendD02WeChat,seedD02Wechat} from '../src/story/d02/wechat.js';
+import {D02_BUILD_DIALOGUE} from '../src/story/d02/dialogue.js';
+import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
 import {entryFor,tickD02Diary,saveDiaryEntry} from '../src/story/diary/entries.js';
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {AODONG_PRODUCTS,aodongPrice,HARDWARE_GOAL} from '../src/apps/browser/aodong-shop.js';
@@ -128,11 +130,50 @@ test('Aodong offers 8 categories with 20% May sale and completed hardware remind
  assert.equal(toggleD02Build(s),true);
  assert.equal(s.content.reminders.find(r=>r.id===D02_REMINDER).done,true);
  const group=s.content.conversations.wechat.find(c=>c.id==='group');
- assert.equal(group.messages.filter(m=>m.id?.startsWith('d02-newpc-group-')).length,7);
+ assert.equal(group.messages.filter(m=>m.id?.startsWith('d02-newpc-group-')).length,0,'checking the list cannot speak for the player');
  assert.equal(toggleD02Build(s),true);
  assert.equal(toggleD02Build(s),true);
- assert.equal(group.messages.filter(m=>m.id?.startsWith('d02-newpc-group-')).length,7);
+ assert.equal(group.messages.filter(m=>m.id?.startsWith('d02-newpc-group-')).length,0);
+ assert.equal(nativeWeChatComposer(s,'group').text,D02_BUILD_DIALOGUE[0][1]);
  s.day=14;assert.equal(aodongPrice(s,gpu),9800);
+});
+
+test('workstation follow-up waits for both real Sends, survives reload and can start after D02',()=>{
+ let s=phone();s.day=8;s.clock='22:20';
+ s.story55.d02.purchased=HARDWARE_GOAL.map(p=>({...p}));
+ createD02Reminder(s);toggleD02Build(s);
+ const store={get:()=>s,update:fn=>fn(s)};
+ const upgrades=()=>s.content.conversations.wechat.find(c=>c.id==='group').messages.filter(m=>m.id?.startsWith('d02-newpc-group-'));
+ tickD02Wechat(s,1000);tickD02Wechat(s,10000);
+ assert.equal(upgrades().length,0);
+ assert.ok(sendNativeWeChatPreset(store,'group',D02_BUILD_DIALOGUE[0][1],10000).messageId);
+ assert.equal(upgrades().length,1);
+ assert.ok(sendNativeWeChatPreset(store,'group',D02_BUILD_DIALOGUE[0][1],10001).reason);
+ for(const now of [11900,13800,15700])tickD02Wechat(s,now);
+ assert.equal(upgrades().length,4);
+ assert.equal(upgrades().filter(m=>m.from==='me').length,1);
+ s=JSON.parse(JSON.stringify(s));s.day=9;s.clock='08:00';
+ tickD02Wechat(s,20000);
+ assert.equal(upgrades().length,4,'refresh and next day cannot invent the second player line');
+ assert.equal(nativeWeChatComposer(s,'group').text,D02_BUILD_DIALOGUE[4][1]);
+ assert.ok(sendNativeWeChatPreset(store,'group',D02_BUILD_DIALOGUE[4][1],21000).messageId);
+ tickD02Wechat(s,22900);tickD02Wechat(s,24800);tickD02Wechat(s,50000);
+ assert.equal(upgrades().length,7);
+ assert.equal(new Set(upgrades().map(m=>m.id)).size,7);
+ assert.deepEqual(upgrades().map(m=>m.day),[8,8,8,8,9,9,9]);
+ assert.equal(s.story55.d02.buildCelebrated,true);
+ toggleD02Build(s);toggleD02Build(s);tickD02Wechat(s,60000);
+ assert.equal(upgrades().length,7);
+});
+
+test('legacy completed workstation celebrations are retained and never offered again',()=>{
+ const s=phone();s.story55.d02.buildCelebrated=true;
+ const c=s.content.conversations.wechat.find(c=>c.id==='group');
+ c.messages.push({id:'d02-newpc-group-0',from:'me',text:'已經發過的話',day:2,time:'08:30'});
+ createD02Reminder(s);s.story55.d02.purchased=HARDWARE_GOAL.map(p=>({...p}));toggleD02Build(s);
+ tickD02Wechat(s,2000);
+ assert.equal(nativeWeChatComposer(s,'group').text,null);
+ assert.equal(c.messages.filter(m=>m.id==='d02-newpc-group-0').length,1);
 });
 test('Developer D03 jump replays both bounties and Talia contact without doubling money or leaking D02 note into D01',()=>{
  const s=phone();

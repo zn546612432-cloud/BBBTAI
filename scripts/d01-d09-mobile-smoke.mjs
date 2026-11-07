@@ -9,7 +9,7 @@ const url=process.env.SMOKE_URL||'http://127.0.0.1:8765/BBBTAI/review/d01-d09-20
 const report=resolve(process.env.SMOKE_OUTPUT_DIR||'qa-results');
 await mkdir(report,{recursive:true});
 const issues=[];
-const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
 const context=await browser.newContext({...devices['iPhone 13'],reducedMotion:'reduce'});
 const page=await context.newPage();
 page.on('pageerror',e=>issues.push(e.message));
@@ -101,6 +101,30 @@ try{
  await page.locator('.wx-conversation').getByText('最近好無聊，我有點想老頭子了。',{exact:true}).waitFor({timeout:25000});
  await page.screenshot({path:resolve(report,'old-save-d08-group.png')});
  console.log('MOBILE_SMOKE_OLD_SAVE',JSON.stringify({day:state.day,balance:state.bankData.balance,historyKept:true,retiredRemoved:true,groupRendered:true}));
+ // Reload an earlier save at D09, allowing the real shared scheduler to
+ // reconcile the background group messages and deliver the actual PNG.
+ await page.evaluate(()=>{
+   const suffix=(location.pathname.match(/\/review\/([a-z0-9-]+)\//i)||[])[1];
+   const key='ximeng-phone-story55-review-'+suffix;
+   const saved=JSON.parse(localStorage.getItem(key));
+   saved.day=9;saved.clock='20:20';saved.batteryPercent=75;saved.unlocked=false;
+   saved.nav.current={appId:'home',route:'/',params:{}};saved.nav.stack=[];
+   localStorage.setItem(key,JSON.stringify(saved));
+ });
+ await page.reload({waitUntil:'domcontentloaded',timeout});
+ await unlock();
+ await page.locator('.home-screen [data-action="open-app"][data-app="wechat"]').click();
+ await page.locator('[data-action="open-chat"][data-id="group"]').click();
+ const sticker=page.locator('[data-key="message-d09-laundry-0"] img.wx-bubble-picture');
+ await sticker.waitFor({timeout:25000});
+ await sticker.scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>{
+   const img=document.querySelector('[data-key="message-d09-laundry-0"] img.wx-bubble-picture');
+   return img?.complete&&img.naturalWidth===240;
+ });
+ assert.equal(await page.locator('[data-key="message-d09-laundry-0"]').count(),1);
+ await page.screenshot({path:resolve(report,'d09-zoggy-original.png')});
+ console.log('MOBILE_SMOKE_D09_IMAGE',JSON.stringify({naturalWidth:240,singleBubble:true}));
  if(issues.length)console.warn('MOBILE_PAGE_ERRORS',JSON.stringify(issues.slice(0,8)));
  console.log('MOBILE_SMOKE_PASS');
 }finally{
