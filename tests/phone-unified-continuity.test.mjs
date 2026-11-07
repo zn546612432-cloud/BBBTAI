@@ -60,7 +60,7 @@ test('authored protagonist messages are never counted as unread and no fake NPC 
 });
 test('one scheduler preserves D01–D05 and registers D08–D10 without duplicate daily engines',()=>{
  assert.deepEqual(PHONE_CHAT_TRACKS.slice(0,5).map(x=>x.name),['D01','D02','D03','D04','D05']);
- assert.deepEqual(PHONE_CHAT_TRACKS.slice(5).map(x=>x.name),['D08','D09','D10']);
+ assert.deepEqual(PHONE_CHAT_TRACKS.slice(5).map(x=>x.name),['D08','D09','D10',...Array.from({length:11},(_,i)=>'D'+(14+i))]);
  assert.equal(new Set(PHONE_CHAT_TRACKS.map(x=>x.name)).size,PHONE_CHAT_TRACKS.length);
  const s=fresh(4,'08:20');
  tickPhoneStoryMessages(s,0);

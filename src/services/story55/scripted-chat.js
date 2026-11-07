@@ -1,21 +1,23 @@
 // Scripted dialogue always belongs to the real messaging UI.
 // Player lines are offered in the native text composer and sent ONLY after
 // the player presses Send. Other characters deliver their own messages over time.
-import {isStory55,nodeStatus,story55Config} from './state.js';
+import {isStory55,nodeStatus,story55Config,nodeById} from './state.js';
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {endingReplyDue55} from './finale.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const NOAPP=new Set(['recognition','paris','ending']);
-export function threadForScene55(id){
+export function threadForScene55(id,s){
+ const n=nodeById(s,id);
+ if(n?.channel&&n.conversationId)return {channel:n.channel,conversationId:n.conversationId};
  if(WECHAT.has(id))return {channel:'wechat',conversationId:'group'};
  if(NOAPP.has(id))return {channel:'noapp',conversationId:'tai'};
  return {channel:'mirage',conversationId:'s55-ouroboros'};
 }
 export function currentScript55(s,channel,conversationId){
  if(!isStory55(s)||s.story55.ended)return null;
- if(channel==='mirage'&&conversationId===FLOW_CONTACT)return flowDraft(s);
+ if(channel==='mirage'&&conversationId===FLOW_CONTACT){const flow=flowDraft(s);if(flow)return flow;}
  if(channel==='mirage'&&conversationId==='s55-ouroboros'&&
      nodeStatus(s,'questions').state==='ready'&&
      s.story55.questions<questions55.length&&
@@ -31,7 +33,7 @@ export function currentScript55(s,channel,conversationId){
    ...all.filter(n=>!prioritized.includes(n.id)).sort((a,b)=>a.day-b.day)];
  for(const n of order){
   if(n.id==='intro'&&s.day===1&&!s.story55?.previewNode)continue;
-  const t=threadForScene55(n.id);
+   const t=threadForScene55(n.id,s);
   if(t.channel!==channel||t.conversationId!==conversationId)continue;
   if(n.id==='recognition'&&!s.story55.noappInstalled)continue;
   if(nodeStatus(s,n.id).state!=='ready')continue;

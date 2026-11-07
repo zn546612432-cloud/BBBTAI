@@ -1,3 +1,4 @@
+import {storyProjectKey} from './features/story55-key/index.js';
 import {isStory55} from '../../services/story55/state.js';
 import {files55} from '../../services/story55/views.js';
 import {btn,card,esc} from '../../system/ui.js';
@@ -79,11 +80,15 @@ function commissionFilePreview(s,mailId){
   '</section>'+open+'</div>';
 }
 export const manifest={id:'files',name:'文件',icon:15,defaultRoute:'/',supportsDeepLink:true,kicker:'ON THIS PHONE'};
-export function render({store},loc){const state=store.get();if(loc.route.startsWith('/attachment/commission/'))return commissionFilePreview(state,decodeURIComponent(loc.route.slice('/attachment/commission/'.length)));if(loc.route==='/attachment/d01-mirage001')return d01FilePreview(state);if(loc.route.startsWith('/attachment/d02/'))return d02FilePreview(state,loc.route.slice('/attachment/d02/'.length));if(loc.route.startsWith('/linked/')){const id=decodeURIComponent(loc.route.slice('/linked/'.length)),files=linkedArtifacts(state).filter(f=>f.orderId===id),mission=linkedMission(state,id);
+export function render({store},loc){
+ if(loc.route==='/story55-key')return storyProjectKey(store.get(),loc.params?.project);const state=store.get();if(loc.route.startsWith('/attachment/commission/'))return commissionFilePreview(state,decodeURIComponent(loc.route.slice('/attachment/commission/'.length)));if(loc.route==='/attachment/d01-mirage001')return d01FilePreview(state);if(loc.route.startsWith('/attachment/d02/'))return d02FilePreview(state,loc.route.slice('/attachment/d02/'.length));if(loc.route.startsWith('/linked/')){const id=decodeURIComponent(loc.route.slice('/linked/'.length)),files=linkedArtifacts(state).filter(f=>f.orderId===id),mission=linkedMission(state,id);
  const d02File=(state.content.missionFiles||[]).find(f=>f.orderId===id&&f.id==='d02-target-intelligence.enc');
  if(d02File)return '<div class="page-pad"><span class="eyebrow">ON THIS PHONE / GHOST · D02</span><div class="large-title">'+esc(d02File.title)+'</div>'+card('<strong>目标资料包 · 已完整提取</strong><p>芯片标识：TALIA-CHIP-0520</p><p>加密状态：DECRYPTED / VERIFIED</p><p>数据包类型：身份索引、通信摘要、访问日志（剧情虚构）</p><p>操作结果：链路已验证，痕迹已隐匿，资料已回收。</p><small>D'+esc(d02File.createdDay)+' · '+esc(d02File.createdTime)+'</small>')+btn('d02-return','‹ 返回 MIRAGE 查看委托','button-quiet wide')+'</div>';
  return '<div class="page-pad"><span class="eyebrow">ON THIS PHONE / GHOST</span><div class="large-title">'+esc(mission?.title||'加密成果')+'</div>'+files.map(f=>card('<strong>'+esc(f.title)+'</strong><p>'+esc(f.description)+'</p><small>D'+esc(f.createdDay)+' · '+esc(f.createdTime)+'</small>')).join('')+(files.length?'':'<p>尚无成果文件。完成 GHOST 后会自动生成。</p>')+btn('linked-return','‹ 返回 KIRA 选择附件','button-quiet wide','data-order="'+esc(id)+'"')+'</div>';}if(isStory55(state))return files55(state,loc);const mail=store.get().content.mail.find(m=>m.id===loc.params.mailId);if(loc.route==='/attachment'&&mail)return `<div class="page-pad"><span class="eyebrow">附件</span><div class="large-title">${esc(mail.subject)}</div>${card(`<p>${esc(mail.body)}</p>`)}${btn('open-map','打开邮件地点 → 地图','button-quiet wide')}</div>`;return `<div class="page-pad"><div class="large-title">文件</div><div class="surface-list">${btn('export-backup','<span class="file-symbol">▤</span><span class="list-copy"><strong>导出本机备份</strong><small>本机数据</small></span>','list-row')}${btn('open-photos','<span class="file-symbol">▧</span><span class="list-copy"><strong>图片</strong><small>本机相册</small></span>','list-row')}</div></div>`;}
 export function handle(a,t,c){
+ if(a==='files-story-key-back')return c.router.open({appId:'kira',route:'/mail/'+t.dataset.mail});
+ if(a==='files-story-key-reveal'){const project=t.dataset.project;if(!c.store.get().content.mail.some(m=>m.project===project&&m.story55&&m.read))return;c.store.update(s=>{s.story55.projectKeysRevealed??={};s.story55.projectKeysRevealed[project]=true;});return;}
+ if(a==='files-story-key-ghost')return c.router.open({appId:'ghost',route:'/deployment',params:{project:t.dataset.project}});
 if(a==='files-commission-back'){
  const id=t.dataset.id;
  if(!commissionAttachment(c.store.get(),id))return;

@@ -41,3 +41,5 @@
 .mc-bounty-switch[aria-label="我的订单状态"] button{font-size:11px;gap:4px;min-width:0}
 .mc-bounty-switch[aria-label="我的订单状态"] button span{font-size:9px}
 .mc-detail .mc-brief{white-space:pre-line}
+
+.mc-session-warning{display:flex;flex-shrink:0;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid #b7c58066;background:#18382d;color:#e3d592;font-size:12px;line-height:1.4}.mc-session-warning button{flex-shrink:0;border:1px solid #c5d89b;padding:8px 10px;color:#dce9bf;font-size:12px}

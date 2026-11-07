@@ -12,6 +12,9 @@ export function nodeStatus(s,id){
  if(completed(s,id))return {state:'done',reason:'已完成'};
  if(final55(s))return {state:'locked',reason:'第一视角已结束'};
  if(s.day<n.day)return {state:'locked',reason:`等待D${n.day}`};
+ if(n.at&&s.day===n.day&&(s.clock||'00:00')<n.at)return {state:'locked',reason:`等待 ${n.at}`};
+ if(n.authorizedProject&&!s.story55?.projects?.[n.authorizedProject]?.authorized)return {state:'locked',reason:'等待本地專案部署'};
+ if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
  const missing=n.requires.filter(x=>!completed(s,x));
  if(missing.length)return {state:'locked',reason:'等待：'+missing.map(x=>nodeById(s,x)?.title||x).join('、')};
  return {state:'ready',reason:'可以继续'};

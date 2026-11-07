@@ -40,7 +40,7 @@ function preserveAuthoring(s){
  return {
   config:copy(story55Config(s)),conversations,
   presets:copy(s.storyPresets||{}),
-  notes:copy((s.content.notes||[]).filter(n=>!n.storyD02)),
+  notes:copy((s.content.notes||[]).filter(n=>!n.storyD02&&!n.storyContent)),
   photos:copy(s.content.photos||[]),
   moments:{posts:copy(moments.posts||[]),editedPosts:copy(moments.editedPosts||{}),deletedIds:copy(moments.deletedIds||[]),profiles:copy(moments.profiles||{}),likes:{},comments:{}},
   authoredMail:copy((s.content.mail||[]).filter(m=>m.authored===true&&!m.story55)),
@@ -196,7 +196,7 @@ function simulateCompletedD01(s){
 function simulateScene(s,node){
  const lines=story55Config(s).scenes[node.id];
  if(!Array.isArray(lines)||!lines.length)throw Error('无法重建场景台词：'+node.id);
- for(let i=0;i<lines.length;i++)advanceScene55(s,node.id,{acceptCall:true});
+ for(let i=0;i<lines.length;i++)advanceScene55(s,node.id,{acceptCall:true,disconnect:lines[s.story55.scenes[node.id]?.index||0]?.[0]==='disconnect'});
  if(!completed(s,node.id))throw Error('场景重建后没有完成：'+node.id);
  const scene=s.story55.scenes[node.id];
  scene.test=true;
@@ -287,6 +287,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
    for(const node of nodes){
     if(node.day>day||completed(s,node.id))continue;
     if(node.requires.some(id=>!completed(s,id)))continue;
+    if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
     if(nodeStatus(s,node.id).state!=='ready')continue;
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
    }
@@ -328,7 +329,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
 export function prepareStory55NodeAtDay(s,id){
  const current=story55Config(s).nodes.find(n=>n.id===id);
  if(!current)throw Error('剧情节点不存在：'+id);
- rebuildStory55AtDay(s,current.day,'20:00');
+ rebuildStory55AtDay(s,current.day,current.at&&current.at>'20:00'?current.at:'20:00');
  const visit=(depId,stack=[])=>{
   if(completed(s,depId))return;
   if(stack.includes(depId))throw Error('剧情节点存在循环：'+depId);

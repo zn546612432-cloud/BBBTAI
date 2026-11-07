@@ -6,6 +6,7 @@ import {d04Track} from '../../../story/d04/wechat.js';
 import {d05Track,tickD05Chats} from '../../../story/d05/wechat.js';
 import {d08Track} from '../../../story/d08/wechat.js';
 import {d09Track} from '../../../story/d09/wechat.js';
+import {D14_D24_TRACKS} from '../../../story/d14-d24/wechat.js';
 import {d10Track} from '../../../story/d10/wechat.js';
 
 export const AUTHORED_CHAT_TRACKS=[
@@ -15,5 +16,6 @@ export const AUTHORED_CHAT_TRACKS=[
  {name:'D05',track:d05Track,tick:tickD05Chats},
  {name:'D08',track:d08Track},
  {name:'D09',track:d09Track},
- {name:'D10',track:d10Track}
+ {name:'D10',track:d10Track},
+ ...D14_D24_TRACKS
 ];

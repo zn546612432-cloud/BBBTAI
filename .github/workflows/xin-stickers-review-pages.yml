@@ -1,4 +1,4 @@
-name: Xin dog stickers mobile review (preserve production and retained previews)
+name: D14-D24 story and dog stickers mobile review (preserve production and retained previews)
 on:
   push:
     branches: [content/xin-dog-stickers-20261107]
@@ -8,6 +8,7 @@ on:
       - 'public/apps/wechat/stickers/**'
       - 'tests/**'
       - 'scripts/xin-stickers-mobile-smoke.mjs'
+      - 'scripts/d14-d24-mobile-smoke.mjs'
       - 'docs/story-packets/**'
       - 'package.json'
       - 'package-lock.json'
@@ -66,7 +67,7 @@ jobs:
         run: |
           npm ci
           npm run story:audit
-          npm run story:check -- --strict docs/story-packets/xin-dog-stickers.json
+          npm run story:check -- --strict docs/story-packets/xin-dog-stickers.json docs/story-packets/d14-d24.json
           npm test
 
       - name: Rebuild unchanged production and normal preview
@@ -161,6 +162,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           SMOKE_URL=http://127.0.0.1:8765/BBBTAI/review/xin-stickers-20261107/ node scripts/xin-stickers-mobile-smoke.mjs
+          SMOKE_URL=http://127.0.0.1:8765/BBBTAI/review/xin-stickers-20261107/ node scripts/d14-d24-mobile-smoke.mjs
 
       - name: Upload phone screenshots and browser console evidence
         if: always()

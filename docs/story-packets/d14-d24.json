@@ -1,0 +1,5047 @@
+{
+  "schemaVersion": 2,
+  "day": 14,
+  "date": "2025-06-01",
+  "title": "D14–D24 行動籌備與兄弟生活",
+  "stage": "approved",
+  "scope": "mixed",
+  "systems": [
+    "messaging",
+    "story55",
+    "bank",
+    "assets"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "code-mail",
+      "kind": "email",
+      "surface": "kira",
+      "capability": "story.framework-key",
+      "owner": "story55",
+      "actor": "Mirage / 系統轉遞",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:16"
+      },
+      "requires": [
+        "node:intrusion"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "09:16"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別告訴我你不會用。"
+    },
+    {
+      "id": "base-key-attachment",
+      "kind": "system-notice",
+      "surface": "files",
+      "capability": "story.project-key",
+      "owner": "story55",
+      "actor": "system",
+      "trigger": {
+        "type": "user-action",
+        "ref": "fact:content-open"
+      },
+      "requires": [
+        "code-mail"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "Framework package.key"
+    },
+    {
+      "id": "base-authorization",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "capability": "story.project-authorize",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "fact:content-open"
+      },
+      "requires": [
+        "base-key-attachment"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "輸入授權密鑰，建立長期專案；此步無小遊戲。"
+    },
+    {
+      "id": "d14-morning-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:32"
+      },
+      "requires": [],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "醒了？",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-morning-0"
+      },
+      "requires": [
+        "d14-morning-0"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "早就醒了。",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-morning-1"
+      },
+      "requires": [
+        "d14-morning-1"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我十點經過你房門，裡面一點動靜都沒有。",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-morning-2"
+      },
+      "requires": [
+        "d14-morning-2"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我在床上看資料也算醒吧",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-morning-3"
+      },
+      "requires": [
+        "d14-morning-3"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "對腰不好，坐起來看",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-morning-4"
+      },
+      "requires": [
+        "d14-morning-4"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "怎麼連這個都要管，知道了",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-morning-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-morning-5"
+      },
+      "requires": [
+        "d14-morning-5"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "11:32"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "乖",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-meeting-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:05"
+      },
+      "requires": [],
+      "timing": {
+        "day": 14,
+        "at": "16:05"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "幹爹要的資料我先整理成一份。今晚到大屋再看",
+      "thread": "group"
+    },
+    {
+      "id": "d14-meeting-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-meeting-0"
+      },
+      "requires": [
+        "d14-meeting-0"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "16:05"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "幾點？",
+      "thread": "group"
+    },
+    {
+      "id": "d14-meeting-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-meeting-1"
+      },
+      "requires": [
+        "d14-meeting-1"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "16:05"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "八點吧，乾爹也會去",
+      "thread": "group"
+    },
+    {
+      "id": "d14-meeting-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-meeting-2"
+      },
+      "requires": [
+        "d14-meeting-2"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "16:05"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "收到。",
+      "thread": "group"
+    },
+    {
+      "id": "d14-meeting-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-meeting-3"
+      },
+      "requires": [
+        "d14-meeting-3"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "16:05"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我帶樣板過去",
+      "thread": "group"
+    },
+    {
+      "id": "d14-budget-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:18"
+      },
+      "requires": [],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "幹爹說的預算你別全往自己身上攬，兩百萬只是初步統計，我再想想辦法",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-budget-0"
+      },
+      "requires": [
+        "d14-budget-0"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "真正往身上攬的是你吧",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-budget-1"
+      },
+      "requires": [
+        "d14-budget-1"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我們又不是印鈔機，之前的錢早用得差不多了，只能換一個軍火商合作了，印度的便宜一點，就是不太好用，我再看看吧",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-budget-2"
+      },
+      "requires": [
+        "d14-budget-2"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我就是看你在乾爹面前信誓旦旦，我很擔心",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-budget-3"
+      },
+      "requires": [
+        "d14-budget-3"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我不那樣說老頭怎麼能答應讓我幹",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-budget-4"
+      },
+      "requires": [
+        "d14-budget-4"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別老頭老頭叫，那是爸爸，他也是擔心你，這一次偷的電子貨幣，我們都沒接觸過，小心一點是好的",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d14-budget-5"
+      },
+      "requires": [
+        "d14-budget-5"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "知道了，我先去忙",
+      "thread": "wang"
+    },
+    {
+      "id": "d14-budget-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d14-budget-6"
+      },
+      "requires": [
+        "d14-budget-6"
+      ],
+      "timing": {
+        "day": 14,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "好",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-costumes-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:22"
+      },
+      "requires": [],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "明天找個人跟我換裝走一遍永利的路線，誰來？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-0"
+      },
+      "requires": [
+        "d15-costumes-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "me",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-1"
+      },
+      "requires": [
+        "d15-costumes-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "只有我們三個",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-2"
+      },
+      "requires": [
+        "d15-costumes-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "衣服我今晚給你們送過去，你們看看好不好脫",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-3"
+      },
+      "requires": [
+        "d15-costumes-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "好",
+      "thread": "group"
+    },
+    {
+      "id": "d15-room-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "23:01"
+      },
+      "requires": [],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你下午在房裡罵誰？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-0"
+      },
+      "requires": [
+        "d15-room-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "網上一個神經病黑客。",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-1"
+      },
+      "requires": [
+        "d15-room-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "惹到你了？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-2"
+      },
+      "requires": [
+        "d15-room-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "他偷看我機房！還嫌我的電腦破！",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-3"
+      },
+      "requires": [
+        "d15-room-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "沒有竊取你的信息造成損失吧？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-4"
+      },
+      "requires": [
+        "d15-room-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "沒有，被我趕出去了。",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-5"
+      },
+      "requires": [
+        "d15-room-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那就好。你的電腦真要換就換吧，哥給你報銷",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-6"
+      },
+      "requires": [
+        "d15-room-6"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "不用，有人給我買單了",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-7"
+      },
+      "requires": [
+        "d15-room-7"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "誰呀？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-8"
+      },
+      "requires": [
+        "d15-room-8"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "那個神經病",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-9"
+      },
+      "requires": [
+        "d15-room-9"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "神經病給你買單？你們認識？還是你和你朋友開玩笑的？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-10"
+      },
+      "requires": [
+        "d15-room-10"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "⋯⋯⋯⋯⋯⋯⋯嗯⋯⋯⋯",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-12",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-11"
+      },
+      "requires": [
+        "d15-room-11"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "一言難盡",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-13",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-12"
+      },
+      "requires": [
+        "d15-room-12"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "23:01"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "有機會再跟你解釋",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-briefing-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:08"
+      },
+      "requires": [],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我把踩點過的撤離路線做好了，不過還有幾個點沒敲定，大家什麼時候有空來看一下，",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-0"
+      },
+      "requires": [
+        "d16-briefing-0"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那就七點半，大屋，我去接乾爹",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-1"
+      },
+      "requires": [
+        "d16-briefing-1"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "好。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-2"
+      },
+      "requires": [
+        "d16-briefing-2"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我晚十分鐘來",
+      "thread": "group"
+    },
+    {
+      "id": "d16-hardware-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "14:19"
+      },
+      "requires": [],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "上次你說要更新機房，打算怎麼弄？",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-0"
+      },
+      "requires": [
+        "d16-hardware-0"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "看中幾個配置，還在比。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-1"
+      },
+      "requires": [
+        "d16-hardware-1"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你別光挑最貴的。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-2"
+      },
+      "requires": [
+        "d16-hardware-2"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "反正有人買單",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-3"
+      },
+      "requires": [
+        "d16-hardware-3"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那也別跟上次一樣買了四個鍵盤丟在家裡",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-4"
+      },
+      "requires": [
+        "d16-hardware-4"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "這你不懂，鍵盤是黑客的飯碗，很講究手感的，這幾個手感都不一樣",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-5"
+      },
+      "requires": [
+        "d16-hardware-5"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "說不過你。你高興就好。",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-information-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:27"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我問過銀行那邊了，有幾個情況要跟你當面核對。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-information-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-information-0"
+      },
+      "requires": [
+        "d17-information-0"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "行，具體資料別發在這裡，晚上碰面再說。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-information-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-information-1"
+      },
+      "requires": [
+        "d17-information-1"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "又到了出賣色相的時候了",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-information-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-information-2"
+      },
+      "requires": [
+        "d17-information-2"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "這幾天少吃點，用你的八塊腹肌迷死她吧",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-information-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-information-3"
+      },
+      "requires": [
+        "d17-information-3"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "大部分女人盯著我的臉就已經迷死了",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-information-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-information-4"
+      },
+      "requires": [
+        "d17-information-4"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你真是被小辛傳染了",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d17-rain-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:18"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "外面突然好大雨，差點淋成狗",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-0"
+      },
+      "requires": [
+        "d17-rain-0"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "看了天氣預報，估計是不會停了，先休息一天吧",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-1"
+      },
+      "requires": [
+        "d17-rain-1"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "不早說，我已經到附近了。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-2"
+      },
+      "requires": [
+        "d17-rain-2"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "進來，我們好久沒燒烤了，今天聚一下",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-3"
+      },
+      "requires": [
+        "d17-rain-3"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我鞋全濕了！！！命苦啊！！剛買的巴黎世家！",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-4"
+      },
+      "requires": [
+        "d17-rain-4"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你訓練為什麼要穿巴黎世家",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-5"
+      },
+      "requires": [
+        "d17-rain-5"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別管",
+      "thread": "group"
+    },
+    {
+      "id": "d17-laundry-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "18:47"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "下雨了，幫你把衣服收了",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-laundry-0"
+      },
+      "requires": [
+        "d17-laundry-0"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "親親親親",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-laundry-1"
+      },
+      "requires": [
+        "d17-laundry-1"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "下次自己收",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-laundry-2"
+      },
+      "requires": [
+        "d17-laundry-2"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "嗯嗯嗯嗯！下雨了你們還訓練嗎？",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-laundry-3"
+      },
+      "requires": [
+        "d17-laundry-3"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你下樓吧，等一下BBQ，今天不練了",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-laundry-4"
+      },
+      "requires": [
+        "d17-laundry-4"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "耶！不過你能不能先給我拿瓶水，我在馬桶上無能為力",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-laundry-5"
+      },
+      "requires": [
+        "d17-laundry-5"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你不能出來自己拿？",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-laundry-6"
+      },
+      "requires": [
+        "d17-laundry-6"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我腿麻了",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-laundry-7"
+      },
+      "requires": [
+        "d17-laundry-7"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我看你你屁股也癢了",
+      "thread": "wang"
+    },
+    {
+      "id": "d17-laundry-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-laundry-8"
+      },
+      "requires": [
+        "d17-laundry-8"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "18:47"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "等著",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-training-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:42"
+      },
+      "requires": [],
+      "timing": {
+        "day": 18,
+        "at": "09:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "下午照常訓練。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-training-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-training-0"
+      },
+      "requires": [
+        "d18-training-0"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "09:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "護具我帶。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-training-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-training-1"
+      },
+      "requires": [
+        "d18-training-1"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "09:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我不參加後半段，還有東西沒做完。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-training-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-training-2"
+      },
+      "requires": [
+        "d18-training-2"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "09:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "知道，按各自安排。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:03"
+      },
+      "requires": [],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我們什麼時候去實戰演習一下？",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-0"
+      },
+      "requires": [
+        "d18-money-0"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "乾爹說了，人多眼雜，能不廢臉就不廢臉",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-1"
+      },
+      "requires": [
+        "d18-money-1"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "可我真的等不及了",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-2"
+      },
+      "requires": [
+        "d18-money-2"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我要錢我要錢",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-3"
+      },
+      "requires": [
+        "d18-money-3"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "錢錢",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-4"
+      },
+      "requires": [
+        "d18-money-4"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "錢錢錢",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-5"
+      },
+      "requires": [
+        "d18-money-5"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "能不能問乾爹什麼時候行動？",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-6"
+      },
+      "requires": [
+        "d18-money-6"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你問煩他了他又給你兩嘴巴子",
+      "thread": "group"
+    },
+    {
+      "id": "d18-money-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-money-7"
+      },
+      "requires": [
+        "d18-money-7"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "21:03"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "已畏懼",
+      "thread": "group"
+    },
+    {
+      "id": "d18-shoulder-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "23:19"
+      },
+      "requires": [],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "今天早上都沒見到你",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-0"
+      },
+      "requires": [
+        "d18-shoulder-0"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我不是在弄程序嘛。",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-1"
+      },
+      "requires": [
+        "d18-shoulder-1"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "辛苦了。肩膀還疼不疼？",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-2"
+      },
+      "requires": [
+        "d18-shoulder-2"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "一點點吧",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-3"
+      },
+      "requires": [
+        "d18-shoulder-3"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "少趴桌上。",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-4"
+      },
+      "requires": [
+        "d18-shoulder-4"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "那你上來給我按一下。",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-5"
+      },
+      "requires": [
+        "d18-shoulder-5"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你先去洗澡，我拿點精油",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-6"
+      },
+      "requires": [
+        "d18-shoulder-6"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "耶！",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-8",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-7"
+      },
+      "requires": [
+        "d18-shoulder-7"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "今晚和我睡好不好",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-8"
+      },
+      "requires": [
+        "d18-shoulder-8"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "多大的人了還和哥哥睡",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-10",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-9"
+      },
+      "requires": [
+        "d18-shoulder-9"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "三歲",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-10"
+      },
+      "requires": [
+        "d18-shoulder-10"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我等一下還要去乾爹那裡，他年紀大了，需要照顧",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-12",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-11"
+      },
+      "requires": [
+        "d18-shoulder-11"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我服了，他看起來那裡需要被照顧了",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-shoulder-12"
+      },
+      "requires": [
+        "d18-shoulder-12"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "乾爹照顧我們那麼多年了，我們照顧他也是應該的，他是爸爸",
+      "thread": "wang"
+    },
+    {
+      "id": "d18-shoulder-14",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-shoulder-13"
+      },
+      "requires": [
+        "d18-shoulder-13"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "23:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "知道了，一個人睡我不會傷心的",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "17:33"
+      },
+      "requires": [],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "晚點要跟干爹碰面。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-dessert-0"
+      },
+      "requires": [
+        "d19-dessert-0"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "又要開會？",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-dessert-1"
+      },
+      "requires": [
+        "d19-dessert-1"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "不是所有人，你不用來。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-dessert-2"
+      },
+      "requires": [
+        "d19-dessert-2"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你們是不是又瞞著我。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-dessert-3"
+      },
+      "requires": [
+        "d19-dessert-3"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "沒有。等確認了我跟你說。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-dessert-4"
+      },
+      "requires": [
+        "d19-dessert-4"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "哼。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-dessert-5"
+      },
+      "requires": [
+        "d19-dessert-5"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別哼。我給你帶雙皮奶。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-dessert-6"
+      },
+      "requires": [
+        "d19-dessert-6"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "要兩份。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-dessert-7"
+      },
+      "requires": [
+        "d19-dessert-7"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "一份。",
+      "thread": "wang"
+    },
+    {
+      "id": "d19-dessert-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-dessert-8"
+      },
+      "requires": [
+        "d19-dessert-8"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "17:33"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "一份也行，哥最好。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-early-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "day-time",
+        "ref": "08:34"
+      },
+      "requires": [],
+      "timing": {
+        "day": 20,
+        "at": "08:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "今天練習提前半小時。",
+      "thread": "group"
+    },
+    {
+      "id": "d20-early-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-early-0"
+      },
+      "requires": [
+        "d20-early-0"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "08:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "收到。",
+      "thread": "group"
+    },
+    {
+      "id": "d20-early-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-early-1"
+      },
+      "requires": [
+        "d20-early-1"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "08:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我才睜眼⋯⋯",
+      "thread": "group"
+    },
+    {
+      "id": "d20-soup-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:42"
+      },
+      "requires": [],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "熙蒙。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-0"
+      },
+      "requires": [
+        "d20-soup-0"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "幹嘛呀哥哥。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-1"
+      },
+      "requires": [
+        "d20-soup-1"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你今天是不是又沒吃晚飯？",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-2"
+      },
+      "requires": [
+        "d20-soup-2"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "吃了。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-3"
+      },
+      "requires": [
+        "d20-soup-3"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "吃什麼？",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-4"
+      },
+      "requires": [
+        "d20-soup-4"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "……",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-5"
+      },
+      "requires": [
+        "d20-soup-5"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我在樓下，給你留了湯。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-6"
+      },
+      "requires": [
+        "d20-soup-6"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "哥哥幫我拿上來好不好。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-7"
+      },
+      "requires": [
+        "d20-soup-7"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你的房間離樓梯只有十步。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-8"
+      },
+      "requires": [
+        "d20-soup-8"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "那我走九步，你走一步。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-9"
+      },
+      "requires": [
+        "d20-soup-9"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你還挺會算。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-10"
+      },
+      "requires": [
+        "d20-soup-10"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "求你啦。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-11"
+      },
+      "requires": [
+        "d20-soup-11"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "開門。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-13",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d20-soup-12"
+      },
+      "requires": [
+        "d20-soup-12"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "嘿嘿，愛你。",
+      "thread": "wang"
+    },
+    {
+      "id": "d20-soup-14",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-soup-13"
+      },
+      "requires": [
+        "d20-soup-13"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "22:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "湯先喝了",
+      "thread": "wang"
+    },
+    {
+      "id": "d21-clothes-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "day-time",
+        "ref": "13:07"
+      },
+      "requires": [],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我把衣服第二版放桌上了，誰看完記得幫我收起來",
+      "thread": "group"
+    },
+    {
+      "id": "d21-clothes-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d21-clothes-0"
+      },
+      "requires": [
+        "d21-clothes-0"
+      ],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我晚點看。",
+      "thread": "group"
+    },
+    {
+      "id": "d21-clothes-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d21-clothes-1"
+      },
+      "requires": [
+        "d21-clothes-1"
+      ],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我能提意見嗎？",
+      "thread": "group"
+    },
+    {
+      "id": "d21-clothes-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d21-clothes-2"
+      },
+      "requires": [
+        "d21-clothes-2"
+      ],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你能，但不一定採納。",
+      "thread": "group"
+    },
+    {
+      "id": "d21-clothes-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d21-clothes-3"
+      },
+      "requires": [
+        "d21-clothes-3"
+      ],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那我先提十條。",
+      "thread": "group"
+    },
+    {
+      "id": "d21-clothes-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d21-clothes-4"
+      },
+      "requires": [
+        "d21-clothes-4"
+      ],
+      "timing": {
+        "day": 21,
+        "at": "13:07"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "……",
+      "thread": "group"
+    },
+    {
+      "id": "d22-headache-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:38"
+      },
+      "requires": [],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "今天你怎麼這麼安靜？",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d22-headache-0"
+      },
+      "requires": [
+        "d22-headache-0"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "頭疼。",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d22-headache-1"
+      },
+      "requires": [
+        "d22-headache-1"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "睡一會兒，別硬撐。",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d22-headache-2"
+      },
+      "requires": [
+        "d22-headache-2"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你過來陪我一下嘛，我都不要你陪我睡了",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d22-headache-3"
+      },
+      "requires": [
+        "d22-headache-3"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我在樓下收東西。",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d22-headache-4"
+      },
+      "requires": [
+        "d22-headache-4"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "五分鐘也行，哥哥哥哥哥哥",
+      "thread": "wang"
+    },
+    {
+      "id": "d22-headache-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d22-headache-5"
+      },
+      "requires": [
+        "d22-headache-5"
+      ],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我等一下上來",
+      "thread": "wang"
+    },
+    {
+      "id": "d23-heat-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:41"
+      },
+      "requires": [],
+      "timing": {
+        "day": 23,
+        "at": "11:41"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "外面熱得要命，三十多度",
+      "thread": "group"
+    },
+    {
+      "id": "d23-heat-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d23-heat-0"
+      },
+      "requires": [
+        "d23-heat-0"
+      ],
+      "timing": {
+        "day": 23,
+        "at": "11:41"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "確實，改室內吧",
+      "thread": "group"
+    },
+    {
+      "id": "d23-heat-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d23-heat-1"
+      },
+      "requires": [
+        "d23-heat-1"
+      ],
+      "timing": {
+        "day": 23,
+        "at": "11:41"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "終於！",
+      "thread": "group"
+    },
+    {
+      "id": "d24-wind-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "08:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 24,
+        "at": "08:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "風球掛了，今天外出的安排先看情況。",
+      "thread": "group"
+    },
+    {
+      "id": "d24-wind-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-wind-0"
+      },
+      "requires": [
+        "d24-wind-0"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "08:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "收到。",
+      "thread": "group"
+    },
+    {
+      "id": "d24-wind-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-wind-1"
+      },
+      "requires": [
+        "d24-wind-1"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "08:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我下午回來",
+      "thread": "group"
+    },
+    {
+      "id": "d24-wind-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-wind-2"
+      },
+      "requires": [
+        "d24-wind-2"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "08:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "👌",
+      "thread": "group"
+    },
+    {
+      "id": "d24-documents-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "14:38"
+      },
+      "requires": [],
+      "timing": {
+        "day": 24,
+        "at": "14:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "上次你問的那份資料，我補齊了。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d24-documents-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-documents-0"
+      },
+      "requires": [
+        "d24-documents-0"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "14:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "有沒有哪裡前後對不上？",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d24-documents-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-documents-1"
+      },
+      "requires": [
+        "d24-documents-1"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "14:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "有兩處。我用筆標出來了，晚上說。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d24-documents-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-documents-2"
+      },
+      "requires": [
+        "d24-documents-2"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "14:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "行，別直接給干爹。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d24-documents-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-documents-3"
+      },
+      "requires": [
+        "d24-documents-3"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "14:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我知道。",
+      "thread": "hufeng"
+    },
+    {
+      "id": "d24-goodnight-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "day-time",
+        "ref": "23:34"
+      },
+      "requires": [],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "還不睡？",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-goodnight-0"
+      },
+      "requires": [
+        "d24-goodnight-0"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你不也是。",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-goodnight-1"
+      },
+      "requires": [
+        "d24-goodnight-1"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我明天早起。",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-goodnight-2"
+      },
+      "requires": [
+        "d24-goodnight-2"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "那你快睡，我等你說晚安。",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-goodnight-3"
+      },
+      "requires": [
+        "d24-goodnight-3"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "晚安。",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-goodnight-4"
+      },
+      "requires": [
+        "d24-goodnight-4"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "哥哥晚安～",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d24-goodnight-5"
+      },
+      "requires": [
+        "d24-goodnight-5"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別又熬到天亮。",
+      "thread": "wang"
+    },
+    {
+      "id": "d24-goodnight-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d24-goodnight-6"
+      },
+      "requires": [
+        "d24-goodnight-6"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "23:34"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "知道啦。",
+      "thread": "wang"
+    },
+    {
+      "id": "s55-loan-v2-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:36"
+      },
+      "requires": [
+        "fact:base-authorized"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "部署得怎麼樣，nya？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-0"
+      },
+      "requires": [
+        "s55-loan-v2-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "能跑，就是慢得要命。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-1"
+      },
+      "requires": [
+        "s55-loan-v2-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你的問題，還是我的問題？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-2"
+      },
+      "requires": [
+        "s55-loan-v2-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "配置問題",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-3"
+      },
+      "requires": [
+        "s55-loan-v2-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "配置？你幹黑客這麼多年，連台像樣的工作站都沒攢出來？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-5",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-4"
+      },
+      "requires": [
+        "s55-loan-v2-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "關你什麼事？能跑就行。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-5"
+      },
+      "requires": [
+        "s55-loan-v2-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我倒想看看你拿什麼跑。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-7",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "camera",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-6"
+      },
+      "requires": [
+        "s55-loan-v2-6"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "相機權限異常／遠端畫面連線",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-8",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-7"
+      },
+      "requires": [
+        "s55-loan-v2-7"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "……",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-9",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-8"
+      },
+      "requires": [
+        "s55-loan-v2-8"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "這是機房？我還以為你把伺服器塞進儲物間了。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-10",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-9"
+      },
+      "requires": [
+        "s55-loan-v2-9"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "？？？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-11",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-10"
+      },
+      "requires": [
+        "s55-loan-v2-10"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你他媽誰准你開我攝像頭的？！",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-12",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "disconnect",
+      "trigger": {
+        "type": "user-action",
+        "ref": "s55-disconnect-session"
+      },
+      "requires": [
+        "s55-loan-v2-11"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "切斷連線",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-13",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-12"
+      },
+      "requires": [
+        "s55-loan-v2-12"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你再碰我設備試試。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-14",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-13"
+      },
+      "requires": [
+        "s55-loan-v2-13"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "呵，反應還挺快。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-15",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-14"
+      },
+      "requires": [
+        "s55-loan-v2-14"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "少在這兒陰陽怪氣，有本事你自己來做！",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-16",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-15"
+      },
+      "requires": [
+        "s55-loan-v2-15"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "行。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-17",
+      "kind": "reward",
+      "surface": "bank",
+      "capability": "story.scene-loan",
+      "owner": "bank",
+      "actor": "credit",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-16"
+      },
+      "requires": [
+        "s55-loan-v2-16"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "太平洋銀行：入帳 1,000,000",
+      "thread": "s55-ouroboros",
+      "transactionId": "s55-loan",
+      "creditAmount": 1000000,
+      "liabilityAmount": 1000000
+    },
+    {
+      "id": "s55-loan-v2-18",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-17"
+      },
+      "requires": [
+        "s55-loan-v2-17"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "？？？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-19",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-18"
+      },
+      "requires": [
+        "s55-loan-v2-18"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你又幹什麼了？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-20",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-19"
+      },
+      "requires": [
+        "s55-loan-v2-19"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "換設備。算我借你的。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-21",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-20"
+      },
+      "requires": [
+        "s55-loan-v2-20"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "誰跟你借錢了？我答應了嗎？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-22",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-21"
+      },
+      "requires": [
+        "s55-loan-v2-21"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "不想要就還。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-23",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-22"
+      },
+      "requires": [
+        "s55-loan-v2-22"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你以為我不敢？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-24",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-23"
+      },
+      "requires": [
+        "s55-loan-v2-23"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "沒說你不敢。等你那台古董跑完程式，隨時。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-25",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-24"
+      },
+      "requires": [
+        "s55-loan-v2-24"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "……你真有病。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-lead-v2-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:lead-opened"
+      },
+      "requires": [
+        "fact:lead-opened",
+        "fact:flow-unlocked"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "問你個人。Dr Ouroboros，你聽過嗎？",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "hacker",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-lead-v2-0"
+      },
+      "requires": [
+        "s55-lead-v2-0"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "這不是上次那個錢包懸賞的發單人嗎？聽說他是mirage的創辦人之一，你贏了他的錢包，他應該有跟你聯繫才對呀？",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-lead-v2-1"
+      },
+      "requires": [
+        "s55-lead-v2-1"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "是有聯繫過，所以才好奇，想知道他什麼來頭。",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "hacker",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-lead-v2-2"
+      },
+      "requires": [
+        "s55-lead-v2-2"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "這種人哪有什麼來頭給你查。圈子裡都說他年紀不大，技術很兇 名聲很響，命很值錢，有黑手黨在懸賞他的人頭，價值二十億，",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-4",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-lead-v2-3"
+      },
+      "requires": [
+        "s55-lead-v2-3"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "就這些？",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "hacker",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-lead-v2-4"
+      },
+      "requires": [
+        "s55-lead-v2-4"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "聽說他住在英國和葡萄牙，其他的真不知道了",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "s55-lead-v2-6",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-lead-v2-5"
+      },
+      "requires": [
+        "s55-lead-v2-5"
+      ],
+      "timing": {
+        "day": 24,
+        "at": "21:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "明白了。謝了。",
+      "thread": "mc-flow-d03"
+    },
+    {
+      "id": "xm-note-d16-meeting",
+      "kind": "system-notice",
+      "surface": "notes",
+      "capability": "story.d14-d24-notes",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:44"
+      },
+      "requires": [],
+      "timing": {
+        "day": 16,
+        "at": "21:44"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "暫定會議備忘\n胡楓：總體安排／文件統合\n熙旺：人員與訓練／與干爹接洽\n仔仔：服裝、外觀及出入場合需要的物件\n阿威：體能、裝備保養與訓練支援\n小辛：外圍人情線索與機動支援\n我：技術系統、資料整理、工具驗證"
+    },
+    {
+      "id": "xm-note-d22-framework",
+      "kind": "system-notice",
+      "surface": "notes",
+      "capability": "story.d14-d24-notes",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:38"
+      },
+      "requires": [],
+      "timing": {
+        "day": 22,
+        "at": "21:38"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "待辦\n檢查 Ghost 既有批次進度"
+    },
+    {
+      "id": "d17-anonymous-search",
+      "kind": "link",
+      "surface": "browser",
+      "capability": "story.anonymous-page",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "browser-search:Mirage"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "23:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "Mirage / Ouroboros：零散舊論壇討論，不揭露真名或IP。"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "d14-d24-trigger",
+      "type": "trigger",
+      "verify": "逐日定時；D14郵件依D13完成，D15須已部署且到15:36，D24僅現有Flow。"
+    },
+    {
+      "id": "d14-d24-negative",
+      "type": "negative",
+      "verify": "未讀附件不授權；部署不進關；未按Send不代發；未切斷連線不得繼續；沒有Flow不建聯絡人。"
+    },
+    {
+      "id": "d14-d24-idempotency",
+      "type": "idempotency",
+      "verify": "多次tick、刷新、重進不重發；s55-loan唯一銀行與負債記帳。"
+    },
+    {
+      "id": "d14-d24-save-restore",
+      "type": "save-restore",
+      "verify": "舊預設精確比對後遷移；保留玩家實發、ID、日期、未讀、歷史和已完成批次。"
+    },
+    {
+      "id": "d14-d24-cross-app",
+      "type": "cross-app",
+      "verify": "Kira單附件→Files取密鑰→Ghost手動部署→原有五步；Mirage借款對應銀行。"
+    },
+    {
+      "id": "d14-d24-late-entry",
+      "type": "late-entry",
+      "verify": "生活聊天可靜默補NPC前綴，不補玩家；固定借款與主線保持等待。"
+    },
+    {
+      "id": "d14-d24-assets",
+      "type": "assets",
+      "verify": "無新增真實圖片與相機權限；小辛表情沿用162張內置資源。"
+    },
+    {
+      "id": "d14-d24-date-clock",
+      "type": "date-clock",
+      "verify": "D14=2025-06-01，D24=2025-06-11；不改統一時鐘、耗電和充電。"
+    },
+    {
+      "id": "d14-d24-mobile",
+      "type": "mobile",
+      "verify": "390px真實點擊附件、輸入密鑰、完成五步、Send、切斷連線及Flow提問。"
+    },
+    {
+      "id": "d14-d24-finance",
+      "type": "finance",
+      "verify": "借款只在credit事件發生一次，不自動退回、不建立第二餘額。"
+    },
+    {
+      "id": "d14-d24-dialogue",
+      "type": "dialogue",
+      "verify": "所有熙蒙句子，包括未標點擊發送的行，也必須玩家Send；群聊無傅隆生與熙泰。"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "scenes": {
+    "loan": [
+      [
+        "ouroboros",
+        "你迟迟没有拿出能运行的版本，我想知道，究竟是设备拖住了你，还是你还不打算告诉我问题出在哪里。"
+      ],
+      [
+        "me",
+        "你的代码要跑起来，得花不少钱。"
+      ],
+      [
+        "ouroboros",
+        "自己搭的机房吗？第一眼我还以为是货车车厢呢。陈熙蒙，你怎么住在这种破地方？"
+      ],
+      [
+        "me",
+        "我们只是合作关系，你不能随随便便侵犯我的隐私。"
+      ],
+      [
+        "ouroboros",
+        "我们不是合作关系，我是你的老板。"
+      ],
+      [
+        "ouroboros",
+        "我会借给你一百万更新设备，我不希望自己挑中的人，最后被一间连程序都跑不动的机房拖垮。"
+      ]
+    ],
+    "lead": [
+      [
+        "hacker",
+        "听说是个很年轻的家伙，IP在葡萄牙和英国出现过，其他的我也不清楚。"
+      ],
+      [
+        "me",
+        "知道了。我自己查。"
+      ]
+    ]
+  },
+  "nodes": [
+    {
+      "id": "code",
+      "day": 14,
+      "title": "基础框架邮件",
+      "kind": "mail",
+      "requires": [
+        "intrusion"
+      ],
+      "mail": "code-mail",
+      "gateDay": 14
+    },
+    {
+      "id": "loan",
+      "day": 15,
+      "title": "机房与一百万借款",
+      "kind": "scene",
+      "requires": [
+        "code"
+      ],
+      "credit": 1000000,
+      "liability": true
+    },
+    {
+      "id": "rumours",
+      "day": 17,
+      "title": "检索MIRAGE",
+      "kind": "page",
+      "requires": [
+        "code"
+      ],
+      "page": "mirage"
+    },
+    {
+      "id": "lead",
+      "day": 24,
+      "title": "熟悉的黑客",
+      "kind": "scene",
+      "requires": [
+        "rumours"
+      ],
+      "gateDay": 24
+    }
+  ],
+  "mails": [
+    {
+      "id": "code-mail",
+      "node": "code",
+      "subject": "本地部署授权 / LOCAL FRAMEWORK",
+      "body": "基础框架已交付。授权码：{{projectKey}}。打开附件，将项目加入GHOST；程序需要本地设备与逐批验证。",
+      "project": "base"
+    }
+  ],
+  "pages": [
+    {
+      "id": "mirage",
+      "title": "MIRAGE / 失效的入口",
+      "body": "大部分旧入口已无法访问。一份论坛缓存提到MIRAGE是匿名交易网络，创办者的身份没有公开。",
+      "node": "rumours"
+    }
+  ]
+}
