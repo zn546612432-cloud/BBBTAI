@@ -5,12 +5,13 @@ on:
     paths:
       - 'src/**'
       - 'scripts/d13-wallet-call-mobile-smoke.mjs'
+      - 'tests/**'
       - '.github/workflows/d13-wallet-call-check.yml'
 permissions:
   contents: read
 jobs:
   d13-mobile:
-    if: github.head_ref == 'feature/d13-wallet-intrusion-call'
+    if: github.head_ref == 'feature/d13-wallet-intrusion-call' || github.head_ref == 'fix/d13-native-mail-wallet-call-20261108'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

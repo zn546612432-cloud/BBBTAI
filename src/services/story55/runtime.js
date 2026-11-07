@@ -85,6 +85,11 @@ export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
  if(line[0]==='camera')s.story55.sceneCamera={node:id,active:true,disconnected:false};
  if(line[0]==='disconnect')s.story55.sceneCamera={node:id,active:false,disconnected:true};
  if(line[0]==='credit')creditScene55(s,n);
+ // D13 stage directions describe internal device activity; never send them as chat bubbles.
+ if(id==='intrusion'&&line[0]==='system'&&(r.index===15||r.index===19)){
+  s.story55.d13??={phase:'chat'};
+  s.story55.d13.traceStatus=r.index===15?'running':'failed';
+ }
  if(line[0]==='call'&&(s.phoneCall?.node!==id||s.phoneCall.state!=='connected'))throw Error('請接聽系統來電');
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
@@ -106,6 +111,7 @@ export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
 }
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
  const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
+ if(id==='intrusion'&&line[0]==='system'&&(index===15||index===19))return;
  if(line[0]==='system'&&index>0&&n.systemMessages){
   appendAuthoredPhoneMessage(s,{channel:n.channel,conversationId:n.conversationId,messageId:`${n.messagePrefix}-${index}`,from:'system',text:line[1],kind:'system',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   return;

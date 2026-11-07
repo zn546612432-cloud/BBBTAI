@@ -43,6 +43,19 @@ export function tickTelephony(ctx,now=Date.now()){
   if(now>=d.greenStartedAt+3000){ctx.store.update(enterD13Chat);ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});}
   return;
  }
+ // Hanging up really ends the call. D13 redials using a new call ID
+ // without resetting the dialogue index or duplicating delivered text.
+ const previous=s.phoneCall;
+ if(previous?.source==='story55'&&previous.node==='intrusion'&&previous.state==='ended'&&
+    ['user-hangup','user-declined'].includes(previous.reason)&&
+    s.story55?.activeScene==='intrusion'&&!completed(s,'intrusion')){
+  if(now>=previous.endedAt+1500){
+   const node=nodeById(s,'intrusion'),retry=(Number(s.story55?.d13?.callRetries)||0)+1;
+   if(node?.call&&receiveCall(ctx.store,{...node.call,id:(node.call.id||'s55-d13-call-v2')+'-retry-'+retry,source:'story55',node:'intrusion'},now))
+    ctx.store.update(state=>{state.story55.d13.callRetries=retry;});
+  }
+  return;
+ }
  const n=sceneCall(s);
  if(n&&!activePhoneCall(s)){
   receiveCall(ctx.store,{id:'story-call-'+n.id,source:'story55',node:n.id,...n.call},now);return;
@@ -124,10 +137,25 @@ export function mountTelephony(getContext){
   const ctx=getContext(),call=activePhoneCall(ctx.store.get());if(!call)return;
   const action=button.dataset.action;
   if(action==='tel-answer'){primeTelephony(ctx);answerCall(ctx.store,call.id);}
-  if(action==='tel-resume'){primeTelephony(ctx);ctx.store.update(s=>s.phoneCall.resumeRequired=false);}
-  if(action==='tel-decline')declineCall(ctx.store,call.id);
-  if(action==='tel-end')endCall(ctx.store,call.id);
-  if(action==='tel-return'&&call.node)ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
+  if(action==='tel-resume'){primeTelephony(ctx);ctx.store.update(s=>{s.phoneCall.resumeRequired=false;s.phoneCall.showControls=false;});}
+  if(action==='tel-decline'){
+   if(call.forced)endCall(ctx.store,call.id,Date.now(),{remote:true,reason:'user-declined'});
+   else declineCall(ctx.store,call.id);
+  }
+  if(action==='tel-end'){
+   if(call.forced)endCall(ctx.store,call.id,Date.now(),{remote:true,reason:'user-hangup'});
+   else endCall(ctx.store,call.id);
+  }
+  if(action==='tel-return')ctx.store.update(s=>{s.phoneCall.showControls=true;});
+  if(action==='tel-chat'){
+   if(call.resumeRequired)primeTelephony(ctx);
+   ctx.store.update(s=>{s.phoneCall.showControls=false;s.phoneCall.resumeRequired=false;});
+   const nav=ctx.store.get().nav.current,node=call.node&&nodeById(ctx.store.get(),call.node);
+   if(node){
+    const target={appId:node.channel||'mirage',route:'/chat/'+(node.conversationId||'s55-ouroboros'),params:{}};
+    if(nav.appId!==target.appId||nav.route!==target.route)ctx.router.open(target);
+   }
+  }
  };
  document.addEventListener('click',click,true);
  const submit=e=>primeAuthoredPhoneSend(getContext(),e.target);
@@ -139,8 +167,16 @@ export function mountTelephony(getContext){
    const call=activePhoneCall(ctx.store.get());
    if(!call&&a.playing){a.audio?.pause();a.playing.cancel();}
    if(call?.state==='connected'){
-    const n=document.querySelector('.tel-call-island span');
-    if(n){const sec=Math.max(0,Math.floor((Date.now()-call.answeredAt)/1000));n.textContent=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;}
+    const n=document.querySelector('.tel-call-island span:last-child');
+    const duration=Math.max(0,Math.floor((Date.now()-call.answeredAt)/1000));
+    const label=`${String(Math.floor(duration/60)).padStart(2,'0')}:${String(duration%60).padStart(2,'0')}`;
+    if(n)n.textContent=label;
+    const fullscreenTimer=document.querySelector('.tel-call-identity p');
+    if(fullscreenTimer)fullscreenTimer.textContent=label;
+   }
+   if(call?.state==='ringing'&&call.forced){
+    const countdown=document.querySelector('.tel-call-auto');
+    if(countdown)countdown.textContent=Math.max(0,Math.ceil((Number(call.presentedAt||Date.now())+call.autoAnswerMs-Date.now())/1000))+' 秒後自動接通';
    }
   }catch(error){ctx.toast?.(error.message);}
  },250);

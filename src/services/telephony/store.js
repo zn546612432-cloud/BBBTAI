@@ -12,7 +12,7 @@ export function receiveCall(store,{id,source='phone',direction='incoming',number
 export function answerCall(store,id,now=Date.now(),{remote=false}={}){
  const c=store.get().phoneCall;
  if(c?.id!==id||c.state!=='ringing'||!canPresentPhoneCall(store.get()))return false;
- store.update(s=>{Object.assign(s.phoneCall,{state:'connected',answeredAt:now,remoteOverride:remote});});return true;
+ store.update(s=>{Object.assign(s.phoneCall,{state:'connected',answeredAt:now,remoteOverride:remote,showControls:!c.node});});return true;
 }
 export function endCall(store,id,now=Date.now(),{remote=false,reason='ended'}={}){
  const c=activePhoneCall(store.get());

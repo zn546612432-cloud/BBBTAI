@@ -46,11 +46,11 @@ test('green screen lasts three seconds and inserts one non-notifying, non-editab
  assert.equal(store.get().notifications.some(n=>n.messageId==='s55-intrusion-divider'),false);
  assert.doesNotMatch(messageCard(chat.messages.find(m=>m.kind==='divider'),chat,store.get(),0),/data-message-field|delete-message|data-drag/);
 });
-test('forced unknown call has no decline, answers at eight seconds and logs once',()=>{
+test('forced unknown call displays both iOS actions, auto-answers and logs once',()=>{
  const {store,ctx}=fixture(),call=ringing(store,ctx),html=telephonyFullscreen(store.get());
- assert.match(html,/未知號碼/);assert.match(html,/tel-answer/);assert.doesNotMatch(html,/tel-decline|img|陳熙泰/);assert.equal(declineCall(store,call.id),false);
+ assert.match(html,/未知號碼/);assert.match(html,/tel-answer/);assert.match(html,/tel-decline/);assert.doesNotMatch(html,/REMOTE OVERRIDE|<img|陳熙泰/);assert.equal(declineCall(store,call.id),false);
  tickTelephony(ctx,17999);assert.equal(store.get().phoneCall.state,'ringing');tickTelephony(ctx,18000);assert.equal(store.get().phoneCall.state,'connected');
- assert.match(telephonyIsland(store.get()),/REMOTE OVERRIDE/);assert.equal(endCall(store,call.id),false);
+ assert.doesNotMatch(telephonyIsland(store.get()),/REMOTE OVERRIDE/);assert.equal(endCall(store,call.id),false);
  endCall(store,call.id,22000,{remote:true});assert.equal(endCall(store,call.id,23000,{remote:true}),false);
  const logs=store.get().content.phone.calls.filter(c=>c.id===call.id);assert.equal(logs.length,1);assert.equal(logs[0].duration,4);
 });
@@ -93,7 +93,7 @@ test('missing voice uses text and completes only after native Send, unlocking D1
 test('refresh skips green animation and connected calls require a resume gesture',()=>{
  const {store,ctx}=fixture(),previous=globalThis.document;globalThis.document={addEventListener(){},removeEventListener(){},querySelector(){return null;}};
  try{transfer(store);const dispose=mountTelephony(()=>ctx);assert.equal(store.get().story55.d13.phase,'chat');dispose();
- const call=reachCall(store,ctx);answerCall(store,call.id,10001);const stop=mountTelephony(()=>ctx);assert.equal(store.get().phoneCall.resumeRequired,true);assert.match(telephonyFullscreen(store.get()),/點擊繼續通話/);stop();
+ const call=reachCall(store,ctx);answerCall(store,call.id,10001);const stop=mountTelephony(()=>ctx);assert.equal(store.get().phoneCall.resumeRequired,true);assert.match(telephonyFullscreen(store.get()),/繼續通話/);stop();
  }finally{globalThis.document=previous;}
 });
 test('migration retains player messages, clears old call locks and never replays completed D13',()=>{

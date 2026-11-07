@@ -59,3 +59,14 @@
 .app-files .files-d01-open-app small{color:#8d9aa5;font-size:11px}
 .app-files .files-d01-chevron{color:#9aa8b4;font-size:24px}
 @media(max-width:375px){.app-files .files-d01-document{padding-top:38px}.app-kira .kira-d01-mail .kira-detail-head{padding-top:23px}}
+
+/* D13 is an ordinary KIRA message. The existing detail toolbar owns navigation. */
+.app-kira .kira-d13-mail{min-height:100%;box-sizing:border-box;background:#fff;color:#1c2530;padding:0 20px 56px;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang TC",sans-serif}
+.app-kira .kira-d13-mail .kira-mail-toolbar{display:flex;align-items:center;justify-content:flex-start;min-height:55px;border-bottom:1px solid #e6e9ed}
+.app-kira .kira-d13-mail .kira-mail-toolbar button{color:#087cc4;font-size:16px;background:transparent;border:0;padding:12px 4px;min-height:44px}
+.app-kira .kira-d13-mail .kira-detail-head{padding:31px 0 19px;border-bottom:1px solid #e9edf0}
+.app-kira .kira-d13-mail .kira-detail-head h2{font-size:clamp(25px,7vw,31px);line-height:1.27;font-weight:700;letter-spacing:-.7px;margin:0 0 23px;color:#18242f;overflow-wrap:anywhere}
+.app-kira .kira-d13-mail .kira-detail-head p{font-size:13px;line-height:1.55;color:#667581;margin:0}
+.app-kira .kira-d13-mail .kira-mail-body{background:transparent!important;box-shadow:none!important;border:0!important;margin:0!important;padding:27px 0 45px!important;color:#273541!important;font-size:16px!important;line-height:2.05!important;white-space:normal;overflow-wrap:anywhere}
+.app-kira .kira-d13-mail .kira-mail-body .kira-d01-inline-link{font-size:inherit!important;color:#087cc4!important;-webkit-text-fill-color:#087cc4!important;min-height:0!important;min-width:0!important;display:inline!important}
+@media(max-width:375px){.app-kira .kira-d13-mail{padding-left:16px;padding-right:16px}.app-kira .kira-d13-mail .kira-mail-body{font-size:15px!important}}

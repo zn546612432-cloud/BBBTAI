@@ -55,15 +55,34 @@ async function send(index){
 }
 try{
  await page.goto(url);await unlock();
- await page.locator('[data-action="kira-mail"][data-id="s55-d13-wallet-mail"]').click();await action('kira-d13-wallet').click();await signIn();
+ await page.locator('[data-action="kira-mail"][data-id="s55-d13-wallet-mail"]').click();
+ await page.locator('.kira-d13-mail').waitFor();
+ assert.match(await page.locator('.kira-d13-mail').innerText(),/數位資產入帳通知/);
+ await page.screenshot({path:'qa-results/d13-kira-native-mail.png'});
+ await action('kira-d13-wallet').click();await signIn();
+ await page.locator('.mc-wallet-list').waitFor();
+ await action('mc-wallet-back').click();await page.locator('.kira-d13-mail').waitFor();
+ await action('kira-d13-wallet').click();await signIn();
  await page.locator('.mc-wallet-list').waitFor();await page.screenshot({path:'qa-results/d13-wallet-list.png'});
+ await action('mc-bind-wallet').click();
+ await page.locator('form[data-form="mc-wallet-bind"]').waitFor();
+ await action('mc-wallet-back').click();await page.locator('.mc-wallet-list').waitFor();
  await action('mc-bind-wallet').click();const bind=page.locator('form[data-form="mc-wallet-bind"]');await bind.waitFor();
  assert.ok(await bind.locator('input[name="account"]').inputValue());assert.ok(await bind.locator('input[name="password"]').inputValue());
- await bind.locator('button[type="submit"]').click();await action('mc-wallet-detail').click();await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
+ await bind.locator('button[type="submit"]').click();
+ await action('mc-wallet-detail').click();await action('mc-wallet-back').click();await page.locator('.mc-wallet-list').waitFor();
+ await action('mc-wallet-detail').click();
+ await action('mc-wallet-transfer').click();await action('mc-wallet-cancel-transfer').click();
+ await page.locator('.mc-wallet-transfer-confirm').waitFor({state:'hidden'});
+ await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
  await page.locator('.tel-green-screen').waitFor();await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
- await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),0);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
- await page.locator('.tel-call-island').waitFor({timeout:12000});assert.match(await page.locator('.tel-call-island').innerText(),/REMOTE OVERRIDE/);
+ await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),1);assert.equal(await action('tel-answer').count(),1);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
+ await page.locator('.tel-call-island').waitFor({timeout:12000});
+ assert.doesNotMatch(await page.locator('.tel-call-island').innerText(),/REMOTE OVERRIDE/);
+ await action('tel-return').click();await action('tel-end').waitFor();
+ await page.screenshot({path:'qa-results/d13-in-call-controls.png'});
+ await action('tel-chat').click();await page.locator('.mc-composer').waitFor();
  await page.locator('.mc-composer input[data-story-stage="intrusion:9"]').waitFor({timeout:90000});
  preReloadAudioEvents=await page.evaluate(()=>window.__d13AudioEvents);
  await page.reload();await unlock();await action('tel-resume').waitFor({timeout:12000});await action('tel-resume').click();await signIn();
