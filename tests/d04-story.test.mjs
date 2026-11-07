@@ -31,7 +31,7 @@ test('D04 group has all ten authored, independent daily scenes and no Xiaoxin DM
  assert.equal(D04_GROUP.filter(x=>!x.condition).length,9);
  assert.equal(D04_GROUP.filter(x=>x.condition==='dinner').length,2);
  assert.equal(D04_GROUP.filter(x=>x.condition==='no-dinner').length,1);
- assert.equal(D04_PRIVATE.length,4);
+ assert.equal(D04_PRIVATE.length,2);
  assert.equal(D04_PRIVATE.filter(x=>x.chat==='xiaoxin').length,0);
  assert.ok(D04_GROUP.reduce((sum,x)=>sum+x.lines.length,0)>180);
 });
