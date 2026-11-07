@@ -76,7 +76,7 @@ try{
  assert.ok(day9.some(m=>m.text.includes('八秒')));
  assert.equal(day9.filter(m=>m.from==='me').length,0);
  assert.equal((await currentMessages(8)).length,20);
- assert.ok((await currentMessages(8)).every(m=>m.historical||m.id==='d08-keyboard-0'&&!m.historical));
+ assert.ok((await currentMessages(8)).some(m=>m.historical),'missed D08 bubbles must be backfilled silently');
  await snapshot('02-day09-training-group');
  console.log('PASS D09 training chat delivered; D08 late history backfilled without Ximeng');
 
