@@ -17,7 +17,10 @@ await page.addInitScript(({seed,key})=>{if(!localStorage.getItem(key))localStora
 const action=a=>page.locator(`[data-action="${a}"]`);
 const saved=()=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
 async function unlock(){
- await page.locator('#xm-boot').waitFor({state:'hidden',timeout:90000});
+ const boot=page.locator('#xm-boot'),next=page.getByRole('button',{name:'继续进入锁屏',exact:true});
+ await Promise.race([boot.waitFor({state:'hidden',timeout:90000}),next.waitFor({state:'visible',timeout:90000})]);
+ if(await next.isVisible())await next.click();
+ await boot.waitFor({state:'hidden',timeout:10000});
  if(await action('unlock').isVisible()){
   await action('unlock').click();for(const k of '0816')await page.locator(`[data-action="passcode-key"][data-key="${k}"]`).click();
  }
@@ -43,14 +46,14 @@ try{
  await page.locator('.tel-call-island').waitFor({timeout:12000});assert.match(await page.locator('.tel-call-island').innerText(),/REMOTE OVERRIDE/);
  await page.locator('.mc-composer input[data-story-stage="intrusion:9"]').waitFor({timeout:25000});
  await page.reload();await unlock();await action('tel-resume').waitFor({timeout:12000});await action('tel-resume').click();await signIn();
- await action('home').first().click();await page.locator('.home-screen').waitFor();await action('tel-return').click();await signIn();
+ await page.locator('#homebar').click();await page.locator('.home-screen').waitFor();await action('tel-return').click();await signIn();
  await send(9);await send(11);await send(13);await send(17);await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key)).phoneCall?.state==='ended',key,{timeout:25000});
  const s=await saved(),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  assert.ok(s.story55.completed.intrusion);assert.equal(s.content.mirage.digitalBalance,btc);assert.deepEqual(s.bankData,bank);
  assert.equal(s.content.mirage.wallets[0].status,'frozen');assert.equal(chat.messages.filter(m=>m.kind==='divider').length,1);
  assert.equal(chat.messages.filter(m=>m.id==='s55-intrusion-v2-8').length,1);assert.equal(chat.messages.filter(m=>m.id==='s55-intrusion-v2-9').length,1);
  assert.equal(s.content.phone.calls.filter(c=>c.id==='s55-d13-call-v2').length,1);assert.equal(await page.evaluate(()=>window.__realMediaCalls),0);
- await action('home').first().click();await page.locator('[data-action="open-app"][data-app="phone"]').click();await page.locator('.ios-recents-page').waitFor();await page.screenshot({path:'qa-results/d13-call-log.png'});
+ await page.locator('#homebar').click();await page.locator('[data-action="open-app"][data-app="phone"]').click();await page.locator('.ios-recents-page').waitFor();await page.screenshot({path:'qa-results/d13-call-log.png'});
  assert.deepEqual(errors,[]);
  const result={wallets:s.content.mirage.wallets.length,bankUnchanged:true,btcUnchanged:true,divider:1,callLogs:1,automaticAnswer:true,refreshResumed:true,manualSends:[2,4,9,11,13,17],realMediaCalls:0,pageErrors:errors};
  await writeFile('qa-results/d13-result.json',JSON.stringify(result,null,2));console.log('PASS_D13_MOBILE',JSON.stringify(result));
