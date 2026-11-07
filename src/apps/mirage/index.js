@@ -233,9 +233,10 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
   }
  }
  if(f==='mc-wallet-bind'){
+  if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}
   let bound=false;ctx.store.update(s=>{bound=bindD13Wallet(s);});
-  form.reset();if(!bound)ctx.toast('目前沒有待綁定錢包');
-  return route(ctx,'/wallet');
+  if(!bound){ctx.toast('目前沒有待綁定錢包');return;}
+  form.reset();return route(ctx,'/wallet');
  }
  if(f==='mc-exchange'){exchange(ctx.store,val('amount'));return;}
 
