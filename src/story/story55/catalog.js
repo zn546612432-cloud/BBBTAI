@@ -52,6 +52,7 @@ export const STORY55_CONFIG={
       "requires": [
         "invitation"
       ],
+      "delivery": "queued",
       "gateDay": 11
     },
     {
