@@ -65,7 +65,7 @@ test('Home widget opens a confirmation, one purchase makes receipt, then opens W
  assert.equal(f.store.get().bankData.transactions.length,1);
  assert.equal(f.store.get().content.reminders[0].done,false,'payment remains pending until dinner is booked');
  assert.match(wishPurchaseOverlay(f.store.get()),/聚餐费用已支付/);
- assert.match(wishPurchaseOverlay(f.store.get()),/去狼崽团回复大家/);
+ assert.match(wishPurchaseOverlay(f.store.get()),/请和大家确认聚餐安排/);
  handle('reminder-wish-chat',{},f.ctx);
  assert.equal(wishPurchaseOverlay(f.store.get()),'');
  assert.deepEqual(f.navigation[0],{appId:'wechat',route:'/chat/group',params:{}});
