@@ -2,7 +2,9 @@
 // All functions accept the existing PhoneStore state. No new storage or clock.
 import {wishDefinition} from './catalog.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
-import {celebration,privateScenes,nextDay,afternoonDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
+import {celebration,privateScenes,rewardSets as d06Rewards} from '../../story/d06/wish-content.js';
+import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../story/d07/life-content.js';
+const rewardSets={...d06Rewards,...d07Rewards};
 import {completed,date55} from '../story55/state.js';
 import {payBankPurchase} from '../bank.js';
 
@@ -114,9 +116,6 @@ function queue(s,entry){
  if(st.lines.some(x=>x.id===entry.id))return false;
  st.lines.push(entry);return true;
 }
-function group(id,from,text,opts={}){return {id,channel:'wechat',chat:'group',from,text,...opts};}
-function dm(id,chat,from,text,opts={}){return {id,channel:'wechat',chat,from,text,...opts};}
-
 function queueReward(s,id,isEvent){
  const r=record(s,id);
  if(!r||r.rewardQueued)return;
@@ -209,7 +208,7 @@ export function tickWishes(s,now=Date.now()){
  if(s.day>=7&&st.d07Started&&dinnerHappened&&
     !st.delivered.includes('d07-dinner-after')&&
     !st.lines.some(x=>x.id==='d07-dinner-after')){
-  queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),
+  queue(s,{...dinnerAfter,
    dueDay:7,dueClock:'09:00',afterId:'d07-chat-07',silentAfterDay:true});
   changed=true;
  }
