@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "day": 6,
   "date": "2025-05-24",
   "title": "D06 聚餐：付款后由熙蒙答应，朋友道谢，仔仔订餐",
@@ -48,7 +48,8 @@
         "amount": -350,
         "transactionId": "wish-purchase-d06-dinner"
       },
-      "text": "已从 PACIFIC 银行扣除 350 USD。去微信群回复大家。"
+      "text": "已从 PACIFIC 银行扣除 350 USD。去微信群回复大家。",
+      "capability": "wish.d06-purchase"
     },
     {
       "id": "wish-dinner-player",
@@ -72,7 +73,8 @@
       "delivery": {
         "late": "skip"
       },
-      "text": "好啊，一起去吃饭！今晚我请客。"
+      "text": "好啊，一起去吃饭！今晚我请客。",
+      "capability": "chat.d06-wish-player"
     },
     {
       "id": "wish-dinner-thanks-xin",
@@ -97,7 +99,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "蒙哥万岁！！今晚我可不客气了"
+      "text": "蒙哥万岁！！今晚我可不客气了",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-thanks-hufeng",
@@ -122,7 +125,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "哈哈哈哈，谢了阿蒙。"
+      "text": "哈哈哈哈，谢了阿蒙。",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-thanks-awei",
@@ -147,7 +151,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "谢了，晚上见。"
+      "text": "谢了，晚上见。",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-wang",
@@ -172,7 +177,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "好，那今晚大家一起吃顿饭。仔仔，你看看哪家还有位置。"
+      "text": "好，那今晚大家一起吃顿饭。仔仔，你看看哪家还有位置。",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-ask",
@@ -197,7 +203,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "行，我来订。你们有什么想吃的？"
+      "text": "行，我来订。你们有什么想吃的？",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-choice",
@@ -222,7 +229,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "烧鹅！我想吃烧鹅！！"
+      "text": "烧鹅！我想吃烧鹅！！",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-booking",
@@ -247,7 +255,8 @@
         "late": "silent",
         "delaySeconds": 2
       },
-      "text": "订好了，晚上七点半。位置我一会儿发群里，大家别迟到。"
+      "text": "订好了，晚上七点半。位置我一会儿发群里，大家别迟到。",
+      "capability": "chat.d06-wish-reply"
     },
     {
       "id": "wish-dinner-photo",
@@ -271,7 +280,8 @@
       "delivery": {
         "late": "skip"
       },
-      "assetId": "d06-dinner-photo"
+      "assetId": "d06-dinner-photo",
+      "capability": "chat.d06-wish-reply"
     }
   ],
   "acceptance": [

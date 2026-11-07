@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 2,
+  "day": 23,
+  "date": "2025-06-10",
+  "title": "D23 短信→浏览器→澳觅订单→D25收货照片（规划示例，不是已实现功能）",
+  "stage": "review",
+  "scope": "optional",
+  "systems": [
+    "messaging",
+    "browser",
+    "aomi",
+    "bank",
+    "assets"
+  ],
+  "assets": [
+    {
+      "id": "d23-delivery-photo",
+      "source": "supabase-public",
+      "path": "ximeng-assets/d23/delivery-photo.jpg"
+    }
+  ],
+  "events": [
+    {
+      "id": "d23-sms-incoming",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "messages",
+      "capability": "sms.receive",
+      "actor": "商家",
+      "trigger": {
+        "type": "day-time",
+        "ref": "14:30"
+      },
+      "requires": [],
+      "timing": {
+        "day": 23,
+        "at": "14:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "thread": "shop",
+      "text": "你之前收藏的东西到货了，链接在这里。"
+    },
+    {
+      "id": "d23-open-website",
+      "kind": "link",
+      "owner": "browser",
+      "surface": "browser",
+      "capability": "page.open-link",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "sms-link-tap"
+      },
+      "requires": [
+        "d23-sms-incoming"
+      ],
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d23-order-buy",
+      "kind": "purchase",
+      "owner": "aomi",
+      "surface": "aomi",
+      "capability": "order.place",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "aomi-checkout"
+      },
+      "requires": [
+        "d23-open-website"
+      ],
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "money": {
+        "operation": "payBankPurchase",
+        "currency": "USD",
+        "amount": -39.95,
+        "transactionId": "d23-order-001"
+      }
+    },
+    {
+      "id": "d25-delivery",
+      "kind": "delivery",
+      "owner": "aomi",
+      "surface": "aomi",
+      "capability": "order.deliver",
+      "actor": "配送员",
+      "trigger": {
+        "type": "order-delivered",
+        "ref": "d23-order-001"
+      },
+      "requires": [
+        "d23-order-buy"
+      ],
+      "timing": {
+        "day": 25,
+        "at": "16:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d25-photo-message",
+      "kind": "incoming-image",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.receive-image",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d25-delivery"
+      },
+      "requires": [
+        "d25-delivery"
+      ],
+      "timing": {
+        "day": 25,
+        "at": "16:10"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "thread": "zaizai",
+      "assetId": "d23-delivery-photo"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "D23 14:30 触发商家短信，D01-D22没有提前发送"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "没有点击短信链接或购买就不会生成订单和收货"
+    },
+    {
+      "id": "check-once",
+      "type": "idempotency",
+      "verify": "连续点击支付按钮只生成一个 transactionId 和一条物流"
+    },
+    {
+      "id": "check-save",
+      "type": "save-restore",
+      "verify": "刷新及跳天保留同一订单状态、交易号和已送照片"
+    },
+    {
+      "id": "check-app",
+      "type": "cross-app",
+      "verify": "消息点击→浏览器→澳觅支付→银行扣款→D25微信照片；同一事件链"
+    },
+    {
+      "id": "check-late",
+      "type": "late-entry",
+      "verify": "D26 才打开微信时历史照片按规则补显而不重复通知"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "照片文件在 Supabase 上传完成、HTTP200/MIME 正确后再发布"
+    },
+    {
+      "id": "check-date",
+      "type": "date-clock",
+      "verify": "D23=2025-06-10，D25=2025-06-12，游戏时间而非现实时间"
+    }
+  ]
+}

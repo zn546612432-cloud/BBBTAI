@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "role": "planning-capability-inventory-not-a-runtime-dispatcher",
+  "registry": "src/system/registry.js",
+  "states": {
+    "wired-day": "An existing day-specific authored flow; not reusable at another origin day without an adapter.",
+    "adapter-required": "App screen/primitive exists but no reviewed generic packet executor; strict approval must fail."
+  },
+  "apps": {
+    "wechat": {
+      "module": "src/apps/wechat/index.js",
+      "appId": "wechat",
+      "capabilities": {
+        "chat.d06-wish-player": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "player-send"
+          ],
+          "proof": "src/services/wishes/index.js",
+          "originDays": [
+            6
+          ]
+        },
+        "chat.d06-wish-reply": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text",
+            "incoming-image"
+          ],
+          "proof": "src/services/wishes/index.js",
+          "originDays": [
+            6
+          ]
+        },
+        "chat.receive-text": {
+          "state": "adapter-required",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text"
+          ],
+          "proof": "src/services/messaging/phone-messages.js"
+        },
+        "chat.receive-image": {
+          "state": "adapter-required",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-image"
+          ],
+          "proof": "src/services/messaging/phone-messages.js"
+        },
+        "chat.player-send": {
+          "state": "adapter-required",
+          "owner": "messaging",
+          "kinds": [
+            "player-send"
+          ],
+          "proof": "src/services/messaging/preset-replies.js"
+        },
+        "moments.post": {
+          "state": "adapter-required",
+          "owner": "moments",
+          "kinds": [
+            "moment"
+          ],
+          "proof": "src/apps/wechat/index.js"
+        }
+      }
+    },
+    "noapp": {
+      "module": "src/apps/noapp/index.js",
+      "appId": "noapp",
+      "capabilities": {
+        "ai.scripted-message": {
+          "state": "adapter-required",
+          "owner": "noapp",
+          "kinds": [
+            "incoming-text",
+            "player-send"
+          ],
+          "proof": "src/apps/noapp/index.js"
+        },
+        "call.incoming": {
+          "state": "adapter-required",
+          "owner": "noapp",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/services/story55/scripted-phone.js"
+        }
+      },
+      "gateFacts": [
+        "fact:tai-recognized"
+      ]
+    },
+    "chess": {
+      "module": "src/apps/chess/index.js",
+      "appId": "chess",
+      "capabilities": {
+        "chess.story-invite": {
+          "state": "adapter-required",
+          "owner": "chess",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/apps/chess/index.js"
+        }
+      },
+      "gateFacts": [
+        "fact:chess-scene-active"
+      ]
+    },
+    "mirage": {
+      "module": "src/apps/mirage/index.js",
+      "appId": "mirage",
+      "capabilities": {
+        "commission.publish": {
+          "state": "adapter-required",
+          "owner": "commissions",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/apps/mirage/index.js"
+        },
+        "commission.d06-wallet": {
+          "state": "wired-day",
+          "owner": "commissions",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/story/d06/commission.js",
+          "originDays": [
+            6
+          ]
+        }
+      }
+    },
+    "ghost": {
+      "module": "src/apps/ghost/index.js",
+      "appId": "ghost",
+      "capabilities": {
+        "mission.start-stages": {
+          "state": "adapter-required",
+          "owner": "ghost",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/apps/ghost/state.js"
+        }
+      }
+    },
+    "kira": {
+      "module": "src/apps/kira/index.js",
+      "appId": "kira",
+      "capabilities": {
+        "mail.receive": {
+          "state": "adapter-required",
+          "owner": "kira",
+          "kinds": [
+            "email"
+          ],
+          "proof": "src/apps/kira/index.js"
+        },
+        "attachment.offer": {
+          "state": "adapter-required",
+          "owner": "kira",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/services/commissions/attachment-flow.js"
+        }
+      }
+    },
+    "bank": {
+      "module": "src/apps/bank/index.js",
+      "appId": "bank",
+      "capabilities": {
+        "ledger.post": {
+          "state": "adapter-required",
+          "owner": "bank",
+          "kinds": [
+            "purchase",
+            "reward"
+          ],
+          "proof": "src/services/bank.js"
+        },
+        "btc.exchange": {
+          "state": "adapter-required",
+          "owner": "bank",
+          "kinds": [
+            "reward"
+          ],
+          "proof": "src/services/bank.js"
+        }
+      }
+    },
+    "schedule": {
+      "module": "src/apps/schedule/index.js",
+      "appId": "schedule",
+      "capabilities": {
+        "journal.entry": {
+          "state": "adapter-required",
+          "owner": "schedule",
+          "kinds": [
+            "reminder"
+          ],
+          "proof": "src/apps/schedule/index.js"
+        }
+      }
+    },
+    "messages": {
+      "module": "src/apps/messages/index.js",
+      "appId": "messages",
+      "capabilities": {
+        "sms.receive": {
+          "state": "adapter-required",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text",
+            "incoming-image"
+          ],
+          "proof": "src/apps/messages/index.js"
+        },
+        "sms.player-send": {
+          "state": "adapter-required",
+          "owner": "messaging",
+          "kinds": [
+            "player-send"
+          ],
+          "proof": "src/apps/messages/index.js"
+        }
+      }
+    },
+    "phone": {
+      "module": "src/apps/phone/index.js",
+      "appId": "phone",
+      "capabilities": {
+        "call.log": {
+          "state": "adapter-required",
+          "owner": "phone",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/apps/phone/index.js"
+        }
+      },
+      "overriddenBy": "src/apps/phone/replica.js"
+    },
+    "mail": {
+      "module": "src/apps/mail/index.js",
+      "appId": "mail",
+      "capabilities": {},
+      "hidden": true,
+      "aliasOf": "kira"
+    },
+    "photos": {
+      "module": "src/apps/photos/index.js",
+      "appId": "photos",
+      "capabilities": {
+        "album.add-photo": {
+          "state": "adapter-required",
+          "owner": "photos",
+          "kinds": [
+            "incoming-image"
+          ],
+          "proof": "src/apps/photos/features/import/index.js"
+        }
+      }
+    },
+    "camera": {
+      "module": "src/apps/camera/index.js",
+      "appId": "camera",
+      "capabilities": {},
+      "notes": "Capturing a user photo is not a story injection adapter."
+    },
+    "files": {
+      "module": "src/apps/files/index.js",
+      "appId": "files",
+      "capabilities": {
+        "attachment.add": {
+          "state": "adapter-required",
+          "owner": "files",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/files/index.js"
+        }
+      }
+    },
+    "notes": {
+      "module": "src/apps/notes/index.js",
+      "appId": "notes",
+      "capabilities": {
+        "note.create": {
+          "state": "adapter-required",
+          "owner": "notes",
+          "kinds": [
+            "reminder"
+          ],
+          "proof": "src/apps/notes/index.js"
+        }
+      }
+    },
+    "maps": {
+      "module": "src/apps/maps/index.js",
+      "appId": "maps",
+      "capabilities": {
+        "place.pin": {
+          "state": "adapter-required",
+          "owner": "maps",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/maps/features/story55/index.js"
+        }
+      }
+    },
+    "browser": {
+      "module": "src/apps/browser/index.js",
+      "appId": "browser",
+      "capabilities": {
+        "page.open-link": {
+          "state": "adapter-required",
+          "owner": "browser",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/browser/index.js"
+        },
+        "shop.purchase": {
+          "state": "adapter-required",
+          "owner": "browser",
+          "kinds": [
+            "purchase"
+          ],
+          "proof": "src/apps/browser/aodong-shop.js"
+        }
+      }
+    },
+    "music": {
+      "module": "src/apps/music/index.js",
+      "appId": "music",
+      "capabilities": {
+        "music.attach-track": {
+          "state": "adapter-required",
+          "owner": "music",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/music/index.js"
+        }
+      }
+    },
+    "calendar": {
+      "module": "src/apps/calendar/index.js",
+      "appId": "calendar",
+      "capabilities": {
+        "event.add": {
+          "state": "adapter-required",
+          "owner": "calendar",
+          "kinds": [
+            "reminder"
+          ],
+          "proof": "src/apps/calendar/data/model.js"
+        }
+      }
+    },
+    "clock": {
+      "module": "src/apps/clock/index.js",
+      "appId": "clock",
+      "capabilities": {
+        "alarm.schedule": {
+          "state": "adapter-required",
+          "owner": "clock",
+          "kinds": [
+            "reminder"
+          ],
+          "proof": "src/apps/clock/index.js"
+        }
+      }
+    },
+    "weather": {
+      "module": "src/apps/weather/index.js",
+      "appId": "weather",
+      "capabilities": {
+        "forecast.story-context": {
+          "state": "adapter-required",
+          "owner": "weather",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/apps/weather/index.js"
+        }
+      },
+      "overriddenBy": "src/apps/weather/replica.js"
+    },
+    "aomi": {
+      "module": "src/apps/aomi/index.js",
+      "appId": "aomi",
+      "capabilities": {
+        "order.place": {
+          "state": "adapter-required",
+          "owner": "aomi",
+          "kinds": [
+            "purchase"
+          ],
+          "proof": "src/apps/aomi/index.js"
+        },
+        "order.deliver": {
+          "state": "adapter-required",
+          "owner": "aomi",
+          "kinds": [
+            "delivery"
+          ],
+          "proof": "src/apps/aomi/features/orders/index.js"
+        }
+      }
+    },
+    "settings": {
+      "module": "src/apps/settings/index.js",
+      "appId": "settings",
+      "capabilities": {},
+      "notes": "App UI configuration is not a supported story-write surface."
+    },
+    "reminders": {
+      "module": "src/apps/reminders/index.js",
+      "appId": "reminders",
+      "capabilities": {
+        "wish.d06-purchase": {
+          "state": "wired-day",
+          "owner": "wishes",
+          "kinds": [
+            "purchase"
+          ],
+          "proof": "src/services/wishes/index.js",
+          "originDays": [
+            6
+          ]
+        },
+        "reminder.add": {
+          "state": "adapter-required",
+          "owner": "reminders",
+          "kinds": [
+            "reminder"
+          ],
+          "proof": "src/services/reminders.js"
+        }
+      }
+    },
+    "developer": {
+      "module": "src/apps/developer/index.js",
+      "appId": "editor",
+      "capabilities": {},
+      "hidden": true,
+      "notes": "manifest id editor; local development only, not a story surface"
+    }
+  }
+}

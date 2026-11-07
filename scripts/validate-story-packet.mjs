@@ -5,12 +5,16 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const DAY0=Date.UTC(2025,4,19);
+const APP_CAPABILITIES=JSON.parse(readFileSync(new URL('../.agents/skills/ximeng-story-fill/references/app-capabilities.json',import.meta.url),'utf8'));
+const registeredApps=new Map(Object.entries(APP_CAPABILITIES.apps).map(([name,definition])=>[definition.appId,{name,...definition}]));
+export {APP_CAPABILITIES};
+
 const stages=new Set(['draft','review','approved','example']);
 const scopes=new Set(['main','optional','mixed']);
 const kinds=new Set(['incoming-text','incoming-image','player-send','purchase',
  'commission','system-notice','moment','email','reminder','delivery','reward','link']);
 const owners=new Set(['story55','messaging','wishes','commissions','bank','reminders',
- 'assets','notifications','moments','time','mirage','ghost','kira','noapp']);
+ 'assets','notifications','moments','time','mirage','ghost','kira','noapp',...Object.keys(APP_CAPABILITIES.apps)]);
 const surfaces=new Set(['wechat','mirage','ghost','kira','bank','reminders','moments',
  'sms','phone','noapp','calendar','photos','home','system']);
 const triggers=new Set(['day-time','node-completed','user-action','user-send',
@@ -31,7 +35,11 @@ export function validateStoryPacket(p,{strict=false}={}){
  const error=(where,msg)=>errors.push(where+': '+msg);
  const warn=(where,msg)=>warnings.push(where+': '+msg);
  if(!obj(p))return {ok:false,errors:['root: 需要 JSON 对象'],warnings,summary:null};
- if(p.schemaVersion!==1)error('schemaVersion','必须为 1');
+ if(![1,2].includes(p.schemaVersion))error('schemaVersion','必须为 1（旧内容兼容）或 2（按 App 能力校验）');
+ if(p.schemaVersion===1){
+  if(strict||p.stage==='approved')error('schemaVersion','旧v1事件包缺少 App 能力合同，不可直接通过严格发布验收；请迁移到 v2');
+  else warn('schemaVersion','旧v1只做结构兼容，不证明支持任意日期的 App 行为');
+ }
  if(!Number.isInteger(p.day)||p.day<1||p.day>55)error('day','必须是 D01–D55');
  else if(p.date!==gameDate(p.day))error('date','游戏日对应日期必须为 '+gameDate(p.day));
  if(!nonempty(p.title))error('title','缺少标题');
@@ -61,7 +69,7 @@ export function validateStoryPacket(p,{strict=false}={}){
  });
  const events=Array.isArray(p.events)?p.events:[];
  if(!Array.isArray(p.events))error('events','必须是数组');
- const seen=new Set(),transactions=new Set();
+ const seen=new Set(),transactions=new Set(),eventTimes=new Map();
  events.forEach((e,i)=>{
   const at='events['+i+']';
   if(!obj(e)){error(at,'必须是对象');return;}
@@ -69,10 +77,36 @@ export function validateStoryPacket(p,{strict=false}={}){
   if(seen.has(e.id))error(at+'.id','ID 重复: '+e.id);
   if(!kinds.has(e.kind))error(at+'.kind','未知事件类型 '+e.kind);
   if(!owners.has(e.owner))error(at+'.owner','必须使用现有统一系统: '+e.owner);
-  if(!surfaces.has(e.surface))error(at+'.surface','未知手机界面 '+e.surface);
+  if(p.schemaVersion===2&&!registeredApps.has(e.surface))
+   error(at+'.surface','未在 src/system/registry.js 中注册的 App：'+e.surface);
+  else if(p.schemaVersion===1&&!surfaces.has(e.surface)&&!registeredApps.has(e.surface))
+   error(at+'.surface','未知手机界面 '+e.surface);
+  if(p.schemaVersion===2){
+   const app=registeredApps.get(e.surface);
+   const cap=app?.capabilities?.[e.capability];
+   if(!nonempty(e.capability))error(at+'.capability','v2 每个事件必须声明 App 能力');
+   else if(!cap)error(at+'.capability','该 App 没有声明此项能力：'+e.surface+'/'+e.capability);
+   else{
+    if(!cap.kinds.includes(e.kind))error(at+'.capability','能力不接受 kind：'+e.kind);
+    if(e.owner!==cap.owner)error(at+'.owner','能力只能由统一权属 '+cap.owner+' 实施');
+    if(cap.state==='wired-day'&&!cap.originDays?.includes(p.day))
+     error(at+'.capability','仅 D'+cap.originDays?.join('/D')+' 已接通此能力，不可在 D'+p.day+' 直接复用');
+    if(cap.state==='adapter-required'){
+     const msg='该 App 能力尚无通用剧情适配器：'+e.surface+'/'+e.capability;
+     if(strict||p.stage==='approved')error(at+'.capability',msg);
+     else warn(at+'.capability',msg+'；仅可审议设计，不代表会运行');
+    }
+    if(!['wired-day','adapter-required'].includes(cap.state))
+     error(at+'.capability','未知能力状态 '+cap.state);
+   }
+   if(app?.hidden)error(at+'.surface','隐藏/别名开发 App 不允许直接发布剧情');
+   for(const fact of app?.gateFacts||[]){
+    if(!e.requires?.includes(fact))error(at+'.requires','受剧情门槛保护的 App 必须声明 '+fact);
+   }
+  }
   if(e.once!==true)error(at+'.once','必须显式 once:true，防重复');
   if(!nonempty(e.actor))error(at+'.actor','需要执行者或发言人');
-  const chat=['wechat','mirage','noapp'].includes(e.surface)&&
+  const chat=['wechat','mirage','noapp','messages'].includes(e.surface)&&
    ['incoming-text','incoming-image','player-send'].includes(e.kind);
   if(chat&&!nonempty(e.thread))error(at+'.thread','需要真实聊天 thread ID');
   if(e.surface==='wechat'&&e.thread==='group'&&forbiddenGroupSenders.has(e.actor))
@@ -80,6 +114,7 @@ export function validateStoryPacket(p,{strict=false}={}){
   if(['incoming-text','incoming-image'].includes(e.kind)&&e.actor==='me')
    error(at+'.actor','入站消息不能代玩家发言');
   if(e.kind==='player-send'){
+   if(e.delivery?.late==='replay')error(at+'.delivery','玩家消息不得跨日自动补发或重放');
    if(e.actor!=='me')error(at+'.actor','玩家发言必须是 me');
    if(e.trigger?.type!=='user-send')error(at+'.trigger','玩家发言只允许由原生 Send 触发');
    if(!nonempty(e.text))error(at+'.text','玩家预填台词不能为空');
@@ -102,15 +137,39 @@ export function validateStoryPacket(p,{strict=false}={}){
    error(at+'.trigger','只有玩家消息可以使用 user-send');
   if(e.trigger?.type==='previous-event'&&!seen.has(e.trigger.ref))
    error(at+'.trigger.ref','previous-event 必须引用已定义的较早事件');
-  if(!obj(e.timing)||e.timing.day!==p.day||
-     !(e.timing.at==='on-trigger'||hhmm.test(e.timing.at||'')))
-   error(at+'.timing','需要本日 day 与 HH:MM 或 on-trigger');
+  if(e.trigger?.type==='user-send'&&!seen.has(e.trigger.ref)&&
+      !/^fact:[a-z0-9-]+$/.test(e.trigger.ref||''))
+   error(at+'.trigger.ref','user-send 必须依赖已发生的事件/事实，不能凭空发送');
+  if(!obj(e.timing)||!Number.isInteger(e.timing.day)||
+      e.timing.day<p.day||e.timing.day>55||
+      !(e.timing.at==='on-trigger'||hhmm.test(e.timing.at||'')))
+   error(at+'.timing','执行日必须为本日或未来D55以内，时间为 HH:MM 或 on-trigger');
+  if(e.trigger?.type==='day-time'&&hhmm.test(e.trigger.ref||'')&&
+      e.timing?.at!==e.trigger.ref)
+   error(at+'.timing','day-time 触发时刻必须与执行时刻一致');
   if(!Array.isArray(e.requires))error(at+'.requires','必须声明前置事件（可以是空数组）');
   else for(const ref of e.requires){
    if(!nonempty(ref)){error(at+'.requires','不允许空依赖');continue;}
    if(!/^(?:node|fact|wallet|legacy):[a-z0-9-]+$/.test(ref)&&!seen.has(ref))
     error(at+'.requires','前置必须先定义，或是 node:/fact:/wallet:/legacy: 事实：'+ref);
    if(ref===e.id)error(at+'.requires','事件不可依赖自身');
+  }
+  if(e.kind==='player-send'&&seen.has(e.trigger?.ref)&&
+      !e.requires?.includes(e.trigger.ref))
+   error(at+'.requires','玩家发送必须显式声明触发它的前置事件');
+  // Cross-day delivery is allowed (buy on D06, receive on D08), but is never
+  // allowed to precede the day/time of a prerequisite.
+  if(Array.isArray(e.requires)&&obj(e.timing)){
+   for(const ref of e.requires){
+    const previous=eventTimes.get(ref);
+    if(!previous)continue;
+    if(e.timing.day<previous.day)
+     error(at+'.timing','发生在前置事件之前：'+ref);
+    if(e.timing.day===previous.day&&
+       hhmm.test(e.timing.at||'')&&hhmm.test(previous.at||'')&&
+       e.timing.at<previous.at)
+     error(at+'.timing','同一天执行时间早于前置事件：'+ref);
+   }
   }
   if(!obj(e.delivery)||!['silent','skip','replay'].includes(e.delivery.late))
    error(at+'.delivery','必须指定跨日处理 late:silent/skip/replay');
@@ -119,6 +178,7 @@ export function validateStoryPacket(p,{strict=false}={}){
    error(at+'.delivery.delaySeconds','延迟必须在0–86400秒');
   if(p.stage==='approved'&&/(?:TODO|TBD|待填写|占位|<placeholder>|\.\.\.)/i.test(e.text||''))
    error(at+'.text','approved 剧情不能包含占位文案');
+  if(!seen.has(e.id))eventTimes.set(e.id,e.timing);
   seen.add(e.id);
  });
  if(p.stage==='approved'&&!events.length)error('events','批准的内容不能为空');
@@ -141,7 +201,7 @@ export function validateStoryPacket(p,{strict=false}={}){
  if(p.stage==='example')warn('stage','示例仅用于演示，不被手机运行时读取');
  return {ok:errors.length===0,errors,warnings,summary:{
   day:p.day,date:p.date,stage:p.stage,events:events.length,
-  assets:assets.length,checks:p.acceptance?.length||0
+  assets:assets.length,checks:p.acceptance?.length||0,apps:[...new Set(events.map(x=>x?.surface).filter(Boolean))]
  }};
 }
 

@@ -1,13 +1,24 @@
-# Unified engine map (checked against BBBTAI main on 2026-11-07)
+# Unified engine map · Story Content Skill v2
 
 This is an **interface inventory**, not permission to duplicate a service. Before implementing, inspect current source and compare with this file; paths may move.
 
+## App registry versus content capability
+
+**The actual UI module registry is `src/system/registry.js`, with 25 imported app modules** (including hidden `mail` and `editor`). Phone and Weather are replaced by replica modules at registration time. A folder such as `src/apps/instagram` is not automatically a registered App.
+
+For **every registered App**, the planning-level capability inventory is [`app-capabilities.json`](app-capabilities.json). This is not a second runtime registry: it states whether a specific authored action is already wired for its origin day (`wired-day`) or needs a reusable adapter (`adapter-required`). Generic arbitrary-day injection cannot be claimed from a `manifest` or UI presence alone.
+
+`src/services/story-engine/index.js` currently has only basic event visibility and approved-package checks; **no general cross-App packet dispatcher is implemented**. Existing Story55 and messaging schedulers still explicitly call D01–D06 sources; migrating them must be a separate reviewed engineering task. See [cross-App contract](cross-app-contract.md).
+
+
 | Concern | Single source of truth / paths | Fill here, rather than rewriting framework |
 | --- | --- | --- |
-| D01–D55 dates and node completion | `src/services/story55/state.js`: `date55`, `nodeStatus`, `completeNode` | `src/story/story55/catalog.js`, matching day content |
+| Actual installed App registry | `src/system/registry.js` (25 registered app modules, two hidden aliases, Phone/Weather overrides) | `app-capabilities.json` is planning inventory; review app-specific adapter before writing day-neutral data |
+| Cross-App story execution | `src/services/story-engine/index.js` is not a general dispatcher; multiple existing D01–D06-specific ticks remain | Build adapters and runtime integration separately, with click-through tests |
+| D01–D55 dates and node completion | `src/services/story55/state.js`: `date55`, `nodeStatus`, `completeNode` | Existing Story55 nodes and authored day content; do not presume JSON packets are mounted |
 | Unified time, battery and charging | `src/system/runtime/policy.js`, `src/services/story55/runtime.js` and phone runtime | Only event due time and late policy in authored content |
-| Native WhatsApp-style WeChat chat and message queues | `src/services/messaging/phone-messages.js` `appendAuthoredPhoneMessage`; `src/services/messaging/preset-replies.js` `nativeWeChatComposer` / `sendNativeWeChatPreset`; `src/services/messaging/lifecycle/registry.js` | `src/story/dXX/wechat.js`, dialogue files, single declared track |
-| Native phone Shell, app navigation & gesture | `src/system/shell.js`, `src/main.js`, `src/system/router.js` | **Do not change for story copy**. If a UI action is needed, add it through existing App's handler, reuse across home widget and app screen |
+| Native WeChat chat and message queues | `src/services/messaging/phone-messages.js` `appendAuthoredPhoneMessage`; `src/services/messaging/preset-replies.js` `nativeWeChatComposer` / `sendNativeWeChatPreset`; `src/services/messaging/lifecycle/registry.js` | `src/story/dXX/wechat.js`, dialogue files, single declared track |
+| Native phone Shell, app navigation & gesture | `src/system/shell.js`, `src/main.js`, `src/services/router.js` | **Do not change for story copy**. If a UI action is needed, add it through existing App's handler, reuse across home widget and app screen |
 | WeChat rendered view / inline link | `src/apps/wechat/components/chat-view.js`; handler in `src/apps/wechat/index.js` | Prefer data or shared handler. Do not wrap interactive link buttons inside other buttons |
 | Reminders and home widget | `src/services/reminders.js` and `src/apps/reminders/index.js`; home widget via Shell | One reminder record; the generic checkbox is not a wish purchase. Purchase/booking statuses are distinct |
 | Optional wishes, late shipment and D07 follow-up | `src/services/wishes/index.js`, `src/services/wishes/catalog.js`; `src/story/d06/wish-content.js` | Extend only canonical catalog/reward source; stable wishId, messageId, order state |
@@ -16,7 +27,7 @@ This is an **interface inventory**, not permission to duplicate a service. Befor
 | Historical 2025 BTC/USD | `src/services/finance/historical-btc-usd.js` and `src/services/bank.js` | UTC calendar date and day-level historical quote, never silently credit fiat on award |
 | Images/remote assets | `src/services/assets/wish-media.js` (D06); public `ximeng-assets/d06` Supabase Storage; other `public/` paths | Add asset IDs/paths, validate URL and MIME, use cache/preload policy; don't scatter full URLs across components |
 | App notifications and unread | `src/services/messaging/phone-messages.js` and incoming scheduler | Never increment unread manually in a competing content scheduler |
-| Script content review and saved history | `src/story/dXX/*`, `src/story/diary/*`, `src/story/story55/catalog.js` | Do not delete author-approved D01-before conversation or Moments |
+| Script content review and saved history | `src/story/dXX/*`, `src/story/diary/*`, existing legacy `src/story/schemas/content.schema.json` (max90, legacy only) | Do not delete author-approved D01-before conversation or Moments |
 | Test baseline | `npm test` (`tests/*.test.mjs`), `npm run build:pages`, `.github/workflows/pages.yml` | Add an event-chain test and mobile click path, not just snapshot assertions |
 | Publishing | `main` → GitHub Pages; `/preview/` separate; `/review/55-20261101/` and `/review/tai-vision-20261105/` retained | Isolated review URL. Verify GitHub Actions deployment after merging; main Pages has four retained entries |
 
