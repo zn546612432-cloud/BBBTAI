@@ -81,7 +81,7 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  html=renderMoments(s,'/moments');assert.equal((html.match(/aria-label="动态操作"/g)||[]).length,1);assert.equal(navigations,0);
  handleMoment('wx-moment-like',target,ctx);assert.equal(s.content.moments.likes['xs-0519'],true);
  assert.doesNotMatch(renderMoments(s,'/moments'),/aria-label="动态操作"/);
- handleMoment('wx-moment-like',target,ctx);assert.equal(s.content.moments.likes['xw-0519'],false);
+ handleMoment('wx-moment-like',target,ctx);assert.notEqual(s.content.moments.likes['xs-0519'],true,'unliking clears the temporary like override');
  const post=authoredMoments.find(p=>p.id==='xs-0519');assert.equal(post.comments.length,2);
 });
 
