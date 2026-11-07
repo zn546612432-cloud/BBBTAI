@@ -76,6 +76,7 @@ try{
  assert.equal(s.content.phone.calls.filter(c=>c.id==='s55-d13-call-v2').length,1);assert.equal(await page.evaluate(()=>window.__realMediaCalls),0);
  await page.locator('#homebar').click();await page.locator('[data-action="open-app"][data-app="phone"]').click();await page.locator('.ios-recents-page').waitFor();await page.screenshot({path:'qa-results/d13-call-log.png'});
  const audioEvents=[...preReloadAudioEvents,...await page.evaluate(()=>window.__d13AudioEvents)];
+ await writeFile('qa-results/d13-audio-events.json',JSON.stringify(audioEvents,null,2));
  if(voiceReady){
   assert.deepEqual(audioEvents.filter(e=>e.kind==='playing').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must start in script order');
   assert.deepEqual(audioEvents.filter(e=>e.kind==='ended').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must end normally');

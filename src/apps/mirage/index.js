@@ -1,7 +1,6 @@
 import {walletPage} from './features/wallet/index.js';
 import {bindD13Wallet,transferD13Wallet,D13_WALLET_ID} from '../../story/d13/runtime.js';
 import {exchange} from '../../services/bank.js';
-import {primeTelephony} from '../../services/telephony/index.js';
 import {storySessionControls} from './features/story-controls/index.js';
 import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01ContactReply} from '../../story/d01/runtime.js';
 import {D02_S,D02_A,D02_STAGES,D02_MAIL,D02_TALIA,acceptD02,submitD02,armD02Ghost,d02StepId,d02State,d02TaliaDraft,onD02TaliaMessage} from '../../story/d02/runtime.js';
@@ -212,7 +211,6 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
    form.elements.text.value='';decrypted.add(id);
    const scripted=scriptedDraft55(ctx.store.get(),'mirage',id);
    if(scripted){
-    if(scripted.id==='intrusion'&&scripted.index===4)primeTelephony(ctx);
     // Native story55 send gate: only player action creates the green bubble.
     ctx.store.update(s=>sendScriptedDraft55(s,'mirage',id,text));
     return;

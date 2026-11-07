@@ -116,3 +116,24 @@ test('full naming-revised source remains intact and only shipped legacy copy mig
  const {store}=fixture(),config=structuredClone(store.get().story55.config);config.scenes.intrusion=structuredClone(D13_LEGACY_LINES);applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,D13_LINES);
  const edited=structuredClone(D13_LEGACY_LINES);edited[1][1]='作者自己改過的句子';config.scenes.intrusion=edited;applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,edited);
 });
+
+test('shared authored Send primes Audio synchronously only on the last valid pre-call turn',()=>{
+ const {store,ctx}=fixture();transfer(store);store.update(enterD13Chat);
+ store.update(s=>s.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
+ while(scene55(store.get(),'intrusion').index<2)store.update(s=>advanceScene55(s,'intrusion'));
+ const priorDocument=globalThis.document,priorAudio=globalThis.Audio,listeners=new Map();let plays=0;
+ globalThis.document={addEventListener(type,fn,capture){if(type==='submit'){assert.equal(capture,true);listeners.set(type,fn);}},removeEventListener(type){listeners.delete(type);},querySelector(){return null;}};
+ globalThis.Audio=class{play(){plays++;return Promise.resolve();}pause(){}};
+ let stop;
+ try{
+  stop=mountTelephony(()=>ctx);const submit=listeners.get('submit');assert.equal(typeof submit,'function');
+  const form={dataset:{storyScene:'intrusion',id:'s55-ouroboros'},elements:{text:{value:sceneLines(store.get(),'intrusion')[2][1]}}};
+  submit({target:form});assert.equal(plays,0,'An earlier player turn must not unlock audio');
+  store.update(s=>{advanceScene55(s,'intrusion');advanceScene55(s,'intrusion');});
+  form.elements.text.value='不完整的預設';submit({target:form});assert.equal(plays,0);
+  form.elements.text.value=sceneLines(store.get(),'intrusion')[4][1];submit({target:form});
+  assert.equal(plays,1,'Prime must happen in the submit capture, before any awaited shell handler');
+  assert.equal(scene55(store.get(),'intrusion').index,4,'Priming cannot send the player turn');
+  assert.equal(store.get().content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-intrusion-v2-4'),false);
+ }finally{stop?.();globalThis.document=priorDocument;globalThis.Audio=priorAudio;}
+});

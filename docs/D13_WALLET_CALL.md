@@ -47,3 +47,5 @@ node scripts/generate-d13-call-voice.mjs
 
 - 新增 MP3／文字 hash／配置一致性回歸。
 - 手機瀏覽器腳本監聽真實 HTMLMediaElement 的 playing／ended／error，要求七段按劇本順序開始並正常結束；開始播放時文字泡泡已寫入且輸入框鎖定，不能僅靠文字後備通過。跨刷新保留驗收事件，六次玩家 Send 仍由原生按鈕點擊。最新結果以 PR CI 為準。
+
+- 實際語音驗收額外發現第一段未 prime：共用 authored Send 會繞過 MIRAGE App 的 submit。已改成 telephony 在 document 的 capture submit 上同步 prime，早於共用處理器第一個 await；仍只對來電前最後一次有效的玩家 Send 生效，不修改 main.js。

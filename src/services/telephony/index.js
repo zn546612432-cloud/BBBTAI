@@ -14,6 +14,21 @@ export function primeTelephony(ctx){
  const a=session(ctx.store);if(!a.audio)a.audio=createGestureAudio();else primeAudio(a.audio);
  return a.audio;
 }
+// The shell handles authored Send before the App's submit handler. Capture the
+// real submit gesture synchronously, before the shell's first await, so iOS and
+// an eight-second remote answer can reuse this unlocked Audio element.
+export function primeAuthoredPhoneSend(ctx,form){
+ const s=ctx.store.get(),id=form?.dataset?.storyScene;
+ if(!s.unlocked||!id||nodeStatus(s,id).state!=='ready')return false;
+ const node=nodeById(s,id),lines=sceneLines(s,id),index=scene55(s,id).index;
+ if(!node?.call||form.dataset.id!==node.conversationId||
+    (form.dataset.channel||s.nav.current.appId)!==node.channel||lines[index]?.[0]!=='me')return false;
+ const value=String(form.elements?.text?.value||'').trim();
+ if(value!==lines[index][1].trim())return false;
+ const call=lines.findIndex((line,i)=>i>index&&line[0]==='call');
+ if(call<0||lines.slice(index+1,call).some(line=>line[0]==='me'))return false;
+ return !!primeTelephony(ctx);
+}
 function sceneCall(s){
  if(s.story55?.activeScene){
   const id=s.story55.activeScene,n=nodeById(s,id);
@@ -115,6 +130,8 @@ export function mountTelephony(getContext){
   if(action==='tel-return'&&call.node)ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
  };
  document.addEventListener('click',click,true);
+ const submit=e=>primeAuthoredPhoneSend(getContext(),e.target);
+ document.addEventListener('submit',submit,true);
  const timer=setInterval(()=>{
   try{
    if(document.hidden)return;
@@ -127,5 +144,5 @@ export function mountTelephony(getContext){
    }
   }catch(error){ctx.toast?.(error.message);}
  },250);
- return ()=>{clearInterval(timer);document.removeEventListener('click',click,true);a.audio?.pause();a.playing?.cancel();};
+ return ()=>{clearInterval(timer);document.removeEventListener('click',click,true);document.removeEventListener('submit',submit,true);a.audio?.pause();a.playing?.cancel();};
 }
