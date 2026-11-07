@@ -32,7 +32,7 @@ export function render({store},loc){
     '<button type="button" class="s55-button" data-action="kira-wallet-d06-ghost">'+
     (done?'查看 GHOST 已完成项目':'打开 GHOST · WALLET CHALLENGE')+'</button></div>';
   }
-  if(mail?.id===D13_MAIL_ID)return '<div class="s55"><nav><button data-action="kira-back">‹ 收件箱</button><small>KIRA / MIRAGE</small></nav><h1>'+esc(mail.subject)+'</h1><article class="s55-document">'+esc(mail.body)+'</article><button class="mc-flow-link" data-action="kira-d13-wallet">MIRAGE 錢包</button></div>';
+  if(mail?.id===D13_MAIL_ID)return kiraDetail(s,mailId);
   if(mail?.story55&&mail.id!=='flow-d03-reward')return mail55(s,mail);
   return mail?.linkedReceipt?linkedReceiptView(s,mailId):mail?.linkedDelivery?linkedSentView(s,mailId):mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
  }
