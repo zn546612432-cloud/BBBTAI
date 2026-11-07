@@ -7,23 +7,23 @@ export const D02_MAIL='d02-talia-key-mail';
 export const D02_A_MAIL='d02-anonymous-key-mail';
 export const D02_KEY_FILES={[D02_S]:'talia-chip-0520.key',[D02_A]:'monitor-nodes-0520.key'};
 export const D02_KIRA_BODY={
- [D02_S]:'加密芯片的项目凭证已同步，授权密钥见附件。',
- [D02_A]:'委托已确认。\n\n本次项目的授权凭证已作为加密附件送达。不要用于其他订单。\n\n期限三天。我只接受完整的结果报告。不要分批提交，也不需要发进度邮件。'
+ [D02_S]:'Talia / MIRAGE\n\n芯片封包已经授权。访问密钥写在这次唯一附件里；解开后按原始资料逐项校验，不需要另外申请。\n\n附件：talia-chip-0520.key',
+ [D02_A]:'本次授权仅用于三个隔离测试节点。取回完整的中断与恢复回执后提交，不接受未验证的中间结果。\n\n附件：monitor-nodes-0520.key'
 };
 export const D02_KEYS={ [D02_S]:'TALIA-CHIP-0520',[D02_A]:'GHOST-A-0520' };
 export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
 export const D02_REMINDER='d02-pc-build-reminder';
 export const D02_AODONG_URL='https://aodong.shop';
-export const D02_AODONG_SMS='五月澳东打折月！澳东商城电子产品全场八折。\n\n显卡、处理器、电脑配件限时优惠。\n\n官网：'+D02_AODONG_URL;
+export const D02_AODONG_SMS='【澳东商城】5月电脑配件限时优惠，部分显卡、处理器及存储设备参与活动。\n了解详情：'+D02_AODONG_URL;
 export const D02_REWARDS={ [D02_S]:12000,[D02_A]:4500 };
 export const D02_STAGES={
  [D02_S]:['route','veil','extract'],
  [D02_A]:['cipher','route','strike']
 };
 export const D02_BRIEFS={
- [D02_S]:'我需要一枚加密芯片里的完整资料。\n\n数据不能有缺失，也不要擅自修改内容。至于里面是什么，我建议你不要太好奇。\n\n今天之内交给我，报酬不会少。\n\n哦，对了，希望你手脚够快。我不太喜欢等人。\n\n—— Talia',
- [D02_A]:'有三个远程监控节点，我需要它们在指定时段内停止向主控端回传数据。\n\n我要中断记录和恢复记录。没有完整结果就不要提交。\n\n期限三天。报酬写在上面了。'
+ [D02_S]:'Talia / PRIVATE CHANNEL\n\n有一枚旧加密芯片需要完整恢复。里面的资料版本太多，有人试过拼接，但缺了几段。\n\n我要的是可核对的整份记录。今天完成。别把封装里的内容改得面目全非。\n\n—— Talia',
+ [D02_A]:'三组匿名中继设备的测试记录互相冲突。按照委托附带的隔离环境执行验证，收集停止和恢复时的完整回执。\n\n交付：三组节点的中断记录、恢复记录、差异清单。\n期限三天。'
 };
 export const D02_DEADLINES={ [D02_S]:{day:2,clock:'23:59'},[D02_A]:{day:4,clock:'23:59'} };
 const ensureD02=s=>{const d=s.story55.d02??={};d.completed??={};d.submitted??={};d.paid??={};d.deployed??={};d.taliaStage??=0;d.bonus??=false;return d;};
