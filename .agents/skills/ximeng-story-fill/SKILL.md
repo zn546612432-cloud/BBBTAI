@@ -15,7 +15,7 @@ description: Fill or revise a day of 《熙蒙的手机》 (D01–D55) using the
 ## 单一流水线（每个新日/新支线都走一遍）
 
 1. **盘点与保护（Baseline）**：定位 `main` 最新 SHA、运行/查看 CI、正式站点、当前新日内容、D01前历史、已有角色和资产；列出**允许修改的路径**与**不能改的服务**。建立独立分支；不清空玩家存档、不删除历史朋友圈/短信/头像/音频、不覆写已验收 UI。
-2. **写事件包（Contract）**：复制 `templates/day-packet.template.json`，填 `day/date`、角色、触发方式、玩家主动发送、NPC 逐条回复、日期/时间、钱、素材、过期与收货分支、重进/跨日策略。先用 `node scripts/validate-story-packet.mjs <文件>` 校验。每个事件只出现一个稳定 ID。要求“玩家点击发送”的话语必须是 `player-send`，不能随付款自动写入聊天。
+2. **写事件包（Contract）**：先运行 `npm run story:new -- D08`（替换成目标日；已存在文件**绝不覆盖**），生成游戏日期正确的 `docs/story-packets/d08.json` 草案；再填 `day/date`、角色、触发方式、玩家主动发送、NPC 逐条回复、日期/时间、钱、素材、过期与收货分支、重进/跨日策略。运行 `npm run story:check -- docs/story-packets/d08.json`；批准后用 `npm run story:check -- --strict docs/story-packets/d08.json`。每个事件只出现一个稳定 ID；“玩家点击发送”的话语必须是 `player-send`，不能随付款自动写入聊天。
 3. **剧情审校（Content review）**：核对人设与自然聊天节奏。手机里只出现真实 App 的内容；不显示“关卡完成、好感+5、玩家”等游戏式提示。核对群成员：熙蒙、熙旺、胡枫、仔仔、小辛、阿威；**熙泰/傅隆生不在狼崽团**。固定剧情和可跳过生活剧情分别标明；不能以可选心愿阻止主线跨日。
 4. **系统映射（Adapter plan）**：参照 `references/system-map.md` 把事件写到**现有** `src/story/dXX/` 内容文件或相应注册表；触发器/状态/通知/收发信/时间/充值/钱包/提醒使用既有服务。**默认不改** `src/main.js`、`src/system/shell.js`、时钟/电量内核或银行状态结构。不得把同一个按钮在主屏和 App 内接成两套 handler；必须共用业务入口。确需底层改动：给出复用点与影响面并单独做回归。
 5. **素材登记（Assets）**：每张图片先写 `assetId`、源（Supabase 公共 Storage / 已打包本地）和使用事件；真实文件存在后验证 HTTPS、内容类型、体积与手机加载。剧情按素材 ID 经唯一资源表解析；不把 ZIP 当图片，不把未上传说成已上线。首屏必要资源本地加载；生活照按需加载，不在锁屏之前预载55天全部照片。
@@ -45,6 +45,7 @@ description: Fill or revise a day of 《熙蒙的手机》 (D01–D55) using the
 - `examples/d06-dinner.example.json`：复盘示例，演示已实现事件顺序，不可作为游戏第二套剧情载入。
 - `references/system-map.md`：系统权属、角色边界、注册点及允许修改处。
 - `references/acceptance-matrix.md`：必须检查的各类边界情境。
+- `scripts/new-story-day.mjs`：一键生成正确日期的 Dxx 草案，不覆盖已有文件，绝不自动变成游戏剧情。
 - `scripts/validate-story-packet.mjs`：事件包日期、依赖、财务、角色、动作及资源的结构校验。
 - `docs/STORY_CONTENT_PIPELINE.md`：给创作者看的简化流程及需求模板。
 
