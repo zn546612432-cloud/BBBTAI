@@ -29,7 +29,14 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
 
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
-const portrait=(name,s)=>'<span class="wx-message-avatar"><img src="'+esc(resolveWeChatAvatar(name==='哥'?'熙旺':name,s.characterAvatars?.[name]||s.characterAvatars?.[name==='哥'?'熙旺':name]))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
+const portrait=(name,s)=>{
+ const normalized=name==='哥'?'熙旺':name;
+ const source=resolveWeChatAvatar(normalized,s.characterAvatars?.[name]||s.characterAvatars?.[normalized]);
+ const image=/^(?:https?:\/\/|\/|blob:|data:image\/)/i.test(source);
+ return '<span class="wx-message-avatar">'+(image
+   ?'<img src="'+esc(source)+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async">'
+   :'<span class="wx-avatar-fallback" aria-label="'+esc(name)+'">'+esc(String(name||'?').slice(0,1))+'</span>')+'</span>';
+};
 const action=(name,title,icon)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'">'+icon+'</button>';
 const voiceIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M9 11v6m3-8c3 2.6 3 7.4 0 10m3-13c4.8 4.5 4.8 11.5 0 16"/></svg>';
 const plusIcon='<svg width="29" height="29" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 8v12M8 14h12"/></svg>';
