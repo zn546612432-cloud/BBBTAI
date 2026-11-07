@@ -26,8 +26,13 @@ async function route(day,clock,appId,path,params={}){
 const action=a=>page.locator(`[data-action="${a}"]`);
 // Prove that the native MIRAGE login actually submitted before checking a chat.
 async function signInMirage(){
- const login=page.locator('form[data-form="mc-login"]');
- if(!(await login.isVisible().catch(()=>false)))return;
+ // Unlock completes after a native 260ms animation; do not inspect the app before it mounts.
+ await page.locator('#screen-layer .mc-login-panel, #screen-layer .mc-composer').first().waitFor({state:'visible',timeout:16000});
+ const login=page.locator('#screen-layer form[data-form="mc-login"]');
+ if(!(await login.isVisible())){
+  await page.locator('#screen-layer .mc-composer').waitFor({state:'visible',timeout:16000});
+  return;
+ }
  await page.evaluate(()=>{
   window.__mirageLoginTrace=[];
   document.addEventListener('submit',e=>{if(e.target?.dataset?.form==='mc-login')window.__mirageLoginTrace.push({event:'submit',at:performance.now(),valid:e.target.checkValidity()});},true);
