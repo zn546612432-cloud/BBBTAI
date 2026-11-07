@@ -29,8 +29,8 @@ const page=await browser.newPage({
  locale:'zh-CN',reducedMotion:'reduce'
 });
 page.setDefaultTimeout(30000);
-const errors=[],missingUrls=[];
-page.on('response',res=>{if(res.status()===404)missingUrls.push(res.url())});
+const errors=[],failedUrls=[];
+page.on('response',res=>{if(res.status()>=400)failedUrls.push(res.status()+' '+res.url())});
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
 page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
 const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
@@ -57,7 +57,20 @@ try{
  await page.addInitScript(({key,json})=>{
   if(!localStorage.getItem(key))localStorage.setItem(key,json);
  },{key,json:JSON.stringify(seed)});
- await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
+ let previewReady=false;
+ for(let attempt=1;attempt<=4;attempt++){
+  const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
+  const status=response?.status()||0;
+  try{
+   if(status>=200&&status<400){
+    await page.locator('#phone').waitFor({state:'attached',timeout:18000});
+    previewReady=true;break;
+   }
+  }catch(e){console.warn('Phone shell not mounted on attempt '+attempt+': '+String(e).slice(0,120));}
+  console.warn('Preview entry not ready: HTTP '+status+' (attempt '+attempt+'/4)');
+  await page.waitForTimeout(Math.min(9000,2500*attempt));
+ }
+ assert.ok(previewReady,'Live review did not render after 4 attempts; responses: '+failedUrls.join(' | '));
  await unlock();
  console.log('PASS iPhone viewport unlock, existing phone shell and passcode');
  await page.locator('form[data-form="bank-exchange"] input[name="amount"]').waitFor();
@@ -130,11 +143,12 @@ try{
  assert.equal(delivered.bankData.balance,1256.82);
  console.log('PASS D08 post-delivery private WeChat photo loaded and is not duplicated');
  if(errors.length)console.log('Browser warnings:\n'+errors.slice(0,20).join('\n'));
- if(missingUrls.length)console.log('404 URLS:',[...new Set(missingUrls)].slice(0,35));
+ if(failedUrls.length)console.log('HTTP FAILED URLS:',[...new Set(failedUrls)].slice(0,35));
  console.log('D06_MOBILE_SMOKE_PASS');
 }catch(err){
  await photo('99-failure').catch(()=>{});
  console.error('D06_MOBILE_SMOKE_FAILED:',err?.stack||String(err));
  console.error('Browser errors:',errors.slice(0,30));
+ console.error('HTTP failures:',[...new Set(failedUrls)].slice(0,35));
  process.exitCode=1;
 }finally{await browser.close();}
