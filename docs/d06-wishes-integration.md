@@ -46,5 +46,5 @@ Both headphone and tableware reward sets now include separately supplied recipie
 - Verify D01-D05 saves, D06 five-stage Ghost, actual wallet settlement, purchase insufficient-funds behavior, back navigation, chat notifications, delivery after short/long charges, duplicate taps, reload, and ordinary D07.
 - Publish a **separate review preview**; do not replace main or delete previous versions.
 
-## Currency caveat
-The original bank exchange uses `bankData.rate` (default 1) for generic digital assets, while D06 awards BTC. Thus 10 BTC cannot currently finance every USD wishlist gift by conversion alone unless the game explicitly defines a BTC/USD exchange rate. Preserve the existing bank behavior until the conversion is reviewed; never silently credit fictitious USD.
+## Historical BTC conversion (resolved)
+D06 uses the verified 24 May 2025 daily reference **1 BTC = US$107,791.16**, with 55 offline daily prices. The 10 BTC reward is worth approximately US$1,077,911.60 but remains in MIRAGE until the player actively sells BTC. Pacific bank credits the converted USD only, via one shared bank ledger; 8 BTC fractional digits are allowed and both sides record the same receipt ID. The original bank `rate=1` is **not** used for BTC in Story55. See `docs/finance-btc-2025.md`.
