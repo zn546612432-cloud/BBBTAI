@@ -55,7 +55,13 @@ export const rewardSets={
   dm('wish-tableware-thanks-2','wang','熙旺','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
  ],
  'd06-dinner':[
-  group('wish-dinner-01','仔仔','钱收到了！我跟店里订好啦，今晚七点半见，大家记得来啊。'),
+  group('wish-dinner-thanks-01','小辛','蒙哥万岁！！今晚我可不客气了'),
+  group('wish-dinner-thanks-02','胡枫','哈哈哈哈，谢了阿蒙。'),
+  group('wish-dinner-thanks-03','阿威','谢了，晚上见。'),
+  group('wish-dinner-thanks-04','熙旺','好，那今晚大家一起吃顿饭。仔仔，你看看哪家还有位置。'),
+  group('wish-dinner-booking-ask','仔仔','行，我来订。你们有什么想吃的？'),
+  group('wish-dinner-booking-reply','小辛','烧鹅！我想吃烧鹅！！'),
+  group('wish-dinner-booking-01','仔仔','订好了，晚上七点半。位置我一会儿发群里，大家别迟到。'),
   group('wish-dinner-02','小辛','我宣布今天不减肥了！！'),
   group('wish-dinner-03','胡枫','你什么时候减过哈哈哈哈'),
   group('wish-dinner-photo','仔仔',d06WishImage('celebration-dinner.jpg'),{kind:'image'})
