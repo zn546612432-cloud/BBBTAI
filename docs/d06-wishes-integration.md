@@ -48,3 +48,8 @@ Both headphone and tableware reward sets now include separately supplied recipie
 
 ## Historical BTC conversion (resolved)
 D06 uses the verified 24 May 2025 daily reference **1 BTC = US$107,791.16**, with 55 offline daily prices. The 10 BTC reward is worth approximately US$1,077,911.60 but remains in MIRAGE until the player actively sells BTC. Pacific bank credits the converted USD only, via one shared bank ledger; 8 BTC fractional digits are allowed and both sides record the same receipt ID. The original bank `rate=1` is **not** used for BTC in Story55. See `docs/finance-btc-2025.md`.
+
+## Supabase Storage asset routing (2026-11-07)
+A public, read-only-from-frontend Storage bucket `ximeng-assets` has been created in the connected Supabase project `ximeng-phone-ai` (`zmnufhswpnreeseyamlv`). The 12 D06 photo names are centrally registered in `src/services/assets/wish-media.js` under `https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/<filename>`. The authored WeChat photos and wish catalog both use that one resolver; no extra app-specific photo base URLs.
+
+**Important:** The bucket currently has **zero objects**. The 12 user-supplied original JPEG files are prepared in `D06_Supabase_Storage_12_images.zip` with `d06/` paths, but this Supabase connector does not provide an object-storage binary upload action and the local file container does not have outbound network connectivity. No image upload success is claimed. The `tests/d06-supabase-image-integrity.test.mjs` release gate must remain red until all 12 public HTTPS JPEG URLs actually return HTTP 200. Do not merge PR #92 before that.
