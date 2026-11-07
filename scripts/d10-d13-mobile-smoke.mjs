@@ -16,18 +16,26 @@ async function unlock(){
  await page.locator('[data-action="passcode-key"][data-key="0"]').waitFor();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
 }
-async function visit(day,clock,appId,route){
- // Inject date/route before app boot: mutating localStorage on the *running*
- // page races against PhoneStore's background clock persistence.
- const k=await storageKey();
- await page.addInitScript(({k,day,clock,appId,route})=>{
-  const raw=localStorage.getItem(k);
+// A single pre-boot override is deterministic across repeated date changes:
+// current PhoneStore timers cannot overwrite the QA target saved in sessionStorage.
+await page.addInitScript(()=>{
+ try{
+  const raw=sessionStorage.getItem('ximeng-qa-target');
   if(!raw)return;
-  const s=JSON.parse(raw);
+  sessionStorage.removeItem('ximeng-qa-target');
+  const {k,day,clock,appId,route}=JSON.parse(raw);
+  const previous=localStorage.getItem(k);
+  if(!previous)return;
+  const s=JSON.parse(previous);
   Object.assign(s,{day,clock,unlocked:false,poweredOff:false,emergencyCharge:false,batteryPercent:95});
-  s.story55.activeScene=null;s.nav={current:{appId,route,params:{}},stack:[]};
+  s.story55.activeScene=null;
+  s.nav={current:{appId,route,params:{}},stack:[]};
   localStorage.setItem(k,JSON.stringify(s));
- },{k,day,clock,appId,route});
+ }catch(e){console.error('QA_BOOT_OVERRIDE_FAILURE',String(e));}
+});
+async function visit(day,clock,appId,route){
+ const k=await storageKey();
+ await page.evaluate(target=>sessionStorage.setItem('ximeng-qa-target',JSON.stringify(target)),{k,day,clock,appId,route});
  await page.reload({waitUntil:'domcontentloaded'});
  await unlock();
  await page.waitForFunction(({k,day,appId})=>{
