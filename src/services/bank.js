@@ -42,10 +42,13 @@ export function exchange(store,amount){
    const id='btc-usd-'+date55(s.day)+'-'+sequence;
    if(wallet.digitalTransactions.some(t=>t.id===id)||s.bankData.transactions.some(t=>t.id===id))throw Error('交易编号重复');
    const usd=usdCents/100,date=date55(s.day);
+   s.bankData.transactions??=[];
    s.bankData.balance=(cents(s.bankData.balance)+usdCents)/100;
    s.bankData.transactions.unshift({id,label:'MIRAGE · BTC 兑换',note:`${btc.toFixed(8)} BTC × $${quote.toFixed(2)}/BTC`,
       amount:usd,asset:'BTC',assetAmount:btc,quoteUsdRate:quote,quoteSource:HISTORICAL_BTC_USD_SOURCE,time:s.clock,date});
    wallet.digitalTransactions.unshift({id,orderId:null,type:'BTC_TO_USD',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,date,day:s.day,clock:s.clock});
+   wallet.transactions??=[];
+   wallet.transactions.unshift({id,type:'EXCHANGE',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,day:s.day,time:s.clock,description:'MIRAGE → PACIFIC'});
    s.events??=[];s.events.push({type:'btc_usd_exchanged',id,assetAmount:btc,usdAmount:usd,quoteUsdRate:quote,day:s.day,clock:s.clock});
   });
   return;
