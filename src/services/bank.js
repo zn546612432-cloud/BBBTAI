@@ -7,6 +7,29 @@ export function ensureBank(s){
  s.bankData=openingBank();return true;
 }
 export const cents=n=>Math.round(Number(n)*100);
+/** One synchronous ledger posting contract used by optional purchases and
+ * BTC cash-outs. Call only inside the existing PhoneStore.update() callback.
+ * A transaction ID is committed with its balance mutation, exactly once. */
+export function postBankTransaction(s,{id,label,amount,metadata={}}){
+ ensureBank(s);
+ const n=Number(amount),value=cents(n);
+ if(!id||!label||!Number.isFinite(n)||!Number.isSafeInteger(value)||value===0||Math.abs(value/100-n)>0.000001)
+  throw Error('银行交易金额或编号无效');
+ s.bankData.transactions??=[];
+ if(s.bankData.transactions.some(t=>t.id===id))throw Error('该笔银行交易已处理');
+ const old=cents(s.bankData.balance);
+ if(!Number.isSafeInteger(old)||old+value<0)throw Error('银行余额不足，请先兑换资产或积攒资金');
+ const tx={id,label,amount:value/100,date:isStory55(s)?date55(s.day):dateLabel(s),time:s.clock,...metadata};
+ s.bankData.balance=(old+value)/100;
+ s.bankData.transactions.unshift(tx);
+ return tx;
+}
+export function payBankPurchase(s,{id,title,price,metadata={}}){
+ const n=Number(price);
+ if(!Number.isFinite(n)||n<=0)throw Error('商品金额无效');
+ return postBankTransaction(s,{id,label:title,amount:-n,metadata});
+}
+
 export function transfer(store,{recipient,account,amount,note=''}){
  const name=String(recipient||'').trim(),destination=String(account||'').trim(),memo=String(note||'').trim(),value=cents(amount);
  if(!name||!destination)throw Error('请填写收款人和账号');
@@ -42,10 +65,8 @@ export function exchange(store,amount){
    const id='btc-usd-'+date55(s.day)+'-'+sequence;
    if(wallet.digitalTransactions.some(t=>t.id===id)||s.bankData.transactions.some(t=>t.id===id))throw Error('交易编号重复');
    const usd=usdCents/100,date=date55(s.day);
-   s.bankData.transactions??=[];
-   s.bankData.balance=(cents(s.bankData.balance)+usdCents)/100;
-   s.bankData.transactions.unshift({id,label:'MIRAGE · BTC 兑换',note:`${btc.toFixed(8)} BTC × $${quote.toFixed(2)}/BTC`,
-      amount:usd,asset:'BTC',assetAmount:btc,quoteUsdRate:quote,quoteSource:HISTORICAL_BTC_USD_SOURCE,time:s.clock,date});
+   postBankTransaction(s,{id,label:'MIRAGE · BTC 兑换',amount:usd,
+    metadata:{note:`${btc.toFixed(8)} BTC × ${quote.toFixed(2)}/BTC`,asset:'BTC',assetAmount:btc,quoteUsdRate:quote,quoteSource:HISTORICAL_BTC_USD_SOURCE}});
    wallet.digitalTransactions.unshift({id,orderId:null,type:'BTC_TO_USD',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,date,day:s.day,clock:s.clock});
    wallet.transactions??=[];
    wallet.transactions.unshift({id,type:'EXCHANGE',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,day:s.day,time:s.clock,description:'MIRAGE → PACIFIC'});
