@@ -166,7 +166,11 @@ export function mountTelephony(getContext){
    if(!call&&a.playing){a.audio?.pause();a.playing.cancel();}
    if(call?.state==='connected'){
     const n=document.querySelector('.tel-call-island span:last-child');
-    if(n){const sec=Math.max(0,Math.floor((Date.now()-call.answeredAt)/1000));n.textContent=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;}
+    const duration=Math.max(0,Math.floor((Date.now()-call.answeredAt)/1000));
+    const label=`${String(Math.floor(duration/60)).padStart(2,'0')}:${String(duration%60).padStart(2,'0')}`;
+    if(n)n.textContent=label;
+    const fullscreenTimer=document.querySelector('.tel-call-identity p');
+    if(fullscreenTimer)fullscreenTimer.textContent=label;
    }
    if(call?.state==='ringing'&&call.forced){
     const countdown=document.querySelector('.tel-call-auto');
