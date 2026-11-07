@@ -194,20 +194,42 @@ try{
  const paidDinner=await widgetState();
  assert.equal(paidDinner.bankData.balance,650);
  assert.equal(paidDinner.bankData.transactions.filter(x=>x.wishId==='d06-dinner').length,1);
- assert.equal(paidDinner.content.reminders.find(x=>x.wishId==='d06-dinner').done,true);
+ assert.equal(paidDinner.content.reminders.find(x=>x.wishId==='d06-dinner').done,false,
+  'paid reservation must stay pending until Ximeng agrees and Zai Zai books');
+ assert.equal(paidDinner.content.conversations.wechat.find(x=>x.id==='group')
+  .messages.some(m=>m.id.startsWith('wish-dinner-thanks-')),false);
  console.log('PASS home widget: direct purchase modal, repaired legacy done, paid receipt, one debit');
  await widgetPage.locator('[data-action="reminder-wish-chat"]').click();
  await widgetPage.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
-  return s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/group'&&
-   s.content.conversations.wechat.find(x=>x.id==='group')?.messages.some(m=>m.id==='wish-dinner-01');
+  return s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/group';
  },key,{timeout:30000});
+ const dinerInput=widgetPage.locator('form[data-form="send-chat"] input[name="text"]');
+ await dinerInput.waitFor({state:'visible'});
+ assert.match(await dinerInput.inputValue(),/好啊，一起去吃饭/);
+ const beforeDinnerSend=await widgetState();
+ assert.equal(beforeDinnerSend.content.conversations.wechat.find(x=>x.id==='group')
+  .messages.some(m=>m.id.startsWith('wish-dinner-thanks-')),false,
+  'no automatic thanks before player sends');
+ await widgetPage.locator('form[data-form="send-chat"] button[type="submit"]').click();
+ await widgetPage.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  const g=s.content.conversations.wechat.find(x=>x.id==='group');
+  return g?.messages.some(m=>m.id==='wish-dinner-player')&&
+    g?.messages.some(m=>m.id==='wish-dinner-booking-01');
+ },key,{timeout:90000});
  const dinnerResponse=await widgetState();
- assert.equal(dinnerResponse.content.conversations.wechat.find(x=>x.id==='group')
-  .messages.filter(m=>m.id==='wish-dinner-01').length,1);
- assert.equal(dinnerResponse.content.conversations.wechat.find(x=>x.id==='group')
-  .messages.some(m=>m.id==='wish-dinner-photo'),false);
- console.log('PASS dinner purchase triggers prompt WeChat booking confirmation; photo awaits evening');
+ const groupMsg=dinnerResponse.content.conversations.wechat.find(x=>x.id==='group').messages;
+ const order=['wish-dinner-player','wish-dinner-thanks-01','wish-dinner-thanks-02',
+  'wish-dinner-thanks-03','wish-dinner-thanks-04','wish-dinner-booking-ask',
+  'wish-dinner-booking-reply','wish-dinner-booking-01'].map(id=>groupMsg.findIndex(m=>m.id===id));
+ assert.ok(order.every(x=>x>=0),JSON.stringify(order));
+ assert.deepEqual(order,[...order].sort((a,b)=>a-b));
+ assert.equal(dinnerResponse.content.reminders.find(x=>x.wishId==='d06-dinner').done,true);
+ assert.equal(groupMsg.some(m=>m.id==='wish-dinner-photo'),false);
+ assert.equal(dinnerResponse.bankData.transactions.filter(x=>x.wishId==='d06-dinner').length,1);
+ await widgetPage.screenshot({path:path+'/07-xmeng-thanked-and-zaizai-booked.png',fullPage:true});
+ console.log('PASS WeChat native Send: Ximeng accepts -> friends thank -> Zai Zai books, photo waits until evening');
 
  if(errors.length)console.log('Browser warnings:\n'+errors.slice(0,20).join('\n'));
  if(failedUrls.length)console.log('HTTP FAILED URLS:',[...new Set(failedUrls)].slice(0,35));
