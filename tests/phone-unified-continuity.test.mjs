@@ -15,7 +15,7 @@ import {kiraMailTreatment,kiraMailDateLabel,KIRA_INTERACTIVE_MAILS} from '../src
 import {D01_OPENING,D01_ATTACHMENT} from '../src/story/d01/runtime.js';
 import {D02_MAIL,D02_A_MAIL} from '../src/story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,seedD03Contract,acceptD03Contract} from '../src/story/d03/contract.js';
-import {D04_CONTRACTS,D04_MAIL,seedD04Contracts,acceptD04Contract} from '../src/story/d04/contract.js';
+import {D04_CONTRACTS,DAILY_CONTRACTS,D04_MAIL,seedD04Contracts,acceptD04Contract} from '../src/story/d04/contract.js';
 import {HACKER_MAIL_ID} from '../src/apps/mirage/mission.js';
 
 const fresh=(day=4,clock='08:00')=>{
@@ -58,9 +58,10 @@ test('authored protagonist messages are never counted as unread and no fake NPC 
   from:'仔仔',text:'在看聊天時收到',day:4,clock:'11:01'});
  assert.equal(cv(s,'group').unread,0);
 });
-test('one scheduler registers D01–D05 with no duplicate or missing day',()=>{
- assert.deepEqual(PHONE_CHAT_TRACKS.map(x=>x.name),['D01','D02','D03','D04','D05']);
- assert.equal(new Set(PHONE_CHAT_TRACKS.map(x=>x.name)).size,5);
+test('one scheduler preserves D01–D05 and registers D08–D10 without duplicate daily engines',()=>{
+ assert.deepEqual(PHONE_CHAT_TRACKS.slice(0,5).map(x=>x.name),['D01','D02','D03','D04','D05']);
+ assert.deepEqual(PHONE_CHAT_TRACKS.slice(5).map(x=>x.name),['D08','D09','D10']);
+ assert.equal(new Set(PHONE_CHAT_TRACKS.map(x=>x.name)).size,PHONE_CHAT_TRACKS.length);
  const s=fresh(4,'08:20');
  tickPhoneStoryMessages(s,0);
  assert.equal(s.story55?.d04Chats?.morning?.started,true);
@@ -129,7 +130,7 @@ test('explicitly approved D01/D02 credential files and HACKER task are unaffecte
  const s=fresh();
  for(const id of [D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,HACKER_MAIL_ID])
   s.content.mail.unshift(mail(id));
- assert.deepEqual(new Set(KIRA_INTERACTIVE_MAILS),new Set([D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,D03_MAIL,...[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT].map(d=>D04_MAIL(d.id)),HACKER_MAIL_ID]));
+ assert.deepEqual(new Set(KIRA_INTERACTIVE_MAILS),new Set([D01_ATTACHMENT,D02_MAIL,D02_A_MAIL,D03_MAIL,...DAILY_CONTRACTS.map(d=>D04_MAIL(d.id)),HACKER_MAIL_ID]));
  assert.equal(kiraMailTreatment(s.content.mail.find(x=>x.id===D01_ATTACHMENT)),'explicit-key-file');
  assert.match(kiraDetail(s,D01_ATTACHMENT),/data-action="kira-d01-open-file"/);
  assert.match(kiraDetail(s,D02_MAIL),/data-action="kira-d02-open-file"/);

@@ -76,6 +76,39 @@
           "originDays": [
             7
           ]
+        },
+        "chat.d08-group": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text"
+          ],
+          "proof": "src/story/d08/dialogue.js",
+          "originDays": [
+            8
+          ]
+        },
+        "chat.d09-group": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text"
+          ],
+          "proof": "src/story/d09/dialogue.js",
+          "originDays": [
+            9
+          ]
+        },
+        "chat.d10-group": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text"
+          ],
+          "proof": "src/story/d10/dialogue.js",
+          "originDays": [
+            10
+          ]
         }
       }
     },
@@ -143,6 +176,39 @@
           "proof": "src/story/d06/commission.js",
           "originDays": [
             6
+          ]
+        },
+        "commission.d08-daily": {
+          "state": "wired-day",
+          "owner": "commissions",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/story/d08/commissions.js",
+          "originDays": [
+            8
+          ]
+        },
+        "commission.d09-daily": {
+          "state": "wired-day",
+          "owner": "commissions",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/story/d09/commissions.js",
+          "originDays": [
+            9
+          ]
+        },
+        "commission.d10-daily": {
+          "state": "wired-day",
+          "owner": "commissions",
+          "kinds": [
+            "commission"
+          ],
+          "proof": "src/story/d10/commissions.js",
+          "originDays": [
+            10
           ]
         }
       }

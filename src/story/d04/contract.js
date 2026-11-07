@@ -1,4 +1,7 @@
 import {D05_CONTRACTS} from '../d05/commissions.js';
+import {D08_CONTRACTS} from '../d08/commissions.js';
+import {D09_CONTRACTS} from '../d09/commissions.js';
+import {D10_CONTRACTS} from '../d10/commissions.js';
 import {D06_CONTRACT,D06_ORDER_ID} from '../d06/commission.js';
 import {completeNode,completed} from '../../services/story55/state.js';
 import {settleStory55Wallet} from '../../services/story55/projects.js';
@@ -18,7 +21,7 @@ export const D04_CONTRACTS=[
 ];
 const DAY=4;
 // Register daily definitions in the existing commission runner, with no new UI/steps.
-export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT];
+export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT,...D08_CONTRACTS,...D09_CONTRACTS,...D10_CONTRACTS];
 const publishDay=c=>c.day??DAY;
 const storyTag=c=>'storyD'+String(publishDay(c)).padStart(2,'0');
 const dateOf=day=>new Date(Date.UTC(2025,4,19)+(day-1)*86400000).toISOString().slice(0,10);

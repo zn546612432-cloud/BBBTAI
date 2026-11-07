@@ -1,0 +1,647 @@
+{
+  "schemaVersion": 2,
+  "day": 10,
+  "date": "2025-05-28",
+  "title": "D10 · 生活日常与三份MIRAGE委托",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": [
+    "story55",
+    "messaging",
+    "commissions",
+    "mirage",
+    "ghost",
+    "kira",
+    "bank"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d10-spectrum-test-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d10-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d10-spectrum-test",
+      "rewardUSD": 4000
+    },
+    {
+      "id": "d10-grey-index-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d10-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d10-grey-index",
+      "rewardUSD": 1400
+    },
+    {
+      "id": "d10-echo-port-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d10-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d10-echo-port",
+      "rewardUSD": 3000
+    },
+    {
+      "id": "d10-shopping-list-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "下午去超市，有没有要带的",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:23"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "09:23"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-shopping-list-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "洗衣液快没了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-shopping-list-01"
+      },
+      "requires": [
+        "d10-shopping-list-01"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-shopping-list-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "五号电池",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-shopping-list-02"
+      },
+      "requires": [
+        "d10-shopping-list-02"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-shopping-list-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "薯片",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-shopping-list-03"
+      },
+      "requires": [
+        "d10-shopping-list-03"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-shopping-list-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "什么口味",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-shopping-list-04"
+      },
+      "requires": [
+        "d10-shopping-list-04"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-shopping-list-06",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "都行，别芥末",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-shopping-list-05"
+      },
+      "requires": [
+        "d10-shopping-list-05"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-noodles-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "中午有人吃面吗",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:50"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "11:50"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-noodles-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "等会儿再说",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-noodles-01"
+      },
+      "requires": [
+        "d10-noodles-01"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-noodles-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "昨天那袋咖啡豆谁开的",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-noodles-02"
+      },
+      "requires": [
+        "d10-noodles-02"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-noodles-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我，剩的都封好了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-noodles-03"
+      },
+      "requires": [
+        "d10-noodles-03"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-heat-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "今天太阳是真的狠",
+      "trigger": {
+        "type": "day-time",
+        "ref": "13:40"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "13:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-supermarket-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "超市排队排了半小时",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:21"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "16:21"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-supermarket-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我们还在停车场",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-supermarket-01"
+      },
+      "requires": [
+        "d10-supermarket-01"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-supermarket-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "马上好了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-supermarket-02"
+      },
+      "requires": [
+        "d10-supermarket-02"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-carry-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "到楼下了，谁下来搬东西",
+      "trigger": {
+        "type": "day-time",
+        "ref": "17:46"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "17:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-carry-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "我下去",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-carry-01"
+      },
+      "requires": [
+        "d10-carry-01"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-carry-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "薯片呢",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-carry-02"
+      },
+      "requires": [
+        "d10-carry-02"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-carry-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "你先搬",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d10-carry-03"
+      },
+      "requires": [
+        "d10-carry-03"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d10-dinner-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "汤在炉上，回来自己盛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "20:02"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "20:02"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d10-night-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d10-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "明天终于不用买东西了",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "22:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "仅当天00:00发布三份新委托，前一天不可提前接"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未手动接单时KIRA不发附件，未提交时银行无结算"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "同一委托只发一封附件邮件、只结算一次；群聊消息不重复"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "刷新与再次打开群聊不重播，D01–D07历史不被覆盖"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "MIRAGE接单→KIRA唯一附件→Files打开Ghost→顺序执行→手动提交→银行入账"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "跳日后历史群聊静默补齐，委托到期不能再接"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "不新增图片；D06/D07既有收货照片仍按购买条件触发"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "全部消息使用2025年5月真实日期与游戏时钟并保持合理间隔"
+    },
+    {
+      "id": "check-dialogue",
+      "type": "dialogue",
+      "verify": "群聊20句含无人回复的独立消息，不自动冒充熙蒙"
+    },
+    {
+      "id": "check-finance",
+      "type": "finance",
+      "verify": "未完成的委托无奖励，手动提交成功每单入账一次"
+    }
+  ]
+}

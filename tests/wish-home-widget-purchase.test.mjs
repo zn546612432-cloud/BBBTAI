@@ -4,6 +4,7 @@ import {reminderWidget} from '../src/system/shell.js';
 import {toggleReminder} from '../src/services/reminders.js';
 import {beginD06Celebration,addWish,purchaseWish,tickWishes,syncWishReminders,d06DinnerDraft,sendD06DinnerReply,D06_DINNER_PLAYER_LINE} from '../src/services/wishes/index.js';
 import {openWishPurchase,wishPurchaseOverlay,handle} from '../src/apps/reminders/index.js';
+import {listHome} from '../src/apps/reminders/features/lists/index.js';
 
 const conversation=id=>({id,name:id,messages:[],unread:0});
 const initial=()=>({
@@ -64,7 +65,7 @@ test('Home widget opens a confirmation, one purchase makes receipt, then opens W
  assert.equal(f.store.get().bankData.transactions.length,1);
  assert.equal(f.store.get().content.reminders[0].done,false,'payment remains pending until dinner is booked');
  assert.match(wishPurchaseOverlay(f.store.get()),/聚餐费用已支付/);
- assert.match(wishPurchaseOverlay(f.store.get()),/去狼崽团回复大家/);
+ assert.match(wishPurchaseOverlay(f.store.get()),/请和大家确认聚餐安排/);
  handle('reminder-wish-chat',{},f.ctx);
  assert.equal(wishPurchaseOverlay(f.store.get()),'');
  assert.deepEqual(f.navigation[0],{appId:'wechat',route:'/chat/group',params:{}});
@@ -128,4 +129,64 @@ test('Old paid dinner save removes premature booking; player Send still required
  assert.equal(group.messages.filter(m=>m.id==='wish-dinner-booking-01').length,1);
  assert.equal(s.bankData.balance,650);
  assert.equal(s.bankData.transactions.length,1);
+});
+
+test('D06 mechanical keyboard purchase receipt is a phone order, not a spoiler of future chat/photos',()=>{
+ const f=fixture();
+ f.store.update(s=>{
+  s.content.conversations.wechat.find(c=>c.id==='group').messages.push({
+   id:'keyboard-wish-source',wishId:'d06-keyboard',text:'新键盘',from:'小辛'
+  });
+  addWish(s,'d06-keyboard');
+ });
+ assert.equal(openWishPurchase('d06-keyboard',f.ctx),true);
+ const before=wishPurchaseOverlay(f.store.get());
+ assert.match(before,/是否花费 899 USD/);
+ assert.doesNotMatch(before,/到货后会收到微信|对应人物/);
+ handle('reminder-wish-buy',{},f.ctx);
+ const receipt=wishPurchaseOverlay(f.store.get());
+ assert.match(receipt,/订单已提交/);
+ assert.match(receipt,/已从 PACIFIC 银行扣除 899 USD/);
+ assert.match(receipt,/预计 5月26日下午送达/);
+ assert.doesNotMatch(receipt,/D08|对应人物|微信|照片|收货后|玩家|剧情|触发/);
+ assert.equal(f.store.get().bankData.balance,101);
+ assert.equal(f.store.get().bankData.transactions.length,1);
+ assert.equal(f.store.get().content.reminders.find(r=>r.wishId==='d06-keyboard').done,false);
+});
+
+test('The same native order receipt uses a calendar date for D07 purchases too',()=>{
+ const f=fixture();
+ f.store.update(s=>{
+  s.day=7;s.clock='10:25';
+  s.content.conversations.wechat.find(c=>c.id==='group').messages.push({
+   id:'headphones-wish-source',wishId:'d07-headphones',text:'耳机',from:'阿威'
+  });
+  addWish(s,'d07-headphones');
+ });
+ assert.equal(openWishPurchase('d07-headphones',f.ctx),true);
+ handle('reminder-wish-buy',{},f.ctx);
+ const receipt=wishPurchaseOverlay(f.store.get());
+ assert.match(receipt,/预计 5月27日下午送达/);
+ assert.doesNotMatch(receipt,/D09|对应人物|微信|照片|收货后/);
+ assert.equal(f.store.get().bankData.balance,780);
+});
+
+test('Dinner payment dialogue does not preannounce its later photo or Zai Zai booking',()=>{
+ const f=fixture();addDinner(f.store);
+ assert.equal(openWishPurchase('d06-dinner',f.ctx),true);
+ const before=wishPurchaseOverlay(f.store.get());
+ assert.doesNotMatch(before,/照片|仔仔再安排订餐/);
+ handle('reminder-wish-buy',{},f.ctx);
+ const after=wishPurchaseOverlay(f.store.get());
+ assert.match(after,/聚餐费用已支付/);
+ assert.match(after,/请和大家确认聚餐安排/);
+ assert.match(after,/去群聊回复/);
+ assert.doesNotMatch(after,/照片|饭后发来|仔仔再安排|D06|剧情/);
+ assert.equal(f.store.get().content.reminders.find(r=>r.wishId==='d06-dinner').done,false);
+});
+
+test('Reminders show ordinary calendar deadline, not a hidden game-day code',()=>{
+ const html=listHome([{id:'wish-d06-dinner',title:'今晚和大家吃饭',wishId:'d06-dinner',done:false}], '');
+ assert.match(html,/5月24日18:30前/);
+ assert.doesNotMatch(html,/D06 限时/);
 });

@@ -1,0 +1,141 @@
+name: D08-D10 quiet days phone review (keep original four Pages sites)
+
+on:
+  push:
+    branches: [feature/d08-d10-quiet-days-20261107]
+    paths:
+      - '.github/workflows/d08-d10-review-pages.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'docs/story-packets/**'
+      - '.agents/skills/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: d08-d10-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d08-d10-20261107/
+    steps:
+      - name: Checkout unchanged production main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+      - name: Checkout isolated D08-D10 review commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: review
+      - name: Checkout retained Story55 reference
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test review and its strict v2 content packets
+        working-directory: review
+        run: |
+          npm ci
+          npm run story:audit
+          npm run story:check -- --strict docs/story-packets/d08.json docs/story-packets/d09.json docs/story-packets/d10.json
+          npm test
+      - name: Build unchanged production and its ordinary preview
+        working-directory: production
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist base-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist base-dist/preview
+          mv base-dist dist
+      - name: Preserve original Story55 comparison site
+        working-directory: story55
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+      - name: Copy Story55 under its established URL
+        run: |
+          mkdir -p production/dist/review/55-20261101
+          cp -a story55/dist/. production/dist/review/55-20261101/
+      - name: Preserve original Tai Vision comparison from main
+        working-directory: production
+        run: |
+          mv dist retained-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p retained-dist/review/tai-vision-20261105
+          cp -a dist/. retained-dist/review/tai-vision-20261105/
+          rm -rf dist
+          mv retained-dist dist
+      - name: Audit original four sites before adding fifth
+        working-directory: production
+        run: node scripts/audit-pages-site.mjs dist
+      - name: Build isolated D08-D10 review with its own localStorage namespace
+        working-directory: review
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d08-d10-20261107/" npm run build:pages
+          test -s dist/index.html
+          grep -q phone-preview dist/index.html
+          test -s dist/release.json
+      - name: Add D08-D10 review without overwriting the four originals
+        run: |
+          mkdir -p production/dist/review/d08-d10-20261107
+          cp -a review/dist/. production/dist/review/d08-d10-20261107/
+          for file in             production/dist/index.html             production/dist/preview/index.html             production/dist/review/55-20261101/index.html             production/dist/review/tai-vision-20261105/index.html             production/dist/review/d08-d10-20261107/index.html; do
+            test -s "$file"
+          done
+      - name: Compress icon atlases for mobile
+        run: |
+          python3 -m pip install --quiet Pillow==11.3.0
+          (cd production && python3 scripts/optimize-icon-atlases.py dist)
+      - name: Validate all five release URL roots and reasonable site size
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const base='production/dist';
+          const sites=[
+            ['.','/BBBTAI/'],
+            ['preview','/BBBTAI/preview/'],
+            ['review/55-20261101','/BBBTAI/review/55-20261101/'],
+            ['review/tai-vision-20261105','/BBBTAI/review/tai-vision-20261105/'],
+            ['review/d08-d10-20261107','/BBBTAI/review/d08-d10-20261107/']
+          ];
+          for(const [folder,root] of sites){
+            const dir=path.join(base,folder);
+            const release=JSON.parse(fs.readFileSync(path.join(dir,'release.json'),'utf8'));
+            const html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
+            if(!release.url.startsWith(root+'releases/')||!html.includes(release.url+'src/main.js'))throw Error('Release URL mismatch '+folder);
+            if(folder!=='.'&&!html.includes('phone-preview'))throw Error('Preview flag absent '+folder);
+            if(!fs.existsSync(path.join(dir,'releases',release.version,'src/main.js')))throw Error('Versioned entry missing '+folder);
+          }
+          let size=0;
+          function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,ent.name);if(ent.isDirectory())walk(p);else if(ent.isFile())size+=fs.statSync(p).size;}}
+          walk(base);
+          console.log('Total Pages size (MiB)',(size/1048576).toFixed(2));
+          if(size>=450*1048576)throw Error('Too large to replace existing Pages artifact');
+          NODE
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production/dist
+      - name: Publish unchanged production and isolated D08-D10 review
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: '1800000'

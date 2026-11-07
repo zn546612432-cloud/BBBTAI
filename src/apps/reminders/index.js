@@ -1,4 +1,4 @@
-import {isStory55} from '../../services/story55/state.js';
+import {isStory55,date55} from '../../services/story55/state.js';
 import {D02_REMINDER,d02CompleteBuild,toggleD02Build} from '../../story/d02/runtime.js';
 import {objectives55} from '../../services/story55/views.js';
 import {btn,esc} from '../../system/ui.js';
@@ -31,9 +31,11 @@ export function wishPurchaseOverlay(s){
  if(!w||!r)return '';
  if(recentPurchase&&r.purchasedDay){
   const dinner=w.kind==='event';
-  const caption=dinner
-   ?'钱已经付了。去狼崽团回复大家，再由仔仔安排订餐。如果订得到位子就今晚19:30见，照片会在饭后发来。'
-   :'预计 D'+String(r.deliveryDay).padStart(2,'0')+' 下午送达。收货后会收到对应人物的微信和照片。';
+  // Purchase receipts describe what the phone knows now: payment and ETA.
+  // Never narrate future WeChat messages, photos or game-day numbers to the player.
+  const deliveryDate=!dinner&&Number.isInteger(r.deliveryDay)?date55(r.deliveryDay):null;
+  const caption=dinner?'请和大家确认聚餐安排。':
+   deliveryDate?'预计 '+Number(deliveryDate.slice(5,7))+'月'+Number(deliveryDate.slice(8,10))+'日下午送达。':'订单已提交。';
   return '<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="购买成功"><div class="wx-wish-panel"><strong>'+
     (dinner?'聚餐费用已支付':'订单已提交')+'</strong><p>已从 PACIFIC 银行扣除 '+w.price+' USD。'+caption+
     '</p><div class="wx-wish-actions"><button type="button" data-action="reminder-wish-finish">完成</button>'+
@@ -42,7 +44,7 @@ export function wishPurchaseOverlay(s){
  }
  if(pendingPurchase&&r.status==='saved'){
   return '<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="确认心愿购买"><div class="wx-wish-panel"><strong>是否花费 '+w.price+' USD 购买'+esc(w.item)+'？</strong><p>从银行余额中扣款。'+
-    (w.kind==='physical'?'到货后会收到微信。':'付款后去微信群里答应，仔仔再安排订餐。')+
+    (w.kind==='event'?'付款后请和大家确认安排。':'')+
     '</p><div class="wx-wish-actions"><button type="button" data-action="reminder-wish-cancel">取消</button><button type="button" data-action="reminder-wish-buy">购买</button></div></div></div>';
  }
  return '';
