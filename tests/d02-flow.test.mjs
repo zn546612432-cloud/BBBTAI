@@ -198,7 +198,7 @@ test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not au
  assert.equal(c.messages.filter(m=>m.storyD02).length,1);
  assert.equal(c.messages.at(-1).from,'小辛');
  assert.equal(c.messages.at(-1).time,'16:08');
- assert.match(d02Draft(s,c.id).text,/促销短信/);
+ assert.match(d02Draft(s,c.id).text,/促銷短信/);
  tickD02Wechat(s,2000);
  assert.equal(c.messages.filter(m=>m.storyD02).length,1);
  assert.ok(sendD02WeChat(store,c.id,d02Draft(s,c.id).text,3000).messageId);
