@@ -74,7 +74,7 @@ export function auditStorySkill(root=process.cwd()){
  const checks=[
   [agents.includes('.agents/skills/ximeng-story-fill/SKILL.md'),'AGENTS.md 必须指向技能'],
   [skill.includes('先讨论、不写代码'),'Skill 必须尊重只讨论'],
-  [skill.includes('不自动')||skill.includes('不是游戏运行时'),'Skill 不得声称直接运行 JSON'],
+  [skill.includes('不是全自动剧情执行引擎')||skill.includes('不会自动执行')||skill.includes('不是游戏运行时'),'Skill 不得声称直接运行 JSON'],
   [systemMap.includes('src/services/router.js'),'PhoneRouter 路径失真'],
   [!systemMap.includes('src/system/router.js'),'PhoneRouter 不应引用不存在的旧路径'],
   [code.includes('appendAuthoredPhoneMessage'),'消息原生写入 API 不存在'],
