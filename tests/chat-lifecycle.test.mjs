@@ -37,24 +37,25 @@ test('a next-day reconciliation finishes yesterday groups at their original date
 
 test('same-day topic transition reconciles the old group and paces only the new live scene',()=>{
  const s=fresh(4,'08:20');d04Track.tick(s,0);d04Track.tick(s,500);
- s.clock='09:35';d04Track.tick(s,3000);
+ s.clock='10:50';d04Track.tick(s,3000);
  assert.ok(s.story55.d04Chats.morning.completed);
  assert.ok(s.notifications.filter(n=>n.messageId?.startsWith('d04-morning-')).every(n=>n.silent));
- assert.equal(messages(s,'group','d04-earbuds-').length,0);
- d04Track.tick(s,3500);assert.equal(messages(s,'group','d04-earbuds-').length,1);
- d04Track.tick(s,4000);assert.equal(messages(s,'group','d04-earbuds-').length,1);
-});
+ assert.equal(messages(s,'group','d04-video-').length,0);
+ d04Track.tick(s,3500);assert.equal(messages(s,'group','d04-video-').length,1);
+ d04Track.tick(s,4000);assert.equal(messages(s,'group','d04-video-').length,1);
+ assert.equal(messages(s,'group','d04-earbuds-').length,0,'Korea earbuds now happen after class');
 
+});
 test('next-day and several-day replies differ; a resolved computer never asks to repair it again',()=>{
  const s=fresh(5,'08:00');tickPhoneStoryMessages(s,0);
- assert.match(nativeWeChatComposer(s,'hufeng').text,/昨天.*電腦弄好了叫你/);
+ assert.equal(nativeWeChatComposer(s,'hufeng').text,null,'deleted repair thread never comes back');
+ assert.match(nativeWeChatComposer(s,'wang').text,/昨天忙忘了/);
  s.day=6;tickPhoneStoryMessages(s,1000);
- assert.match(d04Track.draft(s,'hufeng').text,/電腦已經弄好了/);
- const invitation=d04Track.draft(s,'wang');assert.match(invitation.text,/前幾天/);
+ assert.match(d04Track.draft(s,'wang').text,/前幾天/);
  s.day=8;tickPhoneStoryMessages(s,2000);
- assert.equal(d04Track.draft(s,'wang'),null,'expired invitations have no indefinite draft');
-});
+ assert.equal(d04Track.draft(s,'wang'),null,'expired invitation has no indefinite draft');
 
+});
 test('late player sends are stamped today, NPC answers wait, reload is idempotent, and no dinner is invented',()=>{
  const s=fresh(5,'08:00');tickPhoneStoryMessages(s,0);
  const text=nativeWeChatComposer(s,'wang').text;assert.match(text,/昨天忙忘了/);
@@ -98,34 +99,39 @@ test('today NPC and player turns outrank old replies, which can be handled after
 
 test('crossing midnight during a late reply quietly settles earned NPC tail using the actual reply date',()=>{
  const s=fresh(5,'23:59');d04Track.tick(s,0);
- const draft=d04Track.draft(s,'hufeng');d04Track.send(store(s),'hufeng',draft.text,1000);
+ const draft=d04Track.draft(s,'wang');
+ assert.ok(draft);
+ d04Track.send(store(s),'wang',draft.text,1000);
  s.day=6;s.clock='08:00';d04Track.tick(s,2000);
- const replies=messages(s,'hufeng','d04-hufeng-am-late-resolved');
- assert.equal(replies.length,2);assert.ok(replies.every(m=>m.day===5&&m.time==='23:59'));
+ const replies=messages(s,'wang','d04-wang-dinner-late-nextDay-');
+ assert.equal(replies.length,2);
+ assert.ok(replies.every(m=>m.day===5&&m.time==='23:59'));
  assert.equal(replies[1].historical,true);
  assert.ok(s.notifications.filter(n=>n.messageId===replies[1].id).every(n=>n.silent));
-});
 
+});
 test('real hours away do not expire a conversation while its game-time window is unchanged',()=>{
- const s=fresh();d04Track.tick(s,0);d04Track.tick(s,1000);
+ const s=fresh(4,'17:45');d04Track.tick(s,0);d04Track.tick(s,1000);
  d04Track.tick(s,36000000);
- assert.equal(messages(s,'hufeng','d04-hufeng-am-').length,2);
- assert.equal(d04Track.draft(s,'hufeng').text,'有');
- assert.equal(s.story55.d04Chats['hufeng-am'].historySettled,undefined);
-});
+ assert.equal(messages(s,'wang','d04-wang-dinner-').length,2);
+ assert.equal(d04Track.draft(s,'wang').text,'你請？');
+ assert.equal(s.story55.d04Chats['wang-dinner'].historySettled,undefined);
 
+});
 test('legacy dueAt/nextAt saves preserve sent messages and only catch up the earned NPC prefix',()=>{
- const s=fresh(5,'08:00');
+ const s=fresh(5,'08:00'),c=cv(s,'hufeng');
+ c.messages.push({id:'historic-personal',from:'胡枫',text:'過去的正常歷史',day:0,time:'11:00',sentDate:'2024-03-10'});
+ c.messages.push({id:'d04-hufeng-am-0',from:'胡枫',text:'阿蒙',day:4,time:'09:50',storyD04:true});
+ c.messages.push({id:'d04-hufeng-am-2',from:'me',text:'有',day:4,time:'09:51',storyD04:true});
  s.story55.d04Chats={'hufeng-am':{started:true,index:3,nextAt:123,completed:false}};
- cv(s,'hufeng').messages.push({id:'d04-hufeng-am-2',from:'me',text:'有',day:4,time:'16:20',sentDate:'2025-05-22',storyD04:true});
- d04Track.tick(s,1000);
- const tail=messages(s,'hufeng','d04-hufeng-am-');
- assert.equal(tail.filter(m=>m.from==='me').length,1);
- assert.ok(tail.some(m=>m.text==='真的？！'&&m.time==='16:20'&&m.historical));
- assert.equal(tail.some(m=>m.text==='灰比你頭髮還多'),false);
- const count=tail.length;d04Track.tick(s,999999);assert.equal(messages(s,'hufeng','d04-hufeng-am-').length,count);
-});
+ assert.equal(tickPhoneStoryMessages(s,1000),true);
+ assert.deepEqual(c.messages.filter(m=>m.id.startsWith('d04-hufeng-am-')),[]);
+ assert.equal(c.messages.find(m=>m.id==='historic-personal')?.text,'過去的正常歷史');
+ const count=c.messages.length;
+ tickPhoneStoryMessages(s,999999);
+ assert.equal(c.messages.length,count,'cancelled script must not regenerate');
 
+});
 test('silent history still contributes exact unread and opening the conversation clears it once',()=>{
  const s=fresh(6,'08:00');tickPhoneStoryMessages(s,0);
  const c=cv(s,'group');
