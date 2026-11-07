@@ -25,6 +25,18 @@ export function syncWishReminders(s){
   if(item.done!==done){item.done=done;changed=true;}
   if(item.wishStatus!==r.status){item.wishStatus=r.status;changed=true;}
  }
+ // Existing saves may already have paid $350 while the old scheduler kept
+ // the confirmation until 19:30. Rebase only that pending confirmation;
+ // never debit again or replace anything already delivered.
+ const boughtDinner=s.story55?.wishes?.records?.['d06-dinner'];
+ const confirmation=s.story55?.wishes?.story?.lines?.find(x=>x.id==='wish-dinner-01');
+ if(boughtDinner?.purchasedDay&&boughtDinner?.purchasedClock&&confirmation){
+  if(confirmation.dueDay!==boughtDinner.purchasedDay||confirmation.dueClock!==boughtDinner.purchasedClock){
+   confirmation.dueDay=boughtDinner.purchasedDay;
+   confirmation.dueClock=boughtDinner.purchasedClock;
+   changed=true;
+  }
+ }
  return changed;
 }
 
