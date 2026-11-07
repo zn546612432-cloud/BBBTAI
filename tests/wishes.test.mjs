@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginD06Celebration,tickWishes,addWish,purchaseWish,getWish,wishExpired} from '../src/services/wishes/index.js';
+import {beginD06Celebration,tickWishes,addWish,purchaseWish,getWish,wishExpired,sendD06DinnerReply,D06_DINNER_PLAYER_LINE} from '../src/services/wishes/index.js';
 
 const conversation=id=>({id,name:id==='group'?'狼崽团':id,messages:[],unread:0});
 function phone({day=6,clock='18:00',wallet=true,balance=5000}={}){
@@ -62,13 +62,21 @@ test('D06 timed dinner expires while physical gifts remain purchasable',()=>{
  assert.throws(()=>purchaseWish(s,'d06-dinner'));
  assert.equal(purchaseWish(s,'d06-keyboard'),true);
 });
-test('D07 follows the existing celebration without inventing a dinner if unpaid',()=>{
+test('D07 mentions dinner only if Ximeng actually accepted the paid invitation',()=>{
  const s=phone();beginD06Celebration(s);flush(s);
  s.day=7;s.clock='11:00';flush(s);
  assert.equal(all(s).some(m=>m.id==='d07-chat-01'),true);
  assert.equal(all(s).some(m=>m.id==='d07-dinner-after'),false);
+ const paidButSilent=phone();beginD06Celebration(paidButSilent);flush(paidButSilent);
+ addWish(paidButSilent,'d06-dinner');purchaseWish(paidButSilent,'d06-dinner');
+ paidButSilent.day=7;paidButSilent.clock='11:00';flush(paidButSilent);
+ assert.equal(all(paidButSilent).some(m=>m.id==='d07-dinner-after'),false,'payment alone does not mean dinner happened');
  const bought=phone();beginD06Celebration(bought);flush(bought);
  addWish(bought,'d06-dinner');purchaseWish(bought,'d06-dinner');
+ assert.equal(all(bought).some(m=>m.id==='wish-dinner-booking-01'),false);
+ const store={get:()=>bought,update:fn=>fn(bought)};
+ assert.equal(sendD06DinnerReply(store,'group',D06_DINNER_PLAYER_LINE,0).handled,true);
+ flush(bought);
  bought.day=7;bought.clock='11:00';flush(bought);
  assert.equal(all(bought).some(m=>m.id==='d07-dinner-after'),true);
 });
