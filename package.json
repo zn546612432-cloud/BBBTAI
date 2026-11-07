@@ -1,1 +1,17 @@
-{"name":"ximeng-phone","version":"0.1.0","private":true,"type":"module","scripts":{"dev":"node server/dev.mjs","build":"node scripts/build.mjs","build:pages":"node scripts/build-pages.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"chess.js":"1.4.0"}}
+{
+  "name": "ximeng-phone",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "build:pages": "node scripts/build-pages.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "story:check": "node scripts/validate-story-packet.mjs",
+    "story:example": "node scripts/validate-story-packet.mjs --strict .agents/skills/ximeng-story-fill/examples/d06-dinner.example.json"
+  },
+  "dependencies": {
+    "chess.js": "1.4.0"
+  }
+}
