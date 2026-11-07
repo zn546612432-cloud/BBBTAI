@@ -128,7 +128,7 @@ test('All 9 commissions use real MIRAGE acceptance → KIRA single attachment �
    mirageHandle('mc-d04-submit',{dataset:{id:def.id}},c);
    assert.equal(s.bankData.balance,settled,'no duplicate payout');
   }
-  assert.equal(s.bankData.transactions.filter(t=>t.storyD0+day).length,0);
+  assert.equal(s.bankData.transactions.filter(t=>defs.some(d=>t.id==='d04-receipt-'+d.id)).length,3);
  }
 });
 
@@ -193,7 +193,7 @@ test('Shared scheduler sends one new D08-D10 group bubble per tick, preserving u
   const refreshed=structuredClone(s);
   for(let i=0;i<40;i++)tickPhoneStoryMessages(refreshed,now+i*2000);
   assert.equal(messages(refreshed,day).length,20,'reloading cannot redeliver');
-  assert.equal(nativeWeChatComposer(s,'group')?.text?.includes('训练'),false);
+  assert.ok(!messages(s,day).some(m=>m.from==='me'),'player lines must never be authored by background scheduler');
  }
 });
 
