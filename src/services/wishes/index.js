@@ -150,7 +150,10 @@ export function tickWishes(s,now=Date.now()){
  }
  st.delivered??=[];
  if(now<(st.nextAt||0))return changed;
- const line=st.lines.find(x=>!st.delivered.includes(x.id)&&eligibleLine(s,x));
+ // A paid dinner reservation deserves a prompt confirmation even while
+ // the earlier group celebration is still being delivered one line at a time.
+ const due=x=>!st.delivered.includes(x.id)&&eligibleLine(s,x);
+ const line=st.lines.find(x=>x.id==='wish-dinner-01'&&due(x))||st.lines.find(due);
  if(!line)return changed;
  const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:line.chat,
   messageId:line.id,from:line.from,text:line.text,kind:line.kind||'text',
