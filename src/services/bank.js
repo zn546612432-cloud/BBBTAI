@@ -68,8 +68,6 @@ export function exchange(store,amount){
    postBankTransaction(s,{id,label:'MIRAGE · BTC 兑换',amount:usd,
     metadata:{note:`${btc.toFixed(8)} BTC × ${quote.toFixed(2)}/BTC`,asset:'BTC',assetAmount:btc,quoteUsdRate:quote,quoteSource:HISTORICAL_BTC_USD_SOURCE}});
    wallet.digitalTransactions.unshift({id,orderId:null,type:'BTC_TO_USD',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,date,day:s.day,clock:s.clock});
-   wallet.transactions??=[];
-   wallet.transactions.unshift({id,type:'EXCHANGE',asset:'BTC',amount:-btc,usdAmount:usd,quoteUsdRate:quote,day:s.day,time:s.clock,description:'MIRAGE → PACIFIC'});
    s.events??=[];s.events.push({type:'btc_usd_exchanged',id,assetAmount:btc,usdAmount:usd,quoteUsdRate:quote,day:s.day,clock:s.clock});
   });
   return;
