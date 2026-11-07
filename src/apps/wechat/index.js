@@ -6,7 +6,7 @@ import {recallWeChatMessage} from './features/recall/index.js';
 import {speakWeChatText} from './features/tts/index.js';
 import {selectEmojiCategory,editEmojiInput} from './features/emoji/index.js';
 import {esc} from '../../system/ui.js';
-import {beginD06Celebration,canAddWish,addWish,getWish,wishExpired} from '../../services/wishes/index.js';
+import {canAddWish,addWish,getWish,wishExpired} from '../../services/wishes/index.js';
 import {wishDefinition} from '../../services/wishes/catalog.js';
 import {renderMoments,handleMoment,submitMoment} from './features/moments/index.js';
 
@@ -63,10 +63,6 @@ export function dismissEmojiForKeyboard(input){
 }
 
 export function handle(action,target,ctx){
-  if(action==='wx-share-d06-prize'){
-    ctx.store.update(s=>beginD06Celebration(s));
-    return;
-  }
   if(action==='wx-wish-open'){
     const id=target.dataset.wishId;
     if(getWish(ctx.store.get(),id)){ctx.toast?.('已经加入提醒事项');return;}
