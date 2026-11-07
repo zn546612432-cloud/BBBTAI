@@ -75,8 +75,10 @@ test('exact-match legacy D10 and D11 migration keeps player sent text and no Fu 
  const player={id:'s55-return-1',from:'me',text:'真的？我马上过去。',day:11,time:'13:01'};
  const parent={id:'s55-return-2',from:'father',text:'好好干。',day:11,time:'13:02'};
  const old={id:'s55-return-0',from:'wang',text:OLD_RETURN[0][1],day:11,time:'13:00'};
- const d10={id:'d10-noodles-0',from:'胡枫',text:OLD_D10.noodles[0],day:10,time:'11:50'};
- group.messages.push(player,parent,old,d10);
+ const d10=group.messages.find(m=>m.id==='d10-noodles-0')||{id:'d10-noodles-0',from:'胡枫',day:10,time:'11:50'};
+ d10.text=OLD_D10.noodles[0];
+ if(!group.messages.includes(d10))group.messages.push(d10);
+ group.messages.push(player,parent,old);
  syncD10D13Content(s);
  assert.equal(group.messages.includes(player),true);
  assert.equal(player.text,'真的？我马上过去。');
