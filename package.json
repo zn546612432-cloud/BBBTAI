@@ -10,7 +10,9 @@
     "test": "node --test tests/*.test.mjs",
     "story:check": "node scripts/validate-story-packet.mjs",
     "story:example": "node scripts/validate-story-packet.mjs --strict .agents/skills/ximeng-story-fill/examples/d06-dinner.example.json",
-    "story:new": "node scripts/new-story-day.mjs"
+    "story:new": "node scripts/new-story-day.mjs",
+    "story:apps": "node scripts/list-story-app-capabilities.mjs",
+    "story:audit": "node scripts/audit-story-skill.mjs"
   },
   "dependencies": {
     "chess.js": "1.4.0"
