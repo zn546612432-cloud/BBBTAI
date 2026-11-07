@@ -4,6 +4,7 @@ import {wishDefinition} from './catalog.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {celebration,privateScenes,nextDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
 import {completed,date55} from '../story55/state.js';
+import {payBankPurchase} from '../bank.js';
 
 const today=s=>date55(s.day);
 const perDay=s=>s.story55?.version===1&&!s.story55?.ended;
@@ -33,13 +34,7 @@ export function purchaseWish(s,id){
  const w=wishDefinition(id),r=record(s,id);
  if(!w||!r||r.status!=='saved')throw Error('请先把心愿加入提醒事项');
  if(wishExpired(s,id))throw Error('这项聚餐安排已经过期了');
- const balance=Number(s.bankData?.balance);
- if(!Number.isFinite(balance)||balance<w.price)throw Error('银行余额不足，请先兑换资产或积攒资金');
- const txid='wish-purchase-'+id;
- s.bankData.transactions??=[];
- if(s.bankData.transactions.some(t=>t.id===txid))throw Error('这项心愿已经购买');
- s.bankData.balance=Math.round((balance-w.price)*100)/100;
- s.bankData.transactions.unshift({id:txid,label:w.title,amount:-w.price,date:today(s),time:s.clock,wishId:id});
+ payBankPurchase(s,{id:'wish-purchase-'+id,title:w.title,price:w.price,metadata:{wishId:id}});
  Object.assign(r,{status:w.kind==='event'?'delivered':'ordered',purchasedDay:s.day,purchasedClock:s.clock,
    deliveryDay:w.kind==='event'?s.day:s.day+w.deliveryDays,
    deliveryClock:w.kind==='event'?s.clock:'15:00'});
