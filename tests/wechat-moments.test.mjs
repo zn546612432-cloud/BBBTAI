@@ -72,7 +72,7 @@ test('avatar paths are base-aware strings and privacy is shown only once on a pr
 });
 
 test('ellipsis toggles one menu in place; like and unlike preserve prewritten reactions',()=>{
- const s=initialState();s.day=1;s.clock='13:00';
+ const s=initialState();s.day=1;s.clock='23:30';
  let navigations=0;
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>navigations++},refresh:()=>{}};
  const target={dataset:{id:'xs-0519'}};
