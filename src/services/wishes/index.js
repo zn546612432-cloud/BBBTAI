@@ -12,6 +12,35 @@ const ledger=s=>s.story55.wishes??=({records:{},story:{started:false,lines:[],ne
 const record=(s,id)=>ledger(s).records[id]||null;
 const hasPhrase=(s,id)=>Object.values(s.content?.conversations||{}).some(list=>list.some(c=>c.messages?.some(m=>m.wishId===id)));
 export const getWish=(s,id)=>s.story55?.wishes?.records?.[id]||null;
+// Purchase is not a spoken message. The native WeChat composer shows this
+// only after a real dinner payment, and records it only on the player's Send.
+export const D06_DINNER_PLAYER_LINE='好啊，一起去吃饭！今晚我请客。';
+export function d06DinnerDraft(s,id){
+ const dinner=getWish(s,'d06-dinner');
+ if(!perDay(s)||s.day!==6||id!=='group'||!dinner?.purchasedDay||
+    dinner.confirmedByXimeng||s.content?.conversations?.wechat
+     ?.find(c=>c.id==='group')?.messages?.some(m=>m.id==='wish-dinner-player'))return null;
+ return {text:D06_DINNER_PLAYER_LINE,stage:'d06-dinner-player',day:6,priority:5};
+}
+export function sendD06DinnerReply(store,id,text,now=Date.now()){
+ const draft=d06DinnerDraft(store.get(),id);
+ if(!draft)return {handled:false};
+ if(String(text||'').trim()!==draft.text)
+  return {handled:true,reason:'请发送输入框里的完整预设台词'};
+ store.update(s=>{
+  const dinner=getWish(s,'d06-dinner');
+  const message=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:'group',
+   messageId:'wish-dinner-player',from:'me',text:D06_DINNER_PLAYER_LINE,
+   day:s.day,clock:s.clock,sentDate:today(s),storyTag:'storyWish'});
+  if(!message)return;
+  dinner.confirmedByXimeng=true;
+  queueReward(s,'d06-dinner',true);
+  s.story55.wishes.story.nextAt=now+1800;
+  s.events??=[];s.events.push({type:'d06_dinner_confirmed_by_player',day:s.day,clock:s.clock});
+ });
+ return {handled:true,messageId:'wish-dinner-player'};
+}
+
 // Repair reminders incorrectly marked complete by legacy home-widget taps.
 // Only the wish lifecycle may mark them fulfilled, never generic UI toggles.
 export function syncWishReminders(s){
@@ -25,25 +54,20 @@ export function syncWishReminders(s){
   if(item.done!==done){item.done=done;changed=true;}
   if(item.wishStatus!==r.status){item.wishStatus=r.status;changed=true;}
  }
- // Existing saves may already have paid $350 while the old scheduler kept
- // the confirmation until 19:30. Rebase only that pending confirmation;
- // never debit again or replace anything already delivered.
- const boughtDinner=s.story55?.wishes?.records?.['d06-dinner'];
- const confirmation=s.story55?.wishes?.story?.lines?.find(x=>x.id==='wish-dinner-01');
- if(boughtDinner?.purchasedDay&&boughtDinner?.purchasedClock&&confirmation){
-  if(confirmation.dueDay!==boughtDinner.purchasedDay||confirmation.dueClock!==boughtDinner.purchasedClock){
-   confirmation.dueDay=boughtDinner.purchasedDay;
-   confirmation.dueClock=boughtDinner.purchasedClock;
-   changed=true;
-  }
-  // Previously queued text asked "have you paid?" after a confirmed debit.
-  // Rebase undelivered copy from the one authored source; never rewrite chat history.
-  const currentText=rewardSets['d06-dinner']?.find(line=>line.id==='wish-dinner-01')?.text;
-  const alreadySent=s.story55?.wishes?.story?.delivered?.includes('wish-dinner-01');
-  if(currentText&&!alreadySent&&confirmation.text!==currentText){
-   confirmation.text=currentText;
-   changed=true;
-  }
+ // Migration: older builds queued the restaurant's confirmation at payment
+ // time, before Ximeng said yes. Preserve already delivered history, but
+ // remove not-yet-delivered dinner replies so the new player turn comes first.
+ const dinner=s.story55?.wishes?.records?.['d06-dinner'];
+ const story=s.story55?.wishes?.story;
+ const playerAlreadySent=s.content?.conversations?.wechat
+  ?.find(c=>c.id==='group')?.messages?.some(m=>m.id==='wish-dinner-player');
+ if(dinner?.purchasedDay&&story&&!dinner.confirmedByXimeng&&!playerAlreadySent){
+  const delivered=new Set(story.delivered||[]);
+  const oldPending=story.lines?.length||0;
+  story.lines=(story.lines||[]).filter(line=>
+   line.wishRewardId!=='d06-dinner'||delivered.has(line.id));
+  if(story.lines.length!==oldPending){story.nextAt=0;changed=true;}
+  if(dinner.rewardQueued){dinner.rewardQueued=false;changed=true;}
  }
  return changed;
 }
@@ -78,7 +102,7 @@ export function purchaseWish(s,id){
  if(reminder){reminder.done=w.kind==='event';reminder.wishStatus=r.status;}
  s.events.push({type:'wish_purchased',wishId:id,day:s.day,clock:s.clock});
  // Queue follow-ups; never immediately force-send NPC chat inside a bank action.
- queueReward(s,id,w.kind==='event');
+ if(w.kind!=='event')queueReward(s,id,false);
  return true;
 }
 function queue(s,entry){
@@ -93,11 +117,16 @@ function queueReward(s,id,isEvent){
  const r=record(s,id);
  if(!r||r.rewardQueued)return;
  r.rewardQueued=true;
- for(const item of rewardSets[id]||[])queue(s,{...item,
-   dueDay:isEvent?s.day:r.deliveryDay,
-   dueClock:isEvent?(item.kind==='image'?'20:30':item.id==='wish-dinner-01'?r.purchasedClock:'19:30'):'16:00',
-   silentAfterDay:true,
-   wishRewardId:id});
+ let prev=null;
+ for(const item of rewardSets[id]||[]){
+  const dinner=isEvent&&id==='d06-dinner';
+  const isEvening=dinner&&(item.kind==='image'||['wish-dinner-02','wish-dinner-03'].includes(item.id));
+  queue(s,{...item,dueDay:dinner?s.day:r.deliveryDay,
+   dueClock:dinner?(item.kind==='image'?'20:30':isEvening?'19:30':s.clock):'16:00',
+   ...(dinner&&prev?{afterId:prev}:{}),
+   silentAfterDay:true,wishRewardId:id});
+  if(dinner)prev=item.id;
+ }
 }
 export function d06CelebrationDraft(s,id){
  if(!perDay(s)||s.day!==6||id!=='group'||!completed(s,'wallet')||s.story55?.wishes?.story?.started)return null;
@@ -173,7 +202,7 @@ export function tickWishes(s,now=Date.now()){
  // A paid dinner reservation deserves a prompt confirmation even while
  // the earlier group celebration is still being delivered one line at a time.
  const due=x=>!st.delivered.includes(x.id)&&eligibleLine(s,x);
- const line=st.lines.find(x=>x.id==='wish-dinner-01'&&due(x))||st.lines.find(due);
+ const line=st.lines.find(x=>x.wishRewardId==='d06-dinner'&&x.kind!=='image'&&due(x))||st.lines.find(due);
  if(!line)return changed;
  const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:line.chat,
   messageId:line.id,from:line.from,text:line.text,kind:line.kind||'text',
