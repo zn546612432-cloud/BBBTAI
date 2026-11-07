@@ -46,16 +46,19 @@ test('Flow completion triggers early delivery, but never double-sends fallback',
  assert.equal(s.content.conversations.wechat[0].messages.filter(x=>x.id==='d03-morning-0').length,1);
 });
 test('Hu Feng scripted player bubbles are not auto-sent',()=>{
- const s=state('10:45');tickD03Chats(s,0);
- tickD03Chats(s,1000);
- tickD03Chats(s,3500);
- const c=s.content.conversations.wechat.find(c=>c.id==='hufeng');
- assert.equal(c.messages.length,2);
- assert.equal(d03Draft(s,'hufeng')?.text,'幹嘛');
- assert.equal(sendD03WeChat(store(s),'hufeng','亂發').reason,'請發送輸入框裡完整的預設台詞');
- assert.equal(c.messages.length,2);
- assert.equal(sendD03WeChat(store(s),'hufeng','幹嘛',4000).messageId,'d03-hufeng-2');
- assert.equal(c.messages.at(-1).from,'me');
+ const s=state('14:25');
+ for(let n=0;n<24;n++)tickD03Chats(s,n*2300);
+ const hufeng=s.content.conversations.wechat.find(c=>c.id==='hufeng');
+ assert.equal(hufeng.messages.filter(m=>m.storyD03).length,0,'retired repair DMs must never appear');
+ assert.equal(d03Draft(s,'hufeng'),null);
+ const xin=s.content.conversations.wechat.find(c=>c.id==='xiaoxin');
+ assert.ok(xin.messages.some(m=>m.from==='小辛'));
+ assert.ok(xin.messages.every(m=>m.from!=='me'),'Ximeng is never auto-sent');
+ const draft=d03Draft(s,'xiaoxin');
+ assert.ok(draft?.text,'Xiaoxin still has a player reply');
+ assert.ok(sendD03WeChat(store(s),'xiaoxin',draft.text,60000).messageId);
+ assert.equal(xin.messages.filter(m=>m.from==='me').length,1);
+
 });
 test('B-class mission requires 3 successful games, manual submission, pays once',()=>{
  const s=state('13:40');
