@@ -783,5 +783,23 @@
     "kind": "text",
     "scene": "invitation",
     "index": 19
+  },
+  {
+    "id": "d06-celebrate-01",
+    "channel": "wechat",
+    "chat": "group",
+    "before": "？？？？",
+    "text": "/apps/wechat/stickers/xin-dog-050.webp",
+    "kind": "image",
+    "from": "小辛"
+  },
+  {
+    "id": "wish-keyboard-thanks-1",
+    "channel": "wechat",
+    "chat": "xiaoxin",
+    "from": "小辛",
+    "before": "蒙哥！！！！键盘到啦哈哈哈哈",
+    "text": "/apps/wechat/stickers/xin-dog-008.webp",
+    "kind": "image"
   }
 ]

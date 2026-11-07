@@ -1,10 +1,11 @@
 import {d06WishImage} from '../../services/assets/wish-media.js';
+import {xinDogSticker} from '../../services/assets/xin-dog-stickers.js';
 // D06 authored conversations and the optional D07 consequences.
 // Content lives outside the generic wish service; future days add catalogs, not code.
 const group=(id,from,text,opts={})=>({id,channel:'wechat',chat:'group',from,text,...opts});
 const dm=(id,chat,from,text,opts={})=>({id,channel:'wechat',chat,from,text,...opts});
 export const celebration=[
- group('d06-celebrate-01','小辛','？？？？'),
+ group('d06-celebrate-01','小辛',xinDogSticker('果真吗'),{kind:'image'}),
  group('d06-celebrate-02','小辛','十个？！我去搜一下值多少钱'),
  group('d06-celebrate-03','胡枫','你先说清楚是发财了还是发癫了哈哈哈哈'),
  group('d06-celebrate-04','仔仔','真的假的，阿蒙？'),
@@ -20,7 +21,7 @@ export const celebration=[
 export const privateScenes=[];
 export const rewardSets={
  'd06-keyboard':[
-  dm('wish-keyboard-thanks-1','xiaoxin','小辛','蒙哥！！！！键盘到啦哈哈哈哈'),
+  dm('wish-keyboard-thanks-1','xiaoxin','小辛',xinDogSticker('小狗谢谢'),{kind:'image'}),
   dm('wish-keyboard-photo','xiaoxin','小辛',d06WishImage('keyboard-received.jpg'),{kind:'image'}),
   dm('wish-keyboard-thanks-2','xiaoxin','小辛','你下次打游戏可不许再说我设备差了！')
  ],

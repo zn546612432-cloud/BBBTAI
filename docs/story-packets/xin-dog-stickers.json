@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "day": 6,
+  "date": "2025-05-24",
+  "title": "小辛小狗表情：庆祝与键盘收货两条回复的图片替换",
+  "stage": "review",
+  "scope": "optional",
+  "systems": [
+    "messaging",
+    "assets"
+  ],
+  "assets": [
+    {
+      "id": "xin-dog-050",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/xin-dog-050.webp"
+    },
+    {
+      "id": "xin-dog-008",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/xin-dog-008.webp"
+    }
+  ],
+  "events": [
+    {
+      "id": "d06-celebrate-01",
+      "kind": "incoming-image",
+      "surface": "wechat",
+      "capability": "chat.d06-wish-reply",
+      "owner": "messaging",
+      "actor": "小辛",
+      "thread": "group",
+      "assetId": "xin-dog-050",
+      "trigger": {
+        "type": "node-completed",
+        "ref": "fact:d06-celebration-sent"
+      },
+      "requires": [
+        "fact:d06-celebration-sent"
+      ],
+      "timing": {
+        "day": 6,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "wish-keyboard-thanks-1",
+      "kind": "incoming-image",
+      "surface": "wechat",
+      "capability": "chat.d06-wish-reply",
+      "owner": "messaging",
+      "actor": "小辛",
+      "thread": "xiaoxin",
+      "assetId": "xin-dog-008",
+      "trigger": {
+        "type": "order-delivered",
+        "ref": "fact:d06-keyboard-delivered"
+      },
+      "requires": [
+        "fact:d06-keyboard-delivered"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "16:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "xin-stickers-trigger",
+      "type": "trigger",
+      "verify": "庆祝和键盘真实收货后，小辛各发一张表情。"
+    },
+    {
+      "id": "xin-stickers-negative",
+      "type": "negative",
+      "verify": "未完成钱包比赛不能庆祝；只付款未到货不发谢谢。"
+    },
+    {
+      "id": "xin-stickers-idempotency",
+      "type": "idempotency",
+      "verify": "重复tick、重进群聊和刷新不增加消息。"
+    },
+    {
+      "id": "xin-stickers-save-restore",
+      "type": "save-restore",
+      "verify": "已发两条NPC文案原位迁移；ID、日期、未读和余额不变，玩家与历史不改。"
+    },
+    {
+      "id": "xin-stickers-cross-app",
+      "type": "cross-app",
+      "verify": "提醒付款与银行仍走原有服务；图片不产生新业务副作用。"
+    },
+    {
+      "id": "xin-stickers-late-entry",
+      "type": "late-entry",
+      "verify": "沿用现有心愿队列迟到策略，无新增调度。"
+    },
+    {
+      "id": "xin-stickers-assets",
+      "type": "assets",
+      "verify": "162张本地WebP验证格式、尺寸、SHA256；另2张原链接404未启用。"
+    },
+    {
+      "id": "xin-stickers-date-clock",
+      "type": "date-clock",
+      "verify": "原有D06时钟、前置和发送间隔不变。"
+    },
+    {
+      "id": "xin-stickers-mobile",
+      "type": "mobile",
+      "verify": "手机浏览器验证原生发送后的庆祝表情、键盘收货表情以及刷新去重。"
+    }
+  ]
+}

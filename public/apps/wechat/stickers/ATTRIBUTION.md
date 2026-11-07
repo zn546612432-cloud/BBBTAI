@@ -11,3 +11,11 @@ Both sources predate the story's March 2024 chat history. Assets are bundled loc
 - The source page's JSON-LD `datePublished` is `2024-10-17T11:39:57.597Z` (`createdAt: 1729165197597`), before D09 / 2025-05-27.
 - Original 240 × 240 PNG, unmodified, bundled for the author's personal fan-game. Copyright remains with the original creator; this is not an open-source license claim.
 - Replaces only `d09-laundry-0`, preserving the single image bubble and all other daily scenes.
+
+## 小辛 · user-supplied dog sticker pack (2026-11-07)
+
+- Original links and the user's Chinese names are recorded in `src/story/assets/xin-dog-stickers.json`; IDs retain the original input order, including repeated names.
+- 162 source images were decoded and bundled as lossless WebP, with original dimensions and SHA-256 recorded. Chat rendering makes no requests to the original image hosts.
+- `xin-dog-086` (快速等待（等待）) and `xin-dog-143` (蹭蹭你的手) returned HTTP 404, including their host landing pages. Their source records remain, with `path:null` and `status:unavailable`; no replacement artwork is invented.
+- Supplied for this personal fan-game by its author. Copyright remains with the original creator; no open-source or redistribution license is asserted.
+- Existing message IDs `d06-celebrate-01` and `wish-keyboard-thanks-1` use 果真吗 and 小狗谢谢, respectively. All other imported assets are available by ID/name through `xinDogSticker` for future authored dialogue; there is no automatic random sender.
