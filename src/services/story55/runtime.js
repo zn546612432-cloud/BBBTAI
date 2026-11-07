@@ -1,6 +1,7 @@
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
+import {tickD11MeetingNote} from '../../story/d11/meeting-note.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
@@ -166,6 +167,7 @@ export function tickStory55(s){
  tickD04Contracts(s);
  tickD03MomentReply(s);
  tickD02Diary(s);
+ tickD11MeetingNote(s);
  tickD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.
  const finalLines=story55Config(s).scenes?.ending;
