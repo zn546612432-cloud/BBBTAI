@@ -22,7 +22,7 @@ jobs:
       - run: npm ci
       - run: node scripts/audit-story-skill.mjs
       - run: npm test
-      - run: npm run build:pages
+      - run: GITHUB_PAGES_BASE=/ npm run build:pages
       - run: npm install --no-save --no-package-lock playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - name: Click real mobile flow including reload and cross-app navigation

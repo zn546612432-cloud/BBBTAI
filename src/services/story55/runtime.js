@@ -106,6 +106,10 @@ export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
 }
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
  const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
+ if(line[0]==='system'&&index>0&&n.systemMessages){
+  appendAuthoredPhoneMessage(s,{channel:n.channel,conversationId:n.conversationId,messageId:`${n.messagePrefix}-${index}`,from:'system',text:line[1],kind:'system',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  return;
+ }
  if(!['system','call','watch','camera','disconnect','credit'].includes(line[0])){
   const channel=n.channel||(['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage');
   const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');

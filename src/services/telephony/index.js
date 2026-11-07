@@ -1,5 +1,5 @@
 import {receiveCall,answerCall,endCall,declineCall,outgoingCall,activePhoneCall,canPresentPhoneCall} from './store.js';
-import {createGestureAudio} from '../voice/playback.js';
+import {createGestureAudio,primeAudio} from '../voice/playback.js';
 import {canonicalPhoneAudioPath,resolvePhoneAudioPath} from '../voice/asset-url.js';
 import {scene55,sceneLines,advanceScene55,appendSceneMessage55} from '../story55/runtime.js';
 import {nodeStatus,nodeById,completed,story55Config} from '../story55/state.js';
@@ -11,7 +11,7 @@ export {receiveCall,answerCall,endCall,declineCall,outgoingCall};
 const sessions=new WeakMap();
 function session(store){let a=sessions.get(store);if(!a){a={audio:null,running:false,playing:null,greenSeen:false};sessions.set(store,a);}return a;}
 export function primeTelephony(ctx){
- const a=session(ctx.store);if(!a.audio)a.audio=createGestureAudio();
+ const a=session(ctx.store);if(!a.audio)a.audio=createGestureAudio();else primeAudio(a.audio);
  return a.audio;
 }
 function sceneCall(s){
@@ -85,7 +85,7 @@ async function playStoryLine(ctx,call,index,line,a){
  }catch(error){
   if(current()){
    if(error?.name==='NotAllowedError'){
-    ctx.store.update(s=>s.phoneCall.resumeRequired=true);return;
+    if(a.audio)a.audio._primed=false;ctx.store.update(s=>s.phoneCall.resumeRequired=true);return;
    }
    a.audio?.pause();append();ctx.toast?.('配音暫不可用，已切換文字');
   }

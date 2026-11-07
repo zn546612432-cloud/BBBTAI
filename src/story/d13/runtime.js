@@ -5,16 +5,17 @@ export const d13State=s=>s.story55?.d13;
 export function syncD13(s){
  if(!isStory55(s))return;
  applyD13Definition(s.story55.config);
- if(s.story55.d13Revision===1)return;
+ if(s.story55.d13Revision===2)return;
  // Completed saves retain their exact scene, records and balances.
  // Partial legacy calls restart at the wallet; existing bubble IDs stay intact.
  const finished=completed(s,'intrusion');
  if(finished)for(const id of ['d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer'])s.story55.completed[id]??={...s.story55.completed.intrusion,migrated:true};
  s.story55.d13={phase:finished?'complete':'mail'};
+ if(!finished&&s.phoneCall?.node==='intrusion')delete s.phoneCall;
  if(!finished&&s.story55.scenes.intrusion){s.story55.scenes.intrusion={index:0,accepted:false};}
  if(s.story55.activeScene==='intrusion'&&!finished)s.story55.activeScene=null;
  delete s.story55.lockedCall;
- s.story55.d13Revision=1;
+ s.story55.d13Revision=2;
 }
 export function bindD13Wallet(s){
  if(completed(s,'intrusion'))return false;

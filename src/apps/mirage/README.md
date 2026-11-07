@@ -29,4 +29,4 @@ MIRAGE 內的管理目錄、EDIT MESSAGES、表單與對應路由已移除。全
 
 電話由 `services/telephony` 的 PhoneStore 狀態與系統覆蓋層管理。MIRAGE 只提供原生 Send，沒有接聽劇情電話按鈕。
 
-D13 正式替換台詞與 MP3 尚缺，不能把本分支的舊十行流程測試當作新稿驗收或發布。詳見 `docs/D13_WALLET_CALL.md`。
+D13 已逐句接入完整稱呼修訂稿，仍缺 MiniMax MP3；目前走可驗收的文字後備，不能稱作實際配音已成功。詳見 `docs/D13_WALLET_CALL.md`。

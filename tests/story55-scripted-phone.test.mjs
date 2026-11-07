@@ -72,18 +72,22 @@ test('speech appends on sound start, locks input and never sends the player line
  try{
   const audio=primeTelephony(ctx);store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());
   const chat=()=>store.get().content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
-  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-7'),false);audio.onplaying();assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-7').length,1);
+  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-v2-8'),false);audio.onplaying();assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-v2-8').length,1);
   assert.equal(store.get().phoneCall.speaking,true);assert.equal(scriptedDraft55(store.get(),'mirage','s55-ouroboros'),null);
-  audio.onended();await new Promise(resolve=>setImmediate(resolve));assert.equal(scene55(store.get(),'intrusion').index,8);
-  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-8'),false);
-  const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-8').length,1);
+  audio.onended();await new Promise(resolve=>setImmediate(resolve));assert.equal(scene55(store.get(),'intrusion').index,9);
+  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-v2-9'),false);
+  const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-v2-9').length,1);
  }finally{globalThis.Audio=previous;}
 });
 test('missing voice uses text and completes only after native Send, unlocking D14',()=>{
  const {store,ctx}=fixture(),call=ringing(store,ctx);answerCall(store,call.id,10001);tickTelephony(ctx,10002);
- store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());assert.equal(scene55(store.get(),'intrusion').index,8);assert.equal(completed(store.get(),'intrusion'),false);
- const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));
- store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());tickTelephony(ctx,Date.now()+1);
+ store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());assert.equal(scene55(store.get(),'intrusion').index,9);assert.equal(completed(store.get(),'intrusion'),false);
+ for(let i=0;i<30&&!completed(store.get(),'intrusion');i++){
+  const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');
+  if(draft)store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));
+  else{store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now()+10000);}
+ }
+ tickTelephony(ctx,Date.now()+20000);
  assert.ok(completed(store.get(),'intrusion'));assert.equal(store.get().phoneCall.state,'ended');store.update(s=>{s.day=14;s.clock='09:16';});assert.equal(nodeStatus(store.get(),'code').state,'ready');
 });
 test('refresh skips green animation and connected calls require a resume gesture',()=>{
@@ -102,4 +106,13 @@ test('MIRAGE has no management entry, while the global message editor remains us
  const {store}=fixture();setMirageAuthenticated(true);
  for(const route of ['/','/bounties','/market','/manage','/edit','/history/s55-ouroboros','/wallet'])assert.doesNotMatch(mirageRender({store},{route,params:{}}),/EDIT MESSAGES|mc-manage|mc-edit-message|mc-record|EDIT BALANCE/);
  assert.match(messageCard({id:'a',from:'me',text:'可編輯',kind:'text'},{id:'test',name:'Flow',messages:[]},store.get(),0),/data-message-field="text"/);
+});
+
+test('full naming-revised source remains intact and only shipped legacy copy migrates',async()=>{
+ const {D13_LINES,D13_LEGACY_LINES,D13_VOICE_INDICES}=await import('../src/story/d13/content.js');
+ const {applyD13Definition}=await import('../src/story/d13/definition.js');
+ assert.equal(D13_LINES.length,21);assert.deepEqual(D13_VOICE_INDICES,[8,10,12,14,16,18,20]);
+ assert.match(D13_LINES[8][1],/^晚上好，nya。/);assert.match(D13_LINES[20][1],/晚安，熙蒙。/);
+ const {store}=fixture(),config=structuredClone(store.get().story55.config);config.scenes.intrusion=structuredClone(D13_LEGACY_LINES);applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,D13_LINES);
+ const edited=structuredClone(D13_LEGACY_LINES);edited[1][1]='作者自己改過的句子';config.scenes.intrusion=edited;applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,edited);
 });
