@@ -72,18 +72,18 @@ test('one scheduler preserves D01–D05 and registers D08–D10 without duplicat
  assert.equal(cv(s,'group').messages.filter(m=>m.id==='d04-morning-0').length,1);
 });
 test('unified preset composer never fabricates D04 protagonist; native input shows the exact next line',()=>{
- const s=fresh(4,'09:50');
- // Start the simulated transcript with the injected monotonic clock. An extra
- // tickStory55 here would stamp real Date.now() and invalidate this fake timer.
- tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,2000);
- s.nav.current={appId:'wechat',route:'/chat/hufeng',params:{}};
- assert.equal(nativeWeChatComposer(s,'hufeng').text,'有');
- assert.match(renderWeChatChat(s,'hufeng'),/value="有"/);
- assert.equal(cv(s,'hufeng').messages.filter(m=>m.from==='me'&&m.storyD04).length,0);
- assert.equal(sendNativeWeChatPreset(fakeStore(s),'hufeng','隨便亂發').reason,'請發送輸入框裡完整的預設台詞');
- assert.equal(cv(s,'hufeng').messages.filter(m=>m.from==='me'&&m.storyD04).length,0);
- assert.ok(sendNativeWeChatPreset(fakeStore(s),'hufeng','有').messageId);
- assert.equal(cv(s,'hufeng').messages.filter(m=>m.from==='me'&&m.storyD04).length,1);
+ const s=fresh(4,'17:45');
+ tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,2100);
+ s.nav.current={appId:'wechat',route:'/chat/wang',params:{}};
+ assert.equal(nativeWeChatComposer(s,'wang').text,'你請？');
+ assert.match(renderWeChatChat(s,'wang'),/value="你請？"/);
+ assert.equal(nativeWeChatComposer(s,'hufeng').text,null,'old repair dialogue retired');
+ assert.equal(cv(s,'wang').messages.filter(m=>m.from==='me'&&m.storyD04).length,0);
+ assert.equal(sendNativeWeChatPreset(fakeStore(s),'wang','隨便亂發').reason,'請發送輸入框裡完整的預設台詞');
+ assert.equal(cv(s,'wang').messages.filter(m=>m.from==='me'&&m.storyD04).length,0);
+ assert.ok(sendNativeWeChatPreset(fakeStore(s),'wang','你請？').messageId);
+ assert.equal(cv(s,'wang').messages.filter(m=>m.from==='me'&&m.storyD04).length,1);
+
 });
 test('unified resolver respects D01 first manual message startup trigger',()=>{
  const s=fresh(1,'08:10');
