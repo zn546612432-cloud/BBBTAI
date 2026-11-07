@@ -1,3 +1,4 @@
+import {d06WishImage} from '../../services/assets/wish-media.js';
 // D06 authored conversations and the optional D07 consequences.
 // Content lives outside the generic wish service; future days add catalogs, not code.
 const group=(id,from,text,opts={})=>({id,channel:'wechat',chat:'group',from,text,...opts});
@@ -35,28 +36,28 @@ export const extraDay=[
 export const rewardSets={
  'd06-keyboard':[
   dm('wish-keyboard-thanks-1','xiaoxin','小辛','蒙哥！！！！键盘到啦哈哈哈哈'),
-  dm('wish-keyboard-photo','xiaoxin','小辛','/assets/d06-wishes/keyboard-received.jpg',{kind:'image'}),
+  dm('wish-keyboard-photo','xiaoxin','小辛',d06WishImage('keyboard-received.jpg'),{kind:'image'}),
   dm('wish-keyboard-thanks-2','xiaoxin','小辛','你下次打游戏可不许再说我设备差了！')
  ],
  'd06-shoes':[
   dm('wish-shoes-thanks-1','hufeng','胡枫','阿蒙，你真给我买了？我刚才还以为快递送错了。'),
-  dm('wish-shoes-photo','hufeng','胡枫','/assets/d06-wishes/shoes-received.jpg',{kind:'image'}),
+  dm('wish-shoes-photo','hufeng','胡枫',d06WishImage('shoes-received.jpg'),{kind:'image'}),
   dm('wish-shoes-thanks-2','hufeng','胡枫','这鞋穿着还挺舒服。谢了啊，改天请你喝东西。')
  ],
  'd07-headphones':[
   dm('wish-headphones-thanks-1','awei','阿威','耳机收到了。'),
-  dm('wish-headphones-photo','awei','阿威','/assets/d06-wishes/headphones-received.jpg',{kind:'image'}),
+  dm('wish-headphones-photo','awei','阿威',d06WishImage('headphones-received.jpg'),{kind:'image'}),
   dm('wish-headphones-thanks-2','awei','试过了，声音没问题。谢谢。')
  ],
  'd07-tableware':[
   dm('wish-tableware-thanks-1','wang','熙旺','阿蒙，家里送来一套餐具。你买的？'),
-  dm('wish-tableware-photo','wang','熙旺','/assets/d06-wishes/tableware-received.jpg',{kind:'image'}),
+  dm('wish-tableware-photo','wang','熙旺',d06WishImage('tableware-received.jpg'),{kind:'image'}),
   dm('wish-tableware-thanks-2','wang','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
  ],
  'd06-dinner':[
   group('wish-dinner-01','仔仔','地方我联系好了，今晚七点半。阿蒙你付款了？'),
   group('wish-dinner-02','小辛','我宣布今天不减肥了！！'),
   group('wish-dinner-03','胡枫','你什么时候减过哈哈哈哈'),
-  group('wish-dinner-photo','仔仔','/assets/d06-wishes/celebration-dinner.jpg',{kind:'image'})
+  group('wish-dinner-photo','仔仔',d06WishImage('celebration-dinner.jpg'),{kind:'image'})
  ]
 };
