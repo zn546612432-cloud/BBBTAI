@@ -14,12 +14,12 @@ const specs=[...D04_GROUP,...D04_PRIVATE].map(scene=>({...scene,
  replies:LATE_REPLIES.d04[scene.id],
  ...(scene.id==='hufeng-am'?{resolved:s=>s.day>5||s.day===5&&s.clock>='10:00'}:{}),
  ...(scene.id==='hufeng-pm'?{until:'17:20',lateDays:1}:{}),
- ...(scene.id==='wang-dinner'?{until:'18:31',unanswered:[{who:'熙旺',text:'我先去吃了，你忙完也記得吃飯。'}],onSend:(s,q,i)=>{if(scene.lines[i].text==='😘'&&s.day===4&&s.clock<='18:30'){s.story55.d04Chats.dinnerConfirmed=true;s.story55.d04Chats.dinnerAcceptedAt=s.clock;}}}:{}),
+ ...(scene.id==='wang-dinner'?{until:'18:31',unanswered:[{who:'熙旺',text:'我先去吃了，你忙完也記得吃飯。'}],onSend:(s,q,i)=>{if(scene.lines[i].text==='哥，我去'&&s.day===4&&s.clock<='18:30'){s.story55.d04Chats.dinnerConfirmed=true;s.story55.d04Chats.dinnerAcceptedAt=s.clock;}}}:{}),
 }));
-const extras=['？','你看見什麼了','不是，你真看了？','阿蒙？？？'];
+const extras=['我还没发链接呢','明天交完作业再说'];
 specs.push({id:'video-reply',chat:'group',at:'10:50',until:'12:10',optional:true,
  enabled:s=>!!s.story55.d04Chats?.video?.completed&&!s.story55.d04Chats?.videoReplied,
- lines:[{who:'me',text:'看見了'},...extras.map(text=>({who:'胡枫',text}))],
+ lines:[{who:'me',text:'你那份作业还要我帮看吗？'},...extras.map(text=>({who:'胡枫',text}))],
  messageId:(s,i)=>i===0?'d04-video-player':'d04-video-extra-'+(i-1),
  migrate:(s,q)=>{const d=s.story55.d04Chats;if(d.videoReplied&&!q.started){q.started=true;q.index=1+(d.videoExtras?.index||0);q.nextAt=d.videoExtras?.nextAt??null;q.completed=!!d.videoExtras?.completed;}},
  onSend:s=>{s.story55.d04Chats.videoReplied=true;}
