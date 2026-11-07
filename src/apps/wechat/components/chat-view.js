@@ -61,7 +61,7 @@ function messageRow(m,s,c){
   const wishId=wishIdForMessage(m),wish=wishId&&wishDefinition(wishId);
   const wishText=wish&&m.wishText&&String(m.text).includes(m.wishText)?String(m.text).split(m.wishText):null;
   const highlightedWish=wishText&&wishText.length===2
-    ?esc(wishText[0])+'<span class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" role="button" tabindex="0" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</span>'+esc(wishText[1])
+    ?esc(wishText[0])+'<button type="button" class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</button>'+esc(wishText[1])
     :esc(m.text);
   const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
     m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
