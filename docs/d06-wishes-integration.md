@@ -1,6 +1,6 @@
 # D06 / D07 wish-system integration
 
-**Status:** draft feature; **do not merge** until the ten user-supplied photo files have been committed to `public/assets/d06-wishes/` and the existing asset audit is green.
+**Status:** draft feature; **do not merge** until the twelve user-supplied photo files have been committed to `public/assets/d06-wishes/` and the existing asset audit is green.
 
 ## Source of truth
 - `src/services/wishes/index.js`: one store-backed state machine for wish recording, purchase, bank transaction idempotence, delivery and scheduled messages. No second clock, bank or phone store.
@@ -11,7 +11,7 @@
 - `tests/wishes.test.mjs`: wallet gate, duplicate protection, delivery, expiry and D07 choice branches.
 
 ## User-supplied JPEG names
-The archive named `D06_wish_photos_ready_to_upload.zip` contains these files at their correct repo-relative paths:
+The archive named `D06_wish_photos_complete_12.zip` contains these files at their correct repo-relative paths:
 
 | Filename | Story use |
 | --- | --- |
@@ -25,8 +25,10 @@ The archive named `D06_wish_photos_ready_to_upload.zip` contains these files at 
 | `shoes-received.jpg` | Hu Feng wearing the shoes |
 | `headphones-product.jpg` | A Wei wish preview |
 | `tableware-product.jpg` | Wang's family household wish |
+| `tableware-received.jpg` | Wang's family dinner with matching blue-rimmed ceramic ware |
+| `headphones-received.jpg` | A Wei's matching headphone-and-player unboxing photo |
 
-The headphone and tableware photos are *product previews*, not falsely labeled as recipient selfies; those rewards use text messages until suitable photos are provided.
+Both headphone and tableware reward sets now include separately supplied recipient-viewpoint delivery photographs. The camera shows belongings and hands, not invented character faces.
 
 ## User flow
 1. D06 S-class Ghost contest fully submitted and wallet credited 10 BTC; **no automatic fake USD bonus**.
@@ -43,3 +45,6 @@ The headphone and tableware photos are *product previews*, not falsely labeled a
 - Run `npm test` and `npm run build:pages`; the existing image-path regression audit deliberately fails until all declared images exist.
 - Verify D01-D05 saves, D06 five-stage Ghost, actual wallet settlement, purchase insufficient-funds behavior, back navigation, chat notifications, delivery after short/long charges, duplicate taps, reload, and ordinary D07.
 - Publish a **separate review preview**; do not replace main or delete previous versions.
+
+## Currency caveat
+The original bank exchange uses `bankData.rate` (default 1) for generic digital assets, while D06 awards BTC. Thus 10 BTC cannot currently finance every USD wishlist gift by conversion alone unless the game explicitly defines a BTC/USD exchange rate. Preserve the existing bank behavior until the conversion is reviewed; never silently credit fictitious USD.
