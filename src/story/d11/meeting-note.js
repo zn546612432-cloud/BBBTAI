@@ -18,7 +18,7 @@ export function tickD11MeetingNote(s){
    '干爹说，给我时间，让我做出点东西给他看。',
    '三个月。三千万。账得重新算。',
    '明天哥要去机场接胡枫。'
-  ].join('\\n')
+  ].join('\n')
  });
  return true;
 }
