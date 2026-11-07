@@ -17,14 +17,23 @@ async function unlock(){
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
 }
 async function visit(day,clock,appId,route){
+ // Inject date/route before app boot: mutating localStorage on the *running*
+ // page races against PhoneStore's background clock persistence.
  const k=await storageKey();
- await page.evaluate(({k,day,clock,appId,route})=>{
-  const s=JSON.parse(localStorage.getItem(k));
+ await page.addInitScript(({k,day,clock,appId,route})=>{
+  const raw=localStorage.getItem(k);
+  if(!raw)return;
+  const s=JSON.parse(raw);
   Object.assign(s,{day,clock,unlocked:false,poweredOff:false,emergencyCharge:false,batteryPercent:95});
   s.story55.activeScene=null;s.nav={current:{appId,route,params:{}},stack:[]};
   localStorage.setItem(k,JSON.stringify(s));
  },{k,day,clock,appId,route});
- await page.reload({waitUntil:'domcontentloaded'});await unlock();
+ await page.reload({waitUntil:'domcontentloaded'});
+ await unlock();
+ await page.waitForFunction(({k,day,appId})=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.day===day&&s.unlocked&&s.nav.current.appId===appId;
+ },{k,day,appId},{timeout:16000});
 }
 async function waitDraft(text){
  await page.waitForFunction(text=>document.querySelector('.wx-composer input')?.value===text,text,{timeout:30000});
@@ -76,6 +85,7 @@ try{
  const visibleBody=await page.locator('.nt-body-input').inputValue();
  assert.equal(visibleBody,note.text,'player can actually open the authored D11 Notes entry');
  assert.match(visibleBody,/三个月筹三千万/);
+ await page.waitForTimeout(450); // Let native push animation finish before visual QA.
  await page.screenshot({path:'qa-results/d11-meeting-notes.png'});
  await visit(12,'10:10','wechat','/chat/group');
  await page.locator('.wx-composer').waitFor({state:'visible',timeout:15000});
