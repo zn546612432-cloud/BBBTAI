@@ -73,6 +73,13 @@ export function syncWishReminders(s){
  // remove not-yet-delivered dinner replies so the new player turn comes first.
  const dinner=s.story55?.wishes?.records?.['d06-dinner'];
  const story=s.story55?.wishes?.story;
+ // Cancel queued replies for the retired Hu Feng wish; preserve paid bank history.
+ if(story?.lines?.length){
+  const count=story.lines.length;
+  story.lines=story.lines.filter(line=>line.wishRewardId!=='d06-shoes'&&!/^(?:d06-shoes-|wish-shoes-)/.test(String(line.id||'')));
+  if(count!==story.lines.length){story.nextAt=0;changed=true;}
+ }
+
  const playerAlreadySent=s.content?.conversations?.wechat
   ?.find(c=>c.id==='group')?.messages?.some(m=>m.id==='wish-dinner-player');
  if(dinner?.purchasedDay&&story&&!dinner.confirmedByXimeng&&!playerAlreadySent){
@@ -187,7 +194,7 @@ export function tickWishes(s,now=Date.now()){
  const w=s.story55?.wishes;
  if(!w&&!(s.day>=7&&s.clock>='09:00'))return false;
  const state=w||ledger(s);
- let changed=false;
+ let changed=syncWishReminders(s);
  for(const r of Object.values(state.records)){
   if(r.status==='saved'&&wishExpired(s,r.id)){
    r.status='expired';const item=s.content.reminders?.find(x=>x.wishId===r.id);
