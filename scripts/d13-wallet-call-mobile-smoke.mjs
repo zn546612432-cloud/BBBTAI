@@ -42,7 +42,7 @@ try{
  await bind.locator('button[type="submit"]').click();await action('mc-wallet-detail').click();await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
  await page.locator('.tel-green-screen').waitFor();await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
- await page.locator('.tel-call-screen').waitFor({timeout:25000});assert.equal(await action('tel-decline').count(),0);await page.screenshot({path:'qa-results/d13-forced-call.png'});
+ await page.locator('.tel-call-screen').waitFor({timeout:25000});assert.equal(await action('tel-decline').count(),0);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
  await page.locator('.tel-call-island').waitFor({timeout:12000});assert.match(await page.locator('.tel-call-island').innerText(),/REMOTE OVERRIDE/);
  await page.locator('.mc-composer input[data-story-stage="intrusion:9"]').waitFor({timeout:25000});
  await page.reload();await unlock();await action('tel-resume').waitFor({timeout:12000});await action('tel-resume').click();await signIn();
