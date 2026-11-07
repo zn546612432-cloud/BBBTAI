@@ -96,13 +96,14 @@ test('Old paid dinner save receives pending booking confirmation promptly withou
   }},
   story:{started:true,d07Started:false,nextAt:0,lines:[{
     id:'wish-dinner-01',channel:'wechat',chat:'group',from:'仔仔',
-    text:'钱收到了！我跟店里订好啦，今晚七点半见，大家记得来啊。',
+    text:'地方我联系好了，今晚七点半。阿蒙你付款了？',
     dueDay:6,dueClock:'19:30',wishRewardId:'d06-dinner'
   }],delivered:[]}
  };
  s.content.reminders.push({id:'wish-d06-dinner',wishId:'d06-dinner',title:'今晚和大家吃饭',done:true,wishStatus:'delivered'});
  assert.equal(syncWishReminders(s),true);
  assert.equal(s.story55.wishes.story.lines[0].dueClock,'10:25');
+ assert.match(s.story55.wishes.story.lines[0].text,/钱收到了/);
  assert.equal(syncWishReminders(s),false);
  tickWishes(s,10000);
  const group=s.content.conversations.wechat.find(c=>c.id==='group');
