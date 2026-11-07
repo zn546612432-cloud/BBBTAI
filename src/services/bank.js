@@ -19,7 +19,7 @@ export function postBankTransaction(s,{id,label,amount,metadata={}}){
  if(s.bankData.transactions.some(t=>t.id===id))throw Error('该笔银行交易已处理');
  const old=cents(s.bankData.balance);
  if(!Number.isSafeInteger(old)||old+value<0)throw Error('银行余额不足，请先兑换资产或积攒资金');
- const tx={id,label,amount:value/100,date:isStory55(s)?date55(s.day):dateLabel(s),time:s.clock,...metadata};
+ const tx={...metadata,id,label,amount:value/100,date:isStory55(s)?date55(s.day):dateLabel(s),time:s.clock};
  s.bankData.balance=(old+value)/100;
  s.bankData.transactions.unshift(tx);
  return tx;
