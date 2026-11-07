@@ -16,7 +16,7 @@ export const celebration=[
  group('d06-celebrate-11','熙旺','我今天收车后再看，不用为了庆祝乱花钱。')
 ];
 export const privateScenes=[
- dm('d06-shoes-01','hufeng','胡枫','说起来，我那双鞋底都快磨平了，准备过两天去看看新的。',{wishId:'d06-shoes',wishText:'新的'}),
+ dm('d06-shoes-01','hufeng','胡枫','说起来，我那双鞋底都快磨平了，准备过两天去看看新球鞋。',{wishId:'d06-shoes',wishText:'新球鞋'}),
  dm('d06-shoes-02','hufeng','胡枫','不用你给我买啊，刚才大家起哄闹着玩呢。')
 ];
 export const nextDay=[
@@ -45,10 +45,12 @@ export const rewardSets={
  ],
  'd07-headphones':[
   dm('wish-headphones-thanks-1','awei','阿威','耳机收到了。'),
+  dm('wish-headphones-photo','awei','阿威','/assets/d06-wishes/headphones-received.jpg',{kind:'image'}),
   dm('wish-headphones-thanks-2','awei','试过了，声音没问题。谢谢。')
  ],
  'd07-tableware':[
   dm('wish-tableware-thanks-1','wang','熙旺','阿蒙，家里送来一套餐具。你买的？'),
+  dm('wish-tableware-photo','wang','熙旺','/assets/d06-wishes/tableware-received.jpg',{kind:'image'}),
   dm('wish-tableware-thanks-2','wang','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
  ],
  'd06-dinner':[
