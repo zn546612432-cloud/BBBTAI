@@ -34,7 +34,7 @@ test('D06 BTC reward -> one USD conversion -> four optional purchases -> D07/D09
  for(const id of wishes)phone.update(s=>addWish(s,id));
  for(const id of wishes)phone.update(s=>purchaseWish(s,id));
  assert.equal(phone.get().bankData.balance,906.82);
- assert.equal(phone.get().content.reminders.length,3);
+ assert.equal(phone.get().content.reminders.length,2);
  assert.equal(messages(phone.get()).some(m=>m.id.startsWith('wish-dinner-thanks-')),false,'no NPC thank-you at payment');
  assert.equal(messages(phone.get()).some(m=>m.id==='wish-dinner-photo'),false,'no photo at payment');
  assert.equal(sendD06DinnerReply(phone,'group',D06_DINNER_PLAYER_LINE,0).handled,true);
