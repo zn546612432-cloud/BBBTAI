@@ -61,7 +61,7 @@ export function validateStoryPacket(p,{strict=false}={}){
  });
  const events=Array.isArray(p.events)?p.events:[];
  if(!Array.isArray(p.events))error('events','必须是数组');
- const seen=new Set(),transactions=new Set();
+ const seen=new Set(),transactions=new Set(),eventTimes=new Map();
  events.forEach((e,i)=>{
   const at='events['+i+']';
   if(!obj(e)){error(at,'必须是对象');return;}
@@ -80,6 +80,7 @@ export function validateStoryPacket(p,{strict=false}={}){
   if(['incoming-text','incoming-image'].includes(e.kind)&&e.actor==='me')
    error(at+'.actor','入站消息不能代玩家发言');
   if(e.kind==='player-send'){
+   if(e.delivery?.late==='replay')error(at+'.delivery','玩家消息不得跨日自动补发或重放');
    if(e.actor!=='me')error(at+'.actor','玩家发言必须是 me');
    if(e.trigger?.type!=='user-send')error(at+'.trigger','玩家发言只允许由原生 Send 触发');
    if(!nonempty(e.text))error(at+'.text','玩家预填台词不能为空');
@@ -102,15 +103,39 @@ export function validateStoryPacket(p,{strict=false}={}){
    error(at+'.trigger','只有玩家消息可以使用 user-send');
   if(e.trigger?.type==='previous-event'&&!seen.has(e.trigger.ref))
    error(at+'.trigger.ref','previous-event 必须引用已定义的较早事件');
-  if(!obj(e.timing)||e.timing.day!==p.day||
-     !(e.timing.at==='on-trigger'||hhmm.test(e.timing.at||'')))
-   error(at+'.timing','需要本日 day 与 HH:MM 或 on-trigger');
+  if(e.trigger?.type==='user-send'&&!seen.has(e.trigger.ref)&&
+      !/^fact:[a-z0-9-]+$/.test(e.trigger.ref||''))
+   error(at+'.trigger.ref','user-send 必须依赖已发生的事件/事实，不能凭空发送');
+  if(!obj(e.timing)||!Number.isInteger(e.timing.day)||
+      e.timing.day<p.day||e.timing.day>55||
+      !(e.timing.at==='on-trigger'||hhmm.test(e.timing.at||'')))
+   error(at+'.timing','执行日必须为本日或未来D55以内，时间为 HH:MM 或 on-trigger');
+  if(e.trigger?.type==='day-time'&&hhmm.test(e.trigger.ref||'')&&
+      e.timing?.at!==e.trigger.ref)
+   error(at+'.timing','day-time 触发时刻必须与执行时刻一致');
   if(!Array.isArray(e.requires))error(at+'.requires','必须声明前置事件（可以是空数组）');
   else for(const ref of e.requires){
    if(!nonempty(ref)){error(at+'.requires','不允许空依赖');continue;}
    if(!/^(?:node|fact|wallet|legacy):[a-z0-9-]+$/.test(ref)&&!seen.has(ref))
     error(at+'.requires','前置必须先定义，或是 node:/fact:/wallet:/legacy: 事实：'+ref);
    if(ref===e.id)error(at+'.requires','事件不可依赖自身');
+  }
+  if(e.kind==='player-send'&&seen.has(e.trigger?.ref)&&
+      !e.requires?.includes(e.trigger.ref))
+   error(at+'.requires','玩家发送必须显式声明触发它的前置事件');
+  // Cross-day delivery is allowed (buy on D06, receive on D08), but is never
+  // allowed to precede the day/time of a prerequisite.
+  if(Array.isArray(e.requires)&&obj(e.timing)){
+   for(const ref of e.requires){
+    const previous=eventTimes.get(ref);
+    if(!previous)continue;
+    if(e.timing.day<previous.day)
+     error(at+'.timing','发生在前置事件之前：'+ref);
+    if(e.timing.day===previous.day&&
+       hhmm.test(e.timing.at||'')&&hhmm.test(previous.at||'')&&
+       e.timing.at<previous.at)
+     error(at+'.timing','同一天执行时间早于前置事件：'+ref);
+   }
   }
   if(!obj(e.delivery)||!['silent','skip','replay'].includes(e.delivery.late))
    error(at+'.delivery','必须指定跨日处理 late:silent/skip/replay');
@@ -119,6 +144,7 @@ export function validateStoryPacket(p,{strict=false}={}){
    error(at+'.delivery.delaySeconds','延迟必须在0–86400秒');
   if(p.stage==='approved'&&/(?:TODO|TBD|待填写|占位|<placeholder>|\.\.\.)/i.test(e.text||''))
    error(at+'.text','approved 剧情不能包含占位文案');
+  if(!seen.has(e.id))eventTimes.set(e.id,e.timing);
   seen.add(e.id);
  });
  if(p.stage==='approved'&&!events.length)error('events','批准的内容不能为空');
