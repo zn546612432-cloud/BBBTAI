@@ -69,7 +69,9 @@ function messageRow(m,s,c){
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
     portrait(name,s)+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
-    (media?historicalMediaBubble(media,m,s):'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
+    (media?historicalMediaBubble(media,m,s):wishId
+      ?'<div class="wx-bubble wx-wish-bubble" title="'+esc(timestampLabel(m,s))+'">'+body+'</div>'
+      :'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
     '</div></div>';
 }
 
