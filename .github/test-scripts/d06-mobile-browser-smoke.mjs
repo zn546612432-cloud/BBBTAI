@@ -29,7 +29,8 @@ const page=await browser.newPage({
  locale:'zh-CN',reducedMotion:'reduce'
 });
 page.setDefaultTimeout(30000);
-const errors=[];
+const errors=[],missingUrls=[];
+page.on('response',res=>{if(res.status()===404)missingUrls.push(res.url())});
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
 page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
 const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
@@ -121,6 +122,7 @@ try{
   img.addEventListener('load',()=>resolve(true),{once:true});
   img.addEventListener('error',()=>reject(Error('Supabase image did not load')),{once:true});
  }));
+ await photoBubble.scrollIntoViewIfNeeded();
  await photo('04-recipient-photo-loaded');
  const delivered=await state();
  assert.equal(delivered.content.conversations.wechat.find(c=>c.id==='xiaoxin')
@@ -128,6 +130,7 @@ try{
  assert.equal(delivered.bankData.balance,1256.82);
  console.log('PASS D08 post-delivery private WeChat photo loaded and is not duplicated');
  if(errors.length)console.log('Browser warnings:\n'+errors.slice(0,20).join('\n'));
+ if(missingUrls.length)console.log('404 URLS:',[...new Set(missingUrls)].slice(0,35));
  console.log('D06_MOBILE_SMOKE_PASS');
 }catch(err){
  await photo('99-failure').catch(()=>{});
