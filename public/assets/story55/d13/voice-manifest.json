@@ -1,0 +1,49 @@
+{
+  "voice": "moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4",
+  "region": "cn",
+  "model": "speech-2.8-hd",
+  "clips": [
+    {
+      "index": 8,
+      "path": "/assets/story55/d13/call-8.mp3",
+      "textHash": "a6357e33ae8e7c8116c1a3f482d3f351aa7bd3c266fa423bc5c77628f116057b",
+      "size": 112308
+    },
+    {
+      "index": 10,
+      "path": "/assets/story55/d13/call-10.mp3",
+      "textHash": "366466d7e36e9c1fccfaf5227b1e78b681b2922d7d79ac65c9e356a9a60506fd",
+      "size": 96180
+    },
+    {
+      "index": 12,
+      "path": "/assets/story55/d13/call-12.mp3",
+      "textHash": "fa37d0116093ce826ddd44d68b64053463832afb9a8c47de6ab580d45ae0521b",
+      "size": 89844
+    },
+    {
+      "index": 14,
+      "path": "/assets/story55/d13/call-14.mp3",
+      "textHash": "7a0d09b176b23dfa97259853da574e641b3861c09e4e7acc388dac9cdf75fa4c",
+      "size": 45492
+    },
+    {
+      "index": 16,
+      "path": "/assets/story55/d13/call-16.mp3",
+      "textHash": "334584d81862ad59a33d6d1839903985dc1b2073e4d3bb8e0e192c19d6fa64a1",
+      "size": 128436
+    },
+    {
+      "index": 18,
+      "path": "/assets/story55/d13/call-18.mp3",
+      "textHash": "5a15ead645749a823172d28b81876f0469b7a8c8f4cffab10a6248a9391f5622",
+      "size": 64500
+    },
+    {
+      "index": 20,
+      "path": "/assets/story55/d13/call-20.mp3",
+      "textHash": "1f3e70418a1ed1765f4dc0820fed4e21106482e254bd9a6285141c141e484121",
+      "size": 137652
+    }
+  ]
+}

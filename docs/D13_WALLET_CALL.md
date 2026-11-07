@@ -26,13 +26,13 @@
 
 精確比對兩版已發布十行舊稿後才替換配置，自訂文本不覆寫。新稿用 `s55-intrusion-v2-<index>` 避免新行號撞上舊玩家消息；舊玩家泡泡與歷史 ID 永久保留。完成者不重播，未完成者重回錢包步驟並清除舊電話鎖。
 
-`MINIMAX_API_KEY` 在此環境不存在；未生成或偽造 MP3。本機執行：
+七段正式 MiniMax MP3 已生成並接入：同一熙泰音色、speech-2.8-hd、32kHz，合計 674,412 bytes／約 41.4 秒，每段皆小於 1MB。全部經 ffprobe／ffmpeg 驗證可解碼且非靜音。Key 僅由單次本機程序的環境變數讀取，程序已結束並清除，不寫入檔案、前端或 Git。重新生成時本機執行：
 
 ```
 node scripts/generate-d13-call-voice.mjs
 ```
 
-只讀本機環境變數，不紀錄 key，不使用 getUserMedia。預設從已接入的完整修訂稿生成七段 <1MB MP3 與文字 SHA256 清單；台詞修改後須重跑。無音檔可按要求完整走文字後備，但不將它報作 MiniMax 實際配音成功。
+只讀本機環境變數，不紀錄 key，不使用 getUserMedia。預設從已接入的完整修訂稿生成七段 <1MB MP3 與文字 SHA256 清單；台詞修改後須重跑。預設沿用遊戲國內接口（cn）；國際帳號可設定 MINIMAX_REGION=intl。無音檔或載入失敗仍保留完整文字後備。
 
 ## 驗證狀態
 
@@ -42,3 +42,8 @@ node scripts/generate-d13-call-voice.mjs
 - 目前沒有正式發布，main 未改。
 
 - D13 v2 事件包：`docs/story-packets/d13-wallet-call.json`，24 個事件、11 項驗收；能力僅標記 D13 已接通，不宣稱任意日期通用。
+
+## 配音驗收補充
+
+- 新增 MP3／文字 hash／配置一致性回歸。
+- 手機瀏覽器腳本監聽真實 HTMLMediaElement 的 playing／ended／error，要求七段按劇本順序開始並正常結束；開始播放時文字泡泡已寫入且輸入框鎖定，不能僅靠文字後備通過。跨刷新保留驗收事件，六次玩家 Send 仍由原生按鈕點擊。最新結果以 PR CI 為準。

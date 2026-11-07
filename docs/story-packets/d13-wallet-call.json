@@ -10,9 +10,46 @@
     "messaging",
     "phone",
     "kira",
-    "mirage"
+    "mirage",
+    "assets"
   ],
-  "assets": [],
+  "assets": [
+    {
+      "id": "d13-call-8",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-8.mp3"
+    },
+    {
+      "id": "d13-call-10",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-10.mp3"
+    },
+    {
+      "id": "d13-call-12",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-12.mp3"
+    },
+    {
+      "id": "d13-call-14",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-14.mp3"
+    },
+    {
+      "id": "d13-call-16",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-16.mp3"
+    },
+    {
+      "id": "d13-call-18",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-18.mp3"
+    },
+    {
+      "id": "d13-call-20",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-20.mp3"
+    }
+  ],
   "events": [
     {
       "id": "d13-wallet-mail",
@@ -305,7 +342,8 @@
         "late": "silent"
       },
       "text": "晚上好，nya。歡迎來到 Mirage。看來你不喜歡打字，我只好親自打電話了。",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-8"
     },
     {
       "id": "s55-intrusion-v2-9",
@@ -355,7 +393,8 @@
         "late": "silent"
       },
       "text": "這不重要。重要的是，你應該也不想自己的計劃被別人知道吧？",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-10"
     },
     {
       "id": "s55-intrusion-v2-11",
@@ -405,7 +444,8 @@
         "late": "silent"
       },
       "text": "呵呵，別這麼緊張。我對揭發你沒興趣。恰恰相反，我想參與。",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-12"
     },
     {
       "id": "s55-intrusion-v2-13",
@@ -455,7 +495,8 @@
         "late": "silent"
       },
       "text": "事到如今，你有拒絕的權利嗎？",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-14"
     },
     {
       "id": "s55-intrusion-v2-15",
@@ -504,7 +545,8 @@
         "late": "silent"
       },
       "text": "別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-16"
     },
     {
       "id": "s55-intrusion-v2-17",
@@ -554,7 +596,8 @@
         "late": "silent"
       },
       "text": "可你的手機裡那些資料告訴我，你似乎不止一個人。",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-18"
     },
     {
       "id": "s55-intrusion-v2-19",
@@ -603,7 +646,8 @@
         "late": "silent"
       },
       "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，熙蒙。記得檢查你的郵箱。",
-      "thread": "s55-ouroboros"
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-20"
     }
   ],
   "acceptance": [
@@ -640,7 +684,7 @@
     {
       "id": "accept-d13-assets",
       "type": "assets",
-      "verify": "沒有 MiniMax 檔案時實際走文字後備；有音檔則播放開始寫泡泡、結束才解鎖 Send；尚未宣稱真實配音通過。"
+      "verify": "七段 MiniMax MP3 均小於1MB，文字 SHA256 與原稿一致；瀏覽器必須實際觸發七次 playing 和七次 ended，播放開始已有泡泡且輸入鎖定；缺檔／載入失敗仍保留文字後備。"
     },
     {
       "id": "accept-d13-date-clock",
