@@ -1,0 +1,651 @@
+{
+  "schemaVersion": 2,
+  "day": 9,
+  "date": "2025-05-27",
+  "title": "D09 · 生活日常与三份MIRAGE委托",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": [
+    "story55",
+    "messaging",
+    "commissions",
+    "mirage",
+    "ghost",
+    "kira",
+    "bank"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d09-mute-records-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d09-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d09-mute-records",
+      "rewardUSD": 1500
+    },
+    {
+      "id": "d09-relay-validation-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d09-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d09-relay-validation",
+      "rewardUSD": 3600
+    },
+    {
+      "id": "d09-null-table-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d09-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d09-null-table",
+      "rewardUSD": 1700
+    },
+    {
+      "id": "d09-training-call-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "下午三点训练，记得带水",
+      "trigger": {
+        "type": "day-time",
+        "ref": "08:46"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "08:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d09-training-call-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "今天又练？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-call-01"
+      },
+      "requires": [
+        "d09-training-call-01"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-call-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "昨天没练",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-call-02"
+      },
+      "requires": [
+        "d09-training-call-02"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-call-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "精神上练了算不算",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-call-03"
+      },
+      "requires": [
+        "d09-training-call-03"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-call-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "算你热身",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-call-04"
+      },
+      "requires": [
+        "d09-training-call-04"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-cola-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "冰箱里最后一罐可乐谁喝的",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:27"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "11:27"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d09-cola-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-cola-01"
+      },
+      "requires": [
+        "d09-cola-01"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-cola-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "瓶子倒是留得挺整齐",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-cola-02"
+      },
+      "requires": [
+        "d09-cola-02"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-cola-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "训练的绷带我拿了两卷",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-cola-03"
+      },
+      "requires": [
+        "d09-cola-03"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "第三趟比第一趟慢了八秒",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:52"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "15:52"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d09-training-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "鞋带松了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-01"
+      },
+      "requires": [
+        "d09-training-01"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "你第三趟之前不是刚系过",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-02"
+      },
+      "requires": [
+        "d09-training-02"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "那可能是地的问题",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-03"
+      },
+      "requires": [
+        "d09-training-03"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "休息十分钟，先喝水",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-04"
+      },
+      "requires": [
+        "d09-training-04"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-06",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "阿威你那边记了没",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-05"
+      },
+      "requires": [
+        "d09-training-05"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-training-07",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "记了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-training-06"
+      },
+      "requires": [
+        "d09-training-06"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-laundry-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "训练服放洗衣篮，别又扔椅子上",
+      "trigger": {
+        "type": "day-time",
+        "ref": "18:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "18:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d09-shopping-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "明天下午谁能陪我采购",
+      "trigger": {
+        "type": "day-time",
+        "ref": "20:14"
+      },
+      "requires": [],
+      "timing": {
+        "day": 9,
+        "at": "20:14"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d09-shopping-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我有空",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-shopping-01"
+      },
+      "requires": [
+        "d09-shopping-01"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d09-shopping-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d09-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "明天不用训练，你们自己休息",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d09-shopping-02"
+      },
+      "requires": [
+        "d09-shopping-02"
+      ],
+      "timing": {
+        "day": 9,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "仅当天00:00发布三份新委托，前一天不可提前接"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未手动接单时KIRA不发附件，未提交时银行无结算"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "同一委托只发一封附件邮件、只结算一次；群聊消息不重复"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "刷新与再次打开群聊不重播，D01–D07历史不被覆盖"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "MIRAGE接单→KIRA唯一附件→Files打开Ghost→顺序执行→手动提交→银行入账"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "跳日后历史群聊静默补齐，委托到期不能再接"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "不新增图片；D06/D07既有收货照片仍按购买条件触发"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "全部消息使用2025年5月真实日期与游戏时钟并保持合理间隔"
+    },
+    {
+      "id": "check-dialogue",
+      "type": "dialogue",
+      "verify": "群聊20句含无人回复的独立消息，不自动冒充熙蒙"
+    },
+    {
+      "id": "check-finance",
+      "type": "finance",
+      "verify": "未完成的委托无奖励，手动提交成功每单入账一次"
+    }
+  ]
+}
