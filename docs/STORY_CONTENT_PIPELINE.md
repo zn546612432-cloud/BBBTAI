@@ -23,13 +23,13 @@
 
 ## 每天需要一份可校验的事件包
 
-1. 复制 `.agents/skills/ximeng-story-fill/templates/day-packet.template.json` 为一个工作分支中的 `docs/story-packets/d08.json`；模板本身不包含 D08 的真实内容，不能偷偷当做剧情发布。
+1. 在独立分支运行 **`npm run story:new -- D08`**，会自动计算日期并生成 `docs/story-packets/d08.json`；已存在的文件不会被覆盖。模板不包含 D08 的真实内容，不能偷偷当做剧情发布。
 2. 按既有 `story55` 配置确定当天与前置，填写 `events`（含 kind、owner、trigger、actor、thread、timing、requires、delivery、once），资产在 `assets`，验收在 `acceptance`。
-3. 命令：`node scripts/validate-story-packet.mjs docs/story-packets/d08.json`
-4. 剧情审核通过后把 `stage` 改成 `approved`，再执行 `node scripts/validate-story-packet.mjs --strict docs/story-packets/d08.json`。缺少负面/幂等/旧存档/跨日/资源等测试会报错。
+3. 命令：`npm run story:check -- docs/story-packets/d08.json`
+4. 剧情审核通过后把 `stage` 改成 `approved`，再执行 `npm run story:check -- --strict docs/story-packets/d08.json`。缺少负面/幂等/旧存档/跨日/资源等测试会报错。
 5. **配置包不自动改变游戏**。按已知引擎映射把数据接到现有 `src/story/d08` 或共享服务，运行实际代码与 Playwright/手机点击验证后才叫完成。
 
-示例：`.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json`。它真实记录 D06 的付款→熙蒙亲自发送→大家感谢→仔仔订餐→晚饭照片事件顺序，**只用于审校与测试，不会重复写入游戏聊天**。
+可运行示例校验：`npm run story:example`。示例：`.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json`。它真实记录 D06 的付款→熙蒙亲自发送→大家感谢→仔仔订餐→晚饭照片事件顺序，**只用于审校与测试，不会重复写入游戏聊天**。
 
 ## 内容与程序的界线
 
