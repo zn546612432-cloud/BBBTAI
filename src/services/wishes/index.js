@@ -12,6 +12,10 @@ const ledger=s=>s.story55.wishes??=({records:{},story:{started:false,lines:[],ne
 const record=(s,id)=>ledger(s).records[id]||null;
 const hasPhrase=(s,id)=>Object.values(s.content?.conversations||{}).some(list=>list.some(c=>c.messages?.some(m=>m.wishId===id)));
 export const getWish=(s,id)=>s.story55?.wishes?.records?.[id]||null;
+const dinnerBooked=s=>!!s.story55?.wishes?.story?.delivered?.includes('wish-dinner-booking-01');
+const wishReminderDone=(s,r)=>r.id==='d06-dinner'?dinnerBooked(s):
+  r.status==='completed'||r.status==='delivered';
+
 // Purchase is not a spoken message. The native WeChat composer shows this
 // only after a real dinner payment, and records it only on the player's Send.
 export const D06_DINNER_PLAYER_LINE='好啊，一起去吃饭！今晚我请客。';
@@ -50,7 +54,7 @@ export function syncWishReminders(s){
   if(!item.wishId)continue;
   const r=s.story55?.wishes?.records?.[item.wishId];
   if(!r)continue;
-  const done=r.status==='completed'||r.status==='delivered';
+  const done=wishReminderDone(s,r);
   if(item.done!==done){item.done=done;changed=true;}
   if(item.wishStatus!==r.status){item.wishStatus=r.status;changed=true;}
  }
@@ -99,7 +103,7 @@ export function purchaseWish(s,id){
    deliveryDay:w.kind==='event'?s.day:s.day+w.deliveryDays,
    deliveryClock:w.kind==='event'?s.clock:'15:00'});
  const reminder=s.content.reminders.find(x=>x.wishId===id);
- if(reminder){reminder.done=w.kind==='event';reminder.wishStatus=r.status;}
+ if(reminder){reminder.done=false;reminder.wishStatus=r.status;}
  s.events.push({type:'wish_purchased',wishId:id,day:s.day,clock:s.clock});
  // Queue follow-ups; never immediately force-send NPC chat inside a bank action.
  if(w.kind!=='event')queueReward(s,id,false);
@@ -193,7 +197,7 @@ export function tickWishes(s,now=Date.now()){
   st.d07Started=true;
   for(const line of nextDay)queue(s,{...line,dueDay:7,dueClock:'09:00',silentAfterDay:true});
   for(const line of extraDay)queue(s,{...line,dueDay:7,dueClock:'11:00',silentAfterDay:true});
-  if(record(s,'d06-dinner')?.status==='delivered')
+  if(record(s,'d06-dinner')?.confirmedByXimeng)
    queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),dueDay:7,dueClock:'09:00',silentAfterDay:true});
   changed=true;
  }
@@ -210,6 +214,11 @@ export function tickWishes(s,now=Date.now()){
   sentDate:date55(Math.min(s.day,line.dueDay)),storyTag:'storyWish',
   silent:!!(line.silentAfterDay&&s.day>line.dueDay)});
  if(m&&line.wishId){m.wishId=line.wishId;m.wishText=line.wishText;}
- st.delivered.push(line.id);st.nextAt=now+2000;changed=true;
+ st.delivered.push(line.id);
+ if(line.id==='wish-dinner-booking-01'){
+  const reminder=s.content.reminders?.find(r=>r.wishId==='d06-dinner');
+  if(reminder){reminder.done=true;reminder.wishStatus='delivered';}
+ }
+ st.nextAt=now+2000;changed=true;
  return changed;
 }
