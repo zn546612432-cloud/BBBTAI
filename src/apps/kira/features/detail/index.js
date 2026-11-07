@@ -7,7 +7,7 @@ import {kiraMailTreatment,kiraMailDateLabel} from './policy.js';
 import {renderCommissionAttachment} from './attachment.js';
 import {D13_MAIL_ID} from '../../../../story/d13/definition.js';
 
-const lineBreaks=content=>esc(content).replace(/\\r?\\n|\\\\n/g,'<br>');
+const lineBreaks=content=>esc(content).replace(/\r?\n|\\n/g,'<br>');
 export function kiraDetail(s,id){
  const m=s.content.mail.find(m=>m.id===id);
  if(!m)return empty('邮件不存在');
