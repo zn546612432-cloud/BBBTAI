@@ -5,6 +5,7 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {storyDayPacket} from '../scripts/new-story-day.mjs';
 import {validateStoryPacket,APP_CAPABILITIES} from '../scripts/validate-story-packet.mjs';
 import {auditStorySkill} from '../scripts/audit-story-skill.mjs';
+import {describeAppCapabilities} from '../scripts/list-story-app-capabilities.mjs';
 
 const src=new URL('../.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json',import.meta.url);
 const draftSrc=new URL('../.agents/skills/ximeng-story-fill/templates/day-packet.template.json',import.meta.url);
@@ -253,4 +254,33 @@ test('Reject v1 packet strict publication even if its old fields are otherwise v
 test('Reject events missing capability in v2 packets',()=>{
  const d=sample();delete d.events[0].capability;
  fail(d,'v2 每个事件必须声明');
+});
+
+
+test('Story:apps lists real App capabilities without claiming universal run support',()=>{
+ const a=describeAppCapabilities('wechat');
+ assert.equal(a.length,1);
+ assert.equal(a[0].appId,'wechat');
+ assert.ok(a[0].actions.some(x=>x.name==='chat.d06-wish-player'&&x.state==='wired-day'));
+ assert.ok(a[0].actions.some(x=>x.name==='chat.receive-text'&&x.state==='adapter-required'));
+ assert.equal(describeAppCapabilities().length,25);
+ assert.throws(()=>describeAppCapabilities('instagram'),/未在真实注册表/);
+});
+
+test('Story:apps CLI identifies app requirements and its output is valid JSON',()=>{
+ const raw=execFileSync(process.execPath,['scripts/list-story-app-capabilities.mjs','aomi','--json'],{encoding:'utf8'});
+ const a=JSON.parse(raw);
+ assert.equal(a[0].appId,'aomi');
+ assert.ok(a[0].actions.some(x=>x.name==='order.place'&&x.state==='adapter-required'));
+ const bad=spawnSync(process.execPath,['scripts/list-story-app-capabilities.mjs','instagram'],{encoding:'utf8'});
+ assert.notEqual(bad.status,0);
+});
+
+test('Repository app capability CLI and strict example remain working via npm scripts',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+ assert.equal(pkg.scripts['story:apps'],'node scripts/list-story-app-capabilities.mjs');
+ assert.equal(pkg.scripts['story:audit'],'node scripts/audit-story-skill.mjs');
+ const r=spawnSync(process.execPath,['scripts/audit-story-skill.mjs'],{encoding:'utf8'});
+ assert.equal(r.status,0,r.stdout+'\n'+r.stderr);
+ assert.match(r.stdout,/appsAudited":25/);
 });
