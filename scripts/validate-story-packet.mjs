@@ -5,12 +5,16 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const DAY0=Date.UTC(2025,4,19);
+const APP_CAPABILITIES=JSON.parse(readFileSync(new URL('../.agents/skills/ximeng-story-fill/references/app-capabilities.json',import.meta.url),'utf8'));
+const registeredApps=new Map(Object.entries(APP_CAPABILITIES.apps).map(([name,definition])=>[definition.appId,{name,...definition}]));
+export {APP_CAPABILITIES};
+
 const stages=new Set(['draft','review','approved','example']);
 const scopes=new Set(['main','optional','mixed']);
 const kinds=new Set(['incoming-text','incoming-image','player-send','purchase',
  'commission','system-notice','moment','email','reminder','delivery','reward','link']);
 const owners=new Set(['story55','messaging','wishes','commissions','bank','reminders',
- 'assets','notifications','moments','time','mirage','ghost','kira','noapp']);
+ 'assets','notifications','moments','time','mirage','ghost','kira','noapp',...Object.keys(APP_CAPABILITIES.apps)]);
 const surfaces=new Set(['wechat','mirage','ghost','kira','bank','reminders','moments',
  'sms','phone','noapp','calendar','photos','home','system']);
 const triggers=new Set(['day-time','node-completed','user-action','user-send',
@@ -31,7 +35,11 @@ export function validateStoryPacket(p,{strict=false}={}){
  const error=(where,msg)=>errors.push(where+': '+msg);
  const warn=(where,msg)=>warnings.push(where+': '+msg);
  if(!obj(p))return {ok:false,errors:['root: 需要 JSON 对象'],warnings,summary:null};
- if(p.schemaVersion!==1)error('schemaVersion','必须为 1');
+ if(![1,2].includes(p.schemaVersion))error('schemaVersion','必须为 1（旧内容兼容）或 2（按 App 能力校验）');
+ if(p.schemaVersion===1){
+  if(strict||p.stage==='approved')error('schemaVersion','旧v1事件包缺少 App 能力合同，不可直接通过严格发布验收；请迁移到 v2');
+  else warn('schemaVersion','旧v1只做结构兼容，不证明支持任意日期的 App 行为');
+ }
  if(!Number.isInteger(p.day)||p.day<1||p.day>55)error('day','必须是 D01–D55');
  else if(p.date!==gameDate(p.day))error('date','游戏日对应日期必须为 '+gameDate(p.day));
  if(!nonempty(p.title))error('title','缺少标题');
@@ -69,10 +77,36 @@ export function validateStoryPacket(p,{strict=false}={}){
   if(seen.has(e.id))error(at+'.id','ID 重复: '+e.id);
   if(!kinds.has(e.kind))error(at+'.kind','未知事件类型 '+e.kind);
   if(!owners.has(e.owner))error(at+'.owner','必须使用现有统一系统: '+e.owner);
-  if(!surfaces.has(e.surface))error(at+'.surface','未知手机界面 '+e.surface);
+  if(p.schemaVersion===2&&!registeredApps.has(e.surface))
+   error(at+'.surface','未在 src/system/registry.js 中注册的 App：'+e.surface);
+  else if(p.schemaVersion===1&&!surfaces.has(e.surface)&&!registeredApps.has(e.surface))
+   error(at+'.surface','未知手机界面 '+e.surface);
+  if(p.schemaVersion===2){
+   const app=registeredApps.get(e.surface);
+   const cap=app?.capabilities?.[e.capability];
+   if(!nonempty(e.capability))error(at+'.capability','v2 每个事件必须声明 App 能力');
+   else if(!cap)error(at+'.capability','该 App 没有声明此项能力：'+e.surface+'/'+e.capability);
+   else{
+    if(!cap.kinds.includes(e.kind))error(at+'.capability','能力不接受 kind：'+e.kind);
+    if(e.owner!==cap.owner)error(at+'.owner','能力只能由统一权属 '+cap.owner+' 实施');
+    if(cap.state==='wired-day'&&!cap.originDays?.includes(p.day))
+     error(at+'.capability','仅 D'+cap.originDays?.join('/D')+' 已接通此能力，不可在 D'+p.day+' 直接复用');
+    if(cap.state==='adapter-required'){
+     const msg='该 App 能力尚无通用剧情适配器：'+e.surface+'/'+e.capability;
+     if(strict||p.stage==='approved')error(at+'.capability',msg);
+     else warn(at+'.capability',msg+'；仅可审议设计，不代表会运行');
+    }
+    if(!['wired-day','adapter-required'].includes(cap.state))
+     error(at+'.capability','未知能力状态 '+cap.state);
+   }
+   if(app?.hidden)error(at+'.surface','隐藏/别名开发 App 不允许直接发布剧情');
+   for(const fact of app?.gateFacts||[]){
+    if(!e.requires?.includes(fact))error(at+'.requires','受剧情门槛保护的 App 必须声明 '+fact);
+   }
+  }
   if(e.once!==true)error(at+'.once','必须显式 once:true，防重复');
   if(!nonempty(e.actor))error(at+'.actor','需要执行者或发言人');
-  const chat=['wechat','mirage','noapp'].includes(e.surface)&&
+  const chat=['wechat','mirage','noapp','messages'].includes(e.surface)&&
    ['incoming-text','incoming-image','player-send'].includes(e.kind);
   if(chat&&!nonempty(e.thread))error(at+'.thread','需要真实聊天 thread ID');
   if(e.surface==='wechat'&&e.thread==='group'&&forbiddenGroupSenders.has(e.actor))
@@ -167,7 +201,7 @@ export function validateStoryPacket(p,{strict=false}={}){
  if(p.stage==='example')warn('stage','示例仅用于演示，不被手机运行时读取');
  return {ok:errors.length===0,errors,warnings,summary:{
   day:p.day,date:p.date,stage:p.stage,events:events.length,
-  assets:assets.length,checks:p.acceptance?.length||0
+  assets:assets.length,checks:p.acceptance?.length||0,apps:[...new Set(events.map(x=>x?.surface).filter(Boolean))]
  }};
 }
 
