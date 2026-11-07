@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {storyDayPacket} from '../scripts/new-story-day.mjs';
 import {validateStoryPacket} from '../scripts/validate-story-packet.mjs';
 
 const src=new URL('../.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json',import.meta.url);
@@ -77,4 +79,31 @@ test('Reject approved packets without full negative/late/restore test matrix',()
 test('Reject padded currency amounts with unsupported fractional cents',()=>{
  const d=sample();d.events.find(x=>x.kind==='purchase').money.amount=-350.001;
  fail(d,'美分');
+});
+
+test('Day scaffold auto-derives correct 55-day dates and never invents content',()=>{
+ const d08=storyDayPacket(8);
+ assert.equal(d08.date,'2025-05-26');
+ assert.equal(d08.stage,'draft');
+ assert.equal(d08.events.length,0);
+ assert.equal(d08.assets.length,0);
+ assert.equal(storyDayPacket(55).date,'2025-07-12');
+ assert.throws(()=>storyDayPacket(56),/D01/);
+});
+
+test('New day CLI --stdout prints a schema-valid draft without writing phone code',()=>{
+ const raw=execFileSync(process.execPath,['scripts/new-story-day.mjs','D08','--stdout'],{encoding:'utf8'});
+ const packet=JSON.parse(raw);
+ assert.equal(packet.day,8);
+ assert.equal(packet.date,'2025-05-26');
+ assert.equal(validateStoryPacket(packet).ok,true);
+ const wrong=spawnSync(process.execPath,['scripts/new-story-day.mjs','D56','--stdout'],{encoding:'utf8'});
+ assert.notEqual(wrong.status,0);
+});
+
+test('Story packet CLI actually exits successfully for the curated sample',()=>{
+ const r=spawnSync(process.execPath,['scripts/validate-story-packet.mjs','--strict',
+  '.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json'],{encoding:'utf8'});
+ assert.equal(r.status,0,r.stderr);
+ assert.match(r.stdout,/PASS .*d06-dinner.example.json/);
 });
