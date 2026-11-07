@@ -8,7 +8,7 @@ export const DEFAULT_DIARY_ENTRIES={
     body:'昨天整理的东西还有一点没弄完，今天抽空处理一下。\n\n最近 MIRAGE 的单子还行，不过小委托做多了也挺烦的。看看今天有没有什么值得接的，最好来个奖金高一点的。\n\n哥昨天还叫我出去走走。再说吧，先把手里的事情忙完。',
     // Generic diary stages use completed story nodes; D07-D55 can reuse this
     // format without a new daily tick function or event dispatcher.
-    sections:[{id:'mirage-conversation',afterNode:'invitation',text:'今天运气不错。\n\nFlow 早上发来的那个钱包挑战，奖金居然有 10 BTC。原本还以为会有多麻烦，结果比想象中顺利。\n\n奖金到账了。\n\n发布挑战的那个 Dr Ouroboros 还专门找我聊了几句，问我属于哪个组织。\n\n我说我单干。\n\n他好像挺意外的。说话有点欠揍，不过技术应该不错。\n\n最后还叫我「黑客天才」，说以后有机会合作。\n\n行啊，有钱赚再说。'}]
+    sections:[{id:'mirage-conversation',afterNode:'invitation',text:'今天总算有点意思。\n\nFlow 早上发来的那场钱包挑战，奖金居然真有 10 BTC。四十分钟交了结果，没想到后面还有人排队。\n\n发布人 Dr Ouroboros 主动来找我。他问代码是不是我一个人写的，还想拉我进团队。\n\n我拒绝了。\n\n以后要是有合适的活，可以谈合作，但没兴趣给人当手下。'}]
   },
   5:{
     title:'先把手边的事弄完',
