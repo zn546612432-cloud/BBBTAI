@@ -37,3 +37,8 @@
 `tests/wishes.test.mjs` covers the prize requirement, idempotence, expiry, D07 fallback, and optional reward photos.
 
 The actual user-provided **12 JPEGs** are in `D06_wish_photos_complete_12.zip` under `public/assets/d06-wishes/`. Until those binary images are committed to the **review branch**, GitHub's asset-path regression check correctly fails. Never merge main with missing visuals, and never bypass the check by inserting empty placeholders.
+
+## Supabase Storage asset routing (2026-11-07)
+A public, read-only-from-frontend Storage bucket `ximeng-assets` has been created in the connected Supabase project `ximeng-phone-ai` (`zmnufhswpnreeseyamlv`). The 12 D06 photo names are centrally registered in `src/services/assets/wish-media.js` under `https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/<filename>`. The authored WeChat photos and wish catalog both use that one resolver; no extra app-specific photo base URLs.
+
+**Important:** The bucket currently has **zero objects**. The 12 user-supplied original JPEG files are prepared in `D06_Supabase_Storage_12_images.zip` with `d06/` paths, but this Supabase connector does not provide an object-storage binary upload action and the local file container does not have outbound network connectivity. No image upload success is claimed. The `tests/d06-supabase-image-integrity.test.mjs` release gate must remain red until all 12 public HTTPS JPEG URLs actually return HTTP 200. Do not merge PR #92 before that.
