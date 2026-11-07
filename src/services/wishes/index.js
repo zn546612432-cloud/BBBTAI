@@ -1,13 +1,13 @@
 // One state machine for optional Reminders -> Bank -> delivery -> WeChat rewards.
 // All functions accept the existing PhoneStore state. No new storage or clock.
-import {WISH_CATALOG,wishDefinition} from './catalog.js';
+import {wishDefinition} from './catalog.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {celebration,privateScenes,nextDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
 import {completed,date55} from '../story55/state.js';
 
 const today=s=>date55(s.day);
 const perDay=s=>s.story55?.version===1&&!s.story55?.ended;
-const ledger=s=>s.story55.wishes??=( {records:{},story:{started:false,lines:[],nextAt:null,serial:0,d07Started:false}} );
+const ledger=s=>s.story55.wishes??=({records:{},story:{started:false,lines:[],nextAt:null,d07Started:false}});
 const record=(s,id)=>ledger(s).records[id]||null;
 const hasPhrase=(s,id)=>Object.values(s.content?.conversations||{}).some(list=>list.some(c=>c.messages?.some(m=>m.wishId===id)));
 export const getWish=(s,id)=>s.story55?.wishes?.records?.[id]||null;
@@ -64,8 +64,8 @@ function queueReward(s,id,isEvent){
  r.rewardQueued=true;
  for(const item of rewardSets[id]||[])queue(s,{...item,
    dueDay:isEvent?s.day:r.deliveryDay,
-   dueClock:isEvent?'19:30':'16:00',
-   silentAfterDay:!isEvent,
+   dueClock:isEvent?(item.kind==='image'?'20:30':'19:30'):'16:00',
+   silentAfterDay:true,
    wishRewardId:id});
 }
 export function beginD06Celebration(s,now=Date.now()){
@@ -95,16 +95,17 @@ function eligibleLine(s,line){
 export function wishEventsDue(s,now=Date.now()){
  if(!perDay(s))return false;
  const st=s.story55?.wishes?.story;
- if(st?.started&&s.day>=7&&!st.d07Started&&s.clock>='09:00')return true;
+ if(s.day>=7&&s.clock>='09:00'&&!st?.d07Started)return true;
  if(st?.lines?.some(x=>!st.delivered?.includes(x.id)&&eligibleLine(s,x))&&now>=(st.nextAt||0))return true;
- return Object.values(s.story55?.wishes?.records||{}).some(r=>r.status==='ordered'&&s.day>=r.deliveryDay&&(s.day>r.deliveryDay||s.clock>='15:00'));
+ return Object.values(s.story55?.wishes?.records||{}).some(r=>r.status==='saved'&&wishExpired(s,r.id)||r.status==='ordered'&&s.day>=r.deliveryDay&&(s.day>r.deliveryDay||s.clock>='15:00'));
 }
 export function tickWishes(s,now=Date.now()){
  if(!perDay(s))return false;
  const w=s.story55?.wishes;
- if(!w)return false;
+ if(!w&&!(s.day>=7&&s.clock>='09:00'))return false;
+ const state=w||ledger(s);
  let changed=false;
- for(const r of Object.values(w.records)){
+ for(const r of Object.values(state.records)){
   if(r.status==='saved'&&wishExpired(s,r.id)){
    r.status='expired';const item=s.content.reminders?.find(x=>x.wishId===r.id);
    if(item)item.wishStatus='expired';changed=true;
@@ -115,13 +116,13 @@ export function tickWishes(s,now=Date.now()){
   if(reminder){reminder.done=true;reminder.wishStatus='delivered';}
   queueReward(s,r.id,false);changed=true;
  }
- const st=w.story;
- if(st.started&&!st.d07Started&&s.day>=7&&s.clock>='09:00'){
+ const st=state.story;
+ if(!st.d07Started&&s.day>=7&&s.clock>='09:00'){
   st.d07Started=true;
   for(const line of nextDay)queue(s,{...line,dueDay:7,dueClock:'09:00',silentAfterDay:true});
   for(const line of extraDay)queue(s,{...line,dueDay:7,dueClock:'11:00',silentAfterDay:true});
   if(record(s,'d06-dinner')?.status==='delivered')
-   queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),dueDay:7,dueClock:'09:00'});
+   queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),dueDay:7,dueClock:'09:00',silentAfterDay:true});
   changed=true;
  }
  st.delivered??=[];
