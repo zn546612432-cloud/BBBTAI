@@ -68,6 +68,18 @@ function queueReward(s,id,isEvent){
    silentAfterDay:true,
    wishRewardId:id});
 }
+export function d06CelebrationDraft(s,id){
+ if(!perDay(s)||s.day!==6||id!=='group'||!completed(s,'wallet')||s.story55?.wishes?.story?.started)return null;
+ return {text:'兄弟们！我真的拿到 10 BTC 了！',stage:'d06-celebration-share',day:6,priority:3};
+}
+export function sendD06Celebration(store,id,text,now=Date.now()){
+ const draft=d06CelebrationDraft(store.get(),id);
+ if(!draft)return {handled:false};
+ if(String(text||'').trim()!==draft.text)
+  return {handled:true,reason:'請發送輸入框裡完整的預設台詞'};
+ store.update(s=>beginD06Celebration(s,now));
+ return {handled:true,messageId:'d06-celebration-player'};
+}
 export function beginD06Celebration(s,now=Date.now()){
  if(!perDay(s)||s.day!==6||!completed(s,'wallet'))throw Error('请先完成 D06 钱包挑战');
  const story=ledger(s).story;
