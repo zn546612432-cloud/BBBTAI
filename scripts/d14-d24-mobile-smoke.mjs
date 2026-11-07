@@ -24,6 +24,30 @@ async function route(day,clock,appId,path,params={}){
  await page.reload({waitUntil:'domcontentloaded'});await unlock();
 }
 const action=a=>page.locator(`[data-action="${a}"]`);
+// Prove that the native MIRAGE login actually submitted before checking a chat.
+async function signInMirage(){
+ const login=page.locator('form[data-form="mc-login"]');
+ if(!(await login.isVisible().catch(()=>false)))return;
+ await page.evaluate(()=>{
+  window.__mirageLoginTrace=[];
+  document.addEventListener('submit',e=>{if(e.target?.dataset?.form==='mc-login')window.__mirageLoginTrace.push({event:'submit',at:performance.now(),valid:e.target.checkValidity()});},true);
+ });
+ const fields=await login.evaluate(form=>({valid:form.checkValidity(),account:form.elements.account.value,passwordLength:form.elements.password.value.length}));
+ await login.locator('button[type="submit"]').click();
+ try{await login.waitFor({state:'hidden',timeout:7000});}
+ catch(error){
+  const diagnostics=await page.evaluate(()=>({
+   trace:window.__mirageLoginTrace,
+   stillLogin:!!document.querySelector('.mc-login-panel'),
+   currentRoute:JSON.parse(localStorage.getItem((location.pathname.match(/\\/review\\/([a-z0-9-]+)\\//i)||[])[1]?'ximeng-phone-story55-review-'+(location.pathname.match(/\\/review\\/([a-z0-9-]+)\\//i)||[])[1]:'ximeng-phone-story55-v1'))?.nav?.current,
+   notices:[...document.querySelectorAll('#toast,.mc-signup-warning')].map(x=>x.textContent.trim()).filter(Boolean)
+  }));
+  console.error('MIRAGE_LOGIN_DIAGNOSTIC',JSON.stringify({fields,...diagnostics}));
+  await page.screenshot({path:'qa-results/d15-login-failure.png'}).catch(()=>{});
+  throw error;
+ }
+ console.log('MIRAGE_LOGIN_OK',JSON.stringify({submitted:true,fieldsValid:fields.valid,submitEvents:await page.evaluate(()=>window.__mirageLoginTrace?.length||0)}));
+}
 async function scriptLine(id,conversation){
  return page.evaluate(async({id,conversation})=>{const p=(location.pathname.match(/\/review\/([a-z0-9-]+)\//i)||[])[1];const s=JSON.parse(localStorage.getItem(p?'ximeng-phone-story55-review-'+p:'ximeng-phone-story55-v1'));
   const release=await (await fetch(new URL('release.json',location.href))).json();const {currentScript55}=await import(release.url+'src/services/story55/scripted-chat.js');
@@ -96,7 +120,7 @@ try{
  state=await saved();assert.equal(state.story55.projects.base.batches.filter(b=>b.complete).length,1);assert.equal(state.story55.projects.base.batches[0].steps.filter(Boolean).length,5);assert.ok(!state.story55.completed.base);
  await page.screenshot({path:'qa-results/d14-five-games-9percent.png'});
  await route(15,'15:36','mirage','/chat/s55-ouroboros');
- if(await page.locator('.mc-login-panel').count())await page.getByRole('button',{name:'SIGN IN',exact:true}).click();
+ await signInMirage();
  await page.locator('.mc-composer').waitFor();await finishMirage('loan','s55-ouroboros');
  state=await saved();assert.equal(state.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);assert.equal(state.story55.liabilities,1000000);assert.equal(state.story55.sceneCamera.active,false);
  assert.equal(await page.evaluate(()=>window.__cameraCalls),0);
@@ -111,7 +135,7 @@ try{
  state=await saved();assert.equal(state.story55.authoredDays.d20.soup.completed,true);assert.ok(state.content.conversations.wechat.find(c=>c.id==='wang').messages.some(m=>m.text==='那我走九步，你走一步。'));
  await page.screenshot({path:'qa-results/d20-native-brother-chat.png'});
  await route(24,'21:06','mirage','/chat/mc-flow-d03');
- if(await page.locator('.mc-login-panel').count())await page.getByRole('button',{name:'SIGN IN',exact:true}).click();
+ await signInMirage();
  await page.locator('.mc-composer').waitFor();await finishMirage('lead','mc-flow-d03');state=await saved();
  assert.equal(state.story55.completed.lead.day,24);const flow=state.content.conversations.mirage.find(c=>c.id==='mc-flow-d03');assert.equal(flow.messages.filter(m=>m.id.startsWith('s55-lead-v2-')).length,7);
  assert.ok(!flow.messages.filter(m=>m.id.startsWith('s55-lead-v2-')).some(m=>/IP|哈佛|陈熙泰|陳熙泰/.test(m.text)));
