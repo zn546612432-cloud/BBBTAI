@@ -1,0 +1,651 @@
+{
+  "schemaVersion": 2,
+  "day": 8,
+  "date": "2025-05-26",
+  "title": "D08 · 生活日常与三份MIRAGE委托",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": [
+    "story55",
+    "messaging",
+    "commissions",
+    "mirage",
+    "ghost",
+    "kira",
+    "bank"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d08-archive-index-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d08-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d08-archive-index",
+      "rewardUSD": 1400
+    },
+    {
+      "id": "d08-north-node-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d08-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d08-north-node",
+      "rewardUSD": 3200
+    },
+    {
+      "id": "d08-white-static-published",
+      "kind": "commission",
+      "owner": "commissions",
+      "surface": "mirage",
+      "capability": "commission.d08-daily",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "contractId": "d08-white-static",
+      "rewardUSD": 1900
+    },
+    {
+      "id": "d08-keyboard-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "空格键又开始不理我了",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:12"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "09:12"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d08-keyboard-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "刚才那份表格删了重填",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-keyboard-01"
+      },
+      "requires": [
+        "d08-keyboard-01"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-keyboard-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "你前几天不是说它还能用吗",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-keyboard-02"
+      },
+      "requires": [
+        "d08-keyboard-02"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-keyboard-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "能用和好用是两回事啊",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-keyboard-03"
+      },
+      "requires": [
+        "d08-keyboard-03"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-keyboard-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "你是不是每天都在跟键盘吵架",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-keyboard-04"
+      },
+      "requires": [
+        "d08-keyboard-04"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-delivery-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "今天下午大屋有人吗",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:45"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "11:45"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d08-delivery-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "我在",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-delivery-01"
+      },
+      "requires": [
+        "d08-delivery-01"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-delivery-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "有个设备要送来，麻烦签收一下",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-delivery-02"
+      },
+      "requires": [
+        "d08-delivery-02"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-delivery-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "知道了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-delivery-03"
+      },
+      "requires": [
+        "d08-delivery-03"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-delivery-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "门口那盏灯有点闪",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-delivery-04"
+      },
+      "requires": [
+        "d08-delivery-04"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-heat-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "外面好热",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:40"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "15:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d08-heat-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "刚跑完一趟，汗都没干",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-heat-01"
+      },
+      "requires": [
+        "d08-heat-01"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-heat-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我今天不出去了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-heat-02"
+      },
+      "requires": [
+        "d08-heat-02"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-heat-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "你本来也没打算出门",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-heat-03"
+      },
+      "requires": [
+        "d08-heat-03"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-games-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "今晚有人打游戏吗",
+      "trigger": {
+        "type": "day-time",
+        "ref": "18:42"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "18:42"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "d08-games-02",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我可以",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-games-01"
+      },
+      "requires": [
+        "d08-games-01"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-games-03",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "晚一点",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-games-02"
+      },
+      "requires": [
+        "d08-games-02"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-games-04",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "那我先去找耳机",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-games-03"
+      },
+      "requires": [
+        "d08-games-03"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-games-05",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我先开了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d08-games-04"
+      },
+      "requires": [
+        "d08-games-04"
+      ],
+      "timing": {
+        "day": 8,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 2
+      }
+    },
+    {
+      "id": "d08-soup-01",
+      "kind": "incoming-text",
+      "owner": "messaging",
+      "surface": "wechat",
+      "capability": "chat.d08-group",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "明早冰箱里留了汤，谁先起谁热一下",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:09"
+      },
+      "requires": [],
+      "timing": {
+        "day": 8,
+        "at": "22:09"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "仅当天00:00发布三份新委托，前一天不可提前接"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未手动接单时KIRA不发附件，未提交时银行无结算"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "同一委托只发一封附件邮件、只结算一次；群聊消息不重复"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "刷新与再次打开群聊不重播，D01–D07历史不被覆盖"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "MIRAGE接单→KIRA唯一附件→Files打开Ghost→顺序执行→手动提交→银行入账"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "跳日后历史群聊静默补齐，委托到期不能再接"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "不新增图片；D06/D07既有收货照片仍按购买条件触发"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "全部消息使用2025年5月真实日期与游戏时钟并保持合理间隔"
+    },
+    {
+      "id": "check-dialogue",
+      "type": "dialogue",
+      "verify": "群聊20句含无人回复的独立消息，不自动冒充熙蒙"
+    },
+    {
+      "id": "check-finance",
+      "type": "finance",
+      "verify": "未完成的委托无奖励，手动提交成功每单入账一次"
+    }
+  ]
+}
