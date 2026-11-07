@@ -16,7 +16,9 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: All Phone and Story55 regressions
-        run: npm test
+      - name: New D01-D11 canon and continuity tests
+        run: node --test tests/d01-d11-rewrite-continuity.test.mjs
       - name: Full production Pages build (no deploy)
         run: npm run build:pages
+      - name: Full existing regressions (legacy copy checks need rewriting)
+        run: npm test
