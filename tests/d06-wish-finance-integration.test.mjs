@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {exchange} from '../src/services/bank.js';
-import {beginD06Celebration,tickWishes,addWish,purchaseWish} from '../src/services/wishes/index.js';
+import {beginD06Celebration,tickWishes,addWish,purchaseWish,sendD06DinnerReply,D06_DINNER_PLAYER_LINE} from '../src/services/wishes/index.js';
 import {historicalBtcUsd} from '../src/services/finance/historical-btc-usd.js';
 
 function createPhone(){
@@ -35,6 +35,11 @@ test('D06 BTC reward -> one USD conversion -> five optional purchases -> D07/D09
  for(const id of wishes)phone.update(s=>purchaseWish(s,id));
  assert.equal(phone.get().bankData.balance,726.82);
  assert.equal(phone.get().content.reminders.length,3);
+ assert.equal(messages(phone.get()).some(m=>m.id.startsWith('wish-dinner-thanks-')),false,'no NPC thank-you at payment');
+ assert.equal(messages(phone.get()).some(m=>m.id==='wish-dinner-photo'),false,'no photo at payment');
+ assert.equal(sendD06DinnerReply(phone,'group',D06_DINNER_PLAYER_LINE,0).handled,true);
+ deliver(phone);
+ assert.equal(messages(phone.get()).filter(m=>m.id==='wish-dinner-booking-01').length,1,'Zaizai books after Ximeng');
  phone.update(s=>{s.clock='20:30'});
  deliver(phone);
  assert.equal(messages(phone.get()).filter(m=>m.id==='wish-dinner-photo').length,1);
