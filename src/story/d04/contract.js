@@ -11,13 +11,13 @@ export const D04_CONTRACTS=[
  {id:'d04-archive-recovery',title:'C 級委託',owner:'ARCHIVE / 07',grade:'C',
   amount:1600,reward:'1,600 USD',deadline:{day:6,clock:'00:00'},stages:['extract','veil'],
   key:'ARCHIVE-D04-0522',attachment:'archive_0522.enc',
-  description:'一批封存的帳戶日誌需要重新整理。資料包含部分缺失的操作記錄和加密備份。\n\n請恢復可用資料，排除無效記錄，並提交完整索引。\n\n交付：有效索引、異常記錄清單。\n限期：48小時。',
-  letter:'資料已封裝。把能用的記錄找回來，丟掉重複條目，缺失部分如實標記。\n不要補造不存在的資料。\n\n附件：archive_0522.enc\n執行程序：竊取 → 隱匿。'},
+  description:"匿名客戶有一批過期的黑市帳戶流水，備份的時間標記互相對不上。找回仍可核對的欄位，其他保留為未確認。\\n\\n交付：有效條目索引、錯位時間清單。",
+  letter:"封包只開放本次委託要處理的資料。先取回可讀條目，再清理重複影本。缺少的部分不要替我補。\\n\\n附件：archive_0522.enc\\n執行程序：竊取 → 隱匿。"},
  {id:'d04-secure-channel-audit',title:'B 級委託',owner:'CIPHER / 22',grade:'B',
   amount:3600,reward:'3,600 USD',deadline:{day:7,clock:'00:00'},stages:['cipher','route','veil'],
   key:'CHANNEL-D04-0522',attachment:'relay_0522.log',
-  description:'對一套加密通信系統進行授權測試，檢查傳輸鏈路與異常資料。\n\n交付完整的鏈路檢查記錄及異常項目清單。\n\n限期：72小時。',
-  letter:'這套通信系統最近在固定時段出現鏈路異常。授權檢查已批准。\n我需要完整的測試記錄，不接受口頭描述。\n\n附件：relay_0522.log\n執行程序：破譯 → 連結 → 隱匿。'}
+  description:"一條匿名中繼通道連續三晚留下異常回執。委託人要求重新核對握手記錄，確定是哪一段鏈路出了問題。\\n\\n交付：鏈路比對結果、回執差異。",
+  letter:"給你的只是一份隔離的通信鏡像。解開封包，重建兩端測試鏈路，再將多餘標記隔離。\\n\\n附件：relay_0522.log\\n執行程序：破譯 → 連結 → 隱匿。"}
 ];
 const DAY=4;
 // Register daily definitions in the existing commission runner, with no new UI/steps.
