@@ -110,6 +110,18 @@
           "originDays": [
             10
           ]
+        },
+        "chat.d14-d24": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text",
+            "player-send"
+          ],
+          "proof": "src/story/d14-d24/wechat.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -211,6 +223,19 @@
           "originDays": [
             10
           ]
+        },
+        "story.d14-d24-dialogue": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "incoming-text",
+            "player-send",
+            "system-notice"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -225,6 +250,17 @@
             "commission"
           ],
           "proof": "src/apps/ghost/state.js"
+        },
+        "story.project-authorize": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/services/story55/projects.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -247,6 +283,17 @@
             "link"
           ],
           "proof": "src/services/commissions/attachment-flow.js"
+        },
+        "story.framework-key": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "email"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -270,6 +317,17 @@
             "reward"
           ],
           "proof": "src/services/bank.js"
+        },
+        "story.scene-loan": {
+          "state": "wired-day",
+          "owner": "bank",
+          "kinds": [
+            "reward"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -363,6 +421,17 @@
             "link"
           ],
           "proof": "src/apps/files/index.js"
+        },
+        "story.project-key": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/apps/files/features/story55-key/index.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -377,6 +446,17 @@
             "reminder"
           ],
           "proof": "src/apps/notes/index.js"
+        },
+        "story.d14-d24-notes": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/services/story55/authored-notes.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },
@@ -413,6 +493,17 @@
             "purchase"
           ],
           "proof": "src/apps/browser/aodong-shop.js"
+        },
+        "story.anonymous-page": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/browser/index.js",
+          "originDays": [
+            14
+          ]
         }
       }
     },

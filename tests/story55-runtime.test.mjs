@@ -15,7 +15,7 @@ import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {syncDeathNight,chargingBlock} from '../src/system/power/story.js';
 import {installMining,accrueMining,upgradeMining,sellMining} from '../src/services/story55/mining.js';
 const fixture=()=>{const s=initialState();activateStory55(s);return s;};
-const playScene=(s,id)=>{for(let i=0;i<100&&!completed(s,id);i++)advanceScene55(s,id,{acceptCall:true});assert.ok(completed(s,id));};
+const playScene=(s,id)=>{for(let i=0;i<100&&!completed(s,id);i++)advanceScene55(s,id,{acceptCall:true,disconnect:story55Config(s).scenes[id][s.story55.scenes[id]?.index||0]?.[0]==='disconnect'});assert.ok(completed(s,id));};
 function solveRun(s,id){
  const ctx={store:{get:()=>s,update:f=>f(s)}};const loc={route:'/run',params:{orderId:id}};assert.equal(begin(s,id),true);
  const click=(a,data)=>ghostAction('gh-'+a,{dataset:data},ctx,loc);

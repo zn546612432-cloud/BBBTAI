@@ -4,7 +4,7 @@ import replacements from '../../../story/assets/d01-d09-copy-replacements.json' 
 // A source change must not rewrite real player speech, edited text, timestamps,
 // read state, IDs, progress or pre-D01 historical messages.
 export function reviseDeliveredStoryCopy(s){
- if(s.story55?.copyRevisionD01D09===2)return false;
+ if(s.story55?.copyRevisionD01D09===3)return false;
  for(const [channel,chats] of Object.entries(s.content?.conversations||{}))for(const c of chats){
   for(const m of c.messages||[]){
    const line=replacements.find(line=>line.id===m.id&&line.channel===channel&&(line.before===m.text||m.id==='d09-laundry-0'&&m.text==='🐶'));
@@ -26,6 +26,6 @@ export function reviseDeliveredStoryCopy(s){
  const group=s.content?.conversations?.wechat?.find(c=>c.id==='group');
  for(const m of [...(group?.messages||[]),...(s.story55.wishes?.story?.lines||[])])
   if(m.id==='d06-celebrate-10'&&m.text===dinnerText&&m.wishId==='d06-dinner')m.wishText='出去吃飯';
- s.story55.copyRevisionD01D09=2;
+ s.story55.copyRevisionD01D09=3;
  return true;
 }

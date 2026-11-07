@@ -1,3 +1,6 @@
+import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
+import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
+import {postBankTransaction} from '../bank.js';
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
@@ -52,17 +55,33 @@ export function finishScene55(s,id){
  if(id==='ending'&&!s.story55.finalAudioHeard)throw Error('最后的语音尚未同步；请先配置并播放终局音频');
  if(!completeNode(s,id))return false;
  s.story55.activeScene=null;
- if(n.credit){s.bankData.balance+=n.credit;if(n.liability)s.story55.liabilities+=n.credit;s.bankData.transactions.unshift({id:'s55-'+id,label:n.liability?'ANONYMOUS LOAN':'STORY CREDIT',amount:n.credit,time:s.clock,date:date55(s.day)});}
+ if(n.credit)creditScene55(s,n);
  if(id==='ending')startFinale55(s);
  tickStory55(s);return true;
 }
-export function advanceScene55(s,id,{acceptCall=false,now=Date.now()}={}){
+// The ledger and its loan annotation are committed in the same PhoneStore update.
+function creditScene55(s,n){
+ const id='s55-'+n.id;
+ if(s.bankData.transactions.some(t=>t.id===id))return false;
+ postBankTransaction(s,{id,label:n.liability?'ANONYMOUS LOAN':'STORY CREDIT',amount:n.credit,
+  metadata:n.liability?{liabilityId:id,liabilityAmount:n.credit,kind:'loan'}:{}});
+ if(n.liability)s.story55.liabilities=(s.story55.liabilities||0)+n.credit;
+ s.notifications??=[];
+ s.notifications.push({id:id+'-receipt',title:'太平洋銀行',body:'入帳 '+n.credit.toLocaleString(),day:s.day,clock:s.clock,link:{appId:'bank',route:'/'}});
+ return true;
+}
+export function advanceScene55(s,id,{acceptCall=false,disconnect=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
+ if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
+ if(line[0]==='disconnect'&&!disconnect)throw Error('請先切斷連線');
+ if(line[0]==='camera')s.story55.sceneCamera={node:id,active:true,disconnected:false};
+ if(line[0]==='disconnect')s.story55.sceneCamera={node:id,active:false,disconnected:true};
+ if(line[0]==='credit')creditScene55(s,n);
  if(line[0]==='call'&&!acceptCall)throw Error('请接听未知来电');
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
@@ -73,12 +92,12 @@ export function advanceScene55(s,id,{acceptCall=false,now=Date.now()}={}){
   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
   if(chat)appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
- if(!['system','call','watch'].includes(line[0])){
-  const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
-  const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
+ if(!['system','call','watch','camera','disconnect','credit'].includes(line[0])){
+  const channel=n.channel||(['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage');
+  const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
@@ -118,6 +137,8 @@ export function sendQuestion55(s){
 }
 // Scripted conversations navigate to the existing messaging apps, not Calendar.
 export function chatNodeLink55(s,id){
+ const node=nodeById(s,id);
+ if(node?.channel&&node.conversationId)return {appId:node.channel,route:'/chat/'+node.conversationId,params:{node:id}};
  const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
  const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
@@ -135,7 +156,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
   const next=lines[q.index];if(!next)continue;
   // Do not enqueue NPC replies while the player owes a preset line.
-  if(next[0]==='me')continue;
+  if(['me','disconnect'].includes(next[0]))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;
    return true;
@@ -150,6 +171,8 @@ export function tickStory55(s){
  if(!isStory55(s))return;
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
+ syncD10D13Content(s);
+ syncD14D24Content(s);
  ensureNativeMirage55(s);
  // Legacy D06 accepted saves are repaired by the shared commission runner.
  // Do not create a second prototype authorization email.
@@ -175,8 +198,8 @@ export function tickStory55(s){
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
- for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
-  s.content.mail.unshift({...m,from:'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
+ for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
+  s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.

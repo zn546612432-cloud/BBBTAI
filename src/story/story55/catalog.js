@@ -1,3 +1,4 @@
+import {applyD14D24Definition} from '../d14-d24/definition.js';
 // Story version and editable definitions; no player progress or provider keys.
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
@@ -52,6 +53,10 @@ export const STORY55_CONFIG={
       "requires": [
         "invitation"
       ],
+      "at": "08:40",
+      "delivery": "queued",
+      "channel": "wechat",
+      "conversationId": "wang",
       "gateDay": 11
     },
     {
@@ -62,6 +67,10 @@ export const STORY55_CONFIG={
       "requires": [
         "return"
       ],
+      "at": "10:10",
+      "delivery": "queued",
+      "channel": "wechat",
+      "conversationId": "group",
       "gateDay": 12
     },
     {
@@ -507,32 +516,44 @@ export const STORY55_CONFIG={
     ],
     "return": [
       [
-        "wang",
-        "起床了没有？干爹回来了，今天回据点一趟。"
+            "wang",
+            "阿蒙，醒了没有？"
       ],
       [
-        "me",
-        "真的？我马上过去。"
+            "wang",
+            "干爹前天晚上就回澳门了，今早刚打电话给我。晚上去老地方，大家碰个面。"
       ],
       [
-        "father",
-        "好好干。"
+            "me",
+            "干爹回来了？哥，你怎么现在才告诉我！"
+      ],
+      [
+            "wang",
+            "我也是刚接到电话。他住美景大厦，今天不用过去找他。"
+      ],
+      [
+            "wang",
+            "胡枫还在韩国，明晚落地，我去机场接。你晚上记得过来。"
       ]
-    ],
+],
     "move": [
       [
-        "wang",
-        "先把自己的东西搬回来。胡枫晚上到，我去机场接他。"
+            "wang",
+            "今天先把旧大屋收拾出来，常用的东西各自带，不用一次搬完。"
       ],
       [
-        "xin",
-        "谁把这屋子的插座全占了，我手机快没电了。"
+            "xin",
+            "我晚上再过去，先把手头的事弄完。"
       ],
       [
-        "me",
-        "先别动那排，那是我的服务器。"
+            "me",
+            "机房那几台机器你们先别动，我自己整理。"
+      ],
+      [
+            "wang",
+            "知道。胡枫今晚落地，我去机场接他，记得给他留个地方放箱子。"
       ]
-    ],
+],
     "intrusion": [
       [
         "system",
@@ -556,7 +577,7 @@ export const STORY55_CONFIG={
       ],
       [
         "ouroboros",
-        "你的日程里写着汪杰和他的电子钱包，我想我们有必要把接下来的事情谈清楚。"
+        "你手机里的消息比你想的多。看来你要做的事，也不只那十枚比特币。"
       ],
       [
         "call",
@@ -1195,3 +1216,5 @@ export const STORY55_DAYS=[
     "title": "十一个密钥与熄屏"
   }
 ];
+
+applyD14D24Definition(STORY55_CONFIG,{force:true});
