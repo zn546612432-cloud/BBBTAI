@@ -1,4 +1,5 @@
 import {nativeWeChatComposer} from '../../../services/messaging/preset-replies.js';
+import {wishDefinition,wishIdForMessage} from '../../../services/wishes/catalog.js';
 
 
 
@@ -28,7 +29,14 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
 
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
-const portrait=(name,s)=>'<span class="wx-message-avatar"><img src="'+esc(resolveWeChatAvatar(name==='哥'?'熙旺':name,s.characterAvatars?.[name]||s.characterAvatars?.[name==='哥'?'熙旺':name]))+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async"></span>';
+const portrait=(name,s)=>{
+ const normalized=name==='哥'?'熙旺':name;
+ const source=resolveWeChatAvatar(normalized,s.characterAvatars?.[name]||s.characterAvatars?.[normalized]);
+ const image=/^(?:https?:\/\/|\/|blob:|data:image\/)/i.test(source);
+ return '<span class="wx-message-avatar">'+(image
+   ?'<img src="'+esc(source)+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async">'
+   :'<span class="wx-avatar-fallback" aria-label="'+esc(name)+'">'+esc(String(name||'?').slice(0,1))+'</span>')+'</span>';
+};
 const action=(name,title,icon)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'">'+icon+'</button>';
 const voiceIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M9 11v6m3-8c3 2.6 3 7.4 0 10m3-13c4.8 4.5 4.8 11.5 0 16"/></svg>';
 const plusIcon='<svg width="29" height="29" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 8v12M8 14h12"/></svg>';
@@ -56,13 +64,20 @@ function messageRow(m,s,c){
   const media=m.assetId?historyMediaById.get(m.assetId):null;
   const stickerSize=String(m.text).endsWith('/whitecat.webp')?' width="199" height="170"':
     String(m.text).endsWith('/dog.svg')?' width="88" height="88"':'';
+  const wishId=wishIdForMessage(m),wish=wishId&&wishDefinition(wishId);
+  const wishText=wish&&m.wishText&&String(m.text).includes(m.wishText)?String(m.text).split(m.wishText):null;
+  const highlightedWish=wishText&&wishText.length===2
+    ?esc(wishText[0])+'<button type="button" class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</button>'+esc(wishText[1])
+    :esc(m.text);
   const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
-    m.kind==='app_invitation'?invite(m,s,c):esc(m.text);
+    m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
     portrait(name,s)+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
-    (media?historicalMediaBubble(media,m,s):'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
+    (media?historicalMediaBubble(media,m,s):wishId
+      ?'<div class="wx-bubble wx-wish-bubble" title="'+esc(timestampLabel(m,s))+'">'+body+'</div>'
+      :'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
     '</div></div>';
 }
 
@@ -75,6 +90,7 @@ export function renderWeChatChat(s,id){
     ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
+
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+

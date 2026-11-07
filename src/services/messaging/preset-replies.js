@@ -3,12 +3,15 @@
 // Send never pick a different story rule independently.
 import {d01Draft,d01ComposerDisabled,sendD01WeChat} from '../../story/d01/wechat.js';
 import {AUTHORED_CHAT_TRACKS} from './lifecycle/registry.js';
+import {d06CelebrationDraft,sendD06Celebration,d06DinnerDraft,sendD06DinnerReply} from '../wishes/index.js';
 import {currentScript55,sendScriptedDraft55} from '../story55/scripted-chat.js';
 import {genericMissedReplyDraft,genericMissedReplyBusy,sendGenericMissedReply} from './lifecycle/missed-replies.js';
 
 // Every new authored day registers its track only once in lifecycle/registry.
 const providers=[
  {name:'d01',day:1,draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
+ {name:'d06-wish',day:6,draft:d06CelebrationDraft,disabled:()=>false,send:sendD06Celebration},
+ {name:'d06-dinner',day:6,draft:d06DinnerDraft,disabled:()=>false,send:sendD06DinnerReply},
  ...AUTHORED_CHAT_TRACKS.map(({name,track})=>({
   name:name.toLowerCase(),day:track.day,busy:track.busy,
   draft:track.draft,disabled:track.disabled,send:track.send

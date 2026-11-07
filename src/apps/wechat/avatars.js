@@ -15,6 +15,7 @@ export const wechatAvatars=Object.freeze({
  '傅隆生':publicWeChatAsset('avatars/originals/fulongsheng.jpeg')
 });
 
+const nameAliases=Object.freeze({'胡':'胡枫','枫':'胡枫','辛':'小辛','威':'阿威','哥':'熙旺'});
 export function resolveWeChatAvatar(name,source=''){
  const candidate=String(source||'');
  // Old saves can point to a previous /releases/<hash>/ folder; those
@@ -24,5 +25,6 @@ export function resolveWeChatAvatar(name,source=''){
  if(/^\/(?:apps\/wechat\/)/.test(candidate))return publicWeChatAsset(candidate);
  // Preserve custom uploaded data images and intentional remote portraits.
  if(/^(?:\/|data:image\/|https:\/\/|blob:)/i.test(candidate))return candidate;
- return wechatAvatars[name]||candidate||name?.slice(0,1)||'?';
+ const canonical=nameAliases[name]||name;
+ return wechatAvatars[canonical]||candidate||name?.slice(0,1)||'?';
 }

@@ -1,4 +1,6 @@
 import {isStory55} from './services/story55/state.js';
+import {wishEventsDue,tickWishes,syncWishReminders} from './services/wishes/index.js';
+import {openWishPurchase} from './apps/reminders/index.js';
 import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './story/d01/runtime.js';
 import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging/phone-story-scheduler.js';
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
@@ -35,6 +37,7 @@ import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
 import {beginLockscreenPreload} from './system/preload.js';
+import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
 import {dragOffset,nearestPage,pageTarget} from './system/pager.js';
@@ -50,6 +53,8 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// Reconcile wish entries affected by older home-widget checkbox behavior.
+if(isStory55(store.get()))store.update(s=>syncWishReminders(s));
 // A closed browser does not advance the story clock. A plugged-in battery does.
 if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s));
 // Migrate bookmarks saved by the retired 55-day calendar dialogue panels.
@@ -165,7 +170,7 @@ function render(){
  const oldKeys=new Set([...screen.querySelectorAll('.message-row[data-key]')].map(el=>el.dataset.key));
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
- const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
+ const wallpaper=`url("${rebaseBundledPublicAsset(s.wallpaper)}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
   // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
   $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
@@ -424,6 +429,7 @@ setInterval(()=>{
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+ if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
@@ -526,6 +532,11 @@ $('#root').addEventListener('click',async e=>{
     if(action==='home'){if(tasks.visible)tasks.hide();else if(store.get().nav.current.appId==='home')tasks.show(store.get().nav.current);else router.home();return;}
     if(action==='back'){router.back();return;}
     if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,store.get()))return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
+    if(action==='home-reminder-wish'){openWishPurchase(target.dataset.wishId,ctx());return;}
+    if(['reminder-wish-buy','reminder-wish-cancel','reminder-wish-finish','reminder-wish-chat','reminder-wish-bank'].includes(action)&&store.get().nav.current.appId==='home'){
+      registry.get('reminders')?.handle(action,target,ctx());
+      return;
+    }
     if(action==='home-reminder-toggle'){toggleReminder(store,target.dataset.id);return;}
     if(action==='page'){store.update(s=>{s.homePage=Number(target.dataset.page);});return;}
     if(action==='lock'){lockscreen.reset();shade=false;store.update(s=>{s.unlocked=false;s.nav.current={appId:'home',route:'/',params:{}};s.nav.stack=[];});return;}

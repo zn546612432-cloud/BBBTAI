@@ -1,0 +1,41 @@
+name: D06 simulated iPhone browser acceptance
+
+on:
+  push:
+    branches:
+      - feature/d06-wishes-lifecycle-20261107
+    paths:
+      - '.github/workflows/d06-mobile-browser-check.yml'
+      - '.github/test-scripts/d06-mobile-browser-smoke.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  iphone-browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install isolated Chromium browser test runner
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Exercise deployed D06 review with synthetic iPhone-sized browser
+        env:
+          D06_PREVIEW_URL: https://zn546612432-cloud.github.io/BBBTAI/review/d06-wishes-20261107/
+        run: node .github/test-scripts/d06-mobile-browser-smoke.mjs
+      - name: Retain mobile screenshots, even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d06-iphone-browser-screenshots
+          path: d06-mobile-results/
+          if-no-files-found: ignore
+          retention-days: 14
