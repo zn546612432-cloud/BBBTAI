@@ -36,6 +36,7 @@ import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
 import {beginLockscreenPreload} from './system/preload.js';
+import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
 import {dragOffset,nearestPage,pageTarget} from './system/pager.js';
@@ -166,7 +167,7 @@ function render(){
  const oldKeys=new Set([...screen.querySelectorAll('.message-row[data-key]')].map(el=>el.dataset.key));
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather'].includes(current.appId));
- const wallpaper=`url("${s.wallpaper}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
+ const wallpaper=`url("${rebaseBundledPublicAsset(s.wallpaper)}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
   // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
   $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
