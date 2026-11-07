@@ -61,11 +61,21 @@ try{
  assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.filter(m=>m.id.startsWith('s55-return-')).length,0);
  await page.screenshot({path:'qa-results/d11-wang-native-send.png'});
  await visit(11,'22:00','notes','/');
- await page.locator('#screen-layer').waitFor({state:'visible',timeout:15000});
+ // The passcode unlock animation is asynchronous. Do not assert the generic
+ // screen shell or screenshot the lock screen; require the real Notes list.
+ await page.locator('#screen-layer .nt-screen-list').waitFor({state:'visible',timeout:15000});
  s=await saved();let note=s.content.notes.find(n=>n.id==='xm-note-d11-meeting');
  assert.ok(note&&note.text.includes('五亿美元'));
  assert.ok(note.text.includes('\n'));
  assert.equal(s.content.notes.filter(n=>n.id===note.id).length,1);
+ const noteRow=page.locator('[data-action="open-note"][data-id="xm-note-d11-meeting"]');
+ await noteRow.waitFor({state:'visible'});
+ await page.screenshot({path:'qa-results/d11-meeting-notes-list.png'});
+ await noteRow.click();
+ await page.locator('#screen-layer .nt-screen-editor').waitFor({state:'visible',timeout:15000});
+ const visibleBody=await page.locator('.nt-body-input').inputValue();
+ assert.equal(visibleBody,note.text,'player can actually open the authored D11 Notes entry');
+ assert.match(visibleBody,/三个月筹三千万/);
  await page.screenshot({path:'qa-results/d11-meeting-notes.png'});
  await visit(12,'10:10','wechat','/chat/group');
  await page.locator('.wx-composer').waitFor({state:'visible',timeout:15000});
