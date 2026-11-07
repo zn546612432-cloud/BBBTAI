@@ -43,3 +43,26 @@
 .mc-detail .mc-brief{white-space:pre-line}
 
 .mc-session-warning{display:flex;flex-shrink:0;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid #b7c58066;background:#18382d;color:#e3d592;font-size:12px;line-height:1.4}.mc-session-warning button{flex-shrink:0;border:1px solid #c5d89b;padding:8px 10px;color:#dce9bf;font-size:12px}
+
+/* Decrypted messages replace the cipher layer instead of covering it.
+   The original MIRAGE palette, map, and contact model remain unchanged. */
+.mc-channel.is-decrypted .mc-cipher-scroll,.mc-channel.is-decrypted .mc-channel-monitor{display:none}
+.mc-channel.is-decrypted .mc-decoded{
+ position:relative;inset:auto;top:auto;bottom:auto;left:auto;right:auto;flex:1;
+ min-height:0;margin:8px 0 10px;background:#123c36f2;border:1px solid #76a895;
+ box-shadow:none;animation:mc-reveal .25s ease-out;
+}
+.mc-channel.is-decrypted .mc-decoded-heading{min-height:42px;height:42px;padding-left:14px;background:#2d62533d}
+.mc-channel.is-decrypted .mc-decoded-heading>span{font-size:10px;color:#d6e4cc}
+.mc-channel.is-decrypted .mc-clear-messages{padding:18px 13px 22px;overscroll-behavior:contain}
+.mc-channel.is-decrypted .mc-clear-row{margin-bottom:20px}
+.mc-channel.is-decrypted .mc-clear-sender{color:#b4c9b3;font-size:10px;line-height:1.45}
+.mc-channel.is-decrypted .mc-clear-text{font-size:16px;line-height:1.7;color:#eff4e5;letter-spacing:.1px}
+.mc-channel.is-decrypted .mc-clear-row.is-mine .mc-clear-text{color:#d9f4cf}
+.mc-channel.is-decrypted .mc-clear-row .mc-avatar{width:30px;height:30px}
+.mc-wallet-header{justify-content:space-between;gap:8px}
+.mc-wallet-header>strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.7px}
+.mc-wallet-back{display:flex;align-items:center;gap:3px;min-width:65px;min-height:44px;padding:7px 6px;color:#cce5d2;font:15px -apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;white-space:nowrap}
+.mc-wallet-add,.mc-wallet-placeholder{width:44px;min-width:44px;height:44px;display:grid;place-items:center;font-size:24px;color:#c5e1ca}
+.mc-wallet-transfer-confirm button{min-height:44px;min-width:94px;padding:10px 16px;border:1px solid #8cae9c;background:#204b3c;color:#e7f1e5}
+@media(max-height:650px){.mc-channel.is-decrypted .mc-decoded{top:auto;bottom:auto}}
