@@ -1,4 +1,5 @@
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
+import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
@@ -170,6 +171,7 @@ export function tickStory55(s){
  if(!isStory55(s))return;
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
+ syncD10D13Content(s);
  syncD14D24Content(s);
  ensureNativeMirage55(s);
  // Legacy D06 accepted saves are repaired by the shared commission runner.
