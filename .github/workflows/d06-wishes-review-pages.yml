@@ -1,0 +1,149 @@
+name: D06 wishes phone review — preserve four existing Pages sites
+
+on:
+  push:
+    branches:
+      - feature/d06-wishes-lifecycle-20261107
+    paths:
+      - '.github/workflows/d06-wishes-review-pages.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: d06-wishes-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d06-wishes-20261107/
+    steps:
+      - name: Checkout production main without changing it
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production-source
+      - name: Checkout the exact D06 review branch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: review-source
+      - name: Checkout the retained Story55 comparison
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: comparison-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test production and review before assembling any deploy
+        run: |
+          (cd production-source; npm ci; npm test)
+          (cd review-source; npm ci; npm test)
+
+      - name: Build unchanged main and current production preview
+        working-directory: production-source
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist primary-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist primary-dist/preview
+          mv primary-dist dist
+
+      - name: Rebuild the retained Story55 comparison under its original URL
+        working-directory: comparison-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+
+      - name: Preserve Story55 at its original review URL
+        run: |
+          mkdir -p production-source/dist/review/55-20261101
+          cp -a comparison-source/dist/. production-source/dist/review/55-20261101/
+
+      - name: Preserve Tai Vision from unchanged main
+        working-directory: production-source
+        run: |
+          mv dist preserved-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p preserved-dist/review/tai-vision-20261105
+          cp -a dist/. preserved-dist/review/tai-vision-20261105/
+          rm -rf dist
+          mv preserved-dist dist
+
+      - name: Verify original four sites before adding the fifth
+        working-directory: production-source
+        run: node scripts/audit-pages-site.mjs dist
+
+      - name: Build D06 separately, with its own save namespace and asset version
+        working-directory: review-source
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d06-wishes-20261107/" npm run build:pages
+          grep -q phone-preview dist/index.html
+          test -s dist/release.json
+
+      - name: Add only the new isolated D06 review; never overwrite the four site roots
+        run: |
+          mkdir -p production-source/dist/review/d06-wishes-20261107
+          cp -a review-source/dist/. production-source/dist/review/d06-wishes-20261107/
+          test -s production-source/dist/index.html
+          test -s production-source/dist/preview/index.html
+          test -s production-source/dist/review/55-20261101/index.html
+          test -s production-source/dist/review/tai-vision-20261105/index.html
+          test -s production-source/dist/review/d06-wishes-20261107/index.html
+
+      - name: Optimize static icon assets for mobile
+        run: |
+          python3 -m pip install --quiet Pillow==11.3.0
+          (cd production-source && python3 scripts/optimize-icon-atlases.py dist)
+
+      - name: Enforce final five-site artifact size and URL isolation
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const base='production-source/dist';
+          const sites=[
+            ['.', '/BBBTAI/'],
+            ['preview','/BBBTAI/preview/'],
+            ['review/55-20261101','/BBBTAI/review/55-20261101/'],
+            ['review/tai-vision-20261105','/BBBTAI/review/tai-vision-20261105/'],
+            ['review/d06-wishes-20261107','/BBBTAI/review/d06-wishes-20261107/']
+          ];
+          for(const [folder,url] of sites){
+            const dir=path.join(base,folder);
+            const release=JSON.parse(fs.readFileSync(path.join(dir,'release.json'),'utf8'));
+            const html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
+            if(!release.url.startsWith(url+'releases/')||!html.includes(release.url+'src/main.js'))throw Error('Wrong release URL '+folder);
+            if(folder!=='.'&&!html.includes('phone-preview'))throw Error('Preview has no isolated flag '+folder);
+            if(!fs.existsSync(path.join(dir,'releases',release.version,'src/main.js')))throw Error('Missing versioned JS '+folder);
+          }
+          let total=0;function walk(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,entry.name);if(entry.isDirectory())walk(p);else if(entry.isFile())total+=fs.statSync(p).size;}}
+          walk(base);
+          console.log('Five-site Pages deploy size MiB:',(total/1048576).toFixed(2));
+          if(total>=450*1048576)throw Error('Artifact >=450 MiB; refusing to replace existing four-site Pages');
+          NODE
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production-source/dist
+      - name: Deploy unchanged production and separate D06 review
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: '1800000'
