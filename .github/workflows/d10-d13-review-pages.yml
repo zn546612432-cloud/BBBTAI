@@ -114,6 +114,7 @@ jobs:
       - name: Build retained Xin stickers preview from its original branch
         working-directory: xin
         run: |
+          npm ci
           GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/xin-stickers-20261107/" npm run build:pages
           grep -q phone-preview dist/index.html
           test -s dist/release.json
