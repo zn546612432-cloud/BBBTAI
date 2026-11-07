@@ -36,6 +36,14 @@ export function syncWishReminders(s){
    confirmation.dueClock=boughtDinner.purchasedClock;
    changed=true;
   }
+  // Previously queued text asked "have you paid?" after a confirmed debit.
+  // Rebase undelivered copy from the one authored source; never rewrite chat history.
+  const currentText=rewardSets['d06-dinner']?.find(line=>line.id==='wish-dinner-01')?.text;
+  const alreadySent=s.story55?.wishes?.story?.delivered?.includes('wish-dinner-01');
+  if(currentText&&!alreadySent&&confirmation.text!==currentText){
+   confirmation.text=currentText;
+   changed=true;
+  }
  }
  return changed;
 }
