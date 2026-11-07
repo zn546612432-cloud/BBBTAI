@@ -67,6 +67,19 @@ test('Legacy pending shoes are dropped from shared wish queue, not financial his
  assert.equal(s.bankData.transactions.length,1);
 });
 
+test('Previously paid retired shoe wish disappears from reminders but preserves purchase ledger',()=>{
+ const s={day:8,clock:'16:00',story55:{version:1,ended:false,wishes:{
+  records:{'d06-shoes':{id:'d06-shoes',status:'delivered',purchasedDay:6}},
+  story:{lines:[{id:'wish-shoes-photo',wishRewardId:'d06-shoes'}],delivered:[],nextAt:0}
+ }},content:{reminders:[{id:'wish-d06-shoes',wishId:'d06-shoes',done:true}]},
+ bankData:{balance:999,transactions:[{id:'wish-purchase-d06-shoes',amount:-180}]}};
+ assert.equal(syncWishReminders(s),true);
+ assert.equal(s.content.reminders.length,0);
+ assert.equal(s.story55.wishes.story.lines.length,0);
+ assert.equal(s.bankData.transactions[0].id,'wish-purchase-d06-shoes');
+ assert.equal(s.bankData.balance,999);
+});
+
 test('D01 untitled ordinary day and D02 hardware-only SMS preserve their systems',()=>{
  assert.equal(DEFAULT_DIARY_ENTRIES[1].title,'');
  assert.ok(DEFAULT_DIARY_ENTRIES[1].body.includes('平靜的一天'));
