@@ -47,15 +47,15 @@ export const rewardSets={
  'd07-headphones':[
   dm('wish-headphones-thanks-1','awei','阿威','耳机收到了。'),
   dm('wish-headphones-photo','awei','阿威',d06WishImage('headphones-received.jpg'),{kind:'image'}),
-  dm('wish-headphones-thanks-2','awei','试过了，声音没问题。谢谢。')
+  dm('wish-headphones-thanks-2','awei','阿威','试过了，声音没问题。谢谢。')
  ],
  'd07-tableware':[
   dm('wish-tableware-thanks-1','wang','熙旺','阿蒙，家里送来一套餐具。你买的？'),
   dm('wish-tableware-photo','wang','熙旺',d06WishImage('tableware-received.jpg'),{kind:'image'}),
-  dm('wish-tableware-thanks-2','wang','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
+  dm('wish-tableware-thanks-2','wang','熙旺','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
  ],
  'd06-dinner':[
-  group('wish-dinner-01','仔仔','地方我联系好了，今晚七点半。阿蒙你付款了？'),
+  group('wish-dinner-01','仔仔','钱收到了！我跟店里订好啦，今晚七点半见，大家记得来啊。'),
   group('wish-dinner-02','小辛','我宣布今天不减肥了！！'),
   group('wish-dinner-03','胡枫','你什么时候减过哈哈哈哈'),
   group('wish-dinner-photo','仔仔',d06WishImage('celebration-dinner.jpg'),{kind:'image'})
