@@ -2,7 +2,7 @@
 // All functions accept the existing PhoneStore state. No new storage or clock.
 import {wishDefinition} from './catalog.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
-import {celebration,privateScenes,nextDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
+import {celebration,privateScenes,nextDay,afternoonDay,extraDay,rewardSets} from '../../story/d06/wish-content.js';
 import {completed,date55} from '../story55/state.js';
 import {payBankPurchase} from '../bank.js';
 
@@ -197,11 +197,22 @@ export function tickWishes(s,now=Date.now()){
   st.d07Started=true;
   for(const line of nextDay)queue(s,{...line,dueDay:7,dueClock:'09:00',silentAfterDay:true});
   for(const line of extraDay)queue(s,{...line,dueDay:7,dueClock:'11:00',silentAfterDay:true});
-  if(record(s,'d06-dinner')?.confirmedByXimeng)
-   queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),dueDay:7,dueClock:'09:00',silentAfterDay:true});
+  for(const line of afternoonDay)queue(s,{...line,dueDay:7,dueClock:'13:30',silentAfterDay:true});
   changed=true;
  }
  st.delivered??=[];
+ // Saying yes or paying is not proof that the group actually had dinner.
+ // The dinner photo is the completed-meal evidence, and it can arrive
+ // after late-game replay: reconcile the next-day response exactly once.
+ const dinnerHappened=record(s,'d06-dinner')?.confirmedByXimeng&&
+   st.delivered.includes('wish-dinner-booking-01')&&st.delivered.includes('wish-dinner-photo');
+ if(s.day>=7&&st.d07Started&&dinnerHappened&&
+    !st.delivered.includes('d07-dinner-after')&&
+    !st.lines.some(x=>x.id==='d07-dinner-after')){
+  queue(s,{...group('d07-dinner-after','小辛','昨天吃得太撑了，我今天真的不想看见肉了'),
+   dueDay:7,dueClock:'09:00',afterId:'d07-chat-07',silentAfterDay:true});
+  changed=true;
+ }
  if(now<(st.nextAt||0))return changed;
  // A paid dinner reservation deserves a prompt confirmation even while
  // the earlier group celebration is still being delivered one line at a time.
