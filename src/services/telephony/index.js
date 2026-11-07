@@ -150,9 +150,11 @@ export function mountTelephony(getContext){
   if(action==='tel-chat'){
    if(call.resumeRequired)primeTelephony(ctx);
    ctx.store.update(s=>{s.phoneCall.showControls=false;s.phoneCall.resumeRequired=false;});
-   const nav=ctx.store.get().nav.current;
-   if(call.node&&(nav.appId!=='mirage'||nav.route!=='/chat/s55-ouroboros'))
-    ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
+   const nav=ctx.store.get().nav.current,node=call.node&&nodeById(ctx.store.get(),call.node);
+   if(node){
+    const target={appId:node.channel||'mirage',route:'/chat/'+(node.conversationId||'s55-ouroboros'),params:{}};
+    if(nav.appId!==target.appId||nav.route!==target.route)ctx.router.open(target);
+   }
   }
  };
  document.addEventListener('click',click,true);
