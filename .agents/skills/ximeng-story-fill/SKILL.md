@@ -23,12 +23,12 @@ description: 为《熙蒙的手机》任意 D01–D55 日期与已注册 App 编
 
 1. **锁定基线**：`main` SHA、CI、前期历史聊天/朋友圈/短信、手机 UI、Story55、角色边界、现有分支；确定禁止修改范围。只在独立分支开发，不清空旧存档。
 2. **选择日期与创建事件包**：`npm run story:new -- D23`，自动得到真实日期；填写独立事件 ID、`surface`（实际注册 App ID）、`capability`（该 App 能执行的操作）、`owner`（唯一副作用归属）、游戏日/时钟/前置/人名/台词/图片/迟到处理、交易 ID、负面分支。**JSON schemaVersion=2**。一个包表示事件链的起始日，收货等后续事件可以发生于更晚日期，不能逆时间线。
-3. **能力检查（先于剧情实现）**：运行 `npm run story:check -- docs/story-packets/d23.json`。遇到 `adapter-required` 必须承认未接通；哪怕内容完整，也**禁止**以 `stage:approved` 或 `--strict` 通过上线门禁。没有注册的 App、错误操作、错误 `owner` 和受锁定条件限制的 App 也直接报错。
+3. **能力检查（先于剧情实现）**：先运行 `npm run story:apps -- wechat` 或 `npm run story:apps -- aomi` 查看可用动作和状态，再运行 `npm run story:check -- docs/story-packets/d23.json`。遇到 `adapter-required` 必须承认未接通；哪怕内容完整，也**禁止**以 `stage:approved` 或 `--strict` 通过上线门禁。没有注册的 App、错误操作、错误 `owner` 和受锁定条件限制的 App 也直接报错。
 4. **明确已实现/待适配清单**：能力标注 `wired-day` = 有**特定起始日**的现成内容入口（例如 D06 愿望）；不代表换到 D23 就能跑。`adapter-required` = 有 App/UI/部分原生服务，**尚无通用内容写入适配器**；先设计/补齐可复用 adapter、写跨日集成测试，不能靠重写该 App 页面“伪装接通”。新 adapter 需经真实测试验证后才能升级状态。
 5. **整理自然内容**：角色台词、头像、群成员、消息间隔、图片、朋友圈与后续回忆必须合乎世界书。狼崽团含熙蒙、熙旺、胡枫、仔仔、小辛、阿威，**不含熙泰/傅隆生**。固定主线与可选生活剧情分开；可选心愿不阻止主线推进。玩家说话必须是原生 `player-send`，绝不由付款/定时器代发。
 6. **复用底层而非扩写入口**：现有消息走 `appendAuthoredPhoneMessage`，钱包/银行走 `postBankTransaction/payBankPurchase`，委托走现有 MIRAGE→KIRA→GHOST→手动提交→结算；统一游戏时钟和事件持久化。不要让首页与 App 内的同一动作调用不同业务规则。**默认不动** `src/main.js`、`src/system/shell.js`、时钟/电量或各 App 已验收布局。只有跨日期可复用且测试过的新 adapter 才值得修改共享层。
 7. **审查存档与资源**：相同事件 ID、财务 transactionId 必须幂等；刷新、断网、低电、跳天、提前/迟到打开、重试按既定策略处理。旧脚本的 D01 前对话与90天时代的静态数据不直接删除；由迁移/兼容层明确映射到新版55天，**旧 `src/story/schemas/content.schema.json` 的 max90 不等于新版允许90天**。Supabase 素材必须确实上传、HTTP200 且 MIME 正确；剧情只引用素材 ID。
-8. **证据驱动验收**：`node scripts/audit-story-skill.mjs` → `npm run story:check -- --strict 文件.json` → `npm test` → `npm run build:pages` → 隔离站点的触屏浏览器完整流程 + 旧存档回归。不能靠预置中奖状态冒充真实通关。所有跨 App 效果必须在真实业务状态中出现，不能通过 UI 模拟状态顶替。
+8. **证据驱动验收**：`npm run story:audit` → `npm run story:check -- --strict 文件.json` → `npm test` → `npm run build:pages` → 隔离站点的触屏浏览器完整流程 + 旧存档回归。不能靠预置中奖状态冒充真实通关。所有跨 App 效果必须在真实业务状态中出现，不能通过 UI 模拟状态顶替。
 9. **提交与复盘**：报告具体增加什么内容、每个 App 使用哪个 adapter、用户如何触发、负面分支、CI/真实预览 URL/版本 SHA、没解决的适配器；合并仅在用户**明确授权**、分支绿色、站点审查通过时进行，合并后再验证正式 Pages 成功。
 
 ## v2 事件包合同
@@ -53,7 +53,7 @@ description: 为《熙蒙的手机》任意 D01–D55 日期与已注册 App 编
 - `templates/day-packet.template.json`：空白 v2 内容包。
 - `examples/d06-dinner.example.json`：只供审查、不重复导入的已实现专用链。
 - `examples/d23-cross-app-needs-adapters.example.json`：不能通过正式验收的跨 App 规划链。
-- `scripts/new-story-day.mjs` / `scripts/validate-story-packet.mjs` / `scripts/audit-story-skill.mjs`：生成日期、检查能力、审查真实源码。
+- `scripts/new-story-day.mjs` / `scripts/validate-story-packet.mjs` / `scripts/audit-story-skill.mjs` / `scripts/list-story-app-capabilities.mjs`：生成日期、检查能力、审查真实源码、列出 App 能力与缺失的 adapter。
 - `docs/STORY_CONTENT_PIPELINE.md`：简化作者指南。
 
 ## “已完成”定义
