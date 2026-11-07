@@ -65,6 +65,17 @@
             "moment"
           ],
           "proof": "src/apps/wechat/index.js"
+        },
+        "chat.d07-life": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text"
+          ],
+          "proof": "src/services/wishes/index.js",
+          "originDays": [
+            7
+          ]
         }
       }
     },
@@ -445,6 +456,17 @@
             "reminder"
           ],
           "proof": "src/services/reminders.js"
+        },
+        "wish.d07-purchase": {
+          "state": "wired-day",
+          "owner": "wishes",
+          "kinds": [
+            "purchase"
+          ],
+          "proof": "src/services/wishes/index.js",
+          "originDays": [
+            7
+          ]
         }
       }
     },
