@@ -52,6 +52,14 @@ export function sendD06DinnerReply(store,id,text,now=Date.now()){
 export function syncWishReminders(s){
  if(!perDay(s))return false;
  let changed=false;
+ // Only purge an unpurchased retired wish; never delete a paid order or its ledger.
+ const oldShoe=s.story55?.wishes?.records?.['d06-shoes'];
+ if(!oldShoe||oldShoe.status==='saved'){
+  const oldCount=s.content?.reminders?.length||0;
+  if(s.content?.reminders)s.content.reminders=s.content.reminders.filter(r=>r.wishId!=='d06-shoes');
+  if((s.content?.reminders?.length||0)!==oldCount)changed=true;
+ }
+
  for(const item of s.content?.reminders||[]){
   if(!item.wishId)continue;
   const r=s.story55?.wishes?.records?.[item.wishId];
