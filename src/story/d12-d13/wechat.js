@@ -1,0 +1,17 @@
+import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
+// Only incidental NPC life chats; D12 move and D13 intrusion remain original Story55 nodes.
+const parse=t=>t.split('|').filter(Boolean).map(x=>{const i=x.indexOf('：');if(i<0)throw Error('群聊缺少发言人');return {who:x.slice(0,i),kind:'text',text:x.slice(i+1)};});
+const scene=(id,at,text,condition)=>({id,chat:'group',at,lines:parse(text),...(condition?{condition}:{})});
+const moved=s=>!!s.story55?.completed?.move;
+export const D12_GROUP=[
+ scene('separate-work','13:40','阿威：大屋那邊我先把空地清一下|仔仔：我晚點帶衣架過去|小辛：今天別算我，我晚上才有空',moved),
+ scene('arrival','21:50','胡枫：落地了，在等行李|熙旺：我在出站口那邊|胡枫：行，我拿完箱子就出來',moved),
+ scene('settling','23:02','胡枫：終於到了，行李放哪？|仔仔：我給你空了一個角落|胡枫：可以，明天再整理吧',moved)
+];
+export const D13_GROUP=[
+ scene('seoul-jetlag','09:44','胡枫：昨晚到得太晚了，現在才醒|小辛：回澳門第一天就賴床啊|胡枫：你凌晨三點還在打遊戲，有資格說我？'),
+ scene('work','15:10','仔仔：那幾套衣服要再核一次尺寸|阿威：我晚上過去試|仔仔：別穿著跑，先讓我改完|小辛：這話怎麼像特地說給我聽的'),
+ scene('evening','18:35','熙旺：各自手上的資料先整理好，明天碰面一起看|阿威：我那份晚上發你|胡枫：我剛回來，先把收到的檔案過一遍')
+];
+export const d12Track=createConversationTrack({day:12,prefix:'d12',scenes:D12_GROUP,progress:s=>s.story55.d12Chats??={}});
+export const d13Track=createConversationTrack({day:13,prefix:'d13',scenes:D13_GROUP,progress:s=>s.story55.d13Chats??={}});
