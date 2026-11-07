@@ -23,7 +23,7 @@ test('Editing built-in Moments preserves original data, 90-day schedule and priv
 
 test('Moments editor renders all posts and profile / media / reply controls',()=>{
  const s=initialState();s.editor.momentsMode='overview';
- assert.match(momentsEditor(s),/49 条/);
+ assert.match(momentsEditor(s),/40 条/);
  assert.match(momentsEditor(s),/猜猜谁该减肥了。/);
  s.editor.momentsMode='edit';s.editor.momentsSelected='zz-d15';
  let html=momentsEditor(s);
@@ -38,24 +38,24 @@ test('Moments editor renders all posts and profile / media / reply controls',()=
 });
 
 test('Ximeng options, NPC conditional replies and self-contained export/import round-trip',()=>{
- const s=initialState(),ctx=ctxFor(s);s.editor.momentsSelected='hf-0519';
+ const s=initialState(),ctx=ctxFor(s);s.editor.momentsSelected='xs-d05';
  handleMoments('mom-add-option',{dataset:{}},ctx);
  changeMoments({dataset:{momentOption:'0'},value:'我也想吃'},ctx);
  handleMoments('mom-add-rule',{dataset:{}},ctx);
  changeMoments({dataset:{momentRule:'trigger',index:'0'},value:'我也想吃'},ctx);
  changeMoments({dataset:{momentRule:'text',index:'0'},value:'给你留了一份'},ctx);
- assert.deepEqual(findMoment(s,'hf-0519').replyOptions,['我也想吃']);
- addGameMomentComment(s,'hf-0519','不是这个');
- assert.equal(s.content.moments.comments['hf-0519'].length,1);
- addGameMomentComment(s,'hf-0519','我也想吃');
- assert.equal(s.content.moments.comments['hf-0519'].length,3);
- assert.equal(s.content.moments.comments['hf-0519'][2].text,'给你留了一份');
- addGameMomentComment(s,'hf-0519','我也想吃');
- assert.equal(s.content.moments.comments['hf-0519'].filter(c=>c.text==='给你留了一份').length,1);
- editMoment(s,'hf-0519',p=>p.media=['data:image/jpeg;base64,YWJj']);
+ assert.deepEqual(findMoment(s,'xs-d05').replyOptions,['我也想吃']);
+ addGameMomentComment(s,'xs-d05','不是这个');
+ assert.equal(s.content.moments.comments['xs-d05'].length,1);
+ addGameMomentComment(s,'xs-d05','我也想吃');
+ assert.equal(s.content.moments.comments['xs-d05'].length,3);
+ assert.equal(s.content.moments.comments['xs-d05'][2].text,'给你留了一份');
+ addGameMomentComment(s,'xs-d05','我也想吃');
+ assert.equal(s.content.moments.comments['xs-d05'].filter(c=>c.text==='给你留了一份').length,1);
+ editMoment(s,'xs-d05',p=>p.media=['data:image/jpeg;base64,YWJj']);
  const exported=JSON.parse(JSON.stringify(exportMomentPackage(s)));
- assert.equal(exported.posts.find(p=>p.id==='hf-0519').media[0],'data:image/jpeg;base64,YWJj');
+ assert.equal(exported.posts.find(p=>p.id==='xs-d05').media[0],'data:image/jpeg;base64,YWJj');
  const restored=initialState();importMomentPackage(restored,exported);
- assert.deepEqual(findMoment(restored,'hf-0519').replyOptions,['我也想吃']);
- assert.equal(restored.content.moments.comments['hf-0519'],undefined); // Player state is not scripted content.
+ assert.deepEqual(findMoment(restored,'xs-d05').replyOptions,['我也想吃']);
+ assert.equal(restored.content.moments.comments['xs-d05'],undefined); // Player state is not scripted content.
 });
