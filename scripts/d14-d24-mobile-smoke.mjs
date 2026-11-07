@@ -1,7 +1,7 @@
 // Real UI acceptance. Only the completed D01–D13 phone is a developer fixture;
 // D14 attachment, deployment, five games, later Sends and cut-off are clicked.
 import assert from 'node:assert/strict';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium,devices} from 'playwright';
 const url=process.env.SMOKE_URL||'http://127.0.0.1:8765/BBBTAI/review/xin-stickers-20261107/';
 await mkdir('qa-results',{recursive:true});
@@ -71,9 +71,22 @@ try{
    const goal=[2,10,12,6,10,9,3,10,8];
    for(let i=0;i<9;i++)for(let n=0;n<4;n++){o=(await saved()).ghost.orders[id];if(o.status!=='running'||o.board.masks[i]===goal[i])break;await page.locator(`[data-action="gh-pipe"][data-index="${i}"]`).click();}
   }else if(o.type==='extract'){
-   for(let n=0;n<10;n++){o=(await saved()).ghost.orders[id];if(o.status!=='running')break;await page.locator(`[data-action="gh-match"][data-index="${o.board.correct}"]`).click();}
+   if(o.board.arcade){
+    const cards=o.board.arcade.cards;for(const symbol of new Set(cards)){for(let i=0;i<cards.length;i++)if(cards[i]===symbol)await page.locator(`[data-action="gh-arcade-tap"][data-value="${i}"]`).click();}
+   }else for(let n=0;n<10;n++){o=(await saved()).ghost.orders[id];if(o.status!=='running')break;await page.locator(`[data-action="gh-match"][data-index="${o.board.correct}"]`).click();}
   }else if(o.type==='veil'){
-   for(const digit of o.board.code)await page.locator(`[data-action="gh-key"][data-key="${digit}"]`).click();
+   if(o.board.arcade){
+    const board=o.board.arcade,queue=[{position:board.player,phase:board.phase,path:[]}],seen=new Set();let solution=null;
+    for(let q=0;q<queue.length;q++){
+     const current=queue[q],{position,phase,path}=current;if(position===board.exit){solution=path;break;}
+     for(const [direction,delta] of Object.entries({up:-5,down:5,left:-1,right:1,wait:0})){
+      const next=position+delta,newPhase=(phase+1)%3;
+      if(next<0||next>=25||direction==='left'&&position%5===0||direction==='right'&&position%5===4||board.walls.includes(next)||[5*(1+newPhase%3)+1,5*(1+(newPhase+1)%3)+3].includes(next))continue;
+      const key=next+':'+newPhase;if(seen.has(key))continue;seen.add(key);queue.push({position:next,phase:newPhase,path:[...path,direction]});
+     }
+    }
+    assert.ok(solution);for(const direction of solution)await page.locator(`[data-action="gh-arcade-step"][data-value="${direction}"]`).click();
+   }else for(const digit of o.board.code)await page.locator(`[data-action="gh-key"][data-key="${digit}"]`).click();
   }else if(o.type==='verify'){
    for(const token of o.board.target)await page.locator(`[data-action="gh-verify-token"][data-index="${o.board.tokens.indexOf(token)}"]`).click();
   }else throw Error('Unexpected base game '+o.type);
@@ -106,4 +119,8 @@ try{
  await page.screenshot({path:'qa-results/d24-flow-anonymous.png'});
  await page.reload({waitUntil:'domcontentloaded'});state=await saved();assert.equal(state.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);assert.deepEqual(errors,[]);
  console.log('PASS_D14_D24_MOBILE',JSON.stringify({viewport:await page.viewportSize(),baseCompletedSteps:5,frameworkBatches:state.story55.projects.base.batches.filter(b=>b.complete).length,loanTransactions:1,flowMessages:7,cameraCalls:await page.evaluate(()=>window.__cameraCalls),errors}));
+}catch(error){
+ await page.screenshot({path:'qa-results/d14-d24-failure.png'}).catch(()=>{});
+ const s=await saved().catch(()=>null);if(s)await writeFile('qa-results/d14-d24-failure.json',JSON.stringify({day:s.day,clock:s.clock,nav:s.nav,base:s.story55.projects.base,scenes:s.story55.scenes,active:s.story55.activeScene,run:s.ghost?.orders?.[s.story55.projects.base?.active]},null,2));
+ console.error('D14_D24_FAILURE',error);throw error;
 }finally{await browser.close();}
