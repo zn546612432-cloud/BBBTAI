@@ -1,0 +1,205 @@
+name: D10-D13 continuity mobile review (preserve production and retained previews)
+on:
+  push:
+    branches: [story/d10-d13-continuity-20261108]
+    paths:
+      - '.github/workflows/d10-d13-review-pages.yml'
+      - 'src/**'
+      - 'public/apps/wechat/stickers/**'
+      - 'tests/**'
+      - 'scripts/xin-stickers-mobile-smoke.mjs'
+      - 'scripts/d14-d24-mobile-smoke.mjs'
+      - 'scripts/d10-d13-mobile-smoke.mjs'
+      - 'docs/story-packets/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    environment:
+      name: d10-d13-continuity-review
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d10-d13-20261108/
+
+    steps:
+      - name: Checkout current unchanged production main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+
+      - name: Checkout exact review SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: review
+
+      - name: Checkout retained Xin stickers / D14-D24 preview
+        uses: actions/checkout@v4
+        with:
+          ref: content/xin-dog-stickers-20261107
+          path: xin
+
+      - name: Checkout retained Story55 comparison branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: review/package-lock.json
+
+      - name: Verify production main has not regressed
+        working-directory: production
+        run: |
+          npm ci
+          npm test
+
+      - name: Validate revised content and all release tests
+        working-directory: review
+        run: |
+          npm ci
+          npm run story:audit
+          npm run story:check -- --strict docs/story-packets/xin-dog-stickers.json docs/story-packets/d14-d24.json
+          npm test
+
+      - name: Rebuild unchanged production and normal preview
+        working-directory: production
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist base-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist base-dist/preview
+          mv base-dist dist
+
+      - name: Rebuild retained Story55 comparison
+        working-directory: story55
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+
+      - name: Copy retained Story55 at its original URL
+        run: |
+          mkdir -p production/dist/review/55-20261101
+          cp -a story55/dist/. production/dist/review/55-20261101/
+
+      - name: Rebuild retained Tai Vision at its original URL
+        working-directory: production
+        run: |
+          mv dist held-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p held-dist/review/tai-vision-20261105
+          cp -a dist/. held-dist/review/tai-vision-20261105/
+          rm -rf dist
+          mv held-dist dist
+
+      - name: Validate four existing site roots before adding new review
+        working-directory: production
+        run: node scripts/audit-pages-site.mjs dist
+
+      - name: Build retained Xin stickers preview from its original branch
+        working-directory: xin
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/xin-stickers-20261107/" npm run build:pages
+          grep -q phone-preview dist/index.html
+          test -s dist/release.json
+
+      - name: Restore Xin stickers preview unchanged
+        run: |
+          mkdir -p production/dist/review/xin-stickers-20261107
+          cp -a xin/dist/. production/dist/review/xin-stickers-20261107/
+
+      - name: Build new D10-D13 phone preview with independent save namespace
+        working-directory: review
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d10-d13-20261108/" npm run build:pages
+          grep -q phone-preview dist/index.html
+          test -s dist/release.json
+
+      - name: Add D10-D13 as the sixth root
+        run: |
+          mkdir -p production/dist/review/d10-d13-20261108
+          cp -a review/dist/. production/dist/review/d10-d13-20261108/
+
+      - name: Reduce mobile icon asset overhead
+        run: |
+          python3 -m pip install --quiet Pillow==11.3.0
+          (cd production && python3 scripts/optimize-icon-atlases.py dist)
+
+      - name: Audit all six URLs and artifact size before Pages deployment
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const root='production/dist';
+          const sites=[
+            ['.','/BBBTAI/',false],
+            ['preview','/BBBTAI/preview/',true],
+            ['review/55-20261101','/BBBTAI/review/55-20261101/',true],
+            ['review/tai-vision-20261105','/BBBTAI/review/tai-vision-20261105/',true],
+            ['review/xin-stickers-20261107','/BBBTAI/review/xin-stickers-20261107/',true],
+            ['review/d10-d13-20261108','/BBBTAI/review/d10-d13-20261108/',true]
+          ];
+          for(const [folder,base,preview] of sites){
+            const dir=path.join(root,folder);
+            const html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
+            const release=JSON.parse(fs.readFileSync(path.join(dir,'release.json'),'utf8'));
+            if(!release.url.startsWith(base+'releases/')||!html.includes(release.url+'src/main.js'))throw Error('URL/version mismatch: '+folder);
+            if(preview&&!html.includes('phone-preview'))throw Error('Preview flag missing '+folder);
+            if(!fs.existsSync(path.join(dir,'releases',release.version,'src/main.js')))throw Error('JS missing '+folder);
+          }
+          let bytes=0;
+          function walk(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){
+            const p=path.join(dir,item.name);if(item.isDirectory())walk(p);else if(item.isFile())bytes+=fs.statSync(p).size;
+          }}
+          walk(root);
+          console.log('SAFE_REVIEW_ARTIFACT_MIB',Math.round(bytes/1048576));
+          if(bytes>=450*1048576)throw Error('Pages artifact too large; do not overwrite previous release');
+          NODE
+
+      - name: Mobile Chromium real-UI and legacy-save smoke
+        working-directory: review
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+          mkdir -p ../http-site
+          ln -s "$GITHUB_WORKSPACE/production/dist" ../http-site/BBBTAI
+          python3 -m http.server --bind 127.0.0.1 8765 --directory ../http-site > ./qa-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          SMOKE_URL=http://127.0.0.1:8765/BBBTAI/review/xin-stickers-20261107/ node scripts/xin-stickers-mobile-smoke.mjs
+          SMOKE_URL=http://127.0.0.1:8765/BBBTAI/review/d10-d13-20261108/ node scripts/d10-d13-mobile-smoke.mjs
+          SMOKE_URL=http://127.0.0.1:8765/BBBTAI/review/d10-d13-20261108/ node scripts/d14-d24-mobile-smoke.mjs
+
+      - name: Upload phone screenshots and browser console evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d10-d13-continuity-mobile-qa
+          path: |
+            review/qa-results/
+            review/qa-http.log
+          if-no-files-found: ignore
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production/dist
+      - name: Deploy unchanged production and isolated D10-D13 review
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: '1800000'
