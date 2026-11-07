@@ -44,7 +44,7 @@ test('Reject duplicate event and transaction IDs',()=>{
 test('Reject auto-spoken player text even when a purchase succeeded',()=>{
  const d=sample();const e=d.events.find(x=>x.kind==='player-send');
  e.trigger={type:'previous-event',ref:'wish-dinner-payment'};
- fail(d,'user-send');
+ fail(d,'原生 Send');
 });
 
 test('Reject unrelated AI or forbidden participants in the Wolf Cubs chat',()=>{
@@ -65,7 +65,7 @@ test('Reject artificial bank credit via NPC message',()=>{
 });
 
 test('Reject unregistered owners and duplicate required dependency order',()=>{
- const d=sample();d.events[2].owner='new-d06-bank';fail(d,'已有');
+ const d=sample();d.events[2].owner='new-d06-bank';fail(d,'现有统一系统');
  const t=sample();t.events[2].requires=['wish-dinner-photo'];fail(t,'必须先定义');
 });
 
