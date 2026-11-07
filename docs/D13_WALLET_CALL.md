@@ -36,7 +36,9 @@ node scripts/generate-d13-call-voice.mjs
 
 ## 驗證狀態
 
-- 十項 D13 自動回歸通過；首次完整本機測試 902 項，901 過，既有遠端圖片測試逾時；GitHub CI 已實際通過全部 902 項，未略過任何測試。
+- 十一項 D13 自動回歸通過；首次完整本機測試 902 項，901 過，既有遠端圖片測試逾時；GitHub CI 已實際通過全部 903 項，未略過任何測試。
 - Story skill audit 與 Pages 構建通過。
-- 本機 Chromium 被執行環境禁止建立 socket；共享瀏覽器無法連到本機服務。已將同一真實 iPhone 尺寸點擊腳本接入 PR CI，CI 結果與截圖另行更新；不能將單元測試稱作瀏覽器驗收。
+- iPhone 13 尺寸的真實 Chromium 點擊驗收已於 GitHub Actions #42406797335 通過：KIRA 郵件、綁定、確認轉帳、綠幕、八秒自動接聽、連線刷新、主屏切換再返回、全部六次手動 Send、唯一電話記錄；bank 與 D06 BTC 不變，無任何 getUserMedia 呼叫，無頁面錯誤。截圖／狀態檔為該次執行的 d13-mobile-evidence。這是瀏覽器模擬手機尺寸，不是實體 iPhone Safari。
 - 目前沒有正式發布，main 未改。
+
+- D13 v2 事件包：`docs/story-packets/d13-wallet-call.json`，24 個事件、11 項驗收；能力僅標記 D13 已接通，不宣稱任意日期通用。

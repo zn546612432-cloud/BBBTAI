@@ -1,0 +1,666 @@
+{
+  "schemaVersion": 2,
+  "day": 13,
+  "date": "2025-05-31",
+  "title": "D13 完整修訂稿、電子錢包與系統來電",
+  "stage": "review",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "messaging",
+    "phone",
+    "kira",
+    "mirage"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d13-wallet-mail",
+      "kind": "email",
+      "surface": "kira",
+      "owner": "story55",
+      "capability": "mail.d13-wallet",
+      "actor": "MIRAGE",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:10"
+      },
+      "requires": [
+        "node:exhibition"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "22:10"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "之前懸賞贏的那個錢包入帳 50 枚比特幣，登入 MIRAGE 錢包快速綁定後可取款。"
+    },
+    {
+      "id": "d13-wallet-bind",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "wallet.d13-flow",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "mc-wallet-bind"
+      },
+      "requires": [
+        "d13-wallet-mail"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d13-wallet-transfer",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "wallet.d13-flow",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "mc-wallet-transfer-confirm"
+      },
+      "requires": [
+        "d13-wallet-bind"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d13-green-screen",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "wallet.d13-flow",
+      "actor": "system",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d13-wallet-transfer"
+      },
+      "requires": [
+        "d13-wallet-transfer"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "屏幕失去響應，重啟沒有恢復。"
+    },
+    {
+      "id": "s55-intrusion-v2-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d13-green-screen"
+      },
+      "requires": [
+        "d13-green-screen"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "膽子不小。上次拿了錢，還想回來看看有沒有第二份？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-1"
+      },
+      "requires": [
+        "s55-intrusion-v2-1"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你故意設局？你到底想幹什麼？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-2"
+      },
+      "requires": [
+        "s55-intrusion-v2-2"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "從來沒有人拒絕過我的邀請。你是第一個。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-4",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-3"
+      },
+      "requires": [
+        "s55-intrusion-v2-3"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你查了我的資料？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-4"
+      },
+      "requires": [
+        "s55-intrusion-v2-4"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你的手機比你本人坦率得多。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-5"
+      },
+      "requires": [
+        "s55-intrusion-v2-5"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "汪傑。五億美元。你的胃口倒是很大。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-7",
+      "kind": "system-notice",
+      "surface": "phone",
+      "owner": "phone",
+      "capability": "call.d13-forced",
+      "actor": "system",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-6"
+      },
+      "requires": [
+        "s55-intrusion-v2-6"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "未知號碼來電"
+    },
+    {
+      "id": "s55-intrusion-v2-8",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-7"
+      },
+      "requires": [
+        "s55-intrusion-v2-7"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "晚上好，nya。歡迎來到 Mirage。看來你不喜歡打字，我只好親自打電話了。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-9",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-8"
+      },
+      "requires": [
+        "s55-intrusion-v2-8"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "……你到底是誰？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-10",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-9"
+      },
+      "requires": [
+        "s55-intrusion-v2-9"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "這不重要。重要的是，你應該也不想自己的計劃被別人知道吧？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-11",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-10"
+      },
+      "requires": [
+        "s55-intrusion-v2-10"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你把資料傳出去，就一定會留下痕跡。只要有痕跡，我就找得到你。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-12",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-11"
+      },
+      "requires": [
+        "s55-intrusion-v2-11"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "呵呵，別這麼緊張。我對揭發你沒興趣。恰恰相反，我想參與。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-13",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-12"
+      },
+      "requires": [
+        "s55-intrusion-v2-12"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我憑什麼相信你？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-14",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-13"
+      },
+      "requires": [
+        "s55-intrusion-v2-13"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "事到如今，你有拒絕的權利嗎？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-15",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "wallet.d13-flow",
+      "actor": "system",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-14"
+      },
+      "requires": [
+        "s55-intrusion-v2-14"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "〔熙蒙正在開啟反追蹤〕"
+    },
+    {
+      "id": "s55-intrusion-v2-16",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-15"
+      },
+      "requires": [
+        "s55-intrusion-v2-15"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-17",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-intrusion-v2-16"
+      },
+      "requires": [
+        "s55-intrusion-v2-16"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你有病吧？我說過了，我只單幹。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-18",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-17"
+      },
+      "requires": [
+        "s55-intrusion-v2-17"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "可你的手機裡那些資料告訴我，你似乎不止一個人。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-intrusion-v2-19",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "wallet.d13-flow",
+      "actor": "system",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-18"
+      },
+      "requires": [
+        "s55-intrusion-v2-18"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "〔反追蹤失敗〕"
+    },
+    {
+      "id": "s55-intrusion-v2-20",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-19"
+      },
+      "requires": [
+        "s55-intrusion-v2-19"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，熙蒙。記得檢查你的郵箱。",
+      "thread": "s55-ouroboros"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "accept-d13-trigger",
+      "type": "trigger",
+      "verify": "D13 22:10 且 exhibition 完成才寄唯一郵件；綁定、確認轉帳及 Send 均由玩家點擊。"
+    },
+    {
+      "id": "accept-d13-negative",
+      "type": "negative",
+      "verify": "未綁定不能轉帳；強制來電無拒接／掛斷；未 Send 不前進。"
+    },
+    {
+      "id": "accept-d13-idempotency",
+      "type": "idempotency",
+      "verify": "重複綁定／轉帳／電話結束不增加錢包、銀行、分割線或通話記錄。"
+    },
+    {
+      "id": "accept-d13-save-restore",
+      "type": "save-restore",
+      "verify": "綠幕刷新進聊天，連線刷新要求續通手勢；舊完成者不重播，玩家實發永久保留。"
+    },
+    {
+      "id": "accept-d13-cross-app",
+      "type": "cross-app",
+      "verify": "真實點 KIRA → MIRAGE 登入與綁定 → 綠幕 → 原生聊天 → 系統來電；通話可經主屏返回。"
+    },
+    {
+      "id": "accept-d13-late-entry",
+      "type": "late-entry",
+      "verify": "主線門檻不允許跳過；已完成存檔不補播新通知。"
+    },
+    {
+      "id": "accept-d13-assets",
+      "type": "assets",
+      "verify": "沒有 MiniMax 檔案時實際走文字後備；有音檔則播放開始寫泡泡、結束才解鎖 Send；尚未宣稱真實配音通過。"
+    },
+    {
+      "id": "accept-d13-date-clock",
+      "type": "date-clock",
+      "verify": "D13=2025-05-31；通話與綠幕暫停統一時鐘和電量；D14 code 仍依賴 intrusion。"
+    },
+    {
+      "id": "accept-d13-dialogue",
+      "type": "dialogue",
+      "verify": "完整稱呼修訂稿 21 行逐句保留，不自行縮寫；六次 me 只靠原生 Send。"
+    },
+    {
+      "id": "accept-d13-finance",
+      "type": "finance",
+      "verify": "D06 10 BTC 與 bankData 完全不變；50 BTC 凍結不兌換，地址 MIR-WLT-0013。"
+    },
+    {
+      "id": "accept-d13-mobile",
+      "type": "mobile",
+      "verify": "iPhone 13 Chromium 實際點擊與刷新，截圖及零真實權限呼叫記錄在 PR CI。"
+    }
+  ]
+}
