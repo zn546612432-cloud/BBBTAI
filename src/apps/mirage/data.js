@@ -49,11 +49,12 @@ export function ensureNativeMirage55(s){
  const seed=old.nativeSeedVersion!==1;
  s.content.mirage={
   account:MIRAGE_ACCOUNT,balance:300000,products:structuredClone(defaultProducts),
-  cart:[],transactions:[],assets:[],digitalBalance:0,digitalTransactions:[],
+  cart:[],transactions:[],assets:[],digitalBalance:0,digitalTransactions:[],wallets:[],
   ...old,
   products:Array.isArray(old.products)?old.products:structuredClone(defaultProducts),
   cart:Array.isArray(old.cart)?old.cart:[],
   assets:Array.isArray(old.assets)?old.assets:[],
+  wallets:Array.isArray(old.wallets)?old.wallets:[],
   balance:Number.isFinite(old.balance)?old.balance:300000,
   nativeSeedVersion:1,version:3
  };

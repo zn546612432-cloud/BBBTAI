@@ -48,6 +48,7 @@ import {createTaskSwitcher} from './system/task-switcher.js';
 import {plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,settleOfflineShortCharge} from './system/power/battery.js';
 import {advanceGameMinutes,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
+import {mountTelephony} from './services/telephony/index.js';
 import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
@@ -240,7 +241,7 @@ function mountStory55Incoming(){
  const s=store.get(),loc=s.nav.current,channel=loc.appId;
  const conversationId=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  const line=s.unlocked&&conversationId?currentScript55(s,channel,conversationId):null;
- if(!line||line.kind==='me'||line.kind==='watch'){
+ if(!line||line.managed||line.kind==='me'||line.kind==='watch'){
   if(pendingStory55Incoming){clearTimeout(pendingStory55Incoming.timer);pendingStory55Incoming=null;}
   return;
  }
@@ -253,8 +254,8 @@ function mountStory55Incoming(){
   const current=store.get(),route=current.nav.current;
   if(!current.unlocked||route.appId!==channel||route.route!=='/chat/'+conversationId)return;
   const live=currentScript55(current,channel,conversationId);
-  if(!live||live.id!==line.id||live.index!==line.index||live.kind==='me'||live.kind==='watch')return;
-  try{store.update(next=>advanceScene55(next,line.id,{acceptCall:live.kind==='call'}));}
+  if(!live||live.managed||live.id!==line.id||live.index!==line.index||live.kind==='me'||live.kind==='watch')return;
+  try{store.update(next=>advanceScene55(next,line.id));}
   catch(error){console.error('无法播放预设消息',error);}
  },time);
  pendingStory55Incoming={identity,timer};
@@ -426,6 +427,7 @@ setInterval(()=>{
  }
 },300);
 
+mountTelephony(ctx);
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));

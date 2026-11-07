@@ -1,3 +1,4 @@
+import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../../story/d13/runtime.js';
 /**
  * Reconstruct a developer test phone by replaying completed days from D01.
  * Nothing here changes the authored source config or any saved test snapshot.
@@ -196,12 +197,22 @@ function simulateCompletedD01(s){
 function simulateScene(s,node){
  const lines=story55Config(s).scenes[node.id];
  if(!Array.isArray(lines)||!lines.length)throw Error('无法重建场景台词：'+node.id);
- for(let i=0;i<lines.length;i++)advanceScene55(s,node.id,{acceptCall:true,disconnect:lines[s.story55.scenes[node.id]?.index||0]?.[0]==='disconnect'});
+ for(let i=0;i<lines.length;i++){
+  const kind=lines[s.story55.scenes[node.id]?.index||0]?.[0];
+  if(kind==='call')s.phoneCall={id:'story-call-'+node.id,node:node.id,source:'story55',direction:'incoming',forced:true,state:'connected',answeredAt:0,test:true};
+  advanceScene55(s,node.id,{disconnect:kind==='disconnect'});
+ }
+ if(s.phoneCall?.test)delete s.phoneCall;
  if(!completed(s,node.id))throw Error('场景重建后没有完成：'+node.id);
  const scene=s.story55.scenes[node.id];
  scene.test=true;
 }
 function simulateNode(s,node){
+ if(node.kind==='wallet'){
+  if(node.id==='d13-wallet-bind')bindD13Wallet(s);
+  else{transferD13Wallet(s,0);enterD13Chat(s);}
+  return completed(s,node.id);
+ }
  if(node.kind==='project')return simulateProjectBatch(s,node);
  if(node.kind==='flow'){simulateFlowD03(s);return true;}
  if(node.kind==='scene')simulateScene(s,node);

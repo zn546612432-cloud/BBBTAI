@@ -1,3 +1,5 @@
+import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../src/story/d13/runtime.js';
+import {markMail55} from '../src/services/story55/runtime.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
@@ -58,9 +60,10 @@ test('D12–D13 mandatory nodes preserve D14 KIRA gate, Ghost remains independen
  sendScriptedDraft55(s,'wechat','group',pending.text);advanceScene55(s,'move');
  assert.ok(completed(s,'move'));s.day=13;s.clock='20:00';tickStory55(s);
  advanceScene55(s,'exhibition');assert.ok(completed(s,'exhibition'));
+ s.clock='22:10';tickStory55(s);markMail55(s,'s55-d13-wallet-mail');bindD13Wallet(s);transferD13Wallet(s,0);enterD13Chat(s);
  assert.equal(nodeStatus(s,'intrusion').state,'ready');
  const arr=story55Config(s).scenes.intrusion;
- for(let i=0;i<arr.length+2&&!completed(s,'intrusion');i++)advanceScene55(s,'intrusion',{acceptCall:true});
+ for(let i=0;i<arr.length+2&&!completed(s,'intrusion');i++){if(arr[s.story55.scenes.intrusion?.index||0]?.[0]==='call')s.phoneCall={node:'intrusion',state:'connected'};advanceScene55(s,'intrusion');}
  assert.ok(completed(s,'intrusion'));s.day=14;s.clock='09:16';tickStory55(s);
  assert.equal(nodeStatus(s,'code').state,'ready');
  assert.ok(s.content.mail.some(m=>m.id==='code-mail'));

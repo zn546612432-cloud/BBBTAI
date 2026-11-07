@@ -6,6 +6,7 @@ import {tickWorld} from '../time/clock.js';
 
 export function phoneRuntimePaused(s,{hidden=false,restarting=false}={}){
  return hidden||restarting||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
+  ||['ringing','connected'].includes(s.phoneCall?.state)||s.story55?.d13?.phase==='green'
   ||['off','passcode'].includes(s.deathPhase)||!!s.alarmRinging||!!s.emergencyCharge||!!s.poweredOff
   ||s.nav.current.appId==='editor'&&!deathLocked(s)&&s.powerMode!=='short-charging';
 }

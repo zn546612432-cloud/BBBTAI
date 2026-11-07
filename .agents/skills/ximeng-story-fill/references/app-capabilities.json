@@ -144,7 +144,7 @@
           "kinds": [
             "system-notice"
           ],
-          "proof": "src/services/story55/scripted-phone.js"
+          "proof": "src/services/telephony/index.js"
         }
       },
       "gateFacts": [
@@ -236,6 +236,29 @@
           "originDays": [
             14
           ]
+        },
+        "wallet.d13-flow": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/story/d13/runtime.js",
+          "originDays": [
+            13
+          ]
+        },
+        "chat.d13-intrusion": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text",
+            "player-send"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            13
+          ]
         }
       }
     },
@@ -293,6 +316,17 @@
           "proof": "src/services/story55/runtime.js",
           "originDays": [
             14
+          ]
+        },
+        "mail.d13-wallet": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "email"
+          ],
+          "proof": "src/story/d13/definition.js",
+          "originDays": [
+            13
           ]
         }
       }
@@ -379,6 +413,17 @@
             "system-notice"
           ],
           "proof": "src/apps/phone/index.js"
+        },
+        "call.d13-forced": {
+          "state": "wired-day",
+          "owner": "phone",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/services/telephony/index.js",
+          "originDays": [
+            13
+          ]
         }
       },
       "overriddenBy": "src/apps/phone/replica.js"

@@ -1,6 +1,8 @@
+import {telephonyIsland} from '../../services/telephony/view.js';
 import {batteryPercent,needsCharge,isShortCharging} from './battery.js';
 
 export function dynamicIsland(s,{expanded=false,page='home'}={}){
+ const call=telephonyIsland(s);if(call)return call;
  const blocked=s.deathPhase==='draining';if(blocked)expanded=true;
  const percent=batteryPercent(s),short=isShortCharging(s),charging=short||['charging','sleeping'].includes(s.powerMode),low=needsCharge(s);
  const select=!blocked&&!charging&&page==='select';

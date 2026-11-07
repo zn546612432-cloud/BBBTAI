@@ -1,0 +1,14 @@
+import {esc} from '../../../../system/ui.js';
+import {D13_WALLET_ID} from '../../../../story/d13/definition.js';
+import {completed,nodeStatus} from '../../../../services/story55/state.js';
+export function walletPage(s,path='/wallet'){
+ const m=s.content.mirage,usd=Number(s.bankData?.balance||0);
+ const head=`<header class="mc-header"><button data-action="mc-wallet">‹</button><strong>PRIVATE WALLETS</strong><button data-action="mc-bind-wallet" aria-label="綁定新錢包">＋</button></header>`;
+ if(path==='/wallet/main')return head+`<div class="mc-scroll mc-detail"><label>BTC / MIR-WLT-MAIN</label><strong class="mc-reward">${Number(m.digitalBalance||0).toFixed(8)} BTC</strong><form data-form="mc-exchange"><label>兌換 BTC<input name="amount" type="number" min="0.00000001" step="0.00000001" required></label><button class="mc-primary" type="submit">兌換至美元帳戶</button></form>${(m.digitalTransactions||[]).map(t=>`<div class="mc-ledger-row"><span>${esc(t.type||t.orderId||'BTC')}<small>${esc(t.clock||'')}</small></span><strong>${Number(t.amount).toFixed(8)} BTC</strong></div>`).join('')}</div>`;
+ if(path==='/wallet/usd')return head+`<div class="mc-scroll mc-detail"><label>美元帳戶 / PACIFIC</label><strong class="mc-reward">$ ${usd.toLocaleString('en-US')}</strong>${(s.bankData?.transactions||[]).map(t=>`<div class="mc-ledger-row"><span>${esc(t.label)}<small>${esc(t.time)}</small></span><strong>$ ${Number(t.amount).toLocaleString('en-US')}</strong></div>`).join('')}</div>`;
+ if(path==='/wallet/'+D13_WALLET_ID){
+  const w=m.wallets?.find(w=>w.id===D13_WALLET_ID);if(!w)return head+'<div class="mc-empty">錢包尚未綁定</div>';
+  return head+`<div class="mc-scroll mc-detail"><label>${esc(w.address)}</label><strong class="mc-reward">${w.balance} BTC</strong><p class="mc-wallet-state">${w.status==='frozen'?'轉帳中斷 · 已凍結':'AVAILABLE'}</p>${w.status==='available'?'<button class="mc-primary" data-action="mc-wallet-transfer">轉帳</button>':''}${s.nav.current.params?.confirm==='yes'?'<div class="mc-wallet-transfer-confirm" role="group" aria-label="確認轉帳"><p>50 BTC</p><button data-action="mc-wallet-transfer-confirm">確認轉帳</button><button data-action="mc-wallet-detail">取消</button></div>':''}</div>`;
+ }
+ return head+`<div class="mc-scroll mc-detail mc-wallet-list"><label>BTC 錢包</label><button data-action="mc-wallet-main"><span>MIR-WLT-MAIN<small>BTC</small></span><strong>${Number(m.digitalBalance||0).toFixed(8)}</strong></button>${(m.wallets||[]).map(w=>`<button data-action="mc-wallet-detail"><span>${esc(w.address)}<small>${w.status==='frozen'?'FROZEN':'BTC'}</small></span><strong>${Number(w.balance).toFixed(8)}</strong></button>`).join('')}<label>美元帳戶</label><button data-action="mc-wallet-usd"><span>PACIFIC<small>USD</small></span><strong>$ ${usd.toLocaleString('en-US')}</strong></button>${nodeStatus(s,'d13-wallet-bind').state==='ready'&&!completed(s,'d13-wallet-bind')?'<p>＋ 綁定新錢包</p>':''}</div>`;
+}
