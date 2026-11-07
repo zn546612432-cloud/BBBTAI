@@ -13,7 +13,7 @@ function seedNote(s){
  const notes=s.content.notes??=[];
  if(!notes.some(n=>n.id==='xm-note-d05-workshop'))notes.unshift({
   id:'xm-note-d05-workshop',title:'机房 · 待整理',createdDay:5,updatedDay:5,updatedClock:'08:00',
-  text:'内存、硬盘的报价再对一遍。\n先整理备份，旧盘里的东西不要急着删。\n机房那台风扇有异响，找时间拆开看看。\n\n胡枫的电脑：提醒他自己留备份。'
+  text:'内存、硬盘的报价再对一遍。\n先整理备份，旧盘里的东西不要急着删。\n机房那台风扇有异响，找时间拆开看看。'
  });
  s.story55.d05NoteSeeded=true;return true;
 }
