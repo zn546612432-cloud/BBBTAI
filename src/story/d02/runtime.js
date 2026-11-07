@@ -15,7 +15,7 @@ export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
 export const D02_REMINDER='d02-pc-build-reminder';
 export const D02_AODONG_URL='https://aodong.shop';
-export const D02_AODONG_SMS='五月澳东打折月！澳东商城电子产品全场八折。\n\n显卡、处理器、电脑配件限时优惠。\n\n官网：'+D02_AODONG_URL;
+export const D02_AODONG_SMS='【澳東商城】五月數碼優惠月！\n\n電腦配件專場八折，顯卡、處理器、記憶體及工作站設備限時優惠。\n\n選購請前往：\n'+D02_AODONG_URL;
 export const D02_REWARDS={ [D02_S]:12000,[D02_A]:4500 };
 export const D02_STAGES={
  [D02_S]:['route','veil','extract'],
