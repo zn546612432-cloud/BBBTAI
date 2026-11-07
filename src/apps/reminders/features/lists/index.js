@@ -5,7 +5,7 @@ const rows=items=>items.map(r=>{
   if(w)return '<div class="reminder-item wish-reminder-row">'+
     '<span class="reminder-circle '+(r.done?'done':'')+'">'+(r.done?'✓':'')+'</span>'+
     '<button type="button" class="wish-reminder-detail" data-action="reminder-wish-open" data-id="'+esc(w.id)+'"><strong>'+esc(w.title)+'</strong><small>'+
-    (r.wishStatus==='delivered'?'已购买 · 已送达':r.wishStatus==='ordered'?'已购买 · 等待收货':r.wishStatus==='expired'?'已错过 · 仅供查看':'预计花费 '+w.price+' USD'+(w.expires?' · D06 限时':''))+
+    (w.id==='d06-dinner'&&r.wishStatus==='delivered'?(r.done?'已安排 · 晚上19:30':'已付款 · 去群聊回复'):r.wishStatus==='delivered'?'已购买 · 已送达':r.wishStatus==='ordered'?'已购买 · 等待收货':r.wishStatus==='expired'?'已错过 · 仅供查看':'预计花费 '+w.price+' USD'+(w.expires?' · D06 限时':''))+
     '</small></button></div>';
   return '<div class="reminder-item">'+btn('reminder-toggle',r.done?'✓':'','reminder-circle '+(r.done?'done':''),`data-id="${esc(r.id)}" aria-label="切换完成状态"`)+
     '<span>'+esc(r.title)+(r.storyD02Order?'<small style="display:block;font-size:11px;opacity:.7">D'+r.deadlineDay+' '+esc(r.deadlineClock)+' · '+esc(r.status||'进行中')+' · '+(r.progress||0)+'/'+(r.total||3)+'</small>':'')+
