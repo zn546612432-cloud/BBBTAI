@@ -72,3 +72,26 @@ test('D07 follows the existing celebration without inventing a dinner if unpaid'
  bought.day=7;bought.clock='11:00';flush(bought);
  assert.equal(all(bought).some(m=>m.id==='d07-dinner-after'),true);
 });
+
+test('D07 regular chat is independent of the optional D06 victory announcement',()=>{
+ const s=phone({day:7,clock:'11:00',wallet:true});
+ flush(s);
+ assert.equal(all(s).some(m=>m.id==='d07-chat-01'),true);
+ assert.equal(all(s).some(m=>m.id==='d07-awei-01'),true);
+ assert.equal(all(s).some(m=>m.id==='d07-wang-01'),true);
+ assert.equal(all(s).some(m=>m.id==='d07-dinner-after'),false);
+});
+test('D07 delivery photos are one-time events after arrival',()=>{
+ const s=phone();beginD06Celebration(s);flush(s);
+ s.day=7;s.clock='11:00';flush(s);
+ addWish(s,'d07-headphones');purchaseWish(s,'d07-headphones');
+ addWish(s,'d07-tableware');purchaseWish(s,'d07-tableware');
+ assert.equal(all(s).some(m=>m.id==='wish-headphones-photo'),false);
+ s.day=8;s.clock='18:00';flush(s);
+ assert.equal(all(s).filter(m=>m.id==='wish-tableware-photo').length,1);
+ assert.equal(all(s).some(m=>m.id==='wish-headphones-photo'),false);
+ s.day=9;s.clock='18:00';flush(s);
+ assert.equal(all(s).filter(m=>m.id==='wish-headphones-photo').length,1);
+ flush(s);
+ assert.equal(all(s).filter(m=>m.id==='wish-headphones-photo').length,1);
+});
