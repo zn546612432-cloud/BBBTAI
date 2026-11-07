@@ -166,7 +166,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: d01-d09-mobile-qa
+          name: xin-stickers-mobile-qa
           path: |
             review/qa-results/
             review/qa-http.log
