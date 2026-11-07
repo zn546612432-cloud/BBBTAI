@@ -31,7 +31,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
- assert.equal(validateStory55Config(story55Config(s)).nodes.length,34);assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
+ assert.equal(validateStory55Config(story55Config(s)).nodes.length,37);assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
  assert.equal(story55ChargeGate(s),'plot');assert.equal(nodeStatus(s,'code').state,'locked');

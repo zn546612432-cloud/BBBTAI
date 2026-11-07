@@ -34,8 +34,8 @@ export function newMessage(s,c,kind='text'){
  const last=c.messages.at(-1),from=last?.from||actors(c).find(a=>a.id!=='me')?.id||'me';
  return {id:uid(),from,text:kind==='text'?'新消息':'',time:s.clock,sentDate:dateParts(s).iso,kind,authored:true,schedule:{mode:'immediate'}};
 }
-export function reorderMessage(c,id,targetId,after=false){if(id===targetId)return;const i=c.messages.findIndex(m=>m.id===id);if(i<0||!c.messages.some(m=>m.id===targetId))return;const [m]=c.messages.splice(i,1),j=c.messages.findIndex(m=>m.id===targetId);c.messages.splice(j+(after?1:0),0,m);}
-export function moveMessageTo(c,id,index){const i=c.messages.findIndex(m=>m.id===id);if(i<0)return;const [m]=c.messages.splice(i,1);c.messages.splice(Math.max(0,Math.min(c.messages.length,index)),0,m);}
+export function reorderMessage(c,id,targetId,after=false){if(id===targetId||c.messages.some(m=>(m.id===id||m.id===targetId)&&m.systemOwned))return;const i=c.messages.findIndex(m=>m.id===id);if(i<0||!c.messages.some(m=>m.id===targetId))return;const [m]=c.messages.splice(i,1),j=c.messages.findIndex(m=>m.id===targetId);c.messages.splice(j+(after?1:0),0,m);}
+export function moveMessageTo(c,id,index){const i=c.messages.findIndex(m=>m.id===id);if(i<0||c.messages[i].systemOwned)return;const [m]=c.messages.splice(i,1);const from=Math.min(i,index),to=Math.max(i,index);if(c.messages.slice(from,to+1).some(m=>m.systemOwned)){c.messages.splice(i,0,m);return;}c.messages.splice(Math.max(0,Math.min(c.messages.length,index)),0,m);}
 export function scheduleLabel(m){if(!m.schedule||m.schedule.mode==='immediate')return '已在聊天记录';if(m.delivery)return '已弹出';return m.schedule.mode==='game-time'?`D${String(m.schedule.day).padStart(2,'0')} · ${m.schedule.clock}`:`打开对话后 ${m.schedule.seconds} 秒`;}
 export const chatApps=[['wechat','微信'],['noapp','NoApp'],['mirage','MIRAGE'],['messages','信息']];
 export const isGroup=c=>c.id==='group'||c.group===true;

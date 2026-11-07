@@ -66,6 +66,7 @@ export function handle(a,t,ctx){
  if(a==='remove-charge-gate'){store.update(s=>{s.storyChargeGates=(s.storyChargeGates||[]).filter(g=>g.day!==Number(t.dataset.day));});return;}
  if(a==='preview-chat'){const x=selectedConversation(store.get());if(x)router.open({appId:x.channel,route:'/chat/'+x.c.id});return;}
  if(a==='add-message')store.update(s=>{const {c}=selectedConversation(s);c.messages.push(newMessage(s,c));});
+ if(['duplicate-message','delete-message','move-up','move-down','rearm-message','test-message'].includes(a)&&selectedConversation(store.get())?.c.messages.find(m=>m.id===id)?.systemOwned)return;
  if(a==='duplicate-message')store.update(s=>{const {c}=selectedConversation(s),i=c.messages.findIndex(m=>m.id===id);if(i<0)return;const m=structuredClone(c.messages[i]);m.id=uid();delete m.delivery;delete m.actual;m.authored=true;c.messages.splice(i+1,0,m);});
  if(a==='delete-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);c.messages=c.messages.filter(m=>m.id!==id);});
  if(a==='move-up'||a==='move-down')store.update(s=>{const {c}=selectedConversation(s),i=c.messages.findIndex(m=>m.id===id);moveMessageTo(c,id,i+(a==='move-up'?-1:1));});
@@ -97,9 +98,9 @@ export function change(t,ctx){
  if(t.id==='editor-conversation'){const i=t.value.indexOf(':');store.update(s=>{s.editor.channel=t.value.slice(0,i);s.editor.conversation=t.value.slice(i+1);});return;}
  if(t.id==='editor-conversation-name')store.update(s=>renameConversation(selectedConversation(s).c,t.value));
  if(t.dataset.actorName)store.update(s=>renameActor(selectedConversation(s).c,t.dataset.actorName,t.value));
- if(t.dataset.messageField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m)return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
- if(t.dataset.sentDate)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(m)setMessageDate(m,s,{preset:t.value});});
- if(t.dataset.scheduleField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m)return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
+ if(t.dataset.messageField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned)return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
+ if(t.dataset.sentDate)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(m&&!m.systemOwned)setMessageDate(m,s,{preset:t.value});});
+ if(t.dataset.scheduleField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned)return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
  if(t.dataset.orderMessage){const value=Number(t.value);if(!Number.isInteger(value)||value<1)throw Error('排序位置需为正整数');store.update(s=>moveMessageTo(selectedConversation(s).c,t.dataset.orderMessage,value-1));}
 }
 export const isTextEdit=t=>isMomentsTextEdit(t)||isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';

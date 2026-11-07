@@ -19,3 +19,14 @@ Each entry opens the film-style login with the fixed NYARLATHOTEP account and a 
 During development, the MIRAGE UI exposes message add, edit and delete so authored history can be entered. The planned 0000 developer passcode and its future gating are deferred. The phone's existing local backup export includes MIRAGE edits. The preview has no real AI responses, and no new character dialogue is invented by the directory fixtures.
 
 Validation: `npm test`, `npm run build`, and browser review of login, directory, chat decrypt state, market and product detail.
+
+
+## D13 錢包與電話重做（待審分支）
+
+MIRAGE 內的管理目錄、EDIT MESSAGES、表單與對應路由已移除。全局設定／開發者模式的對話編輯仍由 developer App 負責，`saveRecord` 仍保留，系統分割線為唯讀。
+
+`/wallet` 列出主 BTC、額外綁定錢包與唯一 PACIFIC 美元帳戶；`/wallet/main` 沿用 `bank.exchange()`。D13 50 BTC 使用 `s.content.mirage.wallets` 及固定 ID `s55-d13-wallet-50btc`，只會凍結，不入銀行、不更動 D06 10 BTC。
+
+電話由 `services/telephony` 的 PhoneStore 狀態與系統覆蓋層管理。MIRAGE 只提供原生 Send，沒有接聽劇情電話按鈕。
+
+D13 正式替換台詞與 MP3 尚缺，不能把本分支的舊十行流程測試當作新稿驗收或發布。詳見 `docs/D13_WALLET_CALL.md`。

@@ -1,0 +1,36 @@
+name: D13 wallet and system call mobile acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/d13-wallet-call-mobile-smoke.mjs'
+      - '.github/workflows/d13-wallet-call-check.yml'
+permissions:
+  contents: read
+jobs:
+  d13-mobile:
+    if: github.head_ref == 'feature/d13-wallet-intrusion-call'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/audit-story-skill.mjs
+      - run: npm test
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Click real mobile flow including reload and cross-app navigation
+        run: |
+          PORT=5173 node server/dev.mjs > /tmp/d13-server.log 2>&1 &
+          node scripts/d13-wallet-call-mobile-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d13-mobile-evidence
+          path: qa-results/

@@ -1,3 +1,4 @@
+import {applyD13Definition} from '../d13/definition.js';
 import {applyD14D24Definition} from '../d14-d24/definition.js';
 // Story version and editable definitions; no player progress or provider keys.
 export const STORY55_CONFIG={
@@ -1218,3 +1219,5 @@ export const STORY55_DAYS=[
 ];
 
 applyD14D24Definition(STORY55_CONFIG,{force:true});
+
+applyD13Definition(STORY55_CONFIG);

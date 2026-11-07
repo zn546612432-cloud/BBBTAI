@@ -5,7 +5,6 @@ import {validateStory55Config,importStory55Config,exportStory55Config} from './c
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
 import {toggleFinalRecording} from './final-recording.js';
-import {beginScriptedCall,answerScriptedCall,retryScriptedCall} from './scripted-phone.js';
 import {selectStory55Pin} from '../../apps/maps/features/story55/index.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshotDurable,getTestSnapshotDurable,restoreTestSnapshotDurable,deleteTestSnapshotDurable,storySourceVersion} from './test-snapshots.js';
@@ -18,6 +17,7 @@ function exportText(text,name){const url=URL.createObjectURL(new Blob([text],{ty
 export async function handleStory55Action(a,t,c){
  if(!a.startsWith('s55-'))return false;
  const id=t.dataset.node,project=t.dataset.project;
+ if(a==='s55-d13-preview'){const url=new URL(globalThis.location.href);url.searchParams.set('d13Preview','1');globalThis.open(url.href,'_blank','noopener');return true;}
  if(a==='s55-new-run'){await archiveAndStart(c);return true;}
  if(a==='s55-save-snapshot'){const s=c.store.get();await saveTestSnapshotDurable(c.store.storage,s,'手动保存 · D'+s.day);c.toast?.('测试快照已单独保存');return true;}
  if(a==='s55-rebuild-snapshot'){const saved=await getTestSnapshotDurable(c.store.storage,t.dataset.snapshot);await saveTestSnapshotDurable(c.store.storage,c.store.get(),'按新版重建前 · D'+c.store.get().day);c.store.update(s=>rebuildStory55AtDay(s,saved.entry.day,saved.entry.clock));c.toast?.('已使用当前剧情重建目标日期，旧快照保留');return true;}
@@ -50,10 +50,6 @@ export async function handleStory55Action(a,t,c){
  if(['s55-read-file','s55-read-page','s55-read-map'].includes(a)){c.store.update(s=>readEvidence55(s,a.slice(9),t.dataset.id));return true;}
  if(a==='s55-question'){c.store.update(s=>sendQuestion55(s));return true;}
  if(a==='s55-pay-node'){c.store.update(s=>payNode55(s,id));return true;}
- if(a==='s55-accept-story-call'){beginScriptedCall(c,id);return true;}
-  if(a==='s55-call-answer'){answerScriptedCall(c);return true;}
-  if(a==='s55-call-retry'){retryScriptedCall(c);return true;}
-  if(a==='s55-call-settings'){open(c,'noapp','/settings-ai');return true;}
   if(a==='s55-scene-next'){c.store.update(s=>advanceScene55(s,id));return true;}
  if(a==='s55-export-config'){exportText(exportStory55Config(c.store.get()),'ximeng-story55-config.json');return true;}
  if(a==='s55-commission'){

@@ -1,6 +1,5 @@
 import {aiParameterFields,ttsParameterFields,readAiForm,readTtsForm} from './settings/parameters.js';
 import {s55Button} from '../../services/story55/views.js';
-import {scriptedCallView} from '../../services/story55/scripted-phone.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {finalVoiceBubble} from './final-voice.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
@@ -93,7 +92,6 @@ function finalAudioBubble(s,line){
 }
 export function render({store},loc){
  const s=store.get();
- if(loc.route==='/story-call')return scriptedCallView(s);
   if(loc.route==='/settings-ai')return setting(s);
   if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
  const legacyStoryRoute=loc.route==='/story55/recognition'||loc.route==='/story55/ending';

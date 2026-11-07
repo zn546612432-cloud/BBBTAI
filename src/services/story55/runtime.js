@@ -1,3 +1,4 @@
+import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
@@ -42,9 +43,10 @@ export function activateStory55(s){
  // Reset player interactions, while retaining the author's photos and posts.
  const moments=s.content.moments||{};
  s.content.moments={posts:structuredClone(moments.posts||[]),editedPosts:structuredClone(moments.editedPosts||{}),deletedIds:[...(moments.deletedIds||[])],profiles:structuredClone(moments.profiles||{}),likes:{},comments:{}};
- s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[]};delete s.content.mirage.ouroborosScript;
+ s.content.mirage={...s.content.mirage,digitalBalance:0,digitalTransactions:[],transactions:[],wallets:[]};delete s.content.mirage.ouroborosScript;
  s.storyPresets={rules:[],flags:[],usedIds:[],usedGroups:[],deletedRuleIds:[],firedProactiveDays:[]};
  s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:0,transactions:[]};
+ delete s.phoneCall;
  tickStory55(s);return s;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
@@ -57,6 +59,7 @@ export function finishScene55(s,id){
  s.story55.activeScene=null;
  if(n.credit)creditScene55(s,n);
  if(id==='ending')startFinale55(s);
+ if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
  tickStory55(s);return true;
 }
 // The ledger and its loan annotation are committed in the same PhoneStore update.
@@ -70,7 +73,7 @@ function creditScene55(s,n){
  s.notifications.push({id:id+'-receipt',title:'太平洋銀行',body:'入帳 '+n.credit.toLocaleString(),day:s.day,clock:s.clock,link:{appId:'bank',route:'/'}});
  return true;
 }
-export function advanceScene55(s,id,{acceptCall=false,disconnect=false,now=Date.now()}={}){
+export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
@@ -82,7 +85,7 @@ export function advanceScene55(s,id,{acceptCall=false,disconnect=false,now=Date.
  if(line[0]==='camera')s.story55.sceneCamera={node:id,active:true,disconnected:false};
  if(line[0]==='disconnect')s.story55.sceneCamera={node:id,active:false,disconnected:true};
  if(line[0]==='credit')creditScene55(s,n);
- if(line[0]==='call'&&!acceptCall)throw Error('请接听未知来电');
+ if(line[0]==='call'&&(s.phoneCall?.node!==id||s.phoneCall.state!=='connected'))throw Error('請接聽系統來電');
  if(line[0]==='watch'&&!s.story55.finalAudioHeard)throw Error('请先播放最后的语音');
  if(line[0]==='call')r.accepted=true;
  if(line[0]==='watch'&&id==='ending'){
@@ -92,13 +95,7 @@ export function advanceScene55(s,id,{acceptCall=false,disconnect=false,now=Date.
   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
   if(chat)appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
- if(!['system','call','watch','camera','disconnect','credit'].includes(line[0])){
-  const channel=n.channel||(['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage');
-  const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
-  const list=s.content.conversations[channel]??=[];
-  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
- }
+ appendSceneMessage55(s,id,r.index,{authoredTime});
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
  // The player must explicitly send their own line before any next NPC line.
@@ -106,6 +103,16 @@ export function advanceScene55(s,id,{acceptCall=false,disconnect=false,now=Date.
  if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
+}
+export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
+ const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
+ if(!['system','call','watch','camera','disconnect','credit'].includes(line[0])){
+  const channel=n.channel||(['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage');
+  const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
+  const list=s.content.conversations[channel]??=[];
+  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
+ }
 }
 export function payNode55(s,id){
  const n=nodeById(s,id);if(n?.kind!=='payment'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
@@ -143,7 +150,7 @@ export function chatNodeLink55(s,id){
  const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
-export function nodeLink55(s,id){if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 // Every scene with delivery:"queued" uses this common messaging scheduler.
 // Story content only supplies lines and node prerequisites: no D06-specific
@@ -156,7 +163,8 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
   const next=lines[q.index];if(!next)continue;
   // Do not enqueue NPC replies while the player owes a preset line.
-  if(['me','disconnect'].includes(next[0]))continue;
+  if(['me','disconnect','call'].includes(next[0]))continue;
+  if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;
    return true;
@@ -173,6 +181,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ syncD13(s);
  ensureNativeMirage55(s);
  // Legacy D06 accepted saves are repaired by the shared commission runner.
  // Do not create a second prototype authorization email.
@@ -198,7 +207,7 @@ export function tickStory55(s){
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
- for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
+ for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}

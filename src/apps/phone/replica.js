@@ -1,3 +1,4 @@
+import {outgoingCall} from '../../services/telephony/store.js';
 import {btn,esc} from '../../system/ui.js';
 import {defaultPhoneData,phoneData} from '../../services/phone-data.js';
 
@@ -67,9 +68,9 @@ export function handle(a,t,c){
   if(a==='phone-digit'){digits+=t.dataset.digit;c.refresh();}
   if(a==='phone-erase'){digits=digits.slice(0,-1);c.refresh();}
   if(a==='phone-region')return;
-  if(a==='phone-call')return;
+  if(a==='phone-call'){if(digits)outgoingCall(c.store,digits);return;}
   if(a==='phone-person'){personId=t.dataset.id;selected='person';c.refresh();}
-  if(a==='phone-use-number'){const person=phoneData(c.store.get()).contacts.find(x=>x.id===t.dataset.id);if(person?.number){digits=person.number.replace(/[^\d+]/g,'');selected='keypad';c.refresh();}}
+  if(a==='phone-use-number'){const person=phoneData(c.store.get()).contacts.find(x=>x.id===t.dataset.id);if(person?.number){digits=person.number.replace(/[^\d+]/g,'');outgoingCall(c.store,digits);}}
   if(['phone-add','phone-edit','phone-menu','phone-info'].includes(a))return;
 }
 export function input(el,c){if(el.name==='phone-search'){search=el.value;c.refresh();}}

@@ -42,17 +42,17 @@ export function currentScript55(s,channel,conversationId){
   if(index>=lines.length)continue;
   if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
-  return {id:n.id,index,kind,text,channel,conversationId};
+  return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
  return null;
 }
 export function scriptedDraft55(s,channel,conversationId){
  const line=currentScript55(s,channel,conversationId);
- return line?.kind==='me'?line:null;
+ return line?.kind==='me'&&!s.phoneCall?.speaking&&!s.phoneCall?.resumeRequired?line:null;
 }
 export function sendScriptedDraft55(s,channel,conversationId,text){
  const line=currentScript55(s,channel,conversationId);
- if(!line||line.kind!=='me')throw Error('当前没有等待熙蒙发送的预设消息');
+ if(!line||line.kind!=='me'||s.phoneCall?.speaking||s.phoneCall?.resumeRequired)throw Error('当前没有等待熙蒙发送的预设消息');
  if(String(text||'').trim()!==line.text.trim())throw Error('请发送输入框里完整的预设台词');
  if(line.id==='flow-d03')sendFlowReply(s,text);
  else if(line.id==='questions')sendQuestion55(s);

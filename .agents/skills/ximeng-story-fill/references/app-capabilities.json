@@ -144,7 +144,7 @@
           "kinds": [
             "system-notice"
           ],
-          "proof": "src/services/story55/scripted-phone.js"
+          "proof": "src/services/telephony/index.js"
         }
       },
       "gateFacts": [
