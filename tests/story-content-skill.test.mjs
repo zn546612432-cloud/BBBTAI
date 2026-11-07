@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {storyDayPacket} from '../scripts/new-story-day.mjs';
 import {validateStoryPacket} from '../scripts/validate-story-packet.mjs';
+import {auditStorySkill} from '../scripts/audit-story-skill.mjs';
 
 const src=new URL('../.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json',import.meta.url);
 const draftSrc=new URL('../.agents/skills/ximeng-story-fill/templates/day-packet.template.json',import.meta.url);
@@ -106,4 +107,65 @@ test('Story packet CLI actually exits successfully for the curated sample',()=>{
   '.agents/skills/ximeng-story-fill/examples/d06-dinner.example.json'],{encoding:'utf8'});
  assert.equal(r.status,0,r.stderr);
  assert.match(r.stdout,/PASS .*d06-dinner.example.json/);
+});
+
+
+test('Skill repository audit confirms actual files, agent entrypoint and runtime contracts',()=>{
+ const audit=auditStorySkill();
+ assert.equal(audit.ok,true,audit.errors.join('\n'));
+ assert.ok(audit.filesChecked>=20);
+});
+
+test('Cross-day delivery: D06 paid gift can arrive on D08 without a second engine',()=>{
+ const d=sample();
+ const prior=d.events.find(e=>e.id==='wish-dinner-payment');
+ const photo=d.events.find(e=>e.id==='wish-dinner-photo');
+ photo.timing={day:8,at:'16:00'};
+ photo.trigger={type:'order-delivered',ref:'d06-delivery'};
+ photo.requires=[prior.id];
+ photo.delivery={late:'silent'};
+ const output=validateStoryPacket(d,{strict:true});
+ assert.equal(output.ok,true,output.errors.join('\n'));
+});
+
+test('Reject deliveries dated before the packet or before predecessor day',()=>{
+ const d=sample();
+ d.events.find(e=>e.id==='wish-dinner-photo').timing.day=5;
+ fail(d,'执行日必须');
+ const t=sample();
+ const send=t.events.find(e=>e.id==='wish-dinner-player');
+ send.timing.day=8;
+ const thanks=t.events.find(e=>e.id==='wish-dinner-thanks-xin');
+ thanks.timing.day=7;
+ fail(t,'发生在前置事件之前');
+});
+
+test('Reject same-day chronological reversal between explicitly scheduled events',()=>{
+ const d=sample();
+ const send=d.events.find(e=>e.id==='wish-dinner-player');
+ send.timing.at='19:35';
+ const thanks=d.events.find(e=>e.id==='wish-dinner-thanks-xin');
+ thanks.timing.at='19:30';
+ fail(d,'执行时间早于前置事件');
+});
+
+test('No player-authored reply may be silently replayed or auto-sent',()=>{
+ const d=sample();
+ d.events.find(e=>e.id==='wish-dinner-player').delivery.late='replay';
+ fail(d,'不得跨日自动补发');
+ const t=sample();
+ t.events.find(e=>e.id==='wish-dinner-player').trigger.ref='wish-unpaid';
+ fail(t,'user-send 必须依赖');
+});
+
+test('Time-triggered authored event needs a matching game clock, not a second schedule',()=>{
+ const d=sample();
+ d.events.find(e=>e.id==='wish-dinner-photo').timing.at='19:10';
+ fail(d,'day-time 触发时刻');
+});
+
+test('Player send must explicitly declare the enabling event as a prerequisite',()=>{
+ const d=sample();
+ d.events.find(e=>e.id==='wish-dinner-player').requires=[];
+ fail(d,'必须显式声明');
 });
