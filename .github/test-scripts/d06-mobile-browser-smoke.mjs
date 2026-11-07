@@ -35,12 +35,12 @@ page.on('pageerror',e=>errors.push('pageerror: '+e.message));
 page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
 const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
 const photo=(name)=>page.screenshot({path:path+'/'+name+'.png',fullPage:true});
-async function unlock(){
- await page.locator('#screen-layer [data-action="unlock"]').waitFor({state:'visible',timeout:60000});
- await page.locator('#screen-layer [data-action="unlock"]').click();
- await page.locator('#screen-layer [data-action="passcode-key"][data-key="0"]').waitFor({state:'visible',timeout:45000});
- for(const d of '0816')await page.locator('#screen-layer [data-action="passcode-key"][data-key="'+d+'"]').click();
- await page.waitForFunction(()=>document.querySelector('#phone')?.classList.contains('is-locked')===false,null,{timeout:30000});
+async function unlock(p=page){
+ await p.locator('#screen-layer [data-action="unlock"]').waitFor({state:'visible',timeout:60000});
+ await p.locator('#screen-layer [data-action="unlock"]').click();
+ await p.locator('#screen-layer [data-action="passcode-key"][data-key="0"]').waitFor({state:'visible',timeout:45000});
+ for(const d of '0816')await p.locator('#screen-layer [data-action="passcode-key"][data-key="'+d+'"]').click();
+ await p.waitForFunction(()=>document.querySelector('#phone')?.classList.contains('is-locked')===false,null,{timeout:30000});
 }
 async function changeScreen(appId,route,day=null,clock=null){
  await page.evaluate(({key,appId,route,day,clock})=>{
@@ -142,6 +142,73 @@ try{
   .messages.filter(m=>m.id==='wish-keyboard-photo').length,1);
  assert.equal(delivered.bankData.balance,1256.82);
  console.log('PASS D08 post-delivery private WeChat photo loaded and is not duplicated');
+
+ // A separate synthetic save reproduces the reported issue: a D06 dinner wish
+ // was checked off by the home widget without ever paying for it.
+ const secondSeed=initialState();
+ activateStory55(secondSeed);
+ secondSeed.day=6;secondSeed.clock='10:25';secondSeed.homePage=1;
+ secondSeed.unlocked=false;
+ secondSeed.nav.current={appId:'home',route:'/',params:{}};
+ secondSeed.bankData.balance=1000;
+ secondSeed.story55.wishes={
+  records:{'d06-dinner':{id:'d06-dinner',status:'saved',foundDay:6,foundClock:'10:20'}},
+  story:{started:true,lines:[],nextAt:0,d07Started:false}
+ };
+ secondSeed.content.reminders.push({
+  id:'wish-d06-dinner',wishId:'d06-dinner',title:'今晚和大家吃饭',
+  done:true,wishStatus:'saved',createdDay:6
+ });
+ const widgetPage=await browser.newPage({
+  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
+  locale:'zh-CN',reducedMotion:'reduce'
+ });
+ widgetPage.setDefaultTimeout(30000);
+ widgetPage.on('pageerror',e=>errors.push('widget pageerror: '+e.message));
+ await widgetPage.addInitScript(({key,json})=>{
+  if(!localStorage.getItem(key))localStorage.setItem(key,json);
+ },{key,json:JSON.stringify(secondSeed)});
+ let widgetReady=false;
+ for(let attempt=1;attempt<=4;attempt++){
+  const response=await widgetPage.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
+  if(response?.ok()){
+   try{await widgetPage.locator('#phone').waitFor({timeout:20000});widgetReady=true;break;}
+   catch{}
+  }
+  await widgetPage.waitForTimeout(2500*attempt);
+ }
+ assert.ok(widgetReady,'Widget preview did not load');
+ await unlock(widgetPage);
+ await widgetPage.locator('[data-action="home-reminder-wish"][data-wish-id="d06-dinner"]')
+  .waitFor({state:'visible',timeout:30000});
+ const widgetState=()=>widgetPage.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
+ assert.equal((await widgetState()).content.reminders.find(x=>x.wishId==='d06-dinner').done,false,
+  'old mistaken completed check is repaired on startup');
+ await widgetPage.locator('[data-action="home-reminder-wish"][data-wish-id="d06-dinner"]').click();
+ await widgetPage.locator('[data-action="reminder-wish-buy"]').waitFor({state:'visible'});
+ assert.equal((await widgetState()).nav.current.appId,'home','purchase modal must open directly on home');
+ await widgetPage.screenshot({path:path+'/05-home-direct-purchase.png',fullPage:true});
+ await widgetPage.locator('[data-action="reminder-wish-buy"]').click();
+ await widgetPage.locator('[role="dialog"][aria-label="购买成功"]').waitFor({state:'visible'});
+ await widgetPage.screenshot({path:path+'/06-dinner-booking-confirmed.png',fullPage:true});
+ const paidDinner=await widgetState();
+ assert.equal(paidDinner.bankData.balance,650);
+ assert.equal(paidDinner.bankData.transactions.filter(x=>x.wishId==='d06-dinner').length,1);
+ assert.equal(paidDinner.content.reminders.find(x=>x.wishId==='d06-dinner').done,true);
+ console.log('PASS home widget: direct purchase modal, repaired legacy done, paid receipt, one debit');
+ await widgetPage.locator('[data-action="reminder-wish-chat"]').click();
+ await widgetPage.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.nav.current.appId==='wechat'&&s.nav.current.route==='/chat/group'&&
+   s.content.conversations.wechat.find(x=>x.id==='group')?.messages.some(m=>m.id==='wish-dinner-01');
+ },key,{timeout:30000});
+ const dinnerResponse=await widgetState();
+ assert.equal(dinnerResponse.content.conversations.wechat.find(x=>x.id==='group')
+  .messages.filter(m=>m.id==='wish-dinner-01').length,1);
+ assert.equal(dinnerResponse.content.conversations.wechat.find(x=>x.id==='group')
+  .messages.some(m=>m.id==='wish-dinner-photo'),false);
+ console.log('PASS dinner purchase triggers prompt WeChat booking confirmation; photo awaits evening');
+
  if(errors.length)console.log('Browser warnings:\n'+errors.slice(0,20).join('\n'));
  if(failedUrls.length)console.log('HTTP FAILED URLS:',[...new Set(failedUrls)].slice(0,35));
  console.log('D06_MOBILE_SMOKE_PASS');
