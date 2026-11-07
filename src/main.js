@@ -1,5 +1,6 @@
 import {isStory55} from './services/story55/state.js';
-import {wishEventsDue,tickWishes} from './services/wishes/index.js';
+import {wishEventsDue,tickWishes,syncWishReminders} from './services/wishes/index.js';
+import {openWishPurchase} from './apps/reminders/index.js';
 import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './story/d01/runtime.js';
 import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging/phone-story-scheduler.js';
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
@@ -52,6 +53,8 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// Reconcile wish entries affected by older home-widget checkbox behavior.
+if(isStory55(store.get()))store.update(s=>syncWishReminders(s));
 // A closed browser does not advance the story clock. A plugged-in battery does.
 if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s));
 // Migrate bookmarks saved by the retired 55-day calendar dialogue panels.
@@ -529,6 +532,11 @@ $('#root').addEventListener('click',async e=>{
     if(action==='home'){if(tasks.visible)tasks.hide();else if(store.get().nav.current.appId==='home')tasks.show(store.get().nav.current);else router.home();return;}
     if(action==='back'){router.back();return;}
     if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,store.get()))return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
+    if(action==='home-reminder-wish'){openWishPurchase(target.dataset.wishId,ctx());return;}
+    if(['reminder-wish-buy','reminder-wish-cancel','reminder-wish-finish','reminder-wish-chat','reminder-wish-bank'].includes(action)&&store.get().nav.current.appId==='home'){
+      registry.get('reminders')?.handle(action,target,ctx());
+      return;
+    }
     if(action==='home-reminder-toggle'){toggleReminder(store,target.dataset.id);return;}
     if(action==='page'){store.update(s=>{s.homePage=Number(target.dataset.page);});return;}
     if(action==='lock'){lockscreen.reset();shade=false;store.update(s=>{s.unlocked=false;s.nav.current={appId:'home',route:'/',params:{}};s.nav.stack=[];});return;}
