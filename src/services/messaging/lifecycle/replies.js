@@ -1,25 +1,73 @@
-// Authored delayed replies. No AI invents an unsent response or past arrangement.
+// D01–D11 rewritten delayed reply copy. Never auto-write a player message.
+// A returned choice becomes a native WeChat draft only after the player sends it.
 export const reply=(me,who,...npc)=>[{who:'me',text:me},...npc.map(text=>({who,text}))];
 export const LATE_REPLIES={
  d02:{
-  wang:{sameDay:reply('配件的事我再看看，錢你先給自己留著。','熙旺','好，有需要再跟我說。'),nextDay:reply('昨天配件的事忘了回，錢你自己留著吧。','熙旺','知道了，別自己硬撐。'),later:reply('配件我還在看，有需要再找你，哥。','熙旺','好。'),resolved:reply('配件已經下單了，哥，你給自己留點錢。','熙旺','好，到了跟我說。')},
-  xin:{nextDay:reply('昨天沒顧上回。那台先別買，配置再看看。','小辛','行，我先不下單。'),later:reply('電腦的事還要我幫你看嗎？','小辛','要啊哥，我還沒決定。')}
+  wang:{
+   sameDay:reply('哥，你今天跑车辛苦了，早点收。','熙旺','好，你忙完也早点休息。'),
+   nextDay:reply('昨天没顾上回，哥，今天还忙吗？','熙旺','还行，正在出车。'),
+   later:reply('这两天一直在弄设备，哥，你自己也记得吃饭。','熙旺','知道了，阿蒙。'),
+   resolved:reply('配件已经处理好了，哥，不用操心。','熙旺','行，有事再找我。')
+  },
+  xin:{
+   nextDay:reply('昨天没来得及看，你那张配件单再发一遍。','小辛','好，我整理一下。'),
+   later:reply('那张配件单最后买了没？','小辛','还没呢，想再看看。')
+  }
  },
  d03:{
-  hufeng:{nextDay:reply('昨天忙忘了，你電腦拿來我看看。','胡枫','好，不催你，等你有空。'),later:reply('前幾天電腦的事沒顧上回，現在怎麼樣？','胡枫','還想請你幫我看看。'),resolved:reply('電腦已經弄好了。以後重要的東西自己留份備份。','胡枫','好，我記住了。')},
-  xiaoxin:{nextDay:reply('昨天那台先別買，別光看燈。','小辛','知道啦，等你幫我看配置。'),later:reply('電腦買了沒有？沒買的話先把配置發我。','小辛','還沒，我找找。')},
-  wang:{nextDay:reply('昨天衣服的事忘了回，我自己收拾一下，哥。','熙旺','好，洗了記得晾。'),later:reply('衣服我自己收拾，哥你別操心了。','熙旺','行，有事叫我。'),resolved:reply('衣服晾好了，謝謝哥。','熙旺','不客氣，別又堆一洗衣機。')}
+  hufeng:{
+   nextDay:reply('昨天太忙了，你把首尔学校电脑的日志发我。','胡枫','不急，我今天整理好。'),
+   later:reply('你之前说的剪辑卡顿后来解决了吗？','胡枫','好一些了，还是想请你看看。'),
+   resolved:reply('远程配置我看过了，你先按那个参数试试。','胡枫','行，我等会试。')
+  },
+  xiaoxin:{
+   nextDay:reply('昨天没顾上回。你先别下单，给我看型号。','小辛','放心，我还没买。'),
+   later:reply('你那张显卡截图还留着吗？','小辛','在，我找找。')
+  },
+  wang:{
+   nextDay:reply('昨天太晚没回，哥，我没熬通宵。','熙旺','那就好。'),
+   later:reply('哥，最近车多吗？','熙旺','这两天还行，忙完再聊。'),
+   resolved:reply('我按时睡了，哥。','熙旺','好，继续保持。')
+  }
  },
  d04:{
-  'hufeng-am':{sameDay:reply('還在弄，弄好了叫你。','胡枫','好，不催你了。'),nextDay:reply('昨天沒顧上回，電腦弄好了叫你。','胡枫','行，你慢慢來。'),later:reply('前幾天電腦的事沒顧上回，現在用著怎麼樣？','胡枫','還得請你幫我看看。'),resolved:reply('之前沒顧上回。電腦已經弄好了，記得留份備份。','胡枫','好，我自己留一份，謝啦。')},
-  'hufeng-pm':{sameDay:reply('剛才在忙，咖啡的事沒顧上回你。','胡枫','沒事，給你留著。'),nextDay:reply('昨天忙，咖啡的事沒顧上回你。','胡枫','沒事，下次再給你帶。')},
-  'wang-dinner':{sameDay:reply('剛忙完，今天來不及了，改天一起？','熙旺','行，你也記得吃點東西。'),nextDay:reply('昨天忙忘了，下次一起吃？','熙旺','好，等你有空。'),later:reply('前幾天沒顧上回，飯還欠著呢。','熙旺','記著呢，下次一起。')},
-  'wang-night':{nextDay:reply('昨天到家忘了說，讓你惦記了，哥。','熙旺','沒事，平安就好。'),later:reply('前幾天忘了回，到家了，哥。','熙旺','知道了，下次記得說一聲。')}
+  'hufeng-am':{
+   sameDay:reply('你先把电脑的配置发我，隔海也能看看。','胡枫','好，我发截图。'),
+   nextDay:reply('昨天没顾上，学校电脑还卡吗？','胡枫','还是有点，你有空再看。'),
+   later:reply('电脑的事后来怎么样了？','胡枫','暂时能用。'),
+   resolved:reply('你备份做好就行，下次卡了再找我。','胡枫','放心，我留好了。')
+  },
+  'hufeng-pm':{
+   sameDay:reply('那份作业导出就好，别再通宵了。','胡枫','知道，今晚早点睡。'),
+   nextDay:reply('昨天忙着收尾，你作业交了吗？','胡枫','交了，终于能喘口气。')
+  },
+  'wang-dinner':{
+   sameDay:reply('哥，我今天忙完过不去了，下次再约。','熙旺','没事，吃点东西就行。'),
+   nextDay:reply('昨天晚饭没约上，过两天再吃吧哥。','熙旺','好，我看哪天早点收车。'),
+   later:reply('哥，我还欠你顿饭呢。','熙旺','记着呢。')
+  },
+  'wang-night':{
+   nextDay:reply('昨晚睡着了，忘了跟你说晚安。','熙旺','没事，你休息好就行。'),
+   later:reply('哥，前几天消息回晚了。','熙旺','忙就忙，别累着。')
+  }
  },
  d05:{
-  'wang-morning':{sameDay:reply('剛看到，你出車注意安全，哥。','熙旺','好，你記得吃點東西。'),nextDay:reply('昨天早上忘了回，謝謝哥。','熙旺','知道啦，今天也記得按時吃飯。'),later:reply('前幾天一直忙，謝謝哥哥照顧。','熙旺','少來這套，照顧好自己就行。')},
-  'hufeng-check':{nextDay:reply('電腦用著沒問題就行，備份記得留。','胡枫','留了，放心。'),later:reply('這兩天電腦還好吧？','胡枫','挺好，沒再卡。')},
-  'zaizai-paris':{nextDay:reply('昨天沒顧上回，巴黎的事你繼續準備。','仔仔','嗯，我慢慢攢錢。'),later:reply('你那個去巴黎的計劃，準備得怎麼樣了？','仔仔','還在看學校，也在學法語。')},
-  'wang-evening':{nextDay:reply('昨晚沒顧上回，哥你也別出車太晚。','熙旺','好，今天我早點收。'),later:reply('前幾天沒顧上回，哥，你這兩天忙不忙？','熙旺','還行，你有事找我？')}
+  'wang-morning':{
+   sameDay:reply('哥，今天收车别太晚。','熙旺','好，你也是。'),
+   nextDay:reply('昨早没顾上回，哥，今天还出车吗？','熙旺','出。阿蒙别担心。'),
+   later:reply('哥，我这几天在家忙，没怎么回消息。','熙旺','知道，记得吃饭。')
+  },
+  'hufeng-check':{
+   nextDay:reply('你在首尔那电脑后来好点没？','胡枫','好点了，谢了。'),
+   later:reply('学校电脑还发热吗？','胡枫','偶尔，不过能用。')
+  },
+  'zaizai-paris':{
+   nextDay:reply('你巴黎的事慢慢准备，我帮你留意票价。','仔仔','好，我先把手上的衣服做完。'),
+   later:reply('你想看的那个巴黎展，时间定了吗？','仔仔','还在看，得先攒钱。')
+  },
+  'wang-evening':{
+   nextDay:reply('昨晚忙完没看手机，哥，今天早点收车。','熙旺','好，阿蒙。'),
+   later:reply('这几天辛苦了，哥。','熙旺','你照顾好自己就行。')
+  }
  }
 };

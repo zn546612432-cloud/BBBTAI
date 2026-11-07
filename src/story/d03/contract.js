@@ -24,7 +24,7 @@ export function seedD03Contract(s){
  list.push({
   id:D03_ORDER,title:'B 級委託',owner:'ANONYMOUS',category:'B',reward:'4,800 USD',
   status:'OPEN',storyD03:true,storyDay:3,deadlineDay:5,deadlineClock:'13:40',
-  description:'需對一批來源不明的資料進行交叉比對及有效性驗證。\n\n資料包含通訊紀錄、交易時間戳及多組識別碼，部分內容存在缺失及重複。\n\n請排除無效記錄，整理可確認的關聯資訊，並提交分析結果。\n\n交付要求：有效資料索引、異常記錄清單、關聯分析結果。\n期限：48 小時。'
+  description:"匿名客戶送來一批截斷的交易與通信摘要。原始索引被拆成多段，部分時間標記互相矛盾。\\n\\n把可互證的部分拼好，無法確定的單獨標明。\\n\\n交付：有效索引、時間差異表、可追溯資料包。"
  });
  return true;
 }
@@ -54,7 +54,7 @@ export function acceptD03Contract(s){
  if(!mail.some(m=>m.id===D03_MAIL))mail.unshift({
   id:D03_MAIL,orderId:D03_ORDER,from:'ANONYMOUS / MIRAGE',
   subject:'【mirage】委託資料已發送',
-  body:'您已接受委託。\n\n資料來源不需要你確認。我只要能用的結果。重複的刪掉，缺失的標記出來。不要問其他問題。\n\n所需資料已加密封裝，請於期限內完成分析並提交結果。\n\n附件：dataset_0521.enc（內含 manifest.json）\n\n執行程序：破譯 → 連結 → 隱匿。\n\n提交成功後，驗收結果及交易回執將寄送至此郵箱。',
+  body:"附件是同一批資料的封裝鏡像，索引分散在不同分頁。只要能核對的結果，不要自己補造缺失條目。\\n\\n附件：dataset_0521.enc（內含 manifest.json）\\n執行程序：破譯 → 連結 → 隱匿。\\n\\n完成後返回 MIRAGE 提交，驗收與回執寄至 KIRA。",
   attachments:['dataset_0521.enc'],read:false,storyD03:true,
   day:s.day,time:s.clock,date:DATE
  });

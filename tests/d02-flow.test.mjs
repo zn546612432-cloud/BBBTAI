@@ -153,7 +153,7 @@ test('D02 brother: no authored me bubbles before Send; real Send -> delayed NPC 
  const s=phone(),store={get:()=>s,update:fn=>fn(s)},c=s.content.conversations.wechat.find(c=>c.id==='wang');
  s.clock='12:15';tickStory55(s);assert.equal(d02Draft(s,'wang'),null);
  s.clock='12:16';tickStory55(s);
- assert.match(d02Draft(s,'wang').text,/电脑真该退休/);
+ assert.match(d02Draft(s,'wang').text,/哥，你现在出车吗/);
  assert.match(renderWeChatChat(s,'wang'),/data-story-type=/);
  assert.equal(c.messages.filter(m=>m.storyD02).length,0);
  assert.match(sendD02WeChat(store,'wang','不匹配',1000).reason,/完整的预设台词/);
@@ -164,18 +164,18 @@ test('D02 brother: no authored me bubbles before Send; real Send -> delayed NPC 
  assert.equal(d02Draft(s,'wang'),null);
  assert.equal(d02WeChatDue(s,2799),false);
  assert.equal(tickD02Wechat(s,2800),true);
- assert.match(c.messages.at(-1).text,/又坏了吗/);
+ assert.match(c.messages.at(-1).text,/刚送完一单/);
  assert.ok(d02Draft(s,'wang'));
  assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,3000).messageId);
  assert.equal(tickD02Wechat(s,4800),true);
- assert.match(c.messages.at(-1).text,/还差多少钱/);
+ assert.match(c.messages.at(-1).text,/缺钱跟哥说/);
  assert.ok(sendD02WeChat(store,'wang',d02Draft(s,'wang').text,5000).messageId);
  s.clock='12:25';
  assert.equal(tickD02Wechat(s,6800),true);
- assert.equal(c.messages.at(-1).text,'别担心');
+ assert.equal(c.messages.at(-1).text,'好，哥哥知道。');
  assert.equal(tickD02Wechat(s,8999),false);
  assert.equal(tickD02Wechat(s,9000),true);
- assert.equal(c.messages.at(-1).text,'哥能养你一辈子');
+ assert.equal(c.messages.at(-1).text,'我晚上收车经过你那边，给你带点吃的。');
  assert.equal(s.story55.d02.wechat.wang.completed,true);
  assert.equal(d02Draft(s,'wang'),null);
  assert.equal(tickD02Wechat(s,10000),false);
@@ -198,13 +198,13 @@ test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not au
  assert.equal(c.messages.filter(m=>m.storyD02).length,1);
  assert.equal(c.messages.at(-1).from,'小辛');
  assert.equal(c.messages.at(-1).time,'16:08');
- assert.match(d02Draft(s,c.id).text,/促销短信/);
+ assert.match(d02Draft(s,c.id).text,/先看看/);
  tickD02Wechat(s,2000);
  assert.equal(c.messages.filter(m=>m.storyD02).length,1);
  assert.ok(sendD02WeChat(store,c.id,d02Draft(s,c.id).text,3000).messageId);
  assert.equal(c.messages.filter(m=>m.storyD02&&m.from==='me').length,1);
  assert.equal(tickD02Wechat(s,4800),true);
- assert.match(c.messages.at(-1).text,/收藏的显卡终于降价了/);
+ assert.match(c.messages.at(-1).text,/我还没下单/);
  assert.equal(s.notifications.filter(n=>n.id?.includes('d02-xin-script-0')).length,1);
 });
 
@@ -283,7 +283,7 @@ test('first D02 commission submission unlocks Wang immediately and Xiao Xin afte
  s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
  assert.equal(deployD02(s,D02_A,D02_KEYS[D02_A]),true);
  win(s,D02_A);assert.equal(submitD02(s,D02_A),true);
- assert.match(d02Draft(s,'wang').text,/电脑真该退休/);
+ assert.match(d02Draft(s,'wang').text,/哥，你现在出车吗/);
  assert.equal(d02WeChatDue(s),false);
  s.clock='08:44';assert.equal(d02WeChatDue(s),false);
  s.clock='08:45';assert.equal(d02WeChatDue(s),true);

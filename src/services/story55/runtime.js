@@ -1,6 +1,7 @@
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
+import {tickD11MeetingNote} from '../../story/d11/meeting-note.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
@@ -75,10 +76,10 @@ export function advanceScene55(s,id,{acceptCall=false,now=Date.now()}={}){
  }
  if(!['system','call','watch'].includes(line[0])){
   const channel=['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage';
-  const cid=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
+  const cid=channel==='wechat'?(id==='intro'||id==='return'?'wang':'group'):channel==='noapp'?'tai':'s55-ouroboros';
   const list=s.content.conversations[channel]??=[];
-  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':cid==='wang'?'熙旺':'狼崽团',...(channel==='wechat'&&cid==='group'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`s55-${id}-${r.index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]==='wang'?'熙旺':line[0]):cid,text:id==='ending'&&r.index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
@@ -166,6 +167,7 @@ export function tickStory55(s){
  tickD04Contracts(s);
  tickD03MomentReply(s);
  tickD02Diary(s);
+ tickD11MeetingNote(s);
  tickD01(s);
  // Update only the former default line; never overwrite author-edited dialogue.
  const finalLines=story55Config(s).scenes?.ending;

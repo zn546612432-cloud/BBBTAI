@@ -1,0 +1,24 @@
+name: D01-D11 rewrite branch quality checks
+on:
+  push:
+    branches: [rewrite/d01-d11-independent-lives-20261107]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: New D01-D11 canon and continuity tests
+        run: node --test tests/d01-d11-rewrite-continuity.test.mjs
+      - name: Full production Pages build (no deploy)
+        run: npm run build:pages
+      - name: Full existing regressions (legacy copy checks need rewriting)
+        run: npm test

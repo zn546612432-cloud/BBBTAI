@@ -9,7 +9,7 @@ export const FLOW_INVITE='flow-d03-invite';
 export const FLOW_KEY='flow-1234';
 export const FLOW_REWARD_ID='flow-d03-reward';
 export const FLOW_TOOL='漏洞扫描工具';
-export const FLOW_INVITE_TEXT='嘿，Nyarlathotep，我最近开发了一个新工具，扫描漏洞很有效率，来帮我测试一下吧，密钥是 flow-1234。';
+export const FLOW_INVITE_TEXT='Nyarlathotep，我上次說的掃描工具寫好了。你幫我跑一遍看看結果準不準？密鑰 flow-1234，部署完會有一份回執。';
 const HISTORY_DATE='2025-04-10';
 const history=[
  ['flow','最近在测漏洞扫描程序，批量扫起来慢得要命。你有什么办法提速吗？','10:12'],

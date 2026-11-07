@@ -1,17 +1,12 @@
-// D10 · ordinary Wolf Cubs group life (20 authored NPC bubbles).
-// Deliberately includes single standalone messages; no speaker requires a reply.
-// Ximeng is not automatically impersonated. Existing scheduler controls spacing.
-const parse=body=>body.split('|').filter(Boolean).map(part=>{
- const at=part.indexOf('：');if(at<0)throw Error('群聊缺少说话人');
- return {who:part.slice(0,at),kind:'text',text:part.slice(at+1)};
-});
+// D10 · 2025-05-28. 全新独立生活文案，替换旧剧本；不替玩家发送消息。
+// 胡枫D12晚从韩国回澳；此前所有发言均在远程微信中发生。
+const parse=body=>body.split('|').map(part=>{const at=part.indexOf('：');if(at<0)throw Error('Missing speaker');return {who:part.slice(0,at),kind:'text',text:part.slice(at+1)};});
 const scene=(id,at,body)=>({id,chat:'group',at,lines:parse(body)});
 export const D10_GROUP=[
- scene("shopping-list","09:23","仔仔：下午去超市，有没有要带的|熙旺：洗衣液快没了|阿威：五号电池|小辛：薯片|仔仔：什么口味|小辛：都行，别芥末"),
- scene("noodles","11:50","胡枫：中午有人吃面吗|阿威：等会儿再说|仔仔：昨天那袋咖啡豆谁开的|胡枫：我，剩的都封好了"),
- scene("heat","13:40","小辛：今天太阳是真的狠"),
- scene("supermarket","16:21","仔仔：超市排队排了半小时|胡枫：我们还在停车场|仔仔：马上好了"),
- scene("carry","17:46","仔仔：到楼下了，谁下来搬东西|阿威：我下去|小辛：薯片呢|胡枫：你先搬"),
- scene("dinner","20:02","熙旺：汤在炉上，回来自己盛"),
- scene("night","22:20","小辛：明天终于不用买东西了")
+ scene("shopping","09:23","仔仔：下午去买一批布料|仔仔：有家店说今天能看样|熙旺：你昨天看的颜色定了？|仔仔：还没，想再比较一下|阿威：我去换登山鞋鞋带"),
+ scene("seoul","11:50","胡枫：首尔今天一直下雨|胡枫：我晾的衣服又得搬进来|小辛：你到底还要待多久|胡枫：快了|熙旺：机票订好告诉我"),
+ scene("afternoon","13:40","小辛：刚看了半小时显卡价格，越看越贵"),
+ scene("buying","16:21","仔仔：样布拿到了|仔仔：比照片暗一点|阿威：还是看实物准|小辛：你们设计师真麻烦"),
+ scene("night","19:42","熙旺：明天我可能要忙一天|阿威：知道了|胡枫：我周五晚上到澳门|熙旺：把航班号发我"),
+ scene("last","22:20","小辛：明天不熬夜了，真的")
 ];

@@ -9,6 +9,7 @@ import {endingReplyDue55} from './finale.js';
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const NOAPP=new Set(['recognition','paris','ending']);
 export function threadForScene55(id){
+ if(id==='intro'||id==='return')return {channel:'wechat',conversationId:'wang'};
  if(WECHAT.has(id))return {channel:'wechat',conversationId:'group'};
  if(NOAPP.has(id))return {channel:'noapp',conversationId:'tai'};
  return {channel:'mirage',conversationId:'s55-ouroboros'};

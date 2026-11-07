@@ -6,15 +6,15 @@ const DAY_DATE='2025-05-19';
 const GROUP_ID='group',BROTHER_ID='wang';
 const beforeNoon=s=>s.clock<'12:00';
 const groupSteps=branch=>[
- {after:3000,from:'小辛',text:branch==='morning'?'嗯？蒙蒙哥怎么今天起得那么早？':'蒙蒙哥，你不会现在才起吧？'},
- {after:1000,from:'小辛',text:branch==='morning'?'昨天和我打游戏打到那么晚…今天不到12点居然就醒了。':'昨天和我打游戏打得那么晚，果然起不来床了，哈哈'},
- {after:3000,from:'熙旺',text:'怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。'},
- {after:2000,from:'熙旺',text:'今天不忙的话，就再去睡会，我中午收车回来给你带午餐。'},
- {after:2000,from:'me',text:'不知道怎么就醒了'},
- {after:2000,from:'me',text:'还不是小辛说打赢boss才睡觉'},
- {after:2000,from:'me',text:'谢谢哥，我要吃牛腩饭'},
- {after:2000,from:'小辛',text:'还不是我们太菜了，哈哈。'},
- {after:2000,from:'熙旺',text:'好'}
+ {after:3000,from:'小辛',text:branch==='morning'?'蒙哥，你今天怎么这么早冒泡':'蒙哥，这会儿才看手机？'},
+ {after:1000,from:'小辛',text:branch==='morning'?'昨晚打那局我差点睡着':'我今天已经去了一趟店里，你才起啊'},
+ {after:3000,from:'熙旺',text:'你俩昨天玩到几点？阿蒙今天还有事，别老拖他熬夜。'},
+ {after:2000,from:'熙旺',text:'我下午要出车，阿蒙有事直接找我。'},
+ {after:2000,from:'me',text:'哥，我没事，刚起来看看消息。'},
+ {after:2000,from:'me',text:'小辛昨晚那局打得是真够久。'},
+ {after:2000,from:'me',text:'你出车慢点，别只顾着回我们。'},
+ {after:2000,from:'小辛',text:'我先去补觉了，晚点聊。'},
+ {after:2000,from:'熙旺',text:'好，阿蒙你也记得吃饭。'}
 ];
 // Two seconds more breathing room between every scripted group beat.
 // Add another 3 seconds whenever Xiao Xin and Xiwang speak consecutively.
@@ -118,13 +118,13 @@ export function tickD01WeChat(s,now=Date.now()){
   }
  }
  const b=d.brother;
- if(b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺','嗯？','d01-wang-hello')||changed;b.helloDelivered=true;if(b.phase==='hello')b.phase='counting';}
+ if(b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺','阿蒙？','d01-wang-hello')||changed;b.helloDelivered=true;if(b.phase==='hello')b.phase='counting';}
  if(b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute){
-  changed=deliver(s,BROTHER_ID,'熙旺','刚才在开车','d01-wang-driving')||changed;
+  changed=deliver(s,BROTHER_ID,'熙旺','刚才在跑车，没看手机','d01-wang-driving')||changed;
   b.phase='replySecond';b.secondAt=now+1500;
  }
  if(b?.phase==='replySecond'&&now>=b.secondAt){
-  changed=deliver(s,BROTHER_ID,'熙旺','怎么发了那么多消息？现在看不及时，不重要的话，有什么话等我回家当面跟我讲吧。','d01-wang-finish')||changed;
+  changed=deliver(s,BROTHER_ID,'熙旺','一下发这么多啊。哥今天车多，晚上有空再好好聊。','d01-wang-finish')||changed;
   b.phase='done';b.locked=true;changed=true;
  }
  return changed;
