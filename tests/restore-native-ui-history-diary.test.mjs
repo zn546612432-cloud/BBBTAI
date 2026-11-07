@@ -49,15 +49,17 @@ test('original iOS-style reminders and desktop widget never become story task ca
  assert.doesNotMatch(reminderWidget(s),/data-action="s55-node"/);
  assert.equal(appUnlocked('noapp',s),true);
 });
-test('diary story is the exact requested D01 narrative, and optional reminders are blue links',()=>{
+test('D01 diary is untitled ordinary life; reminder markup remains supported elsewhere',()=>{
  const s=fixture();
  assert.equal(diaryDate(1),'2025-05-19');
- assert.match(entryFor(s,1).body,/傅隆生回澳门的第三天/);
- assert.match(entryFor(s,1).body,/三年了/);
+ assert.equal(entryFor(s,1).title,'');
+ assert.match(entryFor(s,1).body,/平靜的一天/);
+ assert.match(entryFor(s,1).body,/胡楓還在韓國留學/);
+ assert.doesNotMatch(entryFor(s,1).body,/傅隆生回澳門|老狼歸巢/);
  const html=diaryView(s,{route:'/',params:{day:'1'}});
- assert.match(html,/老狼归巢/);
+ assert.doesNotMatch(html,/老狼归巢|class="diary-entry-title"/);
  assert.match(html,/天气 晴/);
- assert.match(html,/data-action="diary-add-reminder"/);
+ assert.doesNotMatch(html,/data-action="diary-add-reminder"/);
  assert.doesNotMatch(html,/GHOST|BOUNTY|任务树/);
  const rich=journalText('提案：[[据点碰面|前往据点碰面]]。');
  assert.match(rich,/class="diary-reminder-link"/);

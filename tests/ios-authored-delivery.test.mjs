@@ -21,31 +21,34 @@ function state(day=4,clock='09:50'){
 }
 
 test('D04 authored replies are present as literal native input values, not blank typewriter drafts',()=>{
- const s=state(4,'09:50');
- tickD04Chats(s,0);
- tickD04Chats(s,2100);
- assert.equal(d04Draft(s,'hufeng')?.text,'有');
- s.nav.current={appId:'wechat',route:'/chat/hufeng',params:{}};
- const html=renderWeChatChat(s,'hufeng');
- assert.match(html,/value="有"/);
- assert.match(html,/data-story-type="有"/);
- assert.match(html,/data-story-stage="d04:hufeng-am:2"/);
- assert.equal(conversation(s,'hufeng').messages.filter(m=>m.from==='me').length,0);
- assert.equal(sendD04WeChat(store(s),'hufeng','不是預設').handled,true);
- assert.equal(conversation(s,'hufeng').messages.filter(m=>m.from==='me').length,0);
- assert.equal(sendD04WeChat(store(s),'hufeng','有',4000).messageId,'d04-hufeng-am-2');
- assert.equal(conversation(s,'hufeng').messages.filter(m=>m.from==='me').length,1);
+ const s=state(4,'17:45');
+ tickD04Chats(s,0);tickD04Chats(s,2100);
+ assert.equal(d04Draft(s,'wang')?.text,'你請？');
+ assert.equal(d04Draft(s,'hufeng'),null,'retired Hu Feng private scene stays absent');
+ s.nav.current={appId:'wechat',route:'/chat/wang',params:{}};
+ const html=renderWeChatChat(s,'wang');
+ assert.match(html,/value="你請？"/);
+ assert.match(html,/data-story-type="你請？"/);
+ assert.match(html,/data-story-stage="d04:wang-dinner:2"/);
+ assert.equal(conversation(s,'wang').messages.filter(m=>m.from==='me').length,0);
+ assert.equal(sendD04WeChat(store(s),'wang','不是預設').handled,true);
+ assert.equal(conversation(s,'wang').messages.filter(m=>m.from==='me').length,0);
+ assert.equal(sendD04WeChat(store(s),'wang','你請？',4000).messageId,'d04-wang-dinner-2');
+ assert.equal(conversation(s,'wang').messages.filter(m=>m.from==='me').length,1);
+
 });
 test('D04 next private scene supersedes stale morning draft and keeps a late alternative',()=>{
- const s=state(4,'09:50');
- tickD04Chats(s,0);tickD04Chats(s,2000);
- assert.equal(d04Draft(s,'hufeng')?.text,'有');
- s.clock='16:50';tickD04Chats(s,5000);
- assert.equal(d04Draft(s,'hufeng'),null,"today's NPC turn takes priority");
- tickD04Chats(s,7000);tickD04Chats(s,9000);
- assert.equal(d04Draft(s,'hufeng')?.text,'什麼口味');
- assert.ok(conversation(s,'hufeng').messages.some(m=>m.text==='我買了兩杯咖啡'));
- assert.equal(s.story55.d04Chats['hufeng-am'].status,'waiting-late');
+ const s=state(4,'17:45');
+ tickD04Chats(s,0);tickD04Chats(s,2100);
+ assert.equal(d04Draft(s,'wang')?.text,'你請？');
+ s.clock='18:32';tickD04Chats(s,5000);
+ const late=d04Draft(s,'wang');
+ assert.ok(late,'missed Wang dinner remains replyable with a time-aware alternative');
+ assert.match(late.text,/改天一起/);
+ assert.equal(d04Draft(s,'hufeng'),null);
+ assert.equal(s.story55.d04Chats['wang-dinner'].status,'waiting-late');
+ assert.ok(conversation(s,'wang').messages.every(m=>m.from!=='me'));
+
 });
 test('all authored D04 notifications count per bubble, each with author and group',()=>{
  const s=state(4,'08:20');

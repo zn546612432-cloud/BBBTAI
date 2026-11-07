@@ -13,11 +13,20 @@ function seedNote(s){
  const notes=s.content.notes??=[];
  if(!notes.some(n=>n.id==='xm-note-d05-workshop'))notes.unshift({
   id:'xm-note-d05-workshop',title:'机房 · 待整理',createdDay:5,updatedDay:5,updatedClock:'08:00',
-  text:'内存、硬盘的报价再对一遍。\n先整理备份，旧盘里的东西不要急着删。\n机房那台风扇有异响，找时间拆开看看。\n\n胡枫的电脑：提醒他自己留备份。'
+  text:'内存、硬盘的报价再对一遍。\n先整理备份，旧盘里的东西不要急着删。\n机房那台风扇有异响，找时间拆开看看。'
  });
  s.story55.d05NoteSeeded=true;return true;
 }
-export const tickD05Chats=(s,now)=>{const seeded=seedNote(s);return d05Track.tick(s,now)||seeded;};
+export const tickD05Chats=(s,now)=>{
+ const seeded=seedNote(s);
+ // An existing D05 save may still contain the deleted computer-repair line.
+ // Remove only that exact authored sentence, not the player's own note edits.
+ const note=s.content?.notes?.find(n=>n.id==='xm-note-d05-workshop');
+ const obsolete='胡枫的电脑：提醒他自己留备份。';
+ const cleaned=!!(note?.text?.includes(obsolete));
+ if(cleaned)note.text=note.text.replace('\n\n'+obsolete,'').replace(obsolete,'');
+ return d05Track.tick(s,now)||seeded||cleaned;
+};
 export const d05ChatDue=d05Track.due;
 export const d05Draft=d05Track.draft;
 export const d05ComposerDisabled=d05Track.disabled;

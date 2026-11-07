@@ -27,14 +27,14 @@ export function diaryView(s,loc){
  if(archive){
   const entries=allDiaryDays(s).filter(d=>d<=s.day).reverse();
   return '<div class="diary-app">'+header('日程')+'<div class="diary-scroll"><div class="diary-overline">JOURNAL</div><h1 class="diary-title">日程</h1><p class="diary-subtitle">记录发生过的日子。</p>'+
-  entries.map(d=>'<button type="button" class="diary-archive-row" data-action="diary-open-day" data-day="'+d+'"><span><strong>'+esc(dateLabel(d))+'</strong><small>'+esc(entryFor(s,d).title||'日记')+'</small></span><span>›</span></button>').join('')+
+  entries.map(d=>'<button type="button" class="diary-archive-row" data-action="diary-open-day" data-day="'+d+'"><span><strong>'+esc(dateLabel(d))+'</strong><small>'+esc(entryFor(s,d).title||'')+'</small></span><span>›</span></button>').join('')+
   (entries.length?'':'<p class="diary-empty">还没有留下记录。</p>')+'</div>'+dialog()+'</div>';
  }
  const entry=entryFor(s,day);
  const previous=allDiaryDays(s).filter(d=>d<day).at(-1);
  const next=allDiaryDays(s).find(d=>d>day&&d<=s.day);
  return '<div class="diary-app">'+header('日程')+'<div class="diary-scroll diary-paper"><div class="diary-overline">DAY '+String(day).padStart(2,'0')+'</div><h1 class="diary-date">'+esc(dateLabel(day))+'</h1><div class="diary-weather"><span aria-hidden="true">'+weatherSymbol(entry?.weather)+'</span> 天气 '+esc(entry?.weather||'暂无记录')+'</div>'+
-  (entry?'<h2 class="diary-entry-title">'+esc(entry.title||'日记')+'</h2><article class="diary-prose">'+journalText(entry.body)+'</article>':'<p class="diary-empty">这一天还没有日程记录。</p>')+
+  (entry?(entry.title?'<h2 class="diary-entry-title">'+esc(entry.title)+'</h2>':'')+'<article class="diary-prose">'+journalText(entry.body)+'</article>':'<p class="diary-empty">这一天还没有日程记录。</p>')+
   '<div class="diary-page-nav"><button type="button" data-action="diary-open-day" data-day="'+previous+'" '+(previous?'':'disabled')+'>‹ 上一篇</button><button type="button" data-action="diary-archive">全部日程</button><button type="button" data-action="diary-open-day" data-day="'+next+'" '+(next?'':'disabled')+'>下一篇 ›</button></div></div>'+dialog()+'</div>';
 }
 export function diaryAction(action,target,ctx){

@@ -92,7 +92,8 @@
           "state": "wired-day",
           "owner": "messaging",
           "kinds": [
-            "incoming-text"
+            "incoming-text",
+            "incoming-image"
           ],
           "proof": "src/story/d09/dialogue.js",
           "originDays": [

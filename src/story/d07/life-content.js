@@ -7,7 +7,7 @@ const dm=(id,chat,from,text,opts={})=>({id,channel:'wechat',chat,from,text,...op
 export const nextDay=[
  group('d07-chat-01','胡枫','今天谁有空？'),
  group('d07-chat-02','小辛','干嘛'),
- group('d07-chat-03','胡枫','出去走走啊'),
+ group('d07-chat-03','胡枫','陪我打把遊戲啊，今天沒課，無聊死了'),
  group('d07-chat-04','小辛','昨天玩到三点了，饶了我吧'),
  group('d07-chat-05','熙旺','你们下午要是出去，顺路帮我买点东西回来'),
  group('d07-chat-06','仔仔','买什么？'),
@@ -17,9 +17,9 @@ export const nextDay=[
 // It is background life, not a new shop order or a mandatory plot gate.
 export const afternoonDay=[
  group('d07-errand-01','熙旺','买袋米、洗洁精，还有盐。家里快用完了。',{afterId:'d07-chat-07'}),
- group('d07-errand-02','仔仔','收到，我和胡枫出去的时候顺手带。',{afterId:'d07-errand-01'}),
- group('d07-errand-03','胡枫','走吧。小辛你确定不来？',{afterId:'d07-errand-02'}),
- group('d07-errand-04','小辛','我负责看家。谢谢。',{afterId:'d07-errand-03'})
+ group('d07-errand-02','仔仔','收到，我下午出去的時候順手帶。',{afterId:'d07-errand-01'}),
+ group('d07-errand-03','胡枫','小辛你確定不去？',{afterId:'d07-errand-02'}),
+ group('d07-errand-04','小辛','我負責精神支持，謝謝。',{afterId:'d07-errand-03'})
 ];
 export const extraDay=[
  dm('d07-awei-01','awei','阿威','我那副耳机接触不良，昨天开会又断了。准备换副无线耳机。',{wishId:'d07-headphones',wishText:'无线耳机'}),

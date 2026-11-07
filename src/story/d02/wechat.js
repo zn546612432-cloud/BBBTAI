@@ -1,6 +1,6 @@
 import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
 import {LATE_REPLIES} from '../../services/messaging/lifecycle/replies.js';
-import {D02_DIALOGUES} from './dialogue.js';
+import {D02_DIALOGUES,D02_BUILD_DIALOGUE} from './dialogue.js';
 const DAY=2;
 const gameMinute=s=>s.day*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3));
 const chat=(s,id)=>s.content.conversations.wechat?.find(c=>c.id===id||(id==='wang'&&c.name==='熙旺')||(id==='xin'&&c.name==='小辛'));
@@ -45,6 +45,14 @@ const specs=['wang','xin'].map(key=>({id:key,chat:key,
  onStart:(s,q)=>{if(key==='xin')q.initialSent=true;},
  onComplete:(s,q)=>{q.completedAt=gameMinute(s);}
 }));
+specs.push({
+ id:'newpc',chat:'group',optional:true,mandatory:true,
+ at:s=>s.story55.d02.buildReadyClock||'08:00',
+ condition:s=>!!s.story55.d02.buildReady&&!s.story55.d02.buildCelebrated,
+ lines:D02_BUILD_DIALOGUE.map(([who,text])=>({who,text})),
+ messageId:(s,i)=>'d02-newpc-group-'+i,
+ onComplete:s=>{s.story55.d02.buildCelebrated=true;}
+});
 export const d02Track=createConversationTrack({day:2,prefix:'d02',scenes:specs,invalidReplyText:'请发送输入框里完整的预设台词',
  progress:s=>{s.story55.d02??={};s.story55.d02.wechat??={version:2};return s.story55.d02.wechat;},
  chatId:(s,d)=>chat(s,d.chat)?.id||d.chat

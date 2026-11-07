@@ -6,14 +6,14 @@ const DAY_DATE='2025-05-19';
 const GROUP_ID='group',BROTHER_ID='wang';
 const beforeNoon=s=>s.clock<'12:00';
 const groupSteps=branch=>[
- {after:3000,from:'小辛',text:branch==='morning'?'嗯？蒙蒙哥怎么今天起得那么早？':'蒙蒙哥，你不会现在才起吧？'},
- {after:1000,from:'小辛',text:branch==='morning'?'昨天和我打游戏打到那么晚…今天不到12点居然就醒了。':'昨天和我打游戏打得那么晚，果然起不来床了，哈哈'},
- {after:3000,from:'熙旺',text:'怎么又熬夜打游戏？你的眼睛度数已经很深了，阿蒙。'},
- {after:2000,from:'熙旺',text:'今天不忙的话，就再去睡会，我中午收车回来给你带午餐。'},
- {after:2000,from:'me',text:'不知道怎么就醒了'},
- {after:2000,from:'me',text:'还不是小辛说打赢boss才睡觉'},
- {after:2000,from:'me',text:'谢谢哥，我要吃牛腩饭'},
- {after:2000,from:'小辛',text:'还不是我们太菜了，哈哈。'},
+ {after:3000,from:'小辛',text:branch==='morning'?'嗯？蒙蒙哥怎麼今天起得那麼早？':'蒙蒙哥，你不會現在才起吧？'},
+ {after:1000,from:'小辛',text:branch==='morning'?'昨天和我打遊戲打到那麼晚…今天不到12點居然就醒了。':'昨天和我打遊戲打得那麼晚，果然起不來床了，哈哈'},
+ {after:3000,from:'熙旺',text:'怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙。'},
+ {after:2000,from:'熙旺',text:'今天不忙的話，就再去睡會，我中午收車回來給你帶午餐。'},
+ {after:2000,from:'me',text:'不知道怎麼就醒了'},
+ {after:2000,from:'me',text:'還不是小辛說打贏boss才睡覺'},
+ {after:2000,from:'me',text:'謝謝哥，我要吃牛腩飯'},
+ {after:2000,from:'小辛',text:'還不是我們太菜了，哈哈。'},
  {after:2000,from:'熙旺',text:'好'}
 ];
 // Two seconds more breathing room between every scripted group beat.
@@ -120,11 +120,11 @@ export function tickD01WeChat(s,now=Date.now()){
  const b=d.brother;
  if(b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺','嗯？','d01-wang-hello')||changed;b.helloDelivered=true;if(b.phase==='hello')b.phase='counting';}
  if(b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute){
-  changed=deliver(s,BROTHER_ID,'熙旺','刚才在开车','d01-wang-driving')||changed;
+  changed=deliver(s,BROTHER_ID,'熙旺','剛才在開車','d01-wang-driving')||changed;
   b.phase='replySecond';b.secondAt=now+1500;
  }
  if(b?.phase==='replySecond'&&now>=b.secondAt){
-  changed=deliver(s,BROTHER_ID,'熙旺','怎么发了那么多消息？现在看不及时，不重要的话，有什么话等我回家当面跟我讲吧。','d01-wang-finish')||changed;
+  changed=deliver(s,BROTHER_ID,'熙旺','怎麼發了那麼多消息？現在看不及時，不重要的話，有什麼話等我回家當面跟我講吧。','d01-wang-finish')||changed;
   b.phase='done';b.locked=true;changed=true;
  }
  return changed;

@@ -20,7 +20,7 @@ function deliver(phone,n=60){
  for(let i=0;i<n;i++)phone.update(s=>tickWishes(s,Date.now()+50000+i*2100));
 }
 const messages=s=>s.content.conversations.wechat.flatMap(c=>c.messages);
-test('D06 BTC reward -> one USD conversion -> five optional purchases -> D07/D09 notifications, single shared store',()=>{
+test('D06 BTC reward -> one USD conversion -> four optional purchases -> D07/D09 notifications, single shared store',()=>{
  const phone=createPhone();
  assert.equal(phone.get().bankData.balance,0);
  assert.equal(historicalBtcUsd(6),107791.16);
@@ -30,11 +30,11 @@ test('D06 BTC reward -> one USD conversion -> five optional purchases -> D07/D09
  assert.equal(phone.get().bankData.transactions.length,1);
  phone.update(s=>beginD06Celebration(s));
  deliver(phone);
- const wishes=['d06-dinner','d06-keyboard','d06-shoes'];
+ const wishes=['d06-dinner','d06-keyboard'];
  for(const id of wishes)phone.update(s=>addWish(s,id));
  for(const id of wishes)phone.update(s=>purchaseWish(s,id));
- assert.equal(phone.get().bankData.balance,726.82);
- assert.equal(phone.get().content.reminders.length,3);
+ assert.equal(phone.get().bankData.balance,906.82);
+ assert.equal(phone.get().content.reminders.length,2);
  assert.equal(messages(phone.get()).some(m=>m.id.startsWith('wish-dinner-thanks-')),false,'no NPC thank-you at payment');
  assert.equal(messages(phone.get()).some(m=>m.id==='wish-dinner-photo'),false,'no photo at payment');
  assert.equal(sendD06DinnerReply(phone,'group',D06_DINNER_PLAYER_LINE,0).handled,true);
@@ -47,11 +47,11 @@ test('D06 BTC reward -> one USD conversion -> five optional purchases -> D07/D09
  deliver(phone);
  for(const id of ['d07-headphones','d07-tableware'])phone.update(s=>addWish(s,id));
  for(const id of ['d07-headphones','d07-tableware'])phone.update(s=>purchaseWish(s,id));
- assert.equal(phone.get().bankData.balance,386.82);
- assert.equal(phone.get().bankData.transactions.filter(t=>t.wishId).length,5);
+ assert.equal(phone.get().bankData.balance,566.82);
+ assert.equal(phone.get().bankData.transactions.filter(t=>t.wishId).length,4);
  phone.update(s=>{s.day=9;s.clock='17:00'});
  deliver(phone,120);
- const pictures=['wish-keyboard-photo','wish-shoes-photo','wish-headphones-photo','wish-tableware-photo'];
+ const pictures=['wish-keyboard-photo','wish-headphones-photo','wish-tableware-photo'];
  for(const id of pictures)assert.equal(messages(phone.get()).filter(m=>m.id===id).length,1,id);
  const before=phone.get().bankData.balance;
  deliver(phone,60);

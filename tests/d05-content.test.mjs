@@ -36,10 +36,10 @@ const ctx=s=>({store:store(s),router:{open:link=>{s.nav.current=link;return link
 const chat=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
 const d05messages=(s,id)=>chat(s,id).messages.filter(m=>m.storyD05);
 
-test('D05 has ten group scenes and four private conversations; no Xiaoxin or Tai DM',()=>{
- assert.equal(D05_GROUP.length,10);assert.equal(D05_PRIVATE.length,4);
+test('D05 has ten group scenes and three private conversations; no Xiaoxin or Tai DM',()=>{
+ assert.equal(D05_GROUP.length,10);assert.equal(D05_PRIVATE.length,3);
  assert.ok(D05_GROUP.reduce((n,x)=>n+x.lines.length,0)>=150);
- assert.deepEqual([...new Set(D05_PRIVATE.map(x=>x.chat))].sort(),['hufeng','wang','zaizai']);
+ assert.deepEqual([...new Set(D05_PRIVATE.map(x=>x.chat))].sort(),['wang','zaizai']);
  assert.equal(D05_GROUP.some(x=>x.lines.some(l=>l.who==='me')),false);
  for(const scene of D05_PRIVATE)assert.ok(chat(fresh(),scene.chat),'actual roster contact '+scene.chat);
 });
@@ -168,14 +168,14 @@ test('D04 original commissions also reach READY through real Ghost finish callba
 });
 test('D05 Moments use real bundled images, keep old post, and follow the existing three-day visibility',()=>{
  const s=fresh('23:00'),posts=allMoments(s).filter(p=>p.storyDay===5);
- assert.deepEqual(posts.map(p=>p.author).sort(),['小辛','熙旺','熙蒙','胡枫','阿威'].filter(x=>x!=='熙旺').sort());
- assert.equal(posts.find(p=>p.id==='hf-d05').text,'散步时看到这片天，站着看了好久。');
+ assert.deepEqual(posts.map(p=>p.author).sort(),['小辛','熙蒙','阿威'].sort());
+ assert.equal(posts.some(p=>p.id==='hf-d05'),false);
  assert.equal(posts.some(p=>p.author==='仔仔'),false);
  for(const post of posts)for(const media of post.media){
   const path=momentImage(media);assert.ok(path);assert.ok(readFileSync(new URL('../public'+path,import.meta.url)).length>0);
  }
  assert.equal(visibleMoments(posts,'2025-05-23',{clock:'08:00'}).length,0);
- assert.equal(visibleMoments(posts,'2025-05-23',{clock:'23:00'}).length,4);
+ assert.equal(visibleMoments(posts,'2025-05-23',{clock:'23:00'}).length,3);
  assert.equal(visibleMoments(posts,'2025-05-27').length,0);
 });
 test('D05 fills diary and a once-only editable note, preserving all existing timing rules',()=>{

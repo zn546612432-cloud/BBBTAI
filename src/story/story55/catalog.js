@@ -840,7 +840,7 @@ export const STORY55_CONFIG={
           ],
           [
                 "ouroboros",
-                "行，拿好你的奖励饼干吧，黑客天才。"
+                "行，獎金收好吧，黑客天才。"
           ],
           [
                 "ouroboros",

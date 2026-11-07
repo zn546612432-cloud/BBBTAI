@@ -72,21 +72,21 @@ test('avatar paths are base-aware strings and privacy is shown only once on a pr
 });
 
 test('ellipsis toggles one menu in place; like and unlike preserve prewritten reactions',()=>{
- const s=initialState();s.day=1;s.clock='13:00';
+ const s=initialState();s.day=1;s.clock='23:30';
  let navigations=0;
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>navigations++},refresh:()=>{}};
- const target={dataset:{id:'hf-0519'}};
+ const target={dataset:{id:'xs-0519'}};
  let html=renderMoments(s,'/moments');assert.doesNotMatch(html,/role="group" aria-label="动态操作"/);
  handleMoment('wx-moment-actions',target,ctx);
  html=renderMoments(s,'/moments');assert.equal((html.match(/aria-label="动态操作"/g)||[]).length,1);assert.equal(navigations,0);
- handleMoment('wx-moment-like',target,ctx);assert.equal(s.content.moments.likes['hf-0519'],true);
+ handleMoment('wx-moment-like',target,ctx);assert.equal(s.content.moments.likes['xs-0519'],true);
  assert.doesNotMatch(renderMoments(s,'/moments'),/aria-label="动态操作"/);
- handleMoment('wx-moment-like',target,ctx);assert.equal(s.content.moments.likes['hf-0519'],false);
- const post=authoredMoments.find(p=>p.id==='hf-0519');assert.equal(post.comments.length,2);
+ handleMoment('wx-moment-like',target,ctx);assert.notEqual(s.content.moments.likes['xs-0519'],true,'unliking clears the temporary like override');
+ const post=authoredMoments.find(p=>p.id==='xs-0519');assert.equal(post.comments.length,2);
 });
 
-test('49 authored posts span D01–D90 with optional zero-comment brother post and mixed media',()=>{
- assert.equal(authoredMoments.length,49);
+test('40 authored posts span D01–D90 with optional zero-comment brother post and mixed media',()=>{
+ assert.equal(authoredMoments.length,40);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
  assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d03'?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
@@ -95,8 +95,8 @@ test('49 authored posts span D01–D90 with optional zero-comment brother post a
  assert.ok(authoredMoments.some(p=>p.media.length>1));
  for(const post of authoredMoments)for(const media of post.media||[])assert.ok(momentImage(media),post.id+': '+media);
  const find=id=>authoredMoments.find(p=>p.id===id);
- assert.deepEqual(find('hf-0519').media,['foodRice']);
  assert.deepEqual(find('xw-0519').media,['morning']);
+ assert.equal(authoredMoments.some(p=>p.author==='胡枫'||p.author==='胡楓'),false);
  assert.deepEqual(find('xs-d04').media,['xmCaught']);
  assert.deepEqual(find('xw-d04').media,['xmDinner','dinnerDish']);
  assert.deepEqual(find('zz-d15').media,['brothers']);

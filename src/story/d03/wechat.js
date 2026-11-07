@@ -6,7 +6,6 @@ const scenes=D03_SCENES.map(scene=>({...scene,
  enabled:s=>scene.trigger(s)||s.clock>=scene.fallback||s.day>3,
  initialDelayMs:900,replies:LATE_REPLIES.d03[scene.id],
  onStart:(s,q)=>{q.mode=scene.trigger(s)?'completed-task':'fallback';},
- ...(scene.id==='hufeng'?{until:'23:59',resolved:s=>s.day>5||s.day===5&&s.clock>='10:00'}:{}),
  ...(scene.id==='wang'?{resolved:s=>!!s.content.conversations.wechat.find(c=>c.id==='wang')?.messages.some(m=>m.id==='d05-wang-morning-6')}:{}),
 }));
 export const d03Track=createConversationTrack({day:3,prefix:'d03',scenes,progress:s=>s.story55.d03Chats??={}});

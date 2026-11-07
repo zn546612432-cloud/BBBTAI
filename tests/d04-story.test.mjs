@@ -31,7 +31,7 @@ test('D04 group has all ten authored, independent daily scenes and no Xiaoxin DM
  assert.equal(D04_GROUP.filter(x=>!x.condition).length,9);
  assert.equal(D04_GROUP.filter(x=>x.condition==='dinner').length,2);
  assert.equal(D04_GROUP.filter(x=>x.condition==='no-dinner').length,1);
- assert.equal(D04_PRIVATE.length,4);
+ assert.equal(D04_PRIVATE.length,2);
  assert.equal(D04_PRIVATE.filter(x=>x.chat==='xiaoxin').length,0);
  assert.ok(D04_GROUP.reduce((sum,x)=>sum+x.lines.length,0)>180);
 });
@@ -72,16 +72,18 @@ test('overdue D04 scenes reconcile silently without fake dinner or player messag
  assert.equal(byId(s,'group').length,previousCount);
 });
 test('private Hufeng dialogue never fabricates player messages',()=>{
- const s=fixture('09:50');tickD04Chats(s,0);tickD04Chats(s,1900);
- assert.deepEqual(byId(s,'hufeng').map(x=>x.text),['阿蒙','我電腦還有救嗎']);
- assert.equal(d04Draft(s,'hufeng')?.text,'有');
- assert.equal(sendD04WeChat(store(s),'hufeng','隨便亂打').messageId,undefined);
- assert.equal(byId(s,'hufeng').length,2);
- const sent=sendD04WeChat(store(s),'hufeng','有',3000);
- assert.equal(sent.messageId,'d04-hufeng-am-2');
- assert.equal(byId(s,'hufeng').at(-1).from,'me');
- tickD04Chats(s,5000);
- assert.equal(byId(s,'hufeng').at(-1).text,'真的？！');
+ const s=fixture('17:45');
+ tickD04Chats(s,0);tickD04Chats(s,2100);
+ assert.equal(D04_PRIVATE.some(x=>x.chat==='hufeng'),false);
+ assert.equal(byId(s,'hufeng').filter(m=>m.storyD04).length,0);
+ assert.equal(d04Draft(s,'hufeng'),null);
+ const draft=d04Draft(s,'wang');
+ assert.ok(draft?.text,'Wang dinner still requires a real Send');
+ assert.equal(byId(s,'wang').some(m=>m.from==='me'),false);
+ const sent=sendD04WeChat(store(s),'wang',draft.text,4100);
+ assert.ok(sent.messageId);
+ assert.equal(byId(s,'wang').filter(m=>m.from==='me').length,1);
+
 });
 test('skipping all protagonist responses does not block family chatter',()=>{
  const s=fixture('23:10');

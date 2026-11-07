@@ -28,7 +28,7 @@ test('D01 optional group uses original WeChat and waits for player to send befor
  assert.equal(group.messages.length,before+1);
  tickD01WeChat(s,6000);
  assert.equal(group.messages.at(-1).from,'小辛');
- assert.match(group.messages.at(-1).text,/起得那么早/);
+ assert.match(group.messages.at(-1).text,/起得那麼早/);
 });
 test('original MIRAGE private channel shows the incoming message and the own reply in composer',()=>{
  const s=state();previewNode55(s,'invitation');
