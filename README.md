@@ -1,5 +1,8 @@
 # 熙蒙的手机 · Phone Framework
 
+> **当前剧情开发说明（2026-11-07）**：第一视角以 **55 天**计，D01=2025-05-19、D55=2025-07-12。下方的“90天/DEMO/未接入”内容包含历史原型记录，不能替代当前源码和测试。日常剧情填充统一使用 [Story Fill Skill](.agents/skills/ximeng-story-fill/SKILL.md) 与 [剧情填充流水线说明](docs/STORY_CONTENT_PIPELINE.md)。先运行 `npm run story:new -- D08` 生成正确日期的设计草案，再运行 `npm run story:check -- docs/story-packets/d08.json` 校验；配置包本身**不会**自动注入游戏。
+
+
 这是《熙蒙的手机》的**可运行工程骨架**与 UI 预览。正式九十天剧情、真实角色 AI、Supabase 云同步和 MiniMax 语音尚未接入。所有演示文案和模拟回应都标记为 DEMO。
 
 ## 本地运行
