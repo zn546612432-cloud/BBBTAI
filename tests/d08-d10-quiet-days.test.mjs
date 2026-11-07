@@ -141,7 +141,7 @@ test('Expiry, partial saves and unaccepted tasks never manufacture payments or u
   assert.ok(commissionAttachment(saved,file));
   assert.equal(openCommissionWithGhost(saved,file),D04_STEP(def.id,0));
   assert.equal(saved.ghost.orders[D04_STEP(def.id,1)],undefined);
-  saved.day=def.deadline.day+1;saved.clock='09:00';tickD04Contracts(saved);
+  saved.day=Math.max(...defs.map(x=>x.deadline.day))+1;saved.clock='09:00';tickD04Contracts(saved);
   assert.equal(saved.content.orders.find(o=>o.id===def.id).status,'EXPIRED');
   assert.equal(saved.content.orders.find(o=>o.id===other.id).status,'EXPIRED');
   assert.equal(openCommissionWithGhost(saved,file),null);
