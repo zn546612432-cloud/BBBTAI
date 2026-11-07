@@ -148,7 +148,8 @@ export function mountTelephony(getContext){
   }
   if(action==='tel-return')ctx.store.update(s=>{s.phoneCall.showControls=true;});
   if(action==='tel-chat'){
-   ctx.store.update(s=>{s.phoneCall.showControls=false;});
+   if(call.resumeRequired)primeTelephony(ctx);
+   ctx.store.update(s=>{s.phoneCall.showControls=false;s.phoneCall.resumeRequired=false;});
    const nav=ctx.store.get().nav.current;
    if(call.node&&(nav.appId!=='mirage'||nav.route!=='/chat/s55-ouroboros'))
     ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
