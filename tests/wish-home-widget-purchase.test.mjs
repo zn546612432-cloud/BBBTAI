@@ -85,3 +85,28 @@ test('Paid dinner confirmation arrives promptly, while dinner photos wait until 
  assert.equal(msgs().filter(m=>m.id==='wish-dinner-photo').length,1);
  assert.equal(s.bankData.transactions.length,1);
 });
+
+test('Old paid dinner save receives pending booking confirmation promptly without a second charge',()=>{
+ const s=initial();
+ s.bankData.balance=650;
+ s.bankData.transactions.push({id:'wish-purchase-d06-dinner',wishId:'d06-dinner',amount:-350});
+ s.story55.wishes={
+  records:{'d06-dinner':{
+    id:'d06-dinner',status:'delivered',purchasedDay:6,purchasedClock:'10:25',rewardQueued:true
+  }},
+  story:{started:true,d07Started:false,nextAt:0,lines:[{
+    id:'wish-dinner-01',channel:'wechat',chat:'group',from:'仔仔',
+    text:'钱收到了！我跟店里订好啦，今晚七点半见，大家记得来啊。',
+    dueDay:6,dueClock:'19:30',wishRewardId:'d06-dinner'
+  }],delivered:[]}
+ };
+ s.content.reminders.push({id:'wish-d06-dinner',wishId:'d06-dinner',title:'今晚和大家吃饭',done:true,wishStatus:'delivered'});
+ assert.equal(syncWishReminders(s),true);
+ assert.equal(s.story55.wishes.story.lines[0].dueClock,'10:25');
+ assert.equal(syncWishReminders(s),false);
+ tickWishes(s,10000);
+ const group=s.content.conversations.wechat.find(c=>c.id==='group');
+ assert.equal(group.messages.filter(m=>m.id==='wish-dinner-01').length,1);
+ assert.equal(s.bankData.balance,650);
+ assert.equal(s.bankData.transactions.length,1);
+});
