@@ -5,7 +5,15 @@ export const d13State=s=>s.story55?.d13;
 export function syncD13(s){
  if(!isStory55(s))return;
  applyD13Definition(s.story55.config);
- if(s.story55.d13Revision===2)return;
+ if(s.story55.d13Revision===3)return;
+ // Previously authored spoken turns become avatar-only call records.
+ const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
+ for(const m of chat?.messages||[]){
+  if(/^s55-intrusion-v2-(8|10|12|14|16|18|20)$/.test(m.id||'')&&m.from!=='me'){
+   m.kind='call-avatar';m.text='';
+  }
+ }
+ if(s.story55.d13Revision===2){s.story55.d13Revision=3;return;}
  // Completed saves retain their exact scene, records and balances.
  // Partial legacy calls restart at the wallet; existing bubble IDs stay intact.
  const finished=completed(s,'intrusion');
@@ -15,7 +23,7 @@ export function syncD13(s){
  if(!finished&&s.story55.scenes.intrusion){s.story55.scenes.intrusion={index:0,accepted:false};}
  if(s.story55.activeScene==='intrusion'&&!finished)s.story55.activeScene=null;
  delete s.story55.lockedCall;
- s.story55.d13Revision=2;
+ s.story55.d13Revision=3;
 }
 export function bindD13Wallet(s){
  if(completed(s,'intrusion'))return false;
