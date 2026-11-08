@@ -53,7 +53,7 @@ export function scriptedDraft55(s,channel,conversationId){
 export function sendScriptedDraft55(s,channel,conversationId,text){
  const line=currentScript55(s,channel,conversationId);
  if(!line||line.kind!=='me'||s.phoneCall?.speaking||s.phoneCall?.resumeRequired)throw Error('当前没有等待熙蒙发送的预设消息');
- if(String(text||'').trim()!==line.text.trim())throw Error('请发送输入框里完整的预设台词');
+ if(String(text||'').trim()!==line.text.trim())throw Error('訊息未發送');
  if(line.id==='flow-d03')sendFlowReply(s,text);
  else if(line.id==='questions')sendQuestion55(s);
  else advanceScene55(s,line.id);
