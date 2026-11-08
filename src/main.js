@@ -219,6 +219,15 @@ function mountScriptedMirageDraft(){
   return;
  }
  const identity=input.dataset.storyStage+':'+input.dataset.storyType;
+ // D13 scripted replies must survive call/minimax pauses and returning from
+ // another App. A partially typed draft is not a reason to block native Send.
+ if(input.dataset.storyStage?.startsWith('intrusion:')){
+  if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  const full=input.dataset.storyType;
+  if(!input.value||full.startsWith(input.value))input.value=full;
+  completedStoryTyping.set(input,identity);
+  return;
+ }
  if(pendingMirageType?.identity===identity&&pendingMirageType.element===input)return;
  if(pendingMirageType)clearInterval(pendingMirageType.timer);
  const full=input.dataset.storyType;
