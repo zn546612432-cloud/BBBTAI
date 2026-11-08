@@ -1,17 +1,17 @@
-# D13 錢包／系統電話：待審實作
+# D13 錢包與系統電話
 
-基線 main `536e0d3`，開發分支 `feature/d13-wallet-intrusion-call`。不合併、不部署 main。
+D13 的語音定稿以 `src/story/d13/content.js` 為準，MP3 與台詞雜湊見 `public/assets/story55/d13/voice-manifest.json`。
 
 ## 已設計與已實作
 
 - Story55 三個前置節點：`d13-wallet-mail` → `d13-wallet-bind` → `d13-wallet-transfer` → 原 `intrusion` → 原 D14 `code`。配置驗證與 nodeLink 同步支援 wallet。
-- 郵件正文直接使用本輪任務提供的一句提示。22:10 只寄一次，深連結至 `/wallet`。
+- KIRA 顯示 MIRAGE Wallet 的數位資產入帳通知。22:10 只寄一次，深連結至 `/wallet`。
 - BTC 列表、原主 BTC 兌換、PACIFIC 唯讀美元帳戶、新錢包綁定與二次確認。登入視覺沿用 MIRAGE，密碼不寫進狀態。
 - 固定 `s55-d13-wallet-50btc`、虛構地址 `MIR-WLT-0013`，轉帳後凍結，不產生 USD，不修改 D06 10 BTC。
-- 三秒低頻綠幕與減少動態效果；重載直接進聊天，固定唯讀 divider，密文和解密視圖都可見，不產生未讀／通知。
-- `PhoneStore` 內 `phoneCall`，所有公開 API 透過 update 交易；強制未知來電、八秒自動接聽、沒有拒接／掛斷、遠端結束、唯一電話記錄。普通撥號只響鈴後失敗，不假接通。
-- 通話中可切換 App；靈動島返回聊天、計時、REMOTE OVERRIDE。通話／綠幕暫停時鐘與耗電。鎖屏、闹鐘、低電／關機／長充優先。
-- 熙泰音訊開始才寫文字，播放完成後才允許玩家手動 Send；刷新要求點擊繼續。iOS 使用第4行 Send 預先 prime 的同一 Audio。無檔案／載入失敗轉文字。
+- 三秒無字綠幕與減少動態效果；重載直接進聊天，固定唯讀 divider，密文和解密視圖都可見，不產生未讀／通知。
+- `PhoneStore` 內 `phoneCall`，所有公開 API 透過 update 交易；強制未知來電、八秒自動接聽、可拒接或掛斷、未完成時重撥、每通各有一筆通話記錄。普通撥號只響鈴後失敗，不假接通。
+- 通話中可切換 App；靈動島返回聊天、計時與閃爍的紅點。通話／綠幕暫停時鐘與耗電。鎖屏、闹鐘、低電／關機／長充優先。
+- 熙泰開口時 MIRAGE 顯示他的頭像，播放完成後才允許玩家手動 Send；刷新要求點擊繼續。iOS 使用第4行 Send 預先 prime 的同一 Audio。載入失敗時暫停在當句，點擊繼續通話可重試。
 - 舊完成存檔不補播；舊未完存檔重回新錢包流程，保留已實發消息和固定 ID，不新增重複的玩家消息；清除 lockedCall。
 - MIRAGE 管理入口、表單、路由移除，developer 全局編輯保留；系統分割線唯讀。
 - 開發者「預覽 D13 流程」開啟獨立的記憶體存檔，不讀寫既有 localStorage。
@@ -26,26 +26,17 @@
 
 精確比對兩版已發布十行舊稿後才替換配置，自訂文本不覆寫。新稿用 `s55-intrusion-v2-<index>` 避免新行號撞上舊玩家消息；舊玩家泡泡與歷史 ID 永久保留。完成者不重播，未完成者重回錢包步驟並清除舊電話鎖。
 
-七段正式 MiniMax MP3 已生成並接入：同一熙泰音色、speech-2.8-hd、32kHz，合計 674,412 bytes／約 41.4 秒，每段皆小於 1MB。全部經 ffprobe／ffmpeg 驗證可解碼且非靜音。Key 僅由單次本機程序的環境變數讀取，程序已結束並清除，不寫入檔案、前端或 Git。重新生成時本機執行：
+七段正式錄音使用既定熙泰音色與 MiniMax speech-2.8-hd，含定稿結尾「晚安，nya，或者我該叫你，熙蒙……」。送往合成器時將 nya 唸作「奈亞」。內建錄音可直接播放；開發者另存的本機配音優先。
 
-```
+重新生成時，由本機環境提供 MINIMAX_API_KEY，依序執行以下指令。
+
+```sh
 node scripts/generate-d13-call-voice.mjs
+node scripts/publish-d13-bundled-voice.mjs
 ```
 
-只讀本機環境變數，不紀錄 key，不使用 getUserMedia。預設從已接入的完整修訂稿生成七段 <1MB MP3 與文字 SHA256 清單；台詞修改後須重跑。預設沿用遊戲國內接口（cn）；國際帳號可設定 MINIMAX_REGION=intl。無音檔或載入失敗仍保留完整文字後備。
+## 驗收
 
-## 驗證狀態
-
-- 十一項 D13 自動回歸通過；首次完整本機測試 902 項，901 過，既有遠端圖片測試逾時；GitHub CI 已實際通過全部 903 項，未略過任何測試。
-- Story skill audit 與 Pages 構建通過。
-- iPhone 13 尺寸的真實 Chromium 點擊驗收已於 GitHub Actions #42406797335 通過：KIRA 郵件、綁定、確認轉帳、綠幕、八秒自動接聽、連線刷新、主屏切換再返回、全部六次手動 Send、唯一電話記錄；bank 與 D06 BTC 不變，無任何 getUserMedia 呼叫，無頁面錯誤。截圖／狀態檔為該次執行的 d13-mobile-evidence。這是瀏覽器模擬手機尺寸，不是實體 iPhone Safari。
-- 目前沒有正式發布，main 未改。
-
-- D13 v2 事件包：`docs/story-packets/d13-wallet-call.json`，24 個事件、11 項驗收；能力僅標記 D13 已接通，不宣稱任意日期通用。
-
-## 配音驗收補充
-
-- 新增 MP3／文字 hash／配置一致性回歸。
-- 手機瀏覽器腳本監聽真實 HTMLMediaElement 的 playing／ended／error，要求七段按劇本順序開始並正常結束；開始播放時文字泡泡已寫入且輸入框鎖定，不能僅靠文字後備通過。跨刷新保留驗收事件，六次玩家 Send 仍由原生按鈕點擊。最新結果以 PR CI 為準。
-
-- 實際語音驗收額外發現第一段未 prime：共用 authored Send 會繞過 MIRAGE App 的 submit。已改成 telephony 在 document 的 capture submit 上同步 prime，早於共用處理器第一個 await；仍只對來電前最後一次有效的玩家 Send 生效，不修改 main.js。
+- `docs/story-packets/d13-wallet-call.json` 列出 D13 的 24 個事件與 11 項驗收。
+- `scripts/d13-wallet-call-mobile-smoke.mjs` 從 KIRA 點至錢包、確認轉帳、進入 MIRAGE、接聽來電並完成六次手動發送。測試涵蓋拒接、掛斷、重撥、刷新續通及電話記錄。
+- 手機尺寸瀏覽器必須從正式 MP3 收到七次依序播放及結束事件，並檢查輸入鎖定、頭像、D06 餘額及銀行資料。每次執行結果見對應 PR 的 d13-mobile-evidence。
