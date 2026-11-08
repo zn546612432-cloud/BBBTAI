@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate,story55ShortChargeGate} from '../../services/story55/state.js';
+import {isStory55} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
@@ -79,7 +79,10 @@ export function advanceGameMinutes(s,requested){
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(short)target=Math.min(target,s.day*DAY_MINUTES-1);
- if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if((short?story55ShortChargeGate:story55ChargeGate)({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
+ // Mandatory nodes gate next-day long charging, never the physical clock.
+ // A waiting scene must not strand the battery and clock at 23:59. The shared
+ // 03:00 emergency below halts the timeline; unfinished scenes remain pending.
+ if(isStory55(s))target=Math.min(target,55*1440-1);
  if(target<=from){if(short){endShortCharge(s);return {minutes:0,event:'short-charge-end'};}return {minutes:0};}
  if(s.deathPhase==='draining'){
   const at=Math.min(target,DEATH_END);setAbsoluteMinute(s,at);syncDeathNight(s);
