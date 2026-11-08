@@ -15,7 +15,17 @@ export const MEETING_NOTE={id:'xm-note-d11-meeting',day:11,at:'22:00',title:'5/2
  '我提了汪杰那份五亿美元电子钱包的线索。现在还不能把话说满。',
  '三个月筹三千万。干爹要看我们做出的东西，不是听我吹。',
  '明天整理旧据点，哥晚上去机场接胡枫。'].join('\n')};
-const archive=(s,m)=>{(s.story55.contentArchives??=[]).push({id:m.id,text:m.text,revision:'d10-d13-20261108'});};
+const archive=(s,m)=>{(s.story55.contentArchives??=[]).push({
+ id:m.id,text:m.text,from:m.from,day:m.day,time:m.time,sentDate:m.sentDate,
+ original:structuredClone(m),revision:'d10-d13-20261108'
+});};
+function replaceNPCText(s,m,text,from,chatId){
+ const old=m.text;
+ archive(s,m);m.text=text;
+ if(from)m.from=from;
+ for(const n of s.notifications||[])if(n.messageId===m.id&&n.conversationId===chatId&&n.body===old)n.body=text;
+}
+
 function migrateNPC(s){
  let changed=false;
  const group=s.content.conversations.wechat?.find(x=>x.id==='group');
@@ -23,12 +33,14 @@ function migrateNPC(s){
  if(group){
   for(const scene of D10_GROUP)for(let i=0;i<scene.lines.length;i++){
    const m=group.messages.find(x=>x.id==='d10-'+scene.id+'-'+i);
-   if(!m||m.from==='me'||m.text!==OLD_D10[scene.id]?.[i])continue;
-   archive(s,m);m.text=scene.lines[i].text;m.from=scene.lines[i].who;changed=true;
+   if(!m||m.from==='me'||m.from==='熙蒙'||m.text!==OLD_D10[scene.id]?.[i])continue;
+   replaceNPCText(s,m,scene.lines[i].text,scene.lines[i].who,'group');changed=true;
   }
   for(let i=0;i<2;i++){
    const m=group.messages.find(x=>x.id==='s55-move-'+i);
-   if(m&&m.from!=='me'&&m.text===OLD_MOVE[i][1]){archive(s,m);m.text=NEW_MOVE[i][1];changed=true;}
+   if(m&&m.from!=='me'&&m.from!=='熙蒙'&&m.text===OLD_MOVE[i][1]){
+    replaceNPCText(s,m,NEW_MOVE[i][1],null,'group');changed=true;
+   }
   }
   const falseFather=group.messages.find(x=>x.id==='s55-return-2'&&x.from!=='me'&&x.text==='好好干。');
   if(falseFather){
@@ -38,7 +50,7 @@ function migrateNPC(s){
   }
   const original=group.messages.find(x=>x.id==='s55-return-0'&&x.from!=='me'&&x.text===OLD_RETURN[0][1]);
   if(original&&wang){
-   archive(s,original);original.text=NEW_RETURN[0][1];
+   replaceNPCText(s,original,NEW_RETURN[0][1],null,'group');
    group.messages=group.messages.filter(m=>m!==original);
    if(!wang.messages.some(m=>m.id===original.id))wang.messages.push(original);
    for(const n of s.notifications||[])if(n.messageId===original.id){
@@ -49,8 +61,24 @@ function migrateNPC(s){
  }
  for(const c of s.content.conversations.mirage||[])for(const m of c.messages||[])
   if(m.id==='s55-intrusion-5'&&m.from!=='me'&&m.text===OLD_INTRUSION_LINE){
-   archive(s,m);m.text=NEW_INTRUSION_LINE;changed=true;
+   replaceNPCText(s,m,NEW_INTRUSION_LINE,null,c.id);changed=true;
   }
+ return changed;
+}
+// Earlier saved phones may already have migration revision 1 and the NEW
+// text but still retain the OLD sender: the original migration changed only
+// m.text. Correct that precise partial migration even after revision 1.
+function correctMigratedD10Speakers(s){
+ const group=s.content?.conversations?.wechat?.find(x=>x.id==='group');
+ if(!group)return false;
+ let changed=false;
+ for(const scene of D10_GROUP)for(let i=0;i<scene.lines.length;i++){
+  const expected=scene.lines[i],m=group.messages.find(x=>x.id==='d10-'+scene.id+'-'+i);
+  if(!m||m.from===expected.who||m.from==='me'||m.from==='熙蒙'||m.authored||m.edited||
+    m.text!==expected.text||!(m.storyD10===true||m.lifecycleId==='d10:'+scene.id)||
+    !(m.day===10||m.sentDate==='2025-05-28'))continue;
+  archive(s,m);m.from=expected.who;changed=true;
+ }
  return changed;
 }
 // Repair the D10 Wednesday/Friday pickup contradiction on already-delivered NPC
@@ -99,6 +127,7 @@ export function syncD10D13Content(s){
   s.story55.d10D13Revision=1;changed=true;
  }
  changed=correctD10Pickup(s)||changed;
+ changed=correctMigratedD10Speakers(s)||changed;
  if(s.story55.completed?.return)changed=seedAuthoredNotes(s,[MEETING_NOTE])||changed;
  return changed;
 }
