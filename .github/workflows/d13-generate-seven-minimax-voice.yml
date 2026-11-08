@@ -1,0 +1,74 @@
+name: Synthesize D13 approved MiniMax voice
+
+on:
+  workflow_dispatch:
+    inputs:
+      voice_id:
+        description: "Approved Chen Xitai voice ID"
+        type: choice
+        required: true
+        default: moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4
+        options:
+          - moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4
+          - moss_audio_4e461be0-d6d5-11f1-9dac-d60bed5a35f4
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: d13-approved-voice
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify private MiniMax configuration
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }
+        run: |
+          if [ -z "$MINIMAX_API_KEY" ]; then
+            echo "::error::Set the MINIMAX_API_KEY repository Actions secret before running this workflow."
+            exit 1
+          fi
+      - name: Synthesize all seven real MP3 files
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }
+          MINIMAX_VOICE_ID: ${{ inputs.voice_id }
+          MINIMAX_REGION: cn
+        run: node scripts/generate-d13-call-voice.mjs
+      - name: Verify hashes and make bundled speech authoritative
+        run: node scripts/publish-d13-bundled-voice.mjs
+      - name: Run voice and story regressions
+        run: |
+          node --test tests/d13-voice-assets.test.mjs tests/d13-short-charge-voice-call-regression.test.mjs
+          npm test
+          npm run build:pages
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d13-minimax-seven-verified-mp3
+          path: public/assets/story55/d13/
+          retention-days: 7
+      - name: Push generated recordings to a review branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
+        run: |
+          branch="assets/d13-minimax-seven-${{ github.run_id }"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -f public/assets/story55/d13/voice-manifest.json public/assets/story55/d13/call-*.mp3
+          git add src/services/telephony/index.js tests/d13-voice-assets.test.mjs scripts/d13-wallet-call-mobile-smoke.mjs
+          git commit -m "assets(d13): seven real MiniMax clips and matching scripted-call playback"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "D13: publish seven authentic MiniMax recordings" \
+            --body "Generated seven real MP3s from the approved D13 dialogue. All hashes match; the existing one-system architecture remains unchanged. Please review before merging." \
+            || echo "::warning::Branch pushed; create a pull request from the new assets/d13-minimax-seven-* branch if Actions PR creation is restricted."
