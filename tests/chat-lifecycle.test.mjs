@@ -126,7 +126,9 @@ test('legacy dueAt/nextAt saves preserve sent messages and only catch up the ear
  s.story55.d04Chats={'hufeng-am':{started:true,index:3,nextAt:123,completed:false}};
  s.story55.legacyHuFengPlotRetired=false; // Simulate an un-migrated older save.
  assert.equal(tickPhoneStoryMessages(s,1000),true);
- assert.deepEqual(c.messages.filter(m=>m.id.startsWith('d04-hufeng-am-')),[]);
+ assert.equal(c.messages.some(m=>m.id==='d04-hufeng-am-0'),false,'retired NPC copy is hidden');
+ assert.equal(c.messages.find(m=>m.id==='d04-hufeng-am-2')?.text,'有','real player Send survives retirement');
+ assert.ok(s.story55.contentArchives.some(x=>x.id==='d04-hufeng-am-0'&&x.original.text==='阿蒙'));
  assert.equal(c.messages.find(m=>m.id==='historic-personal')?.text,'過去的正常歷史');
  const count=c.messages.length;
  tickPhoneStoryMessages(s,999999);
