@@ -27,7 +27,7 @@ export function deploymentReadiness(s,id){
  if(status.state!=='ready')return {canStart:false,reason:status.reason,batch};
  if(!r.authorized)return {canStart:false,reason:'請先從 KIRA 附件部署授權密鑰',batch};
  if((s.story55.hardware||1)<p.minimumHardware)
-  return {canStart:false,reason:`設備等級不足（目前 ${s.story55.hardware||1}，需要 ${p.minimumHardware}）`,batch};
+  return {canStart:false,reason:`设备等级不足（目前 ${s.story55.hardware||1}，需要 ${p.minimumHardware}）`,batch};
  if(batch>=p.batches)return {canStart:false,reason:'本地程序已完成',batch};
  if(batch>=projectCapacity(s,p))return {canStart:false,reason:'今日可執行的程序已完成',batch};
  return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
