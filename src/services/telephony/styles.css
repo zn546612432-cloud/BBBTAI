@@ -17,13 +17,20 @@
 .tel-call-action.is-decline>span{background:#ff3b30;color:#fff}
 .tel-call-action.is-secondary>span{background:#60646b;color:#fff}
 .tel-call-action small{font-size:15px;color:#fff;letter-spacing:.2px}
+.tel-call-action.is-decline svg{transform:rotate(135deg)}
+.tel-call-action svg{display:block}
 .tel-call-action:active>span{filter:brightness(1.2);transform:scale(.96)}
 .tel-call-action:focus-visible,.tel-call-resume:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .tel-call-auto{min-height:18px;font-size:12px;color:#cad0d5;letter-spacing:.1px;margin:0}
 .tel-call-resume{border:1px solid #ffffff69;background:#ffffff18;border-radius:25px;color:#fff;min-height:45px;padding:10px 25px;font-size:15px;cursor:pointer}
 .tel-call-island{color:#8cf2ab;background:#0b2018;border:1px solid #2c8350;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:13px;min-width:108px;min-height:32px;pointer-events:auto;border-radius:22px}
-.tel-call-island span:first-child{color:#5be58b}
+.tel-call-record-dot{display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#ff453a;box-shadow:0 0 8px #ff453a80;animation:tel-record-blink 1s step-end infinite}
+@keyframes tel-record-blink{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.tel-call-record-dot{animation:none}}
+.mc-voice-avatar{align-items:center!important;min-height:34px}
+.mc-voice-avatar .mc-avatar{margin:1px 0}
+.mc-session-divider.is-terminal-status{color:#a3e6bb;font:12px/1.7 monospace;letter-spacing:.2px;text-align:left;padding:9px 12px;white-space:pre-wrap}
 @media(max-height:640px){.tel-call-screen{padding-top:50px;padding-bottom:38px}.tel-call-action>span{width:66px;height:66px}.tel-call-actions{gap:32px}}
-.tel-green-screen{background:#043d17;color:#9bff9c;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 24px;font:13px monospace;gap:30px;animation:tel-green-pulse .8s ease-in-out infinite alternate}.tel-green-screen:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(transparent 0 3px,#0002 4px 5px);pointer-events:none}.mc-session-divider{display:block;text-align:center;color:#8eb8a1;font:10px monospace;letter-spacing:2px;padding:24px 0;clear:both}.mc-wallet-list button{width:100%;text-align:left;display:flex;justify-content:space-between;gap:15px;padding:20px;color:#c3d4c9;border:1px solid #42634c;background:#091d12;margin:12px 0}.mc-wallet-list small{display:block;color:#789782}.mc-wallet-state{color:#b59e73;font-size:12px}.mc-wallet-bind .mc-login-panel{margin-top:40px}.mc-wallet-transfer-confirm{margin:20px 0;padding:20px;border:1px solid #365440}.mc-wallet-transfer-confirm button{margin:10px 10px 0 0}@keyframes tel-green-pulse{from{background-color:#043d17}to{background-color:#0c642a}}@media(prefers-reduced-motion:reduce){.tel-green-screen{animation:none}}
+.tel-green-screen{background:#056b2e;animation:none;padding:0}.tel-green-screen:after{display:none}.mc-session-divider{display:block;text-align:center;color:#8eb8a1;font:10px monospace;letter-spacing:2px;padding:24px 0;clear:both}.mc-wallet-list button{width:100%;text-align:left;display:flex;justify-content:space-between;gap:15px;padding:20px;color:#c3d4c9;border:1px solid #42634c;background:#091d12;margin:12px 0}.mc-wallet-list small{display:block;color:#789782}.mc-wallet-state{color:#b59e73;font-size:12px}.mc-wallet-bind .mc-login-panel{margin-top:40px}.mc-wallet-transfer-confirm{margin:20px 0;padding:20px;border:1px solid #365440}.mc-wallet-transfer-confirm button{margin:10px 10px 0 0}@keyframes tel-green-pulse{from{background-color:#043d17}to{background-color:#0c642a}}@media(prefers-reduced-motion:reduce){.tel-green-screen{animation:none}}
 
 #day-transition-layer:has(.tel-green-screen){background:#06120a}.tel-green-screen{top:calc(60px + env(safe-area-inset-top,0px));bottom:env(safe-area-inset-bottom,0px)}
