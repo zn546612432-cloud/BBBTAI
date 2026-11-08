@@ -16,6 +16,8 @@ import {storySessionControls} from '../src/apps/mirage/features/story-controls/i
 
 function at(day,clock){
  const s=activateStory55(initialState());s.day=day;s.clock=clock;s.story55.completed.intrusion={day:13,clock:'23:00'};
+ // This test starts after D13: earlier mandatory family/move scenes were already played.
+ for(const [id,d] of [['return',11],['move',12]])s.story55.completed[id]={day:d,clock:'22:00',test:true};
  s.story55.activeScene=null;return s;
 }
 const store=s=>({get:()=>s,update:fn=>fn(s)});

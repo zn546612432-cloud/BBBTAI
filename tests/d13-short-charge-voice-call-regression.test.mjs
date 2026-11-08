@@ -120,7 +120,7 @@ test('D13 KIRA mail arrives once at 22:10 even when daytime exhibition was not c
  tickStory55(s);
  assert.equal(s.clock,'22:10');
  assert.deepEqual(s.story55.config.nodes.find(n=>n.id==='d13-wallet-mail').requires,[]);
- assert.deepEqual(s.story55.config.nodes.find(n=>n.id==='d13-wallet-transfer').requires,['d13-wallet-bind','exhibition']);
+ assert.deepEqual(s.story55.config.nodes.find(n=>n.id==='d13-wallet-transfer').requires,['d13-wallet-bind']);
  assert.deepEqual(s.story55.config.nodes.find(n=>n.id==='intrusion').requires,['d13-wallet-transfer']);
  assert.equal(s.content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
  const notice=s.notifications.find(n=>n.id==='s55-mail-s55-d13-wallet-mail');
@@ -130,13 +130,11 @@ test('D13 KIRA mail arrives once at 22:10 even when daytime exhibition was not c
  assert.equal(s.story55.completed.exhibition,undefined,'reading does not auto-complete the meeting');
  assert.equal(s.story55.completed['d13-wallet-mail'].day,13);
  assert.equal(bindD13Wallet(s),true,'mail reading allows the normal wallet binding');
- assert.equal(transferD13Wallet(s,1000),false,'green screen must not begin before exhibition');
- assert.equal(s.story55.d13?.phase,'bound');
- assert.equal(nodeStatus(s,'d13-wallet-transfer').state,'locked');
- assert.equal(nodeStatus(s,'intrusion').state,'locked','the call still needs the real transfer');
- s.story55.completed.exhibition={day:13,clock:'20:00',test:true};
- assert.equal(transferD13Wallet(s,2000),true);
- assert.equal(nodeStatus(s,'intrusion').state,'ready','finished exhibition plus transfer permit the call');
+ assert.equal(transferD13Wallet(s,1000),true,'wallet transfer must not depend on the independent planning note');
+ assert.equal(s.story55.d13?.phase,'green');
+ assert.equal(nodeStatus(s,'d13-wallet-transfer').state,'done');
+ assert.equal(s.story55.completed.exhibition,undefined,'a transfer cannot auto-complete another scene');
+ assert.equal(nodeStatus(s,'intrusion').state,'ready','real transfer permits the call');
  tickStory55(s);tickStory55(s);
  assert.equal(s.content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
  assert.equal(s.notifications.filter(n=>n.id==='s55-mail-s55-d13-wallet-mail').length,1);
@@ -217,14 +215,12 @@ test('D13 short charge stops at 23:59 but normal time and battery resume on the 
  assert.equal(s.story55.completed.exhibition,undefined);
 });
 
-test('MIRAGE native transfer confirmation explains the pending exhibition instead of silently doing nothing',()=>{
+test('MIRAGE native transfer can proceed without the unrelated planning window',()=>{
  const s=day13('22:11');delete s.story55.completed.exhibition;
  tickStory55(s);markMail55(s,'s55-d13-wallet-mail');assert.equal(bindD13Wallet(s),true);
  const ctx={store:{get:()=>s,update:fn=>fn(s)}};
  setMirageAuthenticated(true);
- assert.throws(()=>handleMirage('mc-wallet-transfer-confirm',{dataset:{}},ctx,{route:'/wallet/s55-d13-wallet-50btc'}),/等待：二十九天的行动窗口/);
- assert.equal(s.story55.d13.phase,'bound');
- s.story55.completed.exhibition={day:13,clock:'20:00',test:true};
  handleMirage('mc-wallet-transfer-confirm',{dataset:{}},ctx,{route:'/wallet/s55-d13-wallet-50btc'});
  assert.equal(s.story55.d13.phase,'green');
+ assert.equal(s.story55.completed.exhibition,undefined);
 });

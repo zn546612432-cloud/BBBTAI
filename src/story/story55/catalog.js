@@ -51,9 +51,7 @@ export const STORY55_CONFIG={
       "day": 11,
       "title": "干爹回来了",
       "kind": "scene",
-      "requires": [
-        "invitation"
-      ],
+      "requires": [],
       "at": "08:40",
       "delivery": "queued",
       "channel": "wechat",
@@ -65,9 +63,7 @@ export const STORY55_CONFIG={
       "day": 12,
       "title": "搬回共同据点",
       "kind": "scene",
-      "requires": [
-        "return"
-      ],
+      "requires": [],
       "at": "10:10",
       "delivery": "queued",
       "channel": "wechat",
