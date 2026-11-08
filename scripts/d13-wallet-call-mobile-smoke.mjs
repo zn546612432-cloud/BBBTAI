@@ -95,7 +95,7 @@ try{
  await page.locator('.mc-composer input[data-story-stage="intrusion:9"]').waitFor({timeout:90000});
  preReloadAudioEvents=await page.evaluate(()=>window.__d13AudioEvents);
  await page.reload();await unlock();await action('tel-resume').waitFor({timeout:12000});await action('tel-resume').click();await signIn();
- await page.locator('#homebar').click();await page.locator('.home-screen').waitFor();await action('tel-return').click();await signIn();
+ await page.locator('#homebar').click();await page.locator('.home-screen').waitFor();await action('tel-return').click();await action('tel-chat').waitFor();await action('tel-chat').click();await signIn();
  await send(9);await send(11);await send(13);await send(17);await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key)).phoneCall?.state==='ended',key,{timeout:90000});
  const s=await saved(),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  assert.ok(s.story55.completed.intrusion);assert.equal(s.content.mirage.digitalBalance,btc);assert.deepEqual(s.bankData,bank);
