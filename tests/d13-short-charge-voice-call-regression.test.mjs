@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState} from '../src/services/storage.js';
+import {initialState,PhoneStore} from '../src/services/storage.js';
 import {activateStory55,tickStory55,appendSceneMessage55,sceneLines,markMail55} from '../src/services/story55/runtime.js';
 import {beginShortCharge,plugIn,endShortCharge} from '../src/system/power/battery.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
@@ -167,4 +167,26 @@ test('late foreground delivery retains the authored D13 date and never duplicate
  tickStory55(s);
  assert.equal(s.content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
  assert.equal(s.notifications.filter(n=>n.id==='s55-mail-s55-d13-wallet-mail').length,1);
+});
+
+test('a frozen D13 23:59 saved phone reloads to restore its timed mail and continues the real shared clock',()=>{
+ const s=day13('23:59');delete s.story55.completed.exhibition;
+ const entries=new Map(),storage={
+  getItem:key=>entries.get(key)||null,
+  setItem:(key,value)=>entries.set(key,value)
+ };
+ const store=new PhoneStore(storage);store.replace(s);
+ const reloaded=new PhoneStore(storage);
+ assert.equal(reloaded.get().day,13);assert.equal(reloaded.get().clock,'23:59');
+ assert.equal(reloaded.get().content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
+ assert.equal(reloaded.get().notifications.filter(n=>n.id==='s55-mail-s55-d13-wallet-mail').length,1);
+ const previous=reloaded.get().batteryPercent;
+ reloaded.update(next=>advanceGameMinutes(next,30));
+ assert.equal(reloaded.get().day,14);assert.equal(reloaded.get().clock,'00:29');
+ assert.ok(reloaded.get().batteryPercent<previous);
+ assert.equal(reloaded.get().story55.completed.exhibition,undefined);
+ assert.equal(reloaded.get().content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
+ const another=new PhoneStore(storage);
+ assert.equal(another.get().day,14);assert.equal(another.get().clock,'00:29');
+ assert.equal(another.get().content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
 });
