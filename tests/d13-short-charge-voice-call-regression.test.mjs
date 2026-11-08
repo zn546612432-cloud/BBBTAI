@@ -142,13 +142,13 @@ test('D13 KIRA mail arrives once at 22:10 even when daytime exhibition was not c
 
 test('D13 time and battery continue after 23:59 despite mandatory pending scenes',()=>{
  const s=day13('23:59');delete s.story55.completed.exhibition;
- s.batteryPercent=75;s.powerGameMinuteFraction=0;
+ s.batteryPercent=20;s.powerGameMinuteFraction=0;
  tickStory55(s);
  const before=s.batteryPercent;
  assert.equal(chargingBlock(s),'plot');
  assert.equal(advanceGameMinutes(s,30).minutes,30);
  assert.equal(s.day,14);assert.equal(s.clock,'00:29');
- assert.ok(s.batteryPercent<before,'battery must keep draining after midnight');
+ assert.ok(s.batteryPercent<before,'20% floor must not freeze an incomplete story day after midnight');
  assert.equal(s.story55.completed.exhibition,undefined,'time alone cannot finish the required scene');
  assert.equal(s.story55.completed.intrusion,undefined);
  const outcome=advanceGameMinutes(s,151);
@@ -202,7 +202,7 @@ test('a frozen D13 23:59 saved phone reloads to restore its timed mail and conti
 
 test('D13 short charge stops at 23:59 but normal time and battery resume on the next tick',()=>{
  const s=day13('23:50');delete s.story55.completed.exhibition;
- s.batteryPercent=75;s.powerGameMinuteFraction=0;
+ s.batteryPercent=20;s.powerGameMinuteFraction=0;
  tickStory55(s);
  assert.equal(beginShortCharge(s),true);
  assert.equal(advanceGameMinutes(s,100).event,'short-charge-end');
