@@ -3,6 +3,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'public/assets/story55/d13/**'
       - 'src/**'
       - 'scripts/d13-wallet-call-mobile-smoke.mjs'
       - 'tests/**'
@@ -11,7 +12,7 @@ permissions:
   contents: read
 jobs:
   d13-mobile:
-    if: github.head_ref == 'feature/d13-wallet-intrusion-call' || github.head_ref == 'fix/d13-native-mail-wallet-call-20261108' || github.head_ref == 'fix/d13-short-charge-voice-call-native-20261108'
+    if: github.head_ref == 'fix/d13-bundled-voice' || startsWith(github.head_ref, 'assets/d13-minimax-seven-') || github.head_ref == 'feature/d13-wallet-intrusion-call' || github.head_ref == 'fix/d13-native-mail-wallet-call-20261108' || github.head_ref == 'fix/d13-short-charge-voice-call-native-20261108'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

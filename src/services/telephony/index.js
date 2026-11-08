@@ -1,7 +1,9 @@
 import {receiveCall,answerCall,endCall,declineCall,outgoingCall,activePhoneCall,canPresentPhoneCall} from './store.js';
 import {createGestureAudio,primeAudio} from '../voice/playback.js';
-import {apiConfig,voicePreview} from '../ai/gateway.js';
-import {canonicalPhoneAudioPath,resolvePhoneAudioPath} from '../voice/asset-url.js';
+import {loadClip} from '../voice/audio-store.js';
+import {D13_LINES} from '../../story/d13/content.js';
+import {voicePreview} from '../ai/gateway.js';
+import {canonicalPhoneAudioPath,resolveStablePhoneAudioPath} from '../voice/asset-url.js';
 import {scene55,sceneLines,advanceScene55,appendSceneMessage55} from '../story55/runtime.js';
 import {nodeStatus,nodeById,completed,story55Config} from '../story55/state.js';
 import {enterD13Chat} from '../../story/d13/runtime.js';
@@ -94,22 +96,27 @@ async function playStoryLine(ctx,call,index,line,a){
  const append=()=>{if(current())ctx.store.update(s=>appendSceneMessage55(s,call.node,index));};
  let cancelled=false,liveAudioUrl=null;
  try{
-  const source=story55Config(ctx.store.get()).voiceAssets?.[call.node]?.[index];
+  const config=story55Config(ctx.store.get());
+  const source=config.voiceAssets?.[call.node]?.[index];
   ctx.store.update(s=>s.phoneCall.speaking=true);
   if(!a.audio)throw Error('VOICE_UNAVAILABLE');
   const audio=a.audio;
-  // D13's approved speech is voice-only in MIRAGE. Re-synthesize after
-  // script revisions instead of playing a previously bundled wrong ending.
-  // The personal MiniMax token stays in the existing per-tab AI settings.
-  const liveD13=call.node==='intrusion'&&(!!apiConfig().minimax||index===20);
-  if(liveD13){
+  const clipId=config.voiceClipIds?.[call.node]?.[index];
+  let blob=clipId ? await loadClip(clipId).catch(()=>null) : null;
+  const path=source ? canonicalPhoneAudioPath(source) : '';
+  const bundled=canonicalPhoneAudioPath(`/assets/story55/d13/call-${index}.mp3`);
+  if(!blob && call.node==='intrusion' && (!path || (path===bundled && line[1]!==D13_LINES[index]?.[1]))){
    const spoken=line[1].replace(/\bnya\b/gi,'奈亞');
-   const blob=await voicePreview({text:spoken});
+   blob=await voicePreview({...config.voiceSettings?.[call.node]?.[index],text:spoken});
+  }
+  const state=ctx.store.get();
+  if(!current()||!canPresentPhoneCall(state)||state.phoneCall.resumeRequired)return;
+  if(blob){
    liveAudioUrl=URL.createObjectURL(blob);
    audio.src=liveAudioUrl;
   }else{
-   if(!source)throw Error('VOICE_UNAVAILABLE');
-   audio.src=resolvePhoneAudioPath(canonicalPhoneAudioPath(source));
+   if(!path)throw Error('VOICE_UNAVAILABLE');
+   audio.src=resolveStablePhoneAudioPath(path);
   }
   await new Promise((resolve,reject)=>{
    let timer;
