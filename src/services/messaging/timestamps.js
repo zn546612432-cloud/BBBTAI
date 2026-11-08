@@ -4,10 +4,16 @@ export const shiftDate=(iso,days)=>new Date(new Date(iso+'T00:00:00Z').getTime()
 export function messageDate(m,s){if(validDate(m.sentDate))return m.sentDate;if(Number.isInteger(m.day))return dateParts({...s,day:m.day}).iso;const ago=String(m.time||'').includes('前天')?2:String(m.time||'').includes('昨天')?1:0;return shiftDate(dateParts(s).iso,-ago);}
 export function messageClock(m,s){const found=String(m.time||'').match(/(?:^|\s)((?:[01]\d|2[0-3]):[0-5]\d)(?:$|\s)/);return found?.[1]||(!m.time?s.clock:'');}
 export function timestampLabel(m,s){const iso=messageDate(m,s),today=dateParts(s).iso,ago=Math.round((Date.parse(today)-Date.parse(iso))/DAY),clock=messageClock(m,s);let prefix=ago===0?'':ago===1?'昨天':ago===2?'前天':iso.slice(0,4)===today.slice(0,4)?`${Number(iso.slice(5,7))}月${Number(iso.slice(8))}日`:`${iso.slice(0,4)}年${Number(iso.slice(5,7))}月${Number(iso.slice(8))}日`;return [prefix,clock].filter(Boolean).join(' ')||'今天';}
+// Both the inbox and conversation screen use this same chronological ordering.
+// Never mutate persisted authored message arrays: imported history and current
+// scripted messages may be appended in a different order from their game dates.
+export const compareMessageChronology=(a,b,s)=>
+ `${messageDate(a,s)}T${messageClock(a,s)||'00:00'}`.localeCompare(`${messageDate(b,s)}T${messageClock(b,s)||'00:00'}`);
+export const chronologicalMessages=(messages,s)=>[...messages].sort((a,b)=>compareMessageChronology(a,b,s));
 export function timestampGroups(messages,s){
  // Older imported history sometimes preceded later player messages in the
  // underlying array. Render by in-game date without altering saved order.
- const sorted=[...messages].sort((a,b)=>`${messageDate(a,s)}T${messageClock(a,s)||'00:00'}`.localeCompare(`${messageDate(b,s)}T${messageClock(b,s)||'00:00'}`));
+ const sorted=chronologicalMessages(messages,s);
  let last=null;return sorted.map(m=>{
   const date=messageDate(m,s),clock=messageClock(m,s),minutes=clock?Number(clock.slice(0,2))*60+Number(clock.slice(3)):null;
   const newDay=!last||date!==last.date;
