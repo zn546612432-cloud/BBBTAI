@@ -16,13 +16,17 @@ const time=m=>Date.parse(m.sentDate+'T'+m.time+':00Z');
 
 test('July–October stories and earlier recovery scenes have valid unique historical IDs',()=>{
  const all=messages();
- assert.equal(all.length,156);
+ assert.equal(all.length,176);
  assert.equal(new Set(all.map(m=>m.id)).size,all.length);
  assert.ok(all.every(m=>m.appearance==='immediate'&&m.sentDate.startsWith('2024-')));
  packs.forEach(pack=>assert.equal(parsePresetPayload(pack).length,1));
  assert.ok(at('group','07-20','一到寒暑假澳门人就特别多'));
  assert.ok(at('group','08-21','之前那个卖家被抓了，我在物色新的货源了'));
  assert.ok(at('group','09-10','我们换新据点了，一会发定位给你们，保持联系'));
+ assert.ok(at('group','07-30','學校那邊的材料總算弄完了'));
+ assert.ok(at('group','09-06','今天第一節課差點走錯樓，好还有好心的师姐指路'));
+ assert.ok(at('group','09-15','干爹走了？'));
+ assert.equal(at('group','09-13','okok'),undefined);
  assert.ok(at('wang','10-01','其实我是不想待在澳门'));
  assert.ok(at('xiaoxin','07-08','别想，我们应该诈骗别人，而不是让别人诈骗自己'));
 });

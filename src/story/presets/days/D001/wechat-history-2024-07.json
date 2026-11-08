@@ -550,6 +550,102 @@
           "time": "16:17",
           "sentDate": "2024-07-27",
           "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-001",
+          "from": "胡枫",
+          "text": "學校那邊的材料總算弄完了",
+          "time": "20:00",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-002",
+          "from": "小辛",
+          "text": "所以你真要去韓國了？",
+          "time": "20:01",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-003",
+          "from": "胡枫",
+          "text": "不然呢，機票都買了",
+          "time": "20:02",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-004",
+          "from": "wang",
+          "text": "幾號走？",
+          "time": "20:03",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-005",
+          "from": "胡枫",
+          "text": "八月中，先過去安頓一下，九月開學",
+          "time": "20:04",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-006",
+          "from": "阿威",
+          "text": "真的要在那边待四年啊？",
+          "time": "20:05",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-007",
+          "from": "小辛",
+          "text": "已经开始想你了怎么办枫哥",
+          "time": "20:06",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-008",
+          "from": "阿威",
+          "text": "你给他当伴读",
+          "time": "20:07",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-009",
+          "from": "小辛",
+          "text": "行，我从0开始学韩语",
+          "time": "20:08",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-010",
+          "from": "胡枫",
+          "text": "我又不是不回来了！",
+          "time": "20:09",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-011",
+          "from": "胡枫",
+          "text": "你来吧，让熙蒙给你办个假身份假护照，我正好缺一个人给我打扫房间",
+          "time": "20:10",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240730-012",
+          "from": "小辛",
+          "text": "我们的感情到这刚刚好～",
+          "time": "20:11",
+          "sentDate": "2024-07-30",
+          "appearance": "immediate"
         }
       ]
     }
