@@ -29,8 +29,11 @@ export function drainGameBattery(s,minutes){
  const saved=Number.isFinite(s.powerGameMinuteFraction)?Math.max(0,s.powerGameMinuteFraction):0;
  const total=saved+minutes,points=Math.floor(total/unit+1e-9),before=batteryPercent(s);
  s.powerGameMinuteFraction=Math.max(0,total-points*unit);
- // A story protection floor must never increase an already lower saved battery.
- s.batteryPercent=Math.min(before,Math.max(chargingBlock(s)?20:2,before-points));
+ // A plot gate must never hold an ordinary day's battery at 20% while time
+ // continues after 23:00. D01 alone deliberately holds its unfinished first
+ // story day at 03:00 so the player can still finish that repair.
+ const minimum=s.day===1&&chargingBlock(s)?20:2;
+ s.batteryPercent=Math.min(before,Math.max(minimum,before-points));
  return before-s.batteryPercent;
 }
 export function drainBattery(s,ms){
