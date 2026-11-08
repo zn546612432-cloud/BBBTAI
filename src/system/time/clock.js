@@ -1,7 +1,7 @@
-import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,story55ShortChargeGate} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
-import {DEATH_START,DEATH_END,chargingBlock,deathLocked,syncDeathNight} from '../power/story.js';
+import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
 import {endShortCharge,isShortCharging,drainGameBattery} from '../power/battery.js';
 // Legacy clock constants stay available for old saved campaigns.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
@@ -62,7 +62,7 @@ export function advanceGameMinutes(s,requested){
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  // Short charging never crosses midnight or skips into the next story day.
  const short=isShortCharging(s);
- if(short&&chargingBlock(s)){endShortCharge(s);return {minutes:0,event:'short-charge-story'};}
+ if(short&&shortChargeBlock(s)){endShortCharge(s);return {minutes:0,event:'short-charge-story'};}
  if(short&&s.clock==='23:59'){endShortCharge(s);return {minutes:0,event:'short-charge-end'};}
  // D01 is a story-day, not a midnight boundary. Only charging enters D02.
  // Keep the phone fully operable if compulsory D01 settlements are unfinished
@@ -79,7 +79,7 @@ export function advanceGameMinutes(s,requested){
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(short)target=Math.min(target,s.day*DAY_MINUTES-1);
- if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if(story55ChargeGate({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
+ if(isStory55(s)){target=Math.min(target,55*1440-1);for(let d=s.day;d<=Math.min(55,Math.floor(target/1440)+1);d++)if((short?story55ShortChargeGate:story55ChargeGate)({...s,day:d})){target=Math.min(target,d*1440-1);break;}}
  if(target<=from){if(short){endShortCharge(s);return {minutes:0,event:'short-charge-end'};}return {minutes:0};}
  if(s.deathPhase==='draining'){
   const at=Math.min(target,DEATH_END);setAbsoluteMinute(s,at);syncDeathNight(s);
@@ -90,7 +90,7 @@ export function advanceGameMinutes(s,requested){
  if(alarm&&alarm.at<=stop.at)stop={...alarm,type:'alarm'};
  if(s.powerMode==='sleeping'&&Number.isFinite(s.sleepWakeAt)&&s.sleepWakeAt<stop.at)stop={at:s.sleepWakeAt,type:'wake'};
  // Only an unplugged phone is driven to an emergency 1% at 03:00.
- if(!chargingBlock(s)&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping'){
+ if(s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping'){
   const at=nextClockOccurrence(from,'03:00');
   if(at<=stop.at)stop={at,type:'emergency'};
  }
@@ -112,7 +112,7 @@ export function advanceGameMinutes(s,requested){
   if(a){a.lastFiredDay=s.day;if(a.repeat==='永不')a.enabled=false;}
   s.alarmRinging={id:stop.alarm.id,label:stop.alarm.label||'闹钟',clock:s.clock,day:s.day,fromSleep:s.powerMode==='sleeping'};
   s.notifications.unshift({id:`alarm-${stop.alarm.id}-${s.day}`,title:'闹钟',body:s.alarmRinging.label,link:{appId:'clock',route:'/',params:{}}});
-  if(!chargingBlock(s)&&s.powerMode==='idle'&&s.clock==='03:00'){s.batteryPercent=1;s.emergencyCharge=true;}
+  if(s.powerMode==='idle'&&s.clock==='03:00'){s.batteryPercent=1;s.emergencyCharge=true;}
  }else if(stop.type==='wake'){
   s.powerMode='idle';s.sleepWakeAt=null;s.unlocked=false;
   s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
