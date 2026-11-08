@@ -18,6 +18,9 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function verifyBoot(page,id){
  try{
   await page.locator('#xm-boot').waitFor({state:'hidden',timeout:75000});
+  // The startup overlay fades out, then removes itself 450 ms later.
+  // Hidden is already a successful boot; wait for detach before DOM-count check.
+  await page.locator('#xm-boot').waitFor({state:'detached',timeout:5000});
   await page.locator('#phone').waitFor({state:'visible',timeout:15000});
   await page.locator('.lock-screen').first().waitFor({state:'visible',timeout:15000});
   assert.equal(await page.locator('#xm-boot-next').count(),0,'startup splash should be removed');
