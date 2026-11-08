@@ -17,6 +17,21 @@ export function settleStory55Wallet(s,{test=false}={}){
 export function deployment(s,id){return s.story55?.projects?.[id]||{authorized:false,batches:[],active:null};}
 export function deploymentPercent(s,id){const p=projectById(s,id),r=deployment(s,id);if(!p)return 0;if(r.batches.length===p.batches&&r.batches.every(b=>b.complete))return 100;return Math.min(99.999,Number(r.batches.reduce((sum,b,i)=>sum+(b.complete?p.gains[i]:0),0).toFixed(3)));}
 export function projectCapacity(s,p){return Math.min(p.batches,Math.max(0,s.day-p.day+1));}
+// Both UI and runner consult the same deployment eligibility contract.
+export function deploymentReadiness(s,id){
+ const p=projectById(s,id);
+ if(!isStory55(s)||!p)return {canStart:false,reason:'本地程序不存在',batch:0};
+ const r=deployment(s,id),status=nodeStatus(s,p.node);
+ const unfinished=r.batches.findIndex(b=>!b.complete);
+ const batch=unfinished<0?r.batches.length:unfinished;
+ if(status.state!=='ready')return {canStart:false,reason:status.reason,batch};
+ if(!r.authorized)return {canStart:false,reason:'請先從 KIRA 附件部署授權密鑰',batch};
+ if((s.story55.hardware||1)<p.minimumHardware)
+  return {canStart:false,reason:`設備等級不足（目前 ${s.story55.hardware||1}，需要 ${p.minimumHardware}）`,batch};
+ if(batch>=p.batches)return {canStart:false,reason:'本地程序已完成',batch};
+ if(batch>=projectCapacity(s,p))return {canStart:false,reason:'今日可執行的程序已完成',batch};
+ return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
+}
 export function authorizeProject(s,id,key){
  if(id==='wallet')throw Error('請從 MIRAGE 接單並打開 KIRA 附件，使用 GHOST 執行公開錢包挑戰');
  const p=projectById(s,id);if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
@@ -36,16 +51,13 @@ export function upgradeHardware(s){
 }
 export function startDeploymentStep(s,id){
  if(id==='wallet')throw Error('D06 請從 KIRA 的單一加密附件開啟 GHOST');
- if(!isStory55(s))throw Error('不是55天周目');
- const p=projectById(s,id),r=deployment(s,id);
- if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
- if(!r.authorized)throw Error('请先输入邮件或文件中的授权码');
- if((s.story55.hardware||1)<p.minimumHardware)throw Error('设备性能不足，请升级本地设备');
- const index=r.batches.findIndex(b=>!b.complete),batch=index<0?r.batches.length:index;
- if(batch>=p.batches)throw Error('项目已完成');
- if(batch>=projectCapacity(s,p))throw Error('本日可执行批次已完成');
+ const ready=deploymentReadiness(s,id);
+ if(!ready.canStart)throw Error(ready.reason);
+ const p=projectById(s,id),r=deployment(s,id),batch=ready.batch;
+ if(r.active&&s.ghost?.orders?.[r.active]&&['authorized','running','preview-win','failed'].includes(s.ghost.orders[r.active].status))return r.active;
  const b=r.batches[batch]??={complete:false,steps:[]};r.batches[batch]=b;
  const step=p.steps.findIndex((_,i)=>!b.steps[i]);
+ if(step<0)throw Error('本組工具已執行，請檢查驗收結果');
  const orderId=`s55:${id}:${batch}:${step}`;
  const g=s.ghost??={orders:{},history:[],balance:0,config:{}};g.orders??={};g.history??=[];
  g.orders[orderId]??={id:orderId,type:p.steps[step],key:p.key,status:'authorized',attempts:0,story55Project:id,batch,step,settings:{seconds:90,retries:1000,rounds:1,codeLength:4,attackMs:3500,reward:null}};
