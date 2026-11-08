@@ -396,9 +396,10 @@ store.subscribe(()=>{
   const message=$('#xm-boot-message');
   const next=$('#xm-boot-next');
   if(reason==='timeout'){
-   if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
-   if(next){next.hidden=false;next.onclick=closeBoot;}
-   else closeBoot();
+   // Optional map/image work must never require a tap to open the phone.
+   // Unfinished preloads continue without resetting the saved campaign.
+   if(message)message.textContent='部分素材仍在加载，不影响进入手机…';
+   setTimeout(closeBoot,350);
    return;
   }
   if(message)message.textContent=failed?'已准备完成，部分素材将在使用时重试':'资源已就绪，正在进入锁屏…';
@@ -408,7 +409,9 @@ store.subscribe(()=>{
   setTimeout(closeBoot,300);
  }).catch(error=>{
   console.error('启动资源准备出错',error);
-  const next=$('#xm-boot-next');if(next){next.hidden=false;next.onclick=closeBoot;}else closeBoot();
+  // The phone already rendered underneath this splash; a failed optional
+  // preload must not strand the player on a second recovery button.
+  setTimeout(closeBoot,350);
  });
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
