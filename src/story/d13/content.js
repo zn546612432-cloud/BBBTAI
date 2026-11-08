@@ -1,7 +1,8 @@
 // Verbatim D13 from the saved 稱呼修訂版 (2026-11-07 14:40:23 UTC).
 // One row is one authored turn; no truncation to the former 7/8/9 anchors.
 export const D13_SOURCE='libfile_2fc50bddc858819190faed543e2825a8';
-export const D13_LINES=[
+// Previously released D13 lines for exact-match save migration.
+export const D13_PREVIOUS_LINES=[
  ['system','屏幕失去響應，重啟沒有恢復。'],
  ['ouroboros','膽子不小。上次拿了錢，還想回來看看有沒有第二份？'],
  ['me','你故意設局？你到底想幹什麼？'],
@@ -23,6 +24,29 @@ export const D13_LINES=[
  ['ouroboros','可你的手機裡那些資料告訴我，你似乎不止一個人。'],
  ['system','〔反追蹤失敗〕'],
  ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，熙蒙。記得檢查你的郵箱。']
+];
+export const D13_LINES=[
+ ['system','屏幕失去響應，重啟沒有恢復。'],
+ ['ouroboros','膽子不小。上次拿了錢，還想回來看看有沒有第二份？'],
+ ['me','你故意設局？你到底想幹什麼？'],
+ ['ouroboros','從來沒有人拒絕過我的邀請。你是第一個。'],
+ ['me','你查了我的資料？'],
+ ['ouroboros','你的手機比你本人坦率得多。'],
+ ['ouroboros','汪傑。五億美元。你的胃口倒是很大。'],
+ ['call','未知號碼來電'],
+ ['ouroboros','晚上好，nya。歡迎來到 Mirage。看來你不喜歡打字，我只好親自打電話了。'],
+ ['me','……你到底是誰？'],
+ ['ouroboros','這不重要。重要的是，你應該也不想自己的計劃被別人知道吧？'],
+ ['me','你把資料傳出去，就一定會留下痕跡。只要有痕跡，我就找得到你。'],
+ ['ouroboros','呵呵，別這麼緊張。我對揭發你沒興趣。恰恰相反，我想參與。'],
+ ['me','我憑什麼相信你？'],
+ ['ouroboros','事到如今，你有拒絕的權利嗎？'],
+ ['system','（正在定位 IP………）'],
+ ['ouroboros','別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。'],
+ ['me','你有病吧？我說過了，我只單幹。'],
+ ['ouroboros','可你的手機裡那些資料告訴我，你似乎不止一個人。'],
+ ['system','（追蹤失敗！錯誤代碼：ERR-4037）'],
+ ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……']
 ];
 export const D13_VOICE_INDICES=D13_LINES.flatMap(([actor],index)=>index>7&&actor==='ouroboros'?[index]:[]);
 export const D13_LEGACY_LINES=[

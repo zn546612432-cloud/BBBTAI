@@ -47,7 +47,7 @@ import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
 import {plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,settleOfflineShortCharge} from './system/power/battery.js';
 import {advanceGameMinutes,setSleeping,dismissAlarm} from './system/time/clock.js';
-import {chargingBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
+import {chargingBlock,shortChargeBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {mountTelephony} from './services/telephony/index.js';
 import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
@@ -219,6 +219,15 @@ function mountScriptedMirageDraft(){
   return;
  }
  const identity=input.dataset.storyStage+':'+input.dataset.storyType;
+ // D13 scripted replies must survive call/minimax pauses and returning from
+ // another App. A partially typed draft is not a reason to block native Send.
+ if(input.dataset.storyStage?.startsWith('intrusion:')){
+  if(pendingMirageType){clearInterval(pendingMirageType.timer);pendingMirageType=null;}
+  const full=input.dataset.storyType;
+  if(!input.value||full.startsWith(input.value))input.value=full;
+  completedStoryTyping.set(input,identity);
+  return;
+ }
  if(pendingMirageType?.identity===identity&&pendingMirageType.element===input)return;
  if(pendingMirageType)clearInterval(pendingMirageType.timer);
  const full=input.dataset.storyType;
@@ -497,7 +506,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-open'){expandIsland();return;}
     if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
     if(action==='power-short-start'){
-      if(chargingBlock(store.get())||store.get().story55?.activeScene){collapseIsland();toast('充电口进水，稍后再试。');return;}
+      if(shortChargeBlock(store.get())||store.get().story55?.activeScene){collapseIsland();toast('充电口进水，稍后再试。');return;}
       let ok=false;store.update(s=>{ok=beginShortCharge(s);});
       collapseIsland();
       if(!ok)toast('现在无法短充');

@@ -1,5 +1,6 @@
 import {receiveCall,answerCall,endCall,declineCall,outgoingCall,activePhoneCall,canPresentPhoneCall} from './store.js';
 import {createGestureAudio,primeAudio} from '../voice/playback.js';
+import {apiConfig,voicePreview} from '../ai/gateway.js';
 import {canonicalPhoneAudioPath,resolvePhoneAudioPath} from '../voice/asset-url.js';
 import {scene55,sceneLines,advanceScene55,appendSceneMessage55} from '../story55/runtime.js';
 import {nodeStatus,nodeById,completed,story55Config} from '../story55/state.js';
@@ -91,13 +92,25 @@ async function playStoryLine(ctx,call,index,line,a){
   const s=ctx.store.get();return s.phoneCall?.id===call.id&&s.phoneCall.state==='connected'&&scene55(s,call.node).index===index&&!completed(s,call.node);
  };
  const append=()=>{if(current())ctx.store.update(s=>appendSceneMessage55(s,call.node,index));};
- let cancelled=false;
+ let cancelled=false,liveAudioUrl=null;
  try{
   const source=story55Config(ctx.store.get()).voiceAssets?.[call.node]?.[index];
   ctx.store.update(s=>s.phoneCall.speaking=true);
-  if(!source||!a.audio)throw Error('VOICE_UNAVAILABLE');
+  if(!a.audio)throw Error('VOICE_UNAVAILABLE');
   const audio=a.audio;
-  audio.src=resolvePhoneAudioPath(canonicalPhoneAudioPath(source));
+  // D13's approved speech is voice-only in MIRAGE. Re-synthesize after
+  // script revisions instead of playing a previously bundled wrong ending.
+  // The personal MiniMax token stays in the existing per-tab AI settings.
+  const liveD13=call.node==='intrusion'&&(!!apiConfig().minimax||index===20);
+  if(liveD13){
+   const spoken=line[1].replace(/\bnya\b/gi,'奈亞');
+   const blob=await voicePreview({text:spoken});
+   liveAudioUrl=URL.createObjectURL(blob);
+   audio.src=liveAudioUrl;
+  }else{
+   if(!source)throw Error('VOICE_UNAVAILABLE');
+   audio.src=resolvePhoneAudioPath(canonicalPhoneAudioPath(source));
+  }
   await new Promise((resolve,reject)=>{
    let timer;
    const cleanup=()=>{clearTimeout(timer);audio.onplaying=null;audio.onended=null;audio.onerror=null;a.playing=null;};
@@ -115,11 +128,18 @@ async function playStoryLine(ctx,call,index,line,a){
    if(error?.name==='NotAllowedError'){
     if(a.audio)a.audio._primed=false;ctx.store.update(s=>s.phoneCall.resumeRequired=true);return;
    }
-   a.audio?.pause();append();ctx.toast?.('配音暫不可用，已切換文字');
+   a.audio?.pause();
+   if(call.node==='intrusion'){
+    // Never replace a missing phone voice with an unwanted text bubble.
+    ctx.store.update(s=>{s.phoneCall.resumeRequired=true;});
+    return;
+   }
+   append();ctx.toast?.('配音暫不可用，已切換文字');
   }
  }finally{
   if(current())ctx.store.update(s=>s.phoneCall.speaking=false);
   a.running=false;
+  if(liveAudioUrl)URL.revokeObjectURL(liveAudioUrl);
  }
  if(!cancelled&&current())ctx.store.update(s=>advanceScene55(s,call.node));
 }
@@ -167,7 +187,7 @@ export function mountTelephony(getContext){
    const call=activePhoneCall(ctx.store.get());
    if(!call&&a.playing){a.audio?.pause();a.playing.cancel();}
    if(call?.state==='connected'){
-    const n=document.querySelector('.tel-call-island span:last-child');
+    const n=document.querySelector('.tel-call-island .tel-call-time');
     const duration=Math.max(0,Math.floor((Date.now()-call.answeredAt)/1000));
     const label=`${String(Math.floor(duration/60)).padStart(2,'0')}:${String(duration%60).padStart(2,'0')}`;
     if(n)n.textContent=label;

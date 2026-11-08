@@ -79,16 +79,15 @@ test('speech appends on sound start, locks input and never sends the player line
   const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-v2-9').length,1);
  }finally{globalThis.Audio=previous;}
 });
-test('missing voice uses text and completes only after native Send, unlocking D14',()=>{
+test('missing voice must not leak Tai dialogue as a MIRAGE text bubble or skip the call',()=>{
  const {store,ctx}=fixture(),call=ringing(store,ctx);answerCall(store,call.id,10001);tickTelephony(ctx,10002);
- store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());assert.equal(scene55(store.get(),'intrusion').index,9);assert.equal(completed(store.get(),'intrusion'),false);
- for(let i=0;i<30&&!completed(store.get(),'intrusion');i++){
-  const draft=scriptedDraft55(store.get(),'mirage','s55-ouroboros');
-  if(draft)store.update(s=>sendScriptedDraft55(s,'mirage','s55-ouroboros',draft.text));
-  else{store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now()+10000);}
- }
- tickTelephony(ctx,Date.now()+20000);
- assert.ok(completed(store.get(),'intrusion'));assert.equal(store.get().phoneCall.state,'ended');store.update(s=>{s.day=14;s.clock='09:16';});assert.equal(nodeStatus(store.get(),'code').state,'ready');
+ store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());
+ assert.equal(scene55(store.get(),'intrusion').index,8);
+ assert.equal(completed(store.get(),'intrusion'),false);
+ assert.equal(store.get().phoneCall.resumeRequired,true);
+ const chat=store.get().content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ assert.equal(chat.messages.some(m=>m.id==='s55-intrusion-v2-8'),false);
+ assert.equal(nodeStatus(store.get(),'code').state,'locked');
 });
 test('refresh skips green animation and connected calls require a resume gesture',()=>{
  const {store,ctx}=fixture(),previous=globalThis.document;globalThis.document={addEventListener(){},removeEventListener(){},querySelector(){return null;}};
@@ -112,7 +111,7 @@ test('full naming-revised source remains intact and only shipped legacy copy mig
  const {D13_LINES,D13_LEGACY_LINES,D13_VOICE_INDICES}=await import('../src/story/d13/content.js');
  const {applyD13Definition}=await import('../src/story/d13/definition.js');
  assert.equal(D13_LINES.length,21);assert.deepEqual(D13_VOICE_INDICES,[8,10,12,14,16,18,20]);
- assert.match(D13_LINES[8][1],/^晚上好，nya。/);assert.match(D13_LINES[20][1],/晚安，熙蒙。/);
+ assert.match(D13_LINES[8][1],/^晚上好，nya。/);assert.match(D13_LINES[20][1],/晚安，nya，或者我該叫你，熙蒙……/);
  const {store}=fixture(),config=structuredClone(store.get().story55.config);config.scenes.intrusion=structuredClone(D13_LEGACY_LINES);applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,D13_LINES);
  const edited=structuredClone(D13_LEGACY_LINES);edited[1][1]='作者自己改過的句子';config.scenes.intrusion=edited;applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,edited);
 });
