@@ -57,7 +57,7 @@
       "surface": "kira",
       "owner": "story55",
       "capability": "mail.d13-wallet",
-      "actor": "MIRAGE",
+      "actor": "MIRAGE Wallet",
       "trigger": {
         "type": "day-time",
         "ref": "22:10"
@@ -73,7 +73,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "之前懸賞贏的那個錢包入帳 50 枚比特幣，登入 MIRAGE 錢包快速綁定後可取款。"
+      "text": "您的數位資產帳戶已收到一筆轉入款項。\n\n入帳金額：50.00000000 BTC\n資產類型：Bitcoin (BTC)\n交易狀態：已確認\n\n款項已記入您的帳戶。請登入 MIRAGE 錢包查看交易詳情及管理資產。\n\n此郵件由系統自動發送，請勿直接回覆。"
     },
     {
       "id": "d13-wallet-bind",
@@ -142,8 +142,7 @@
       "once": true,
       "delivery": {
         "late": "silent"
-      },
-      "text": "屏幕失去響應，重啟沒有恢復。"
+      }
     },
     {
       "id": "s55-intrusion-v2-1",
@@ -520,7 +519,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "〔熙蒙正在開啟反追蹤〕"
+      "text": "（正在定位 IP………）"
     },
     {
       "id": "s55-intrusion-v2-16",
@@ -621,7 +620,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "〔反追蹤失敗〕"
+      "text": "（追蹤失敗！錯誤代碼：ERR-4037）"
     },
     {
       "id": "s55-intrusion-v2-20",
@@ -645,7 +644,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，熙蒙。記得檢查你的郵箱。",
+      "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……",
       "thread": "s55-ouroboros",
       "audioAssetId": "d13-call-20"
     }
@@ -659,7 +658,7 @@
     {
       "id": "accept-d13-negative",
       "type": "negative",
-      "verify": "未綁定不能轉帳；強制來電無拒接／掛斷；未 Send 不前進。"
+      "verify": "綁定後才能轉帳。拒接或掛斷會結束當次通話，重撥接回原進度。熙蒙的預設回覆須手動發送。"
     },
     {
       "id": "accept-d13-idempotency",
@@ -684,7 +683,7 @@
     {
       "id": "accept-d13-assets",
       "type": "assets",
-      "verify": "七段 MiniMax MP3 均小於1MB，文字 SHA256 與原稿一致；瀏覽器必須實際觸發七次 playing 和七次 ended，播放開始已有泡泡且輸入鎖定；缺檔／載入失敗仍保留文字後備。"
+      "verify": "七段 MP3 的文字雜湊須與定稿相符。依序收到七次 playing 與 ended；熙泰開口時顯示頭像並鎖定輸入。載入失敗須停在當句，點繼續可重試。"
     },
     {
       "id": "accept-d13-date-clock",
