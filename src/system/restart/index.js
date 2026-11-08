@@ -4,7 +4,7 @@ import {initialState,clone} from '../../services/storage.js';
 import {calendarAnchor} from '../../services/calendar.js';
 // Story definitions remain editable; only the player's run is discarded.
 export function restartState(previous){
- if(isStory55(previous)){const next=clone(previous);rebuildStory55AtDay(next,1,'08:00');next.unlocked=false;next.nav={current:{appId:'home',route:'/',params:{}},stack:[]};delete next.story55.developerRebuild;return next;}
+ if(isStory55(previous)){const next=clone(previous);rebuildStory55AtDay(next,1,'08:00',{preservePlayerChats:false});next.unlocked=false;next.nav={current:{appId:'home',route:'/',params:{}},stack:[]};delete next.story55.developerRebuild;return next;}
  const next=initialState();
  Object.assign(next,{day:1,clock:'08:00',calendar:calendarAnchor(1),batteryPercent:100,invitations:[],content:clone(previous.content),wallpaper:previous.wallpaper,iconOverrides:clone(previous.iconOverrides||{}),characterAvatars:clone(previous.characterAvatars||{}),storyChargeGates:clone(previous.storyChargeGates||[])});
  next.storyPresets.rules=clone(previous.storyPresets?.rules||[]);

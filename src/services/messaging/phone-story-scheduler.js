@@ -18,23 +18,24 @@ export const PHONE_CHAT_TRACKS=tracks.map(({name,day,carryForward})=>({name,day,
 function retireHuFengPlot(s){
  if(s.story55?.legacyHuFengPlotRetired)return false;
  const retired=/^(?:d03-hufeng-|d04-hufeng-(?:am|pm)-|d05-hufeng-check-|d06-shoes-|wish-shoes-)/;
- const chats=s.content?.conversations?.wechat||[];
- const c=chats.find(x=>x.id==='hufeng');
- let changed=false;
- if(c?.messages?.length){
-  const removed=c.messages.filter(m=>retired.test(String(m.id||'')));
-  if(removed.length){
-   c.messages=c.messages.filter(m=>!retired.test(String(m.id||'')));
-   c.unread=Math.max(0,(Number(c.unread)||0)-removed.filter(m=>m.from!=='me'&&!m.historical).length);
-   changed=true;
-  }
+ const c=s.content?.conversations?.wechat?.find(x=>x.id==='hufeng');
+ // Old plot bubbles are NPC-authored only. Never delete a real player's
+ // message, a historical (pre-D01) message, or an unrelated free-chat entry.
+ const retiredNpc=m=>retired.test(String(m.id||''))&&m.from!=='me'&&m.from!=='熙蒙'&&
+  !(typeof m.sentDate==='string'&&m.sentDate<'2025-05-19');
+ const removed=(c?.messages||[]).filter(retiredNpc);
+ if(removed.length){
+  s.story55.contentArchives??=[];
+  for(const m of removed)s.story55.contentArchives.push({
+   id:m.id,channel:'wechat',conversationId:'hufeng',
+   revision:'retired-hufeng-npc-plot',original:structuredClone(m)
+  });
+  const removedIds=new Set(removed.map(m=>m.id));
+  c.messages=c.messages.filter(m=>!retiredNpc(m));
+  c.unread=Math.max(0,(Number(c.unread)||0)-removed.filter(m=>!m.historical).length);
+  s.notifications=(s.notifications||[]).filter(n=>!(n.conversationId==='hufeng'&&removedIds.has(n.messageId)));
+  s.events=(s.events||[]).filter(e=>!(e.conversationId==='hufeng'&&removedIds.has(e.messageId)));
  }
- const before=s.notifications?.length||0;
- if(s.notifications)s.notifications=s.notifications.filter(n=>!retired.test(String(n.messageId||'')));
- if((s.notifications?.length||0)!==before)changed=true;
- const oldEvents=s.events?.length||0;
- if(s.events)s.events=s.events.filter(e=>!retired.test(String(e.messageId||'')));
- if((s.events?.length||0)!==oldEvents)changed=true;
  s.story55.legacyHuFengPlotRetired=true;
  return true;
 }

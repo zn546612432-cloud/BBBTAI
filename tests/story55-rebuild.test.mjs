@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55} from '../src/services/story55/runtime.js';
+import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
 import {completed,story55Config,date55} from '../src/services/story55/state.js';
 import {storySourceVersion} from '../src/services/story55/test-snapshots.js';
@@ -179,4 +179,52 @@ test('D21 shows pending review for a D20 contract until the exact configured gam
  rebuildStory55AtDay(s,22,'08:00');
  assert.equal(s.content.orders.find(o=>o.id==='d20-slow').status,'COMPLETED');
  assert.equal(s.content.mirage.digitalBalance,2010.04); // D01, D06 and D20 entries
+});
+
+test('developer day jump retains genuine D01-D13 Send records and unscripted replies without future leaks',()=>{
+ const s=phone();s.day=31;s.clock='23:00';
+ const group=s.content.conversations.wechat.find(c=>c.id==='group');
+ const wang=s.content.conversations.wechat.find(c=>c.id==='wang');
+ const feng=s.content.conversations.wechat.find(c=>c.id==='hufeng');
+ const sent={id:'player-real-d11',from:'me',text:'我自己發出的群聊',day:11,time:'21:04',sentDate:'2025-05-29',actual:true,storyD11:true};
+ const scriptedSend={id:'s55-return-2',from:'me',text:'我真實點擊 Send 的內容',day:11,time:'08:42',sentDate:'2025-05-29',actual:true,story55:true};
+ const aiReply={id:'real-hufeng-reply',from:'胡枫',text:'我看到你的訊息了',day:12,time:'22:09',sentDate:'2025-05-30',actual:true};
+ const future={id:'player-d30-future',from:'me',text:'D30才發出的消息',day:30,time:'22:10',sentDate:'2025-06-17',actual:true};
+ group.messages.push(sent,future);wang.messages.push(scriptedSend);feng.messages.push(aiReply);
+ rebuildStory55AtDay(s,13,'23:15');
+ const g=()=>s.content.conversations.wechat.find(c=>c.id==='group');
+ const w=()=>s.content.conversations.wechat.find(c=>c.id==='wang');
+ const h=()=>s.content.conversations.wechat.find(c=>c.id==='hufeng');
+ assert.equal(g().messages.find(m=>m.id===sent.id)?.text,sent.text);
+ assert.equal(w().messages.find(m=>m.id===scriptedSend.id)?.text,scriptedSend.text);
+ assert.equal(h().messages.find(m=>m.id===aiReply.id)?.text,aiReply.text);
+ assert.equal(g().messages.some(m=>m.id===future.id),false,'D30 future messages stay hidden at D13');
+ assert.ok(s.story55.developerChatArchive.some(x=>x.message.id===future.id));
+ rebuildStory55AtDay(s,8,'08:00');
+ assert.equal(g().messages.some(m=>m.id===sent.id),false);
+ assert.ok(s.story55.developerChatArchive.some(x=>x.message.id===sent.id));
+ rebuildStory55AtDay(s,11,'08:00');
+ assert.equal(g().messages.some(m=>m.id===sent.id),false,'same-day future Send waits for original time');
+ s.clock='21:05';tickStory55(s);
+ assert.equal(g().messages.filter(m=>m.id===sent.id).length,1);
+ assert.equal(w().messages.filter(m=>m.id===scriptedSend.id).length,1);
+ tickStory55(s);assert.equal(g().messages.filter(m=>m.id===sent.id).length,1,'tick does not duplicate Send');
+ rebuildStory55AtDay(s,31,'23:00');
+ assert.equal(g().messages.filter(m=>m.id===future.id).length,1);
+ assert.equal(g().messages.filter(m=>m.id===sent.id).length,1);
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.some(m=>m.id==='history-2024-0310'),true);
+});
+
+test('explicit phone reset discards developer runtime chat archive but retains old authored history',()=>{
+ const s=phone();s.day=13;s.clock='23:00';
+ const g=s.content.conversations.wechat.find(c=>c.id==='group');
+ g.messages.push({id:'real-player-d12',from:'me',text:'only this playthrough',day:12,time:'13:00',sentDate:'2025-05-30',actual:true});
+ rebuildStory55AtDay(s,13,'23:00');
+ assert.ok(s.story55.developerChatArchive.length);
+ const reset=restartState(s);
+ assert.equal(reset.story55.developerChatArchive,undefined);
+ assert.equal(reset.content.conversations.wechat.find(c=>c.id==='group').messages.some(m=>m.id==='real-player-d12'),false);
+ assert.equal(reset.content.conversations.wechat.find(c=>c.id==='group').messages.some(m=>m.id==='history-2024-0310'),true);
+ rebuildStory55AtDay(reset,13,'23:00');
+ assert.equal(reset.content.conversations.wechat.find(c=>c.id==='group').messages.some(m=>m.id==='real-player-d12'),false);
 });

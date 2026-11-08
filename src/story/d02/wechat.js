@@ -15,7 +15,10 @@ export function seedD02Wechat(s){
  for(const key of ['wang','xin']){
   const c=chat(s,key);if(!c)continue;
   c.messages=c.messages.filter(m=>{
-   const legacy=m.storyD02&&new RegExp('^d02-'+key+'-0[1-6]$').test(m.id);
+   const legacy=m.storyD02&&new RegExp('^d02-'+key+'-0[1-6]$').test(m.id)&&
+    // Protect genuine old player sends even when their IDs overlap the
+    // six legacy auto-seeded placeholder IDs.
+    (m.from!=='me'&&m.from!=='熙蒙'||m.actual!==true&&m.playerSent!==true&&m.authored!==true);
    if(legacy)deleted.add(m.id);
    return !legacy;
   });

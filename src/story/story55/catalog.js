@@ -87,8 +87,7 @@ export const STORY55_CONFIG={
       "kind": "scene",
       "requires": [
         "move"
-      ],
-      "gateDay": 13
+      ]
     },
     {
       "id": "code",

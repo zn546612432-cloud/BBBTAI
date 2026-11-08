@@ -7,6 +7,7 @@ import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
 import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
+import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
@@ -207,6 +208,9 @@ export function tickStory55(s){
  seedD02(s);
  tickD02Contracts(s);
  tickPhoneStoryMessages(s);
+ // The existing story tick silently rehydrates saved real chats as game time
+ // reaches their original timestamps. No extra event queue or notifications.
+ restoreDeveloperChatArchive(s);
  tickD03Contract(s);
  tickD04Contracts(s);
  tickD03MomentReply(s);

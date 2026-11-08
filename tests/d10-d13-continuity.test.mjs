@@ -114,3 +114,21 @@ test('D11 and D12 NPC messages recover old skipped status without a player reply
  assert.equal(b.story55.d12Chats.arrival.skipped,false);
  assert.ok(thread(b,'group').messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('落地了')));
 });
+
+test('D10 revision-one saved chat repairs only the known stale NPC speaker, keeping player customizations and audit copy',()=>{
+ const s=phone(11,'20:00'),group=thread(s,'group');
+ s.story55.d10D13Revision=1;
+ const canonical=D10_GROUP.find(d=>d.id==='shopping-list').lines[1];
+ const oldSpeaker={id:'d10-shopping-list-1',from:'熙旺',text:canonical.text,storyD10:true,actual:true,day:10,time:'09:23',sentDate:'2025-05-28'};
+ const custom={...oldSpeaker,id:'d10-shopping-list-2',text:'自己寫的內容'};
+ const player={...oldSpeaker,id:'d10-shopping-list-3',from:'me'};
+ group.messages=group.messages.filter(m=>!['d10-shopping-list-1','d10-shopping-list-2','d10-shopping-list-3'].includes(m.id));
+ group.messages.push(oldSpeaker,custom,player);
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(oldSpeaker.from,canonical.who);
+ assert.equal(custom.from,'熙旺');
+ assert.equal(player.from,'me');
+ const archived=s.story55.contentArchives.find(x=>x.id===oldSpeaker.id&&x.original?.from==='熙旺');
+ assert.ok(archived,'original NPC record is recoverable');
+ assert.equal(syncD10D13Content(s),false,'migration runs once for an already repaired save');
+});
