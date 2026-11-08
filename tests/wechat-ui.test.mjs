@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {renderWeChatHome,routeForTab,tabForRoute} from '../src/apps/wechat/components/views.js';
 import {wxIcon} from '../src/apps/wechat/components/icons.js';
 import {demoContent} from '../src/story/demo/seed.js';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {isWeChatTabSwitch} from '../src/system/navigation.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../src/apps/wechat/avatars.js';
 import {readFileSync,existsSync} from 'node:fs';
@@ -86,3 +89,27 @@ test('red unread badge in WeChat tab bar is driven by conversation data and is c
  }
 });
 
+
+test('WeChat inbox shows the same newest visible bubble as the dated conversation, without changing saved order',()=>{
+ const s=activateStory55(initialState());s.day=13;s.clock='15:18';s.unlocked=true;
+ const wang=s.content.conversations.wechat.find(c=>c.id==='wang');
+ const group=s.content.conversations.wechat.find(c=>c.id==='group');
+ wang.messages=[
+  {id:'wang-new',from:'wang',kind:'text',text:'D13 最新回话',sentDate:'2025-05-31',time:'08:12'},
+  {id:'wang-old',from:'wang',kind:'text',text:'D07 旧消息',sentDate:'2025-05-25',time:'11:00'},
+  {id:'wang-future',from:'wang',kind:'text',text:'D13 未到时间',sentDate:'2025-05-31',time:'22:30'}
+ ];
+ group.messages=[{id:'group-old',from:'小辛',kind:'text',text:'群聊旧消息',sentDate:'2025-05-25',time:'13:30'}];
+ const original=wang.messages.map(m=>m.id);
+ const home=renderWeChatHome(s,'/');
+ const row=home.match(/<button type="button" class="wx-chat-row"[^>]*data-id="wang"[\\s\\S]*?<\\/button>/)?.[0];
+ assert.ok(row,'the Wang inbox row should exist');
+ assert.match(row,/D13 最新回话/);
+ assert.match(row,/5月31日 08:12/);
+ assert.doesNotMatch(row,/D07 旧消息|D13 未到时间/);
+ assert.ok(home.indexOf('data-id="wang"')<home.indexOf('data-id="group"'),'the newer conversation must lead the inbox');
+ const detail=renderWeChatChat(s,'wang');
+ assert.ok(detail.indexOf('D07 旧消息')<detail.indexOf('D13 最新回话'),'detail is chronological');
+ assert.doesNotMatch(detail,/D13 未到时间/);
+ assert.deepEqual(wang.messages.map(m=>m.id),original,'rendering cannot reorder saved messages');
+});
