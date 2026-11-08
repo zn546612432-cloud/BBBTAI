@@ -24,12 +24,12 @@ try{
  if(!XITAI_VOICE_DIRECTION)throw Error('缺少熙泰聲音設定。');
  const outputs=[];
  for(const i of D13_VOICE_INDICES){
-  const text=lines[i][1],performance=prepareTaiVoicePerformance(text);
+  const text=lines[i][1],spoken=text.replace(/\bnya\b/gi,'奈亞'),performance=prepareTaiVoicePerformance(spoken);
   const settings=ttsProviderSettings(normalizeTtsSettings({...performance,...config.voiceSettings?.intrusion?.[i]}));
   const path=canonicalPhoneAudioPath(`/assets/story55/d13/call-${i}.mp3`);
   const response=await fetch(endpoint,{
    method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),
-   body:JSON.stringify({model:'speech-2.8-hd',text,stream:false,output_format:'hex',...settings,voice_setting:{voice_id:voice,...settings.voice_setting}})
+   body:JSON.stringify({model:'speech-2.8-hd',text:spoken,stream:false,output_format:'hex',...settings,voice_setting:{voice_id:voice,...settings.voice_setting}})
   });
   if(!response.ok)throw Error(`第${i}行配音請求失敗（HTTP ${response.status}）。`);
   const data=await response.json(),hex=data.data?.audio;
