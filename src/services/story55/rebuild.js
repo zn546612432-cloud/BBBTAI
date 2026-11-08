@@ -18,6 +18,7 @@ import {simulateFlowD03} from './flow-d03.js';
 import {D01_REPAIR,D01_ATTACHMENT,seedD01,deliverD01Opening,claimD01Bank,acceptD01Repair,deliverD01Attachment,revealD01Key,deployD01,finishD01Round,submitD01Attachment,settleD01Repair} from '../../story/d01/runtime.js';
 import {authorize} from '../../apps/ghost/state.js';
 import {rebuildD02} from '../../story/d02/runtime.js';
+import {collectDeveloperChatArchive,markDeveloperSimulatedMessages,restoreDeveloperChatArchive} from './developer-chat-archive.js';
 
 const copy=value=>structuredClone(value);
 const minute=(day,clock)=>day*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
@@ -271,11 +272,14 @@ function deliverAuthoredScheduled(s,targetDay,clock){
  * Every day before targetDay is simulated once in temporal order; target day
  * remains playable. For a project spanning N days, only one batch/day is done.
  */
-export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
+export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerChats=true}={}){
  if(!isStory55(s))throw Error('请先创建55天周目');
  if(!Number.isInteger(targetDay)||targetDay<1||targetDay>55||!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock))
   throw Error('日期或时间无效');
  const author=preserveAuthoring(s);
+ // Keep genuine Send actions and unscripted replies across forward/backward
+ // developer jumps. A deliberate phone reset explicitly disables this.
+ const savedChats=preservePlayerChats?collectDeveloperChatArchive(s):[];
  const dailyShortChargeQuota=structuredClone(s.shortChargeGains||{});
  activateStory55(s);
  // Rebuilding dates unplugs the cable, but cannot refill previously spent daily quota.
@@ -321,6 +325,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00'){
  tickStory55(s);
  tickLinkedContracts(s);
  deliverAuthoredScheduled(s,targetDay,clock);
+ // Mark only the recreated simulation as synthetic. Restore genuine records
+ // at their original authored times; future-day records remain safely archived.
+ markDeveloperSimulatedMessages(s);
+ if(preservePlayerChats){s.story55.developerChatArchive=savedChats;restoreDeveloperChatArchive(s);}
  // An authored message can have an earlier original timestamp than a newly
  // simulated mail. Reorder both history and banners by event time, not by
  // which reconciliation helper ran last.
