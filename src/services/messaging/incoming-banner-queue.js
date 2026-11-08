@@ -2,6 +2,12 @@
 // previous banner before it has had a visible dwell/exit interval.
 // The queue only displays unread notifications which still exist; tapping a
 // conversation cancels its stale queued banners without losing chat history.
+// Outstanding one-shot receipts survive lock, reload, and developer-date
+// reconstruction. Ordinary chat notices retain their original live-only rule.
+export function queueableNotices(notices,seenIds=new Set()){
+ return (notices||[]).filter(n=>n?.id&&!n.silent
+  &&(!seenIds.has(n.id)||(n.bannerPending===true&&n.bannerShown!==true)));
+}
 export class IncomingBannerQueue{
  constructor({show,stillUnread,eligible,schedule=(fn,ms)=>setTimeout(fn,ms),interval=1750}){
   this.show=show;this.stillUnread=stillUnread;this.eligible=eligible;

@@ -68,13 +68,36 @@ function creditScene55(s,n){
  const id='s55-'+n.id;
  if(s.bankData.transactions.some(t=>t.id===id))return false;
  postBankTransaction(s,{id,label:n.liability?'ANONYMOUS LOAN':'STORY CREDIT',amount:n.credit,
-  metadata:n.liability?{liabilityId:id,liabilityAmount:n.credit,kind:'loan'}:{}});
- if(n.liability)s.story55.liabilities=(s.story55.liabilities||0)+n.credit;
- s.notifications??=[];
- s.notifications.push({id:id+'-receipt',title:'太平洋銀行',body:'入帳 '+n.credit.toLocaleString(),day:s.day,clock:s.clock,link:{appId:'bank',route:'/'}});
+   metadata:n.liability?{liabilityId:id,liabilityAmount:n.credit,kind:'loan'}:{},
+   receipt:{id:id+'-receipt',title:'Pacific',
+    body:'帳戶入帳 US$'+Number(n.credit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+    link:{appId:'bank',route:'/receipt/'+encodeURIComponent(id)}}});
+ if(n.liability){
+  s.story55.liabilities=(s.story55.liabilities||0)+n.credit;
+  s.story55.loanReceiptDeliveryRevision=1;
+ }
  return true;
 }
-export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
+// Upgrade ONLY the outstanding D15 loan receipt from older saved phones.
+ // Do not replay the loan, alter the balance, or delete already-read notices.
+ export function syncLegacyLoanReceipt55(s){
+  if(!isStory55(s)||s.story55.loanReceiptDeliveryRevision===1)return false;
+  const tx=s.bankData?.transactions?.find(t=>t.id==='s55-loan');
+  if(!tx)return false;
+  s.notifications??=[];
+  const id='s55-loan-receipt',existing=s.notifications.find(n=>n.id===id);
+  if(existing){
+   if(existing.bannerShown!==true)existing.bannerPending=true;
+   existing.link={appId:'bank',route:'/receipt/s55-loan'};
+  }else s.notifications.unshift({
+   id,title:'Pacific',body:'帳戶入帳 US$1,000,000.00',
+   day:s.story55.completed?.loan?.day||s.day,clock:s.story55.completed?.loan?.clock||s.clock,
+   link:{appId:'bank',route:'/receipt/s55-loan'},bannerPending:true
+  });
+  s.story55.loanReceiptDeliveryRevision=1;
+  return true;
+ }
+ export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
@@ -195,6 +218,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);
  // Legacy D06 accepted saves are repaired by the shared commission runner.

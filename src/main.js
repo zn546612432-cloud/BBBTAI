@@ -32,7 +32,7 @@ import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
 import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
-import {IncomingBannerQueue} from './services/messaging/incoming-banner-queue.js';
+import {IncomingBannerQueue,queueableNotices} from './services/messaging/incoming-banner-queue.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
@@ -112,7 +112,20 @@ let noticeSwipeAnimating=false;
 let shortChargeNoticePausedUntil=0;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
-const showBanner=(notice,{duration=3700}={})=>{const node=$('#toast');if(!node)return;node.innerHTML=notificationCard(notice,store.get());node.dataset.noticeId=notice.id||'';node.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);};
+const showBanner=(notice,{duration=3700}={})=>{
+ const node=$('#toast');if(!node)return;
+ node.innerHTML=notificationCard(notice,store.get());
+ node.dataset.noticeId=notice.id||'';
+ node.classList.add('visible');
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);
+ // Mark only after the banner has really reached the screen; locked notices
+ // remain pending and a refreshed page cannot replay an already-shown receipt.
+ if(notice.bannerPending===true)store.update(s=>{
+  const saved=s.notifications.find(n=>n.id===notice.id);
+  if(saved)saved.bannerShown=true;
+ });
+};
 const liveBanners=new IncomingBannerQueue({
  show:showBanner,
  stillUnread:n=>store.get().notifications.some(x=>x.id===n.id&&!x.silent),
@@ -362,7 +375,7 @@ store.subscribe(()=>{
  const s=store.get();
  // A compulsory active scene or a newly imposed charge gate unplugs the cable.
  if(shortChargeStoryInterrupted(s)){store.update(next=>endShortCharge(next));return;}
- const added=s.notifications.filter(n=>!seenNotices.has(n.id));
+ const added=queueableNotices(s.notifications,seenNotices);
  seenNotices=new Set(s.notifications.map(n=>n.id));
  const shown=$('#toast')?.dataset.noticeId;
  if(shown&&s.notifications.some(n=>n.id===shown&&n.silent)){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}

@@ -10,7 +10,7 @@ export const cents=n=>Math.round(Number(n)*100);
 /** One synchronous ledger posting contract used by optional purchases and
  * BTC cash-outs. Call only inside the existing PhoneStore.update() callback.
  * A transaction ID is committed with its balance mutation, exactly once. */
-export function postBankTransaction(s,{id,label,amount,metadata={}}){
+export function postBankTransaction(s,{id,label,amount,metadata={},receipt=null}){
  ensureBank(s);
  const n=Number(amount),value=cents(n);
  if(!id||!label||!Number.isFinite(n)||!Number.isSafeInteger(value)||value===0||Math.abs(value/100-n)>0.000001)
@@ -22,6 +22,18 @@ export function postBankTransaction(s,{id,label,amount,metadata={}}){
  const tx={...metadata,id,label,amount:value/100,date:isStory55(s)?date55(s.day):dateLabel(s),time:s.clock};
  s.bankData.balance=(old+value)/100;
  s.bankData.transactions.unshift(tx);
+ // A bank receipt is the notification for the SAME ledger posting, not a
+ // separately scheduled story event. Its transaction ID is the idempotency key.
+ if(receipt){
+  s.notifications??=[];
+  const noticeId=receipt.id||'bank-receipt-'+id;
+  if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({
+   id:noticeId,title:receipt.title||'Pacific',
+   body:receipt.body||`${n>0?'轉入':'轉出'} US$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+   day:s.day,clock:s.clock,link:receipt.link||{appId:'bank',route:'/receipt/'+encodeURIComponent(id)},
+   bannerPending:true
+  });
+ }
  return tx;
 }
 export function payBankPurchase(s,{id,title,price,metadata={}}){
