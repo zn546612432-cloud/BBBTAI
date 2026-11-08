@@ -41,3 +41,12 @@ export function story55ChargeGate(s){
  if(d01Gate(s))return 'plot';
  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
 }
+
+// A timed D13 notification may be awaited while short-charging. Other
+// outstanding authored work (including the D13 exhibition) still gates it.
+const D13_WAITING_NODES=new Set(['d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion']);
+export function story55ShortChargeGate(s){
+ if(!isStory55(s)||s.day!==13)return story55ChargeGate(s);
+ if(d01Gate(s))return 'plot';
+ return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)&&!D13_WAITING_NODES.has(n.id))?'plot':null;
+}
