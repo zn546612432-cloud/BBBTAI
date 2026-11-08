@@ -78,7 +78,10 @@ try{
  await action('mc-wallet-detail').click();
  await action('mc-wallet-transfer').click();await action('mc-wallet-cancel-transfer').click();
  await page.locator('.mc-wallet-transfer-confirm').waitFor({state:'hidden'});
- await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
+ await action('mc-wallet-transfer').click();
+ assert.equal((await saved()).story55.completed.exhibition,undefined,'D13 exhibition was not auto-completed');
+ await action('mc-wallet-transfer-confirm').click();
+ assert.equal((await saved()).story55.completed.exhibition,undefined,'transfer cannot complete the exhibition');
  await page.locator('.tel-green-screen').waitFor();await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
  await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),1);assert.equal(await action('tel-answer').count(),1);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
