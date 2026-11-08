@@ -4,7 +4,7 @@ export const D13_MAIL_ID='s55-d13-wallet-mail';
 export const D13_NODES=[
  {id:'d13-wallet-mail',day:13,at:'22:10',title:'MIRAGE 錢包通知',kind:'mail',requires:[],mail:D13_MAIL_ID,gateDay:13},
  {id:'d13-wallet-bind',day:13,title:'綁定電子錢包',kind:'wallet',requires:['d13-wallet-mail'],gateDay:13},
- {id:'d13-wallet-transfer',day:13,title:'電子錢包轉帳',kind:'wallet',requires:['d13-wallet-bind','exhibition'],gateDay:13}
+ {id:'d13-wallet-transfer',day:13,title:'電子錢包轉帳',kind:'wallet',requires:['d13-wallet-bind'],gateDay:13}
 ];
 export function applyD13Definition(c){
  const current=c.scenes.intrusion,old=structuredClone(D13_LEGACY_LINES);
@@ -17,16 +17,16 @@ export function applyD13Definition(c){
  // daytime exhibition. Upgrade only the former default prerequisite on saves.
  const scheduledMail=c.nodes.find(n=>n.id==='d13-wallet-mail');
  if(JSON.stringify(scheduledMail?.requires)==='["exhibition"]')scheduledMail.requires=[];
- // The wallet may be bound when the mail arrives. The irreversible transfer
- // that triggers the green screen waits for the compulsory daytime scene.
- // Keeping this gate at transfer (not in the call) prevents a green-screen
- // takeover that cannot progress due to outstanding scene prerequisites.
+ // D13 is two independent plot tracks: exhibition plans and the evening
+ // KIRA -> wallet -> green screen -> forced-call chain. The real transfer
+ // requires wallet binding only; never couple it to the exhibition scene.
+ // Repair saved default node configurations without clearing player progress.
  const transfer=c.nodes.find(n=>n.id==='d13-wallet-transfer');
- if(JSON.stringify(transfer?.requires)==='["d13-wallet-bind"]')
-  transfer.requires=['d13-wallet-bind','exhibition'];
+ if(['["d13-wallet-bind","exhibition"]','["exhibition","d13-wallet-bind"]'].includes(JSON.stringify(transfer?.requires)))
+  transfer.requires=['d13-wallet-bind'];
  const n=c.nodes.find(n=>n.id==='intrusion');
  if(n){
-  if(['["exhibition"]','["exhibition","d13-wallet-transfer"]'].includes(JSON.stringify(n.requires)))
+  if(['["exhibition"]','["exhibition","d13-wallet-transfer"]','["d13-wallet-transfer","exhibition"]'].includes(JSON.stringify(n.requires)))
    n.requires=['d13-wallet-transfer'];
   Object.assign(n,{at:'22:10',delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-intrusion-v2',systemMessages:true,call:{id:'s55-d13-call-v2',displayName:'未知號碼',forced:true,autoAnswerMs:8000}});
  }
