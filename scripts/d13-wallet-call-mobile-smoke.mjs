@@ -19,8 +19,10 @@ const context=await browser.newContext({...devices['iPhone 13']});const page=awa
 const sample=await readFile(new URL('../public/assets/story55/d13/call-8.mp3',import.meta.url));
 const requestedSpeech=[];
 await page.route('https://api.minimaxi.com/v1/t2a_v2',route=>{
- requestedSpeech.push(route.request().postDataJSON()?.text||'');
- return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({base_resp:{status_code:0},data:{audio:sample.toString('hex')}})});
+ const request=route.request(),headers={'access-control-allow-origin':'*','access-control-allow-headers':'authorization,content-type','access-control-allow-methods':'OPTIONS,POST'};
+ if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
+ requestedSpeech.push(request.postDataJSON()?.text||'');
+ return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({base_resp:{status_code:0},data:{audio:sample.toString('hex')}})});
 });
 page.on('pageerror',e=>errors.push(e.message));
 await page.addInitScript(({seed,key})=>{
