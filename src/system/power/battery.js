@@ -1,7 +1,7 @@
 import {isStory55} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY} from '../runtime/policy.js';
 import {closeD01WeChat} from '../../story/d01/wechat.js';
-import {chargingBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
+import {chargingBlock,shortChargeBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
 import {secondView55} from '../../services/story55/finale.js';
 // Story55 discharge follows the accepted game minutes, never a second real-time timer.
 // From 08:00 at 100%, ordinary use reaches 20% around 23:00.
@@ -12,7 +12,7 @@ export const isShortCharging=s=>s?.powerMode==='short-charging';
 // Persist actual percentage points gained per story day. Unplugging/reloading
 // never grants a fresh 10%, including after a developer jumps back in time.
 export const shortChargeGainToday=s=>Math.max(0,Math.min(SHORT_CHARGE_MAX_GAIN,Number(s?.shortChargeGains?.[String(s?.day)])||0));
-export const shortChargeStoryInterrupted=s=>isShortCharging(s)&&!!(chargingBlock(s)||s?.story55?.activeScene||s?.story55?.ended);
+export const shortChargeStoryInterrupted=s=>isShortCharging(s)&&!!(shortChargeBlock(s)||s?.story55?.activeScene||s?.story55?.ended);
 export const BATTERY_DRAIN_INTERVAL_MS=1_125_000/80;
 export const batteryPercent=s=>Number.isFinite(Number(s.batteryPercent))?Math.max(0,Math.min(100,Math.round(Number(s.batteryPercent)))):82;
 export const needsCharge=s=>batteryPercent(s)<=LOW_BATTERY_PERCENT;
@@ -46,10 +46,11 @@ export function drainBattery(s,ms){
  s.batteryPercent=Math.max(chargingBlock(s)?20:2,before-points);
  return before-s.batteryPercent;
 }
+export const canShortCharge=s=>!!s&&!phoneBlocked(s)&&!shortChargeBlock(s)&&!s.story55?.activeScene&&!['charging','short-charging','sleeping'].includes(s.powerMode);
 export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&!s.story55?.activeScene&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping';
 // Short charge respects the original wet-port/story gate for BOTH modes.
 export function beginShortCharge(s,now=Date.now()){
- if(!canCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
+ if(!canShortCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
  s.powerMode='short-charging';
  s.shortCharge={startPercent:batteryPercent(s),elapsedMs:0,credited:0,lastAccruedAt:now};
  s.shortChargeGains??={};
