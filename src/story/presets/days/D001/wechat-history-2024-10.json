@@ -26,14 +26,6 @@
           "appearance": "immediate"
         },
         {
-          "id": "wx-group-2024-10-01-003",
-          "from": "胡枫",
-          "text": "国庆快乐！",
-          "time": "11:20",
-          "sentDate": "2024-10-01",
-          "appearance": "immediate"
-        },
-        {
           "id": "wx-group-2024-10-01-004",
           "from": "仔仔",
           "text": "国庆快乐",
@@ -60,7 +52,7 @@
         {
           "id": "wx-group-2024-10-01-007",
           "from": "小辛",
-          "text": "阿枫和我下周去韩国玩，有没有要代购的",
+          "text": "下周去韩国找阿枫玩，有没有要代购的",
           "time": "11:26",
           "sentDate": "2024-10-01",
           "appearance": "immediate"

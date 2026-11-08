@@ -10,18 +10,66 @@
       "conversationName": "GROUP",
       "messages": [
         {
+          "id": "wx-group-20240906-001",
+          "from": "胡枫",
+          "text": "今天第一節課差點走錯樓，好还有好心的师姐指路",
+          "time": "18:00",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-002",
+          "from": "小辛",
+          "text": "这叫转角遇到爱，唉～～～～你的心里已经没有我了",
+          "time": "18:01",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-003",
+          "from": "胡枫",
+          "text": "你一天不找骂浑身痒是吧？你那間酒吧裝修完了沒有",
+          "time": "18:02",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-004",
+          "from": "小辛",
+          "text": "快了，桌椅上次挑的不满意，新的還沒送到",
+          "time": "18:03",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-005",
+          "from": "胡枫",
+          "text": "那个紫色大沙发真是太丑了，挑点好看的，等我飞回来光顾",
+          "time": "18:04",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-006",
+          "from": "小辛",
+          "text": "嘻嘻，我听说韩国的酒吧卡年龄，我的酒吧不卡，永远欢迎你们",
+          "time": "18:05",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240906-007",
+          "from": "胡枫",
+          "text": "蒙哥揍他好吗求你了@熙蒙",
+          "time": "18:06",
+          "sentDate": "2024-09-06",
+          "appearance": "immediate"
+        },
+        {
           "id": "wx-group-2024-09-10-001",
           "from": "仔仔",
           "text": "我们换新据点了，一会发定位给你们，保持联系",
           "time": "13:18",
-          "sentDate": "2024-09-10",
-          "appearance": "immediate"
-        },
-        {
-          "id": "wx-group-2024-09-10-002",
-          "from": "胡枫",
-          "text": "好",
-          "time": "13:20",
           "sentDate": "2024-09-10",
           "appearance": "immediate"
         },
@@ -74,11 +122,35 @@
           "appearance": "immediate"
         },
         {
-          "id": "wx-group-2024-09-13-007",
-          "from": "胡枫",
-          "text": "okok",
-          "time": "20:45",
-          "sentDate": "2024-09-13",
+          "id": "wx-group-20240915-001",
+          "from": "小辛",
+          "text": "干爹走了？",
+          "time": "10:42",
+          "sentDate": "2024-09-15",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240915-002",
+          "from": "wang",
+          "text": "嗯，早上走的。",
+          "time": "10:46",
+          "sentDate": "2024-09-15",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240915-003",
+          "from": "小辛",
+          "text": "又没说什么时候回来啊",
+          "time": "10:49",
+          "sentDate": "2024-09-15",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-group-20240915-004",
+          "from": "wang",
+          "text": "没有。",
+          "time": "10:53",
+          "sentDate": "2024-09-15",
           "appearance": "immediate"
         },
         {
@@ -220,7 +292,7 @@
         {
           "id": "wx-group-2024-09-29-003",
           "from": "仔仔",
-          "text": "我还以为你们只去几天",
+          "text": "我还以为你只去几天",
           "time": "23:11",
           "sentDate": "2024-09-29",
           "appearance": "immediate"

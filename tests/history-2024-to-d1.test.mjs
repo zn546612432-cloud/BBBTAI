@@ -18,10 +18,13 @@ test('October through D1-7 history uses valid unique IDs and stays in the past',
  assert.equal(new Set(ids).size,ids.length);
  assert.ok(all.length>200,`expected substantial month-by-month history, got ${all.length}`);
  assert.ok(all.every(m=>m.appearance==='immediate'&&m.sentDate<='2025-05-13'));
- assert.equal(all.map(m=>m.sentDate).sort().at(-1),'2025-05-13');
+ assert.equal(all.map(m=>m.sentDate).sort().at(-1),'2025-05-12');
  assert.equal(all.map(m=>m.sentDate).sort()[0],'2024-10-12');
  packs.forEach(pack=>assert.equal(parsePresetPayload(pack).length,1));
  assert.equal(exact('group','2024-12-24','圣诞夜惊魂！！！！').length,1);
+ assert.equal(exact('hufeng','2025-05-13','蒙哥，我那台电脑开机只有黑屏了……').length,0);
+ assert.equal(exact('group','2024-10-12','回来就来工房，门口那台电脑又蓝屏').length,0);
+ assert.equal(exact('group','2024-10-12','你就不能先关心一下我吗？？？').length,1);
  assert.equal(exact('wang','2025-01-21','澳大利亚').length,1);
  const manifest=JSON.parse(readFileSync(new URL(prefix+'../manifest.json',import.meta.url),'utf8'));
  for(const m of months)assert.ok(manifest.files.includes('D001/wechat-history-'+m+'.json'));
