@@ -17,6 +17,12 @@ export function applyD13Definition(c){
  // daytime exhibition. Upgrade only the former default prerequisite on saves.
  const scheduledMail=c.nodes.find(n=>n.id==='d13-wallet-mail');
  if(JSON.stringify(scheduledMail?.requires)==='["exhibition"]')scheduledMail.requires=[];
+ // The independently readable 29-day planning note must not block the
+ // phone's overnight charge after the wallet call. Upgrade only legacy
+ // default node config; leave custom author-authored gating alone.
+ const planning=c.nodes.find(n=>n.id==='exhibition');
+ if(planning?.gateDay===13&&planning.kind==='scene'&&
+    JSON.stringify(planning.requires)==='["move"]')delete planning.gateDay;
  // Wallet transfer is triggered by the player after reading the mail and
  // binding the wallet; the earlier planning note is an independent event.
  const transfer=c.nodes.find(n=>n.id==='d13-wallet-transfer');
