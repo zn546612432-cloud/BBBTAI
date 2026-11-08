@@ -224,3 +224,25 @@ test('MIRAGE native transfer can proceed without the unrelated planning window',
  assert.equal(s.story55.d13.phase,'green');
  assert.equal(s.story55.completed.exhibition,undefined);
 });
+
+test('D13 evening phone call releases long-charge to D14 even when the independent planning note was never opened',()=>{
+ const s=day13('22:30');
+ delete s.story55.completed.exhibition;
+ // Emulate saved pre-fix planning gate: upgrading must not remove its text.
+ const plan=s.story55.config.nodes.find(n=>n.id==='exhibition');
+ plan.gateDay=13;
+ assert.equal(chargingBlock(s),'plot');
+ tickStory55(s);
+ assert.equal(plan.gateDay,undefined,'migrate only the old default note gate');
+ assert.ok(s.story55.config.scenes.exhibition[0][1].includes('29天'));
+ for(const id of ['d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion'])
+  s.story55.completed[id]={day:13,clock:'22:28'};
+ assert.equal(s.story55.completed.exhibition,undefined,'never auto-complete optional text');
+ assert.equal(chargingBlock(s),null,'only actual required call needs to block day transition');
+ s.clock='23:25';s.story55.activeScene=null;
+ assert.equal(plugIn(s),true);
+ assert.equal(s.day,14);
+ s.dayChargeRemainingMs=0;tickStory55(s);
+ s.clock='09:16';tickStory55(s);
+ assert.ok(s.content.mail.some(m=>m.id==='code-mail'),'D14 KIRA mail is still reached');
+});
