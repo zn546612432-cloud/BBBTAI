@@ -12,7 +12,7 @@ permissions:
   contents: read
 jobs:
   d13-mobile:
-    if: github.head_ref == 'fix/d13-bundled-voice' || startsWith(github.head_ref, 'assets/d13-minimax-seven-') || github.head_ref == 'feature/d13-wallet-intrusion-call' || github.head_ref == 'fix/d13-native-mail-wallet-call-20261108' || github.head_ref == 'fix/d13-short-charge-voice-call-native-20261108' || startsWith(github.head_ref, 'fix/d13-mail-midnight-clock-unified-') || startsWith(github.head_ref, 'fix/wechat-chronology-d13-shortcharge-')
+    if: github.head_ref == 'fix/d13-bundled-voice' || startsWith(github.head_ref, 'assets/d13-minimax-seven-') || github.head_ref == 'feature/d13-wallet-intrusion-call' || github.head_ref == 'fix/d13-native-mail-wallet-call-20261108' || github.head_ref == 'fix/d13-short-charge-voice-call-native-20261108' || startsWith(github.head_ref, 'fix/d13-mail-midnight-clock-unified-') || startsWith(github.head_ref, 'fix/d13-wallet-transfer-unblock-exhibition-') || startsWith(github.head_ref, 'fix/wechat-chronology-d13-shortcharge-')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
