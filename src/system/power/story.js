@@ -49,7 +49,12 @@ export function syncDeathNight(s){
 export const shortChargeBlock=s=>isStory55(s)?story55ShortChargeGate(s):chargingBlock(s);
 
 export function chargingBlock(s){
- if(isStory55(s))return story55ChargeGate(s);
+ if(isStory55(s)){
+  // A forced 03:00 emergency is physical recovery, not an authored skip.
+  // Keep every incomplete node pending while permitting the battery to recover.
+  if((s.emergencyCharge||s.poweredOff)&&s.day<55&&!s.story55?.ended)return null;
+  return story55ChargeGate(s);
+ }
  if(s.day===DEATH_DAY||deathLocked(s))return 'death';
  const flags=s.storyPresets?.flags||[];
  const gate=(s.storyChargeGates||[]).find(g=>g.day===s.day&&!flags.includes(g.untilFlag));
