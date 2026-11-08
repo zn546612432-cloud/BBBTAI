@@ -9,7 +9,7 @@ import {DAILY_CONTRACTS as D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD
 import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
-import {isStory55} from '../../services/story55/state.js';
+import {isStory55,nodeStatus} from '../../services/story55/state.js';
 import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './data.js';
 import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
@@ -193,7 +193,12 @@ export function handle(action,t,ctx,loc){const id=t.dataset.id,s=ctx.store.get()
  if(action==='mc-wallet-usd')return route(ctx,'/wallet/usd');
  if(action==='mc-wallet-detail')return route(ctx,'/wallet/'+D13_WALLET_ID);
  if(action==='mc-wallet-transfer')return route(ctx,'/wallet/'+D13_WALLET_ID,{confirm:'yes'});
- if(action==='mc-wallet-transfer-confirm'){ctx.store.update(n=>transferD13Wallet(n));return;}
+ if(action==='mc-wallet-transfer-confirm'){
+  const status=nodeStatus(ctx.store.get(),'d13-wallet-transfer');
+  if(status.state!=='ready')throw Error(status.reason);
+  ctx.store.update(n=>{if(!transferD13Wallet(n))throw Error('轉帳尚未完成');});
+  return;
+ }
  if(action==='mc-product')route(ctx,'/product/'+id);if(action==='mc-cart')route(ctx,'/cart');
  if(action==='mc-filter'){filter=t.dataset.category;ctx.refresh();}
  if(action==='mc-add-cart'){ctx.store.update(s=>{const d=s.content.mirage,p=d.products.find(x=>x.id===id),row=d.cart.find(x=>x.id===id);if(!p||Number(p.stock)<(row?.qty||0)+1)throw Error('INSUFFICIENT STOCK');if(row)row.qty++;else d.cart.push({id,qty:1});});ctx.toast('ADDED TO CART');}
