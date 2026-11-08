@@ -38,12 +38,7 @@
       "path": "/assets/story55/d13/call-18.mp3",
       "textHash": "5a15ead645749a823172d28b81876f0469b7a8c8f4cffab10a6248a9391f5622",
       "size": 64500
-    },
-    {
-      "index": 20,
-      "path": "/assets/story55/d13/call-20.mp3",
-      "textHash": "1f3e70418a1ed1765f4dc0820fed4e21106482e254bd9a6285141c141e484121",
-      "size": 137652
     }
-  ]
+  ],
+  "note": "call-20 is re-synthesized from the approved current dialogue at runtime. Never play the previous recorded ending."
 }
