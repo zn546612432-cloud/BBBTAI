@@ -41,9 +41,10 @@ test('D13 waiting for 22:10 KIRA mail permits short charge, not long charge or p
  assert.equal(endShortCharge(s),true);
 });
 
-test('03:00 emergency battery is not suppressed by waiting story nodes',()=>{
+test('03:00 emergency battery follows completion of the D13 evening call',()=>{
  const s=day13('23:59');
- assert.equal(chargingBlock(s),'plot');
+ for(const id of ['d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion'])s.story55.completed[id]={day:13,clock:'22:26',test:true};
+ assert.equal(chargingBlock(s),null);
  assert.equal(advanceGameMinutes(s,181).event,'emergency');
  assert.equal(s.day,14);assert.equal(s.clock,'03:00');
  assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,true);
