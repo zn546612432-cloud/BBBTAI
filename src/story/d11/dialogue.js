@@ -1,7 +1,9 @@
 // D11 · 2025-05-29. Only the six Wolf Cubs are in the group;
 // Fu Longsheng's offline meeting is represented in Ximeng's own note.
 const parse=body=>body.split('|').filter(Boolean).map(part=>{const i=part.indexOf('：');if(i<0)throw Error('群聊缺少发言人');return {who:part.slice(0,i),kind:'text',text:part.slice(i+1)};});
-const scene=(id,at,body)=>({id,chat:'group',at,lines:parse(body),condition:s=>!!s.story55?.completed?.return});
+// Chat events are independent of the player's reply. Unskip legacy missed NPC scenes.
+const restoreSkipped=(s,q)=>{if(q.skipped&&q.status==='skipped'){q.skipped=false;q.historySettled=false;q.status='pending';q.started=false;q.index=0;q.nextAt=null;q.dueAt=null;q.awaitingPlayer=false;}};
+const scene=(id,at,body)=>({id,chat:'group',at,lines:parse(body),migrate:restoreSkipped});
 export const D11_GROUP=[
  scene('notice','09:15','熙旺：晚上七點半，老地方見|熙旺：乾爹回來了，今天大家盡量過來|阿威：我晚上可以|仔仔：收到，我把手上的活弄完就去|小辛：啊？真的？|胡枫：我還在首爾，明晚才落地|熙旺：知道，航班號收到了，我去接'),
  scene('afternoon','15:20','阿威：我先去訓練，結束直接過去|小辛：我帶點喝的|仔仔：別買太多，今晚還有人準備吃的'),

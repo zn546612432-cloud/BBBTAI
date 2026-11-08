@@ -24,7 +24,7 @@ function migrateNPC(s){
   for(const scene of D10_GROUP)for(let i=0;i<scene.lines.length;i++){
    const m=group.messages.find(x=>x.id==='d10-'+scene.id+'-'+i);
    if(!m||m.from==='me'||m.text!==OLD_D10[scene.id]?.[i])continue;
-   archive(s,m);m.text=scene.lines[i].text;changed=true;
+   archive(s,m);m.text=scene.lines[i].text;m.from=scene.lines[i].who;changed=true;
   }
   for(let i=0;i<2;i++){
    const m=group.messages.find(x=>x.id==='s55-move-'+i);
@@ -56,6 +56,11 @@ function migrateNPC(s){
 export function syncD10D13Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
+ // Keep D11 family reunion and D12 arrival independent of D06 and reply gates.
+ for(const [id,old] of [['return','invitation'],['move','return']]){
+  const node=s.story55.config?.nodes?.find(n=>n.id===id);
+  if(node&&JSON.stringify(node.requires)===JSON.stringify([old])){node.requires=[];changed=true;}
+ }
  if(s.story55.d10D13Revision!==1){
   const c=s.story55.config,q=s.story55.scenes||{};
   if(c&&same(c.scenes?.return,OLD_RETURN)){
