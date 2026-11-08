@@ -111,7 +111,10 @@ export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
 }
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
  const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
- if(id==='intrusion'&&line[0]==='system'&&(index===15||index===19))return;
+ if(id==='intrusion'&&line[0]==='system'&&(index===15||index===19)){
+  appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:`s55-intrusion-v2-${index}`,from:'system',text:line[1],kind:'terminal-status',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  return;
+ }
  if(line[0]==='system'&&index>0&&n.systemMessages){
   appendAuthoredPhoneMessage(s,{channel:n.channel,conversationId:n.conversationId,messageId:`${n.messagePrefix}-${index}`,from:'system',text:line[1],kind:'system',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   return;
@@ -121,7 +124,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
