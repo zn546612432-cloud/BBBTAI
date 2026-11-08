@@ -24,7 +24,7 @@ export const D13_PREVIOUS_LINES=[
  ['ouroboros','可你的手機裡那些資料告訴我，你似乎不止一個人。'],
  ['system','〔反追蹤失敗〕'],
  ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，熙蒙。記得檢查你的郵箱。']
-];;
+];
 export const D13_LINES=[
  ['system','屏幕失去響應，重啟沒有恢復。'],
  ['ouroboros','膽子不小。上次拿了錢，還想回來看看有沒有第二份？'],
