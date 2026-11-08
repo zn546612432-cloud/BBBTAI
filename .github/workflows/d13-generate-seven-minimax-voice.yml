@@ -37,7 +37,7 @@ jobs:
       - run: npm ci
       - name: Verify private MiniMax configuration
         env:
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           if [ -z "$MINIMAX_API_KEY" ]; then
             echo "::error::Set the MINIMAX_API_KEY repository Actions secret before running this workflow."
@@ -45,8 +45,8 @@ jobs:
           fi
       - name: Synthesize all seven real MP3 files
         env:
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }
-          MINIMAX_VOICE_ID: ${{ inputs.voice_id }
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_VOICE_ID: ${{ inputs.voice_id }}
           MINIMAX_REGION: cn
         run: node scripts/generate-d13-call-voice.mjs
       - name: Verify hashes and make bundled speech authoritative
@@ -63,9 +63,9 @@ jobs:
           retention-days: 7
       - name: Push generated recordings to a review branch
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          branch="assets/d13-minimax-seven-${{ github.run_id }"
+          branch="assets/d13-minimax-seven-${{ github.run_id }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
