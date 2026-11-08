@@ -268,12 +268,14 @@ test('D02 migration removes only legacy auto-sent chat bubbles and stale notices
  delete s.story55.d02.wechat;
  c.messages.push({id:'d02-wang-01',from:'me',storyD02:true,text:'旧自动发消息',day:2,sentDate:'2025-05-20'});
  c.messages.push({id:'player-authored-example',from:'me',actual:true,text:'玩家原有记录',day:2,sentDate:'2025-05-20'});
+ c.messages.push({id:'d02-wang-03',from:'me',actual:true,storyD02:true,text:'玩家真正點擊發送的舊訊息',day:2,sentDate:'2025-05-20'});
  c.messages.push({id:'d02-wang-02',from:'熙旺',storyD02:true,text:'旧自动回复',day:2,sentDate:'2025-05-20',delivery:{day:2,clock:'12:19'}});
  s.notifications.push({id:'message-wechat-wang-d02-wang-02',messageId:'d02-wang-02',conversationId:'wang'});
  c.unread=1;
  assert.equal(seedD02Wechat(s),true);
  assert.equal(c.messages.some(m=>m.id==='d02-wang-01'||m.id==='d02-wang-02'),false);
  assert.equal(c.messages.some(m=>m.id==='player-authored-example'),true);
+ assert.equal(c.messages.some(m=>m.id==='d02-wang-03'&&m.from==='me'&&m.actual===true),true,'real player messages survive old D02 cleanup');
  assert.equal(c.unread,0);
  assert.equal(seedD02Wechat(s),false);
 });
