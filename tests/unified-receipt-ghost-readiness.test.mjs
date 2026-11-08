@@ -83,6 +83,6 @@ test('Ghost day capacity is enforced by the same readiness used in the view',()=
  s.story55.projects.base.batches.push({complete:true,steps:stages.map((_,i)=>({id:'completed-'+i}))});
  const availability=deploymentReadiness(s,'base');
  assert.equal(availability.canStart,false);
- assert.match(availability.reason,/今日可執行/);
- assert.throws(()=>startDeploymentStep(s,'base'),/今日可執行/);
+ assert.match(availability.reason,/本日可執行/);
+ assert.throws(()=>startDeploymentStep(s,'base'),/本日可執行/);
 });
