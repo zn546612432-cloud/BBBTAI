@@ -122,6 +122,7 @@ test('D10 revision-one saved chat repairs only the known stale NPC speaker, keep
  const oldSpeaker={id:'d10-shopping-list-1',from:'熙旺',text:canonical.text,storyD10:true,actual:true,day:10,time:'09:23',sentDate:'2025-05-28'};
  const custom={...oldSpeaker,id:'d10-shopping-list-2',text:'自己寫的內容'};
  const player={...oldSpeaker,id:'d10-shopping-list-3',from:'me'};
+ group.messages=group.messages.filter(m=>!['d10-shopping-list-1','d10-shopping-list-2','d10-shopping-list-3'].includes(m.id));
  group.messages.push(oldSpeaker,custom,player);
  assert.equal(syncD10D13Content(s),true);
  assert.equal(oldSpeaker.from,canonical.who);
