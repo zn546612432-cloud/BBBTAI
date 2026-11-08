@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,story55ShortChargeGate} from '../../services/story55/state.js';
 import {secondView55,finaleInProgress55,syncSecondClock55} from '../../services/story55/finale.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
@@ -45,6 +45,8 @@ export function syncDeathNight(s){
   s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  }
 }
+
+export const shortChargeBlock=s=>isStory55(s)?story55ShortChargeGate(s):chargingBlock(s);
 
 export function chargingBlock(s){
  if(isStory55(s))return story55ChargeGate(s);
