@@ -61,9 +61,9 @@ test('Ghost readiness and its actual runner share hardware and authorization rul
  s.story55.projects.base={authorized:true,batches:[],active:null};
  const blocked=deploymentReadiness(s,'base');
  assert.equal(blocked.canStart,false);
- assert.match(blocked.reason,/設備等級不足/);
+ assert.match(blocked.reason,/设备等级不足/);
  assert.match(deploymentView(s,'base'),/disabled aria-disabled="true"/);
- assert.throws(()=>startDeploymentStep(s,'base'),/設備等級不足/);
+ assert.throws(()=>startDeploymentStep(s,'base'),/设备等级不足/);
  s.bankData.balance=1000000;
  upgradeHardware(s);
  assert.equal(s.story55.hardware,2);
