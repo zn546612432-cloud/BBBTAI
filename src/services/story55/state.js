@@ -42,9 +42,11 @@ export function story55ChargeGate(s){
  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
 }
 
-// A timed D13 notification may be awaited while short-charging. Other
-// outstanding authored work (including the D13 exhibition) still gates it.
-const D13_WAITING_NODES=new Set(['d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion']);
+// D13 is a waiting day until the 22:10 KIRA mail. The D13 exhibition and
+// wallet/call sequence must not force the player to idle all afternoon.
+// Short charge never changes the date, never completes these nodes and still
+// stops for an active scene; long charge remains gated by the story tree.
+const D13_WAITING_NODES=new Set(['exhibition','d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion']);
 export function story55ShortChargeGate(s){
  if(!isStory55(s)||s.day!==13)return story55ChargeGate(s);
  if(d01Gate(s))return 'plot';
