@@ -1,6 +1,10 @@
 name: Synthesize D13 approved MiniMax voice
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/d13-generate-seven-minimax-voice.yml'
   workflow_dispatch:
     inputs:
       voice_id:
