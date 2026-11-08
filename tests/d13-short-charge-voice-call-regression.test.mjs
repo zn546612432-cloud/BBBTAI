@@ -199,3 +199,18 @@ test('a frozen D13 23:59 saved phone reloads to restore its timed mail and conti
  assert.equal(another.get().day,14);assert.equal(another.get().clock,'00:29');
  assert.equal(another.get().content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
 });
+
+test('D13 short charge stops at 23:59 but normal time and battery resume on the next tick',()=>{
+ const s=day13('23:50');delete s.story55.completed.exhibition;
+ s.batteryPercent=75;s.powerGameMinuteFraction=0;
+ tickStory55(s);
+ assert.equal(beginShortCharge(s),true);
+ assert.equal(advanceGameMinutes(s,100).event,'short-charge-end');
+ assert.equal(s.day,13);assert.equal(s.clock,'23:59');
+ assert.equal(s.powerMode,'idle');
+ const before=s.batteryPercent;
+ assert.equal(advanceGameMinutes(s,12).minutes,12);
+ assert.equal(s.day,14);assert.equal(s.clock,'00:11');
+ assert.ok(s.batteryPercent<before,'unplugged battery drains again after 23:59');
+ assert.equal(s.story55.completed.exhibition,undefined);
+});
