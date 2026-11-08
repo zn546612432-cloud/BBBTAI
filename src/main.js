@@ -53,6 +53,9 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
+// The native module graph has evaluated. Distinguish slow startup from a
+// genuine missing module before touching the existing user save.
+globalThis.__xmBootModulesReady?.();
 const store=new PhoneStore();
 // Reconcile wish entries affected by older home-widget checkbox behavior.
 if(isStory55(store.get()))store.update(s=>syncWishReminders(s));
@@ -72,7 +75,7 @@ mountCallEvents({store});
 // Built-in narratives are fetched from local static files. A broken cache or
 // stalled request must not keep the entire phone behind the static 0% splash.
 // The original promise continues and its eventual merge preserves user data.
-const boundedBootTask=async(task,label,limit=7000)=>{
+const boundedBootTask=async(task,label,limit=3500)=>{
  let timer;
  try{
   const result=await Promise.race([
@@ -86,7 +89,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
 await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
-await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
+await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',1500);
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
