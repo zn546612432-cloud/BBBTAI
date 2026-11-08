@@ -9,7 +9,8 @@ import {currentScript55,sendScriptedDraft55} from '../src/services/story55/scrip
 import {PHONE_CHAT_TRACKS} from '../src/services/messaging/phone-story-scheduler.js';
 import {D10_GROUP} from '../src/story/d10/dialogue.js';
 import {D11_GROUP} from '../src/story/d11/dialogue.js';
-import {D12_GROUP,D13_GROUP} from '../src/story/d12-d13/wechat.js';
+import {D12_GROUP,D13_GROUP,d12Track} from '../src/story/d12-d13/wechat.js';
+import {d11Track} from '../src/story/d11/wechat.js';
 import {syncD10D13Content,OLD_D10,OLD_RETURN,OLD_MOVE,MEETING_NOTE,OLD_INTRUSION_LINE} from '../src/story/d10-d13/continuity.js';
 const phone=(day,clock='08:00')=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.unlocked=true;s.story55.completed.invitation={day:6,clock:'20:00'};tickStory55(s);return s;};
 const thread=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
@@ -26,6 +27,7 @@ test('D10 preserves twenty independent NPC messages, their original IDs and firs
 test('D11 Fu returns via Wang private native Send, without inventing Fu group bubbles',()=>{
  const s=phone(11,'08:40'),n=story55Config(s).nodes.find(x=>x.id==='return');
  assert.equal(n.conversationId,'wang');assert.equal(n.at,'08:40');assert.equal(n.delivery,'queued');
+ assert.deepEqual(n.requires,[],'returning family cannot be gated by D06');
  assert.deepEqual(story55Config(s).scenes.return.map(x=>x[0]),['wang','wang','me','wang','wang']);
  assert.ok(!flat(D11_GROUP).some(x=>x.who==='傅隆生'));
  assert.equal(currentScript55(s,'wechat','wang').kind,'wang');
@@ -82,15 +84,33 @@ test('exact-match legacy D10 and D11 migration keeps player sent text and no Fu 
  d10.text=OLD_D10.noodles[0];
  if(!group.messages.includes(d10))group.messages.push(d10);
  group.messages.push(player,parent,old);
+ const d10Other=group.messages.find(m=>m.id==='d10-shopping-list-1')||{id:'d10-shopping-list-1',day:10,time:'09:23'};
+ d10Other.text=OLD_D10['shopping-list'][1];d10Other.from='熙旺';
+ if(!group.messages.includes(d10Other))group.messages.push(d10Other);
  syncD10D13Content(s);
  assert.equal(group.messages.includes(player),true);
  assert.equal(player.text,'真的？我马上过去。');
  assert.ok(!group.messages.some(m=>m.id===parent.id));
  assert.ok(wang.messages.some(m=>m.id===old.id));
  assert.equal(d10.text,D10_GROUP.find(x=>x.id==='noodles').lines[0].text);
+ assert.equal(d10Other.text,D10_GROUP[0].lines[1].text);
+ assert.equal(d10Other.from,'仔仔','D10 migration updates the NPC speaker as well as text');
  assert.equal(s.story55.scenes.return.index,3);
  assert.notEqual(s.story55.config.scenes.intrusion[5][1],OLD_INTRUSION_LINE);
  assert.ok(s.story55.contentArchives.some(x=>x.id===parent.id));
  const count=wang.messages.length;syncD10D13Content(s);
  assert.equal(wang.messages.length,count);
+});
+
+test('D11 and D12 NPC messages recover old skipped status without a player reply',()=>{
+ const a=phone(11,'08:00');delete a.story55.completed.return;
+ a.story55.d11Chats={notice:{started:false,index:0,nextAt:null,completed:false,skipped:true,historySettled:true,status:'skipped'}};
+ a.clock='10:00';d11Track.tick(a,1000);
+ assert.equal(a.story55.d11Chats.notice.skipped,false);
+ assert.ok(thread(a,'group').messages.some(m=>m.id==='d11-notice-0'&&m.text.includes('晚上七點半')));
+ const b=phone(12,'08:00');delete b.story55.completed.move;
+ b.story55.d12Chats={arrival:{started:false,index:0,nextAt:null,completed:false,skipped:true,historySettled:true,status:'skipped'}};
+ b.clock='23:30';d12Track.tick(b,1000);
+ assert.equal(b.story55.d12Chats.arrival.skipped,false);
+ assert.ok(thread(b,'group').messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('落地了')));
 });

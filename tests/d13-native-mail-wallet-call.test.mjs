@@ -44,6 +44,9 @@ test('MIRAGE wallet has real return and cancel navigation actions',()=>{
  const detail=walletPage(s,s.nav.current.route);
  assert.match(detail,/data-action="mc-wallet-back"/);
  assert.match(detail,/data-action="mc-wallet-cancel-transfer"/);
+ assert.match(detail,/mc-wallet-confirm-actions/);
+ assert.match(detail,/data-action="mc-wallet-transfer-confirm"/);
+ assert.doesNotMatch(detail,/data-action="mc-wallet-transfer"/,'confirm replaces the transfer button');
  assert.doesNotMatch(detail,/data-action="mc-wallet">‹/);
 });
 test('D13 system tracking is metadata, never a chat bubble',()=>{
