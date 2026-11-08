@@ -53,6 +53,20 @@ function migrateNPC(s){
   }
  return changed;
 }
+// Repair the D10 Wednesday/Friday pickup contradiction on already-delivered NPC
+// messages, including saves that have completed the previous D10-D13 migration.
+// A player-sent or customized message is never rewritten.
+function correctD10Pickup(s){
+ const oldText='收到了，明晚我去機場接你';
+ const newText='收到了，後天晚上我去機場接你';
+ const group=s.content?.conversations?.wechat?.find(x=>x.id==='group');
+ const m=group?.messages?.find(x=>x.id==='d10-carry-2'&&x.from==='熙旺'&&
+   x.text===oldText&&(x.day===10||x.sentDate==='2025-05-28'));
+ if(!m)return false;
+ archive(s,m);m.text=newText;
+ for(const n of s.notifications||[])if(n.messageId===m.id&&n.conversationId==='group'&&n.body===oldText)n.body=newText;
+ return true;
+}
 export function syncD10D13Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
@@ -84,6 +98,7 @@ export function syncD10D13Content(s){
   changed=migrateNPC(s)||changed;
   s.story55.d10D13Revision=1;changed=true;
  }
+ changed=correctD10Pickup(s)||changed;
  if(s.story55.completed?.return)changed=seedAuthoredNotes(s,[MEETING_NOTE])||changed;
  return changed;
 }
