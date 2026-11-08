@@ -1,6 +1,6 @@
 import {esc} from '../../../system/ui.js';
 import {visibleMessages} from '../../../services/messaging/delivery.js';
-import {timestampLabel} from '../../../services/messaging/timestamps.js';
+import {timestampLabel,chronologicalMessages,compareMessageChronology} from '../../../services/messaging/timestamps.js';
 import {actors,isGroup} from '../../../editor/conversations/model.js';
 import {wxIcon} from './icons.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
@@ -58,10 +58,21 @@ function menu(){
     '</div>';
 }
 function chats(s){
-  const conversations=(s.content.conversations.wechat||[]).filter(c=>visibleMessages(c,s).length||c.unread||c.authored||['wang','group'].includes(c.id));
+  // List preview and conversation details must agree on the final *visible*
+  // message even when saved/imported bubbles were appended out of date order.
+  const conversations=(s.content.conversations.wechat||[])
+    .map((c,index)=>{
+      const messages=visibleMessages(c,s);
+      return {c,index,last:chronologicalMessages(messages,s).at(-1),hasMessages:messages.length>0};
+    })
+    .filter(({c,hasMessages})=>hasMessages||c.unread||c.authored||['wang','group'].includes(c.id))
+    .sort((a,b)=>{
+      if(Boolean(a.c.pinned)!==Boolean(b.c.pinned))return a.c.pinned?-1:1;
+      if(!a.last||!b.last)return a.last?-1:b.last?1:a.index-b.index;
+      return compareMessageChronology(b.last,a.last,s)||a.index-b.index;
+    });
   const title=header('微信',iconButton('wx-toggle-menu','plus','更多操作'))+menu();
-  const rows=conversations.map((c,i)=>{
-    const last=visibleMessages(c,s).at(-1);
+  const rows=conversations.map(({c,last},i)=>{
     const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':last.text||''):'暂无消息';
     const time=last?timestampLabel(last,s):'';
     const unread=Math.max(0,Number(c.unread)||0);
