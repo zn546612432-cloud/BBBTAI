@@ -25,7 +25,6 @@ test('reviewed private scenes have exact day/time, recipients, and never add fat
   ['wang-supper','wang','20:32',6]
  ]);
  assert.deepEqual(D11_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
-  ['hufeng-laptop','hufeng','16:24',5],
   ['father-after-meeting','fulongsheng','22:06',1],
   ['wang-worry','wang','22:18',11]
  ]);
@@ -33,7 +32,6 @@ test('reviewed private scenes have exact day/time, recipients, and never add fat
   ['wang-airport','wang','18:41',6]
  ]);
  assert.deepEqual(D13_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
-  ['hufeng-laptop','hufeng','12:27',6],
   ['father-planning','fulongsheng','19:03',4]
  ]);
  for(const scene of [...D10_PRIVATE,...D11_PRIVATE,...D12_PRIVATE,...D13_PRIVATE]){
@@ -101,13 +99,12 @@ test('D12 airport is a private conversation, no false arrival before the actual 
  assert.equal(msgs(s,'d12-wang-airport-','wang').length,6);
  assert.equal(msgs(s,'d12-arrival-','group').length,0);
 });
-test('D13 independent Hu Feng and Father private chats do not touch wallet/call',()=>{
+test('D13 father private chat does not touch wallet/call',()=>{
  const s=make(13,'19:03');
  pump(s,15);
  assert.equal(msgs(s,'d13-father-planning-','fulongsheng').map(x=>x.text).join(' / '),
  '下午說的資料，你先慢慢整理。 / 這次不急著動手，先把每一步想清楚。');
  assert.equal(nativeWeChatComposer(s,'fulongsheng').text,'知道了干爹，我會做好方案的');
- assert.equal(msgs(s,'d13-hufeng-laptop-','hufeng').length,1,'past optional history pauses at unsent player reply');
  assert.equal(s.story55.completed.intrusion,undefined);
  assert.equal(s.content.conversations.mirage.some(c=>c.id==='s55-ouroboros'),false);
 });
@@ -127,4 +124,14 @@ test('jumping from D10 to D14 quietly backfills only earned NPC prefixes, never 
  pump(s,12,65000);
  assert.equal(msgs(s,'d11-father-after-meeting-','fulongsheng').length,1);
  assert.equal(msgs(s,'d12-wang-airport-','wang').length,2);
+});
+
+test('cancelled computer-repair storyline stays absent on D11–D13, including missed old NPC history',()=>{
+ for(const [day,defs] of [[11,D11_PRIVATE],[13,D13_PRIVATE]]){
+  assert.equal(defs.some(scene=>/laptop|repair|computer/i.test(scene.id)),false);
+  assert.ok(defs.every(scene=>scene.lines.every(line=>!/修電腦|修理費|舊筆電|你那台電腦你看了沒|開機像拖拉機/.test(line.text))),'day '+day);
+  const s=make(day,'23:59');pump(s,18);
+  const h=chat(s,'hufeng');
+  assert.equal(h.messages.some(m=>/^d(?:11|13)-hufeng-laptop-/.test(m.id)),false);
+ }
 });

@@ -20,7 +20,6 @@ export const D12_PRIVATE=[
 ];
 // D13's existing Mirage wallet, green screen and telephony scenes are untouched.
 export const D13_PRIVATE=[
- {id:'hufeng-laptop','chat':'hufeng',at:'12:27',lines:parse('胡枫：我那台電腦你看了沒？|熙蒙：你昨晚才給我，急什麼|胡枫：怕報告又丟了嘛。|胡枫：晚上請你吃豬扒包，算修理費。|熙蒙：一個豬扒包就打發我？|胡枫：再加杯凍檸茶，不能更多了。')},
  {id:'father-planning',chat:'fulongsheng',at:'19:03',lines:parse('傅隆生：下午說的資料，你先慢慢整理。|傅隆生：這次不急著動手，先把每一步想清楚。|熙蒙：知道了干爹，我會做好方案的|傅隆生：嗯，別光顧著逞能。')}
 ];
 

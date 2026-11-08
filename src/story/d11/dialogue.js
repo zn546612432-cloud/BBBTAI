@@ -17,8 +17,6 @@ const privateScene=(id,chat,at,body,extra={})=>({
  id,chat,at,lines:parse(body),...extra
 });
 export const D11_PRIVATE=[
- privateScene('hufeng-laptop','hufeng','16:24',
-  '胡枫：你那台舊筆電還在嗎？我回去想找你幫忙看看。|熙蒙：在啊，你又怎麼了|胡枫：開機像拖拉機，教授的報告還在裡面。|熙蒙：帶回來吧|胡枫：好，請你吃飯。不請辣炒年糕。'),
  privateScene('father-after-meeting','fulongsheng','22:06','傅隆生：好好幹。'),
  privateScene('wang-worry','wang','22:18',
   '熙旺：到家了嗎？|熙蒙：到了哥|熙旺：今晚那個電子錢包的事，我還是有點擔心。|熙旺：五億美元，哪有那麼容易拿。|熙蒙：我又沒說明天就能拿到|熙旺：我知道。干爹肯讓你試，是信你的本事。|熙旺：但有什麼風險，你得先跟我說。|熙蒙：哥，你不信我啊？|熙旺：信。就是不想你一個人扛著。|熙蒙：知道啦，我會跟你商量的|熙旺：嗯，明天搬東西，早點睡。',
