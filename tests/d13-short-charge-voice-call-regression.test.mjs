@@ -7,6 +7,8 @@ import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {chargingBlock,shortChargeBlock} from '../src/system/power/story.js';
 import {nodeStatus} from '../src/services/story55/state.js';
 import {bindD13Wallet,transferD13Wallet} from '../src/story/d13/runtime.js';
+import {handle as handleMirage} from '../src/apps/mirage/index.js';
+import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {telephonyFullscreen,telephonyIsland} from '../src/services/telephony/view.js';
 
 function day13(clock='21:00'){
@@ -213,4 +215,16 @@ test('D13 short charge stops at 23:59 but normal time and battery resume on the 
  assert.equal(s.day,14);assert.equal(s.clock,'00:11');
  assert.ok(s.batteryPercent<before,'unplugged battery drains again after 23:59');
  assert.equal(s.story55.completed.exhibition,undefined);
+});
+
+test('MIRAGE native transfer confirmation explains the pending exhibition instead of silently doing nothing',()=>{
+ const s=day13('22:11');delete s.story55.completed.exhibition;
+ tickStory55(s);markMail55(s,'s55-d13-wallet-mail');assert.equal(bindD13Wallet(s),true);
+ const ctx={store:{get:()=>s,update:fn=>fn(s)}};
+ setMirageAuthenticated(true);
+ assert.throws(()=>handleMirage('mc-wallet-transfer-confirm',{dataset:{}},ctx,{route:'/wallet/s55-d13-wallet-50btc'}),/等待：二十九天的行动窗口/);
+ assert.equal(s.story55.d13.phase,'bound');
+ s.story55.completed.exhibition={day:13,clock:'20:00',test:true};
+ handleMirage('mc-wallet-transfer-confirm',{dataset:{}},ctx,{route:'/wallet/s55-d13-wallet-50btc'});
+ assert.equal(s.story55.d13.phase,'green');
 });
