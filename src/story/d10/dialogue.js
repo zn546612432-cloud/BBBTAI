@@ -11,3 +11,11 @@ export const D10_GROUP=[
  scene('dinner','20:02','熙旺：我明天白天還要出車，可能一整天都在外面'),
  scene('night','22:20','小辛：明天不熬夜了，真的')
 ];
+
+
+// Private daily messages join the SAME authored-chat lifecycle as group chat.
+// "熙蒙" always means a native composer draft that needs the real Send button.
+const privateScene=(id,chat,at,body)=>({id,chat,at,lines:parse(body)});
+export const D10_PRIVATE=[
+ privateScene('wang-supper','wang','20:32','熙旺：阿蒙，晚上吃了嗎？|熙蒙：吃了哥|熙旺：吃的什麼？|熙蒙：麵啦|熙旺：別又是泡麵。我留了湯，記得熱。|熙蒙：知道啦～')
+];
