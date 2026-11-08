@@ -1,6 +1,6 @@
 import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
 // Only incidental NPC life chats; D12 move and D13 intrusion remain original Story55 nodes.
-const parse=t=>t.split('|').filter(Boolean).map(x=>{const i=x.indexOf('：');if(i<0)throw Error('群聊缺少发言人');return {who:x.slice(0,i),kind:'text',text:x.slice(i+1)};});
+const parse=t=>t.split('|').filter(Boolean).map(x=>{const i=x.indexOf('：');if(i<0)throw Error('群聊缺少发言人');const speaker=x.slice(0,i);return {who:speaker==='熙蒙'?'me':speaker==='胡楓'?'胡枫':speaker,kind:'text',text:x.slice(i+1)};});
 // Chat events are independent of the player's reply. Unskip legacy missed NPC scenes.
 const restoreSkipped=(s,q)=>{if(q.skipped&&q.status==='skipped'){q.skipped=false;q.historySettled=false;q.status='pending';q.started=false;q.index=0;q.nextAt=null;q.dueAt=null;q.awaitingPlayer=false;}};
 const scene=(id,at,text,migrate=null)=>({id,chat:'group',at,lines:parse(text),...(migrate?{migrate}:{})});

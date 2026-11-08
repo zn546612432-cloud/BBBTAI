@@ -1,6 +1,6 @@
 // D11 · 2025-05-29. Only the six Wolf Cubs are in the group;
 // Fu Longsheng's offline meeting is represented in Ximeng's own note.
-const parse=body=>body.split('|').filter(Boolean).map(part=>{const i=part.indexOf('：');if(i<0)throw Error('群聊缺少发言人');return {who:part.slice(0,i),kind:'text',text:part.slice(i+1)};});
+const parse=body=>body.split('|').filter(Boolean).map(part=>{const i=part.indexOf('：');if(i<0)throw Error('群聊缺少发言人');const speaker=part.slice(0,i);return {who:speaker==='熙蒙'?'me':speaker==='胡楓'?'胡枫':speaker,kind:'text',text:part.slice(i+1)};});
 // Chat events are independent of the player's reply. Unskip legacy missed NPC scenes.
 const restoreSkipped=(s,q)=>{if(q.skipped&&q.status==='skipped'){q.skipped=false;q.historySettled=false;q.status='pending';q.started=false;q.index=0;q.nextAt=null;q.dueAt=null;q.awaitingPlayer=false;}};
 const scene=(id,at,body)=>({id,chat:'group',at,lines:parse(body),migrate:restoreSkipped});
