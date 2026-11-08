@@ -51,6 +51,11 @@ function completeQueued(s,id,channel,conversationId){
    // Native handset establishes the call before the voice line is released.
    s.phoneCall={id:'story-call-'+id,node:id,source:'story55',direction:'incoming',state:'connected'};
    advanceScene55(s,id);
+  }else if(id==='intrusion'&&q.accepted){
+   // After the native handset is connected, incoming D13 lines are paced
+   // by telephony audio, not by the pre-call message queue. This models
+   // completion of one played voice clip without fetching live MiniMax audio.
+   advanceScene55(s,id);
   }else{
    const due=Math.max(Date.now(),Number(q.nextAt)||0)+20;
    tickQueuedStoryScenes55(s,due);
