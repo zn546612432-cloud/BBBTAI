@@ -29,7 +29,7 @@ export function postBankTransaction(s,{id,label,amount,metadata={},receipt=null}
   const noticeId=receipt.id||'bank-receipt-'+id;
   if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({
    id:noticeId,title:receipt.title||'Pacific',
-   body:receipt.body||`${n>0?'轉入':'轉出'} US${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+   body:receipt.body||`${n>0?'轉入':'轉出'} US$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`,
    day:s.day,clock:s.clock,link:receipt.link||{appId:'bank',route:'/receipt/'+encodeURIComponent(id)},
    bannerPending:true
   });
