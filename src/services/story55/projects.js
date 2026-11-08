@@ -29,7 +29,7 @@ export function deploymentReadiness(s,id){
  if((s.story55.hardware||1)<p.minimumHardware)
   return {canStart:false,reason:`设备等级不足（目前 ${s.story55.hardware||1}，需要 ${p.minimumHardware}）`,batch};
  if(batch>=p.batches)return {canStart:false,reason:'本地程序已完成',batch};
- if(batch>=projectCapacity(s,p))return {canStart:false,reason:'今日可執行的程序已完成',batch};
+ if(batch>=projectCapacity(s,p))return {canStart:false,reason:'本日可執行的程序已完成',batch};
  return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
 }
 export function authorizeProject(s,id,key){
