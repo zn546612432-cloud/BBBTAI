@@ -1,0 +1,40 @@
+name: iPhone Safari boot and save regression
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/main.js'
+      - 'src/system/preload.js'
+      - 'src/services/storage.js'
+      - 'scripts/build-pages.mjs'
+      - 'scripts/mobile-boot-smoke.mjs'
+      - '.github/workflows/boot-webkit-check.yml'
+permissions:
+  contents: read
+jobs:
+  safari-boot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Verify Safari and Chrome boot with preserved D13 save
+        run: |
+          mkdir -p /tmp/phone-boot-site/BBBTAI
+          cp -a dist/. /tmp/phone-boot-site/BBBTAI/
+          python3 -m http.server 5173 --bind 127.0.0.1 --directory /tmp/phone-boot-site > /tmp/phone-boot-server.log 2>&1 &
+          SMOKE_URL=http://127.0.0.1:5173/BBBTAI/ node scripts/mobile-boot-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-boot-evidence
+          path: qa-results/
