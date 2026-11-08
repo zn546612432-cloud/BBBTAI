@@ -4,7 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,appendSceneMessage55,sceneLines} from '../src/services/story55/runtime.js';
 import {beginShortCharge,plugIn,endShortCharge} from '../src/system/power/battery.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
-import {chargingBlock} from '../src/system/power/story.js';
+import {chargingBlock,shortChargeBlock} from '../src/system/power/story.js';
 import {telephonyFullscreen,telephonyIsland} from '../src/services/telephony/view.js';
 
 function day13(clock='21:00'){
@@ -86,4 +86,19 @@ test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-15').text,'（正在定位 IP………）');
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-19').text,'（追蹤失敗！錯誤代碼：ERR-4037）');
  assert.ok(chat.messages.filter(m=>m.kind==='terminal-status').every(m=>m.from==='system'));
+});
+
+test('D13 exhibition pending before 22:10 does not disable short charge or silently complete the scene',()=>{
+ const s=day13('15:18');
+ delete s.story55.completed.exhibition;
+ tickStory55(s);
+ assert.equal(chargingBlock(s),'plot','long charge remains blocked until the authored story finishes');
+ assert.equal(shortChargeBlock(s),null,'exhibition is not a short-charge gate on the D13 waiting day');
+ assert.equal(beginShortCharge(s),true);
+ assert.equal(advanceGameMinutes(s,30).minutes,30);
+ assert.equal(s.day,13);
+ assert.equal(s.story55.completed.exhibition,undefined,'short charge must not send any scene or player reply');
+ assert.equal(endShortCharge(s),true);
+ s.story55.activeScene='exhibition';
+ assert.equal(beginShortCharge(s),false,'an actively running scene still interrupts charging');
 });
