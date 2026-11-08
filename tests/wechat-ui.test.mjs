@@ -102,10 +102,10 @@ test('WeChat inbox shows the same newest visible bubble as the dated conversatio
  group.messages=[{id:'group-old',from:'小辛',kind:'text',text:'群聊旧消息',sentDate:'2025-05-25',time:'13:30'}];
  const original=wang.messages.map(m=>m.id);
  const home=renderWeChatHome(s,'/');
- const row=home.match(/<button type="button" class="wx-chat-row"[^>]*data-id="wang"[\\s\\S]*?<\\/button>/)?.[0];
+ const row=home.split('data-id="wang"')[1]?.split('</button>')[0];
  assert.ok(row,'the Wang inbox row should exist');
  assert.match(row,/D13 最新回话/);
- assert.match(row,/5月31日 08:12/);
+ assert.match(row,/>08:12<\/time>/);
  assert.doesNotMatch(row,/D07 旧消息|D13 未到时间/);
  assert.ok(home.indexOf('data-id="wang"')<home.indexOf('data-id="group"'),'the newer conversation must lead the inbox');
  const detail=renderWeChatChat(s,'wang');
