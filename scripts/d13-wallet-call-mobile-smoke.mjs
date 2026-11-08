@@ -1,4 +1,4 @@
-// Only prior days are a fixture. Every D13 interaction below uses native UI.
+// Prior days and the daytime exhibition are fixtures; KIRA, wallet, green screen and the D13 call below use native UI.
 import assert from 'node:assert/strict';
 import {D13_VOICE_INDICES} from '../src/story/d13/content.js';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -8,7 +8,7 @@ import {activateStory55} from '../src/services/story55/runtime.js';
 import {previewNode55} from '../src/services/story55/controller.js';
 let preReloadAudioEvents=[];
 const url=process.env.SMOKE_URL||'http://127.0.0.1:5173/';
-const seed=initialState();activateStory55(seed);previewNode55(seed,'d13-wallet-mail');seed.story55.minutesPerSecond=0;seed.unlocked=false;
+const seed=initialState();activateStory55(seed);previewNode55(seed,'d13-wallet-mail');seed.story55.completed.exhibition={day:13,clock:'20:00',test:true};seed.story55.minutesPerSecond=0;seed.unlocked=false;
 seed.nav={current:{appId:'kira',route:'/',params:{}},stack:[]};
 const key='ximeng-phone-story55-v1',bank=structuredClone(seed.bankData),btc=seed.content.mirage.digitalBalance;
 await mkdir('qa-results',{recursive:true});

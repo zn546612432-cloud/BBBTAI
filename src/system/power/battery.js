@@ -29,8 +29,11 @@ export function drainGameBattery(s,minutes){
  const saved=Number.isFinite(s.powerGameMinuteFraction)?Math.max(0,s.powerGameMinuteFraction):0;
  const total=saved+minutes,points=Math.floor(total/unit+1e-9),before=batteryPercent(s);
  s.powerGameMinuteFraction=Math.max(0,total-points*unit);
- // A story protection floor must never increase an already lower saved battery.
- s.batteryPercent=Math.min(before,Math.max(chargingBlock(s)?20:2,before-points));
+ // A plot gate must never hold an ordinary day's battery at 20% while time
+ // continues after 23:00. D01 alone deliberately holds its unfinished first
+ // story day at 03:00 so the player can still finish that repair.
+ const minimum=s.day===1&&chargingBlock(s)?20:2;
+ s.batteryPercent=Math.min(before,Math.max(minimum,before-points));
  return before-s.batteryPercent;
 }
 export function drainBattery(s,ms){
@@ -47,7 +50,7 @@ export function drainBattery(s,ms){
  return before-s.batteryPercent;
 }
 export const canShortCharge=s=>!!s&&!phoneBlocked(s)&&!shortChargeBlock(s)&&!s.story55?.activeScene&&!['charging','short-charging','sleeping'].includes(s.powerMode);
-export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&!s.story55?.activeScene&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping';
+export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&(!s.story55?.activeScene||s.emergencyCharge||s.poweredOff)&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping';
 // Short charge respects the original wet-port/story gate for BOTH modes.
 export function beginShortCharge(s,now=Date.now()){
  if(!canShortCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;

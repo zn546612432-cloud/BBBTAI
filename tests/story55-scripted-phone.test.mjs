@@ -15,6 +15,9 @@ import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {messageCard} from '../src/apps/developer/features/conversations/index.js';
 function fixture(){
  const s=initialState();activateStory55(s);previewNode55(s,'d13-wallet-mail');
+ // Phone-call fixtures assume the daytime mandatory scene was already played.
+ // The timed mail has its own independent delivery regression tests.
+ s.story55.completed.exhibition={day:13,clock:'20:00',test:true};
  const entries=new Map(),store=new PhoneStore({getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v)});store.replace(s);
  const ctx={store,router:{open(loc){store.update(s=>s.nav.current=loc);}},toast(){},refresh(){}};
  return {store,ctx};

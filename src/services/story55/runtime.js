@@ -221,8 +221,13 @@ export function tickStory55(s){
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
-  s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(s.day)});
-  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
+  // Clock-authored mail keeps its original send date/time even if a foreground
+  // tick jumps over the exact minute, or a saved phone resumes after midnight.
+  // The existing mail ID is the idempotency key; no second queue or scheduler.
+  const node=nodeById(s,m.node);
+  const arrivalDay=node?.at?node.day:s.day,arrivalClock=node?.at||s.clock;
+  s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(arrivalDay)});
+  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:arrivalDay,clock:arrivalClock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));
