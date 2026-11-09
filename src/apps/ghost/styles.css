@@ -82,3 +82,19 @@
 .gh-shell .gh-grid:not(.gh-pipes) .gh-button[data-action="gh-tile"]{position:relative}
 .gh-shell .gh-tile-id{position:absolute;right:4px;bottom:3px;font:600 11px ui-monospace,monospace;color:#dbfff3;background:#092219df;border:1px solid #305d4f;padding:2px 4px;pointer-events:none}
 .gh-shell .gh-grid .gh-button.selected .gh-tile-id{color:#fff;background:#2b6756}
+
+/* D14/D15 shares GHOST's native tool chrome, not a Story55 dashboard. */
+.gh-shell.gh-fw-shell{padding-top:24px;min-height:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.gh-fw-shell .gh-top{margin-bottom:22px}
+.gh-fw-shell h1{font-size:clamp(21px,6vw,27px);letter-spacing:.045em;margin:0 0 24px;font-weight:500}
+.gh-fw-shell .gh-fw-ledger{padding:14px 0 24px;border-top:1px solid var(--gh-line)}
+.gh-fw-shell .gh-fw-line{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:42px;color:var(--gh-ink);font:13px Arial,'PingFang SC',sans-serif}
+.gh-fw-shell .gh-fw-line strong{font:500 13px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.gh-fw-shell .gh-meter{height:3px;margin-top:9px}
+.gh-fw-shell .gh-fw-status{margin-top:15px;color:var(--gh-dim);font-size:11px;letter-spacing:.03em}
+.gh-fw-shell .gh-fw-actions{border-top:1px solid var(--gh-line);padding:14px 0}
+.gh-fw-shell .gh-fw-button{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:48px;margin-top:10px;padding:11px 15px;border:1px solid var(--gh-line);background:#0e1d1a;text-align:left;font-size:12px}
+.gh-fw-shell .gh-fw-button span{font-size:22px;line-height:1;color:var(--gh-dim)}
+.gh-fw-shell .gh-fw-button:disabled{opacity:.33;cursor:default}
+.gh-fw-shell .gh-fw-upgrade{margin-top:17px;padding-top:17px;border-top:1px solid var(--gh-line)}
+.gh-fw-shell .gh-flow-dialog p{font-size:12px;letter-spacing:.03em}
