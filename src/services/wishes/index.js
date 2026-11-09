@@ -5,6 +5,14 @@ import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {celebration,privateScenes,rewardSets as d06Rewards} from '../../story/d06/wish-content.js';
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../story/d07/life-content.js';
 const rewardSets={...d06Rewards,...d07Rewards};
+// A per-line authored clock must not let a later bubble leapfrog an earlier
+// bubble from the same source thread. Existing wish queue and message IDs stay.
+const sourcePredecessors=new Map();
+for(const rows of [celebration,privateScenes,nextDay,afternoonDay,extraDay,[dinnerAfter],...Object.values(rewardSets)]){
+ for(let i=0;i<rows.length;i++){
+  sourcePredecessors.set(rows[i].id,rows.slice(0,i).filter(x=>x.chat===rows[i].chat).map(x=>x.id));
+ }
+}
 import {completed,date55} from '../story55/state.js';
 import {payBankPurchase} from '../bank.js';
 
@@ -171,8 +179,14 @@ export function beginD06Celebration(s,now=Date.now()){
  s.events.push({type:'d06_celebration_started',day:s.day,clock:s.clock});
  return true;
 }
+function lineDueClock(s,line){
+ const edited=s.story55?.chatSceneEdits?.['wish:'+line.id]?.clock;
+ return typeof edited==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(edited)?edited:line.dueClock;
+}
 function eligibleLine(s,line){
- if(s.day<line.dueDay||s.day===line.dueDay&&s.clock<line.dueClock)return false;
+ if(s.day<line.dueDay||s.day===line.dueDay&&s.clock<lineDueClock(s,line))return false;
+ const history=ledger(s).story,earlier=sourcePredecessors.get(line.id)||[];
+ if(earlier.some(id=>history.lines?.some(m=>m.id===id)&&!history.delivered?.includes(id)))return false;
  if(line.afterId&&!ledger(s).story.delivered?.includes(line.afterId))return false;
  if(line.wishRewardId){
    const r=record(s,line.wishRewardId);
@@ -231,9 +245,12 @@ export function tickWishes(s,now=Date.now()){
  const due=x=>!st.delivered.includes(x.id)&&eligibleLine(s,x);
  const line=st.lines.find(x=>x.wishRewardId==='d06-dinner'&&x.kind!=='image'&&due(x))||st.lines.find(due);
  if(!line)return changed;
+ const clock=lineDueClock(s,line),planned=s.story55?.chatSceneEdits?.['wish:'+line.id]?.clock;
+ const displayClock=s.day>line.dueDay?clock:
+  planned&&clock>=line.dueClock&&clock<=s.clock?clock:s.clock;
  const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:line.chat,
-  messageId:line.id,from:line.from,text:line.text,kind:line.kind||'text',
-  day:s.day>line.dueDay?line.dueDay:s.day,clock:s.day>line.dueDay?line.dueClock:s.clock,
+  messageId:line.id,from:line.from,text:(s.story55?.chatSceneEdits?.['wish:'+line.id]?.text??line.text),kind:line.kind||'text',
+  day:s.day>line.dueDay?line.dueDay:s.day,clock:displayClock,
   sentDate:date55(Math.min(s.day,line.dueDay)),storyTag:'storyWish',
   silent:!!(line.silentAfterDay&&s.day>line.dueDay)});
  if(m&&line.wishId){m.wishId=line.wishId;m.wishText=line.wishText;}

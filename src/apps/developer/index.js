@@ -16,6 +16,7 @@ import {selection,historyDates,activeConversation,selectDate,rowsFor,PAGE_SIZE,a
 import {handleChatTransferAction,stageChatImportFile} from './features/conversations/ui-transfer.js';
 import {trackSource,saveTrackValues} from '../../story/d14-d24/editor-overrides.js';
 import {loadPreD01Wechat} from '../../story/presets/catalog.js';
+import {readChatSources,saveChatSource} from './features/conversations/source-model.js';
 import {applyPresetImport} from '../../story/presets/io/import.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
 import {ghostDevSkipAvailable} from '../ghost/features/dev-skip/index.js';
@@ -41,8 +42,11 @@ export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(handleChatTransferAction(a,t,ctx))return;
  if(a==='chat-view'){
-  const next=t.dataset.view==='dated'?'dated':'classic';
-  store.update(s=>{s.editor.chatView=next;s.editor.chatPage=0;s.editor.chatExplicitSelection=next==='classic';});
+  const next=['dated','source'].includes(t.dataset.view)?t.dataset.view:'classic';
+  store.update(s=>{
+   if(next==='source'&&s.editor.chatView==='dated'&&selection(s).scope==='story')s.editor.chatSourceDay=selection(s).day;
+   s.editor.chatView=next;s.editor.chatPage=0;s.editor.chatExplicitSelection=next==='classic';
+  });
   document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
   return;
  }
@@ -58,6 +62,16 @@ export function handle(a,t,ctx){
    ctx.toast(`历史聊天已校验：补齐 ${report.historyNew} 条，保留已有 ${report.historyConflict} 条`);
   }).catch(error=>ctx.toast('历史聊天载入失败：'+String(error?.message||error)));
   return;
+ }
+ if(a==='chat-source-prev'||a==='chat-source-next'){
+  const delta=a==='chat-source-prev'?-1:1;
+  store.update(s=>{s.editor.chatSourceDay=Math.max(1,Math.min(55,Number(s.editor.chatSourceDay||s.day)+delta));});
+  document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
+  return;
+ }
+ if(a==='chat-source-open-node'){
+  store.update(s=>{s.editor.story55Node=t.dataset.node;});
+  router.open({appId:'editor',route:'/story55'});return;
  }
  if(a==='chat-scope'){
   store.update(s=>selectDate(s,{chatScope:t.dataset.scope}));
@@ -165,6 +179,13 @@ export function change(t,ctx){
  const {store}=ctx;
  if(changeMoments(t,ctx))return;
  if(changePresetField(t,ctx))return;
+ if(t.id==='chat-source-day'){
+  const day=Number(t.value);
+  if(Number.isInteger(day)&&day>=1&&day<=55)store.update(s=>{s.editor.chatSourceDay=day;});
+  return;
+ }
+ if(t.id==='chat-source-kind'){store.update(s=>{s.editor.chatSourceKind=t.value;});return;}
+ if(t.id==='chat-source-search'){store.update(s=>{s.editor.chatSourceSearch=t.value;});return;}
  if(t.id==='chat-history-date'||t.id==='chat-history-select'){
   if(t.value)store.update(s=>selectDate(s,{chatScope:'history',chatDate:t.value}));return;
  }
@@ -212,6 +233,16 @@ export function submit(f,ctx){
  if(voiceSubmit(f,ctx))return;
   if(diaryEditorSubmit(f,ctx))return;
  if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
+ if(form==='chat-source-edit'){
+  const key=f.dataset.key,source=readChatSources(store.get(),Number(store.get().editor?.chatSourceDay||store.get().day)).find(x=>x.key===key);
+  if(!source)throw Error('找不到当天的原稿来源；没有修改任何数据');
+  const lines=source.lines.map((_,i)=>String(data.get('line-'+i)??''));
+  const times=source.lines.map((line,i)=>data.has('time-'+i)?String(data.get('time-'+i)||''):line.clock||'');
+  const waits=source.lines.map((line,i)=>data.has('wait-'+i)?Number(data.get('wait-'+i)):line.waitSeconds);
+  store.update(s=>saveChatSource(s,key,{at:data.has('at')?String(data.get('at')):undefined,lines,times,waits}));
+  toast('逐句时间与正式原稿已保存；原触发规则和已发送记录保持不变');
+  return;
+ }
  if(form==='chat-track-edit'){
   const key=f.dataset.key,scene=trackSource(key);
   if(!scene)throw Error('找不到來源劇情');

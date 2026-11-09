@@ -25,6 +25,16 @@ const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博�
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
  const c=defaultStory55Config();
+ const authored=s.story55?.chatSceneEdits||{};
+ for(const [key,edit] of Object.entries(authored)){
+  if(!key.startsWith('node:'))continue;
+  const id=key.slice(5),node=c.nodes.find(n=>n.id===id),previous=c.scenes?.[id];
+  if(!node||!Array.isArray(previous)||!Array.isArray(edit?.lines)||previous.length!==edit.lines.length)continue;
+  if(!edit.lines.every((l,i)=>l.who===previous[i][0]&&typeof l.text==='string'&&l.text.trim()))continue;
+  c.scenes[id]=edit.lines.map(l=>[l.who,l.text]);
+  if(edit.at&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(edit.at))node.at=edit.at;
+  else if(edit.at==='')delete node.at;
+ }
  const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,legacySMSImported:s.story55?.legacySMSImported,
   // Author-edited source dialogue survives a new run; gameplay progress does not.
   ...(s.story55?.chatSceneEdits?{chatSceneEdits:structuredClone(s.story55.chatSceneEdits)}:{}),
@@ -52,6 +62,10 @@ export function activateStory55(s){
  s.ghost={orders:{},history:[],balance:0,config:{}};s.bankData={...s.bankData,balance:0,transactions:[]};
  delete s.phoneCall;
  tickStory55(s);return s;
+}
+export function plannedSceneLineClock55(s,id,index){
+ const t=s.story55?.chatSceneEdits?.['node:'+id]?.lineTimes?.[index];
+ return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:null;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){return story55Config(s).scenes[id]||[];}
@@ -106,6 +120,8 @@ function creditScene55(s,n){
  s.story55.activeScene=id;
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
+ const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
+ if(planned&&s.clock<planned)throw Error('這條消息預定於 '+planned+' 發送');
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
@@ -153,7 +169,10 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
+  const shown=plannedSceneLineClock55(s,id,index);
+  const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
+   (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:date55(s.day),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -208,6 +227,8 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   // Do not enqueue NPC replies while the player owes a preset line.
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
+  const planned=plannedSceneLineClock55(s,n.id,q.index);
+  if(planned&&s.clock<planned)continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;
    return true;

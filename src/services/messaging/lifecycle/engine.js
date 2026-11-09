@@ -24,18 +24,37 @@ export function createConversationTrack(config){
  const pause=(s,d,q)=>value(d.pauseMs,s,q)??CHAT_LIFECYCLE_POLICY.pauseMs;
  const chatId=(s,d)=>config.chatId?.(s,d)||d.chat;
  const get=(s,d)=>root(s)[d.id];
- const lines=(s,d,q)=>value(d.lines,s,q)||[];
- const starts=(s,d,q)=>value(d.at,s,q)||d.fallback||d.early||'08:00';
+ // Author text changes are data for this existing lifecycle, not a second
+ // message queue. Stable scene IDs, Send gating, notifications and progress
+ // continue to belong to this module.
+ const edited=(s,d)=>s.story55?.chatSceneEdits?.[config.prefix+':'+d.id];
+ const lines=(s,d,q)=>{
+  const source=value(d.lines,s,q)||[],revision=edited(s,d);
+  if(!Array.isArray(revision?.lines)||revision.lines.length!==source.length)return source;
+  // Untouched author lines must keep their existing conditional variants.
+  // A baseline from the editor identifies which indices were actually changed.
+  return source.map((line,i)=>({
+   ...line,text:Array.isArray(revision.baseline)&&revision.baseline[i]===revision.lines[i].text
+    ?line.text:revision.lines[i].text
+  }));
+ };
+ const plannedClock=(s,d,i)=>{
+  const t=edited(s,d)?.lineTimes?.[i];
+  return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:null;
+ };
+ const lineIsDue=(s,d,i)=>!plannedClock(s,d,i)||conversationMinute(s)>=(d.day-1)*1440+minute(plannedClock(s,d,i));
+ const starts=(s,d,q)=>edited(s,d)?.at||value(d.at,s,q)||d.fallback||d.early||'08:00';
  const startMinute=(s,d,q)=>(d.day-1)*1440+minute(starts(s,d,q));
  const endMinute=(s,d,q)=>{
   if(d.until)return (d.day-1)*1440+minute(value(d.until,s,q));
   const next=defs.filter(x=>x.chat===d.chat&&x.ordinal>d.ordinal&&!x.optional);
   const end=next.length?startMinute(s,next[0],get(s,next[0])):d.day*1440;
-  const latest=d.historyClock?Math.max(startMinute(s,d,q),...lines(s,d,q).map((_,i)=>(d.day-1)*1440+minute(d.historyClock(i,s,q)))):startMinute(s,d,q);
+  const clocks=lines(s,d,q).map((_,i)=>plannedClock(s,d,i)||d.historyClock?.(i,s,q)||starts(s,d,q));
+   const latest=Math.max(startMinute(s,d,q),...clocks.map(clock=>(d.day-1)*1440+minute(clock)));
   return d.chat==='group'?Math.min(end,Math.max(latest+1,startMinute(s,d,q)+(d.liveMinutes??CHAT_LIFECYCLE_POLICY.groupLiveMinutes))):end;
  };
  const allowed=(s,d)=>!d.condition||d.condition(s);
- const canStart=(s,d,q)=>allowed(s,d)&&(!d.enabled||d.enabled(s,q))&&conversationMinute(s)>=startMinute(s,d,q);
+ const canStart=(s,d,q)=>allowed(s,d)&&(!d.enabled||d.enabled(s,q))&&conversationMinute(s)>=startMinute(s,d,q)&&lineIsDue(s,d,q?.index||0);
  const messageId=(s,d,i)=>d.messageId?.(s,i)||config.prefix+'-'+d.id+'-'+i;
  function ensure(s){
   const map=root(s);
@@ -48,7 +67,7 @@ export function createConversationTrack(config){
  }
  function sendLine(s,d,q,i,line,{history=false,branch=null,at=null}={}){
   const id=branch?config.prefix+'-'+d.id+'-late-'+branch+'-'+i:messageId(s,d,i);
-  let when=at||{day:history?d.day:s.day,clock:history?(d.historyClock?.(i,s,q)||starts(s,d,q)):s.clock};
+  let when=at||{day:history?d.day:s.day,clock:history?(plannedClock(s,d,i)||d.historyClock?.(i,s,q)||starts(s,d,q)):s.clock};
   // Reconciled replies cannot precede a player message that was really sent.
   if(history&&!branch){
    const c=s.content.conversations?.[d.channel]?.find(c=>c.id===chatId(s,d));
@@ -126,7 +145,7 @@ export function createConversationTrack(config){
   for(const d of defs){
    const q=map[d.id],key=d.channel+':'+chatId(s,d);
    if(q.lateRun&&!q.lateHandled){
-    const r=q.lateRun;if(qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
+    const r=q.lateRun;if(!lineIsDue(s,d,q.index)||qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
     const last=s.story55.conversationDelivery[key];
     if(Number.isFinite(last)&&now-last<pause(s,d,q))continue;
     const line=r.lines[r.index];if(!line||line.who==='me')continue;
@@ -152,7 +171,13 @@ export function createConversationTrack(config){
    if(qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
    const last=s.story55.conversationDelivery[key];
    if(Number.isFinite(last)&&now-last<pause(s,d,q))continue;
-   sendLine(s,d,q,q.index,line);q.index++;spoken.add(key);s.story55.conversationDelivery[key]=now;changed=true;
+   const shown=plannedClock(s,d,q.index);
+    const stampClock=shown&&shown<=s.clock?shown:null;
+    const previous=s.content.conversations?.[d.channel]?.find(c=>c.id===chatId(s,d))?.messages
+     ?.find(m=>m.id===messageId(s,d,q.index-1));
+    const finalClock=stampClock&&previous?.day===s.day&&previous.time>stampClock?previous.time:stampClock;
+    sendLine(s,d,q,q.index,line,{...(finalClock?{at:{day:s.day,clock:finalClock}}:{})});
+    q.index++;spoken.add(key);s.story55.conversationDelivery[key]=now;changed=true;
    if(q.index>=lines(s,d,q).length)finish(s,d,q);
    else setDue(q,lines(s,d,q)[q.index].who==='me'?null:now+pause(s,d,q));
   }
@@ -167,7 +192,7 @@ export function createConversationTrack(config){
    if(q.lateRun){const r=q.lateRun,line=r.lines[r.index];if(s.day!==r.day||conversationMinute(s)>=r.validUntil)continue;if(line?.who==='me')available.push({d,q,line,late:r.kind,rank:1});continue;}
    if(!q.historySettled&&!isPast(s,d,q)&&(q.started||canStart(s,d,q))){
     const line=lines(s,d,q)[q.index];
-    if(line?.who==='me'&&qDue(q)==null)available.push({d,q,line,rank:d.mandatory?3:2});
+    if(line?.who==='me'&&qDue(q)==null&&lineIsDue(s,d,q.index))available.push({d,q,line,rank:d.mandatory?3:2});
    }else{
     const late=lateChoice(s,d,q);
     if(late?.lines[0]?.who==='me')available.push({d,q,line:late.lines[0],late:late.kind,lateLines:late.lines,rank:0});
