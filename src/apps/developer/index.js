@@ -15,6 +15,8 @@ import {messageCard,newConversationForm,conversations} from './features/conversa
 import {selection,historyDates,activeConversation,selectDate,rowsFor,PAGE_SIZE,addDatedMessage,messageEditorDate,isEditableMessage} from './features/conversations/navigation.js';
 import {handleChatTransferAction,stageChatImportFile} from './features/conversations/ui-transfer.js';
 import {trackSource,saveTrackValues} from '../../story/d14-d24/editor-overrides.js';
+import {loadPreD01Wechat} from '../../story/presets/catalog.js';
+import {applyPresetImport} from '../../story/presets/io/import.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
 import {ghostDevSkipAvailable} from '../ghost/features/dev-skip/index.js';
 import {taiPhonePanel,taiPhoneAction} from './features/tai-phone/index.js';
@@ -33,11 +35,30 @@ import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
 const tabs=[[['story55','55天剧情树'],['diary','日程日记'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片'],['voice-authoring','预设配音']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音'],['tai-phone','熙泰手机访问']]];
 const attr=v=>esc(v);
-function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.filter(([id])=>!(isStory55(s)&&id==='presets')).map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?(isStory55(s)?story55Editor(s):presetEditor(s)):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(handleChatTransferAction(a,t,ctx))return;
+ if(a==='chat-view'){
+  const next=t.dataset.view==='dated'?'dated':'classic';
+  store.update(s=>{s.editor.chatView=next;s.editor.chatPage=0;s.editor.chatExplicitSelection=next==='classic';});
+  document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
+  return;
+ }
+ if(a==='chat-restore-historical'){
+  loadPreD01Wechat().then(packs=>{
+   let report;
+   store.update(s=>{
+    report=applyPresetImport(s,packs,{mode:'merge'});
+    s.content.historicalWechat={loaded:true,
+     count:(s.content.conversations.wechat||[]).reduce((n,c)=>n+(c.messages||[]).filter(m=>m.sentDate&&m.sentDate<'2025-05-19').length,0),
+     source:'historical-pre-D01',newMessages:report.historyNew};
+   });
+   ctx.toast(`历史聊天已校验：补齐 ${report.historyNew} 条，保留已有 ${report.historyConflict} 条`);
+  }).catch(error=>ctx.toast('历史聊天载入失败：'+String(error?.message||error)));
+  return;
+ }
  if(a==='chat-scope'){
   store.update(s=>selectDate(s,{chatScope:t.dataset.scope}));
   document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
@@ -105,15 +126,18 @@ export function handle(a,t,ctx){
  if(a==='delete-phone-call'){store.update(s=>{s.content.phone.calls=s.content.phone.calls.filter(call=>call.id!==id);});ctx.toast('通话记录已删除');return;}
  if(a==='remove-charge-gate'){store.update(s=>{s.storyChargeGates=(s.storyChargeGates||[]).filter(g=>g.day!==Number(t.dataset.day));});return;}
  if(a==='preview-chat'){const x=activeConversation(store.get());if(x)router.open({appId:x.channel,route:'/chat/'+x.c.id});return;}
- if(a==='add-message')store.update(s=>{const {c}=activeConversation(s);c.messages.push(addDatedMessage(s,c,'text',newMessage));});
- if(['duplicate-message','delete-message','move-up','move-down','rearm-message','test-message','replace-message-image'].includes(a)&&
- !isEditableMessage(activeConversation(store.get())?.c.messages.find(m=>m.id===id)))return;
+ if(a==='add-message')store.update(s=>{const {c}=activeConversation(s);c.messages.push(s.editor.chatView==='dated'?addDatedMessage(s,c,'text',newMessage):newMessage(s,c));});
+ if(['duplicate-message','delete-message','move-up','move-down','rearm-message','test-message','replace-message-image'].includes(a)){
+  const m=activeConversation(store.get())?.c.messages.find(m=>m.id===id);
+  if(!m?.id||m.systemOwned||store.get().editor.chatView==='dated'&&!isEditableMessage(m))return;
+ }
  if(a==='delete-message'&&!globalThis.confirm('確定刪除此條作者消息？請先備份重要劇情。'))return;
  if(a==='duplicate-message')store.update(s=>{const {c}=activeConversation(s),i=c.messages.findIndex(m=>m.id===id);if(i<0)return;const m=structuredClone(c.messages[i]);m.id=uid();delete m.delivery;delete m.actual;m.authored=true;c.messages.splice(i+1,0,m);});
  if(a==='delete-message')store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);c.messages=c.messages.filter(m=>m.id!==id);});
  if(a==='move-up'||a==='move-down')store.update(s=>{
   const {c}=activeConversation(s),i=c.messages.findIndex(m=>m.id===id),neighbor=c.messages[i+(a==='move-up'?-1:1)];
-  if(i<0||!isEditableMessage(neighbor)||messageEditorDate(c.messages[i])!==messageEditorDate(neighbor))return;
+  if(i<0)return;
+  if(s.editor.chatView==='dated'&&(!isEditableMessage(neighbor)||messageEditorDate(c.messages[i])!==messageEditorDate(neighbor)))return;
   moveMessageTo(c,id,i+(a==='move-up'?-1:1));
  });
  if(a==='rearm-message')store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
@@ -124,7 +148,7 @@ export function handle(a,t,ctx){
  }
  if(a==='add-image-message'||a==='replace-message-image'){
   const x=activeConversation(store.get());
-  ctx.pickImage(src=>store.update(s=>{const c=s.content.conversations[x.channel].find(c=>c.id===x.c.id);if(a==='add-image-message')c.messages.push({...addDatedMessage(s,c,'image',newMessage),text:src});else {const m=c.messages.find(m=>m.id===id);if(m)m.text=src;}}));
+  ctx.pickImage(src=>store.update(s=>{const c=s.content.conversations[x.channel].find(c=>c.id===x.c.id);if(a==='add-image-message')c.messages.push({...((s.editor.chatView==='dated')?addDatedMessage(s,c,'image',newMessage):newMessage(s,c,'image')),text:src});else {const m=c.messages.find(m=>m.id===id);if(m)m.text=src;}}));
  }
  if(a==='replace-wallpaper')ctx.pickImage(src=>store.update(s=>s.wallpaper=src));
  if(a==='replace-icon')ctx.pickImage(src=>store.update(s=>s.iconOverrides[id]=src));
@@ -154,9 +178,9 @@ export function change(t,ctx){
  if(t.id==='editor-conversation'){const i=t.value.indexOf(':');store.update(s=>{s.editor.channel=t.value.slice(0,i);s.editor.conversation=t.value.slice(i+1);s.editor.chatExplicitSelection=true;s.editor.chatPage=0;});return;}
  if(t.id==='editor-conversation-name')store.update(s=>renameConversation(activeConversation(s).c,t.value));
  if(t.dataset.actorName)store.update(s=>renameActor(activeConversation(s).c,t.dataset.actorName,t.value));
- if(t.dataset.messageField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!isEditableMessage(m))return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
- if(t.dataset.sentDate)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(isEditableMessage(m))setMessageDate(m,s,{preset:t.value});});
- if(t.dataset.scheduleField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!isEditableMessage(m))return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
+ if(t.dataset.messageField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned||s.editor.chatView==='dated'&&!isEditableMessage(m))return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
+ if(t.dataset.sentDate)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(m&&!m.systemOwned&&(s.editor.chatView!=='dated'||isEditableMessage(m)))setMessageDate(m,s,{preset:t.value});});
+ if(t.dataset.scheduleField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned||s.editor.chatView==='dated'&&!isEditableMessage(m))return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
  if(t.dataset.orderMessage){const value=Number(t.value);if(!Number.isInteger(value)||value<1)throw Error('排序位置需为正整数');store.update(s=>moveMessageTo(activeConversation(s).c,t.dataset.orderMessage,value-1));}
 }
 export const isTextEdit=t=>isMomentsTextEdit(t)||isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';
@@ -257,7 +281,7 @@ export function mountInteractions(root,ctx){
   const moved=drag;drag=null;if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);cleanup();
   if(moved.targetId){ctx.store.update(s=>{
     const {c}=activeConversation(s),from=c.messages.find(m=>m.id===moved.id),to=c.messages.find(m=>m.id===moved.targetId);
-    if(isEditableMessage(from)&&isEditableMessage(to)&&messageEditorDate(from)===messageEditorDate(to))reorderMessage(c,moved.id,moved.targetId,moved.after);
+    if(s.editor.chatView!=='dated'?from&&!from.systemOwned&&to&&!to.systemOwned:isEditableMessage(from)&&isEditableMessage(to)&&messageEditorDate(from)===messageEditorDate(to))reorderMessage(c,moved.id,moved.targetId,moved.after);
    });const status=root.querySelector('.editor-drag-status');if(status)status.textContent='消息顺序已保存';}
  });
  root.addEventListener('pointercancel',()=>{drag=null;cleanup();});
