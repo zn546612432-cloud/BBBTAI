@@ -88,7 +88,7 @@ export function render({store},loc){
 export function handle(a,t,c){
  if(a==='files-story-key-back')return c.router.open({appId:'kira',route:'/mail/'+t.dataset.mail});
  if(a==='files-story-key-reveal'){const project=t.dataset.project;if(!c.store.get().content.mail.some(m=>m.project===project&&m.story55&&m.read))return;c.store.update(s=>{s.story55.projectKeysRevealed??={};s.story55.projectKeysRevealed[project]=true;});return;}
- if(a==='files-story-key-ghost')return c.router.open({appId:'ghost',route:'/deployment',params:{project:t.dataset.project}});
+ if(a==='files-story-key-ghost')return c.router.open({appId:'ghost',route:t.dataset.project==='base'?'/flow-deploy':'/deployment',params:{project:t.dataset.project}});
 if(a==='files-commission-back'){
  const id=t.dataset.id;
  if(!commissionAttachment(c.store.get(),id))return;

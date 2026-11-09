@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState,PhoneStore} from '../src/services/storage.js';
 import {activateStory55,tickStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,anonymousPresence55} from '../src/services/story55/runtime.js';
 import {story55Config,completed,nodeStatus,date55,taiRecognized,story55ChargeGate} from '../src/services/story55/state.js';
-import {authorizeProject,startDeploymentStep,deploymentPercent,upgradeHardware} from '../src/services/story55/projects.js';
+import {authorizeProject,startDeploymentStep,deploymentPercent,upgradeHardware,upgradeBaseFramework} from '../src/services/story55/projects.js';
 import {previewNode55} from '../src/services/story55/controller.js';
 import {validateStory55Config,importStory55Config,exportStory55Config} from '../src/services/story55/config.js';
 import {begin,finish} from '../src/apps/ghost/state.js';
@@ -25,6 +25,7 @@ function solveRun(s,id){
  if(o.type==='extract'){while(o.status==='running')click('match',{index:String(o.board.correct)});}
  if(o.type==='veil'){while(o.status==='running'){for(const digit of o.board.code)click('key',{key:digit});}}
  if(o.type==='verify'){for(const token of o.board.target)click('verify-token',{index:String(o.board.tokens.indexOf(token))});}
+ if(o.status==='preview-win')finish(s,id,true,o.previewUntil);
  assert.ok(['success','paid'].includes(o.status),o.type);
 }
 const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for(let i=0;i<p.steps.length;i++){const run=startDeploymentStep(s,id);solveRun(s,run);}};
@@ -36,24 +37,36 @@ test('55-day graph validates and isolates legacy progress without deleting histo
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
  assert.equal(story55ChargeGate(s),'plot');assert.equal(nodeStatus(s,'code').state,'locked');
 });
-test('Kira authorization, hardware and five actual games commit one 9% batch; retries/reload do not duplicate it',()=>{
+test('D14 Kira authorization installs five LINK checks without hardware purchase; failure is kept on reload',()=>{
  const s=fixture();previewNode55(s,'code');assert.ok(s.content.mail.some(m=>m.id==='code-mail'));
  assert.throws(()=>authorizeProject(s,'base','wrong'),/等待/);markMail55(s,'code-mail');assert.throws(()=>authorizeProject(s,'base','wrong'),/授权码/);authorizeProject(s,'base','OUROBOROS-14');
- assert.throws(()=>startDeploymentStep(s,'base'),/设备/);s.bankData.balance=100000;upgradeHardware(s);
+ assert.equal(s.story55.hardware,1);assert.equal(startDeploymentStep(s,'base'),'s55:base:0:0');
  const p=story55Config(s).projects.find(p=>p.id==='base');
  for(let i=0;i<4;i++){const run=startDeploymentStep(s,'base');solveRun(s,run);assert.equal(deploymentPercent(s,'base'),0);}
  const final=startDeploymentStep(s,'base');solveRun(s,final);assert.equal(deploymentPercent(s,'base'),9);assert.equal(Object.keys(s.story55.reports).filter(id=>id.startsWith('base-')).length,1);assert.ok(s.story55.reports['wallet-0']);
- finish(s,final,true);assert.equal(deploymentPercent(s,'base'),9);assert.throws(()=>startDeploymentStep(s,'base'),/本日/);
+ finish(s,final,true);assert.equal(deploymentPercent(s,'base'),9);assert.equal(s.story55.projects.base.batches[0].runFailed,true);assert.throws(()=>startDeploymentStep(s,'base'),/等待D15/);
  const payload=JSON.stringify(s),memory=new Map();const store=new PhoneStore({getItem:()=>payload,setItem:(k,v)=>memory.set(k,v)});
  assert.equal(deploymentPercent(store.get(),'base'),9);assert.equal(store.get().story55.projects.base.batches[0].steps.filter(Boolean).length,5);
 });
-test('base deployment catches up missed batches, ends at exactly100 and writes completion shared with the tree',()=>{
- const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=3;s.day=24;
- for(let i=0;i<11;i++)runBatch(s,'base');
- assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);assert.throws(()=>startDeploymentStep(s,'base'),/已完成/);
- assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);assert.equal(s.ghost.history.filter(h=>h.orderId.startsWith('s55-mirage-wallet-bounty-stage-')).length,5);assert.equal(s.bankData.balance,18500); // D01 + D02 S/A + D03 payouts, less the D14 living expense.
-  assert.equal(s.bankData.transactions.filter(t=>t.id==='d01-bank-1846').length,1);
-  assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
+test('the first D14 failure and ten paid daily upgrades reach exactly 100% on D24',()=>{
+ const s=fixture();previewNode55(s,'code');markMail55(s,'code-mail');authorizeProject(s,'base','OUROBOROS-14');
+ s.day=14;runBatch(s,'base');
+ assert.equal(s.story55.projects.base.batches[0].runFailed,true);
+ s.day=15;s.clock='15:36';playScene(s,'loan');
+ const loan=s.bankData.transactions.find(t=>t.id==='s55-loan');
+ assert.equal(loan?.amount,1000000);
+ for(let day=15;day<=24;day++){
+  s.day=day;
+  runBatch(s,'base');
+  assert.equal(upgradeBaseFramework(s),true);
+  assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-base-upgrade-'+(day-14)).length,1);
+ }
+ assert.equal(deploymentPercent(s,'base'),100);assert.equal(completed(s,'base'),true);
+ assert.equal(s.ghost.history.filter(h=>h.success&&h.orderId.startsWith('s55:base:')).length,55);
+ assert.equal(s.bankData.transactions.filter(t=>t.label==='LOCAL FRAMEWORK UPGRADE').length,10);
+ assert.equal(s.story55.hardware,1);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='d01-bank-1846').length,1);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='flow-d03-reward').length,1);
 });
 test('failed game cannot increase progress; current batch remains resumable',()=>{
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;

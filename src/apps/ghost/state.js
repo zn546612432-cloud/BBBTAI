@@ -106,6 +106,12 @@ export function startD03PipePreview(s,id,now=Date.now()){
  o.status='preview-win';o.previewUntil=now+3000;return true;
 }
 // D04 LINK also displays the connected circuit for three seconds.
+export function startBaseFrameworkPipePreview(s,id,now=Date.now()){
+ const run=s.ghost?.orders?.[id];
+ if(run?.story55Project!=='base'||run.type!=='route'||run.status!=='running')return false;
+ if(!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
+ run.status='preview-win';run.previewUntil=now+3000;return true;
+}
 export function startD04PipePreview(s,id,now=Date.now()){
  if(!d04OrderOfStep(id))return false;
  const o=s.ghost?.orders?.[id];

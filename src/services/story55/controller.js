@@ -1,6 +1,6 @@
 import {isStory55,story55Config,nodeById,nodeStatus,completeNode,completed,date55} from './state.js';
 import {anonymousPresence55,activateStory55,advanceScene55,scene55,sceneLines,markMail55,readEvidence55,sendQuestion55,payNode55,nodeLink55,tickStory55} from './runtime.js';
-import {authorizeProject,startDeploymentStep,upgradeHardware} from './projects.js';
+import {authorizeProject,startDeploymentStep,upgradeHardware,upgradeBaseFramework} from './projects.js';
 import {validateStory55Config,importStory55Config,exportStory55Config} from './config.js';
 import {installMining,upgradeMining,sellMining} from './mining.js';
 import {createGestureAudio} from '../voice/playback.js';
@@ -45,6 +45,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-map-pin'){selectStory55Pin(t);return true;}
  if(a==='s55-run-step'){let run;c.store.update(s=>run=startDeploymentStep(s,project));open(c,'ghost','/contract',{orderId:run});return true;}
  if(a==='s55-upgrade'){c.store.update(s=>upgradeHardware(s));return true;}
+ if(a==='s55-base-upgrade'){c.store.update(s=>upgradeBaseFramework(s));return true;}
  if(a==='s55-read-mail'){let project;c.store.update(s=>{markMail55(s,t.dataset.id);project=s.content.mail.find(m=>m.id===t.dataset.id)?.project;});if(project)open(c,'files','/story55-key',{project});return true;}
  if(a==='s55-disconnect-session'){c.store.update(s=>advanceScene55(s,id,{disconnect:true}));return true;}
  if(['s55-read-file','s55-read-page','s55-read-map'].includes(a)){c.store.update(s=>readEvidence55(s,a.slice(9),t.dataset.id));return true;}

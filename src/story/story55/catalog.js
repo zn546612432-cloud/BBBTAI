@@ -398,14 +398,16 @@ export const STORY55_CONFIG={
         10
       ],
       "steps": [
-        "cipher",
         "route",
-        "extract",
-        "veil",
-        "verify"
+        "route",
+        "route",
+        "route",
+        "route"
       ],
       "key": "OUROBOROS-14",
-      "minimumHardware": 2,
+      "minimumHardware": 1,
+      "upgradePrice": 100000,
+      "runtimeErrorCode": "E-ENV-014",
       "gate": "code"
     },
     {

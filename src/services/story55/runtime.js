@@ -2,6 +2,7 @@ import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
+import {syncBaseFrameworkRevision,deployment} from './projects.js';
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
@@ -61,6 +62,7 @@ export function finishScene55(s,id){
  if(n.credit)creditScene55(s,n);
  if(id==='ending')startFinale55(s);
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
+ if(id==='loan')s.story55.loanOfflineDay=s.day;
  tickStory55(s);return true;
 }
 // The ledger and its loan annotation are committed in the same PhoneStore update.
@@ -109,6 +111,7 @@ function creditScene55(s,n){
  if(line[0]==='camera')s.story55.sceneCamera={node:id,active:true,disconnected:false};
  if(line[0]==='disconnect')s.story55.sceneCamera={node:id,active:false,disconnected:true};
  if(line[0]==='credit')creditScene55(s,n);
+ if(line[0]==='offline'&&id==='loan')s.story55.loanOfflineDay=s.day;
  // D13 stage directions describe internal device activity; never send them as chat bubbles.
  if(id==='intrusion'&&line[0]==='system'&&(r.index===15||r.index===19)){
   s.story55.d13??={phase:'chat'};
@@ -143,7 +146,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   appendAuthoredPhoneMessage(s,{channel:n.channel,conversationId:n.conversationId,messageId:`${n.messagePrefix}-${index}`,from:'system',text:line[1],kind:'system',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   return;
  }
- if(!['system','call','watch','camera','disconnect','credit'].includes(line[0])){
+ if(!['system','call','watch','camera','disconnect','credit','offline'].includes(line[0])){
   const channel=n.channel||(['intro','return','move','show','target','confide','failure','ready'].includes(id)?'wechat':['recognition','paris','ending'].includes(id)?'noapp':'mirage');
   const cid=n.conversationId||(channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros');
   const list=s.content.conversations[channel]??=[];
@@ -188,6 +191,7 @@ export function chatNodeLink55(s,id){
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
 export function nodeLink55(s,id){if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+ if(n.kind==='project'&&n.project==='base')return {appId:'ghost',route:deployment(s,'base').authorized?'/deployment':'/flow-deploy',params:{project:'base'}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 // Every scene with delivery:"queued" uses this common messaging scheduler.
 // Story content only supplies lines and node prerequisites: no D06-specific
@@ -218,6 +222,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ syncBaseFrameworkRevision(s);
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);
@@ -276,6 +281,7 @@ export function story55Presence(s,now=Date.now()){
 export function anonymousPresence55(s,now=Date.now()){
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
+ if(s.story55.loanOfflineDay===s.day)return {online:false,reason:'已下线'};
  if(s.day>=15&&s.day<=24){const start=s.story55.anonymousWindows?.[s.day];const remaining=start?Math.max(0,1500000-(now-start)):1500000;return {online:!!start&&remaining>0,remaining,reason:remaining>0?'每日25分钟联络窗口':'本日已离线'};}
  if(s.day>=25&&s.day<=29)return {online:true,reason:'在线'};
  return {online:false,reason:s.day>=30?'正在调查，等待剧情联络':'尚未开放自由联络'};

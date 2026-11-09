@@ -1,5 +1,7 @@
 // Ghost UI for the single D03 Flow deployment; other mission games are untouched.
 import {esc} from '../../../../system/ui.js';
+import {projectById} from '../../../../services/story55/state.js';
+import {deployment,authorizeProject} from '../../../../services/story55/projects.js';
 import {
  FLOW_TOOL,FLOW_KEY,flowState,acceptFlowKey,installFlowTool,submitFlowScan
 } from '../../../../services/story55/flow-d03.js';
@@ -20,19 +22,29 @@ const modal=()=>{
  return '<div class="gh-flow-overlay"><section class="gh-flow-dialog" role="alertdialog" aria-modal="true"><h2>'+d.title+'</h2><div class="gh-flow-dialog-actions">'+d.buttons+'</div></section></div>';
 };
 export function renderFlowD03(s,loc){
- const p=flowState(s);
+ const p=flowState(s),base=deployment(s,'base'),
+  mail=s.content.mail?.find(m=>m.story55&&m.project==='base'&&m.read),
+  baseReady=!!mail&&!!projectById(s,'base');
  let body='';
  if(loc.route==='/flow-deploy'){
   body=headline('01 部署')+'<h1>01 部署</h1>';
-  if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';
-  else body+='<div class="gh-flow-panel"><form data-form="gh-flow-key" autocomplete="off"><label for="gh-flow-key">密钥</label><input id="gh-flow-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>'+
-    '';
+  if(loc.params?.project==='base'){
+   if(base.authorized)body+='<div class="gh-flow-panel"><b>LOCAL FRAMEWORK</b><p>已部署至项目</p>'+btn('base-project','项目','gh-primary')+'</div>';
+   else if(!baseReady)body+='<div class="gh-flow-panel"><p>请先在 KIRA 打开基础框架授权附件。</p></div>';
+   else body+='<div class="gh-flow-panel"><form data-form="gh-base-key" autocomplete="off"><label for="gh-base-key">密钥</label><input id="gh-base-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
+  }else{
+   if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';
+   else body+='<div class="gh-flow-panel"><form data-form="gh-flow-key" autocomplete="off"><label for="gh-flow-key">密钥</label><input id="gh-flow-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
+   if(baseReady||base.authorized)body+='<div class="gh-flow-panel"><b>LOCAL FRAMEWORK</b><p>'+(base.authorized?'已部署':'来自 KIRA 的授权附件')+'</p>'+btn('base-deploy',base.authorized?'查看部署':'输入密钥','gh-primary')+'</div>';
+  }
  }else if(loc.route==='/flow-install'){
   body=headline('部署工具','deploy')+'<h1>部署工具</h1><div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>›</span></button></div>';
  }else if(loc.route==='/flow-projects'){
-  body=headline('项目')+'<h1>项目</h1>'+
-   (p.deployed?'<div class="gh-flow-project-list">'+btn('scan',FLOW_TOOL+'　›','gh-flow-project')+'</div>':'<div class="gh-empty">暂无已部署项目</div>');
-  if(p.submitted)body=headline('项目')+'<h1>项目</h1><div class="gh-flow-project-list">'+btn('record',FLOW_TOOL+'　›','gh-flow-project')+'</div>';
+  body=headline('项目')+'<h1>项目</h1><div class="gh-flow-project-list">'+
+   (p.deployed?btn(p.submitted?'record':'scan',FLOW_TOOL+'　›','gh-flow-project'):'')+
+   (base.authorized?btn('base-project','LOCAL FRAMEWORK　›','gh-flow-project'):'')+
+   '</div>';
+  if(!p.deployed&&!base.authorized)body+='<div class="gh-empty">暂无已部署项目</div>';
  }else if(loc.route==='/flow-record'){
   body=headline('扫描记录','projects')+'<h1>'+FLOW_TOOL+'</h1><div class="gh-flow-panel"><strong>45 个安全漏洞</strong><p>已提交</p></div>';
  }else return '';
@@ -45,6 +57,8 @@ export function handleFlowD03(action,ctx){
   case 'gh-flow-deploy':dialog=null;route(ctx,'/flow-deploy');break;
   case 'gh-flow-projects':dialog=null;route(ctx,'/flow-projects');break;
   case 'gh-flow-record':dialog=null;route(ctx,'/flow-record');break;
+  case 'gh-flow-base-deploy':dialog=null;ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{project:'base'}});break;
+  case 'gh-flow-base-project':dialog=null;ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'base'}});break;
   case 'gh-flow-install':{
    let installed=false;
    ctx.store.update(s=>{installed=installFlowTool(s);});
@@ -72,10 +86,22 @@ export function handleFlowD03(action,ctx){
  return true;
 }
 export function submitFlowD03Form(form,ctx){
+ if(form.dataset.form==='gh-base-key'){
+  const key=String(new FormData(form).get('key')||'').trim(),
+   state=ctx.store.get(),error=form.querySelector('.gh-flow-error');
+  if(!state.content.mail?.some(m=>m.story55&&m.project==='base'&&m.read)){
+   if(error)error.textContent='请先在 KIRA 打开授权附件';return true;
+  }
+  if(key!==projectById(state,'base')?.key){
+   if(error)error.textContent='密钥错误';return true;
+  }
+  ctx.store.update(s=>authorizeProject(s,'base',key));
+  dialog='installed';route(ctx,'/flow-projects');
+  return true;
+ }
  if(form.dataset.form!=='gh-flow-key')return false;
  const key=String(new FormData(form).get('key')||'').trim();
  const p=flowState(ctx.store.get()),error=form.querySelector('.gh-flow-error');
- // Keep the input and the typed key intact for unsuccessful submissions.
  if(!p.linkOpened){if(error)error.textContent='尚未收到对应的部署任务';return true;}
  if(key!==FLOW_KEY){if(error)error.textContent='密钥错误';return true;}
  ctx.store.update(s=>acceptFlowKey(s,key));
