@@ -13,7 +13,7 @@ export function conversations(s){
  const authored=Array.from({length:55},(_,i)=>daySourceSummary(s,i+1)).reduce((acc,day)=>({scenes:acc.scenes+day.count,lines:acc.lines+day.lines}),{scenes:0,lines:0});
  const modeBar=`<section class="chat-mode-toolbar" aria-label="聊天编辑器模式">
   <strong>聊天资料编辑</strong>
-  ${btn('chat-view','全部消息 · 原版完整编辑',dated?'button-quiet':'button-primary',`data-view="classic"`)}
+  ${btn('chat-view','全部消息 · 原版完整编辑',mode==='classic'?'button-primary':'button-quiet',`data-view="classic"`)}
   ${btn('chat-view','按日期浏览',dated?'button-primary':'button-quiet',`data-view="dated"`)}
   ${btn('chat-view','D01–D55 原稿 · '+authored.lines+' 句',sources?'button-primary':'button-quiet',`data-view="source"`)}
   <small>本机已有 ${count} 条聊天记录，D01 前 ${historical} 条。日期浏览只筛选已生成气泡；「D01–D55 原稿」可读取尚未触发的正式台词。</small>
