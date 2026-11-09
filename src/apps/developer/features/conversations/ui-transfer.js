@@ -14,6 +14,7 @@ export function renderStagedChatImport(){
  const r=staged.report;
  return `<div class="chat-import-report"><strong>導入預覽 · 尚未修改</strong>
  <p>新增窗口 ${r.conversationsNew} · 新消息 ${r.messagesNew} · 異動衝突 ${r.conflicts} · 已存在 ${r.unchanged} · 受保護 ${r.protected}</p>
+ ${r.tracksChanged!==undefined?`<p>來源劇情：待更新 ${r.tracksChanged} 段 · 無改動 ${r.tracksUnchanged} 段 · 已播放不可修改 ${r.tracksBlocked} 段</p>`:''}
  ${r.details.length?`<details><summary>查看衝突（最多顯示20條）</summary><ul>${r.details.slice(0,20).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`:''}
  <label>衝突處理<select id="chat-import-mode"><option value="merge">合併：保留本機同 ID 消息</option><option value="replace-conflicts">僅覆蓋同 ID 的作者消息</option></select></label>
  <p>導入前自動下載作者聊天備份。遊戲進度、玩家實發消息不會被替換。</p>
@@ -41,7 +42,7 @@ export function handleChatTransferAction(a,t,ctx){
   downloadJSON(makeChatBundle(ctx.store.get(),{scope:'all'}),'BBBTAI-chat-before-import-'+new Date().toISOString().slice(0,10)+'.json');
   let result;ctx.store.update(s=>{result=applyChatImport(s,staged.bundle,{mode});});
   staged=null;
-  ctx.toast(`導入完成：新增 ${result.messagesNew} 條，${result.protected} 條受保護消息未修改`);
+  ctx.toast(`導入完成：新增 ${result.messagesNew} 條，${result.tracksChanged||0} 段來源劇情可更新；${result.protected} 條玩家／運行消息未修改`);
   return true;
  }
  const scopes={'chat-export-date':'date','chat-export-history':'history','chat-export-story':'story','chat-export-all':'all'};
@@ -50,6 +51,6 @@ export function handleChatTransferAction(a,t,ctx){
  const suffix=scope==='date'?(v.date||'other'):scope;
  const data=makeChatBundle(ctx.store.get(),{scope});
  downloadJSON(data,`BBBTAI-chat-${suffix}-${new Date().toISOString().slice(0,10)}.json`);
- ctx.toast(`已開始下載：${data.conversations.reduce((n,c)=>n+c.messages.length,0)} 條作者消息`);
+ ctx.toast(`已開始下載：${data.conversations.reduce((n,c)=>n+c.messages.length,0)} 條作者消息，${data.tracks?.length||0} 段來源劇情`);
  return true;
 }
