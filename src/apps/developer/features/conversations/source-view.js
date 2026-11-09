@@ -1,6 +1,7 @@
 import {btn,esc} from '../../../../system/ui.js';
 import {date55,story55Config} from '../../../../services/story55/state.js';
 import {readChatSources,daySourceSummary} from './source-model.js';
+import {renderStagedChatImport} from './ui-transfer.js';
 
 const optionDay=(s,day)=>{
  const x=daySourceSummary(s,day);
@@ -73,5 +74,10 @@ export function sourceView(s,{day=Number(s.editor?.chatSourceDay||s.day),embedde
  nodes.map(n=>'<div class="chat-source-node-row"><span>'+esc(n.title)+' · '+esc(n.kind)+(n.at?' · '+esc(n.at):'')+'</span>'+
  btn('chat-source-open-node','到剧情树编辑','button-quiet',`data-node="${esc(n.id)}"`)+
  '</div>').join('')+'</details>':'')+
- '<p class="editor-help">修改只保存到当前浏览器的游戏存档；在原剧情播放器触发之前有效。导出文件用于跨设备保存，勿清除浏览器网站数据。</p></section>';
+ '<section class="chat-source-backup"><strong>原稿备份／恢复</strong>'+
+ '<p class="editor-help">导出完整 D01–D55 正式原稿及可编辑消息，不包含玩家真实已发记录。导入前先预览差异并保存本地备份。</p>'+
+ btn('chat-export-source','导出 D01–D55 原稿 JSON','button-primary wide')+
+ '<label>导入聊天及原稿 JSON<input id="chat-import-file" type="file" accept=".json,application/json"></label>'+
+ '<div id="chat-import-preview">'+renderStagedChatImport()+'</div></section>'+
+ '<p class="editor-help">修改只保存到当前浏览器的游戏存档；编辑后请导出 JSON 备份，勿清除浏览器网站数据。</p></section>';
 }
