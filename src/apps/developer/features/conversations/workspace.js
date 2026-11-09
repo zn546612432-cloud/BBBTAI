@@ -5,6 +5,7 @@ import {story55Config} from '../../../../services/story55/state.js';
 import {conversations as allConversations,actors,isGroup,chatApps,scheduleLabel} from './model.js';
 import {selection,historyDates,rowsFor,activeConversation,PAGE_SIZE,dayDate,isEditableMessage} from './navigation.js';
 import {renderStagedChatImport} from './ui-transfer.js';
+import {daySourceSummary} from './source-model.js';
 import {messageCard as classicMessageCard} from './classic.js';
 import {trackKey,tracksForDay,trackValues,trackEditReason} from '../../../../story/d14-d24/editor-overrides.js';
 const attr=esc;
@@ -44,6 +45,7 @@ function dateNavigation(s,v){
 function fixedScenes(s,v){
  if(v.scope!=='story'||!isStory55(s))return '';
  const config=story55Config(s),nodes=config.nodes.filter(n=>n.day===v.day);
+ const sourceSummary=daySourceSummary(s,v.day);
  const scenes=tracksForDay(v.day);
  const sources=scenes.map(scene=>{
   const key=trackKey(scene),current=trackValues(s,scene),reason=trackEditReason(s,scene);
@@ -54,7 +56,10 @@ function fixedScenes(s,v){
   ${reason?`<p class="editor-help">${esc(reason)}。請在未播放的周目中修改，再匯出 JSON。</p>`:`<button class="button-primary wide" type="submit">保存此段來源對話</button>`}
   </form></details>`;
  }).join('');
- return `<section class="chat-fixed-scenes"><strong>當日正式劇情來源</strong>
+ return `<section class="chat-fixed-scenes"><strong>當日真正的劇情原稿</strong>
+ <p>此日共有 ${sourceSummary.count} 段正式來源 · ${sourceSummary.lines} 句。上方聊天窗口計數只計算已生成的消息，不代表原稿缺失。</p>
+ ${btn('chat-view','打開 D01–D55 原稿全文','button-primary wide',`data-view="source"`)}
+ <strong>舊版 D14–D24 原稿入口</strong>
  <p>直接修改原消息生命週期引擎所讀取的台詞。不增加第二套排程；不修改已發送玩家消息。</p>
  ${sources||'<small>本日沒有可直接編輯的日常對話來源</small>'}
  <strong>固定劇情節點</strong>
