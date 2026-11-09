@@ -34,7 +34,7 @@ function baseView(s,p){
  </section>
  <section class="gh-fw-actions" aria-label="项目操作">
   <div class="gh-fw-line"><span>链接</span><strong>${tested} / 5</strong></div>
-  ${!finished?`<button type="button" class="gh-button gh-fw-button" data-action="s55-run-step" data-project="base" ${ready.canStart?'':'disabled aria-disabled="true"'}>链接测试<span>›</span></button>`:''}
+  ${!finished&&ready.canStart?`<button type="button" class="gh-button gh-fw-button" data-action="s55-run-step" data-project="base">链接测试<span>›</span></button>`:''}
   ${loan&&ready.batch>0&&!finished?`
   <div class="gh-fw-line gh-fw-upgrade"><span>设备更新</span><strong>US$${cost.toLocaleString('en-US')}</strong></div>
   <button type="button" class="gh-button gh-fw-button" data-action="s55-base-upgrade" data-project="base" ${canUpgrade?'':'disabled aria-disabled="true"'}>升级<span>›</span></button>`:''}
