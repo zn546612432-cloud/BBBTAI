@@ -2,7 +2,7 @@
 // Player lines are offered in the native text composer and sent ONLY after
 // the player presses Send. Other characters deliver their own messages over time.
 import {isStory55,nodeStatus,story55Config,nodeById} from './state.js';
-import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55} from './runtime.js';
+import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {endingReplyDue55} from './finale.js';
 
@@ -42,6 +42,8 @@ export function currentScript55(s,channel,conversationId){
   if(index>=lines.length)continue;
   if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
+  const clock=n.delivery==='queued'&&kind==='me'?plannedSceneLineClock55(s,n.id,index):null;
+  if(clock&&s.clock<clock)continue; // Only offer the native player draft once it is due.
   return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
  return null;
