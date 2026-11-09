@@ -16,7 +16,10 @@ export const isProtectedMessage=m=>!m||m.actual===true||m.systemOwned===true||
  m.developerSimulated===true||m.story55===true||!!m.lifecycleId||!!m.ouroborosScript||
  Object.keys(m).some(k=>/^storyD\d+/.test(k))||
  (typeof m.id==='string'&&/^s55-/.test(m.id)&&m.authored!==true&&m.storyImported!==true);
-export const isEditableMessage=m=>!isProtectedMessage(m)&&(m.authored===true||m.storyImported===true);
+// The legacy editor allowed unflagged fixture bubbles to be edited. Keep that UI
+// compatibility, but treat only explicitly authored/imported records as portable.
+export const isEditableMessage=m=>!isProtectedMessage(m);
+export const isPortableMessage=m=>isEditableMessage(m)&&(m.authored===true||m.storyImported===true);
 
 export function messageEditorDate(m){
  if(validDate(m?.sentDate))return m.sentDate;
