@@ -43,12 +43,17 @@ function trackSources(s,day){
    let rows=[],at=d.fallback||d.early||'08:00',failure='';
    try{rows=sourceLines(value(d.lines,s,q)||[]);}catch(error){failure=String(error?.message||error);}
    try{at=value(d.at,s,q)||at;}catch{/* leave fallback; lines remain visible */}
+   const baseTexts=rows.map(line=>line.text),baseAt=at;
    const edited=scope(s,key);
-   if(edited?.lines?.length===rows.length)rows=rows.map((l,i)=>({...l,text:edited.lines[i].text}));
+   if(edited?.lines?.length===rows.length)rows=rows.map((l,i)=>({
+    ...l,text:Array.isArray(edited.baseline)&&edited.baseline[i]===edited.lines[i].text
+     ?l.text:edited.lines[i].text
+   }));
    if(edited?.at)at=edited.at;
    const reason=alreadyStarted(s,track.name,d.id)?'本周目这段对话已经开始或生成消息；为了保护玩家记录，请在新的未播放周目修改。':failure;
    result.push({key,type:'track',day,channel:d.channel||'wechat',chat:d.chat,
     title:channelLabel(d.channel||'wechat',d.chat)+' · '+d.id,at:TIME.test(at)?at:'08:00',
+    baseAt:TIME.test(baseAt)?baseAt:'08:00',baseTexts,atExplicit:!!edited?.at,
     timingLabel:d.condition||d.enabled?'带剧情前置条件 · 最早开始时间':'按游戏时间开始',
     deliveryLabel:rows.some(l=>l.who==='me')?'含熙蒙的原生点击发送':'NPC 逐条自动发送',
     details:[d.optional?'可选支线':'',d.until?'有效至 '+String(d.until):'',d.pauseMs&&typeof d.pauseMs==='number'?'消息间隔 '+d.pauseMs+' 毫秒':''].filter(Boolean),
@@ -134,10 +139,16 @@ export function saveChatSource(s,key,input){
  });
  s.story55.chatSceneEdits??={};
  if(entry.type==='track'){
-  if(!TIME.test(input.at))throw Error('发送时间应为 HH:MM');
-  const edited={at:input.at,lines:valid};
+  const time=input.at==null?entry.baseAt:input.at;
+  if(!TIME.test(time))throw Error('发送时间应为 HH:MM');
+  const edited={at:time,lines:valid};
   if(trackSource(key))saveTrackValues(s,key,edited);
-  else s.story55.chatSceneEdits[key]=edited;
+  else{
+   const old=s.story55.chatSceneEdits[key];
+   const atChanged=input.at!=null&&(time!==entry.baseAt||!!old?.at&&time===entry.at);
+   const baseline=old?.baseline?.length===valid.length?old.baseline:entry.baseTexts;
+   s.story55.chatSceneEdits[key]={...(atChanged?{at:time}:{}),lines:valid,baseline};
+  }
  }else if(entry.type==='d01'){
   const lines=valid.map((x,i)=>entry.lines[i].after!==undefined?{...x,after:entry.lines[i].after}:x);
   s.story55.chatSceneEdits[key]={lines};
