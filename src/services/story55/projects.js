@@ -62,6 +62,20 @@ export function syncBaseFrameworkRevision(s){
  s.story55.baseUpgradeRevision=2;
  return changed;
 }
+// Restore the existing MIT-adapted pipe-network implementation for *future*
+// base LINK attempts. An in-flight board is never replaced by migration.
+export function syncBaseLinkPipeRevision(s){
+ if(!isStory55(s)||s.story55.baseLinkPipeRevision===1)return false;
+ let changed=false;
+ for(const run of Object.values(s.ghost?.orders||{})){
+  if(run?.story55Project!=='base'||run.type!=='route'||!['authorized','failed'].includes(run.status))continue;
+  run.settings??={};run.settings.pipeNetwork=true;
+  run.settings.pipeSize=[5,5,6,6,7][Math.min(4,run.step||0)];
+  run.settings.seconds=null;changed=true;
+ }
+ s.story55.baseLinkPipeRevision=1;
+ return changed;
+}
 
 /** A base framework is one persistent GHOST project. Its daily five LINK
  * tests use the same order runner as other commissions; upgrades are a
@@ -116,7 +130,7 @@ export function startDeploymentStep(s,id){
  if(step<0)throw Error('本組工具已執行，請檢查驗收結果');
  const orderId=`s55:${id}:${batch}:${step}`;
  const g=s.ghost??={orders:{},history:[],balance:0,config:{}};g.orders??={};g.history??=[];
- g.orders[orderId]??={id:orderId,type:p.steps[step],key:p.key,status:'authorized',attempts:0,story55Project:id,batch,step,settings:{seconds:90,retries:1000,rounds:1,codeLength:4,attackMs:3500,reward:null}};
+ g.orders[orderId]??={id:orderId,type:p.steps[step],key:p.key,status:'authorized',attempts:0,story55Project:id,batch,step,settings:{seconds:id==='base'?null:90,retries:1000,rounds:1,codeLength:4,attackMs:3500,reward:null,...(id==='base'?{pipeNetwork:true,pipeSize:[5,5,6,6,7][Math.min(4,step)]}:{})}};
  r.active=orderId;return orderId;
 }
 export function upgradeBaseFramework(s){
@@ -143,7 +157,7 @@ export function completeDeploymentRun(s,run){
   b.testedDay=s.day;
   if(p.id==='base'){
    if(run.batch===0){
-    b.complete=true;b.day=s.day;b.runFailed=true;
+    b.complete=true;b.day=s.day;b.runFailed=true;r.baseRunNoticePending=true;r.baseRunNoticeShown=false;
     s.story55.reports['base-0']={title:p.title,project:'base',percent:deploymentPercent(s,'base'),
       day:s.day,errorCode:p.runtimeErrorCode||'E-ENV-014',status:'runtime-failed',message:'部署成功！运行失败！'};
    }else{

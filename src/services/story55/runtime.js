@@ -2,7 +2,7 @@ import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
-import {syncBaseFrameworkRevision,deployment} from './projects.js';
+import {syncBaseFrameworkRevision,syncBaseLinkPipeRevision,deployment} from './projects.js';
 import {PHONE_RUNTIME_POLICY} from '../../system/runtime/policy.js';
 import {tickWishes} from '../wishes/index.js';
 import {seedD01,tickD01} from '../../story/d01/runtime.js';
@@ -223,6 +223,7 @@ export function tickStory55(s){
  syncD10D13Content(s);
  syncD14D24Content(s);
  syncBaseFrameworkRevision(s);
+ syncBaseLinkPipeRevision(s);
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);

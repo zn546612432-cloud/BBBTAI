@@ -1,38 +1,46 @@
 import {esc} from '../../../system/ui.js';
 import {story55Config,nodeStatus,projectById,completed} from '../../../services/story55/state.js';
 import {deployment,deploymentPercent,deploymentReadiness,baseUpgradeCost} from '../../../services/story55/projects.js';
+import {renderFlowD03} from '../features/flow-d03/index.js';
 const b=(a,t,attrs='')=>`<button type="button" class="s55-button" data-action="s55-${a}" ${attrs}>${t}</button>`;
-export function deploymentHome(s){
- const c=story55Config(s),list=c.projects.filter(p=>p.id!=='wallet'&&s.day>=p.day&&(p.id!=='base'||deployment(s,'base').authorized));
- return `<div class="s55 s55-dark"><small>GHOST / 項目</small><h1>項目</h1>${s.day>=25?`<div class="s55-hardware"><b>設備等級 ${s.story55.hardware}</b>${b('upgrade','升級設備')}</div>`:''}${list.map(p=>{
-  const percent=deploymentPercent(s,p.id),readiness=deploymentReadiness(s,p.id);
-  return `<article class="s55-card"><h2>${esc(p.title)}</h2><div class="s55-meter"><i style="width:${percent}%"></i></div><strong>${percent}%</strong><p>${esc(readiness.reason)}</p>${b('project','打開',`data-project="${esc(p.id)}"`)}</article>`;
- }).join('')||'<p>暂无已部署项目。请先在「01 部署」输入授权密钥。</p>'}</div>`;
-}
+// The D03 scanner and the D14 framework are entries in the SAME GHOST
+// Projects list. Do not introduce a second story-themed project dashboard.
+export function deploymentHome(s){return renderFlowD03(s,{route:'/flow-projects',params:{}});}
+
 function baseView(s,p){
- const r=deployment(s,'base'),percent=deploymentPercent(s,'base'),ready=deploymentReadiness(s,'base');
- const initial=r.batches?.[0],bNow=r.batches?.[ready.batch];
- const tested=Math.min(5,(bNow?.steps||[]).filter(Boolean).length);
- const loan=completed(s,'loan');
- const failure=initial?.runFailed&&!r.batches?.slice(1).some(b=>b?.complete);
- const status=completed(s,'base')?'程序已完成':!initial?.complete?'准备首次运行':!loan?'已部署 · 运行环境异常':ready.canUpgrade?'测试完成 · 待升级':ready.reason;
- return `<div class="s55 s55-dark">
-   <nav>${b('projects','‹ 項目')}<small>GHOST / 本地程序</small></nav>
-   <h1>${esc(p.title)}</h1>
-   <article class="s55-card"><small>${esc(status)}</small><strong class="s55-percent">${percent}%</strong>
-    <div class="s55-meter"><i style="width:${percent}%"></i></div>
-    <p>累计完成 ${r.batches?.reduce((sum,b)=>sum+(b?.steps||[]).filter(Boolean).length,0)||0} 次链接测试</p>
-   </article>
-   ${failure?`<article class="s55-card" role="status"><strong>错误代码：${esc(p.runtimeErrorCode||'E-ENV-014')}</strong><p>部署成功！运行失败！</p><small>现有设备无法启动基础框架，程序与测试记录已保留。</small></article>`:''}
-   ${!completed(s,'base')?`<article class="s55-card">
-    <h2>链接测试</h2><p>本轮已完成 ${tested} / 5</p>
-    <p class="s55-runtime-status" role="status">${esc(ready.reason)}</p>
-    ${b('run-step','执行链接测试',`data-project="base" ${ready.canStart?'':'disabled aria-disabled="true"'}`)}
-    ${loan&&ready.batch>0?`<p>设备升级：五次链接测试 + US$${baseUpgradeCost(s).toLocaleString('en-US')}</p>
-       ${b('base-upgrade','升级',`data-project="base" ${ready.canUpgrade&&s.bankData.balance>=baseUpgradeCost(s)?'':'disabled aria-disabled="true"'}`)}
-       ${ready.canUpgrade&&s.bankData.balance<baseUpgradeCost(s)?'<small>银行余额不足，完成委托或兑换资产后再升级。</small>':''}`:''}
-   </article>`:'<article class="s55-card"><h2>程序已完成</h2><p>已完成全部链接测试和升级。</p></article>'}
-  </div>`;
+ const r=deployment(s,'base'),percent=deploymentPercent(s,'base'),ready=deploymentReadiness(s,'base'),
+  first=r.batches?.[0],current=r.batches?.[ready.batch],
+  today=r.batches?.find(batch=>batch?.testedDay===s.day),
+  tested=Math.min(5,(today?.steps||current?.steps||[]).filter(Boolean).length),
+  loan=completed(s,'loan'),finished=completed(s,'base'),
+  failed=!!first?.runFailed,showFailure=!!r.baseRunNoticePending,
+  cost=baseUpgradeCost(s),
+  canUpgrade=ready.canUpgrade&&s.bankData.balance>=cost;
+ const state=finished?'已完成':
+   !first?.complete?'已部署':
+   !loan?'运行失败':
+   ready.canUpgrade?'待升级':'运行中';
+ const modal=showFailure?`<div class="gh-flow-overlay" role="presentation"><section class="gh-flow-dialog" role="alertdialog" aria-modal="true" aria-label="基础框架运行结果"><h2>部署成功！运行失败！</h2><p>错误代码：${esc(p.runtimeErrorCode||'E-ENV-014')}</p><div class="gh-flow-dialog-actions"><button type="button" class="gh-button gh-primary" data-action="s55-base-dismiss-report">确定</button></div></section></div>`:'';
+ return `<div class="gh-shell gh-flow-shell gh-fw-shell" data-view-key="ghost-framework-base">
+ <div class="gh-top">
+  <button type="button" class="gh-button gh-back" data-action="s55-projects" aria-label="返回项目">‹</button>
+  <span>GHOST / 项目</span><span>●</span>
+ </div>
+ <h1>${esc(p.title)}</h1>
+ <section class="gh-fw-ledger" aria-label="基础框架状态">
+  <div class="gh-fw-line"><span>部署</span><strong>${percent}%</strong></div>
+  <div class="gh-meter"><i style="width:${percent}%"></i></div>
+  <div class="gh-fw-status">${state}${failed&&!loan?' · '+esc(p.runtimeErrorCode||'E-ENV-014'):''}</div>
+ </section>
+ <section class="gh-fw-actions" aria-label="项目操作">
+  <div class="gh-fw-line"><span>链接</span><strong>${tested} / 5</strong></div>
+  ${!finished&&ready.canStart?`<button type="button" class="gh-button gh-fw-button" data-action="s55-run-step" data-project="base">链接测试<span>›</span></button>`:''}
+  ${loan&&ready.batch>0&&!finished?`
+  <div class="gh-fw-line gh-fw-upgrade"><span>设备更新</span><strong>US$${cost.toLocaleString('en-US')}</strong></div>
+  <button type="button" class="gh-button gh-fw-button" data-action="s55-base-upgrade" data-project="base" ${canUpgrade?'':'disabled aria-disabled="true"'}>升级<span>›</span></button>`:''}
+ </section>
+ ${modal}
+ </div>`;
 }
 export function deploymentView(s,id){
  const p=projectById(s,id);if(!p)return deploymentHome(s);
