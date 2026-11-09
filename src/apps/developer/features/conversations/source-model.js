@@ -1,6 +1,6 @@
 import {AUTHORED_CHAT_TRACKS} from '../../../../services/messaging/lifecycle/registry.js';
 import {story55Config,date55} from '../../../../services/story55/state.js';
-import {d01GroupScript,d01BrotherLines,D01_GROUP_BRANCHES} from '../../../../story/d01/wechat.js';
+import {d01GroupScript,d01BrotherLines,d01GroupWait,D01_GROUP_BRANCHES} from '../../../../story/d01/wechat.js';
 import {celebration,privateScenes as d06Private,rewardSets as d06Rewards} from '../../../../story/d06/wish-content.js';
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../../../story/d07/life-content.js';
 import {saveTrackValues,trackSource} from '../../../../story/d14-d24/editor-overrides.js';
@@ -50,6 +50,8 @@ function trackSources(s,day){
     ...l,text:Array.isArray(edited.baseline)&&edited.baseline[i]===edited.lines[i].text
      ?l.text:edited.lines[i].text
    }));
+   rows=rows.map((l,i)=>({...l,clock:edited?.lineTimes?.[i]||'',
+    defaultClock:typeof d.historyClock==='function'?d.historyClock(i,s,q):i===0?at:''}));
    if(edited?.at)at=edited.at;
    const reason=alreadyStarted(s,track.name,d.id)?'本周目这段对话已经开始或生成消息；为了保护玩家记录，请在新的未播放周目修改。':failure;
    result.push({key,type:'track',day,channel:d.channel||'wechat',chat:d.chat,
@@ -71,14 +73,16 @@ function d01Sources(s){
    title:'狼崽團 · '+(branch==='morning'?'午前':'午后')+'对话分支',
    at:'',timingLabel:'玩家主动在群聊发出第一条消息后触发；由游戏时间决定分支',
    deliveryLabel:'NPC 间隔发送；轮到熙蒙时必须亲自点击发送',
-   lines:rows.map(x=>({who:x.from,text:x.text,kind:'text',after:x.after})),
+   lines:rows.map((x,i)=>({who:x.from,text:x.text,kind:'text',
+     waitSeconds:d01GroupWait(rows,i)/1000,timeMode:'seconds'})),
    reason:s.story55?.d01?.group?.started?'本周目 D01 群聊已开始，不能覆盖正在播放的文案。':''};
  });
  return [...group,{key:'d01:brother',day:1,type:'d01',chat:'wang',channel:'wechat',
   title:'熙旺 · 独立私聊回复',at:'',
   timingLabel:'玩家先发「哥」，再连发三条，之后经过 2 游戏分钟',
   deliveryLabel:'玩家发言自行输入；熙旺分三段回复',
-  lines:d01BrotherLines(s).map(x=>({who:x.who,text:x.text,kind:'text',id:x.at})),
+  lines:d01BrotherLines(s).map((x,i)=>({who:x.who,text:x.text,kind:'text',id:x.at,
+    waitSeconds:i===1?x.gameMinutes:x.waitMs/1000,timeMode:i===1?'game-minutes':'seconds'})),
   reason:s.story55?.d01?.brother?.phase&&s.story55.d01.brother.phase!=='idle'?'本周目熙旺私聊已触发；请在未触发的周目修改。':''}];
 }
 const wishesByDay={
@@ -92,7 +96,10 @@ const wishesByDay={
   ...Object.entries(d07Rewards).map(([id,rows])=>({key:'wish:d07-'+id,title:'心愿到货回复 · '+id,rows}))]};
 function wishSources(s,day){
  return (wishesByDay[day]||[]).filter(g=>g.rows.length).map(g=>{
-  const rows=sourceLines(g.rows).map(l=>({...l,text:scope(s,'wish:'+l.id)?.text??l.text}));
+  const rows=sourceLines(g.rows).map(l=>({
+   ...l,text:scope(s,'wish:'+l.id)?.text??l.text,
+   clock:scope(s,'wish:'+l.id)?.clock||'',timeMode:'event-clock'
+  }));
   const sent=rows.some(l=>(s.story55?.wishes?.story?.delivered||[]).includes(l.id)||
    Object.values(s.content?.conversations||{}).some(chats=>chats.some(c=>(c.messages||[]).some(m=>m.id===l.id))));
   return {key:g.key,type:'wish',day,channel:'wechat',chat:'group',title:g.title,at:'',
@@ -118,7 +125,11 @@ function nodeSources(s,day){
   title:n.title+' · 主线场景',at:n.at||'',timingLabel:n.at?'达到 '+n.at+' 且满足剧情节点依赖':'由剧情节点前置条件决定，不定时自动弹出',
   deliveryLabel:n.delivery==='queued'?'原系统逐条排队，熙蒙亲自点击发送':'原 Story55 场景及确认流程',
   details:[n.requires?.length?'前置：'+n.requires.join('、'):'',n.call?'包含电话事件':''].filter(Boolean),
-  lines:sourceLines(c.scenes[n.id].map(([who,text])=>({who,text}))),
+  lines:sourceLines(c.scenes[n.id].map(([who,text])=>({who,text}))).map((l,i)=>({
+   ...l,clock:s.story55?.chatSceneEdits?.['node:'+n.id]?.lineTimes?.[i]||'',
+   timeMode:n.delivery==='queued'?'queued-clock':'scene-clock',
+   clockLocked:['intrusion','ending'].includes(n.id)||['system','call','watch','camera','disconnect','credit','offline'].includes(l.who)
+  })),
   reason:s.story55?.completed?.[n.id]||s.story55?.scenes?.[n.id]?.index>0?'本周目该剧情节点已开始／完成，为保护剧情进度只读。':''
  }));
 }
