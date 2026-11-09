@@ -685,3 +685,12 @@ to{opacity:1;transform:none}
 .chat-source-node-row button{font-size:11px;padding:6px;white-space:nowrap}
 @media(min-width:900px){#phone:has(.chat-source-dashboard){width:min(1140px,calc(100vw - 30px));height:min(950px,calc(100dvh - 22px));min-height:560px}#phone:has(.chat-source-dashboard) .chat-source-line-list{grid-template-columns:repeat(2,minmax(0,1fr))}#phone:has(.chat-source-dashboard) .chat-source-card form{padding:18px}}
 @media(max-width:460px){.chat-source-filter{grid-template-columns:1fr}.chat-source-day-controls{display:grid;grid-template-columns:1fr 1fr}.chat-source-day-controls label{grid-column:1/-1;grid-row:1}.chat-source-day-controls button{grid-row:2}}
+
+/* Each original speech bubble has its own editable schedule while retaining the old timeline. */
+.chat-source-line-timing{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;margin:7px 0 0;border-top:1px solid #dbe6ed;padding-top:9px;font-size:12px;font-weight:600;color:#385e75;min-width:0}
+.chat-source-line-timing input{box-sizing:border-box;width:100%;min-width:0;min-height:42px;padding:8px 9px;border:1px solid #a9bfd0;border-radius:9px;background:#f9fcff;color:#23485f;font-size:14px}
+.chat-source-line-timing input:focus{outline:2px solid #74b4dc;outline-offset:1px}
+.chat-source-line-timing input:disabled{opacity:.6;background:#e6eef3}
+.chat-source-line-timing small{font-size:11px;line-height:1.5;font-weight:400;color:#7b8d98}
+.chat-source-line>label>strong{display:block;margin-bottom:6px}
+.chat-source-line>label{min-width:0;display:block}
