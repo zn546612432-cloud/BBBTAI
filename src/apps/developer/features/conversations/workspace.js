@@ -5,49 +5,18 @@ import {story55Config} from '../../../../services/story55/state.js';
 import {conversations as allConversations,actors,isGroup,chatApps,scheduleLabel} from './model.js';
 import {selection,historyDates,rowsFor,activeConversation,PAGE_SIZE,dayDate,isEditableMessage} from './navigation.js';
 import {renderStagedChatImport} from './ui-transfer.js';
+import {messageCard as classicMessageCard} from './classic.js';
 import {trackKey,tracksForDay,trackValues,trackEditReason} from '../../../../story/d14-d24/editor-overrides.js';
 const attr=esc;
 const channelName=id=>({wechat:'微信',noapp:'NoApp',mirage:'MIRAGE',messages:'信息'}[id]||id);
 const pad=n=>String(n).padStart(2,'0');
 const labelDay=n=>`D${pad(n)} · ${dayDate(n)}`;
 
-export function messageCard(m,c,s,index,{position=index+1}={}){
- const key=attr(m.id),editable=isEditableMessage(m),kind=m.kind||'text';
- if(!editable)return `<article class="edit-message chat-readonly" data-message-id="${key}"><div class="edit-message-head"><span class="edit-number">${position}</span><strong>${esc(m.from||'系統')}</strong><span class="edit-kind">唯讀 · ${esc(m.sentDate||m.time||'運行消息')}</span></div><p>${esc(m.text||'[非文字消息]')}</p><small>玩家已發送或運行時生成，請在原劇情來源編輯，不覆寫存檔。</small></article>`;
- const mode=m.schedule?.mode||'immediate',options=actors(c),sentPreset=datePreset(m,s);
- return `<article class="edit-message" data-message-id="${key}">
- <div class="edit-message-head">
-  <button type="button" class="drag-message" data-drag-message="${key}" aria-label="拖曳第 ${position} 條排序">⠿</button>
-  <span class="edit-number">${position}</span><span class="edit-kind">${kind==='image'?'圖片':kind==='app_invitation'?'棋局邀請':'文字'}</span>
-  ${btn('duplicate-message','複製','text-button',`data-id="${key}"`)}
-  ${btn('delete-message','刪除','text-button danger',`data-id="${key}"`)}
- </div>
- <div class="editor-field-pair">
-  <label>發言人<select data-message-field="from" data-id="${key}">${options.map(a=>`<option value="${attr(a.id)}" ${m.from===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select></label>
-  <label>顯示時間<input type="time" data-message-field="time" data-id="${key}" value="${attr(messageClock(m,s)||s.clock)}"></label>
- </div>
- <div class="editor-field-pair">
-  <label>發送日期<select data-sent-date="${key}">${[['today','今天'],['yesterday','昨天'],['before-yesterday','前天'],['custom','指定日期']].map(([id,label])=>`<option value="${id}" ${sentPreset===id?'selected':''}>${label}</option>`).join('')}</select></label>
-  ${sentPreset==='custom'?`<label>日期<input type="date" data-message-field="sentDate" data-id="${key}" value="${attr(messageDate(m,s))}"></label>`:''}
- </div>
- ${kind==='image'?`<img src="${attr(m.text)}" alt="消息圖片">${btn('replace-message-image','替換圖片','button-quiet',`data-id="${key}"`)}`:kind==='app_invitation'?`<p>國際象棋邀請 · ${esc(m.invitationId)}</p>`:`<label class="editor-message-label">對話內容<textarea data-message-field="text" data-id="${key}" rows="3">${esc(m.text)}</textarea></label>`}
- <div class="message-schedule">
-  <div class="schedule-heading"><span>出現條件</span><span class="schedule-badge ${m.delivery?'delivered':''}">${esc(scheduleLabel(m))}</span></div>
-  <select data-schedule-field="mode" data-id="${key}">
-   <option value="immediate" ${mode==='immediate'?'selected':''}>直接留在聊天記錄</option>
-   <option value="game-time" ${mode==='game-time'?'selected':''}>指定劇情日和時間</option>
-   <option value="chat-delay" ${mode==='chat-delay'?'selected':''}>開啟聊天後延遲</option>
-  </select>
-  ${mode==='game-time'?`<div class="editor-field-pair"><label>劇情日<input type="number" min="1" max="${isStory55(s)?55:90}" data-schedule-field="day" data-id="${key}" value="${m.schedule.day}"></label><label>劇情時間<input type="time" data-schedule-field="clock" data-id="${key}" value="${attr(m.schedule.clock)}"></label></div>`:''}
-  ${mode==='chat-delay'?`<label>延遲秒數<input type="number" min="0" max="3600" step=".1" data-schedule-field="seconds" data-id="${key}" value="${m.schedule.seconds}"></label>`:''}
-  ${mode!=='immediate'?`<div class="edit-order">${btn('test-message','▶ 測試彈出','text-button',`data-id="${key}"`)}${m.delivery?btn('rearm-message','重新等待','text-button',`data-id="${key}"`):''}</div>`:''}
- </div>
- <div class="edit-order edit-order-footer">
-  ${btn('move-up','↑ 上移','text-button',`data-id="${key}" ${index===0?'disabled':''}`)}
-  ${btn('move-down','↓ 下移','text-button',`data-id="${key}" ${index===c.messages.length-1?'disabled':''}`)}
-  <label>移到第 <input type="number" min="1" max="${c.messages.length}" value="${index+1}" data-order-message="${key}"> 條</label>
- </div>
- </article>`;
+// Date browsing retains every original sender, display-date, scheduling,
+// preview, reorder and delayed-delivery control from the classic editor.
+export function messageCard(m,c,s,index){
+ if(!isEditableMessage(m))return `<article class="edit-message chat-readonly" data-message-id="${attr(m.id)}"><div class="edit-message-head"><strong>${esc(m.from||'系統')}</strong><small>已發送的劇情／系統消息 · 唯讀</small></div><p>${esc(m.text||'[非文字消息]')}</p></article>`;
+ return classicMessageCard(m,c,s,index);
 }
 export function newConversationForm(s){
  return `<details class="new-conversation"><summary>＋ 新建聊天窗口</summary><form data-form="new-conversation">
