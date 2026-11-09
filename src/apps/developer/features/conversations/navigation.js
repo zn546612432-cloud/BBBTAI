@@ -22,8 +22,10 @@ export const isEditableMessage=m=>!isProtectedMessage(m);
 export const isPortableMessage=m=>isEditableMessage(m)&&(m.authored===true||m.storyImported===true);
 
 export function messageEditorDate(m){
+ // The day a timed script will actually fire is the editing date; its
+ // separately displayed message timestamp can legitimately differ.
+ if(m?.schedule?.mode==='game-time'&&Number.isInteger(m.schedule.day)&&m.schedule.day>=1&&m.schedule.day<=55)return dayDate(m.schedule.day);
  if(validDate(m?.sentDate))return m.sentDate;
- if(Number.isInteger(m?.schedule?.day)&&m.schedule.day>=1&&m.schedule.day<=55)return dayDate(m.schedule.day);
  if(Number.isInteger(m?.day)&&m.day>=1&&m.day<=55)return dayDate(m.day);
  return null;
 }
