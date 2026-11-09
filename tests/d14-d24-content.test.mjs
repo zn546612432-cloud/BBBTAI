@@ -79,7 +79,8 @@ test('D15 fictional session requires an explicit disconnect and one ledger/debt 
 
 test('old default scene migration preserves player history, finished loan and real Ghost batches',()=>{
  const s=at(24,'23:00');s.story55.config.scenes.loan=structuredClone(D14_D24_LEGACY.scenes.loan);s.story55.config.scenes.lead=structuredClone(D14_D24_LEGACY.scenes.lead);
- delete s.story55.d14D24Revision;s.story55.completed.loan={day:15,clock:'16:00'};
+ delete s.story55.d14D24Revision;delete s.story55.d14D24LoanRevision;delete s.story55.baseUpgradeRevision; // Simulate an actual pre-upgrade save.
+ s.story55.completed.loan={day:15,clock:'16:00'};
  s.story55.projects.base={authorized:true,batches:[{complete:true,steps:[1,2,3,4,5]}]};s.story55.liabilities=1000000;
  s.bankData.transactions.push({id:'s55-loan',amount:1000000});
  const history={id:'keep-historical',from:'me',text:'自己的話',sentDate:'2024-03-10'};const player={id:'s55-loan-1',from:'me',text:'舊版本親自發的話',sentDate:'2025-06-02'};
