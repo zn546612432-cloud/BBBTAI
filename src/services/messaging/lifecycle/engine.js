@@ -24,8 +24,16 @@ export function createConversationTrack(config){
  const pause=(s,d,q)=>value(d.pauseMs,s,q)??CHAT_LIFECYCLE_POLICY.pauseMs;
  const chatId=(s,d)=>config.chatId?.(s,d)||d.chat;
  const get=(s,d)=>root(s)[d.id];
- const lines=(s,d,q)=>value(d.lines,s,q)||[];
- const starts=(s,d,q)=>value(d.at,s,q)||d.fallback||d.early||'08:00';
+ // Author text changes are data for this existing lifecycle, not a second
+ // message queue. Stable scene IDs, Send gating, notifications and progress
+ // continue to belong to this module.
+ const edited=(s,d)=>s.story55?.chatSceneEdits?.[config.prefix+':'+d.id];
+ const lines=(s,d,q)=>{
+  const source=value(d.lines,s,q)||[],revision=edited(s,d);
+  if(!Array.isArray(revision?.lines)||revision.lines.length!==source.length)return source;
+  return source.map((line,i)=>({...line,text:revision.lines[i].text}));
+ };
+ const starts=(s,d,q)=>edited(s,d)?.at||value(d.at,s,q)||d.fallback||d.early||'08:00';
  const startMinute=(s,d,q)=>(d.day-1)*1440+minute(starts(s,d,q));
  const endMinute=(s,d,q)=>{
   if(d.until)return (d.day-1)*1440+minute(value(d.until,s,q));
