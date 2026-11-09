@@ -58,6 +58,9 @@ export function rowsFor(s,channel,c,{ignoreSearch=false}={}){
 }
 export function activeConversation(s){
  const list=conversations(s),picked=selectedConversation(s);
+ // Classic full-chat editor must always edit the selected conversation, not an
+ // invisible date-filtered auto-selection from the alternative viewer.
+ if(s.editor?.chatView!=='dated')return picked;
  if(s.editor?.chatExplicitSelection)return picked;
  return list.find(({channel,c})=>rowsFor(s,channel,c).length>0)||picked;
 }
