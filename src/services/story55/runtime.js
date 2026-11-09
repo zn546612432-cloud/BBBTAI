@@ -32,7 +32,7 @@ export function activateStory55(s){
   if(!node||!Array.isArray(previous)||!Array.isArray(edit?.lines)||previous.length!==edit.lines.length)continue;
   if(!edit.lines.every((l,i)=>l.who===previous[i][0]&&typeof l.text==='string'&&l.text.trim()))continue;
   c.scenes[id]=edit.lines.map(l=>[l.who,l.text]);
-  if(edit.at&&/^([01]\\d|2[0-3]):[0-5]\\d$/.test(edit.at))node.at=edit.at;
+  if(edit.at&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(edit.at))node.at=edit.at;
   else if(edit.at==='')delete node.at;
  }
  const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,legacySMSImported:s.story55?.legacySMSImported,
