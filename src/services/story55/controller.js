@@ -46,6 +46,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-run-step'){let run;c.store.update(s=>run=startDeploymentStep(s,project));open(c,'ghost','/contract',{orderId:run});return true;}
  if(a==='s55-upgrade'){c.store.update(s=>upgradeHardware(s));return true;}
  if(a==='s55-base-upgrade'){c.store.update(s=>upgradeBaseFramework(s));return true;}
+ if(a==='s55-base-dismiss-report'){c.store.update(s=>{const r=s.story55?.projects?.base;if(r){r.baseRunNoticePending=false;r.baseRunNoticeShown=true;}});return true;}
  if(a==='s55-read-mail'){let project;c.store.update(s=>{markMail55(s,t.dataset.id);project=s.content.mail.find(m=>m.id===t.dataset.id)?.project;});if(project)open(c,'files','/story55-key',{project});return true;}
  if(a==='s55-disconnect-session'){c.store.update(s=>advanceScene55(s,id,{disconnect:true}));return true;}
  if(['s55-read-file','s55-read-page','s55-read-map'].includes(a)){c.store.update(s=>readEvidence55(s,a.slice(9),t.dataset.id));return true;}
