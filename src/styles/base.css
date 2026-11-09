@@ -544,3 +544,73 @@ to{opacity:1;transform:none}
 .home-app .home-icon-wrap{position:relative;display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;overflow:visible;isolation:isolate}
 .home-app .home-unread-badge{position:absolute;top:-7px;right:-9px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;box-sizing:border-box;padding:0 5px;border-radius:999px;background:#ff3b30;color:#fff;font:700 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;letter-spacing:-.15px;font-variant-numeric:tabular-nums;box-shadow:0 1px 3px #0007;pointer-events:none;white-space:nowrap}
 .home-dock .home-unread-badge{top:-6px;right:-8px}
+
+/* Desktop date editor (developer route only). */
+.chat-editor{color:#233f50}
+.chat-editor-toolbar{position:sticky;top:-22px;z-index:12;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid #d7e3e8;border-radius:15px;background:#f7fafbf4;backdrop-filter:blur(18px);box-shadow:0 8px 18px #173b5011}
+.chat-editor-toolbar strong{font-size:14px;color:#244b63}
+.chat-jump-tools{display:flex;gap:6px}
+.chat-jump-tools button{white-space:nowrap;width:auto;font-size:12px;padding:10px 12px}
+.chat-editor-layout{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px;align-items:start}
+.chat-editor-sidebar{display:grid;gap:11px;min-width:0;padding:14px;background:#f0f5f8;border:1px solid #dbe7ed;border-radius:17px}
+.chat-editor-sidebar>label{margin:0}
+.chat-editor-sidebar input,.chat-editor-sidebar select{width:100%;margin-top:6px}
+.chat-date-navigation{display:grid;gap:10px}
+.chat-scope-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.chat-scope-tabs button{padding:10px 6px;border-radius:10px;border:1px solid #dce6eb;background:white;color:#527184;font-size:12px}
+.chat-scope-tabs button.active{background:#284e69;color:#fff;border-color:#284e69}
+.chat-date-navigation label{margin:0}
+.chat-date-arrows{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chat-date-arrows button{background:white;border:1px solid #d9e4ea;border-radius:11px;padding:9px;font-size:12px}
+.chat-editor .new-conversation{margin:0;border-radius:12px;background:#fff;padding:12px}
+.chat-editor .new-conversation>summary{cursor:pointer;font-size:13px}
+.chat-fixed-scenes,.chat-transfer{display:grid;gap:8px;border-top:1px solid #d2dfe6;padding-top:13px}
+.chat-fixed-scenes strong,.chat-transfer strong{color:#284e69;font-size:13px}
+.chat-fixed-scenes p,.chat-transfer p{color:#627a88;font-size:11px;line-height:1.6;margin:0}
+.chat-node-link{padding:11px;text-align:left;border-radius:11px;background:#fff;color:#396982;border:1px solid #dce6eb;font-size:12px}
+.chat-export-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.chat-export-buttons button{font-size:11px;padding:9px 5px;white-space:normal}
+.chat-upload-label{display:block!important;margin:0!important;padding:9px;border:1px dashed #8ba9ba;border-radius:11px;background:#fff;color:#315a72!important;font-weight:650;cursor:pointer}
+.chat-upload-label input{font-size:11px;padding:8px 0;border:0;background:transparent}
+.chat-import-report{padding:12px;background:#fff;border-radius:12px;display:grid;gap:8px}
+.chat-import-report p{margin:0}
+.chat-import-report details summary{font-size:11px;cursor:pointer}
+.chat-import-report ul{font-size:11px;line-height:1.6;padding-left:20px}
+.chat-import-report label{margin:0}
+.chat-editor-workspace{min-width:0}
+.chat-editor-current{margin:0 0 15px;padding:18px;background:#fff;border:1px solid #dfe8ee;border-radius:18px}
+.chat-editor-current small{font-size:12px;color:#628096}
+.chat-editor-current h2{font-size:23px;line-height:1.2;margin:7px 0;color:#213d50;word-break:break-word}
+.chat-editor-current p{font-size:12px;color:#778f9f;margin:6px 0 0}
+.chat-conversation-details{margin:0 0 16px;padding:12px;background:#fff;border:1px solid #dfebf0;border-radius:14px}
+.chat-conversation-details>summary{cursor:pointer;font-size:13px;font-weight:650;color:#38677f}
+.chat-conversation-details .editor-conversation-info{border:0;padding:0}
+.chat-editor .editor-message-list{margin:14px 0}
+.chat-editor .edit-message{background:#fff;border:1px solid #dce7ee}
+.chat-editor .edit-message textarea{min-height:70px}
+.chat-editor .chat-readonly{background:#eef3f6;border-style:dashed}
+.chat-readonly p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.chat-readonly small{font-size:11px;color:#7f8992}
+.chat-editor .editor-add-actions{margin:18px 0}
+.chat-pager{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 6px;border-top:1px solid #dbe5e9;border-bottom:1px solid #dbe5e9}
+.chat-pager span{font-size:11px;color:#637e91}
+.chat-pager>div{display:flex;gap:4px;flex-wrap:wrap}
+.chat-pager button{font-size:11px;border-radius:8px;padding:8px 9px;background:white}
+.chat-pager button:disabled,.chat-date-arrows button:disabled{opacity:.35;cursor:default}
+.chat-editor .edit-order-footer input{width:56px}
+@media(min-width:920px){
+ #phone:has(.chat-editor){width:min(1160px,calc(100vw - 32px));height:min(940px,calc(100dvh - 24px));min-height:590px;border-radius:26px}
+ #phone:has(.chat-editor) .editor-page{padding:20px 24px 42px}
+ #phone:has(.chat-editor) .editor-nav-grid{grid-template-columns:1fr 1fr 1fr;gap:8px}
+ #phone:has(.chat-editor) .editor-nav-group{min-width:0}
+ #phone:has(.chat-editor) .editor-nav-group .editor-tabs{flex-wrap:wrap}
+ #phone:has(.chat-editor) .chat-editor-layout{grid-template-columns:minmax(250px,285px) minmax(0,1fr);gap:18px}
+ #phone:has(.chat-editor) .chat-editor-sidebar{position:sticky;top:58px;max-height:calc(100dvh - 125px);overflow:auto;scrollbar-width:thin}
+ #phone:has(.chat-editor) .chat-editor-workspace{padding-bottom:40px}
+ #phone:has(.chat-editor) .editor-field-pair{grid-template-columns:1fr 1fr}
+}
+@media(max-width:400px){
+ .chat-editor-toolbar{flex-wrap:wrap}
+ .chat-jump-tools{width:100%}
+ .chat-jump-tools button{flex:1}
+}
