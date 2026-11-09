@@ -25,7 +25,7 @@ function sceneCard(x,{first=false}={}){
     (x.type==='track'?'required':'')+'></label>':'')+
   '<div class="chat-source-line-list">'+x.lines.map((line,i)=>{
     const actor=line.who==='me'?'熙蒙 · 玩家点击发送':line.who;
-    const isText=line.kind==='text',readonly=locked||!isText;
+    const isText=line.kind==='text',readonly=locked||!isText||!line.text.trim();
     const title=(i+1)+'. '+actor+(line.kind!=='text'?' ['+line.kind+']':'')+
      (line.after!==undefined?' · 间隔基础 '+(line.after/1000).toFixed(1)+' 秒':'')+
      (line.id&&x.type==='d01'?' · '+line.id:'');
