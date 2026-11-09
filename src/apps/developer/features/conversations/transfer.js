@@ -46,7 +46,7 @@ export function makeChatBundle(s,{scope='all'}={}){
    .filter(day=>scope!=='date'||day===sourceDay)
    .flatMap(day=>readChatSources(s,day))
    .filter(item=>item.lines.length&&!(item.type==='track'&&trackSource(item.key)))
-   .map(item=>({key:item.key,day:item.day,at:item.at,lines:item.lines.map(line=>line.text)})):[];
+   .map(item=>({key:item.key,day:item.day,at:item.at,...(item.type==='track'?{atExplicit:item.atExplicit}:{}),lines:item.lines.map(line=>line.text)})):[];
  return {format:CHAT_BUNDLE_FORMAT,scope,exportedAt:new Date().toISOString(),conversations:items,tracks,sources};
 }
 export function parseChatBundle(raw){
@@ -68,7 +68,7 @@ export function parseChatBundle(raw){
   const seen=new Set();
   for(const scene of value.sources){
    if(!plain(scene)||!validId(scene.key)||!Number.isInteger(scene.day)||scene.day<1||scene.day>55||
-    (scene.at!==undefined&&typeof scene.at!=='string')||!Array.isArray(scene.lines)||scene.lines.length>500||
+    (scene.at!==undefined&&typeof scene.at!=='string')||(scene.atExplicit!==undefined&&typeof scene.atExplicit!=='boolean')||!Array.isArray(scene.lines)||scene.lines.length>500||
     scene.lines.some(line=>typeof line!=='string'||line.length>3000))fail('來源原稿的日期、行數或正文無效');
    if(seen.has(scene.key))fail('來源原稿編號重複：'+scene.key);
    seen.add(scene.key);
@@ -119,7 +119,7 @@ export function previewChatImport(s,raw){
   for(const incoming of bundle.sources){
    const original=readChatSources(s,incoming.day).find(item=>item.key===incoming.key);
    if(!original||original.lines.length!==incoming.lines.length){result.sourcesBlocked++;if(result.details.length<20)result.details.push(incoming.key+'：來源版本不一致');continue;}
-   const equal=original.at===incoming.at&&original.lines.every((line,i)=>line.text===incoming.lines[i]);
+   const equal=(incoming.atExplicit===false||original.at===incoming.at)&&original.lines.every((line,i)=>line.text===incoming.lines[i]);
    if(equal){result.sourcesUnchanged++;continue;}
    if(original.reason){result.sourcesBlocked++;if(result.details.length<20)result.details.push(incoming.key+'：'+original.reason);continue;}
    result.sourcesChanged++;
@@ -162,7 +162,7 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
    if(!current||current.reason||current.lines.length!==source.lines.length)continue;
    // A full exported archive also contains original unedited copy. Re-importing
    // it must never replace a dynamic send-time calculation with a fixed clock.
-   if(current.at===source.at&&current.lines.every((l,i)=>l.text===source.lines[i]))continue;
+   if((source.atExplicit===false||current.at===source.at)&&current.lines.every((l,i)=>l.text===source.lines[i]))continue;
    if(mode==='merge'&&(Object.hasOwn(s.story55.chatSceneEdits||{},source.key)
      ||current.type==='wish'&&current.lines.some(l=>Object.hasOwn(s.story55.chatSceneEdits||{},'wish:'+l.id))))continue;
    if(mode==='merge'&&current.type==='node'){
@@ -172,7 +172,7 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
      ||(s.story55.config?.nodes?.find(n=>n.id===id)?.at||'')!==(baseNode?.at||'');
     if(altered||Object.hasOwn(s.story55.chatSceneEdits||{},source.key))continue;
    }
-   saveChatSource(s,source.key,{at:source.at,lines:source.lines});
+   saveChatSource(s,source.key,{at:source.atExplicit===false?undefined:source.at,lines:source.lines});
   }
   for(const item of bundle.conversations){
    const list=s.content.conversations[item.channel]||(s.content.conversations[item.channel]=[]);
