@@ -614,3 +614,14 @@ to{opacity:1;transform:none}
  .chat-jump-tools{width:100%}
  .chat-jump-tools button{flex:1}
 }
+
+.chat-source-scene{background:#fff;border:1px solid #d4e3eb;border-radius:12px;overflow:hidden}
+.chat-source-scene>summary{cursor:pointer;padding:11px 12px;font-size:12px;color:#2a607c;line-height:1.55}
+.chat-source-scene[open]>summary{border-bottom:1px solid #e2ebef;font-weight:650}
+.chat-source-scene form{padding:10px 12px 14px;gap:9px}
+.chat-source-scene label{display:block;font-size:11px;color:#5f7686;margin:4px 0 10px}
+.chat-source-scene label span{display:block;padding-bottom:4px;font-size:11px;color:#385d75;font-weight:650}
+.chat-source-scene textarea{width:100%;min-height:58px;padding:8px 10px;font-size:12px;line-height:1.6}
+.chat-source-scene input{margin-top:4px}
+.chat-source-scene textarea:disabled,.chat-source-scene input:disabled{opacity:.55}
+.chat-source-scene button{font-size:12px;padding:11px 10px}
