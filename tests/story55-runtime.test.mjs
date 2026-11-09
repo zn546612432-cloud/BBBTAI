@@ -21,7 +21,14 @@ function solveRun(s,id){
  const click=(a,data)=>ghostAction('gh-'+a,{dataset:data},ctx,loc);
  const o=s.ghost.orders[id];
  if(o.type==='cipher'){for(let i=0;i<9&&o.status==='running';i++){if(o.board.tiles[i]!==i){const j=o.board.tiles.indexOf(i);click('tile',{index:String(i)});click('tile',{index:String(j)});}}}
- if(o.type==='route'){for(let i=0;i<9&&o.status==='running';i++)for(let n=0;n<4&&o.board.masks[i]!==routeSolution[i]&&o.status==='running';n++)click('pipe',{index:String(i)});}
+ if(o.type==='route'){
+  const solution=o.board.solvedMasks||routeSolution;
+  for(let i=0;i<o.board.masks.length&&o.status==='running';i++){
+   if(o.board.size&&(i===o.board.source||i===o.board.sink))continue;
+   for(let n=0;n<4&&o.board.masks[i]!==solution[i]&&o.status==='running';n++)
+    click('pipe',{index:String(i)});
+  }
+ }
  if(o.type==='extract'){while(o.status==='running')click('match',{index:String(o.board.correct)});}
  if(o.type==='veil'){while(o.status==='running'){for(const digit of o.board.code)click('key',{key:digit});}}
  if(o.type==='verify'){for(const token of o.board.target)click('verify-token',{index:String(o.board.tokens.indexOf(token))});}
@@ -41,10 +48,14 @@ test('D14 Kira authorization installs five LINK checks without hardware purchase
  const s=fixture();previewNode55(s,'code');assert.ok(s.content.mail.some(m=>m.id==='code-mail'));
  assert.throws(()=>authorizeProject(s,'base','wrong'),/等待/);markMail55(s,'code-mail');assert.throws(()=>authorizeProject(s,'base','wrong'),/授权码/);authorizeProject(s,'base','OUROBOROS-14');
  assert.equal(s.story55.hardware,1);assert.equal(startDeploymentStep(s,'base'),'s55:base:0:0');
+ assert.equal(s.ghost.orders['s55:base:0:0'].settings.pipeNetwork,true);
+ assert.equal(s.ghost.orders['s55:base:0:0'].settings.pipeSize,5);
+ assert.equal(s.ghost.orders['s55:base:0:0'].settings.seconds,null);
  const p=story55Config(s).projects.find(p=>p.id==='base');
  for(let i=0;i<4;i++){const run=startDeploymentStep(s,'base');solveRun(s,run);assert.equal(deploymentPercent(s,'base'),0);}
  const final=startDeploymentStep(s,'base');solveRun(s,final);assert.equal(deploymentPercent(s,'base'),9);assert.equal(Object.keys(s.story55.reports).filter(id=>id.startsWith('base-')).length,1);assert.ok(s.story55.reports['wallet-0']);
  finish(s,final,true);assert.equal(deploymentPercent(s,'base'),9);assert.equal(s.story55.projects.base.batches[0].runFailed,true);assert.throws(()=>startDeploymentStep(s,'base'),/等待D15/);
+ assert.equal(s.story55.projects.base.baseRunNoticePending,true);
  const payload=JSON.stringify(s),memory=new Map();const store=new PhoneStore({getItem:()=>payload,setItem:(k,v)=>memory.set(k,v)});
  assert.equal(deploymentPercent(store.get(),'base'),9);assert.equal(store.get().story55.projects.base.batches[0].steps.filter(Boolean).length,5);
 });
