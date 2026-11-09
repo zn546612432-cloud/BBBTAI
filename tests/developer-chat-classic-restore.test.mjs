@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {conversations,messageCard} from '../src/apps/developer/features/conversations/index.js';
 import {activeConversation,rowsFor} from '../src/apps/developer/features/conversations/navigation.js';
-import {render} from '../src/apps/developer/index.js';
+import {render,change,handle} from '../src/apps/developer/index.js';
 
 function sample(){
  return {
@@ -59,4 +59,25 @@ test('55-day run exposes original keyword, timing and proactive preset authoring
  assert.match(html,/结束时间/);
  assert.match(html,/一次性/);
  assert.match(html,/NPC 回复气泡/);
+});
+
+test('restored classic handlers edit real source message timing, trigger and prose',()=>{
+ const s=sample();s.notifications=[];
+ const store={get:()=>s,update(fn){fn(s);return s;}};
+ const ctx={store,toast:()=>{}};
+ const message=s.content.conversations.wechat[0].messages[1];
+ change({id:'',dataset:{messageField:'text',id:'d-16'},value:'修訂後的台詞'},ctx);
+ assert.equal(message.text,'修訂後的台詞');
+ change({id:'',dataset:{scheduleField:'mode',id:'d-16'},value:'chat-delay'},ctx);
+ assert.equal(message.schedule.mode,'chat-delay');
+ change({id:'',dataset:{scheduleField:'seconds',id:'d-16'},value:'4.5'},ctx);
+ assert.equal(message.schedule.seconds,4.5);
+ change({id:'',dataset:{scheduleField:'mode',id:'d-16'},value:'game-time'},ctx);
+ change({id:'',dataset:{scheduleField:'day',id:'d-16'},value:'18'},ctx);
+ change({id:'',dataset:{scheduleField:'clock',id:'d-16'},value:'09:25'},ctx);
+ assert.deepEqual(message.schedule,{mode:'game-time',day:18,clock:'09:25'});
+ handle('add-message',{dataset:{}},ctx);
+ const last=s.content.conversations.wechat[0].messages.at(-1);
+ assert.equal(last.authored,true);
+ assert.equal(last.schedule.mode,'immediate'); // No silent forced D01 schedule.
 });
