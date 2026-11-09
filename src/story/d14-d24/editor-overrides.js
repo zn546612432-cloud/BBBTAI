@@ -21,7 +21,20 @@ export function validateTrackValues(key,values){
   if(!line||typeof line!=='object'||Array.isArray(line)||line.who!==original.lines[i].who||typeof line.text!=='string'||!line.text.trim()||line.text.length>3000)
    throw Error(`第 ${i+1} 條的發言人或正文格式不正確`);
  }
- return {at:values.at,lines:values.lines.map(x=>({who:x.who,text:x.text}))};
+ const lineTimes=values.lineTimes;
+ if(lineTimes!==undefined){
+  if(!Array.isArray(lineTimes)||lineTimes.length!==original.lines.length||
+     lineTimes.some(t=>typeof t!=='string'||t!==''&&!TIME.test(t)))
+   throw Error('逐條發送時間必須是 HH:MM 或留空');
+  let previous=values.at;
+  for(const t of lineTimes)if(t){
+   if(t<previous)throw Error('逐條發送時間不能早於段落開始或上一條指定時間');
+   previous=t;
+  }
+ }
+ const answer={at:values.at,lines:values.lines.map(x=>({who:x.who,text:x.text}))};
+ if(lineTimes?.some(Boolean))answer.lineTimes=[...lineTimes];
+ return answer;
 }
 export function trackEditReason(s,scene){
  if(!s.story55||s.story55.version!==1)return '只有 55 天劇情周目可以編輯此來源';
