@@ -232,7 +232,7 @@ export function tickWishes(s,now=Date.now()){
  const line=st.lines.find(x=>x.wishRewardId==='d06-dinner'&&x.kind!=='image'&&due(x))||st.lines.find(due);
  if(!line)return changed;
  const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:line.chat,
-  messageId:line.id,from:line.from,text:line.text,kind:line.kind||'text',
+  messageId:line.id,from:line.from,text:(s.story55?.chatSceneEdits?.['wish:'+line.id]?.text??line.text),kind:line.kind||'text',
   day:s.day>line.dueDay?line.dueDay:s.day,clock:s.day>line.dueDay?line.dueClock:s.clock,
   sentDate:date55(Math.min(s.day,line.dueDay)),storyTag:'storyWish',
   silent:!!(line.silentAfterDay&&s.day>line.dueDay)});
