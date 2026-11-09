@@ -27,18 +27,32 @@ function sceneCard(x,{first=false}={}){
     const actor=line.who==='me'?'熙蒙 · 玩家点击发送':line.who;
     const isText=line.kind==='text',readonly=locked||!isText||!line.text.trim();
     const title=(i+1)+'. '+actor+(line.kind!=='text'?' ['+line.kind+']':'')+
-     (line.after!==undefined?' · 间隔基础 '+(line.after/1000).toFixed(1)+' 秒':'')+
      (line.id&&x.type==='d01'?' · '+line.id:'');
+    const delay=x.type==='d01';
+    const units=line.timeMode==='game-minutes'?'遊戲分鐘':'秒';
+    const timing=locked||x.type==='scripted-player'?'':delay?
+     '<label class="chat-source-line-timing"><span>這句前的等待（'+units+'）</span><input type="number" name="wait-'+i+
+      '" min="'+(units==='秒'?'0.5':'1')+'" max="'+(units==='秒'?'3600':'120')+'" step="'+(units==='秒'?'0.05':'1')+
+      '" value="'+esc(line.waitSeconds)+'" required></label>':
+     '<label class="chat-source-line-timing"><span>'+(
+      line.timeMode==='event-clock'?'最早可送達時刻（仍需事件觸發）':
+      line.timeMode==='scene-clock'?'顯示時刻（保留原場景觸發）':
+      '預定發送時刻（遊戲時間）')+
+      '</span><input type="time" name="time-'+i+'" value="'+esc(line.clock||'')+
+      '" '+(line.clockLocked?'disabled':'')+'>'+
+      '<small>'+(line.clockLocked?'由原電話／技術事件控制，禁止改動':
+      line.clock?'指定的時刻；熙蒙仍需親自點擊發送':'留空＝沿用原本的逐條間隔與發送條件')+
+      '</small></label>';
     if(readonly){
       return '<div class="chat-source-line chat-source-readonly"><strong>'+esc(title)+'</strong><p>'+esc(line.text)+'</p>'+
-       '<input type="hidden" name="line-'+i+'" value="'+esc(line.text)+'"></div>';
+       '<input type="hidden" name="line-'+i+'" value="'+esc(line.text)+'">'+timing+'</div>';
     }
-    return '<label class="chat-source-line"><strong>'+esc(title)+'</strong><textarea name="line-'+i+
-      '" maxlength="3000" rows="2" required>'+esc(line.text)+'</textarea></label>';
+    return '<div class="chat-source-line"><label><strong>'+esc(title)+'</strong><textarea name="line-'+i+
+      '" maxlength="3000" rows="2" required>'+esc(line.text)+'</textarea></label>'+timing+'</div>';
   }).join('')+'</div>'+
   (locked?'<p class="chat-source-warning">'+esc(x.reason)+'</p>':
    '<button type="submit" class="button-primary wide">保存此段原稿（不会自动发送）</button>')+
-  '<small class="editor-help">固定的消息 ID、发言人、图片和玩家发送步骤不会被编辑器重排；已送达的手机记录仍保持原样。</small>'+
+  '<small class="editor-help">时间按每条记录分别保存：指定时刻只设定最早可发送时间，原剧情前置、玩家手动点击、原生逐条通知和既有手机记录不变。</small>'+
   '</form></details>';
 }
 export function sourceView(s,{day=Number(s.editor?.chatSourceDay||s.day),embedded=false}={}){
