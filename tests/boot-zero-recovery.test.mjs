@@ -28,7 +28,7 @@ test('standalone boot watchdog works even if the main ES module cannot start',()
  assert.equal(typeof pending,'function');
  pending();
  assert.equal(objects['xm-boot-next'].hidden,false);
- assert.match(objects['xm-boot-message'].textContent,/启动超时/);
+ assert.match(objects['xm-boot-message'].textContent,/长时间未完成启动/);
  assert.equal(objects['xm-boot-percent'].textContent,'加载中');
  objects['xm-boot-next'].onclick();
  assert.match(redirect,/^https:\/\/phone\.example\/BBBTAI\/\?boot-retry=\d+$/);
@@ -65,4 +65,41 @@ test('story and snapshot hydration do not block the phone indefinitely',()=>{
  assert.match(code,/globalThis\.__xmBootStarted\?\.\(\)/);
  assert.doesNotMatch(code,/localStorage\.clear\(\)|store\.replace\(initialState\(\)\)/);
  assert.match(html,/<script type="module" src="\/src\/main\.js"><\/script>/);
+});
+
+test('Safari slow module loading is not misreported as a 12-second failure',()=>{
+ assert.match(html,/},8000\);/);
+ assert.match(html,/},30000\);/);
+ assert.doesNotMatch(html,/},12000\);/);
+ assert.match(html,/window\.__xmBootModulesReady=function/);
+ assert.match(code,/globalThis\.__xmBootModulesReady\?\.\(\)/);
+ assert.match(code,/limit=3500/);
+ assert.match(code,/primeTestSnapshots\(store\.storage\)[^\n]*1500\)/);
+});
+
+test('an actual failed ES module shows a recoverable message without clearing the phone save',()=>{
+ const objects={
+  'xm-boot':{classList:{contains:()=>false}},
+  'xm-boot-percent':{textContent:'0%'},
+  'xm-boot-message':{textContent:'正在准备手机资源和离线地图…'},
+  'xm-boot-next':{hidden:true,onclick:null,textContent:''}
+ };
+ const listeners={},timers=[];
+ let redirect=null;
+ const sandbox={
+  window:{addEventListener:(name,listener)=>listeners[name]=listener},
+  location:{href:'https://phone.example/BBBTAI/',replace:url=>redirect=url},
+  URL,
+  document:{getElementById:id=>objects[id]||null},
+  setTimeout:fn=>{timers.push(fn);return timers.length;},
+  clearTimeout:()=>{}
+ };
+ vm.runInNewContext(startup,sandbox,{timeout:500});
+ listeners.error({target:{tagName:'SCRIPT',type:'module'},message:'Script error.'});
+ assert.equal(objects['xm-boot-next'].hidden,false);
+ assert.match(objects['xm-boot-message'].textContent,/模块下载失败/);
+ assert.match(objects['xm-boot-message'].textContent,/不会清除存档/);
+ objects['xm-boot-next'].onclick();
+ assert.match(redirect,/boot-retry=/);
+ assert.doesNotMatch(html,/localStorage\.clear\(\)|sessionStorage\.clear\(\)/);
 });

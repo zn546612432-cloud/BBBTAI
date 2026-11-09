@@ -12,8 +12,8 @@
 #xm-boot-next[hidden]{display:none;}
 </style></head><body><div id="xm-boot" role="status" aria-live="polite"><div id="xm-boot-panel"><div id="xm-boot-logo">⌖</div><div id="xm-boot-title">熙蒙的手机</div><div id="xm-boot-percent">0%</div><div id="xm-boot-progress"><span></span></div><div id="xm-boot-message">正在准备手机资源和离线地图…</div><button type="button" id="xm-boot-next" hidden>继续进入锁屏</button></div></div><div id="root"></div><script>
 (function(){
- var started=Date.now(),lastError='',stage='loading';
- var timer=null;
+ var lastError='',stage='loading';
+ var timer=null,slowTimer=null;
  function byId(id){return document.getElementById(id);}
  function explain(reason){
   var boot=byId('xm-boot');
@@ -25,19 +25,47 @@
    var url=new URL(location.href);url.searchParams.set('boot-retry',String(Date.now()));location.replace(url.href);
   };}
  }
- window.__xmBootStarted=function(){stage='started';clearTimeout(timer);};
- window.__xmBootError=function(message){lastError=String(message||'');explain('手机程序尚未完成启动。'+(lastError?'错误：'+lastError.slice(0,115):'请检查网络连接。'))};
+ // The main module has a large native ESM dependency graph. On iOS Safari
+ // it may still be downloading after 12 seconds; that is not a failed boot.
+ // No percentage is fabricated until the real preload progress is available.
+ window.__xmBootModulesReady=function(){
+  if(stage==='started')return;
+  stage='restoring';
+  var msg=byId('xm-boot-message');
+  if(msg)msg.textContent='程序已加载，正在恢复手机存档和聊天记录…';
+ };
+ window.__xmBootStarted=function(){
+  stage='started';clearTimeout(timer);clearTimeout(slowTimer);
+ };
+ window.__xmBootError=function(message){
+  if(stage==='started')return;
+  lastError=String(message||'');
+  clearTimeout(timer);clearTimeout(slowTimer);
+  explain('手机程序未能启动。'+(lastError?'错误：'+lastError.slice(0,115):'请检查网络连接。')+' 重试不会清除存档。');
+ };
  window.addEventListener('error',function(event){
   if(stage==='started')return;
-  lastError=event.message||'资源加载失败';
- });
+  var target=event.target;
+  if(target&&target.tagName==='SCRIPT'&&target.type==='module'){
+   window.__xmBootError('系统模块下载失败，请检查网络或稍后重试');
+   return;
+  }
+  if(event.error||event.message)window.__xmBootError(event.error&&event.error.message||event.message);
+ },true);
  window.addEventListener('unhandledrejection',function(event){
   if(stage==='started')return;
-  lastError=event.reason&&event.reason.message||'模块加载中断';
+  window.__xmBootError(event.reason&&event.reason.message||'模块初始化失败');
  });
+ slowTimer=setTimeout(function(){
+  if(stage==='started')return;
+  var msg=byId('xm-boot-message');
+  if(msg)msg.textContent=stage==='restoring'
+   ?'正在整理聊天记录和存档，内容会保留…'
+   :'正在加载手机系统模块… 网络较慢时可能需要更多时间。';
+ },8000);
  timer=setTimeout(function(){
   if(stage==='started')return;
-  explain('手机程序启动超时'+(lastError?'：'+lastError.slice(0,100):'，可能有资源无法加载。')+' 请重新加载。');
- },12000);
+  explain('手机程序长时间未完成启动'+(lastError?'：'+lastError.slice(0,100)+'。':'，可能有模块未能下载。')+' 重试不会删除存档。');
+ },30000);
 })();
 </script><script type="module" src="/src/main.js"></script></body></html>

@@ -53,6 +53,9 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
+// The native module graph has evaluated. Distinguish slow startup from a
+// genuine missing module before touching the existing user save.
+globalThis.__xmBootModulesReady?.();
 const store=new PhoneStore();
 // Reconcile wish entries affected by older home-widget checkbox behavior.
 if(isStory55(store.get()))store.update(s=>syncWishReminders(s));
@@ -72,7 +75,7 @@ mountCallEvents({store});
 // Built-in narratives are fetched from local static files. A broken cache or
 // stalled request must not keep the entire phone behind the static 0% splash.
 // The original promise continues and its eventual merge preserves user data.
-const boundedBootTask=async(task,label,limit=7000)=>{
+const boundedBootTask=async(task,label,limit=3500)=>{
  let timer;
  try{
   const result=await Promise.race([
@@ -86,7 +89,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
 await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
-await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
+await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',1500);
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
@@ -406,9 +409,10 @@ store.subscribe(()=>{
   const message=$('#xm-boot-message');
   const next=$('#xm-boot-next');
   if(reason==='timeout'){
-   if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
-   if(next){next.hidden=false;next.onclick=closeBoot;}
-   else closeBoot();
+   // Optional map/image work must never require a tap to open the phone.
+   // Unfinished preloads continue without resetting the saved campaign.
+   if(message)message.textContent='部分素材仍在加载，不影响进入手机…';
+   setTimeout(closeBoot,350);
    return;
   }
   if(message)message.textContent=failed?'已准备完成，部分素材将在使用时重试':'资源已就绪，正在进入锁屏…';
@@ -418,7 +422,9 @@ store.subscribe(()=>{
   setTimeout(closeBoot,300);
  }).catch(error=>{
   console.error('启动资源准备出错',error);
-  const next=$('#xm-boot-next');if(next){next.hidden=false;next.onclick=closeBoot;}else closeBoot();
+  // The phone already rendered underneath this splash; a failed optional
+  // preload must not strand the player on a second recovery button.
+  setTimeout(closeBoot,350);
  });
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
