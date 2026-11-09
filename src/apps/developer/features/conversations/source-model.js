@@ -167,11 +167,29 @@ export function saveChatSource(s,key,input){
   throw Error('逐句時間需要 HH:MM，或者留空沿用既有發送規則');
  if(entry.type==='track'||entry.type==='node'){
   let previous=entry.type==='track'?(input.at||entry.at):(input.at||entry.at||'00:00');
+  // A later, independent scene in the same chat keeps its established place.
+  // Per-bubble times cannot silently cross its original start time.
+  let cutoff='23:59';
+  if(entry.type==='track'){
+   const parent=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===entry.key.slice(0,3));
+   const defs=parent?.track.defs||[],i=defs.findIndex(d=>entry.key===parent.track.name+':'+d.id);
+   const current=defs[i];
+   if(typeof current?.until==='string'&&TIME.test(current.until))cutoff=current.until;
+   for(const later of defs.slice(i+1)){
+    if(later.chat!==current?.chat||later.optional)continue;
+    const q=progress(s,parent.track.name,later.id)||{};
+    const nextTime=value(later.at,s,q)||later.fallback||later.early;
+    if(TIME.test(nextTime)&&nextTime>(input.at||entry.at)&&nextTime<cutoff)cutoff=nextTime;
+    break;
+   }
+  }
   for(let i=0;i<times.length;i++){
    if(entry.lines[i].clockLocked&&times[i]!==entry.lines[i].clock)
     throw Error('第 '+(i+1)+' 條是系統電話／固定節點，時間不能修改');
    if(times[i]){
     if(times[i]<previous)throw Error('第 '+(i+1)+' 條指定時間不能早於段落開始或上一條指定時間');
+    if(entry.type==='track'&&times[i]>=cutoff)
+     throw Error('第 '+(i+1)+' 條時間不能超過本段有效期／下一段開始 '+cutoff);
     previous=times[i];
    }
   }
