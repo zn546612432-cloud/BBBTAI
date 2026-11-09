@@ -68,7 +68,7 @@ export function parseChatBundle(raw){
   for(const scene of value.sources){
    if(!plain(scene)||!validId(scene.key)||!Number.isInteger(scene.day)||scene.day<1||scene.day>55||
     (scene.at!==undefined&&typeof scene.at!=='string')||!Array.isArray(scene.lines)||scene.lines.length>500||
-    scene.lines.some(line=>typeof line!=='string'||line.length>3000||!line.trim()))fail('來源原稿的日期、行數或正文無效');
+    scene.lines.some(line=>typeof line!=='string'||line.length>3000))fail('來源原稿的日期、行數或正文無效');
    if(seen.has(scene.key))fail('來源原稿編號重複：'+scene.key);
    seen.add(scene.key);
   }
