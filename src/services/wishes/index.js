@@ -5,6 +5,14 @@ import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {celebration,privateScenes,rewardSets as d06Rewards} from '../../story/d06/wish-content.js';
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../story/d07/life-content.js';
 const rewardSets={...d06Rewards,...d07Rewards};
+// A per-line authored clock must not let a later bubble leapfrog an earlier
+// bubble from the same source thread. Existing wish queue and message IDs stay.
+const sourcePredecessors=new Map();
+for(const rows of [celebration,privateScenes,nextDay,afternoonDay,extraDay,[dinnerAfter],...Object.values(rewardSets)]){
+ for(let i=0;i<rows.length;i++){
+  sourcePredecessors.set(rows[i].id,rows.slice(0,i).filter(x=>x.chat===rows[i].chat).map(x=>x.id));
+ }
+}
 import {completed,date55} from '../story55/state.js';
 import {payBankPurchase} from '../bank.js';
 
@@ -177,6 +185,8 @@ function lineDueClock(s,line){
 }
 function eligibleLine(s,line){
  if(s.day<line.dueDay||s.day===line.dueDay&&s.clock<lineDueClock(s,line))return false;
+ const history=ledger(s).story,earlier=sourcePredecessors.get(line.id)||[];
+ if(earlier.some(id=>history.lines?.some(m=>m.id===id)&&!history.delivered?.includes(id)))return false;
  if(line.afterId&&!ledger(s).story.delivered?.includes(line.afterId))return false;
  if(line.wishRewardId){
    const r=record(s,line.wishRewardId);
