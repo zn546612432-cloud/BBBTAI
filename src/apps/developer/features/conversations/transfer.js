@@ -2,6 +2,7 @@ import {validDate} from '../../../../services/calendar.js';
 import {conversations,chatApps} from './model.js';
 import {STORY_START,HISTORY_START,dayDate,messageEditorDate,isEditableMessage,isPortableMessage,isProtectedMessage,selection} from './navigation.js';
 import {trackKey,trackSource,tracksForDay,trackValues,validateTrackValues,trackEditReason,saveTrackValues} from '../../../../story/d14-d24/editor-overrides.js';
+import {readChatSources,saveChatSource} from './source-model.js';
 
 export const CHAT_BUNDLE_FORMAT='ximeng-chat-editor-v1';
 const CHANNELS=new Set(chatApps.map(([id])=>id));
@@ -38,7 +39,14 @@ export function makeChatBundle(s,{scope='all'}={}){
   Array.from({length:11},(_,i)=>tracksForDay(i+14)).flat()
    .filter(scene=>scope!=='date'||selected.scope==='story'&&selected.day===scene.day)
    .map(scene=>({key:trackKey(scene),...trackValues(s,scene)})):[];
- return {format:CHAT_BUNDLE_FORMAT,scope,exportedAt:new Date().toISOString(),conversations:items,tracks};
+ const sourceDay=s.editor?.chatView==='source'?Number(s.editor?.chatSourceDay||s.day):selected.day;
+ const sources=s.story55?.version===1&&scope!=='history'?
+  Array.from({length:55},(_,i)=>i+1)
+   .filter(day=>scope!=='date'||day===sourceDay)
+   .flatMap(day=>readChatSources(s,day))
+   .filter(item=>item.lines.length&&!(item.type==='track'&&trackSource(item.key)))
+   .map(item=>({key:item.key,day:item.day,at:item.at,lines:item.lines.map(line=>line.text)})):[];
+ return {format:CHAT_BUNDLE_FORMAT,scope,exportedAt:new Date().toISOString(),conversations:items,tracks,sources};
 }
 export function parseChatBundle(raw){
  let value=raw;
@@ -52,6 +60,17 @@ export function parseChatBundle(raw){
    if(keys.has(scene.key))fail('同一來源劇情重複：'+scene.key);
    keys.add(scene.key);
    try{validateTrackValues(scene.key,scene);}catch(error){fail(error.message);}
+  }
+ }
+ if(value.sources!==undefined){
+  if(!Array.isArray(value.sources)||value.sources.length>600)fail('來源原稿數量過多');
+  const seen=new Set();
+  for(const scene of value.sources){
+   if(!plain(scene)||!validId(scene.key)||!Number.isInteger(scene.day)||scene.day<1||scene.day>55||
+    (scene.at!==undefined&&typeof scene.at!=='string')||!Array.isArray(scene.lines)||scene.lines.length>500||
+    scene.lines.some(line=>typeof line!=='string'||line.length>3000||!line.trim()))fail('來源原稿的日期、行數或正文無效');
+   if(seen.has(scene.key))fail('來源原稿編號重複：'+scene.key);
+   seen.add(scene.key);
   }
  }
  const chats=new Set();let total=0;
@@ -94,6 +113,17 @@ export function previewChatImport(s,raw){
    }else result.tracksChanged++;
   }
  }
+ if(bundle.sources?.length){
+  Object.assign(result,{sourcesChanged:0,sourcesUnchanged:0,sourcesBlocked:0});
+  for(const incoming of bundle.sources){
+   const original=readChatSources(s,incoming.day).find(item=>item.key===incoming.key);
+   if(!original||original.lines.length!==incoming.lines.length){result.sourcesBlocked++;if(result.details.length<20)result.details.push(incoming.key+'：來源版本不一致');continue;}
+   const equal=original.at===incoming.at&&original.lines.every((line,i)=>line.text===incoming.lines[i]);
+   if(equal){result.sourcesUnchanged++;continue;}
+   if(original.reason){result.sourcesBlocked++;if(result.details.length<20)result.details.push(incoming.key+'：'+original.reason);continue;}
+   result.sourcesChanged++;
+  }
+ }
  for(const item of bundle.conversations){
   const existing=s.content.conversations[item.channel]?.find(c=>c.id===item.id);
   if(!existing)result.conversationsNew++;
@@ -112,7 +142,8 @@ export function previewChatImport(s,raw){
 export function applyChatImport(s,raw,{mode='merge'}={}){
  if(!['merge','replace-conflicts'].includes(mode))throw Error('請選擇合併或覆蓋同編號作者消息');
  const {bundle,report}=previewChatImport(s,raw);
- const before=structuredClone(s.content.conversations),oldOverrides=structuredClone(s.story55?.chatSceneEdits||{});
+ const before=structuredClone(s.content.conversations),oldOverrides=structuredClone(s.story55?.chatSceneEdits||{}),
+  oldConfig=s.story55?.config?structuredClone(s.story55.config):null;
  try{
   if(bundle.tracks?.length){
    if(!s.story55||s.story55.version!==1)throw Error('來源劇情需要 55 天周目');
@@ -123,6 +154,15 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
     if(mode==='merge'&&hasOverride)continue;
     saveTrackValues(s,entry.key,entry);
    }
+  }
+  for(const source of bundle.sources||[]){
+   if(!s.story55||s.story55.version!==1)throw Error('來源劇情需在55天周目導入');
+   const current=readChatSources(s,source.day).find(x=>x.key===source.key);
+   if(!current||current.reason||current.lines.length!==source.lines.length)continue;
+   if(mode==='merge'&&(Object.hasOwn(s.story55.chatSceneEdits||{},source.key)
+     ||current.type==='wish'&&current.lines.some(l=>Object.hasOwn(s.story55.chatSceneEdits||{},'wish:'+l.id))))continue;
+   if(mode==='merge'&&current.type==='node'&&s.story55.config?.scenes?.[source.key.slice(5)]&&current.lines.some((l,i)=>l.text!==source.lines[i]))continue;
+   saveChatSource(s,source.key,{at:source.at,lines:source.lines});
   }
   for(const item of bundle.conversations){
    const list=s.content.conversations[item.channel]||(s.content.conversations[item.channel]=[]);
@@ -147,7 +187,7 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
   }
  }catch(error){
   s.content.conversations=before;
-  if(s.story55)s.story55.chatSceneEdits=oldOverrides;
+  if(s.story55){s.story55.chatSceneEdits=oldOverrides;if(oldConfig)s.story55.config=oldConfig;}
   throw error;
  }
  return report;
