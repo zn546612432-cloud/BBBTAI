@@ -171,8 +171,12 @@ export function beginD06Celebration(s,now=Date.now()){
  s.events.push({type:'d06_celebration_started',day:s.day,clock:s.clock});
  return true;
 }
+function lineDueClock(s,line){
+ const edited=s.story55?.chatSceneEdits?.['wish:'+line.id]?.clock;
+ return typeof edited==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(edited)?edited:line.dueClock;
+}
 function eligibleLine(s,line){
- if(s.day<line.dueDay||s.day===line.dueDay&&s.clock<line.dueClock)return false;
+ if(s.day<line.dueDay||s.day===line.dueDay&&s.clock<lineDueClock(s,line))return false;
  if(line.afterId&&!ledger(s).story.delivered?.includes(line.afterId))return false;
  if(line.wishRewardId){
    const r=record(s,line.wishRewardId);
@@ -231,9 +235,12 @@ export function tickWishes(s,now=Date.now()){
  const due=x=>!st.delivered.includes(x.id)&&eligibleLine(s,x);
  const line=st.lines.find(x=>x.wishRewardId==='d06-dinner'&&x.kind!=='image'&&due(x))||st.lines.find(due);
  if(!line)return changed;
+ const clock=lineDueClock(s,line),planned=s.story55?.chatSceneEdits?.['wish:'+line.id]?.clock;
+ const displayClock=s.day>line.dueDay?clock:
+  planned&&clock>=line.dueClock&&clock<=s.clock?clock:s.clock;
  const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:line.chat,
   messageId:line.id,from:line.from,text:(s.story55?.chatSceneEdits?.['wish:'+line.id]?.text??line.text),kind:line.kind||'text',
-  day:s.day>line.dueDay?line.dueDay:s.day,clock:s.day>line.dueDay?line.dueClock:s.clock,
+  day:s.day>line.dueDay?line.dueDay:s.day,clock:displayClock,
   sentDate:date55(Math.min(s.day,line.dueDay)),storyTag:'storyWish',
   silent:!!(line.silentAfterDay&&s.day>line.dueDay)});
  if(m&&line.wishId){m.wishId=line.wishId;m.wishText=line.wishText;}
