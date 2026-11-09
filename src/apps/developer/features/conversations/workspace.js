@@ -5,6 +5,7 @@ import {story55Config} from '../../../../services/story55/state.js';
 import {conversations as allConversations,actors,isGroup,chatApps,scheduleLabel} from './model.js';
 import {selection,historyDates,rowsFor,activeConversation,PAGE_SIZE,dayDate,isEditableMessage} from './navigation.js';
 import {renderStagedChatImport} from './ui-transfer.js';
+import {trackKey,tracksForDay,trackValues,trackEditReason} from '../../../../story/d14-d24/editor-overrides.js';
 const attr=esc;
 const channelName=id=>({wechat:'微信',noapp:'NoApp',mirage:'MIRAGE',messages:'信息'}[id]||id);
 const pad=n=>String(n).padStart(2,'0');
@@ -74,8 +75,22 @@ function dateNavigation(s,v){
 function fixedScenes(s,v){
  if(v.scope!=='story'||!isStory55(s))return '';
  const config=story55Config(s),nodes=config.nodes.filter(n=>n.day===v.day);
- return `<section class="chat-fixed-scenes"><strong>當日固定劇情</strong><p>固定劇情仍由 Story55 原系統調度，這裡只提供日期入口。</p>
- ${nodes.map(n=>btn('chat-open-node',`${esc(n.title)} · 編輯台詞`,'chat-node-link',`data-node="${esc(n.id)}"`)).join('')||'<small>本日沒有獨立固定場景</small>'}</section>`;
+ const scenes=tracksForDay(v.day);
+ const sources=scenes.map(scene=>{
+  const key=trackKey(scene),current=trackValues(s,scene),reason=trackEditReason(s,scene);
+  return `<details class="chat-source-scene"><summary>${esc(scene.chat==='group'?'狼崽團':'微信私聊')} · ${esc(scene.chat)} · ${esc(current.at)} · ${current.lines.length} 條${reason?'（已播放，唯讀）':''}</summary>
+  <form data-form="chat-track-edit" data-key="${esc(key)}">
+  <label>發送時間<input type="time" name="at" required value="${esc(current.at)}" ${reason?'disabled':''}></label>
+  ${current.lines.map((line,index)=>`<label><span>${index+1}. ${esc(line.who)}（原發言人不變）</span><textarea name="line-${index}" rows="2" required maxlength="3000" ${reason?'disabled':''}>${esc(line.text)}</textarea></label>`).join('')}
+  ${reason?`<p class="editor-help">${esc(reason)}。請在未播放的周目中修改，再匯出 JSON。</p>`:`<button class="button-primary wide" type="submit">保存此段來源對話</button>`}
+  </form></details>`;
+ }).join('');
+ return `<section class="chat-fixed-scenes"><strong>當日正式劇情來源</strong>
+ <p>直接修改原消息生命週期引擎所讀取的台詞。不增加第二套排程；不修改已發送玩家消息。</p>
+ ${sources||'<small>本日沒有可直接編輯的日常對話來源</small>'}
+ <strong>固定劇情節點</strong>
+ ${nodes.map(n=>btn('chat-open-node',`${esc(n.title)} · 原劇情樹編輯`,'chat-node-link',`data-node="${esc(n.id)}"`)).join('')||'<small>本日沒有固定劇情節點</small>'}
+ </section>`;
 }
 function transferControls(){
  return `<section class="chat-transfer">
