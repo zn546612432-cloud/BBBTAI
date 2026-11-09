@@ -1,0 +1,128 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55,advanceScene55,tickQueuedStoryScenes55} from '../src/services/story55/runtime.js';
+import {readChatSources,saveChatSource} from '../src/apps/developer/features/conversations/source-model.js';
+import {sourceView} from '../src/apps/developer/features/conversations/source-view.js';
+import {D14_D24_TRACKS} from '../src/story/d14-d24/wechat.js';
+import {d01GroupScript,d01GroupWait,d01BrotherLines} from '../src/story/d01/wechat.js';
+import {tickWishes} from '../src/services/wishes/index.js';
+import {makeChatBundle,parseChatBundle,applyChatImport} from '../src/apps/developer/features/conversations/transfer.js';
+import {currentScript55} from '../src/services/story55/scripted-chat.js';
+
+const fresh=()=>activateStory55(initialState());
+const line=(s,day,key)=>readChatSources(s,day).find(x=>x.key===key);
+const get=s=>s.content.conversations.wechat.find(c=>c.id==='wang')?.messages||[];
+const store=s=>({get:()=>s,update:f=>f(s)});
+
+test('D14 every bubble has an optional clock; NPC waits and player still clicks Send',()=>{
+ const s=fresh();s.day=14;s.clock='11:32';
+ const d=line(s,14,'d14:morning');assert.ok(d&&d.lines[0].who!=='me'&&d.lines[1].who==='me');
+ const times=d.lines.map(()=>'');times[0]='11:40';times[1]='11:45';
+ saveChatSource(s,d.key,{at:d.at,lines:d.lines.map(x=>x.text),times});
+ assert.equal(line(s,14,d.key).lines[0].clock,'11:40');
+ const {track}=D14_D24_TRACKS.find(x=>x.track.day===14);
+ const q=track.ensure(s);
+ for(const other of track.defs)if(other.id!=='morning')q[other.id].completed=true;
+ s.clock='11:39';track.tick(s,1000);
+ assert.equal(get(s).filter(x=>x.lifecycleId==='d14:morning').length,0);
+ s.clock='11:40';track.tick(s,2000);track.tick(s,2600);
+ let messages=get(s).filter(x=>x.lifecycleId==='d14:morning');
+ assert.equal(messages.length,1);
+ assert.equal(messages[0].time,'11:40');
+ assert.equal(messages.some(x=>x.from==='me'),false);
+ assert.equal(track.draft(s,'wang'),null);
+ s.clock='11:45';
+ assert.equal(track.draft(s,'wang')?.text,d.lines[1].text);
+ assert.equal(track.send(store(s),'wang',d.lines[1].text,5000).handled,true);
+ messages=get(s).filter(x=>x.lifecycleId==='d14:morning');
+ assert.equal(messages.length,2);
+ assert.equal(messages[1].from,'me');
+ assert.equal(messages[1].time,'11:45');
+ track.tick(s,8000);
+ assert.equal(messages.length,2,'no duplicate due to prior per-line schedule');
+});
+
+test('D01 edits set exact real-second waits, brother waits and game-minute gate without auto-sending',()=>{
+ const s=fresh();
+ const a=line(s,1,'d01:group-morning'),waits=a.lines.map(x=>x.waitSeconds);
+ waits[0]=9.5;waits[1]=4.25;
+ saveChatSource(s,a.key,{lines:a.lines.map(x=>x.text),waits});
+ const rows=d01GroupScript(s,'morning');
+ assert.equal(d01GroupWait(rows,0),9500);
+ assert.equal(d01GroupWait(rows,1),4250);
+ const brother=line(s,1,'d01:brother'),b=brother.lines.map(x=>x.waitSeconds);
+ b[0]=1.25;b[1]=4;b[2]=2.5;
+ saveChatSource(s,brother.key,{lines:brother.lines.map(x=>x.text),waits:b});
+ assert.equal(d01BrotherLines(s)[0].waitMs,1250);
+ assert.equal(d01BrotherLines(s)[1].gameMinutes,4);
+ assert.equal(d01BrotherLines(s)[2].waitMs,2500);
+ assert.equal(s.content.conversations.wechat.find(x=>x.id==='group').messages.some(x=>x.id?.startsWith('d01-group-script')),false);
+});
+
+test('D07 earliest per-line time cannot leapfrog earlier messages in the same group',()=>{
+ const s=fresh();s.day=7;s.clock='09:00';
+ const a=line(s,7,'wish:d07-next'),times=a.lines.map(()=>'');times[0]='10:15';
+ saveChatSource(s,a.key,{lines:a.lines.map(x=>x.text),times});
+ tickWishes(s,0);
+ const messages=()=>s.content.conversations.wechat.find(x=>x.id==='group').messages.filter(x=>x.id?.startsWith('d07-chat-'));
+ assert.equal(messages().length,0);
+ s.clock='10:15';tickWishes(s,3000);
+ assert.equal(messages().length,1);
+ assert.equal(messages()[0].id,'d07-chat-01');
+ assert.equal(messages()[0].time,'10:15');
+ tickWishes(s,6000);
+ assert.equal(messages()[1]?.id,'d07-chat-02');
+});
+
+test('Story55 queued node waits for each edited clock, without impersonating player',()=>{
+ const s=fresh();s.day=1;s.clock='08:40';
+ const n=s.story55.config.nodes.find(x=>x.id==='intro');
+ n.delivery='queued';n.channel='wechat';n.conversationId='group';
+ const source=line(s,1,'node:intro'),times=source.lines.map(()=>'');
+ times[0]='08:45';times[1]='08:50';
+ saveChatSource(s,source.key,{at:source.at,lines:source.lines.map(x=>x.text),times});
+ s.story55.previewNode='intro';
+ assert.throws(()=>advanceScene55(s,'intro'),/08:45/);
+ assert.equal(tickQueuedStoryScenes55(s,1000),false);
+ s.clock='08:45';
+ assert.equal(tickQueuedStoryScenes55(s,2000),true);
+ assert.equal(tickQueuedStoryScenes55(s,3000),true);
+ const group=s.content.conversations.wechat.find(c=>c.id==='group').messages;
+ const old=group.filter(x=>x.id==='s55-intro-0');
+ assert.equal(old.length,1);
+ assert.equal(old[0].time,'08:45');
+ assert.equal(group.some(x=>x.id==='s55-intro-1'),false);
+ assert.equal(currentScript55(s,'wechat','group'),null);
+ s.clock='08:50';
+ const draft=currentScript55(s,'wechat','group');
+ assert.equal(draft?.kind,'me');
+ assert.equal(group.some(x=>x.id==='s55-intro-1'),false);
+});
+
+test('time controls are visible per bubble and portable JSON restores every kind',()=>{
+ const s=fresh(),src=line(s,14,'d14:morning'),times=src.lines.map(()=>'');
+ times[0]='11:40';
+ saveChatSource(s,src.key,{at:src.at,lines:src.lines.map(x=>x.text),times});
+ const g=line(s,1,'d01:group-afternoon'),waits=g.lines.map(x=>x.waitSeconds);waits[0]=7.5;
+ saveChatSource(s,g.key,{lines:g.lines.map(x=>x.text),waits});
+ const w=line(s,7,'wish:d07-next'),wt=w.lines.map(()=>'');wt[0]='10:15';
+ saveChatSource(s,w.key,{lines:w.lines.map(x=>x.text),times:wt});
+ const original=s.editor.chatSourceDay;s.editor.chatSourceDay=14;
+ const view=sourceView(s);
+ assert.match(view,/name="time-0" value="11:40"/);
+ assert.match(view,/原本的逐條間隔/);
+ s.editor.chatSourceDay=1;
+ assert.match(sourceView(s),/name="wait-0"/);
+ s.editor.chatSourceDay=original;
+ const data=makeChatBundle(s,{scope:'story'});
+ const parsed=parseChatBundle(JSON.stringify(data));
+ assert.equal(parsed.tracks.find(t=>t.key==='d14:morning').lineTimes[0],'11:40');
+ assert.equal(parsed.sources.find(t=>t.key==='d01:group-afternoon').waits[0],7.5);
+ assert.equal(parsed.sources.find(t=>t.key==='wish:d07-next').times[0],'10:15');
+ const restored=fresh();
+ applyChatImport(restored,parsed,{mode:'merge'});
+ assert.equal(line(restored,14,'d14:morning').lines[0].clock,'11:40');
+ assert.equal(line(restored,1,'d01:group-afternoon').lines[0].waitSeconds,7.5);
+ assert.equal(line(restored,7,'wish:d07-next').lines[0].clock,'10:15');
+});
