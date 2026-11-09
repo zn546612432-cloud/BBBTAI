@@ -17,6 +17,7 @@ export function syncD14D24Content(s){
    const q=s.story55.scenes.loan;
    q.index=[0,1,4,10,13,17,26][Math.min(q.index||0,6)];delete q.nextAt;
    if(q.index>=13)s.story55.sceneCamera={node:'loan',active:false,disconnected:true};
+   if(q.index>0)c.scenes.loan=structuredClone(previousLoan); // old index belongs to the 26-line script
   }
   if(oldLead&&!s.story55.completed.lead&&s.story55.scenes.lead){
    s.story55.scenes.lead.index=s.story55.scenes.lead.index?6:0;
