@@ -152,6 +152,9 @@ export function saveChatSource(s,key,input){
   if(input.at!==''&&input.at!=null&&!TIME.test(input.at))throw Error('节点开始时间无效');
   c.scenes[id]=valid.map(l=>[l.who,l.text]);
   if(input.at)node.at=input.at;else delete node.at;
+  // Author edits must survive rebuilding a game day or starting a new run.
+  // Their runtime source remains story55.config.scenes, not a new dispatcher.
+  s.story55.chatSceneEdits[key]={at:input.at||'',lines:valid};
  }
  return entry;
 }
