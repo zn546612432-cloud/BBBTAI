@@ -115,7 +115,7 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
  return result;
 }
 export function tickD01WeChat(s,now=Date.now()){
- if(s.day>1||s.story55?.d01?.nightAfterMidnight)return reconcileD01History(s,branch=>groupSteps(branch,s),d01BrotherLines(s));
+ if(s.day>1||s.story55?.d01?.nightAfterMidnight)return reconcileD01History(s,branch=>groupSteps(branch,s),s.story55?.chatSceneEdits?.['d01:brother']?d01BrotherLines(s):null);
  if(!d01(s))return false;
  const d=state(s);let changed=false;
  const g=d.group;
