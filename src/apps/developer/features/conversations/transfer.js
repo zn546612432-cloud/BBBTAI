@@ -160,6 +160,9 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
    if(!s.story55||s.story55.version!==1)throw Error('來源劇情需在55天周目導入');
    const current=readChatSources(s,source.day).find(x=>x.key===source.key);
    if(!current||current.reason||current.lines.length!==source.lines.length)continue;
+   // A full exported archive also contains original unedited copy. Re-importing
+   // it must never replace a dynamic send-time calculation with a fixed clock.
+   if(current.at===source.at&&current.lines.every((l,i)=>l.text===source.lines[i]))continue;
    if(mode==='merge'&&(Object.hasOwn(s.story55.chatSceneEdits||{},source.key)
      ||current.type==='wish'&&current.lines.some(l=>Object.hasOwn(s.story55.chatSceneEdits||{},'wish:'+l.id))))continue;
    if(mode==='merge'&&current.type==='node'){
