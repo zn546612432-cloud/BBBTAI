@@ -237,8 +237,10 @@ export function submit(f,ctx){
   const key=f.dataset.key,source=readChatSources(store.get(),Number(store.get().editor?.chatSourceDay||store.get().day)).find(x=>x.key===key);
   if(!source)throw Error('找不到当天的原稿来源；没有修改任何数据');
   const lines=source.lines.map((_,i)=>String(data.get('line-'+i)??''));
-  store.update(s=>saveChatSource(s,key,{at:data.has('at')?String(data.get('at')):undefined,lines}));
-  toast('已保存正式剧情来源；已发送的手机记录没有修改');
+  const times=source.lines.map((line,i)=>data.has('time-'+i)?String(data.get('time-'+i)||''):line.clock||'');
+  const waits=source.lines.map((line,i)=>data.has('wait-'+i)?Number(data.get('wait-'+i)):line.waitSeconds);
+  store.update(s=>saveChatSource(s,key,{at:data.has('at')?String(data.get('at')):undefined,lines,times,waits}));
+  toast('逐句时间与正式原稿已保存；原触发规则和已发送记录保持不变');
   return;
  }
  if(form==='chat-track-edit'){
