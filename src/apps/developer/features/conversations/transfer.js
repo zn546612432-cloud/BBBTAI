@@ -1,6 +1,6 @@
 import {validDate} from '../../../../services/calendar.js';
 import {conversations,chatApps} from './model.js';
-import {STORY_START,HISTORY_START,dayDate,messageEditorDate,isEditableMessage,isProtectedMessage,selection} from './navigation.js';
+import {STORY_START,HISTORY_START,dayDate,messageEditorDate,isEditableMessage,isPortableMessage,isProtectedMessage,selection} from './navigation.js';
 
 export const CHAT_BUNDLE_FORMAT='ximeng-chat-editor-v1';
 const CHANNELS=new Set(chatApps.map(([id])=>id));
@@ -21,7 +21,7 @@ export function makeChatBundle(s,{scope='all'}={}){
  if(!['all','history','story','date'].includes(scope))throw Error('未知的匯出範圍');
  const selected=selection(s),items=[];
  for(const {channel,c} of conversations(s)){
-  const messages=(c.messages||[]).filter(m=>isEditableMessage(m)&&inScope(m,scope,selected)).map(m=>{
+  const messages=(c.messages||[]).filter(m=>isPortableMessage(m)&&inScope(m,scope,selected)).map(m=>{
    const copy=structuredClone(m);
    // A screenplay export does not contain message-delivery/read state or game progress.
    delete copy.delivery;delete copy.deliveryRevision;delete copy.actual;
@@ -50,7 +50,7 @@ export function parseChatBundle(raw){
   for(const m of c.messages){
    if(!plain(m)||!validId(m.id)||!validId(m.from)||typeof m.text!=='string'||m.text.length>10000||m.time!==undefined&&!TIME.test(m.time)||m.sentDate!==undefined&&!validDate(m.sentDate))fail('消息的編號、角色、日期或正文無效');
    if(m.kind!==undefined&&!['text','image','app_invitation','divider'].includes(m.kind))fail('不支持的消息類型：'+m.kind);
-   if(!isEditableMessage(m)||isProtectedMessage(m)||m.delivery!==undefined||m.actual!==undefined)fail('匯入包含玩家實發或系統運行消息：'+m.id);
+   if(!isPortableMessage(m)||isProtectedMessage(m)||m.delivery!==undefined||m.actual!==undefined)fail('匯入包含玩家實發或系統運行消息：'+m.id);
    if(seen.has(m.id))fail('同一對話消息編號重複：'+m.id);seen.add(m.id);
    if(m.schedule!==undefined){
     const x=m.schedule;
@@ -73,7 +73,7 @@ export function previewChatImport(s,raw){
   for(const m of item.messages){
    const old=map.get(m.id);
    if(!old){result.messagesNew++;continue;}
-   if(!isEditableMessage(old)){result.protected++;result.details.push(item.name+' / '+m.id+'：玩家／運行消息，禁止覆蓋');continue;}
+   if(!isPortableMessage(old)){result.protected++;result.details.push(item.name+' / '+m.id+'：玩家／運行消息，禁止覆蓋');continue;}
    const a=structuredClone(old);delete a.delivery;delete a.deliveryRevision;delete a.actual;
    if(JSON.stringify(a)===JSON.stringify(m))result.unchanged++;
    else {result.conflicts++;if(result.details.length<20)result.details.push(item.name+' / '+m.id+'：內容不同');}
@@ -100,7 +100,7 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
     const index=c.messages.findIndex(m=>m.id===incoming.id);
     if(index<0){c.messages.push(structuredClone(incoming));continue;}
     const old=c.messages[index];
-    if(mode!=='replace-conflicts'||!isEditableMessage(old))continue;
+    if(mode!=='replace-conflicts'||!isPortableMessage(old))continue;
     const copy=structuredClone(incoming);
     // A patched authored bubble never rewinds notification/read/delivery state.
     for(const key of ['delivery','deliveryRevision','read','unread'])if(old[key]!==undefined)copy[key]=structuredClone(old[key]);
