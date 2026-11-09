@@ -3,6 +3,7 @@ import {conversations,chatApps} from './model.js';
 import {STORY_START,HISTORY_START,dayDate,messageEditorDate,isEditableMessage,isPortableMessage,isProtectedMessage,selection} from './navigation.js';
 import {trackKey,trackSource,tracksForDay,trackValues,validateTrackValues,trackEditReason,saveTrackValues} from '../../../../story/d14-d24/editor-overrides.js';
 import {readChatSources,saveChatSource} from './source-model.js';
+import {defaultStory55Config} from '../../../../services/story55/config.js';
 
 export const CHAT_BUNDLE_FORMAT='ximeng-chat-editor-v1';
 const CHANNELS=new Set(chatApps.map(([id])=>id));
@@ -161,7 +162,13 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
    if(!current||current.reason||current.lines.length!==source.lines.length)continue;
    if(mode==='merge'&&(Object.hasOwn(s.story55.chatSceneEdits||{},source.key)
      ||current.type==='wish'&&current.lines.some(l=>Object.hasOwn(s.story55.chatSceneEdits||{},'wish:'+l.id))))continue;
-   if(mode==='merge'&&current.type==='node'&&s.story55.config?.scenes?.[source.key.slice(5)]&&current.lines.some((l,i)=>l.text!==source.lines[i]))continue;
+   if(mode==='merge'&&current.type==='node'){
+    const id=source.key.slice(5),defaults=defaultStory55Config(),baseNode=defaults.nodes.find(n=>n.id===id);
+    const local=[...(s.story55.config?.scenes?.[id]||[])];
+    const altered=JSON.stringify(local)!==JSON.stringify(defaults.scenes?.[id])
+     ||(s.story55.config?.nodes?.find(n=>n.id===id)?.at||'')!==(baseNode?.at||'');
+    if(altered||Object.hasOwn(s.story55.chatSceneEdits||{},source.key))continue;
+   }
    saveChatSource(s,source.key,{at:source.at,lines:source.lines});
   }
   for(const item of bundle.conversations){
