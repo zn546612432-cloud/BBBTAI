@@ -29,15 +29,12 @@ test('the day index includes unplayed canonical D01–D24 content and future Sto
  assert.equal(readChatSources(s,56).length,0);
  assert.ok(readChatSources(s,5).reduce((n,x)=>n+x.lines.length,0)>100);
 });
-test('source UI makes authored transcript visible despite an empty delivered chat',()=>{
+test('restored original editor is isolated from canonical source authoring services',()=>{
  const s=fresh();s.editor.chatView='source';s.editor.chatSourceDay=2;
  const html=conversations(s);
- assert.match(html,/D01–D55 原稿/);
- assert.match(html,/data-form="chat-source-edit"/);
- assert.match(html,/聊天原稿/);
- assert.match(html,/原生点击发送/);
- assert.match(html,/data-view="classic"/);
- assert.match(html,/data-view="dated"/);
+ assert.match(html,/＋ 新建对话窗口/);
+ assert.doesNotMatch(html,/data-form="chat-source-edit"/);
+ assert.doesNotMatch(html,/data-view="dated"/);
  assert.ok((s.content.conversations.wechat.find(c=>c.id==='wang')?.messages||[]).every(m=>!m.id?.startsWith('d02-')));
  const day=sourceView(s,{day:55});
  assert.match(day,/最后的同步/);
