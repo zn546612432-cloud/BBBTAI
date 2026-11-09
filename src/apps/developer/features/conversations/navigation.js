@@ -14,8 +14,8 @@ export function dayOfDate(iso){
 }
 export const isProtectedMessage=m=>!m||m.actual===true||m.systemOwned===true||
  m.developerSimulated===true||m.story55===true||!!m.lifecycleId||!!m.ouroborosScript||
- !!m.storyD01||!!m.storyD02||!!m.storyD03||
- (typeof m.id==='string'&&/^(?:s55-|d\d{2}-)/.test(m.id));
+ Object.keys(m).some(k=>/^storyD\d+/.test(k))||
+ (typeof m.id==='string'&&/^s55-/.test(m.id)&&m.authored!==true&&m.storyImported!==true);
 export const isEditableMessage=m=>!isProtectedMessage(m)&&(m.authored===true||m.storyImported===true);
 
 export function messageEditorDate(m){
