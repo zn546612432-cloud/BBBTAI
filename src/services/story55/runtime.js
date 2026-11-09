@@ -25,6 +25,16 @@ const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博�
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
  const c=defaultStory55Config();
+ const authored=s.story55?.chatSceneEdits||{};
+ for(const [key,edit] of Object.entries(authored)){
+  if(!key.startsWith('node:'))continue;
+  const id=key.slice(5),node=c.nodes.find(n=>n.id===id),previous=c.scenes?.[id];
+  if(!node||!Array.isArray(previous)||!Array.isArray(edit?.lines)||previous.length!==edit.lines.length)continue;
+  if(!edit.lines.every((l,i)=>l.who===previous[i][0]&&typeof l.text==='string'&&l.text.trim()))continue;
+  c.scenes[id]=edit.lines.map(l=>[l.who,l.text]);
+  if(edit.at&&/^([01]\\d|2[0-3]):[0-5]\\d$/.test(edit.at))node.at=edit.at;
+  else if(edit.at==='')delete node.at;
+ }
  const imported={legacyHistoryImported:s.story55?.legacyHistoryImported,legacyContentImported:s.story55?.legacyContentImported,legacySMSImported:s.story55?.legacySMSImported,
   // Author-edited source dialogue survives a new run; gameplay progress does not.
   ...(s.story55?.chatSceneEdits?{chatSceneEdits:structuredClone(s.story55.chatSceneEdits)}:{}),
