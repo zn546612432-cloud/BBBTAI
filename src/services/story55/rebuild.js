@@ -6,7 +6,7 @@ import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../../story/d13/runt
  */
 import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from './state.js';
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
-import {deployment,projectCapacity,upgradeHardware} from './projects.js';
+import {deployment,projectCapacity,upgradeHardware,completeDeploymentRun,upgradeBaseFramework,baseUpgradeCost} from './projects.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {defaultProducts} from '../../apps/mirage/data.js';
 import {D06_ORDER_ID,D06_CONTRACT} from '../../story/d06/commission.js';
@@ -146,6 +146,28 @@ function simulateProjectBatch(s,node){
 
  const run=s.story55.projects[p.id]??(s.story55.projects[p.id]={authorized:true,active:null,batches:[]});
  if(run.batches.length>=p.batches||run.batches.length>=projectCapacity(s,p))return false;
+ if(p.id==='base'){
+  // Developer reconstruction uses the exact same five LINK results, first
+  // failed runtime report, D15 loan prerequisite and explicit bank upgrades.
+  if(run.batches.some(b=>b?.testedDay===s.day))return false;
+  if(run.batches.length>0&&!completed(s,'loan'))return false;
+  run.authorized=true;
+  const batch=run.batches.length,b={complete:false,steps:[]};
+  run.batches.push(b);
+  for(let i=0;i<5;i++){
+   const id='s55:base:'+batch+':'+i;
+   s.ghost.orders[id]={id,type:'route',key:p.key,status:'success',attempts:1,
+    story55Project:'base',batch,step:i,moves:0,errors:0,
+    settings:{seconds:90,retries:1000,rounds:1},test:true};
+   s.ghost.history.unshift({id:id+':1',orderId:id,type:'route',success:true,at:0,attempt:1,test:true,day:s.day});
+   completeDeploymentRun(s,s.ghost.orders[id]);
+  }
+  if(batch>0){
+   funding(s,baseUpgradeCost(s),'FRAMEWORK UPGRADE');
+   upgradeBaseFramework(s);
+  }
+  return true;
+ }
  hardware(s,p.minimumHardware);
  run.authorized=true;
  const batch=run.batches.length;
