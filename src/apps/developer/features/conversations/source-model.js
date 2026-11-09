@@ -159,25 +159,63 @@ export function saveChatSource(s,key,input){
   if(old.kind!=='text'&&text!==old.text)throw Error('图片、电话或其他非文字消息请通过原素材入口修改');
   return {who:old.who,text};
  });
+ // Every authored bubble can retain its own time; blank means follow the
+ // original event-driven timing rather than generating a new timer.
+ const times=input.times===undefined?entry.lines.map(x=>x.clock||''):input.times;
+ if(!Array.isArray(times)||times.length!==entry.lines.length||
+    times.some(t=>typeof t!=='string'||t!==''&&!TIME.test(t)))
+  throw Error('逐句時間需要 HH:MM，或者留空沿用既有發送規則');
+ if(entry.type==='track'||entry.type==='node'){
+  let previous=entry.type==='track'?(input.at||entry.at):(input.at||entry.at||'00:00');
+  for(let i=0;i<times.length;i++){
+   if(entry.lines[i].clockLocked&&times[i]!==entry.lines[i].clock)
+    throw Error('第 '+(i+1)+' 條是系統電話／固定節點，時間不能修改');
+   if(times[i]){
+    if(times[i]<previous)throw Error('第 '+(i+1)+' 條指定時間不能早於段落開始或上一條指定時間');
+    previous=times[i];
+   }
+  }
+ }
  s.story55.chatSceneEdits??={};
  if(entry.type==='track'){
   const time=input.at==null?entry.baseAt:input.at;
   if(!TIME.test(time))throw Error('发送时间应为 HH:MM');
-  const edited={at:time,lines:valid};
+  const edited={at:time,lines:valid,...(times.some(Boolean)?{lineTimes:[...times]}:{})};
   if(trackSource(key))saveTrackValues(s,key,edited);
   else{
    const old=s.story55.chatSceneEdits[key];
    const atChanged=input.at!=null&&(time!==entry.baseAt||!!old?.at&&time===entry.at);
    const baseline=old?.baseline?.length===valid.length?old.baseline:entry.baseTexts;
-   s.story55.chatSceneEdits[key]={...(atChanged?{at:time}:{}),lines:valid,baseline};
+   s.story55.chatSceneEdits[key]={...(atChanged?{at:time}:{}),lines:valid,baseline,...(times.some(Boolean)?{lineTimes:[...times]}:{})};
   }
  }else if(entry.type==='d01'){
-  const lines=valid.map((x,i)=>entry.lines[i].after!==undefined?{...x,after:entry.lines[i].after}:x);
-  s.story55.chatSceneEdits[key]={lines};
+  const waits=input.waits===undefined?entry.lines.map(x=>x.waitSeconds):input.waits;
+  if(!Array.isArray(waits)||waits.length!==entry.lines.length)throw Error('D01每句等待時間數量不一致');
+  const calibrated=waits.map((v,i)=>{
+   const n=Number(v),game=entry.lines[i].timeMode==='game-minutes';
+   if(!Number.isFinite(n)||n<(game?1:0.5)||n>(game?120:3600)||Math.abs(Math.round(n*100)-n*100)>0.001)
+    throw Error('第 '+(i+1)+' 條等待時間無效（秒數最多3600，遊戲分鐘最多120）');
+   return game?n:Math.round(n*1000);
+  });
+  const revision={lines:valid};
+  if(key==='d01:brother'){
+   if(calibrated.some((x,i)=>x!==[850,2,1500][i]))revision.timing=calibrated;
+  }else{
+   const previous=s.story55.chatSceneEdits?.[key]?.waitMs||[];
+   const original=entry.lines.map((x,i)=>previous[i]??Math.round(x.waitSeconds*1000));
+   const active=calibrated.map((ms,i)=>ms!==original[i]||Number.isFinite(previous[i])?ms:null);
+   if(active.some(Number.isFinite))revision.waitMs=active;
+  }
+  s.story55.chatSceneEdits[key]=revision;
  }else if(entry.type==='wish'){
   for(let i=0;i<entry.lines.length;i++){
    const l=entry.lines[i];
-   if(l.id&&l.kind==='text')s.story55.chatSceneEdits['wish:'+l.id]={text:valid[i].text};
+   if(!l.id)continue;
+   const key='wish:'+l.id;
+   s.story55.chatSceneEdits[key]={
+    ...(l.kind==='text'?{text:valid[i].text}:{}),
+    ...(times[i]?{clock:times[i]}:{})
+   };
   }
  }else if(entry.type==='node'){
   const id=key.slice(5),c=story55Config(s),node=c.nodes.find(n=>n.id===id);
@@ -187,7 +225,8 @@ export function saveChatSource(s,key,input){
   if(input.at)node.at=input.at;else delete node.at;
   // Author edits must survive rebuilding a game day or starting a new run.
   // Their runtime source remains story55.config.scenes, not a new dispatcher.
-  s.story55.chatSceneEdits[key]={at:input.at||'',lines:valid};
+  s.story55.chatSceneEdits[key]={at:input.at||'',lines:valid,
+   ...(times.some(Boolean)?{lineTimes:[...times]}:{})};
  }
  return entry;
 }
