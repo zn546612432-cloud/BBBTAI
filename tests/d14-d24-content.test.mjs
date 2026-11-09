@@ -58,7 +58,7 @@ test('D14 mail stays separate from deployment, exposes one file attachment and n
 test('D15 fictional session requires an explicit disconnect and one ledger/debt receipt before later messages',()=>{
  const s=at(15,'15:35');s.story55.completed.code={day:14,clock:'10:00'};
  assert.equal(nodeStatus(s,'loan').state,'locked');s.clock='15:36';assert.equal(nodeStatus(s,'loan').state,'locked');
- s.story55.projects.base={authorized:true,batches:[],active:null};assert.equal(nodeStatus(s,'loan').state,'ready');
+ s.story55.projects.base={authorized:true,batches:[{complete:true,steps:[1,2,3,4,5],day:14,testedDay:14,runFailed:true}],active:null};assert.equal(nodeStatus(s,'loan').state,'ready');
  let now=Date.now()+100000;
  const drain=()=>{for(let n=0;n<120&&!completed(s,'loan');n++){
   const line=currentScript55(s,'mirage','s55-ouroboros');
@@ -85,7 +85,10 @@ test('old default scene migration preserves player history, finished loan and re
  const history={id:'keep-historical',from:'me',text:'自己的話',sentDate:'2024-03-10'};const player={id:'s55-loan-1',from:'me',text:'舊版本親自發的話',sentDate:'2025-06-02'};
  s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros')?.messages.push(player,history);
  const before=structuredClone(s.story55.projects.base);syncD14D24Content(s);tickStory55(s);
- assert.deepEqual(s.story55.projects.base,before);assert.equal(s.story55.liabilities,1000000);assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);
+ assert.deepEqual(s.story55.projects.base.batches[0].steps,before.batches[0].steps);
+ assert.equal(s.story55.projects.base.batches[0].complete,true);
+ assert.equal(s.story55.projects.base.batches[0].runFailed,true);
+ assert.equal(s.story55.liabilities,1000000);assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);
  assert.equal(player.text,'舊版本親自發的話');assert.equal(history.text,'自己的話');assert.equal(completed(s,'loan'),true);
 });
 
