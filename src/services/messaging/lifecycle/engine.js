@@ -31,7 +31,12 @@ export function createConversationTrack(config){
  const lines=(s,d,q)=>{
   const source=value(d.lines,s,q)||[],revision=edited(s,d);
   if(!Array.isArray(revision?.lines)||revision.lines.length!==source.length)return source;
-  return source.map((line,i)=>({...line,text:revision.lines[i].text}));
+  // Untouched author lines must keep their existing conditional variants.
+  // A baseline from the editor identifies which indices were actually changed.
+  return source.map((line,i)=>({
+   ...line,text:Array.isArray(revision.baseline)&&revision.baseline[i]===revision.lines[i].text
+    ?line.text:revision.lines[i].text
+  }));
  };
  const starts=(s,d,q)=>edited(s,d)?.at||value(d.at,s,q)||d.fallback||d.early||'08:00';
  const startMinute=(s,d,q)=>(d.day-1)*1440+minute(starts(s,d,q));
