@@ -23,13 +23,22 @@ export const D01_BROTHER_LINES=[
  {who:'熙旺',text:'怎麼發了那麼多消息？現在看不及時，不重要的話，有什麼話等我回家當面跟我講吧。',at:'上一句約 1.5 秒後'}
 ];
 export function d01BrotherLines(s){
- const edited=s.story55?.chatSceneEdits?.['d01:brother']?.lines;
- return D01_BROTHER_LINES.map((line,i)=>({...line,text:edited?.length===D01_BROTHER_LINES.length?edited[i].text:line.text}));
+ const revision=s.story55?.chatSceneEdits?.['d01:brother'];
+ const edited=revision?.lines,values=revision?.timing;
+ return D01_BROTHER_LINES.map((line,i)=>({
+  ...line,text:edited?.length===D01_BROTHER_LINES.length?edited[i].text:line.text,
+  ...(i===1?{gameMinutes:Number.isFinite(values?.[1])?values[1]:2}
+          :{waitMs:Number.isFinite(values?.[i])?values[i]:(i===0?850:1500)})
+ }));
 }
 export function d01GroupScript(s,branch){
  const original=defaultGroupSteps(branch);
- const edit=s.story55?.chatSceneEdits?.['d01:group-'+branch]?.lines;
- return original.map((step,i)=>({...step,text:edit?.length===original.length?edit[i].text:step.text}));
+ const revision=s.story55?.chatSceneEdits?.['d01:group-'+branch];
+ const edit=revision?.lines,waits=revision?.waitMs;
+ return original.map((step,i)=>({
+  ...step,text:edit?.length===original.length?edit[i].text:step.text,
+  ...(Number.isFinite(waits?.[i])?{waitMs:waits[i]}:{})
+ }));
 }
 const groupSteps=(branch,s)=>s?d01GroupScript(s,branch):defaultGroupSteps(branch);
 // Two seconds more breathing room between every scripted group beat.
@@ -39,7 +48,7 @@ export function d01GroupWait(steps,index){
  if(!next)return 0;
  const npc=new Set(['小辛','熙旺']);
  const handoff=previous&&npc.has(previous.from)&&npc.has(next.from)&&previous.from!==next.from;
- return next.after+2000+(handoff?3000:0);
+ return Number.isFinite(next.waitMs)?next.waitMs:next.after+2000+(handoff?3000:0);
 }
 const d01=s=>s.story55?.version===1&&s.day===1;
 const state=s=>(s.story55.d01??={});
@@ -104,10 +113,10 @@ export function sendD01WeChat(store,id,text,now=Date.now()){
   if(b.locked){result.reason='熙旺現在不方便回覆';return;}
   result.messageId=pushMe(s,id,text);
   if(b.phase==='idle'&&text.includes('哥')){
-   b.phase='hello';b.helloAt=now+850;b.helloDelivered=false;b.extra=0;
+   b.phase='hello';b.helloAt=now+d01BrotherLines(s)[0].waitMs;b.helloDelivered=false;b.extra=0;
   }else if(['hello','counting','waiting'].includes(b.phase)){
    b.extra++;
-   if(b.extra>=3){b.phase='waiting';b.dueGameMinute=gameMinute(s)+2;}
+   if(b.extra>=3){b.phase='waiting';b.dueGameMinute=gameMinute(s)+d01BrotherLines(s)[1].gameMinutes;}
    else b.phase='counting';
   }
   d.brother=b;
@@ -137,7 +146,7 @@ export function tickD01WeChat(s,now=Date.now()){
  if(b&&!b.helloDelivered&&b.helloAt&&now>=b.helloAt){changed=deliver(s,BROTHER_ID,'熙旺',d01BrotherLines(s)[0].text,'d01-wang-hello')||changed;b.helloDelivered=true;if(b.phase==='hello')b.phase='counting';}
  if(b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute){
   changed=deliver(s,BROTHER_ID,'熙旺',d01BrotherLines(s)[1].text,'d01-wang-driving')||changed;
-  b.phase='replySecond';b.secondAt=now+1500;
+  b.phase='replySecond';b.secondAt=now+d01BrotherLines(s)[2].waitMs;
  }
  if(b?.phase==='replySecond'&&now>=b.secondAt){
   changed=deliver(s,BROTHER_ID,'熙旺',d01BrotherLines(s)[2].text,'d01-wang-finish')||changed;
