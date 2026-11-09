@@ -128,7 +128,7 @@ export function saveChatSource(s,key,input){
  if(!Array.isArray(texts)||texts.length!==entry.lines.length)throw Error('消息条数不一致，不允许改变剧情消息ID或跳过玩家发送');
  const valid=texts.map((text,i)=>{
   const old=entry.lines[i];
-  if(typeof text!=='string'||!text.trim()||text.length>3000)throw Error('第 '+(i+1)+' 条必须有有效的正文');
+  if(typeof text!=='string'||text.length>3000||(!text.trim()&&text!==old.text)||old.text===''&&text!=='')throw Error('第 '+(i+1)+' 条正文无效；不能改变专用空消息');
   if(old.kind!=='text'&&text!==old.text)throw Error('图片、电话或其他非文字消息请通过原素材入口修改');
   return {who:old.who,text};
  });
