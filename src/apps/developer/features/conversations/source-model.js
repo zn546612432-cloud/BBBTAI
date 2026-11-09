@@ -4,6 +4,7 @@ import {d01GroupScript,d01BrotherLines,D01_GROUP_BRANCHES} from '../../../../sto
 import {celebration,privateScenes as d06Private,rewardSets as d06Rewards} from '../../../../story/d06/wish-content.js';
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../../../story/d07/life-content.js';
 import {saveTrackValues,trackSource} from '../../../../story/d14-d24/editor-overrides.js';
+import {D06_DINNER_PLAYER_LINE} from '../../../../services/wishes/index.js';
 
 const TIME=/^([01]\d|2[0-3]):[0-5]\d$/;
 const labelDay=day=>'D'+String(day).padStart(2,'0')+' · '+date55(day);
@@ -100,6 +101,16 @@ function wishSources(s,day){
    lines:rows,reason:sent?'该组已有消息送达，避免改写正在进行的心愿记录；新周目可再编辑。':''};
  });
 }
+function scriptedPlayerSources(day){
+ if(day!==6)return [];
+ return [
+  {key:'player:d06-celebrate',title:'钱包比赛获奖后 · 熙蒙主动分享',text:'兄弟们！我真的拿到 10 BTC 了！',trigger:'完成钱包比赛后，玩家必须亲自点击发送'},
+  {key:'player:d06-dinner',title:'购买 D06 聚餐心愿后 · 熙蒙回复',text:D06_DINNER_PLAYER_LINE,trigger:'真实购买聚餐后，玩家必须亲自点击发送'}
+ ].map(x=>({key:x.key,type:'scripted-player',day,channel:'wechat',chat:'group',title:x.title,
+  at:'',timingLabel:x.trigger,deliveryLabel:'固定玩家草稿；不由定时器自动发出',
+  lines:[{who:'me',text:x.text,kind:'text'}],
+  reason:'玩家原生 Send 及购买前置不在此编辑器修改；本条只提供原稿阅读。'}));
+}
 function nodeSources(s,day){
  const c=story55Config(s);
  return c.nodes.filter(n=>n.day===day&&Array.isArray(c.scenes?.[n.id])&&c.scenes[n.id].length).map(n=>({
@@ -113,7 +124,7 @@ function nodeSources(s,day){
 }
 export function readChatSources(s,day){
  if(!Number.isInteger(day)||day<1||day>55)return [];
- return [...(day===1?d01Sources(s):[]),...trackSources(s,day),...wishSources(s,day),...nodeSources(s,day)];
+ return [...(day===1?d01Sources(s):[]),...trackSources(s,day),...wishSources(s,day),...scriptedPlayerSources(day),...nodeSources(s,day)];
 }
 export function daySourceSummary(s,day){
  const rows=readChatSources(s,day);
