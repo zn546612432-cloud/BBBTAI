@@ -42,7 +42,7 @@ export function handle(a,t,ctx){
  if(handleChatTransferAction(a,t,ctx))return;
  if(a==='chat-view'){
   const next=t.dataset.view==='dated'?'dated':'classic';
-  store.update(s=>{s.editor.chatView=next;s.editor.chatPage=0;s.editor.chatExplicitSelection=true;});
+  store.update(s=>{s.editor.chatView=next;s.editor.chatPage=0;s.editor.chatExplicitSelection=next==='classic';});
   document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
   return;
  }
