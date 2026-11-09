@@ -12,6 +12,8 @@ import {phoneEditor} from './features/phone/index.js';
 import {sms} from './features/sms/index.js';
 import {assets} from './features/assets/index.js';
 import {messageCard,newConversationForm,conversations} from './features/conversations/index.js';
+import {selection,historyDates,activeConversation,selectDate,rowsFor,PAGE_SIZE,addDatedMessage,messageEditorDate,isEditableMessage} from './features/conversations/navigation.js';
+import {handleChatTransferAction,stageChatImportFile} from './features/conversations/ui-transfer.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
 import {ghostDevSkipAvailable} from '../ghost/features/dev-skip/index.js';
 import {taiPhonePanel,taiPhoneAction} from './features/tai-phone/index.js';
@@ -34,6 +36,43 @@ function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=
 export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?(isStory55(s)?story55Editor(s):presetEditor(s)):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(handleChatTransferAction(a,t,ctx))return;
+ if(a==='chat-scope'){
+  store.update(s=>selectDate(s,{chatScope:t.dataset.scope}));
+  document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
+  return;
+ }
+ if(a==='chat-prev'||a==='chat-next'){
+  const v=selection(store.get()),delta=a==='chat-next'?1:-1;
+  if(v.scope==='story')store.update(s=>selectDate(s,{chatDay:Math.max(1,Math.min(55,v.day+delta))}));
+  else if(v.scope==='history'){
+   const dates=historyDates(store.get()),at=dates.indexOf(v.historyDate);
+   const next=at>=0?at+delta:delta>0?dates.findIndex(d=>d>v.historyDate):dates.findLastIndex(d=>d<v.historyDate);
+   if(dates[next])store.update(s=>selectDate(s,{chatDate:dates[next]}));
+  }
+  document.querySelector('#screen-layer #app-content')?.scrollTo({top:0});
+  return;
+ }
+ if(a==='chat-page'||a==='chat-jump-top'||a==='chat-jump-bottom'){
+  const v=selection(store.get()),x=activeConversation(store.get());
+  const count=x?rowsFor(store.get(),x.channel,x.c).length:0;
+  const maxPage=Math.max(0,Math.ceil(count/PAGE_SIZE)-1);
+  const page=a==='chat-jump-top'?0:a==='chat-jump-bottom'?maxPage:Math.max(0,Math.min(maxPage,Number(t.dataset.page)||0));
+  store.update(s=>{s.editor.chatPage=page;});
+  const pane=document.querySelector('#screen-layer #app-content');
+  if(a==='chat-jump-top')pane?.scrollTo({top:0});
+  else if(a==='chat-jump-bottom')pane?.scrollTo({top:pane.scrollHeight});
+  else document.getElementById('chat-message-list')?.scrollIntoView({block:'start'});
+  return;
+ }
+ if(a==='chat-search-go'){
+  const query=document.getElementById('chat-search')?.value||'';
+  store.update(s=>selectDate(s,{chatSearch:query}));return;
+ }
+ if(a==='chat-open-node'){
+  store.update(s=>{s.editor.story55Node=t.dataset.node;});
+  router.open({appId:'editor',route:'/story55'});return;
+ }
  if(a==='s55-speed-default'){
   store.update(s=>setStory55MinutesPerSecond(s,STORY55_SPEED_DEFAULT));
   ctx.toast(`主畫面掛機已恢復：1 秒＝${STORY55_SPEED_DEFAULT} 分鐘；App 內 1 分鐘＝${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘`);
@@ -64,21 +103,27 @@ export function handle(a,t,ctx){
  if(a==='delete-phone-contact'){store.update(s=>{s.content.phone.contacts=s.content.phone.contacts.filter(p=>p.id!==id);});ctx.toast('联系人已删除');return;}
  if(a==='delete-phone-call'){store.update(s=>{s.content.phone.calls=s.content.phone.calls.filter(call=>call.id!==id);});ctx.toast('通话记录已删除');return;}
  if(a==='remove-charge-gate'){store.update(s=>{s.storyChargeGates=(s.storyChargeGates||[]).filter(g=>g.day!==Number(t.dataset.day));});return;}
- if(a==='preview-chat'){const x=selectedConversation(store.get());if(x)router.open({appId:x.channel,route:'/chat/'+x.c.id});return;}
- if(a==='add-message')store.update(s=>{const {c}=selectedConversation(s);c.messages.push(newMessage(s,c));});
- if(['duplicate-message','delete-message','move-up','move-down','rearm-message','test-message'].includes(a)&&selectedConversation(store.get())?.c.messages.find(m=>m.id===id)?.systemOwned)return;
- if(a==='duplicate-message')store.update(s=>{const {c}=selectedConversation(s),i=c.messages.findIndex(m=>m.id===id);if(i<0)return;const m=structuredClone(c.messages[i]);m.id=uid();delete m.delivery;delete m.actual;m.authored=true;c.messages.splice(i+1,0,m);});
- if(a==='delete-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);c.messages=c.messages.filter(m=>m.id!==id);});
- if(a==='move-up'||a==='move-down')store.update(s=>{const {c}=selectedConversation(s),i=c.messages.findIndex(m=>m.id===id);moveMessageTo(c,id,i+(a==='move-up'?-1:1));});
- if(a==='rearm-message')store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
+ if(a==='preview-chat'){const x=activeConversation(store.get());if(x)router.open({appId:x.channel,route:'/chat/'+x.c.id});return;}
+ if(a==='add-message')store.update(s=>{const {c}=activeConversation(s);c.messages.push(addDatedMessage(s,c,'text',newMessage));});
+ if(['duplicate-message','delete-message','move-up','move-down','rearm-message','test-message','replace-message-image'].includes(a)&&
+ !isEditableMessage(activeConversation(store.get())?.c.messages.find(m=>m.id===id)))return;
+ if(a==='delete-message'&&!globalThis.confirm('確定刪除此條作者消息？請先備份重要劇情。'))return;
+ if(a==='duplicate-message')store.update(s=>{const {c}=activeConversation(s),i=c.messages.findIndex(m=>m.id===id);if(i<0)return;const m=structuredClone(c.messages[i]);m.id=uid();delete m.delivery;delete m.actual;m.authored=true;c.messages.splice(i+1,0,m);});
+ if(a==='delete-message')store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);c.messages=c.messages.filter(m=>m.id!==id);});
+ if(a==='move-up'||a==='move-down')store.update(s=>{
+  const {c}=activeConversation(s),i=c.messages.findIndex(m=>m.id===id),neighbor=c.messages[i+(a==='move-up'?-1:1)];
+  if(i<0||!isEditableMessage(neighbor)||messageEditorDate(c.messages[i])!==messageEditorDate(neighbor))return;
+  moveMessageTo(c,id,i+(a==='move-up'?-1:1));
+ });
+ if(a==='rearm-message')store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===id);if(m)clearDelivery(s,c,m);});
  if(a==='test-message'){
-  const x=selectedConversation(store.get());
-  store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;endShortCharge(s);clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
+  const x=activeConversation(store.get());
+  store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===id);if(!m)return;endShortCharge(s);clearDelivery(s,c,m);if(m.schedule?.mode==='game-time'){s.day=m.schedule.day;s.clock=m.schedule.clock;}if(x.channel==='noapp'&&!isStory55(s)&&s.day<56)s.day=56;});
   router.open({appId:x.channel,route:'/chat/'+x.c.id});return;
  }
  if(a==='add-image-message'||a==='replace-message-image'){
-  const x=selectedConversation(store.get());
-  ctx.pickImage(src=>store.update(s=>{const c=s.content.conversations[x.channel].find(c=>c.id===x.c.id);if(a==='add-image-message')c.messages.push({...newMessage(s,c,'image'),text:src});else {const m=c.messages.find(m=>m.id===id);if(m)m.text=src;}}));
+  const x=activeConversation(store.get());
+  ctx.pickImage(src=>store.update(s=>{const c=s.content.conversations[x.channel].find(c=>c.id===x.c.id);if(a==='add-image-message')c.messages.push({...addDatedMessage(s,c,'image',newMessage),text:src});else {const m=c.messages.find(m=>m.id===id);if(m)m.text=src;}}));
  }
  if(a==='replace-wallpaper')ctx.pickImage(src=>store.update(s=>s.wallpaper=src));
  if(a==='replace-icon')ctx.pickImage(src=>store.update(s=>s.iconOverrides[id]=src));
@@ -95,13 +140,23 @@ export function change(t,ctx){
  const {store}=ctx;
  if(changeMoments(t,ctx))return;
  if(changePresetField(t,ctx))return;
- if(t.id==='editor-conversation'){const i=t.value.indexOf(':');store.update(s=>{s.editor.channel=t.value.slice(0,i);s.editor.conversation=t.value.slice(i+1);});return;}
- if(t.id==='editor-conversation-name')store.update(s=>renameConversation(selectedConversation(s).c,t.value));
- if(t.dataset.actorName)store.update(s=>renameActor(selectedConversation(s).c,t.dataset.actorName,t.value));
- if(t.dataset.messageField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned)return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
- if(t.dataset.sentDate)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(m&&!m.systemOwned)setMessageDate(m,s,{preset:t.value});});
- if(t.dataset.scheduleField)store.update(s=>{const {c}=selectedConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!m||m.systemOwned)return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
- if(t.dataset.orderMessage){const value=Number(t.value);if(!Number.isInteger(value)||value<1)throw Error('排序位置需为正整数');store.update(s=>moveMessageTo(selectedConversation(s).c,t.dataset.orderMessage,value-1));}
+ if(t.id==='chat-history-date'||t.id==='chat-history-select'){
+  if(t.value)store.update(s=>selectDate(s,{chatScope:'history',chatDate:t.value}));return;
+ }
+ if(t.id==='chat-story-day'){
+  const day=Number(t.value);
+  if(Number.isInteger(day)&&day>=1&&day<=55)store.update(s=>selectDate(s,{chatScope:'story',chatDay:day}));
+  return;
+ }
+ if(t.id==='chat-kind'){store.update(s=>selectDate(s,{chatKind:t.value}));return;}
+ if(t.id==='chat-search'){store.update(s=>selectDate(s,{chatSearch:t.value}));return;}
+ if(t.id==='editor-conversation'){const i=t.value.indexOf(':');store.update(s=>{s.editor.channel=t.value.slice(0,i);s.editor.conversation=t.value.slice(i+1);s.editor.chatExplicitSelection=true;s.editor.chatPage=0;});return;}
+ if(t.id==='editor-conversation-name')store.update(s=>renameConversation(activeConversation(s).c,t.value));
+ if(t.dataset.actorName)store.update(s=>renameActor(activeConversation(s).c,t.dataset.actorName,t.value));
+ if(t.dataset.messageField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!isEditableMessage(m))return;const field=t.dataset.messageField;if(field==='from'&&actors(c).some(a=>a.id===t.value))m.from=t.value;else if(field==='time')setMessageDate(m,s,{time:t.value});else if(field==='sentDate')setMessageDate(m,s,{date:t.value});else if(field==='text'&&(!m.kind||m.kind==='text'))m.text=t.value;});
+ if(t.dataset.sentDate)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.sentDate);if(isEditableMessage(m))setMessageDate(m,s,{preset:t.value});});
+ if(t.dataset.scheduleField)store.update(s=>{const {c}=activeConversation(s),m=c.messages.find(m=>m.id===t.dataset.id);if(!isEditableMessage(m))return;const field=t.dataset.scheduleField,mode=field==='mode'?t.value:m.schedule?.mode;const input=field==='mode'?{mode}:{...m.schedule,[field]:t.value};setSchedule(s,c,m,input);});
+ if(t.dataset.orderMessage){const value=Number(t.value);if(!Number.isInteger(value)||value<1)throw Error('排序位置需为正整数');store.update(s=>moveMessageTo(activeConversation(s).c,t.dataset.orderMessage,value-1));}
 }
 export const isTextEdit=t=>isMomentsTextEdit(t)||isPresetTextField(t)||t.id==='editor-conversation-name'||!!t.dataset.actorName||!!t.dataset.messageField&&['text','time','sentDate'].includes(t.dataset.messageField)||!!t.dataset.scheduleField&&t.dataset.scheduleField!=='mode';
 export function input(t,ctx){
@@ -119,7 +174,7 @@ export function input(t,ctx){
  if((t.id==='editor-conversation-name'||t.dataset.actorName)&&!t.value.trim())return;
  change(t,ctx);
  const root=t.closest('.editor-panel');if(!root)return;
- const {c,channel}=selectedConversation(ctx.store.get());
+ const {c,channel}=activeConversation(ctx.store.get());
  const edited=c.messages.find(m=>m.id===t.dataset.id),badge=t.closest('[data-message-id]')?.querySelector('.schedule-badge');if(edited&&badge){badge.textContent=scheduleLabel(edited);badge.classList.toggle('delivered',!!edited.delivery);}
  const people=new Map(actors(c).map(a=>[a.id,a.name]));
  const choice=root.querySelector('#editor-conversation');
@@ -152,7 +207,7 @@ export function submit(f,ctx){
    toast(form==='phone-add-call'?'通话记录已添加':'通话记录已保存');return;
   }
  }
- if(form==='new-conversation'||form==='new-sms'){createConversation(store,{channel:form==='new-sms'?'messages':String(data.get('channel')),name:String(data.get('name')||''),type:form==='new-sms'?'direct':String(data.get('type')),members:String(data.get('members')||'')});const pane=document.querySelector('#app-content');if(pane)pane.scrollTop=0;toast('对话窗口已创建，可以添加消息');}
+ if(form==='new-conversation'||form==='new-sms'){createConversation(store,{channel:form==='new-sms'?'messages':String(data.get('channel')),name:String(data.get('name')||''),type:form==='new-sms'?'direct':String(data.get('type')),members:String(data.get('members')||'')});store.update(s=>{s.editor.chatExplicitSelection=true;s.editor.chatPage=0;});const pane=document.querySelector('#app-content');if(pane)pane.scrollTop=0;toast('对话窗口已创建，可以添加消息');}
  if(form==='charge-gate'){const day=Number(data.get('day')),untilFlag=String(data.get('flag')||'').trim();if(!Number.isInteger(day)||day<1||day>89||!untilFlag)throw Error('请填写天数与完成标记');store.update(s=>{s.storyChargeGates=[...(s.storyChargeGates||[]).filter(g=>g.day!==day),{day,untilFlag}];});toast('已保存');return;}
  if(form==='preview'){let count=0;store.update(s=>{endShortCharge(s);const previous={day:s.day,clock:s.clock};setPreviewDate(s,{day:Number(data.get('day')),clock:String(data.get('clock'))});count=deliverMissedScheduled(s,previous).length;});if(!count)toast('时间已更新；没有新的定时主动消息');}
 }
@@ -160,6 +215,10 @@ export function mountInteractions(root,ctx){
  root.addEventListener('input',e=>updateTimelinePreview(e.target));
  let drag=null;
  root.addEventListener('change',async e=>{
+  if(e.target.id==='chat-import-file'){
+   const file=e.target.files?.[0];if(file)try{await stageChatImportFile(file,ctx);}catch(error){ctx.toast(error.message||'聊天文件無法導入');}finally{e.target.value='';}
+   return;
+  }
   if(e.target.id==='mom-import-file'){
    const file=e.target.files?.[0];if(file)try{await handleMomentsImport(file,ctx);}catch(error){ctx.toast(error.message||'朋友圈数据无法导入');}finally{e.target.value='';}
    return;
@@ -187,7 +246,10 @@ export function mountInteractions(root,ctx){
  root.addEventListener('pointerup',e=>{
   if(!drag||e.pointerId!==drag.pointerId)return;
   const moved=drag;drag=null;if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);cleanup();
-  if(moved.targetId){ctx.store.update(s=>reorderMessage(selectedConversation(s).c,moved.id,moved.targetId,moved.after));const status=root.querySelector('.editor-drag-status');if(status)status.textContent='消息顺序已保存';}
+  if(moved.targetId){ctx.store.update(s=>{
+    const {c}=activeConversation(s),from=c.messages.find(m=>m.id===moved.id),to=c.messages.find(m=>m.id===moved.targetId);
+    if(isEditableMessage(from)&&isEditableMessage(to)&&messageEditorDate(from)===messageEditorDate(to))reorderMessage(c,moved.id,moved.targetId,moved.after);
+   });const status=root.querySelector('.editor-drag-status');if(status)status.textContent='消息顺序已保存';}
  });
  root.addEventListener('pointercancel',()=>{drag=null;cleanup();});
 }
