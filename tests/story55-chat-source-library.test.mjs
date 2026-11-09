@@ -7,6 +7,7 @@ import {sourceView} from '../src/apps/developer/features/conversations/source-vi
 import {conversations} from '../src/apps/developer/features/conversations/index.js';
 import {d01Draft,d01GroupScript} from '../src/story/d01/wechat.js';
 import {d02Track} from '../src/story/d02/wechat.js';
+import {makeChatBundle,parseChatBundle,previewChatImport,applyChatImport} from '../src/apps/developer/features/conversations/transfer.js';
 const fresh=()=>activateStory55(initialState());
 const find=(s,day,key)=>readChatSources(s,day).find(row=>row.key===key);
 test('the day index includes unplayed canonical D01–D24 content and future Story55 nodes',()=>{
@@ -83,4 +84,42 @@ test('node scene editing retains the original speaker count and never rewrites d
  const old={id:'player-test',from:'me',text:'玩家真正發出的話',actual:true,day:55};
  s.content.conversations.wechat[0].messages.push(old);
  assert.equal(s.content.conversations.wechat[0].messages.at(-1).text,'玩家真正發出的話');
+});
+
+test('author text and node revisions survive new run, with game progress reset',()=>{
+ const s=fresh(),target=find(s,55,'node:ending'),lines=target.lines.map(l=>l.text);
+ lines[0]='New run preserved ending';
+ saveChatSource(s,target.key,{at:target.at,lines});
+ const group=find(s,1,'d01:group-afternoon'),g=group.lines.map(l=>l.text);
+ g[0]='午後修改過的第一句';
+ saveChatSource(s,group.key,{lines:g});
+ const next=activateStory55(s);
+ assert.equal(next.story55.config.scenes.ending[0][1],'New run preserved ending');
+ assert.equal(d01GroupScript(next,'afternoon')[0].text,'午後修改過的第一句');
+ assert.equal(next.story55.completed.ending,undefined);
+});
+test('portable 55-day source bundle restores D02 track, D06 wish and D55 node without replaying messages',()=>{
+ const src=fresh();
+ const track=readChatSources(src,2).find(x=>x.key.startsWith('d02:'));
+ const line=track.lines.map(l=>l.text);line[0]='Restore canonical D02 first line';
+ saveChatSource(src,track.key,{at:track.at,lines:line});
+ const wish=find(src,6,'wish:d06-celebration'),w=wish.lines.map(l=>l.text);
+ w[1]='Restored BTC message';
+ saveChatSource(src,wish.key,{lines:w});
+ const node=find(src,55,'node:ending'),n=node.lines.map(l=>l.text);
+ n[0]='Restored finale';
+ saveChatSource(src,node.key,{at:node.at,lines:n});
+ const exported=makeChatBundle(src,{scope:'story'});
+ assert.ok(exported.sources.some(x=>x.key===track.key));
+ assert.ok(exported.sources.some(x=>x.key===wish.key));
+ assert.ok(exported.sources.some(x=>x.key==='node:ending'));
+ const parsed=parseChatBundle(JSON.stringify(exported));
+ const restored=fresh();
+ assert.ok(previewChatImport(restored,parsed).report.sourcesChanged>0);
+ const before=restored.content.conversations.wechat.map(c=>c.messages.length);
+ applyChatImport(restored,parsed,{mode:'merge'});
+ assert.equal(find(restored,2,track.key).lines[0].text,'Restore canonical D02 first line');
+ assert.equal(find(restored,6,wish.key).lines[1].text,'Restored BTC message');
+ assert.equal(restored.story55.config.scenes.ending[0][1],'Restored finale');
+ assert.deepEqual(restored.content.conversations.wechat.map(c=>c.messages.length),before);
 });
