@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {postBankTransaction} from '../src/services/bank.js';
-import {activateStory55,syncLegacyLoanReceipt55} from '../src/services/story55/runtime.js';
+import {activateStory55,syncLegacyLoanReceipt55,tickStory55,advanceScene55,sceneLines} from '../src/services/story55/runtime.js';
 import {queueableNotices} from '../src/services/messaging/incoming-banner-queue.js';
 import {deploymentReadiness,deploymentPercent,startDeploymentStep,upgradeBaseFramework,completeDeploymentRun} from '../src/services/story55/projects.js';
-import {deploymentView} from '../src/apps/ghost/deployment/index.js';
+import {deploymentView,deploymentHome} from '../src/apps/ghost/deployment/index.js';
+import {nodeStatus,completed} from '../src/services/story55/state.js';
+import {handleStory55Action} from '../src/services/story55/controller.js';
 
 const story=()=>activateStory55(initialState());
 
@@ -110,4 +112,47 @@ test('five tests per day cannot become ten when an earlier date was skipped',()=
  assert.equal(deploymentReadiness(s,'base').canStart,false);
  assert.match(deploymentReadiness(s,'base').reason,/本日已完成五次链接测试/);
  assert.throws(()=>startDeploymentStep(s,'base'),/本日已完成/);
+});
+
+
+test('D14 project stays inside native GHOST Projects; runtime error is acknowledged once',async()=>{
+ const s=story();s.day=14;s.clock='12:00';
+ s.story55.completed.code={day:14,clock:'09:16'};
+ s.story55.projects.base={authorized:true,batches:[],active:null};
+ runFiveLinks(s);
+ const page=deploymentView(s,'base'),list=deploymentHome(s);
+ assert.match(page,/class="gh-shell gh-flow-shell gh-fw-shell"/);
+ assert.match(page,/role="alertdialog"/);
+ assert.match(page,/部署成功！运行失败！/);
+ assert.match(page,/<span>链接<\/span><strong>5 \/ 5<\/strong>/);
+ assert.doesNotMatch(page,/等待D15|現有設備無法|现在设备无法|本轮已完成|s55-card|s55-percent/);
+ assert.match(list,/LOCAL FRAMEWORK/);
+ const ctx={store:{get:()=>s,update:f=>f(s)}};
+ assert.equal(await handleStory55Action('s55-base-dismiss-report',{dataset:{}},ctx),true);
+ assert.equal(s.story55.projects.base.baseRunNoticePending,false);
+ assert.doesNotMatch(deploymentView(s,'base'),/role="alertdialog"/);
+ assert.equal(s.story55.projects.base.baseRunNoticeShown,true);
+});
+test('D15 15:36 unlocks Mirage message, not an automatic million-dollar deposit',()=>{
+ const s=story();s.day=14;s.clock='12:00';
+ s.story55.completed.code={day:14,clock:'09:16'};
+ s.story55.projects.base={authorized:true,batches:[],active:null};
+ runFiveLinks(s);
+ s.day=15;s.clock='15:35';tickStory55(s);
+ assert.equal(nodeStatus(s,'loan').state,'locked');
+ assert.equal(s.bankData.transactions.some(t=>t.id==='s55-loan'),false);
+ s.clock='15:36';tickStory55(s);
+ assert.equal(nodeStatus(s,'loan').state,'ready');
+ assert.equal(s.bankData.transactions.some(t=>t.id==='s55-loan'),false);
+ for(let i=0;i<30&&!completed(s,'loan');i++){
+  const pos=s.story55.scenes?.loan?.index||0;
+  const kind=sceneLines(s,'loan')[pos]?.[0];
+  advanceScene55(s,'loan',{disconnect:kind==='disconnect'});
+ }
+ assert.equal(completed(s,'loan'),true);
+ assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);
+ assert.equal(s.notifications.filter(n=>n.id==='s55-loan-receipt').length,1);
+ assert.equal(s.story55.liabilities,1000000);
+ assert.equal(s.story55.loanOfflineDay,15);
+ assert.match(deploymentView(s,'base'),/LOCAL FRAMEWORK/);
 });
