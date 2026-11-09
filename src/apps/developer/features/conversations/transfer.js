@@ -1,6 +1,7 @@
 import {validDate} from '../../../../services/calendar.js';
 import {conversations,chatApps} from './model.js';
 import {STORY_START,HISTORY_START,dayDate,messageEditorDate,isEditableMessage,isPortableMessage,isProtectedMessage,selection} from './navigation.js';
+import {trackKey,trackSource,tracksForDay,trackValues,validateTrackValues,trackEditReason,saveTrackValues} from '../../../../story/d14-d24/editor-overrides.js';
 
 export const CHAT_BUNDLE_FORMAT='ximeng-chat-editor-v1';
 const CHANNELS=new Set(chatApps.map(([id])=>id));
@@ -33,12 +34,26 @@ export function makeChatBundle(s,{scope='all'}={}){
    ...(plain(c.actorNames)?{actorNames:structuredClone(c.actorNames)}:{}),
    messages});
  }
- return {format:CHAT_BUNDLE_FORMAT,scope,exportedAt:new Date().toISOString(),conversations:items};
+ const tracks=s.story55?.version===1&&scope!=='history'?
+  Array.from({length:11},(_,i)=>tracksForDay(i+14)).flat()
+   .filter(scene=>scope!=='date'||selected.scope==='story'&&selected.day===scene.day)
+   .map(scene=>({key:trackKey(scene),...trackValues(s,scene)})):[];
+ return {format:CHAT_BUNDLE_FORMAT,scope,exportedAt:new Date().toISOString(),conversations:items,tracks};
 }
 export function parseChatBundle(raw){
  let value=raw;
  if(typeof raw==='string'){if(raw.length>8*1024*1024)fail('檔案超過 8MB');try{value=JSON.parse(raw);}catch{fail('不是有效的 JSON');}}
  if(!plain(value)||value.format!==CHAT_BUNDLE_FORMAT||!Array.isArray(value.conversations)||value.conversations.length>500)fail('版本或對話列表無效');
+ if(value.tracks!==undefined){
+  if(!Array.isArray(value.tracks)||value.tracks.length>300)fail('來源劇情條目過多');
+  const keys=new Set();
+  for(const scene of value.tracks){
+   if(!plain(scene)||typeof scene.key!=='string'||!trackSource(scene.key))fail('來源劇情編號無效');
+   if(keys.has(scene.key))fail('同一來源劇情重複：'+scene.key);
+   keys.add(scene.key);
+   try{validateTrackValues(scene.key,scene);}catch(error){fail(error.message);}
+  }
+ }
  const chats=new Set();let total=0;
  for(const c of value.conversations){
   if(!plain(c)||!CHANNELS.has(c.channel)||!validId(c.id)||typeof c.name!=='string'||!c.name.trim()||c.name.length>120||!Array.isArray(c.messages)||c.messages.length>15000)fail('對話基本資料無效');
@@ -66,6 +81,19 @@ export function parseChatBundle(raw){
 }
 export function previewChatImport(s,raw){
  const bundle=parseChatBundle(raw),result={conversationsNew:0,messagesNew:0,conflicts:0,protected:0,unchanged:0,details:[]};
+ if(bundle.tracks?.length){
+  Object.assign(result,{tracksChanged:0,tracksUnchanged:0,tracksBlocked:0});
+  for(const incoming of bundle.tracks){
+   const scene=trackSource(incoming.key),reason=trackEditReason(s,scene);
+   const current=trackValues(s,scene);
+   const normalized=validateTrackValues(incoming.key,incoming);
+   if(JSON.stringify(normalized)===JSON.stringify(current)){result.tracksUnchanged++;continue;}
+   if(reason){
+    result.tracksBlocked++;
+    if(result.details.length<20)result.details.push(incoming.key+'：'+reason);
+   }else result.tracksChanged++;
+  }
+ }
  for(const item of bundle.conversations){
   const existing=s.content.conversations[item.channel]?.find(c=>c.id===item.id);
   if(!existing)result.conversationsNew++;
@@ -84,8 +112,18 @@ export function previewChatImport(s,raw){
 export function applyChatImport(s,raw,{mode='merge'}={}){
  if(!['merge','replace-conflicts'].includes(mode))throw Error('請選擇合併或覆蓋同編號作者消息');
  const {bundle,report}=previewChatImport(s,raw);
- const before=structuredClone(s.content.conversations);
+ const before=structuredClone(s.content.conversations),oldOverrides=structuredClone(s.story55?.chatSceneEdits||{});
  try{
+  if(bundle.tracks?.length){
+   if(!s.story55||s.story55.version!==1)throw Error('來源劇情需要 55 天周目');
+   for(const entry of bundle.tracks){
+    const scene=trackSource(entry.key),reason=trackEditReason(s,scene);
+    if(reason)continue; // Never overwrite started/played source or real player messages.
+    const hasOverride=Object.hasOwn(s.story55.chatSceneEdits||{},entry.key);
+    if(mode==='merge'&&hasOverride)continue;
+    saveTrackValues(s,entry.key,entry);
+   }
+  }
   for(const item of bundle.conversations){
    const list=s.content.conversations[item.channel]||(s.content.conversations[item.channel]=[]);
    let c=list.find(x=>x.id===item.id);
@@ -107,6 +145,10 @@ export function applyChatImport(s,raw,{mode='merge'}={}){
     c.messages[index]=copy;
    }
   }
- }catch(error){s.content.conversations=before;throw error;}
+ }catch(error){
+  s.content.conversations=before;
+  if(s.story55)s.story55.chatSceneEdits=oldOverrides;
+  throw error;
+ }
  return report;
 }
