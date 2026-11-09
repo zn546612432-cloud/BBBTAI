@@ -14,6 +14,7 @@ import {assets} from './features/assets/index.js';
 import {messageCard,newConversationForm,conversations} from './features/conversations/index.js';
 import {selection,historyDates,activeConversation,selectDate,rowsFor,PAGE_SIZE,addDatedMessage,messageEditorDate,isEditableMessage} from './features/conversations/navigation.js';
 import {handleChatTransferAction,stageChatImportFile} from './features/conversations/ui-transfer.js';
+import {trackSource,saveTrackValues} from '../../story/d14-d24/editor-overrides.js';
 import {ghostEditor,saveGhostConfig} from '../ghost/editor.js';
 import {ghostDevSkipAvailable} from '../ghost/features/dev-skip/index.js';
 import {taiPhonePanel,taiPhoneAction} from './features/tai-phone/index.js';
@@ -187,6 +188,14 @@ export function submit(f,ctx){
  if(voiceSubmit(f,ctx))return;
   if(diaryEditorSubmit(f,ctx))return;
  if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
+ if(form==='chat-track-edit'){
+  const key=f.dataset.key,scene=trackSource(key);
+  if(!scene)throw Error('找不到來源劇情');
+  const lines=scene.lines.map((line,i)=>({who:line.who,text:String(data.get('line-'+i)??'')}));
+  store.update(s=>saveTrackValues(s,key,{at:String(data.get('at')||''),lines}));
+  toast('來源對話已保存，下次播放由原聊天引擎讀取');
+  return;
+ }
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
  if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}
  if(form?.startsWith('phone-')){
