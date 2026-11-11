@@ -1,6 +1,6 @@
 # D17 website media
 
-All six production images are bundled WebP files. No remote image request or additional image service is used at runtime. Total payload is approximately 345 KiB before HTTP compression and browser caching.
+The six assets in the earlier revision below are bundled WebP files. The user-v3 additions are recorded at the end of this file. No remote image request or additional image service is used at runtime. Total payload is approximately 345 KiB before HTTP compression and browser caching.
 
 | File | Origin | Use |
 | --- | --- | --- |

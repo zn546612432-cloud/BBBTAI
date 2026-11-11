@@ -13,7 +13,7 @@ export function renderWebArchive(p){
  if(b.type==='comments')return `<section class="archive-comments"><h2>${esc(b.heading||'留言')}</h2>${b.items.map(c=>`<article><strong>${esc(c.author)}</strong><p>${esc(c.text)}</p></article>`).join('')}</section>`;
  if(b.type==='tracks')return `<h2>${esc(b.heading)}</h2><ol class="archive-tracks">${b.items.map(([n,t,time])=>`<li><span>${esc(n)}</span><strong>${esc(t)}</strong><time>${esc(time)}</time></li>`).join('')}</ol>`;
  if(b.type==='facts')return `<h2>${esc(b.heading)}</h2><dl class="archive-facts">${b.items.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
- if(b.type==='works')return `<h2>${esc(b.heading)}</h2><div class="portfolio-works">${b.items.map((t,i)=>`<figure><img src="${D17_MEDIA[['portfolio','boss','portfolio','album'][i]]}" alt="${esc(t)}" loading="lazy"><figcaption>${esc(t)}</figcaption></figure>`).join('')}</div>`;
+ if(b.type==='works')return `<h2>${esc(b.heading)}</h2><div class="portfolio-works">${b.items.map((t,i)=>`<figure><img src="${D17_MEDIA[['cosmic','boss','portfolio','album'][i]]}" alt="${esc(t)}" loading="lazy"><figcaption>${esc(t)}</figcaption></figure>`).join('')}</div>`;
  return `<h2>${esc(b.heading)}</h2><ul class="archive-drops">${b.items.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
  }).join('');
  const sections=a.blocks?renderBlocks(a.blocks):a.sections.map((s,i)=>`<section id="archive-${i}"><h2>${esc(s.heading)}</h2>${s.paragraphs.map(t=>`<p>${esc(t)}</p>`).join('')}${s.code?`<pre><code>${esc(s.code)}</code></pre>`:''}</section>`).join('');
