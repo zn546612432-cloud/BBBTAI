@@ -48,12 +48,18 @@ export const D17_FORUM={
   {id:'fish-reply',parent:'op-reply',author:'憂傷的魚',text:'暗網怎麼可能用正常途徑搜得到嘛！我猜樓樓應該對這些了解很少。偷偷告訴你，有一個很龐大的黑客組織叫「Azathoth」，會用釣魚網站偽裝成暗網入口，誘騙你們點擊，然後盜刷你們的銀行卡……所以千萬不要隨便點擊啊！'}
  ]
 };
+export const D17_MEDIA={
+ cosmic:'/assets/browser/d17/azathoth-cover.webp',
+ community:'/assets/browser/d17/community-cover.webp',
+ island:'/assets/browser/d17/avatar-island.webp',
+ fish:'/assets/browser/d17/avatar-fish.webp'
+};
 export const D17_WEB_PAGES=[
- {id:'d17-mirage-old',title:'Mirage — Community Portal',url:'https://mirage-archive.example/',label:'Mirage',keywords:['mirage'],desc:'Mirage 社群入口與會員登入。',failure:'expired'},
- {id:'d17-mirage-fake',title:'Mirage｜登入',url:'https://mirage-access.example/login',label:'Mirage',keywords:['mirage'],desc:'會員專用入口。登入以繼續瀏覽。',failure:'unsafe'},
- {id:D17_FORUM.id,title:D17_FORUM.title+' — 星月論壇',url:'https://xingyue.example/thread/18427',label:'星月論壇',keywords:['mirage','星月論壇'],desc:'憂傷的魚：這串不是亂碼，是 Base64 編碼。解碼後就是 Mirage……',forum:true},
- {id:'d17-mirage-outdated',title:'MIRAGE / 舊版入口',url:'https://mirage-old.example/index.html',label:'MIRAGE',keywords:['mirage'],desc:'社群公告、舊版入口與連線資訊。',failure:'outdated'},
- {id:'d17-azathoth',title:'Azathoth',url:'https://reference.example/entry/azathoth',label:'詞條',keywords:['azathoth'],reference:true}
+ {id:'d17-mirage-old',title:'Mirage — Community Portal',url:'https://mirage-archive.org/',label:'Mirage',keywords:['mirage'],desc:'Mirage 社群入口與會員登入。',failure:'expired'},
+ {id:'d17-mirage-fake',title:'Mirage｜登入',url:'https://mirage-access.net/login',label:'Mirage',keywords:['mirage'],desc:'會員專用入口。登入以繼續瀏覽。',failure:'unsafe'},
+ {id:D17_FORUM.id,title:D17_FORUM.title+' — 星月論壇',url:'https://bbs.xingyue.club/thread/18427',label:'星月論壇',keywords:['mirage','星月論壇'],desc:'憂傷的魚：這串不是亂碼，是 Base64 編碼。解碼後就是 Mirage……',forum:true},
+ {id:'d17-mirage-outdated',title:'MIRAGE / 舊版入口',url:'https://mirage-forum.net/index.html',label:'MIRAGE',keywords:['mirage'],desc:'社群公告、舊版入口與連線資訊。',failure:'outdated'},
+ {id:'d17-azathoth',title:'阿撒托斯 — 百度百科',url:'https://baike.baidu.com/item/阿撒托斯',label:'百度百科',keywords:['azathoth','阿撒托斯'],reference:true}
 ];
 export const D17_NOTE_TEXT=[
  '星月論壇舊帖：'+D17_FORUM.title,

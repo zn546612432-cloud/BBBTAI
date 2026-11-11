@@ -97,5 +97,26 @@ test('migration preserves in-flight history, edited notes and completed old opti
  assert.equal(JSON.stringify(s.content.conversations),before);assert.equal(s.bankData.balance,balance);
  assert.equal(node.at,'00:00');assert.ok(completed(s,'rumours'));
  const reference=renderResearchPage(s,D17_WEB_PAGES.find(p=>p.reference));
- assert.match(reference,/神話中的名字/);assert.match(reference,/無法核實/);assert.doesNotMatch(reference,/陳熙泰|陈熙泰|管理員/);
+ assert.match(reference,/基本資料/);assert.match(reference,/角色關係/);assert.doesNotMatch(reference,/陳熙泰|陈熙泰|管理員|黑客組織|同名傳聞/);
+});
+
+
+test('the public pages use real bundled imagery and no plot instructions, with a native image gallery',()=>{
+ const s=phone(),c=ctx(s),p=D17_WEB_PAGES.find(p=>p.reference);
+ const forbidden=/含 Mirage 的回覆|遊戲提示|游戏提示|玩家|任務提示|本地模擬|收錄這條線索/;
+ for(const page of [forum,p]){
+  const html=renderResearchPage(s,page);
+  assert.doesNotMatch(html,forbidden);assert.match(html,/<img /);
+  for(const [,src] of html.matchAll(/<img src="([^"]+)"/g)){
+   assert.ok(src.startsWith('/assets/browser/d17/'));
+   const bytes=readFileSync(new URL('../public'+src,import.meta.url));
+   assert.equal(bytes.subarray(0,4).toString(),'RIFF');assert.ok(bytes.length>1000);
+  }
+ }
+ s.nav.current={appId:'browser',route:'/page',params:{page:p.id}};
+ handle('browser-research-gallery',{dataset:{}},c,s.nav.current);
+ assert.equal(s.nav.current.params.media,'1');assert.match(render(c,s.nav.current),/bk-gallery/);
+ handle('browser-research-close',{dataset:{}},c,s.nav.current);
+ assert.match(render(c,s.nav.current),/baike-entry/);assert.equal(s.nav.current.params.media,undefined);
+ assert.equal(s.story55.browserReadIds,undefined);
 });

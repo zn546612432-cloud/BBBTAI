@@ -15,7 +15,7 @@ await context.route('**/*',route=>{
 });
 const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
 const screen=page.locator('#screen-layer');
-const action=a=>screen.locator(`[data-action="${a}"]`);
+const action=a=>screen.locator(`[data-action="${a}"]`).last();
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
 async function unlock(){
  await screen.locator('.lock-screen').waitFor({timeout:90000});await action('unlock').click();
@@ -57,6 +57,9 @@ try{
  }
  await screen.locator('[data-page="d17-xingyue"]').click();await screen.locator('.xingyue-forum').waitFor();
  assert.equal(await screen.locator('.xy-comment').count(),3);
+ await page.waitForFunction(()=>[...document.querySelectorAll('#screen-layer .xingyue-forum img')].every(img=>img.complete&&img.naturalWidth>0));
+ assert.ok(await screen.locator('.xingyue-forum img').count()>=5);
+ assert.equal(await screen.locator('.xy-match-label').count(),0);
  await page.screenshot({path:root+'/02-forum.png'});
  const floor=screen.locator('#xy-fish-reply');await floor.scrollIntoViewIfNeeded();
  assert.ok((await floor.innerText()).includes('盜刷你們的銀行卡'));
@@ -99,10 +102,26 @@ try{
  assert.equal(lines.length,30);assert.equal(state.story55.completed.rumours,undefined);
  await page.screenshot({path:root+'/06-invitation.png'});
  const link=action('mc-azathoth-reference').last();await link.scrollIntoViewIfNeeded();await link.click();
- await screen.getByRole('heading',{name:'神話中的名字'}).waitFor();
+ await screen.getByRole('heading',{name:'阿撒托斯',exact:true}).waitFor();
+ await page.waitForFunction(()=>{const img=document.querySelector('#screen-layer .bk-cover img');return img?.complete&&img.naturalWidth>0;});
+ assert.equal(await page.evaluate(()=>document.querySelector('#screen-layer .saf-content').scrollWidth<=document.querySelector('#screen-layer .saf-content').clientWidth),true);
  await page.screenshot({path:root+'/07-reference.png'});
+ await screen.locator('.bk-cover button').click();await screen.locator('.bk-gallery').waitFor();
+ await page.screenshot({path:root+'/08-gallery.png'});
+ await action('browser-research-close').click();await screen.locator('.baike-entry').waitFor();
+ const directory=screen.locator('.bk-directory summary');await directory.scrollIntoViewIfNeeded();await directory.click();
+ await screen.locator('.bk-directory[open]').waitFor();
+ await page.screenshot({path:root+'/09-directory.png'});
+ await screen.locator('.bk-directory a[href="#bk-relations"]').click();
+ await page.screenshot({path:root+'/10-relations.png'});
+ for(const width of [320,390,430]){
+  await page.setViewportSize({width,height:750});
+  assert.equal(await page.evaluate(()=>document.querySelector('#screen-layer .saf-content').scrollWidth<=document.querySelector('#screen-layer .saf-content').clientWidth),true);
+  if(width===320)await page.screenshot({path:root+'/11-narrow.png'});
+ }
+ await page.setViewportSize({width:390,height:664});
  assert.deepEqual(errors,[]);
- const result={passed:true,viewport:await page.viewportSize(),resultCount:4,comments:3,invitationLines:30,readOnce:true,externalRequestsBlocked:[...new Set(external)],errors};
+ const result={passed:true,viewport:await page.viewportSize(),resultCount:4,comments:3,invitationLines:30,readOnce:true,websiteImages:true,gallery:true,directory:true,widths:[320,390,430],externalRequestsBlocked:[...new Set(external)],errors};
  await writeFile(root+'/result.json',JSON.stringify(result,null,2)+'\n');console.log('PASS_D17_MOBILE',JSON.stringify(result));
 }catch(error){
  await page.screenshot({path:root+'/failure.png'}).catch(()=>{});

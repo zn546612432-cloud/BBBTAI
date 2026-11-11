@@ -44,3 +44,11 @@ D17私聊30句逐字对照上传交接文档第6节。独立冻结副本为 `tes
 回滚：撤销本PR提交即可恢复旧搜索入口。新增的已发聊天和笔记保持为普通存档记录，不清空用户存档。
 
 完整npm test曾被自动审批拦截，提示潜在Supabase AI外部请求；本地改用明确列出的相关回归文件。此限制不应被报告为完整测试通过。浏览器验证使用本地静态服务器并阻断外部请求，开发者重建仅用于D17之前的前置状态，D17页面点击及消息发送实际操作。
+
+## 2026-11-11 mobile website visual revision
+
+The first review was rejected by the user for looking like a plain document. The revision replaces that presentation with distinct mobile website structures: illustrated encyclopedia cover and gallery, blue brand header, anchored tabs, a collapsible contents list, basic information and references; a forum board photo, user photo avatars, post statistics, numbered reply and nested conversation; site favicons and a thumbnail in search results.
+
+The old “含 Mirage 的回覆” clue label and encyclopedia organization summary are removed from the website. The three approved comments, unread-content restriction, expired-login result, note idempotency and all 30 invitation lines are preserved. The encyclopedia contains ordinary mythology only. Illustration, photography, licensing and source references are in `public/assets/browser/d17/SOURCES.md`.
+
+Visual acceptance now checks image decoding, the expanded contents list, image gallery, and 320/390/430-pixel widths, in addition to the original interaction checks. A passing unit test alone does not count as visual acceptance; review the generated phone screenshots before handing over the preview.

@@ -11,7 +11,28 @@
     "notes",
     "messaging"
   ],
-  "assets": [],
+  "assets": [
+    {
+      "id": "d17-azathoth-cover",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/azathoth-cover.webp"
+    },
+    {
+      "id": "d17-community-cover",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/community-cover.webp"
+    },
+    {
+      "id": "d17-avatar-island",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/avatar-island.webp"
+    },
+    {
+      "id": "d17-avatar-fish",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/avatar-fish.webp"
+    }
+  ],
   "events": [
     {
       "id": "d17-mirage-search",
@@ -867,7 +888,7 @@
     {
       "id": "d17-check-assets",
       "type": "assets",
-      "verify": "无新增图片或外链；本地CSS保留MIT授权。"
+      "verify": "四張本地WebP存在且正確解碼，無外部圖片請求；原創插畫及Unsplash來源見資產清單。"
     },
     {
       "id": "d17-check-date-clock",
@@ -882,7 +903,7 @@
     {
       "id": "d17-check-mobile",
       "type": "mobile",
-      "verify": "390像素手机宽度实际点击三类错误、楼中楼、登录失效和后退，零横向溢出。"
+      "verify": "390及320像素驗證論壇照片頭像、百科封面、目錄及圖集，原論壇樓中樓和失效頁可點擊，零橫向溢出。"
     }
   ]
 }
