@@ -1,0 +1,34 @@
+@import './vendor/e-comments-scoped.css';
+.saf-content:has(.xingyue-forum){padding:0;background:#f1f3f5}
+.xingyue-forum{min-height:100%;color:#353e49;background:#f1f3f5;font:14px/1.85 -apple-system,BlinkMacSystemFont,'PingFang TC',sans-serif;overflow-wrap:anywhere}
+.xy-masthead{padding:18px 20px 15px;background:#324f68;color:#fff}
+.xy-masthead b{display:block;font-size:24px;letter-spacing:3px;line-height:1.4}
+.xy-masthead b span{font-weight:400;font-size:18px}
+.xy-masthead small{font-size:11px;letter-spacing:1px;color:#cbd8e3}
+.xy-breadcrumb{padding:10px 16px;color:#687888;font-size:11px;border-bottom:1px solid #dbe1e6;background:#e9edf1}
+.xy-thread{padding:20px 16px 26px;background:#fff}
+.xy-thread>small{color:#54718a;background:#edf3f8;padding:3px 7px;font-size:11px}
+.xy-thread h1{font-size:21px;line-height:1.5;font-weight:600;margin:12px 0 8px;letter-spacing:0}
+.xy-thread-meta{font-size:11px;color:#8c969f}
+.xy-excerpt{margin:16px 0 22px;color:#68727b;font-size:13px}
+.xy-match-label{font-size:11px;color:#7f8992;padding:9px 0;border-top:1px solid #e9edf0}
+.xingyue-forum .xy-comment{border:0;border-top:1px solid #e3e8ed;margin:0;background:#fff}
+.xingyue-forum .xy-comment .title{display:flex;align-items:center;gap:8px;background:none;padding:15px 0 7px;font-size:13px;color:#3e6685}
+.xy-avatar{width:25px;height:25px;display:grid;place-items:center;background:#e7eef3;color:#627f93;border-radius:4px;font-size:12px}
+.xy-comment .title small{font-size:10px;color:#7992a4;font-weight:400}
+.xingyue-forum .xy-comment .body{padding:0}
+.xy-comment p{margin:0 0 16px}
+.xy-replies{margin:0 0 16px;padding:0 0 0 12px;border-left:2px solid #d9e2e9}
+.xy-replies .xy-comment{font-size:13px}
+.xy-replies .xy-comment .title{padding-top:12px}
+.xy-replies .xy-replies{margin-bottom:0;padding-left:10px}
+.xy-login{border-top:1px solid #e3e8ed;padding:18px 0 0;text-align:center}
+.safari .xy-login button{border:1px solid #c8d5df;background:#edf3f8;color:#3f647f;border-radius:4px;width:100%;padding:12px;text-align:center;font-size:14px}
+.xingyue-forum footer{text-align:center;padding:20px;color:#9aa4ad;font-size:11px;letter-spacing:2px}
+.xy-error{padding:65px 12px;text-align:center;color:#777;line-height:1.8;overflow-wrap:anywhere}
+.xy-error span{font-size:12px;color:#9299a2}
+.xy-error h1{font-size:21px;font-weight:500;color:#535d68;margin-top:20px}
+.xy-error p{font-size:14px}
+.xy-reference{padding:10px 3px;font-size:14px;line-height:1.9;color:#4c5863}
+.xy-reference small{color:#8b959e}.xy-reference h1{font:500 28px/1.5 Georgia,serif;color:#263b4a}
+.xy-reference h2{font-size:16px;font-weight:500;border-top:1px solid #e0e6ea;padding-top:18px;margin-top:24px;color:#354f63}

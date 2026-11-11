@@ -1,0 +1,888 @@
+{
+  "schemaVersion": 2,
+  "day": 17,
+  "date": "2025-06-04",
+  "title": "D17 Mirage搜索与Azathoth邀请",
+  "stage": "review",
+  "scope": "mixed",
+  "systems": [
+    "story55",
+    "browser",
+    "notes",
+    "messaging"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d17-mirage-search",
+      "kind": "link",
+      "surface": "browser",
+      "owner": "story55",
+      "capability": "story.d17-research",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "browser-search-mirage"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-forum-open",
+      "kind": "link",
+      "surface": "browser",
+      "owner": "story55",
+      "capability": "story.d17-research",
+      "actor": "me",
+      "trigger": {
+        "type": "user-action",
+        "ref": "browser-open-d17-xingyue"
+      },
+      "requires": [
+        "d17-mirage-search"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-forum-note",
+      "kind": "system-notice",
+      "surface": "notes",
+      "owner": "story55",
+      "capability": "story.d17-browser-notes",
+      "actor": "me",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-forum-open"
+      },
+      "requires": [
+        "d17-forum-open"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "部署得如何？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "19:00"
+      },
+      "requires": [
+        "node:intrusion",
+        "node:code",
+        "node:loan"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "19:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "剛訂了設備，還沒那麼快到。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-0"
+      },
+      "requires": [
+        "d17-invitation-0"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "不過不得不說，你還挺有本事。我記得「NS」是 Azathoth 的內部項目吧？那東西從來沒公開過源碼。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-1"
+      },
+      "requires": [
+        "d17-invitation-1"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你是自己復刻的，還是有人幫你？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-2"
+      },
+      "requires": [
+        "d17-invitation-2"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "那就是我寫的。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-3"
+      },
+      "requires": [
+        "d17-invitation-3"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-5",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你寫的？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-4"
+      },
+      "requires": [
+        "d17-invitation-4"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-6",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你也是 Azathoth 的成員？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-5"
+      },
+      "requires": [
+        "d17-invitation-5"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "聽起來你對這個組織很熟悉。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-6"
+      },
+      "requires": [
+        "d17-invitation-6"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-8",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "為什麼？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-7"
+      },
+      "requires": [
+        "d17-invitation-7"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-9",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "我以前自學的時候，看過他們公開的很多項目和教程。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-8"
+      },
+      "requires": [
+        "d17-invitation-8"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-10",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "說實話，幫了我不少忙。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-9"
+      },
+      "requires": [
+        "d17-invitation-9"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-11",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "他們有自己的內部論壇，只有會員才能進。裡面的資料很難找，外面甚至有人高價倒賣。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-10"
+      },
+      "requires": [
+        "d17-invitation-10"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-12",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "倒賣的，一經發現就會被除名。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-11"
+      },
+      "requires": [
+        "d17-invitation-11"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-13",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你怎麼知道得這麼清楚？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-12"
+      },
+      "requires": [
+        "d17-invitation-12"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-14",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "等等，你真的是他們的人？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-13"
+      },
+      "requires": [
+        "d17-invitation-13"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-15",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "準確地說。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-14"
+      },
+      "requires": [
+        "d17-invitation-14"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-16",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "Azathoth 的現任管理員，是我。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-15"
+      },
+      "requires": [
+        "d17-invitation-15"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-17",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "……你？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-16"
+      },
+      "requires": [
+        "d17-invitation-16"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-18",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "真的假的？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-17"
+      },
+      "requires": [
+        "d17-invitation-17"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-19",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "我有必要騙你？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-18"
+      },
+      "requires": [
+        "d17-invitation-18"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-20",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你騙我的事還少嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-19"
+      },
+      "requires": [
+        "d17-invitation-19"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-21",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "呵。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-20"
+      },
+      "requires": [
+        "d17-invitation-20"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-22",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "既然你叫 NYARLATHOTEP，應該知道祂與 Azathoth 的關係吧？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-21"
+      },
+      "requires": [
+        "d17-invitation-21"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-23",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "怎麼樣，有沒有興趣來當我的使者？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-22"
+      },
+      "requires": [
+        "d17-invitation-22"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-24",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "我的千面之神。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-23"
+      },
+      "requires": [
+        "d17-invitation-23"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-25",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你是說……加入 Azathoth？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-24"
+      },
+      "requires": [
+        "d17-invitation-24"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-26",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "不然呢？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-25"
+      },
+      "requires": [
+        "d17-invitation-25"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-27",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你先證明你真的是管理員。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-invitation-26"
+      },
+      "requires": [
+        "d17-invitation-26"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-28",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "呵呵……",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-27"
+      },
+      "requires": [
+        "d17-invitation-27"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "d17-invitation-29",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d17-invitation",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "等你把程序部署完，我會讓你親眼看看。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-invitation-28"
+      },
+      "requires": [
+        "d17-invitation-28"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "d17-check-trigger",
+      "type": "trigger",
+      "verify": "D17开放搜索；私聊19:00且借款完整结束。"
+    },
+    {
+      "id": "d17-check-negative",
+      "type": "negative",
+      "verify": "未完成借款不发邀请；论坛、购买设备及部署100%不是私聊前置。"
+    },
+    {
+      "id": "d17-check-idempotency",
+      "type": "idempotency",
+      "verify": "失效站点无副作用；论坛重复进入、刷新不重复收录。"
+    },
+    {
+      "id": "d17-check-save-restore",
+      "type": "save-restore",
+      "verify": "保留旧历史与玩家笔记；30句中间刷新不代发玩家回复。"
+    },
+    {
+      "id": "d17-check-cross-app",
+      "type": "cross-app",
+      "verify": "原Safari搜索→论坛→备忘录；原Mirage蓝字→浏览器词条。"
+    },
+    {
+      "id": "d17-check-late-entry",
+      "type": "late-entry",
+      "verify": "借款晚完成则当前时间解锁；不回拨、不补发消息暴雨。"
+    },
+    {
+      "id": "d17-check-assets",
+      "type": "assets",
+      "verify": "无新增图片或外链；本地CSS保留MIT授权。"
+    },
+    {
+      "id": "d17-check-date-clock",
+      "type": "date-clock",
+      "verify": "D17=2025-06-04；不改变统一时钟/电量/充电。"
+    },
+    {
+      "id": "d17-check-dialogue",
+      "type": "dialogue",
+      "verify": "与上传交接冻结稿30句逐字diff为零；所有me只能原生Send。"
+    },
+    {
+      "id": "d17-check-mobile",
+      "type": "mobile",
+      "verify": "390像素手机宽度实际点击三类错误、楼中楼、登录失效和后退，零横向溢出。"
+    }
+  ]
+}
