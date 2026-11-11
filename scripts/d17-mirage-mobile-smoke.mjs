@@ -126,8 +126,10 @@ try{
  await screen.locator('.bk-cover button').click();await screen.locator('.bk-gallery').waitFor();
  await capture('08-gallery.png');
  await action('browser-research-close').click();await screen.locator('.baike-entry').waitFor();
- const directory=screen.locator('.bk-directory summary');await directory.scrollIntoViewIfNeeded();await directory.click();
- await screen.locator('.bk-directory[open]').waitFor();
+ const directory=screen.locator('.bk-directory-toggle');await directory.scrollIntoViewIfNeeded();await directory.click();
+ await screen.locator('.bk-directory.is-open').waitFor();
+ await page.waitForTimeout(1500);
+ assert.equal(await screen.locator('.bk-directory-toggle').getAttribute('aria-expanded'),'true');
  await capture('09-directory.png');
  await screen.locator('.bk-directory a[href="#bk-relations"]').click();
  await capture('10-relations.png');

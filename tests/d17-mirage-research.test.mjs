@@ -118,5 +118,11 @@ test('the public pages use real bundled imagery and no plot instructions, with a
  assert.equal(s.nav.current.params.media,'1');assert.match(render(c,s.nav.current),/bk-gallery/);
  handle('browser-research-close',{dataset:{}},c,s.nav.current);
  assert.match(render(c,s.nav.current),/baike-entry/);assert.equal(s.nav.current.params.media,undefined);
+ handle('browser-research-directory',{dataset:{}},c,s.nav.current);
+ s.batteryPercent-=1; // The shell may redraw while the reader uses the directory.
+ assert.match(render(c,s.nav.current),/aria-expanded="true"/);
+ assert.match(render(c,s.nav.current),/href="#bk-relations">03/);
+ handle('browser-research-directory',{dataset:{}},c,s.nav.current);
+ assert.match(render(c,s.nav.current),/aria-expanded="false"/);
  assert.equal(s.story55.browserReadIds,undefined);
 });
