@@ -1,7 +1,7 @@
 /* Adapted from skx/e-comments, client/css/e-comments.css.
  * Copyright (c) 2014 Steve Kemp. MIT; see e-comments-LICENSE.md. */
 
-.xingyue-forum div.comment {
+.xingyue-forum .comment {
 	border: 1px solid black;
         background-color: white;
         margin: 10px 0px;
@@ -11,19 +11,19 @@
         margin: 15px;
 }
 
-.xingyue-forum div.comment div.body {
+.xingyue-forum .comment .body {
 	padding: 10px 10px;
 }
 
-.xingyue-forum div.comment div.replyto {
+.xingyue-forum .comment .replyto {
     text-align:right;
     margin:2px;
     padding:2px;
 }
-.xingyue-forum div.comment div.replyto div {
+.xingyue-forum .comment .replyto div {
     text-align: left;
 }
-.xingyue-forum div.comment .title {
+.xingyue-forum .comment .title {
         background-color: #ddd;
 	font-weight: bold;
 	font-size: 110%;
@@ -31,21 +31,21 @@
 
 }
 
-.xingyue-forum div.comment .title a {
+.xingyue-forum .comment .title a {
         color: black !important;
 }
 
-.xingyue-forum div.comment .title a:hover {
+.xingyue-forum .comment .title a:hover {
         color: black !important;
 }
 
-.xingyue-forum div.comment .link {
+.xingyue-forum .comment .link {
 	float: right;
         padding-top: 0.25ex;
         padding-right: 0.5em;
 }
 
-.xingyue-forum div.comment div.tagline {
+.xingyue-forum .comment .tagline {
         text-align: left;
 	border-bottom: 1px solid #ddd;
 	font-size: 96%;

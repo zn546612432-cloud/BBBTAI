@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {normalizeAppLink} from '../src/services/deep-links/index.js';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,tickQueuedStoryScenes55} from '../src/services/story55/runtime.js';
 import {nodeStatus,completed} from '../src/services/story55/state.js';
@@ -16,7 +17,7 @@ function phone(day=17,clock='19:00'){
  s.story55.completed.code={day:14,clock:'09:16'};s.story55.completed.wallet={day:6,clock:'11:00'};
  s.story55.activeScene=null;return s;
 }
-function ctx(s){return {store:{get:()=>s,update:f=>f(s)},router:{open:loc=>{s.nav.current=loc},back:()=>{}},refresh:()=>{}};}
+function ctx(s){return {store:{get:()=>s,update:f=>f(s)},router:{open:loc=>{s.nav.current=normalizeAppLink(loc,new Map([['browser',{}]]))},back:()=>{}},refresh:()=>{}};}
 const forum=D17_WEB_PAGES.find(p=>p.forum);
 
 test('D17 invitation is the approved 30 lines and waits for time and the completed loan',()=>{
