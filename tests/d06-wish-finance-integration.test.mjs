@@ -43,7 +43,7 @@ test('D06 BTC reward -> one USD conversion -> four optional purchases -> D07/D09
  phone.update(s=>{s.clock='20:30'});
  deliver(phone);
  assert.equal(messages(phone.get()).filter(m=>m.id==='wish-dinner-photo').length,1);
- phone.update(s=>{s.day=7;s.clock='11:00'});
+ phone.update(s=>{s.day=7;s.clock='14:10'});
  deliver(phone);
  for(const id of ['d07-headphones','d07-tableware'])phone.update(s=>addWish(s,id));
  for(const id of ['d07-headphones','d07-tableware'])phone.update(s=>purchaseWish(s,id));

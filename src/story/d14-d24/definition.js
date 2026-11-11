@@ -21,7 +21,7 @@ export function applyD14D24Definition(c,{force=false}={}){
   if(node&&(force||same(node,old))){Object.assign(node,patch);changed=true;}
  }
  const mail=c.mails.find(m=>m.id==='code-mail');
- if(mail&&(force||same(mail,legacy.mails[0]))){Object.assign(mail,{from:'Mirage / 系統轉遞',subject:'Framework package',body:'別告訴我你不會用。',attachmentName:'Framework package.key',project:'base'});changed=true;}
+ if(mail&&(force||same(mail,legacy.mails[0]))){Object.assign(mail,{from:'Mirage / 系統轉遞',subject:'Ouroboros’ Tear — Framework Package',body:'聽說過「Narrenschiff」嗎？這是它的基礎框架「Ouroboros’ Tear」。\n一套能在不同系統之間自行建立通道、繞過常規防護，並在完成操作後抹去痕跡的程序。\n當然，這還不是完整版本。\n別告訴我你連這個都不會用。',attachmentName:'Ouroboros_Tear_package.key',project:'base'});changed=true;}
  const page=c.pages.find(p=>p.id==='mirage');
  if(page&&(force||same(page,legacy.pages[0]))){Object.assign(page,{title:'Mirage / Ouroboros',body:'零散舊論壇討論；不少連結已失效。\n\n有人提過這個匿名帳號，留下的多半是技術圈的傳聞。更多資料無法核實。'});changed=true;}
  return changed;

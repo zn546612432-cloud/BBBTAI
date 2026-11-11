@@ -1,0 +1,3872 @@
+{
+  "schemaVersion": 2,
+  "day": 5,
+  "date": "2025-05-23",
+  "title": "D05–D17 approved native chat replacement",
+  "stage": "review",
+  "scope": "mixed",
+  "systems": [
+    "story55",
+    "messaging",
+    "wishes",
+    "kira",
+    "bank"
+  ],
+  "assets": [
+    {
+      "id": "v2-d10-carry-image-7",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/xin-dog-112.webp"
+    },
+    {
+      "id": "v2-d11-notice-image-14",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/xin-dog-002.webp"
+    },
+    {
+      "id": "v2-d12-separate-work-image-6",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/stickers/xin-dog-001.webp"
+    }
+  ],
+  "events": [
+    {
+      "id": "v2-d05-computer-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "教授突然說下週要交報告",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:35"
+      },
+      "requires": [],
+      "timing": {
+        "day": 5,
+        "at": "10:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我人都傻了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-0"
+      },
+      "requires": [
+        "v2-d05-computer-0"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "你前幾天不是說這學期很輕鬆嗎哈哈哈哈",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-1"
+      },
+      "requires": [
+        "v2-d05-computer-1"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "你就不能聊點有用的嗎？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-2"
+      },
+      "requires": [
+        "v2-d05-computer-2"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "能",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-3"
+      },
+      "requires": [
+        "v2-d05-computer-3"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "中午吃什麼",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-4"
+      },
+      "requires": [
+        "v2-d05-computer-4"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "進步了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-5"
+      },
+      "requires": [
+        "v2-d05-computer-5"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "你報告寫了多少",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-6"
+      },
+      "requires": [
+        "v2-d05-computer-6"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "標題",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-7"
+      },
+      "requires": [
+        "v2-d05-computer-7"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "然後呢",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-8"
+      },
+      "requires": [
+        "v2-d05-computer-8"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "還沒想好第二行寫什麼",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-9"
+      },
+      "requires": [
+        "v2-d05-computer-9"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "那確實挺輕鬆",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-10"
+      },
+      "requires": [
+        "v2-d05-computer-10"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "楓哥加油 精神上支持你",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-11"
+      },
+      "requires": [
+        "v2-d05-computer-11"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "謝謝 不如幫我寫兩頁",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-12"
+      },
+      "requires": [
+        "v2-d05-computer-12"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d05-computer-14",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "你這個要求也沒好到哪去",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d05-computer-13"
+      },
+      "requires": [
+        "v2-d05-computer-13"
+      ],
+      "timing": {
+        "day": 5,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-noodles-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "首爾今天一直下雨",
+      "trigger": {
+        "type": "day-time",
+        "ref": "11:50"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "11:50"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-noodles-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我晾的衣服又得搬進來",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-noodles-0"
+      },
+      "requires": [
+        "v2-d10-noodles-0"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-noodles-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "怎麼，你得首爾病了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-noodles-1"
+      },
+      "requires": [
+        "v2-d10-noodles-1"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-noodles-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "首爾的雨未必有你憂鬱。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-noodles-2"
+      },
+      "requires": [
+        "v2-d10-noodles-2"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-noodles-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "這還是我哥嗎？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-noodles-3"
+      },
+      "requires": [
+        "v2-d10-noodles-3"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "終於考完試了，我可以不憂鬱了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "17:46"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "17:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "恭喜恭喜。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-0"
+      },
+      "requires": [
+        "v2-d10-carry-0"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "嘿嘿，找個時間我回來一趟，給你們買了很多禮物。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-1"
+      },
+      "requires": [
+        "v2-d10-carry-1"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "謝謝阿楓。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-2"
+      },
+      "requires": [
+        "v2-d10-carry-2"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "真的嗎真的嗎！給我買了什麼！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-3"
+      },
+      "requires": [
+        "v2-d10-carry-3"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "狗項圈。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-4"
+      },
+      "requires": [
+        "v2-d10-carry-4"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "阿西八！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-5"
+      },
+      "requires": [
+        "v2-d10-carry-5"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-carry-7",
+      "kind": "incoming-image",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "/apps/wechat/stickers/xin-dog-112.webp",
+      "assetId": "v2-d10-carry-image-7",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d10-carry-6"
+      },
+      "requires": [
+        "v2-d10-carry-6"
+      ],
+      "timing": {
+        "day": 10,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d10-night-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "明天再也不熬夜了，真的。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 10,
+        "at": "22:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "晚上七點半，老地方見。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:15"
+      },
+      "requires": [],
+      "timing": {
+        "day": 11,
+        "at": "09:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "乾爹回來了，今天大家盡量過來。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-0"
+      },
+      "requires": [
+        "v2-d11-notice-0"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "？？？？？？？什麼時候回來的？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-1"
+      },
+      "requires": [
+        "v2-d11-notice-1"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "哇！！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-2"
+      },
+      "requires": [
+        "v2-d11-notice-2"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "啊？真的？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-3"
+      },
+      "requires": [
+        "v2-d11-notice-3"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "是不是說",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-4"
+      },
+      "requires": [
+        "v2-d11-notice-4"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "我們終於可以出山幹一票大的了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-5"
+      },
+      "requires": [
+        "v2-d11-notice-5"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我的手槍飢渴難耐。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-6"
+      },
+      "requires": [
+        "v2-d11-notice-6"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "這麼突然？可我還在韓國。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-7"
+      },
+      "requires": [
+        "v2-d11-notice-7"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "乾爹什麼時候回來的，一點風聲也沒有。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-8"
+      },
+      "requires": [
+        "v2-d11-notice-8"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "具體情況見面再說呢。阿楓，你看看最近的機票是什麼時候，我到時候去機場接你。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-9"
+      },
+      "requires": [
+        "v2-d11-notice-9"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-10"
+      },
+      "requires": [
+        "v2-d11-notice-10"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "怎麼辦，我有點激動。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-11"
+      },
+      "requires": [
+        "v2-d11-notice-11"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "乾爹感受到你們的愛了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-12"
+      },
+      "requires": [
+        "v2-d11-notice-12"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-14",
+      "kind": "incoming-image",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "/apps/wechat/stickers/xin-dog-002.webp",
+      "assetId": "v2-d11-notice-image-14",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-13"
+      },
+      "requires": [
+        "v2-d11-notice-13"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-notice-15",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "欸，好難得看到旺哥用表情包！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-notice-14"
+      },
+      "requires": [
+        "v2-d11-notice-14"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "興奮得我酒吧打烊半天。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 11,
+        "at": "15:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "小辛順路嗎？我在大三巴，一會接我。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-afternoon-0"
+      },
+      "requires": [
+        "v2-d11-afternoon-0"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "好，我去買點啤酒。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-afternoon-1"
+      },
+      "requires": [
+        "v2-d11-afternoon-1"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "楓哥你今天來嗎？@胡楓",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-afternoon-2"
+      },
+      "requires": [
+        "v2-d11-afternoon-2"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "來不了，我明天才能到。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-afternoon-3"
+      },
+      "requires": [
+        "v2-d11-afternoon-3"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-afternoon-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "好哦，注意安全。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-afternoon-4"
+      },
+      "requires": [
+        "v2-d11-afternoon-4"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-after-meeting-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "我到家了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:20"
+      },
+      "requires": [],
+      "timing": {
+        "day": 11,
+        "at": "22:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-after-meeting-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "我也回去了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-after-meeting-0"
+      },
+      "requires": [
+        "v2-d11-after-meeting-0"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-after-meeting-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "今天吃得夠飽。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-after-meeting-1"
+      },
+      "requires": [
+        "v2-d11-after-meeting-1"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-after-meeting-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "明晚機場見，早點休息。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-after-meeting-2"
+      },
+      "requires": [
+        "v2-d11-after-meeting-2"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "蒙蒙，睡了嗎？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:18"
+      },
+      "requires": [],
+      "timing": {
+        "day": 11,
+        "at": "22:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "沒呢哥。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-0"
+      },
+      "requires": [
+        "v2-d11-wang-worry-0"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "今天你說的電子錢包的事，我還是有點擔心。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-1"
+      },
+      "requires": [
+        "v2-d11-wang-worry-1"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "五億美元，沒有那麼容易拿。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-2"
+      },
+      "requires": [
+        "v2-d11-wang-worry-2"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "我又沒說明天就能拿到。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-3"
+      },
+      "requires": [
+        "v2-d11-wang-worry-3"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "上次那十枚比特幣，我不也拿到了嗎？這次規模是大了點，可又不是完全沒機會。哥，我可是天才黑客。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-4"
+      },
+      "requires": [
+        "v2-d11-wang-worry-4"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "我知道。我弟弟肯定是最棒的。而且我看得出來，乾爹被你說動了。他肯讓你試，也是信你的本事。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-5"
+      },
+      "requires": [
+        "v2-d11-wang-worry-5"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "時代在變，我們也要變，這是趨勢。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-6"
+      },
+      "requires": [
+        "v2-d11-wang-worry-6"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "不過，我希望有任何事情，你能先跟我商量。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-7"
+      },
+      "requires": [
+        "v2-d11-wang-worry-7"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "哥，你不信我啊？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-8"
+      },
+      "requires": [
+        "v2-d11-wang-worry-8"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "信。只是不想你一個人扛著，我們是一家人。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-9"
+      },
+      "requires": [
+        "v2-d11-wang-worry-9"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "知道啦，我會跟你商量的。時間不早了，我先休息了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d11-wang-worry-10"
+      },
+      "requires": [
+        "v2-d11-wang-worry-10"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d11-wang-worry-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "嗯，晚安。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d11-wang-worry-11"
+      },
+      "requires": [
+        "v2-d11-wang-worry-11"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "我已經分不清是過敏還是被灰塵嗆的了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "13:40"
+      },
+      "requires": [],
+      "timing": {
+        "day": 12,
+        "at": "13:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "你休息一下。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-0"
+      },
+      "requires": [
+        "v2-d12-separate-work-0"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "我買了酒精噴霧，我要把這些地方全部消毒。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-1"
+      },
+      "requires": [
+        "v2-d12-separate-work-1"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我把那個紫色沙發帶過來了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-2"
+      },
+      "requires": [
+        "v2-d12-separate-work-2"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "酒吧那個？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-3"
+      },
+      "requires": [
+        "v2-d12-separate-work-3"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "對，等一下幫我搬一下。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-4"
+      },
+      "requires": [
+        "v2-d12-separate-work-4"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-separate-work-6",
+      "kind": "incoming-image",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "/apps/wechat/stickers/xin-dog-001.webp",
+      "assetId": "v2-d12-separate-work-image-6",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-separate-work-5"
+      },
+      "requires": [
+        "v2-d12-separate-work-5"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-arrival-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "澳門好熱。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:50"
+      },
+      "requires": [],
+      "timing": {
+        "day": 12,
+        "at": "21:50"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-arrival-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "@熙旺 我在拿行李了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-arrival-0"
+      },
+      "requires": [
+        "v2-d12-arrival-0"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-arrival-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "我在出站口。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-arrival-1"
+      },
+      "requires": [
+        "v2-d12-arrival-1"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-arrival-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-arrival-2"
+      },
+      "requires": [
+        "v2-d12-arrival-2"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "你們都收拾好了，我睡哪呀？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "23:02"
+      },
+      "requires": [],
+      "timing": {
+        "day": 12,
+        "at": "23:02"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "老樣子，我隔壁。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-settling-0"
+      },
+      "requires": [
+        "v2-d12-settling-0"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "隔音不好？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-settling-1"
+      },
+      "requires": [
+        "v2-d12-settling-1"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我晚上那個你都可以聽得見。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-settling-2"
+      },
+      "requires": [
+        "v2-d12-settling-2"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我會用狗項圈掐死你。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-settling-3"
+      },
+      "requires": [
+        "v2-d12-settling-3"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-settling-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我說唱歌啦！！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-settling-4"
+      },
+      "requires": [
+        "v2-d12-settling-4"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-wang-airport-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "我出門去機場接胡楓了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "18:41"
+      },
+      "requires": [],
+      "timing": {
+        "day": 12,
+        "at": "18:41"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-wang-airport-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "他幾點落地？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d12-wang-airport-0"
+      },
+      "requires": [
+        "v2-d12-wang-airport-0"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-wang-airport-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "八點多，路上可能慢一點。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d12-wang-airport-1"
+      },
+      "requires": [
+        "v2-d12-wang-airport-1"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d12-wang-airport-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "那你小心開車。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d12-wang-airport-2"
+      },
+      "requires": [
+        "v2-d12-wang-airport-2"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "你下午在房裡罵誰？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:30"
+      },
+      "requires": [],
+      "timing": {
+        "day": 15,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "網上一個神經病黑客。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d15-room-0"
+      },
+      "requires": [
+        "v2-d15-room-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "惹到你了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d15-room-1"
+      },
+      "requires": [
+        "v2-d15-room-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "他偷看我機房！還嫌我的電腦破！",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d15-room-2"
+      },
+      "requires": [
+        "v2-d15-room-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "沒有竊取你的信息造成損失吧？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d15-room-3"
+      },
+      "requires": [
+        "v2-d15-room-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "沒有，被我趕出去了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d15-room-4"
+      },
+      "requires": [
+        "v2-d15-room-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "那就好。你的電腦真要換就換吧，哥給你報銷。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d15-room-5"
+      },
+      "requires": [
+        "v2-d15-room-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d15-room-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "不用，有人給我買單了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d15-room-6"
+      },
+      "requires": [
+        "v2-d15-room-6"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-briefing-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "我把之前踩點的撤離路線整理好了，還有幾個地方沒敲定。大家什麼時候有空一起看一下？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:08"
+      },
+      "requires": [],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-briefing-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "那就晚上七點半，大屋。我去接乾爹。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-briefing-0"
+      },
+      "requires": [
+        "v2-d16-briefing-0"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-briefing-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "group",
+      "text": "好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-briefing-1"
+      },
+      "requires": [
+        "v2-d16-briefing-1"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-briefing-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "很強。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-briefing-2"
+      },
+      "requires": [
+        "v2-d16-briefing-2"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-headphones-promise-0",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "awei",
+      "text": "沒問題，哥買單。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:v2-d07-reply-headphones-promise"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-headphones-promise-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "阿威",
+      "thread": "awei",
+      "text": "謝謝蒙哥！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d07-reply-headphones-promise-0"
+      },
+      "requires": [
+        "v2-d07-reply-headphones-promise-0"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-promise-0",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "去買十套，記我帳上。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:v2-d07-reply-tableware-promise"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-promise-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "哈哈，弟弟有錢說話就是不一樣。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d07-reply-tableware-promise-0"
+      },
+      "requires": [
+        "v2-d07-reply-tableware-promise-0"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-keyboard-received-0",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "xiaoxin",
+      "text": "這麼快就收到了？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:v2-d07-reply-keyboard-received"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-keyboard-received-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "xiaoxin",
+      "text": "下次打遊戲你必須拿五殺。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d07-reply-keyboard-received-0"
+      },
+      "requires": [
+        "v2-d07-reply-keyboard-received-0"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-keyboard-received-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "xiaoxin",
+      "text": "包的哥哥！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d07-reply-keyboard-received-1"
+      },
+      "requires": [
+        "v2-d07-reply-keyboard-received-1"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-received-0",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "認真的嗎哥哥？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:v2-d07-reply-tableware-received"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-received-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "我買的是碗，不是垃圾桶。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d07-reply-tableware-received-0"
+      },
+      "requires": [
+        "v2-d07-reply-tableware-received-0"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-received-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "那……糖醋排骨？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d07-reply-tableware-received-1"
+      },
+      "requires": [
+        "v2-d07-reply-tableware-received-1"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-tableware-received-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "我要吃三碗飯。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d07-reply-tableware-received-2"
+      },
+      "requires": [
+        "v2-d07-reply-tableware-received-2"
+      ],
+      "timing": {
+        "day": 7,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-brother-ask-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "怎麼了蒙蒙？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d07-reply-brother-pat-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "乖",
+      "trigger": {
+        "type": "day-time",
+        "ref": "00:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 7,
+        "at": "00:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "熙旺",
+      "thread": "group",
+      "text": "下午那趟試走辛苦大家了，配合得挺好。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:00"
+      },
+      "requires": [],
+      "timing": {
+        "day": 16,
+        "at": "16:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "你們都不知道色誘有多痛苦。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-0"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-0"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "誰讓你長得帥呢？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-1"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-1"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "胡枫",
+      "thread": "group",
+      "text": "那確實。事成之後我能多分一筆嗎？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-2"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-2"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "你可以拿走小辛的。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d16-after-rehearsal-3"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-3"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "那不行！！",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-4"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-4"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "怎麼不行？你也去色誘啊。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-d16-after-rehearsal-5"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-5"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "我嗎？那我要扮成女的，迷死所有人。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-6"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-6"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "你別說。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-7"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-7"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "仔仔",
+      "thread": "group",
+      "text": "我有想法了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-8"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-8"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-d16-after-rehearsal-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "小辛",
+      "thread": "group",
+      "text": "？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-d16-after-rehearsal-9"
+      },
+      "requires": [
+        "v2-d16-after-rehearsal-9"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-return-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "wang",
+      "text": "阿蒙，醒了没有？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "08:40"
+      },
+      "requires": [],
+      "timing": {
+        "day": 11,
+        "at": "08:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-return-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "wang",
+      "text": "干爹前天晚上就回澳门了，今早刚打电话给我。晚上去老地方，大家碰个面。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-return-0"
+      },
+      "requires": [
+        "v2-node-return-0"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-return-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "wang",
+      "text": "干爹回来了？哥，你怎么现在才告诉我！",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-return-1"
+      },
+      "requires": [
+        "v2-node-return-1"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-return-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "wang",
+      "text": "我也是刚接到电话。他住美景大厦，今天不用过去找他。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-return-2"
+      },
+      "requires": [
+        "v2-node-return-2"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-return-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "wang",
+      "text": "你晚上記得過來。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-return-3"
+      },
+      "requires": [
+        "v2-node-return-3"
+      ],
+      "timing": {
+        "day": 11,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "group",
+      "text": "今天先把舊大屋收拾出來，常用的東西各自帶，不用一次搬完。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:10"
+      },
+      "requires": [],
+      "timing": {
+        "day": 12,
+        "at": "10:10"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "xin",
+      "thread": "group",
+      "text": "我已經打包好了，晚上再過去。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-move-0"
+      },
+      "requires": [
+        "v2-node-move-0"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "我的東西太多了，我需要一個機房擺我的伺服器。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-move-1"
+      },
+      "requires": [
+        "v2-node-move-1"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "group",
+      "text": "就按昨天說的那樣改造，等我們騰出空間了你再搬。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-move-2"
+      },
+      "requires": [
+        "v2-node-move-2"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "我還需要一輛卡車。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-move-3"
+      },
+      "requires": [
+        "v2-node-move-3"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "group",
+      "text": "卡車？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-move-4"
+      },
+      "requires": [
+        "v2-node-move-4"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "對，有些操作遠端連線延遲太大，我得帶著設備到現場。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-move-5"
+      },
+      "requires": [
+        "v2-node-move-5"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "wang",
+      "thread": "group",
+      "text": "好，我去辦。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-move-6"
+      },
+      "requires": [
+        "v2-node-move-6"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "awei",
+      "thread": "group",
+      "text": "蒙哥，你告訴我哪幾台要搬的，我到時候給你搬上去。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-move-7"
+      },
+      "requires": [
+        "v2-node-move-7"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-move-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "owner": "messaging",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "group",
+      "text": "好。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-move-8"
+      },
+      "requires": [
+        "v2-node-move-8"
+      ],
+      "timing": {
+        "day": 12,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "部署得怎麼樣，nya？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:36"
+      },
+      "requires": [
+        "node:code"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "跑得動，就是慢。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-loan-0"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "慢到什麼程度？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-loan-1"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你給的東西吃配置。這套機器不夠。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-loan-2"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "你做了這麼多年，連台像樣的工作站都沒攢出來？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-loan-3"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-5",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你到底想說什麼？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-loan-4"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "自己搭的机房吗？第一眼我还以为是货车车厢呢。陈熙蒙，你怎么住在这种破地方？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-loan-5"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-8",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "谁让你打开我的摄像头的？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-loan-7"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-7"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-10",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "我们只是合作关系，你不能随随便便侵犯我的隐私。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "v2-node-loan-8"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-8"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-11",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "我们不是合作关系，我是你的老板。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-loan-10"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-10"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-node-loan-13",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "ouroboros",
+      "thread": "s55-ouroboros",
+      "text": "一百万，借你的。去更新你的系统设备。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "v2-node-loan-11"
+      },
+      "requires": [
+        "node:code",
+        "v2-node-loan-11"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-s55-d13-wallet-mail",
+      "kind": "email",
+      "surface": "kira",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "system",
+      "text": "您有一筆數位資產待確認。\n資產數量：50.00000000 BTC\n狀態：待綁定錢包\n請登入 Mirage Wallet，綁定指定錢包以查看資產詳情及辦理後續操作。\n此郵件由系統自動發送，請勿直接回覆。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:10"
+      },
+      "requires": [],
+      "timing": {
+        "day": 13,
+        "at": "22:10"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "v2-code-mail",
+      "kind": "email",
+      "surface": "kira",
+      "owner": "story55",
+      "capability": "story.d05-d17-v2",
+      "actor": "system",
+      "text": "聽說過「Narrenschiff」嗎？這是它的基礎框架「Ouroboros’ Tear」。\n一套能在不同系統之間自行建立通道、繞過常規防護，並在完成操作後抹去痕跡的程序。\n當然，這還不是完整版本。\n別告訴我你連這個都不會用。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:16"
+      },
+      "requires": [],
+      "timing": {
+        "day": 14,
+        "at": "09:16"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "v2-check-trigger",
+      "type": "trigger",
+      "verify": "Real Send, wish addition and actual deliveries gate their own next lines."
+    },
+    {
+      "id": "v2-check-negative",
+      "type": "negative",
+      "verify": "No purchase/arrival inferred from date; no automatic player speech; no D18/D19 edits."
+    },
+    {
+      "id": "v2-check-idempotency",
+      "type": "idempotency",
+      "verify": "Stable mail, bank, wish and message IDs survive reload."
+    },
+    {
+      "id": "v2-check-save-restore",
+      "type": "save-restore",
+      "verify": "Exact known NPC/default edits upgrade; preserve real player, custom and pre-D01 history."
+    },
+    {
+      "id": "v2-check-cross-app",
+      "type": "cross-app",
+      "verify": "WeChat, reminders, paid orders, KIRA, Mirage and bank use existing services."
+    },
+    {
+      "id": "v2-check-late-entry",
+      "type": "late-entry",
+      "verify": "Deliveries follow purchase day; D15 Wang waits for full loan and timestamps actual delivery."
+    },
+    {
+      "id": "v2-check-assets",
+      "type": "assets",
+      "verify": "Existing user-owned dog sticker pack reused; no new media upload."
+    },
+    {
+      "id": "v2-check-date-clock",
+      "type": "date-clock",
+      "verify": "D01=2025-05-19; first D13 mail opening clamps only forward to22:30."
+    },
+    {
+      "id": "v2-check-dialogue",
+      "type": "dialogue",
+      "verify": "Main baseline, old-to-new diff, native Send export and frozen30 comparison."
+    },
+    {
+      "id": "v2-check-mobile",
+      "type": "mobile",
+      "verify": "iPhone viewport native composer clicks, source messages, mail, dates and screenshots."
+    }
+  ]
+}

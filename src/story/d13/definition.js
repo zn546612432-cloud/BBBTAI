@@ -34,19 +34,10 @@ export function applyD13Definition(c){
    n.requires=['d13-wallet-transfer'];
   Object.assign(n,{at:'22:10',delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-intrusion-v2',systemMessages:true,call:{id:'s55-d13-call-v2',displayName:'未知號碼',forced:true,autoAnswerMs:8000}});
  }
- const oldMailBody='之前懸賞贏的那個錢包入帳 50 枚比特幣，登入 MIRAGE 錢包快速綁定後可取款。';
- const mailBody='您的數位資產帳戶已收到一筆轉入款項。\\n\\n入帳金額：50.00000000 BTC\\n資產類型：Bitcoin (BTC)\\n交易狀態：已確認\\n\\n款項已記入您的帳戶。請登入 MIRAGE 錢包查看交易詳情及管理資產。\\n\\n此郵件由系統自動發送，請勿直接回覆。';
  const walletMail=c.mails.find(m=>m.id===D13_MAIL_ID);
- if(!walletMail)c.mails.push({
-  id:D13_MAIL_ID,node:'d13-wallet-mail',from:'MIRAGE Wallet',subject:'數位資產入帳通知',
-  body:mailBody,link:{appId:'mirage',route:'/wallet',params:{}}
- });
- else{
-  // Migrate only old defaults; preserve any author-edited mail and existing read state.
-  if(walletMail.subject==='[MIRAGE] 50 BTC')walletMail.subject='數位資產入帳通知';
-  if(walletMail.body===oldMailBody)walletMail.body=mailBody;
-  if(walletMail.from==='MIRAGE')walletMail.from='MIRAGE Wallet';
- }
+ const target={id:D13_MAIL_ID,node:'d13-wallet-mail',from:'Mirage Wallet',subject:'待領取資產通知',body:'您有一筆數位資產待確認。\n資產數量：50.00000000 BTC\n狀態：待綁定錢包\n請登入 Mirage Wallet，綁定指定錢包以查看資產詳情及辦理後續操作。\n此郵件由系統自動發送，請勿直接回覆。',attachmentName:'wallet-binding.key',link:{appId:'mirage',route:'/wallet',params:{}}};
+ if(!walletMail)c.mails.push(target);
+ else if(['[MIRAGE] 50 BTC','數位資產入帳通知','待領取資產通知'].includes(walletMail.subject))Object.assign(walletMail,target);
  c.voiceAssets??={};c.voiceAssets.intrusion??={};
  if(replace){delete c.voiceAssets.intrusion[7];delete c.voiceAssets.intrusion[9];}
  for(const i of D13_VOICE_INDICES)c.voiceAssets.intrusion[i]??=`/assets/story55/d13/call-${i}.mp3`;

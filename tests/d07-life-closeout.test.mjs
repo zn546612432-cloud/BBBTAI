@@ -30,7 +30,7 @@ test('D07 ordinary WeChat begins independently of D06 victory and completes Wang
  assert.equal(all(s).filter(m=>m.id.startsWith('wish-')).length,0);
  s.clock='11:15';deliver(s);
  assert.equal(all(s).some(m=>m.id==='d07-awei-01'),true);
- assert.equal(all(s).some(m=>m.id==='d07-wang-01'),true);
+ assert.equal(all(s).some(m=>m.id==='d07-wang-01'),false);
  assert.equal(all(s).filter(m=>m.id.startsWith('d07-errand-')).length,0);
  s.clock='13:30';deliver(s);
  const ids=['d07-chat-07','d07-errand-01','d07-errand-02','d07-errand-03','d07-errand-04'];
@@ -44,7 +44,7 @@ test('D07 ordinary WeChat begins independently of D06 victory and completes Wang
  for(const id of ids)assert.equal(group(s).filter(m=>m.id===id).length,1,id);
 });
 test('D07 is an optional-life chapter: wish links never charge money until actual purchase',()=>{
- const s=state(7,'11:20');deliver(s);
+ const s=state(7,'14:10');deliver(s);
  assert.equal(all(s).filter(m=>m.wishId==='d07-headphones').length,1);
  assert.equal(all(s).filter(m=>m.wishId==='d07-tableware').length,1);
  assert.equal(s.bankData.balance,5000);

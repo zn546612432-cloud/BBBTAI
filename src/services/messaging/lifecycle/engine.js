@@ -55,7 +55,7 @@ export function createConversationTrack(config){
  };
  const allowed=(s,d)=>!d.condition||d.condition(s);
  const canStart=(s,d,q)=>allowed(s,d)&&(!d.enabled||d.enabled(s,q))&&conversationMinute(s)>=startMinute(s,d,q)&&lineIsDue(s,d,q?.index||0);
- const messageId=(s,d,i)=>d.messageId?.(s,i)||config.prefix+'-'+d.id+'-'+i;
+ const messageId=(s,d,i)=>d.messageId?.(s,i)||(get(s,d)?.messagePrefix||config.prefix)+'-'+d.id+'-'+i;
  function ensure(s){
   const map=root(s);
   for(const d of defs){
@@ -192,7 +192,7 @@ export function createConversationTrack(config){
    if(q.lateRun){const r=q.lateRun,line=r.lines[r.index];if(s.day!==r.day||conversationMinute(s)>=r.validUntil)continue;if(line?.who==='me')available.push({d,q,line,late:r.kind,rank:1});continue;}
    if(!q.historySettled&&!isPast(s,d,q)&&(q.started||canStart(s,d,q))){
     const line=lines(s,d,q)[q.index];
-    if(line?.who==='me'&&qDue(q)==null&&lineIsDue(s,d,q.index))available.push({d,q,line,rank:d.mandatory?3:2});
+    if(line?.who==='me'&&qDue(q)==null&&lineIsDue(s,d,q.index))available.push({d,q,line,rank:d.priority??(d.mandatory?3:2)});
    }else{
     const late=lateChoice(s,d,q);
     if(late?.lines[0]?.who==='me')available.push({d,q,line:late.lines[0],late:late.kind,lateLines:late.lines,rank:0});

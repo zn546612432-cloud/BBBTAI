@@ -15,10 +15,10 @@ import {syncD10D13Content,OLD_D10,OLD_RETURN,OLD_MOVE,MEETING_NOTE,OLD_INTRUSION
 const phone=(day,clock='08:00')=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.unlocked=true;s.story55.completed.invitation={day:6,clock:'20:00'};tickStory55(s);return s;};
 const thread=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
 const flat=defs=>defs.flatMap(d=>d.lines);
-test('D10 preserves twenty independent NPC messages, their original IDs and first-line counts',()=>{
- assert.equal(flat(D10_GROUP).length,20);
+test('D10 preserves scene IDs and changes only the approved rain, exam and night copy',()=>{
+ assert.equal(flat(D10_GROUP).length,25);
  assert.deepEqual(D10_GROUP.map(x=>x.id),Object.keys(OLD_D10));
- for(const d of D10_GROUP)assert.equal(d.lines.length,OLD_D10[d.id].length);
+ for(const d of D10_GROUP.filter(x=>!['noodles','carry'].includes(x.id)))assert.equal(d.lines.length,OLD_D10[d.id].length);
  assert.ok(D10_GROUP.some(d=>d.lines.length===1));
  assert.ok(flat(D10_GROUP).every(x=>!['me','熙蒙','傅隆生','熙泰'].includes(x.who)));
  assert.ok(flat(D10_GROUP).filter(x=>x.who==='胡枫').some(x=>/首爾/.test(x.text)));
@@ -46,8 +46,8 @@ test('D11 Fu returns via Wang private native Send, without inventing Fu group bu
 });
 test('D12 Hu Feng lands in Macau; D13 fresh group remains NPC only and no future identity is leaked',()=>{
  assert.deepEqual(PHONE_CHAT_TRACKS.filter(x=>x.day>=10&&x.day<=13).map(x=>x.day),[10,11,12,13]);
- assert.ok(flat(D11_GROUP).some(x=>x.who==='胡枫'&&/首爾/.test(x.text)));
- assert.ok(flat(D12_GROUP).some(x=>x.who==='胡枫'&&/落地/.test(x.text)));
+ assert.ok(flat(D11_GROUP).some(x=>x.who==='胡枫'&&/韓國/.test(x.text)));
+ assert.ok(flat(D12_GROUP).some(x=>x.who==='胡枫'&&/拿行李/.test(x.text)));
  assert.ok(flat(D13_GROUP).some(x=>x.who==='胡枫'&&/昨晚/.test(x.text)));
  assert.ok(flat(D13_GROUP).every(x=>x.who!=='me'&&x.who!=='傅隆生'&&x.who!=='熙泰'));
  const s=phone(13,'16:00');
@@ -59,7 +59,8 @@ test('D12–D13 mandatory nodes preserve D14 KIRA gate, Ghost remains independen
  assert.equal(nodeStatus(s,'move').state,'ready');
  advanceScene55(s,'move');advanceScene55(s,'move');
  const pending=currentScript55(s,'wechat','group');assert.equal(pending.kind,'me');
- sendScriptedDraft55(s,'wechat','group',pending.text);advanceScene55(s,'move');
+ sendScriptedDraft55(s,'wechat','group',pending.text);
+ while(!completed(s,'move')){const line=currentScript55(s,'wechat','group');if(line.kind==='me')sendScriptedDraft55(s,'wechat','group',line.text);else advanceScene55(s,'move');}
  assert.ok(completed(s,'move'));s.day=13;s.clock='20:00';tickStory55(s);
  advanceScene55(s,'exhibition');assert.ok(completed(s,'exhibition'));
  s.clock='22:10';tickStory55(s);markMail55(s,'s55-d13-wallet-mail');bindD13Wallet(s);transferD13Wallet(s,0);enterD13Chat(s);
@@ -112,7 +113,7 @@ test('D11 and D12 NPC messages recover old skipped status without a player reply
  b.story55.d12Chats={arrival:{started:false,index:0,nextAt:null,completed:false,skipped:true,historySettled:true,status:'skipped'}};
  b.clock='23:30';d12Track.tick(b,1000);
  assert.equal(b.story55.d12Chats.arrival.skipped,false);
- assert.ok(thread(b,'group').messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('落地了')));
+ assert.ok(thread(b,'group').messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('澳門好熱')));
 });
 
 test('D10 revision-one saved chat repairs only the known stale NPC speaker, keeping player customizations and audit copy',()=>{

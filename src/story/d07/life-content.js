@@ -22,8 +22,8 @@ export const afternoonDay=[
  group('d07-errand-04','小辛','我負責精神支持，謝謝。',{afterId:'d07-errand-03'})
 ];
 export const extraDay=[
- dm('d07-awei-01','awei','阿威','我那副耳机接触不良，昨天开会又断了。准备换副无线耳机。',{wishId:'d07-headphones',wishText:'无线耳机'}),
- dm('d07-wang-01','wang','熙旺','家里吃饭的碗有几只都磕了口，过两天我去添一套新餐具。',{wishId:'d07-tableware',wishText:'新餐具'})
+ dm('d07-awei-01','awei','阿威','我那副耳機接觸不良，昨天開會又斷了。準備換副無線耳機。',{wishId:'d07-headphones',wishText:'無線耳機',dueClock:'11:12'}),
+ dm('d07-wang-01','wang','熙旺','家裡吃飯的碗有幾隻都磕了口，過兩天我去添一套新餐具。',{wishId:'d07-tableware',wishText:'新餐具',dueClock:'14:10'})
 ];
 export const dinnerAfter=group('d07-dinner-after','小辛',
  '昨天吃得太撑了，我今天真的不想看见肉了');
@@ -35,8 +35,7 @@ export const rewardSets={
   dm('wish-headphones-thanks-2','awei','阿威','试过了，声音没问题。谢谢。')
  ],
  'd07-tableware':[
-  dm('wish-tableware-thanks-1','wang','熙旺','阿蒙，家里送来一套餐具。你买的？'),
+  dm('wish-tableware-thanks-1','wang','熙旺','碗到了，今晚給你們做西湖醋魚。'),
   dm('wish-tableware-photo','wang','熙旺',d06WishImage('tableware-received.jpg'),{kind:'image'}),
-  dm('wish-tableware-thanks-2','wang','熙旺','原来那些还能用，不过这套也挺好。晚上回来吃饭。')
  ],
 };
