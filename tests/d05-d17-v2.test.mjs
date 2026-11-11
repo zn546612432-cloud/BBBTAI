@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import baseline from '../docs/chat-v2/main-baseline.json' with {type:'json'};
 import previous from '../src/story/revisions/d05-d17-v2-previous.json' with {type:'json'};
+import {kiraInbox} from '../src/apps/kira/features/inbox/index.js';
 import {kiraDetail} from '../src/apps/kira/features/detail/index.js';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,markMail55} from '../src/services/story55/runtime.js';
@@ -96,7 +97,7 @@ test('D11 private native draft survives simultaneous 22:20 group delivery',()=>{
 test('D13 real father Send -> one mail, actual timestamp, first-read clock clamp, separate 50 BTC',()=>{
  const s=phone(13,'19:03');delete s.story55.completed.intrusion;s.story55.d13Revision=3;
  drain(s,d13Track,'father-planning','fulongsheng');tickStory55(s);
- const mail=s.content.mail.find(m=>m.id===D13_MAIL_ID);assert.ok(mail);assert.equal(mail.time,'19:03');assert.equal(mail.subject,'待領取資產通知');assert.match(kiraDetail(s,D13_MAIL_ID),/kira-d01-attachment[\s\S]*wallet-binding.key/);
+ const mail=s.content.mail.find(m=>m.id===D13_MAIL_ID);assert.ok(mail);assert.equal(mail.time,'19:03');assert.match(kiraInbox(s),/<time>19:03<\/time>/);assert.equal(mail.subject,'待領取資產通知');assert.match(kiraDetail(s,D13_MAIL_ID),/kira-d01-attachment[\s\S]*wallet-binding.key/);
  const beforePlayers=JSON.stringify(chat(s,'fulongsheng').messages.filter(m=>m.from==='me')),bank=s.bankData.balance,balance=s.content.mirage.digitalBalance;
  mail.read=true;markMail55(s,D13_MAIL_ID);assert.equal(s.clock,'22:30');assert.equal(s.story55.completed.exhibition,undefined);
  assert.equal(JSON.stringify(chat(s,'fulongsheng').messages.filter(m=>m.from==='me')),beforePlayers);assert.equal(bindD13Wallet(s),true);
@@ -133,7 +134,7 @@ test('V2 migration upgrades known scripts/queues only, retains real player/histo
 });
 
 test('D14 shows its exact encrypted filename using the existing native KIRA file card',()=>{
- const s=phone(14,'09:16');tickStory55(s);const html=kiraDetail(s,'code-mail');assert.match(html,/Ouroboros_Tear_package.key/);assert.match(html,/加密附件/);assert.match(html,/data-action="s55-read-mail"/);assert.match(html,/今天 09:16/);
+ const s=phone(14,'09:16');tickStory55(s);const html=kiraDetail(s,'code-mail');assert.match(html,/Ouroboros_Tear_package.key/);assert.match(html,/加密附件/);assert.match(html,/data-action="s55-read-mail"/);assert.match(html,/今天 09:16/);assert.match(kiraInbox(s),/<time>09:16<\/time>/);
 });
 
 test('native Send retains the next consecutive preset installed by a synchronous UI render',t=>{

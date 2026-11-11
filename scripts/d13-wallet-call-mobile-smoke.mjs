@@ -62,6 +62,7 @@ try{
  await page.locator('[data-action="kira-mail"][data-id="s55-d13-wallet-mail"]').click();
  await page.locator('.kira-d13-mail').waitFor();
  assert.match(await page.locator('.kira-d13-mail').innerText(),/待領取資產通知/);
+ await page.waitForFunction(()=>!document.querySelector('#transition-layer')?.childElementCount);
  await page.screenshot({path:'qa-results/d13-kira-native-mail.png'});
  await action('kira-d13-wallet').last().click();await signIn();
  await page.locator('.mc-wallet-list').waitFor();
@@ -79,7 +80,7 @@ try{
  await action('mc-wallet-transfer').click();await action('mc-wallet-cancel-transfer').click();
  await page.locator('.mc-wallet-transfer-confirm').waitFor({state:'hidden'});
  await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
- await page.locator('.tel-green-screen').waitFor();await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
+ await page.locator('.tel-green-screen').waitFor();await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');assert.equal(await page.locator('.tel-green-screen').innerText(),'');assert.equal(await page.locator('.tel-green-screen').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(5, 107, 46)');await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
  await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),1);assert.equal(await action('tel-answer').count(),1);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
  await action('tel-decline').click();

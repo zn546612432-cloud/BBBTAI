@@ -36,7 +36,7 @@
 .app-kira .kira-d01-file-icon{height:43px;width:39px;flex:0 0 39px;border-radius:11px;background:#edf3f6;color:#4b7790;display:grid;place-items:center}
 .app-kira .kira-d01-file-icon svg{width:27px;height:34px}
 .app-kira .kira-d01-attachment-copy{min-width:0;flex:1;text-align:left;display:flex;flex-direction:column;gap:4px;line-height:1.3}
-.app-kira .kira-d01-attachment-copy strong{font-size:14px;font-weight:650;color:#263b4b}
+.app-kira .kira-d01-attachment-copy strong{overflow-wrap:anywhere;font-size:14px;font-weight:650;color:#263b4b}
 .app-kira .kira-d01-attachment-copy small{font-size:11px;font-weight:400;color:#98a3ad}
 .app-kira .kira-d01-attachment-arrow{color:#b2bac4;font-size:26px;font-weight:300}
 .app-kira .kira-d01-file-status{font-size:11px;color:#6b8790;margin:12px 2px 0}
