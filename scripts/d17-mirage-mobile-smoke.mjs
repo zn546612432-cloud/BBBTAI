@@ -35,6 +35,13 @@ async function loadPhone(state){
  },{state,token,origin:allowedOrigin});
  await page.goto(url,{waitUntil:'domcontentloaded'});await unlock();
 }
+async function decodeWebsiteImages(){
+ for(const img of await screen.locator('.web-archive img').all()){
+  await img.scrollIntoViewIfNeeded();
+  await img.evaluate(async el=>{await el.decode();if(!el.naturalWidth)throw Error('image did not decode');});
+ }
+ await screen.locator('.saf-content').evaluate(el=>{el.scrollTop=0;});
+}
 async function capture(name){
  await page.waitForFunction(()=>{
   const layer=document.querySelector('#transition-layer'),screen=document.querySelector('#screen-layer');
@@ -70,7 +77,7 @@ try{
  const initial=await saved(),money=initial.bankData.balance;
  for(const id of ['d17-mirage-js','d17-mirage-music','d17-mirage-os','d17-mirage-coast']){
   await screen.locator(`[data-page="${id}"]`).click();await screen.locator('.web-archive').waitFor();
-  await page.waitForFunction(()=>[...document.querySelectorAll('#screen-layer .web-archive img')].every(img=>img.complete&&img.naturalWidth>0));
+  await decodeWebsiteImages();
   assert.equal((await saved()).story55.browserReadIds,undefined);
   await capture(id+'.png');
   for(const width of [320,390,430]){
@@ -161,7 +168,7 @@ try{
  await capture('12-azathoth-search.png');
  for(const id of ['d17-azathoth-culture','d17-azathoth-report','d17-azathoth-notes','d17-azathoth-debate','d17-azathoth-spelling']){
   await screen.locator(`[data-page="${id}"]`).click();await screen.locator('.web-archive').waitFor();
-  await page.waitForFunction(()=>[...document.querySelectorAll('#screen-layer .web-archive img')].every(img=>img.complete&&img.naturalWidth>0));
+  await decodeWebsiteImages();
   const before=JSON.stringify((await saved()).content.notes);
   await capture(id+'.png');
   for(const width of [320,390,430]){
