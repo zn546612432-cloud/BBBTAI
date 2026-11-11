@@ -75,6 +75,8 @@ test('brother egg consumes only actual free messages, once, without replacing a 
  sendMessage(store(s),{channel:'wechat',conversationId:'wang',text:'想你啦'});delete s.story55.d07Replies['brother-pat'];
  assert.deepEqual(drain(s,d07RepliesTrack,'brother-pat','wang').map(m=>m.text),['乖']);
  sendMessage(store(s),{channel:'wechat',conversationId:'wang',text:'哥哥'});assert.equal(s.story55.brotherEgg.stage,'done');
+ const idle=phone(16,'23:59');const t=D14_D24_TRACKS.find(x=>x.track.day===16).track;for(const q of Object.values(t.ensure(idle)))q.completed=true;
+ assert.equal(nativeWeChatComposer(idle,'wang').disabled,false);assert.equal(sendNativeWeChatPreset(store(idle),'wang','哥哥').handled,false);
  const plot=phone(11,'08:40');plot.story55.scenes.return={index:2};plot.story55.wishes={records:{'d07-tableware':{status:'saved'}},story:{lines:[],delivered:[]}};
  assert.equal(nativeWeChatComposer(plot,'wang').source,'story55');assert.match(nativeWeChatComposer(plot,'wang').text,/干爹/);
 });

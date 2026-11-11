@@ -75,6 +75,21 @@ try{
  s=await state();s.unlocked=false;s.nav={current:{appId:'reminders',route:'/all',params:{}},stack:[]};await load(s);await screen.locator('[data-action="reminder-wish-open"][data-id="d07-tableware"]').click();await action('reminder-wish-buy').click();
  s=await state();s.day=8;s.clock='18:00';s.unlocked=false;s.nav={current:{appId:'wechat',route:'/chat/wang',params:{}},stack:[]};await load(s);assert.equal((await state()).story55.wishes.records['d07-tableware'].status,'ordered');
  s=await state();s.day=9;s.unlocked=false;await load(s);await finishTrack('d07-reply','tableware-received','wang');
+ // An earlier real D06 purchase is a fixture; D08 arrival and replies remain live.
+ await prepare(8,'18:00','wechat','/chat/xiaoxin');
+ s=await page.evaluate(async({release})=>{
+  const s=JSON.parse(localStorage.getItem('ximeng-phone-story55-v1'));
+  const {beginD06Celebration,tickWishes,addWish,purchaseWish}=await import(release.url+'src/services/wishes/index.js');
+  s.day=6;s.clock='17:00';beginD06Celebration(s,0);
+  for(let i=0;i<100;i++){s.story55.wishes.story.nextAt=0;tickWishes(s,i*3000);}
+  addWish(s,'d06-keyboard');purchaseWish(s,'d06-keyboard');s.day=8;s.clock='18:00';s.unlocked=false;return s;
+ },{release});await load(s);await finishTrack('d07-reply','keyboard-received','xiaoxin','d08-keyboard-received');
+ await prepare(7,'18:00','wechat','/chat/wang');await screen.locator('.wx-composer input:not([disabled])').waitFor();
+ await screen.locator('.wx-composer input').fill('哥哥');await screen.locator('.wx-composer button[type="submit"]').click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.brotherEgg?.stage==='waiting',null,{timeout:15000});
+ await screen.locator('.wx-composer input').fill('想你啦');await screen.locator('.wx-composer button[type="submit"]').click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.brotherEgg?.stage==='done',null,{timeout:15000});
+ s=await state();exports.push({scene:'brother-free-chat',messages:s.content.conversations.wechat.find(c=>c.id==='wang').messages.filter(m=>m.lifecycleId?.startsWith('d07-reply:brother-')||[s.story55.brotherEgg.firstMessageId,s.story55.brotherEgg.secondMessageId].includes(m.id))});await capture('d07-brother-free-chat');
  // Separate fixtures reconstruct completed prior days only. Target copy is live.
  for(const [day,at,prefix,id,chat] of [[10,'11:50','d10','noodles','group'],[10,'17:46','d10','carry','group'],[10,'22:20','d10','night','group'],[11,'09:15','d11','notice','group'],[11,'15:20','d11','afternoon','group']]){
   await prepare(day,at,'wechat','/chat/'+chat);await finishTrack(prefix,id,chat);

@@ -1,9 +1,8 @@
-import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
 const line=(who,text)=>({who,kind:'text',text});
 const r=(s,id)=>s.story55?.wishes?.records?.[id];
 const sent=(s,id)=>s.story55?.wishes?.story?.delivered?.includes(id);
-const idle=(s,chat)=>!s.story55?.activeScene&&(!s.story55?.config||!currentScript55(s,'wechat',chat));
+const idle=(s,chat)=>!s.story55?.activeScene&&!s.story55?.config?.nodes?.some(n=>n.kind==='scene'&&n.channel==='wechat'&&n.conversationId===chat&&!s.story55.completed?.[n.id]&&s.day>=n.day&&(s.day>n.day||!n.at||s.clock>=n.at)&&n.requires.every(id=>!!s.story55.completed?.[id])&&s.story55.config.scenes[n.id]?.[s.story55.scenes?.[n.id]?.index||0]);
 const d=(id,chat,condition,lines,extra={})=>({id,chat,at:'00:00',mandatory:true,priority:1,condition:s=>idle(s,chat)&&condition(s),lines,...extra});
 export const D07_REPLY_SCENES=[
  d('headphones-promise','awei',s=>!!r(s,'d07-headphones'),[line('me','沒問題，哥買單。'),line('阿威','謝謝蒙哥！！')]),

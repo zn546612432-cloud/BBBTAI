@@ -21,15 +21,13 @@ function pump(s,count=12,begin=10_000){
  for(let i=0;i<count;i++)tickPhoneStoryMessages(s,begin+i*2500);
 }
 test('reviewed private scenes have exact day/time, recipients, and never add father or Ouroboros to the group',()=>{
- assert.deepEqual(D10_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
-  ['wang-supper','wang','20:32',6]
- ]);
+ assert.deepEqual(D10_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[]);
  assert.deepEqual(D11_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
   ['father-after-meeting','fulongsheng','22:06',1],
-  ['wang-worry','wang','22:18',11]
+  ['wang-worry','wang','22:18',13]
  ]);
  assert.deepEqual(D12_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
-  ['wang-airport','wang','18:41',6]
+  ['wang-airport','wang','18:41',4]
  ]);
  assert.deepEqual(D13_PRIVATE.map(s=>[s.id,s.chat,s.at,s.lines.length]),[
   ['father-planning','fulongsheng','19:03',4]
@@ -62,16 +60,16 @@ test('D11 Wang post-meeting worry offers original Send drafts and does not send 
  const prefix='d11-wang-worry-';
  assert.equal(msgs(s,prefix,'wang').map(m=>m.from).join(','),'熙旺');
  const before=msgs(s,prefix,'wang').length;
- assert.equal(nativeWeChatComposer(s,'wang').text,'到了哥');
+ assert.equal(nativeWeChatComposer(s,'wang').text,'沒呢哥。');
  assert.equal(msgs(s,prefix,'wang').filter(m=>m.from==='me').length,0);
  assert.ok(sendNativeWeChatPreset(store(s),'wang','錯誤台詞',40000).reason);
  assert.equal(msgs(s,prefix,'wang').length,before,'wrong draft cannot create a message');
- const sent=sendNativeWeChatPreset(store(s),'wang','到了哥',41000);
+ const sent=sendNativeWeChatPreset(store(s),'wang','沒呢哥。',41000);
  assert.equal(sent.handled,true);
  assert.equal(msgs(s,prefix,'wang').filter(m=>m.from==='me').length,1);
  pump(s,12,43500);
- assert.ok(msgs(s,prefix,'wang').some(m=>m.text==='五億美元，哪有那麼容易拿。'));
- assert.equal(nativeWeChatComposer(s,'wang').text,'我又沒說明天就能拿到');
+ assert.ok(msgs(s,prefix,'wang').some(m=>m.text==='五億美元，沒有那麼容易拿。'));
+ assert.equal(nativeWeChatComposer(s,'wang').text,'我又沒說明天就能拿到。');
 });
 test('D11 unfinished morning scene does not allow later optional Wang draft to hijack it',()=>{
  const s=make(11,'22:18'); // No completed return.
@@ -87,16 +85,16 @@ test('D12 airport is a private conversation, no false arrival before the actual 
  s.clock='18:41';
  pump(s,9,25000);
  assert.deepEqual(msgs(s,'d12-wang-airport-','wang').map(m=>m.text),[
-  '我出門去機場接胡楓了。','你們先吃，不用等。'
+  '我出門去機場接胡楓了。'
  ]);
  assert.equal(nativeWeChatComposer(s,'wang').text,'他幾點落地？');
  assert.equal(msgs(s,'d12-wang-airport-','wang').some(m=>m.from==='me'),false);
  sendNativeWeChatPreset(store(s),'wang','他幾點落地？',52000);
  pump(s,4,54500);
- assert.equal(nativeWeChatComposer(s,'wang').text,'那你小心開車');
- sendNativeWeChatPreset(store(s),'wang','那你小心開車',67000);
+ assert.equal(nativeWeChatComposer(s,'wang').text,'那你小心開車。');
+ sendNativeWeChatPreset(store(s),'wang','那你小心開車。',67000);
  pump(s,4,70000);
- assert.equal(msgs(s,'d12-wang-airport-','wang').length,6);
+ assert.equal(msgs(s,'d12-wang-airport-','wang').length,4);
  assert.equal(msgs(s,'d12-arrival-','group').length,0);
 });
 test('D13 father private chat does not touch wallet/call',()=>{
@@ -115,7 +113,7 @@ test('jumping from D10 to D14 quietly backfills only earned NPC prefixes, never 
  const airport=msgs(s,'d12-wang-airport-','wang');
  assert.equal(father.length,1);
  assert.equal(father[0].historical,true);
- assert.equal(airport.length,2);
+ assert.equal(airport.length,1);
  assert.ok(airport.every(m=>m.historical===true&&m.sentDate==='2025-05-30'));
  assert.equal(airport.some(m=>m.from==='me'),false);
  assert.equal(msgs(s,'d11-wang-worry-','wang').length,1);
@@ -123,7 +121,7 @@ test('jumping from D10 to D14 quietly backfills only earned NPC prefixes, never 
  assert.ok(used.every(n=>n.silent),'past notifications never play as live banners');
  pump(s,12,65000);
  assert.equal(msgs(s,'d11-father-after-meeting-','fulongsheng').length,1);
- assert.equal(msgs(s,'d12-wang-airport-','wang').length,2);
+ assert.equal(msgs(s,'d12-wang-airport-','wang').length,1);
 });
 
 test('cancelled computer-repair storyline stays absent on D11–D13, including missed old NPC history',()=>{

@@ -160,7 +160,7 @@ test('D01 → D14 follows actual charge / KIRA / MIRAGE / GHOST / message intera
  assert.equal(s.story55.completed.exhibition,undefined);
  const group=thread(s,'group'),p=group.messages.filter(m=>m.from==='me');
  assert.ok(p.length>=2,'real user Send lines survived 13 charges');
- assert.ok(group.messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('落地')));
+ assert.ok(group.messages.some(m=>m.id==='d12-arrival-0'&&m.text.includes('澳門好熱')));
  assert.equal(new Set(group.messages.map(m=>m.id)).size,group.messages.length,'no duplicate group IDs');
  assert.ok(group.messages.every(m=>!m.sentDate||m.sentDate<='2025-06-01'),'future scenes never leak');
 });
