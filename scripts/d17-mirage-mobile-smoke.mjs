@@ -23,13 +23,17 @@ async function unlock(){
  for(const key of '0816')await screen.locator(`[data-action="passcode-key"][data-key="${key}"]`).click();
 }
 async function route(day,clock,appId,path,params={}){
+ // Flush the native Notes editor before preparing a developer fixture.
+ await page.locator('#homebar').click();
+ const loaded=page.waitForEvent('domcontentloaded');
  await page.evaluate(({day,clock,appId,path,params})=>{
   const key='ximeng-phone-story55-v1',s=JSON.parse(localStorage.getItem(key));
   Object.assign(s,{day,clock,batteryPercent:95,unlocked:false,poweredOff:false,emergencyCharge:false});
   s.story55.activeScene=null;s.story55.minutesPerSecond=0;
-  s.nav={current:{appId,route:path,params},stack:[]};localStorage.setItem(key,JSON.stringify(s));
+  if(appId==='mirage'){delete s.story55.completed.rumours;delete s.story55.browserReadIds;}
+  s.nav={current:{appId,route:path,params},stack:[]};localStorage.setItem(key,JSON.stringify(s));location.reload();
  },{day,clock,appId,path,params});
- await page.reload({waitUntil:'domcontentloaded'});await unlock();
+ await loaded;await unlock();
 }
 try{
  await page.goto(url,{waitUntil:'domcontentloaded'});await screen.locator('.lock-screen').waitFor({timeout:90000});
@@ -68,11 +72,6 @@ try{
  await route(17,'11:00','notes','/edit',{noteId:note.id});await screen.locator('.nt-screen-editor').waitFor();
  await page.screenshot({path:root+'/05-note.png'});
  // A separate D17 session: leave the optional forum unread and buy no hardware.
- await page.evaluate(()=>{
-  const key='ximeng-phone-story55-v1',s=JSON.parse(localStorage.getItem(key));
-  delete s.story55.completed.rumours;delete s.story55.browserReadIds;
-  localStorage.setItem(key,JSON.stringify(s));
- });
  await route(17,'19:00','mirage','/chat/s55-ouroboros');
  await screen.locator('.mc-login-panel, .mc-composer').first().waitFor({timeout:16000});
  const login=screen.locator('form[data-form="mc-login"]');
