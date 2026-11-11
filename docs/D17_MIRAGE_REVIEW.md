@@ -12,7 +12,7 @@
 | 星月论坛 | 无页面 | 女生求助帖摘要、憂傷的魚评论、楼主回复、憂傷的魚再回复，顺序完整保留 |
 | 登入查看更多 | 无 | 原浏览器内进入“該帖子已失效”，可后退/前进 |
 | 备忘录mirage | 无搜索阅读联动 | 仅打开可见论坛摘录后追加；不从失效网站或搜索结果提前记录；保留用户原笔记与修改，只收录一次 |
-| Azathoth | 无词条链接 | D17解密聊天中的同名字样可打开词条，分开神话与未核实的组织传闻 |
+| Azathoth | 无词条链接 | D17解密聊天中的同名字样可打开词条，以配图、图集、目录、资料栏和参考资料呈现文学神话；组织传闻仅留在论坛 |
 | D17私聊 | 无对应冻结稿节点 | 原queued Story55场景，19:00且intrusion、code、loan完成；不检查购物、设备到货、base完成或论坛阅读 |
 
 ## 文案与事实边界
@@ -29,7 +29,7 @@ D17私聊30句逐字对照上传交接文档第6节。独立冻结副本为 `tes
 - MIT许可： https://github.com/skx/e-comments/blob/master/LICENSE.md ，blob `8f109c8622200358d584bbe61c28f3d81e55ce1c`。
 - 技术参考： https://developer.mozilla.org/en-US/docs/Web/API/Window/atob ，https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/blockquote 。网页历史复用项目已有browserData.navigation，不另建路由或计时器。
 
-全部站点为原浏览器中的本地剧情页面，无真实暗网、登录、银行或评论服务请求；无新增图片、字体和远程资源。
+全部站点为原浏览器中的本地页面，无真实暗网、登录、银行或评论服务请求。新增四张随站点打包的 WebP 图片；无运行时远程图片、字体请求。
 
 ## 回归与复现
 
@@ -51,4 +51,4 @@ The first review was rejected by the user for looking like a plain document. The
 
 The old “含 Mirage 的回覆” clue label and encyclopedia organization summary are removed from the website. The three approved comments, unread-content restriction, expired-login result, note idempotency and all 30 invitation lines are preserved. The encyclopedia contains ordinary mythology only. Illustration, photography, licensing and source references are in `public/assets/browser/d17/SOURCES.md`.
 
-Visual acceptance now checks image decoding, the expanded contents list, image gallery, and 320/390/430-pixel widths, in addition to the original interaction checks. A passing unit test alone does not count as visual acceptance; review the generated phone screenshots before handing over the preview.
+The contents state is retained in the existing browser route parameters so phone status redraws cannot collapse it during reading. Visual acceptance now checks image decoding, the expanded contents list, image gallery, and 320/390/430-pixel widths, in addition to the original interaction checks. A passing unit test alone does not count as visual acceptance; review the generated phone screenshots before handing over the preview.
