@@ -1,0 +1,146 @@
+{
+  "queries": [
+    {
+      "query": "mirage",
+      "broad": true,
+      "expected_count": 8,
+      "max_clue_results": 2,
+      "results": [
+        {
+          "id": "d17-mirage-js",
+          "title": "Mirage JS — 前端開發的 API 模擬工具",
+          "kind": "docs",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://miragejs.com/",
+          "date": "2024-09-18"
+        },
+        {
+          "id": "d17-mirage-music",
+          "title": "MIRAGE / 03:17 — Glass Hours 新作試聽筆記",
+          "kind": "music",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://halfstep.fm/releases/mirage-0317",
+          "date": "2024-10-26"
+        },
+        {
+          "id": "d17-mirage-old",
+          "title": "Mirage Photo｜風景與底片作品集",
+          "kind": "download",
+          "intent": "unrelated",
+          "status": "expired",
+          "url": "https://mirage-archive.org/",
+          "date": null
+        },
+        {
+          "id": "d17-mirage-fake",
+          "title": "Mirage Plus｜雲端素材與桌布",
+          "kind": "download",
+          "intent": "unrelated",
+          "status": "unsafe",
+          "url": "https://mirage-access.net/login",
+          "date": null
+        },
+        {
+          "id": "d17-xingyue",
+          "title": "求助，男朋友的手機是不是中病毒了？ — 星月論壇",
+          "kind": "forum",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://bbs.xingyue.club/thread/18427",
+          "date": null
+        },
+        {
+          "id": "d17-mirage-os",
+          "title": "MirageOS：把應用程式組成一個小型系統",
+          "kind": "software",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://mirageos.org/",
+          "date": "2024-06-20"
+        },
+        {
+          "id": "d17-mirage-coast",
+          "title": "Mirage Coast｜把週末留給沒有行程的海邊",
+          "kind": "travel",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://slowroute.travel/journal/mirage-coast",
+          "date": "2025-03-16"
+        },
+        {
+          "id": "d17-mirage-outdated",
+          "title": "MIRAGE / 舊版入口",
+          "kind": "download",
+          "intent": "clue",
+          "status": "outdated",
+          "url": "https://mirage-forum.net/index.html",
+          "date": null
+        }
+      ]
+    },
+    {
+      "query": "azathoth",
+      "broad": true,
+      "expected_count": 6,
+      "max_clue_results": 2,
+      "results": [
+        {
+          "id": "d17-azathoth",
+          "title": "阿撒托斯（Azathoth）— 克蘇魯神話中的外神",
+          "kind": "encyclopedia",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://knowledge.example/entry/azathoth",
+          "date": null
+        },
+        {
+          "id": "d17-azathoth-culture",
+          "title": "AZATHOTH — Nocturne Below：首張專輯試聽",
+          "kind": "music",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://halfstep.example/reviews/nocturne-below",
+          "date": "2024-10-26"
+        },
+        {
+          "id": "d17-azathoth-report",
+          "title": "求助：這份2012年的英文教程作者到底是誰？",
+          "kind": "bbs",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://computer-tea.example/thread/20120417",
+          "date": "2023-04-17"
+        },
+        {
+          "id": "d17-azathoth-debate",
+          "title": "Azathoth｜《深淵圖書館》Boss戰與背景設定",
+          "kind": "guide",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://archivepad.example/abyss-library/azathoth",
+          "date": "2025-01-12"
+        },
+        {
+          "id": "d17-azathoth-notes",
+          "title": "一個叫 Azathoth 的名字：我聽過的幾件舊事",
+          "kind": "oldblog",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://nightvoyage.example/2018/09/azathoth",
+          "date": "2018-09-06"
+        },
+        {
+          "id": "d17-azathoth-spelling",
+          "title": "AZATHOTH：The Sleeper Between Stars",
+          "kind": "portfolio",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://mira-r.example/works/azathoth",
+          "date": "2025-02-14"
+        }
+      ]
+    }
+  ]
+}

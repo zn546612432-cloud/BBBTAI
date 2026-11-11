@@ -1,0 +1,53 @@
+/* Adapted from skx/e-comments, client/css/e-comments.css.
+ * Copyright (c) 2014 Steve Kemp. MIT; see e-comments-LICENSE.md. */
+
+.xingyue-forum .comment {
+	border: 1px solid black;
+        background-color: white;
+        margin: 10px 0px;
+
+}
+.xingyue-forum .comment-spacing {
+        margin: 15px;
+}
+
+.xingyue-forum .comment .body {
+	padding: 10px 10px;
+}
+
+.xingyue-forum .comment .replyto {
+    text-align:right;
+    margin:2px;
+    padding:2px;
+}
+.xingyue-forum .comment .replyto div {
+    text-align: left;
+}
+.xingyue-forum .comment .title {
+        background-color: #ddd;
+	font-weight: bold;
+	font-size: 110%;
+	padding: 5px;
+
+}
+
+.xingyue-forum .comment .title a {
+        color: black !important;
+}
+
+.xingyue-forum .comment .title a:hover {
+        color: black !important;
+}
+
+.xingyue-forum .comment .link {
+	float: right;
+        padding-top: 0.25ex;
+        padding-right: 0.5em;
+}
+
+.xingyue-forum .comment .tagline {
+        text-align: left;
+	border-bottom: 1px solid #ddd;
+	font-size: 96%;
+	padding: 0.26ex 10px !important;
+}

@@ -1,0 +1,300 @@
+{
+  "baseline": "e6dde9421b3d6f8a51cd4260b6c3b121a05afa76",
+  "media": {
+    "cosmic": "/assets/browser/d17/azathoth-cover.webp",
+    "community": "/assets/browser/d17/community-cover.webp",
+    "island": "/assets/browser/d17/avatar-island.webp",
+    "fish": "/assets/browser/d17/avatar-fish.webp",
+    "server": "/assets/browser/d17/server-room.webp",
+    "record": "/assets/browser/d17/record-desk.webp"
+  },
+  "pages": [
+    {
+      "id": "d17-azathoth",
+      "title": "阿撒托斯 — 百度百科",
+      "url": "https://baike.baidu.com/item/阿撒托斯",
+      "label": "百度百科",
+      "keywords": [
+        "azathoth",
+        "阿撒托斯"
+      ],
+      "desc": "阿撒托斯（Azathoth），洛夫克拉夫特筆下的虛構存在。詞條整理其文學形象，以及與奈亞拉托提普的關係。",
+      "reference": true
+    },
+    {
+      "id": "d17-azathoth-culture",
+      "group": "azathoth",
+      "kind": "feature",
+      "title": "Azathoth 是哪一派？公開程式碼與封閉社群之間",
+      "url": "https://digital-margin.net/features/azathoth",
+      "label": "數位邊界",
+      "keywords": [
+        "azathoth",
+        "阿撒托斯",
+        "azathoth 流派"
+      ],
+      "desc": "有人叫它灰帽社群，有人只認它的公開工具。從早年的技術文章，到始終不對外開放的內部論壇。",
+      "article": {
+        "style": "feature",
+        "brand": "數位邊界",
+        "category": "TECH CULTURE / 深度",
+        "date": "2024-08-19",
+        "author": "周硯・技術文化觀察",
+        "hero": "server",
+        "caption": "同一個名字，出現在程式碼註解、舊論壇與不同版本的傳聞中。",
+        "lead": "最容易被找到的是名字，最難被確認的是邊界。",
+        "sections": [
+          {
+            "heading": "研究社群，還是灰帽組織？",
+            "paragraphs": [
+              "把 Azathoth 寫進搜尋欄，第一頁往往先把人帶回克蘇魯神話。換一批關鍵字，才會看見它作為技術社群名稱留下的痕跡：逆向分析筆記、匿名通訊實驗，以及被轉載很多次的程式設計文章。",
+              "一些作者把它歸到灰帽一派，理由是它不只討論如何修補系統，也追問系統為什麼能被控制。另一些讀者反對這種分類：公開工具能做什麼，不能直接證明寫工具的人做過什麼。"
+            ]
+          },
+          {
+            "heading": "公開資料與會員區不是一回事",
+            "paragraphs": [
+              "早年的公開項目附有範例和說明，不少自學者從轉載接觸到這個名字。但常被提及的內部論壇並不開放註冊，外面流傳的課程包也混有舊版本、缺頁和重新拼裝的內容。",
+              "有賣家用「內部資料」替普通教程抬價，也有人把公開項目換一個封面就收費。價格高、附件多，並不代表出處可靠。"
+            ]
+          },
+          {
+            "heading": "名聲是怎麼長出來的",
+            "paragraphs": [
+              "Azathoth 沒有一份讓外界核驗的成員名單。幾起被冠上這個名字的網站事件，只有截圖與轉述；同一段公開程式碼被不同人使用，也讓歸因更加混亂。",
+              "與其把所有傳聞拼成一個無所不能的組織，不如分開看：公開項目是一回事，自稱成員的人是另一回事，事件裡留下的署名又是第三回事。"
+            ]
+          }
+        ],
+        "related": [
+          "d17-azathoth-report",
+          "d17-azathoth-notes",
+          "d17-azathoth-debate"
+        ]
+      }
+    },
+    {
+      "id": "d17-azathoth-report",
+      "group": "azathoth",
+      "kind": "news",
+      "title": "「靜鐘」事件回看：三個鏡像，一份署名 Azathoth 的公告",
+      "url": "https://northline.news/archive/2020/silent-bell",
+      "label": "北線科技",
+      "keywords": [
+        "azathoth",
+        "阿撒托斯",
+        "靜鐘"
+      ],
+      "desc": "2019 年的網站改寫事件留下多份截圖。服務商確認部分頁面曾被替換，但沒有證實公告作者的身分。",
+      "article": {
+        "style": "news",
+        "brand": "北線科技",
+        "category": "網路安全 / 舊聞回看",
+        "date": "2020-02-11",
+        "author": "科技組・陸銘",
+        "hero": "server",
+        "caption": "資料中心示意照片，非涉事服務商現場。",
+        "lead": "網站恢復後，留下來的爭議比公告存在的時間更長。",
+        "sections": [
+          {
+            "heading": "那一夜能確認的事",
+            "paragraphs": [
+              "2019 年 11 月，北橋資料託管的三個公開鏡像先後顯示同一份黑底公告。頁面指責業者把客戶資料交給轉售商，底部只有一行署名：Azathoth。網友後來把這次事件叫作「靜鐘」。",
+              "北橋當時的回覆承認部分公開頁面遭到替換，維護約一小時後恢復；對客戶資料遭轉售的指控則予以否認。兩份聲明都沒有給出足以供外界獨立核驗的完整材料。"
+            ]
+          },
+          {
+            "heading": "截圖之外的空白",
+            "paragraphs": [
+              "網路上後續出現過所謂「資料庫清單」，但其中一份混入了早已公開的範例資料。這讓事件從最初的聲援，轉為對資料真偽與冒名者的爭論。",
+              "署名是否來自那個以公開教程為人熟悉的社群，始終沒有確定答案。有人把頁面的字體當成證據，也有人指出，連公告的截圖都出現過被改字的版本。"
+            ]
+          },
+          {
+            "heading": "半年後仍在流傳的版本",
+            "paragraphs": [
+              "一些轉載把事件寫成「攻破三家資料中心」，把三個鏡像說成三家公司。這種說法與當時服務商的維護公告並不一致。",
+              "本次回看比對的是仍能找到日期的頁面存檔與原始回覆。被刪除的貼文及無法核對出處的聊天截圖，沒有被當作已確認的事實。"
+            ]
+          }
+        ],
+        "facts": [
+          [
+            "時間",
+            "2019年11月"
+          ],
+          [
+            "受影響對象",
+            "北橋資料託管的公開鏡像"
+          ],
+          [
+            "爭議",
+            "署名歸屬與資料真偽"
+          ]
+        ],
+        "related": [
+          "d17-azathoth-culture",
+          "d17-azathoth-debate"
+        ]
+      }
+    },
+    {
+      "id": "d17-azathoth-notes",
+      "group": "azathoth",
+      "kind": "blog",
+      "title": "我讀過的 Azathoth 公開教程，和那些被倒賣的壓縮包",
+      "url": "https://outside-stack.blog/notes/azathoth-reading",
+      "label": "棧外筆記",
+      "keywords": [
+        "azathoth",
+        "阿撒托斯",
+        "azathoth 教程"
+      ],
+      "desc": "整理自學時存下的公開文章。哪些是原始項目，哪些是轉載；「會員版」標籤到底能不能信。",
+      "article": {
+        "style": "notebook",
+        "brand": "棧外筆記",
+        "category": "NOTES / 自學與開源",
+        "date": "2023-07-09",
+        "author": "棧外人",
+        "lead": "資料不會因為裝進有密碼的壓縮包，就突然變得稀有。",
+        "sections": [
+          {
+            "heading": "先把出處寫回來",
+            "paragraphs": [
+              "我第一次看 Azathoth 的文章，是別人貼來的一份翻譯。後來才發現，譯文漏了範例限制，也沒帶上更新日期。我把手上還能對到版本的筆記重新整理，免得下一次又轉到同一份錯的。",
+              "比較適合初學者的，是程式結構閱讀、通訊格式與錯誤處理那幾篇。它們把問題拆開，允許你跟著重現結果；不是把幾個工具名字排在一起就說學會了。"
+            ]
+          },
+          {
+            "heading": "公開項目不是會員資料",
+            "paragraphs": [
+              "能找到作者頁、版本紀錄與授權說明的，才放進我的公開資料索引。有些封面寫著「內部課程」，打開卻連原文的公開標記都沒刪乾淨。",
+              "也有真正找不到來源的檔案。找不到不等於高級，我不替它們背書，更不會因為有人說「會員才看得到」就花錢買。"
+            ]
+          },
+          {
+            "heading": "還沒有補齊的部分",
+            "paragraphs": [
+              "有讀者問到 NS。我沒有它的原始碼，也不把名字相似的專案算作同一個東西。網上那些聲稱可以直接下載的壓縮包，我沒有測試，這裡也不轉。",
+              "這篇只記錄我讀過的公開內容。失效連結會標記時間，重新流出的附件則從頭核對，不用舊評價替新檔案擔保。"
+            ]
+          }
+        ],
+        "facts": [
+          [
+            "整理範圍",
+            "公開文章與範例"
+          ],
+          [
+            "最後修訂",
+            "2023-07-09"
+          ],
+          [
+            "尚缺",
+            "部分原始頁面與版本紀錄"
+          ]
+        ],
+        "related": [
+          "d17-azathoth-culture"
+        ]
+      }
+    },
+    {
+      "id": "d17-azathoth-debate",
+      "group": "azathoth",
+      "kind": "forum",
+      "title": "Azathoth 真有那麼神？還是故事傳著傳著變了",
+      "url": "https://packet-cafe.net/topic/9031",
+      "label": "封包咖啡館",
+      "keywords": [
+        "azathoth",
+        "阿撒托斯"
+      ],
+      "desc": "有人談公開項目，有人翻出「靜鐘」舊截圖。樓內對灰帽、冒名與資料倒賣各有說法。",
+      "article": {
+        "style": "discussion",
+        "brand": "封包咖啡館",
+        "category": "茶水間 / 技術閒談",
+        "date": "2024-12-03",
+        "author": "port_0 · 18則回覆",
+        "lead": "看了三篇轉載，三篇寫的都像不是同一群人。",
+        "sections": [
+          {
+            "heading": "port_0　#1",
+            "paragraphs": [
+              "有人認真整理過嗎？一邊是開源教程，一邊是那些被講得很玄的入侵故事。這到底算哪一派？"
+            ]
+          },
+          {
+            "heading": "faint_signal　#4",
+            "paragraphs": [
+              "我只看過他們公開的東西，品質不差。要叫灰帽也行，但工具不是判決書。別人拿去做了什麼，不能全算到作者頭上。"
+            ]
+          },
+          {
+            "heading": "檸檬路由器　#7",
+            "paragraphs": [
+              "「靜鐘」那次我看過原帖。後來流傳的三家公司其實是三個鏡像，這個版本一直沒人改。事情可能是真的，傳說也可能加了十倍。"
+            ]
+          },
+          {
+            "heading": "sleep-mode　#11",
+            "paragraphs": [
+              "先別買那些內部包。我買過一份，六成是公開文章，另外四成連檔名都對不上。賣家跟 Azathoth 有沒有關係，我現在也說不清。"
+            ]
+          },
+          {
+            "heading": "faint_signal　#18",
+            "paragraphs": [
+              "研究社群、接單的人、冒名蹭名氣的，外面看起來都像同一個標籤。沒有可核驗的出處，就先留個問號吧。"
+            ]
+          }
+        ],
+        "related": [
+          "d17-azathoth-report",
+          "d17-azathoth-notes"
+        ]
+      }
+    },
+    {
+      "id": "d17-azathoth-spelling",
+      "group": "azathoth",
+      "kind": "blog",
+      "title": "Azathoth、Astaroth：相似名字，別混成同一份安全報告",
+      "url": "https://digital-margin.net/notes/similar-names",
+      "label": "數位邊界",
+      "keywords": [
+        "azathoth",
+        "astaroth"
+      ],
+      "desc": "神話名稱、社群暱稱與惡意程式代號常被搜尋結果混在一起。拼字相近不代表存在關聯。",
+      "article": {
+        "style": "notebook",
+        "brand": "數位邊界 / 資料室",
+        "category": "名詞辨析",
+        "date": "2022-05-18",
+        "author": "資料室編輯",
+        "lead": "少看一個字母，可能就找成完全不同的東西。",
+        "sections": [
+          {
+            "heading": "先核對拼字",
+            "paragraphs": [
+              "Azathoth 通常指向克蘇魯神話中的阿撒托斯，也有人拿來當作社群或帳號名稱。Astaroth 則是另一個拼法；在安全文章中，它也被用作資訊竊取惡意程式的名稱。",
+              "Microsoft 在 2019 年發表過 Astaroth 活動的分析。那份報告談的是惡意程式與偵測過程，不能因為名字相似，就拿來證明名為 Azathoth 的社群做過什麼。"
+            ]
+          },
+          {
+            "heading": "轉載容易省掉的東西",
+            "paragraphs": [
+              "搜尋時除了名稱，還要看日期、作者與原始連結。把不同報告的圖片接在同一篇貼文裡，不會讓它們變成同一宗事件。"
+            ]
+          }
+        ],
+        "related": [
+          "d17-azathoth-culture"
+        ]
+      }
+    }
+  ]
+}

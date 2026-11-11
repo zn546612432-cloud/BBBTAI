@@ -259,6 +259,18 @@
           "originDays": [
             13
           ]
+        },
+        "story.d17-invitation": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "incoming-text",
+            "player-send"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            17
+          ]
         }
       }
     },
@@ -502,6 +514,17 @@
           "originDays": [
             14
           ]
+        },
+        "story.d17-browser-notes": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "system-notice"
+          ],
+          "proof": "src/apps/browser/mirage-research.js",
+          "originDays": [
+            17
+          ]
         }
       }
     },
@@ -548,6 +571,17 @@
           "proof": "src/apps/browser/index.js",
           "originDays": [
             14
+          ]
+        },
+        "story.d17-research": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "link"
+          ],
+          "proof": "src/apps/browser/mirage-research.js",
+          "originDays": [
+            17
           ]
         }
       }

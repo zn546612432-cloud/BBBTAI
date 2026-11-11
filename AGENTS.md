@@ -13,3 +13,9 @@ Treat `main` as production; D01=2025-05-19, D55=2025-07-12. Older 90-day DEMO ar
 7. Report separately what is designed, what's supported by existing day-specific code, what still needs adapters, what ran in a browser, and what actually shipped.
 
 For general feature code not related to story data, keep the existing architecture and tests.
+
+## Browser websites and search content
+
+Treat each site as an independent website with its own purpose, sources, images and mobile layout. Inspect real references and licensed open-source examples before implementation. Broad searches must mix unrelated same-name results with relevant pages; do not fill the list with portals. Keep fictional reports and disputed attribution separate from real encyclopedia facts. Preserve approved copy and existing story gates. Click every result and inspect rendered mobile screenshots, images, scrolling and state after shell redraws; passing unit tests alone is not acceptance.
+
+For approved webpage handoffs, preserve exact result order, source ratio and all正文/comments; replace rejected pages rather than appending. Organization knowledge must match each narrator: clues may appear only in a few replies or a limited personal recollection. Never turn unrelated music/game/art pages into organization reports or cross-link them to hidden lore. Allow normal game-guide terms in a fictional game website; ban only meta prompts about the phone story.

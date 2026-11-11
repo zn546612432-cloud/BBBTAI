@@ -1,5 +1,6 @@
 import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
+import {applyD17Definition} from '../../story/d17/definition.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
 import {syncBaseFrameworkRevision,syncBaseLinkPipeRevision,deployment} from './projects.js';
@@ -245,6 +246,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ applyD17Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
  syncLegacyLoanReceipt55(s);

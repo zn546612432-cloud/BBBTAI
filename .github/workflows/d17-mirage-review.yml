@@ -1,0 +1,58 @@
+name: D17 Mirage search and invitation review
+on:
+  push:
+    branches: [feature/d17-mirage-search-forum]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/story/d17/**'
+      - 'src/apps/browser/**'
+      - 'scripts/d17-mirage-mobile-smoke.mjs'
+      - 'tests/d17-mirage-research.test.mjs'
+      - '.github/workflows/d17-mirage-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: d17-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/audit-story-skill.mjs
+      - run: npm run story:check -- --strict docs/story-packets/d17-mirage-research.json
+      - name: Local story, save, loan, phone and editor regression
+        run: >-
+          node --test tests/d17-mirage-research.test.mjs tests/d14-d24-content.test.mjs
+          tests/story55-runtime.test.mjs tests/story55-default-migration.test.mjs
+          tests/story55-rebuild.test.mjs tests/chat-lifecycle.test.mjs
+          tests/d13-native-mail-wallet-call.test.mjs
+          tests/d13-short-charge-voice-call-regression.test.mjs
+          tests/developer-chat-classic-restore.test.mjs
+          tests/story55-chat-source-library.test.mjs
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Click mobile search, forum, notes and all thirty dialogue lines
+        run: |
+          mkdir -p /tmp/d17-site/BBBTAI
+          cp -a dist/. /tmp/d17-site/BBBTAI/
+          python3 -m http.server 5173 --bind 127.0.0.1 --directory /tmp/d17-site > /tmp/d17-server.log 2>&1 &
+          SMOKE_URL=http://127.0.0.1:5173/BBBTAI/ node scripts/d17-mirage-mobile-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d17-review-evidence
+          path: qa-results/d17/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d17-review-phone-build
+          path: dist/
