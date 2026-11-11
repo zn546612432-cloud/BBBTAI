@@ -169,11 +169,13 @@ try{
    assert.equal(await page.evaluate(()=>document.querySelector('#screen-layer .saf-content').scrollWidth<=document.querySelector('#screen-layer .saf-content').clientWidth),true);
   }
   await page.setViewportSize({width:390,height:664});
-  if(id==='d17-azathoth-culture'){
-   const related=screen.locator('.archive-related [data-page="d17-azathoth-report"]');await related.scrollIntoViewIfNeeded();await related.click();
-   await screen.locator('.archive-news').waitFor();assert.equal(JSON.stringify((await saved()).content.notes),before);
-   await action('browser-back').click();await screen.locator('.archive-feature').waitFor();
+  if(id==='d17-azathoth-report'){
+   await screen.locator('.bbs-floor[data-floor="8"]').scrollIntoViewIfNeeded();await capture('v3-forum-floor8.png');
+   assert.equal(await screen.locator('.bbs-floor').count(),13);
+  }else{
+   await screen.locator('.archive-body').scrollIntoViewIfNeeded();await capture(id+'-body.png');
   }
+  assert.equal(JSON.stringify((await saved()).content.notes),before);
   await action('browser-back').click();await screen.locator('[data-page="d17-azathoth-culture"]').waitFor();
  }
  assert.deepEqual(errors,[]);

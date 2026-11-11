@@ -3,6 +3,8 @@
     {
       "query": "mirage",
       "broad": true,
+      "expected_count": 8,
+      "max_clue_results": 2,
       "results": [
         {
           "id": "d17-mirage-js",
@@ -25,7 +27,7 @@
         {
           "id": "d17-mirage-old",
           "title": "Mirage Photo｜風景與底片作品集",
-          "kind": "portfolio",
+          "kind": "download",
           "intent": "unrelated",
           "status": "expired",
           "url": "https://mirage-archive.org/",
@@ -47,7 +49,7 @@
           "intent": "clue",
           "status": "live",
           "url": "https://bbs.xingyue.club/thread/18427",
-          "date": "2024-11-08"
+          "date": null
         },
         {
           "id": "d17-mirage-os",
@@ -80,61 +82,63 @@
     },
     {
       "query": "azathoth",
-      "broad": false,
+      "broad": true,
+      "expected_count": 6,
+      "max_clue_results": 2,
       "results": [
         {
           "id": "d17-azathoth",
-          "title": "阿撒托斯 — 百度百科",
+          "title": "阿撒托斯（Azathoth）— 克蘇魯神話中的外神",
           "kind": "encyclopedia",
-          "intent": "clue",
+          "intent": "unrelated",
           "status": "live",
-          "url": "https://baike.baidu.com/item/阿撒托斯",
+          "url": "https://knowledge.example/entry/azathoth",
           "date": null
         },
         {
           "id": "d17-azathoth-culture",
-          "title": "Azathoth 是哪一派？公開程式碼與封閉社群之間",
-          "kind": "feature",
-          "intent": "clue",
+          "title": "AZATHOTH — Nocturne Below：首張專輯試聽",
+          "kind": "music",
+          "intent": "unrelated",
           "status": "live",
-          "url": "https://digital-margin.net/features/azathoth",
-          "date": "2024-08-19"
+          "url": "https://halfstep.example/reviews/nocturne-below",
+          "date": "2024-10-26"
         },
         {
           "id": "d17-azathoth-report",
-          "title": "「靜鐘」事件回看：三個鏡像，一份署名 Azathoth 的公告",
-          "kind": "news",
+          "title": "求助：這份2012年的英文教程作者到底是誰？",
+          "kind": "bbs",
           "intent": "clue",
           "status": "live",
-          "url": "https://northline.news/archive/2020/silent-bell",
-          "date": "2020-02-11"
-        },
-        {
-          "id": "d17-azathoth-notes",
-          "title": "我讀過的 Azathoth 公開教程，和那些被倒賣的壓縮包",
-          "kind": "blog",
-          "intent": "clue",
-          "status": "live",
-          "url": "https://outside-stack.blog/notes/azathoth-reading",
-          "date": "2023-07-09"
+          "url": "https://computer-tea.example/thread/20120417",
+          "date": "2023-04-17"
         },
         {
           "id": "d17-azathoth-debate",
-          "title": "Azathoth 真有那麼神？還是故事傳著傳著變了",
-          "kind": "forum",
+          "title": "Azathoth｜《深淵圖書館》Boss戰與背景設定",
+          "kind": "guide",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://archivepad.example/abyss-library/azathoth",
+          "date": "2025-01-12"
+        },
+        {
+          "id": "d17-azathoth-notes",
+          "title": "一個叫 Azathoth 的名字：我聽過的幾件舊事",
+          "kind": "oldblog",
           "intent": "clue",
           "status": "live",
-          "url": "https://packet-cafe.net/topic/9031",
-          "date": "2024-12-03"
+          "url": "https://nightvoyage.example/2018/09/azathoth",
+          "date": "2018-09-06"
         },
         {
           "id": "d17-azathoth-spelling",
-          "title": "Azathoth、Astaroth：相似名字，別混成同一份安全報告",
-          "kind": "blog",
-          "intent": "clue",
+          "title": "AZATHOTH：The Sleeper Between Stars",
+          "kind": "portfolio",
+          "intent": "unrelated",
           "status": "live",
-          "url": "https://digital-margin.net/notes/similar-names",
-          "date": "2022-05-18"
+          "url": "https://mira-r.example/works/azathoth",
+          "date": "2025-02-14"
         }
       ]
     }

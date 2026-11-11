@@ -41,6 +41,31 @@
       "id": "d17-record-desk",
       "source": "bundled-local",
       "path": "public/assets/browser/d17/record-desk.webp"
+    },
+    {
+      "id": "d17-nocturne-cover",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/nocturne-cover.webp"
+    },
+    {
+      "id": "d17-abyss-boss",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/abyss-boss.webp"
+    },
+    {
+      "id": "d17-old-keyboard",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/old-keyboard.webp"
+    },
+    {
+      "id": "d17-sleeper-art",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/sleeper-art.webp"
+    },
+    {
+      "id": "d17-tutorial-scan",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/tutorial-scan.svg"
     }
   ],
   "events": [
@@ -913,7 +938,7 @@
     {
       "id": "d17-check-mobile",
       "type": "mobile",
-      "verify": "Mirage八條、Azathoth六條結果；九個新增正文均可閱讀及返回，相關文章可跳轉，320/390/430無橫向溢出。論壇、百科、圖集與原生對話保持可用。"
+      "verify": "Azathoth恰好六條：百科、樂評、普通求助帖、攻略、舊博客、作品集；四無關兩相關；13樓順序與8樓資訊正確；320/390/430無溢出，原Mirage與借款前置不變。"
     }
   ]
 }

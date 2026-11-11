@@ -97,7 +97,7 @@ test('migration preserves in-flight history, edited notes and completed old opti
  assert.equal(JSON.stringify(s.content.conversations),before);assert.equal(s.bankData.balance,balance);
  assert.equal(node.at,'00:00');assert.ok(completed(s,'rumours'));
  const reference=renderResearchPage(s,D17_WEB_PAGES.find(p=>p.reference));
- assert.match(reference,/基本資料/);assert.match(reference,/角色關係/);assert.doesNotMatch(reference,/陳熙泰|陈熙泰|管理員|黑客組織|同名傳聞/);
+ assert.match(reference,/基本資料/);assert.match(reference,/相關角色/);assert.doesNotMatch(reference,/陳熙泰|陈熙泰|管理員|黑客組織|同名傳聞/);
 });
 
 
@@ -128,27 +128,21 @@ test('the public pages use real bundled imagery and no plot instructions, with a
 });
 
 
-test('search mixes same-name websites and Azathoth public reporting without leaking identity or recording unrelated pages',()=>{
- const s=phone(),c=ctx(s);
- const mirage=render(c,{route:'/search',params:{query:'mirage'}});
- for(const id of ['d17-mirage-js','d17-mirage-music','d17-mirage-os','d17-mirage-coast'])assert.match(mirage,new RegExp('data-page="'+id+'"'));
- assert.doesNotMatch(mirage,/data-page="d17-azathoth/);
- const azathoth=render(c,{route:'/search',params:{query:'azathoth'}});
- for(const id of ['d17-azathoth','d17-azathoth-culture','d17-azathoth-report','d17-azathoth-notes','d17-azathoth-debate'])assert.match(azathoth,new RegExp('data-page="'+id+'"'));
- assert.doesNotMatch(azathoth,/data-page="d17-mirage/);
- const balance=JSON.stringify(s.bankData),notes=JSON.stringify(s.content.notes);
- for(const p of D17_WEB_PAGES.filter(p=>p.article)){
-  assert.ok(p.article.date<'2025-06-05');
-  handle('browser-open',{dataset:{page:p.id}},c,{route:'/search',params:{query:p.group}});
-  const html=render(c,s.nav.current);
-  assert.match(html,/web-archive/);assert.match(html,/<time datetime=/);
-  assert.doesNotMatch(html,/陳熙泰|陈熙泰|現任管理員|玩家|遊戲提示|本地模擬/);
-  for(const id of p.article.related)assert.ok(D17_WEB_PAGES.some(x=>x.id===id));
+test('v3 handoff replaces exactly six results, four unrelated and two limited sources',()=>{
+ const expected=JSON.parse(readFileSync(new URL('fixtures/d17-azathoth-v3.json',import.meta.url)));
+ const pages=D17_WEB_PAGES.filter(p=>p.reference||p.group==='azathoth');assert.deepEqual(pages,expected);
+ assert.equal(pages.filter(p=>p.intent==='unrelated').length,4);assert.equal(pages.filter(p=>p.intent==='clue').length,2);
+ const s=phone(),c=ctx(s),before=JSON.stringify(s.content.notes);
+ for(const p of pages){handle('browser-open',{dataset:{page:p.id}},c,{route:'/search',params:{query:'azathoth'}});const html=render(c,s.nav.current);
+ assert.doesNotMatch(html,/靜鐘|數位邊界|現任管理員|Dr Ouroboros|熙泰|本頁為遊戲內|本頁無關|收錄線索/);
+ if(p.article)assert.ok(p.article.date<'2025-06-05');
+ if(p.intent==='unrelated')assert.doesNotMatch(html,/黑客|內部論壇|組織|機房/);
  }
- assert.equal(JSON.stringify(s.bankData),balance);assert.equal(JSON.stringify(s.content.notes),notes);
- assert.equal(s.story55.browserReadIds,undefined);
- const report=render(c,{route:'/page',params:{page:'d17-azathoth-report'}});
- assert.match(report,/2019 年 11 月/);assert.match(report,/三個鏡像/);assert.match(report,/署名是否/);
- const notesPage=render(c,{route:'/page',params:{page:'d17-azathoth-notes'}});
- assert.match(notesPage,/我沒有它的原始碼/);
+ assert.equal(JSON.stringify(s.content.notes),before);assert.equal(s.story55.browserReadIds,undefined);
+ const thread=render(c,{route:'/page',params:{page:'d17-azathoth-report'}});
+ assert.equal((thread.match(/class="bbs-floor"/g)||[]).length,13);
+ assert.ok(thread.indexOf('data-floor="8"')<thread.indexOf('以前有一批人共用這個署名'));
+ assert.ok(thread.indexOf('data-floor="10"')<thread.indexOf('外面那些收費會員站大多是假的'));
+ const guide=render(c,{route:'/page',params:{page:'d17-azathoth-debate'}});assert.match(guide,/星霧書籤/);assert.match(guide,/玩家/);
+ const music=render(c,{route:'/page',params:{page:'d17-azathoth-culture'}});assert.match(music,/When the Lamps Go Out/);
 });

@@ -36,3 +36,9 @@ Public-world expansion references (checked 2026-11-11):
 - https://www.microsoft.com/en-us/security/blog/2019/07/08/dismantling-a-fileless-campaign-microsoft-defender-atp-next-gen-protection-exposes-astaroth-attack/ : Astaroth spelling distinction only; no attack instructions or invented Azathoth attribution.
 
 Glass Hours, HALFSTEP, Slow Route, Digital Margin, Northline, Outside Stack, Packet Cafe and Northbridge are authored fictional publications/subjects. The Silent Bell incident and forum debate are invented story-world writing. They are not claims that real companies were attacked or that real journalists published these stories. Copy keeps public projects separate from private member material and does not reveal the hidden administrator. All dates precede D17 (2025-06-04).
+
+## User handoff v3 replacement
+
+The prior Azathoth feature/news/debate copy is superseded by the supplied six-site handoff (2026-11-11). Exact display copy is frozen in tests/fixtures/d17-azathoth-v3.json. Previous pages and image mappings are backed up in docs/d17-azathoth-before-v3.json; prior Git revisions preserve rollback. Internal page IDs stay stable; displayed URLs now use .example and no longer impersonate real publishers. Mirage search is untouched.
+
+New assets: nocturne-cover.webp and abyss-boss.webp are original generated illustrations for the fictional record and game. sleeper-art.webp is an original artist-portfolio painting. tutorial-scan.svg is an authored benign document prop, not a real recovered document; it contains no executable code. old-keyboard.webp is Unsplash photo-1587829741301-dc798b83add3 under the previously linked Unsplash license, used as a generic keyboard illustration, not a person or incident photograph.
