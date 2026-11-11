@@ -7,7 +7,7 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const player=m=>['me','熙蒙'].includes(m.from);
 const archive=(s,m,chat)=>{(s.story55.contentArchives??=[]).push({revision:'d05-d17-v2',channel:'wechat',conversationId:chat,original:structuredClone(m)});};
 function remove(s,c,m){
- archive(s,m,c.id);c.messages=c.messages.filter(x=>x!==m);c.unread=Math.max(0,(Number(c.unread)||0)-1);
+ archive(s,m,c.id);c.messages=c.messages.filter(x=>x!==m);if(s.notifications?.some(n=>n.messageId===m.id&&n.conversationId===c.id))c.unread=Math.max(0,(Number(c.unread)||0)-1);
  s.notifications=(s.notifications||[]).filter(n=>n.messageId!==m.id);
  s.events=(s.events||[]).filter(e=>e.messageId!==m.id);
 }
@@ -45,14 +45,15 @@ export function syncApprovedChatV2(s){
   }
   const q=track?.ensure(s)?.[before.id];
   const recognized=old.filter(m=>before.lines.some(l=>l.who===m.from&&l.text===m.text));
+  if(after.source==='d15'&&after.id==='room'&&q?.skipped&&!q.completed){q.skipped=false;q.historySettled=false;q.started=false;q.index=0;q.nextAt=null;q.dueAt=null;}
   if(!recognized.length)continue;
   if(before.lines.every(l=>l.who!=='me')&&old.length===recognized.length){
    const finished=q?.completed,limit=finished?after.lines.length:Math.min(q?.index||recognized.length,after.lines.length);
-   const first=recognized[0],slot=chat.messages.indexOf(first),when={day:first.day||before.day,clock:first.time||before.at,sentDate:first.sentDate};
+   const first=recognized[0],slot=chat.messages.indexOf(first),unread=new Set(recognized.filter(m=>s.notifications?.some(n=>n.messageId===m.id&&n.conversationId===chat.id)).map(m=>Number(m.id.slice(prefix.length))));
    for(const m of recognized)remove(s,chat,m);
    const added=[];
    for(let i=0;i<limit;i++){
-    const l=after.lines[i];const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:chat.id,messageId:prefix+i,from:l.who,text:l.text,kind:l.kind||'text',...when,storyTag:'storyD'+String(before.day).padStart(2,'0'),silent:true,lifecycleId:before.source+':'+before.id});
+    const l=after.lines[i],former=recognized.find(m=>m.id===prefix+i)||recognized.at(-1),when={day:former.day||before.day,clock:former.time||before.at,sentDate:former.sentDate};const m=appendAuthoredPhoneMessage(s,{channel:'wechat',conversationId:chat.id,messageId:prefix+i,from:l.who,text:l.text,kind:l.kind||'text',...when,storyTag:'storyD'+String(before.day).padStart(2,'0'),notify:unread.has(i)||(i>=before.lines.length&&unread.has(before.lines.length-1)),silent:true,lifecycleId:before.source+':'+before.id});
     if(m)added.push(m);
    }
    chat.messages=chat.messages.filter(m=>!added.includes(m));chat.messages.splice(Math.max(0,slot),0,...added);

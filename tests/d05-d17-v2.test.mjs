@@ -113,6 +113,7 @@ test('D15 Wang starts no earlier than 16:30 and only after the complete loan; D1
  track.tick(s,now+=3000);track.tick(s,now+=3000);assert.equal(chat(s,'wang').messages.some(m=>m.text==='你下午在房裡罵誰？'),false);
  s.clock='20:40';s.story55.completed.loan={day:15,clock:'20:40'};const q=track.ensure(s);for(const d of track.defs)if(d.id!=='room')q[d.id].completed=true;
  track.tick(s,now+=3000);track.tick(s,now+=3000);assert.equal(chat(s,'wang').messages.find(m=>m.text==='你下午在房裡罵誰？').time,'20:40');
+ const crossed=phone(16,'08:05');delete crossed.story55.completed.loan;const lateTrack=D14_D24_TRACKS.find(x=>x.track.day===15).track;lateTrack.tick(crossed,now+=3000);assert.equal(chat(crossed,'wang').messages.some(m=>m.text==='你下午在房裡罵誰？'),false);crossed.story55.completed.loan={day:16,clock:'08:05'};lateTrack.tick(crossed,now+=3000);lateTrack.tick(crossed,now+=3000);const delayed=chat(crossed,'wang').messages.find(m=>m.text==='你下午在房裡罵誰？');assert.equal(delayed.day,16);assert.equal(delayed.time,'08:05');
  const d16=D14_D24_TRACKS.find(x=>x.track.day===16).track;assert.ok(d16.defs.some(d=>d.chat==='wang'&&d.id==='hardware'));
  const a=phone(16,'16:00'),lines=drain(a,d16,'after-rehearsal','group');assert.equal(lines.length,11);assert.equal(lines.filter(m=>m.from==='me').length,2);assert.equal(lines.at(-1).text,'？');
 });
@@ -123,9 +124,10 @@ test('V2 migration upgrades known scripts/queues only, retains real player/histo
  const player={id:'d10-wang-supper-1',from:'me',text:'這是我親自發的',day:10};chat(s,'wang').messages.push(player);
  const custom={id:'custom',from:'熙旺',text:'不能覆蓋',authored:true};chat(s,'wang').messages.push(custom);
  const history=structuredClone(chat(s,'wang').messages.filter(m=>m.sentDate<'2025-05-19'));
+ c.unread=3;s.notifications.push({id:'unrelated-unread',conversationId:'group',messageId:'unrelated-message'});
  const oldMove=previous.story.find(x=>x.node.id==='move');s.story55.config.scenes.move=structuredClone(oldMove.lines);s.story55.scenes.move={index:3};delete s.story55.completed.move;
  syncApprovedChatV2(s);assert.deepEqual(c.messages.filter(m=>m.id.startsWith('d10-carry-')).map(m=>m.text),previous.scenes.find(x=>x.before?.id==='carry'&&x.before.source==='d10').after.lines.map(l=>l.text));
- assert.equal(player.text,'這是我親自發的');assert.equal(custom.text,'不能覆蓋');assert.deepEqual(chat(s,'wang').messages.filter(m=>m.sentDate<'2025-05-19'),history);
+ assert.equal(c.unread,3,'read authored copy must not create fresh unread counts');assert.equal(player.text,'這是我親自發的');assert.equal(custom.text,'不能覆蓋');assert.deepEqual(chat(s,'wang').messages.filter(m=>m.sentDate<'2025-05-19'),history);
  assert.equal(s.story55.config.scenes.move.length,10);assert.equal(s.story55.scenes.move.index,3);assert.equal(s.story55.scenes.move.messagePrefix,undefined);
  assert.equal(syncApprovedChatV2(s),false);assert.ok(s.story55.contentArchives.length);
 });
@@ -133,3 +135,17 @@ test('V2 migration upgrades known scripts/queues only, retains real player/histo
 test('D14 shows its exact encrypted filename using the existing native KIRA file card',()=>{
  const s=phone(14,'09:16');tickStory55(s);const html=kiraDetail(s,'code-mail');assert.match(html,/Ouroboros_Tear_package.key/);assert.match(html,/加密附件/);assert.match(html,/data-action="s55-read-mail"/);assert.match(html,/今天 09:16/);
 });
+
+test('native Send retains the next consecutive preset installed by a synchronous UI render',t=>{
+ const s=phone(9,'18:00');s.story55.wishes={records:{'d07-tableware':{status:'delivered'}},story:{lines:[],delivered:['wish-tableware-photo']}};
+ const q=d07RepliesTrack.ensure(s);for(const [id,row] of Object.entries(q))if(id!=='tableware-received')row.completed=true;
+ const first=nativeWeChatComposer(s,'wang');assert.equal(first.text,'認真的嗎哥哥？');
+ const input={value:first.text,dataset:{storyStage:first.stage}},form={dataset:{channel:'wechat',id:'wang'},elements:{text:input}};
+ t.mock.method(globalThis,'FormData',function(source){return {get:name=>source.elements[name].value};});
+ const uiStore={get:()=>s,update:fn=>{fn(s);const next=nativeWeChatComposer(s,'wang');input.value=next.text??'';input.dataset.storyStage=next.stage;}};
+ sendChat(form,{store:uiStore});assert.equal(input.value,'我買的是碗，不是垃圾桶。');
+ assert.equal(chat(s,'wang').messages.filter(m=>m.from==='me').length,1);
+ sendChat(form,{store:uiStore});assert.equal(chat(s,'wang').messages.filter(m=>m.from==='me').length,2);
+ assert.equal(input.value,'');
+});
+import {sendChat} from '../src/components/chat.js';

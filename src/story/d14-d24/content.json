@@ -172,7 +172,8 @@
           "text": "不用，有人給我買單了。"
         }
       ],
-      "requiresNode": "loan"
+      "requiresNode": "loan",
+      "mandatory": true
     },
     {
       "day": 16,
