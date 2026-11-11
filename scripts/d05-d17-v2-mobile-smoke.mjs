@@ -85,7 +85,15 @@ try{
   for(let i=0;i<100;i++){s.story55.wishes.story.nextAt=0;tickWishes(s,i*3000);}
   addWish(s,'d06-keyboard');purchaseWish(s,'d06-keyboard');s.day=8;s.clock='18:00';s.unlocked=false;return s;
  },{release});await load(s);await finishTrack('d07-reply','keyboard-received','xiaoxin','d08-keyboard-received');
- await prepare(7,'18:00','wechat','/chat/wang');await screen.locator('.wx-composer input:not([disabled])').waitFor();
+ await prepare(7,'18:00','wechat','/chat/wang');
+ // Prior unread fixed replies keep priority. Complete them through their own
+ // native Send before testing a genuinely free message; never swallow them.
+ for(let i=0;i<25;i++){
+  const composer=await page.evaluate(async({release})=>{const {nativeWeChatComposer}=await import(release.url+'src/services/messaging/preset-replies.js');return nativeWeChatComposer(JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')),'wang');},{release});
+  if(composer.text)await nativeDraft(composer.text);else if(!composer.disabled)break;
+  await page.waitForTimeout(2200);
+ }
+ await screen.locator('.wx-composer input:not([disabled]):not([data-story-type])').waitFor({timeout:15000});
  await screen.locator('.wx-composer input').fill('哥哥');await screen.locator('.wx-composer button[type="submit"]').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.brotherEgg?.stage==='waiting',null,{timeout:15000});
  await screen.locator('.wx-composer input').fill('想你啦');await screen.locator('.wx-composer button[type="submit"]').click();

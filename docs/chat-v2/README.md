@@ -33,4 +33,4 @@ Story55 replacements: return, move, loan.
 
 D15 room: current main contains14lines; the user’s complete eight-line target takes precedence, with the16:30/full-loan gate. D17 invitation30lines and all six websites remain unchanged. Existing stickers:112(D10),002(D11 user choice),001(D12); no new images.
 
-Evidence: main-baseline.json, current.json, old-to-new.json; CI artifact chat-v2-review-evidence contains actual native output, screenshots and recording.
+Evidence: main-all-chat-source.json (120 source scenes,1015 lines), main-baseline.json, current.json, old-to-new.json and old-to-new.md; CI artifact chat-v2-review-evidence contains actual native output, screenshots and recording.
