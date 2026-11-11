@@ -41,7 +41,7 @@ jobs:
       - run: npm run build:pages
       - run: npm install --no-save --no-package-lock playwright@1.56.1
       - run: npx playwright install --with-deps chromium
-      - name: Click mobile search, forum, notes and all thirty native Send lines
+      - name: Click mobile search, forum, notes and all thirty dialogue lines
         run: |
           mkdir -p /tmp/d17-site/BBBTAI
           cp -a dist/. /tmp/d17-site/BBBTAI/
