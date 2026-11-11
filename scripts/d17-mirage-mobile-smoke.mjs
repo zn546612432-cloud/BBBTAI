@@ -152,7 +152,10 @@ try{
  }
  await page.setViewportSize({width:390,height:664});
  assert.deepEqual(errors,[]);
- await route(17,'19:00','browser','/search',{query:'azathoth'});
+ // Search through the address bar so the existing browser history records
+ // the new query, rather than injecting a route without its navigation entry.
+ await screen.locator('.saf-address input').fill('azathoth');
+ await screen.locator('.saf-address input').press('Enter');
  await screen.locator('[data-page="d17-azathoth-culture"]').waitFor();
  assert.equal(await screen.locator('.saf-result').count(),6);
  await capture('12-azathoth-search.png');
