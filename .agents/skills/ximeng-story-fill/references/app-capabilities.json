@@ -122,6 +122,19 @@
           "originDays": [
             14
           ]
+        },
+        "story.d05-d17-v2": {
+          "state": "wired-day",
+          "owner": "messaging",
+          "kinds": [
+            "incoming-text",
+            "incoming-image",
+            "player-send"
+          ],
+          "proof": "src/services/messaging/lifecycle/registry.js",
+          "originDays": [
+            5
+          ]
         }
       }
     },
@@ -271,6 +284,18 @@
           "originDays": [
             17
           ]
+        },
+        "story.d05-d17-v2": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "incoming-text",
+            "player-send"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            5
+          ]
         }
       }
     },
@@ -339,6 +364,17 @@
           "proof": "src/story/d13/definition.js",
           "originDays": [
             13
+          ]
+        },
+        "story.d05-d17-v2": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": [
+            "email"
+          ],
+          "proof": "src/services/story55/runtime.js",
+          "originDays": [
+            5
           ]
         }
       }

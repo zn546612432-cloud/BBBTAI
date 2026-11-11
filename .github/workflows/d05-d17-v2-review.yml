@@ -1,0 +1,69 @@
+name: D05-D17 approved chat review
+on:
+  push:
+    branches: [feature/d05-d17-v2-chat-replacement]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: chat-v2-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/audit-story-skill.mjs
+      - run: npm run story:check -- --strict docs/story-packets/d05-d17-v2-chat.json
+      - run: npm test
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Native mobile Send, wishes, real orders, mail, loan and frozen thirty lines
+        run: |
+          mkdir -p /tmp/chat-v2-site/BBBTAI
+          cp -a dist/. /tmp/chat-v2-site/BBBTAI/
+          python3 -m http.server 5173 --bind 127.0.0.1 --directory /tmp/chat-v2-site > /tmp/chat-v2-server.log 2>&1 &
+          SMOKE_URL=http://127.0.0.1:5173/BBBTAI/ node scripts/d05-d17-v2-mobile-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chat-v2-review-evidence
+          path: qa-results/chat-v2/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chat-v2-phone-build
+          path: dist/
+
+  d13-call-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/d13-native-mail-wallet-call.test.mjs tests/d13-short-charge-voice-call-regression.test.mjs
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Existing native wallet, green screen, bundled audio and real call controls
+        run: |
+          mkdir -p /tmp/call-site/BBBTAI
+          cp -a dist/. /tmp/call-site/BBBTAI/
+          python3 -m http.server 5173 --bind 127.0.0.1 --directory /tmp/call-site > /tmp/call-server.log 2>&1 &
+          SMOKE_URL=http://127.0.0.1:5173/BBBTAI/ node scripts/d13-wallet-call-mobile-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chat-v2-d13-call-evidence
+          path: qa-results/

@@ -49,7 +49,7 @@ export function nativeWeChatComposer(s,id){
  };
  return {
   text:null,stage:null,source:null,
-  disabled:!!line||busy||providers.some(p=>p.disabled(s,id))
+  disabled:!!line||busy||(!(id==='wang'&&s.day>=7)&&providers.some(p=>p.disabled(s,id)))
  };
 }
 
@@ -71,6 +71,9 @@ export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  if(!line&&!busy&&genericMissedReplyDraft(s,id))
   return sendGenericMissedReply(store,id,text,now);
  if(chosen&&!line)return chosen.provider.send(store,id,text,now);
+ // Wang's idle private thread permits the approved free-message exchange.
+ // Any current preset, missed reply or plot turn has already taken precedence.
+ if(id==='wang'&&s.day>=7&&!line&&!busy)return {handled:false};
  // D01's first "hello" and certain legacy scenes start when the player
  // types and presses Send, before any preset draft exists. Preserve that
  // authored trigger; never fall through to a generic, unscripted send.

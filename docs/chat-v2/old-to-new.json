@@ -1,0 +1,2126 @@
+{
+  "mainSha": "cd846d934c53aea7e0aed29bb1f9592a4c3f8460",
+  "scenes": [
+    {
+      "before": {
+        "source": "d05",
+        "id": "computer",
+        "day": 5,
+        "chat": "group",
+        "at": "10:35",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "教授突然說下週要交報告"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我人都傻了"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "你前幾天不是說這學期很輕鬆嗎哈哈哈哈"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "你腦子裡能不能有點別的"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "能"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "中午吃什麼"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "進步了"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "你報告寫了多少"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "標題"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "然後呢"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "還沒想好第二行寫什麼"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "那確實挺輕鬆"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "楓哥加油 精神上支持你"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "謝謝 不如幫我寫兩頁"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "你這個要求也沒好到哪去"
+          }
+        ]
+      },
+      "after": {
+        "source": "d05",
+        "id": "computer",
+        "day": 5,
+        "chat": "group",
+        "at": "10:35",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "教授突然說下週要交報告"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我人都傻了"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "你前幾天不是說這學期很輕鬆嗎哈哈哈哈"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "你就不能聊點有用的嗎？"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "能"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "中午吃什麼"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "進步了"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "你報告寫了多少"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "標題"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "然後呢"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "還沒想好第二行寫什麼"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "那確實挺輕鬆"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "楓哥加油 精神上支持你"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "謝謝 不如幫我寫兩頁"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "你這個要求也沒好到哪去"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d10",
+        "id": "noodles",
+        "day": 10,
+        "chat": "group",
+        "at": "11:50",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "首爾今天一直下雨"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我晾的衣服又得搬進來"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "你到底還要待多久"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "快了，週五晚上到澳門"
+          }
+        ]
+      },
+      "after": {
+        "source": "d10",
+        "id": "noodles",
+        "day": 10,
+        "chat": "group",
+        "at": "11:50",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "首爾今天一直下雨"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我晾的衣服又得搬進來"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "怎麼，你得首爾病了？"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "首爾的雨未必有你憂鬱。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "這還是我哥嗎？"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d10",
+        "id": "carry",
+        "day": 10,
+        "chat": "group",
+        "at": "17:46",
+        "lines": [
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "你們設計師真麻煩"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我把航班號發給旺哥了"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "收到了，後天晚上我去機場接你"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "好，落地聯絡"
+          }
+        ]
+      },
+      "after": {
+        "source": "d10",
+        "id": "carry",
+        "day": 10,
+        "chat": "group",
+        "at": "17:46",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "終於考完試了，我可以不憂鬱了。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "恭喜恭喜。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "嘿嘿，找個時間我回來一趟，給你們買了很多禮物。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "謝謝阿楓。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "真的嗎真的嗎！給我買了什麼！！"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "狗項圈。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "阿西八！！"
+          },
+          {
+            "who": "小辛",
+            "kind": "image",
+            "text": "/apps/wechat/stickers/xin-dog-112.webp"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d10",
+        "id": "night",
+        "day": 10,
+        "chat": "group",
+        "at": "22:20",
+        "lines": [
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "明天不熬夜了，真的"
+          }
+        ]
+      },
+      "after": {
+        "source": "d10",
+        "id": "night",
+        "day": 10,
+        "chat": "group",
+        "at": "22:20",
+        "lines": [
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "明天再也不熬夜了，真的。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d10",
+        "id": "wang-supper",
+        "day": 10,
+        "chat": "wang",
+        "at": "20:32",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "阿蒙，晚上吃了嗎？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "吃了哥"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "吃的什麼？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "麵啦"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "別又是泡麵。我留了湯，記得熱。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "知道啦～"
+          }
+        ]
+      },
+      "after": null
+    },
+    {
+      "before": {
+        "source": "d11",
+        "id": "notice",
+        "day": 11,
+        "chat": "group",
+        "at": "09:15",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "晚上七點半，老地方見"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "乾爹回來了，今天大家盡量過來"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "我晚上可以"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "收到，我把手上的活弄完就去"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "啊？真的？"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我還在首爾，明晚才落地"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "知道，航班號收到了，我去接"
+          }
+        ]
+      },
+      "after": {
+        "source": "d11",
+        "id": "notice",
+        "day": 11,
+        "chat": "group",
+        "at": "09:15",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "晚上七點半，老地方見。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "乾爹回來了，今天大家盡量過來。"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "？？？？？？？什麼時候回來的？"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "哇！！！"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "啊？真的？"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "是不是說"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "我們終於可以出山幹一票大的了？"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "我的手槍飢渴難耐。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "這麼突然？可我還在韓國。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "乾爹什麼時候回來的，一點風聲也沒有。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "具體情況見面再說呢。阿楓，你看看最近的機票是什麼時候，我到時候去機場接你。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "好。"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "怎麼辦，我有點激動。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "乾爹感受到你們的愛了。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "image",
+            "text": "/apps/wechat/stickers/xin-dog-002.webp"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "欸，好難得看到旺哥用表情包！"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d11",
+        "id": "afternoon",
+        "day": 11,
+        "chat": "group",
+        "at": "15:20",
+        "lines": [
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "我先去訓練，結束直接過去"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "我帶點喝的"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "別買太多，今晚還有人準備吃的"
+          }
+        ]
+      },
+      "after": {
+        "source": "d11",
+        "id": "afternoon",
+        "day": 11,
+        "chat": "group",
+        "at": "15:20",
+        "lines": [
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "興奮得我酒吧打烊半天。"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "小辛順路嗎？我在大三巴，一會接我。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "好，我去買點啤酒。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "楓哥你今天來嗎？@胡楓"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "來不了，我明天才能到。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "好哦，注意安全。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d11",
+        "id": "after-meeting",
+        "day": 11,
+        "chat": "group",
+        "at": "22:20",
+        "lines": [
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我到家了"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "我也回去了"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "今天吃得夠飽"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "你們好歹給我留張照片"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "明晚機場見，早點休息"
+          }
+        ]
+      },
+      "after": {
+        "source": "d11",
+        "id": "after-meeting",
+        "day": 11,
+        "chat": "group",
+        "at": "22:20",
+        "lines": [
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我到家了。"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "我也回去了。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "今天吃得夠飽。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "明晚機場見，早點休息。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d11",
+        "id": "wang-worry",
+        "day": 11,
+        "chat": "wang",
+        "at": "22:18",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "到家了嗎？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "到了哥"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "今晚那個電子錢包的事，我還是有點擔心。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "五億美元，哪有那麼容易拿。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "我又沒說明天就能拿到"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我知道。干爹肯讓你試，是信你的本事。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "但有什麼風險，你得先跟我說。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "哥，你不信我啊？"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "信。就是不想你一個人扛著。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "知道啦，我會跟你商量的"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "嗯，明天搬東西，早點睡。"
+          }
+        ]
+      },
+      "after": {
+        "source": "d11",
+        "id": "wang-worry",
+        "day": 11,
+        "chat": "wang",
+        "at": "22:18",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "蒙蒙，睡了嗎？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "沒呢哥。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "今天你說的電子錢包的事，我還是有點擔心。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "五億美元，沒有那麼容易拿。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "我又沒說明天就能拿到。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "上次那十枚比特幣，我不也拿到了嗎？這次規模是大了點，可又不是完全沒機會。哥，我可是天才黑客。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我知道。我弟弟肯定是最棒的。而且我看得出來，乾爹被你說動了。他肯讓你試，也是信你的本事。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "時代在變，我們也要變，這是趨勢。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "不過，我希望有任何事情，你能先跟我商量。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "哥，你不信我啊？"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "信。只是不想你一個人扛著，我們是一家人。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "知道啦，我會跟你商量的。時間不早了，我先休息了。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "嗯，晚安。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d12",
+        "id": "separate-work",
+        "day": 12,
+        "chat": "group",
+        "at": "13:40",
+        "lines": [
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "大屋那邊我先把空地清一下"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我晚點帶衣架過去"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "今天別算我，我晚上才有空"
+          }
+        ]
+      },
+      "after": {
+        "source": "d12",
+        "id": "separate-work",
+        "day": 12,
+        "chat": "group",
+        "at": "13:40",
+        "lines": [
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我已經分不清是過敏還是被灰塵嗆的了。"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "你休息一下。"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我買了酒精噴霧，我要把這些地方全部消毒。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "我把那個紫色沙發帶過來了。"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "酒吧那個？"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "對，等一下幫我搬一下。"
+          },
+          {
+            "who": "小辛",
+            "kind": "image",
+            "text": "/apps/wechat/stickers/xin-dog-001.webp"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d12",
+        "id": "arrival",
+        "day": 12,
+        "chat": "group",
+        "at": "21:50",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "落地了，在等行李"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我在出站口那邊"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "行，我拿完箱子就出來"
+          }
+        ]
+      },
+      "after": {
+        "source": "d12",
+        "id": "arrival",
+        "day": 12,
+        "chat": "group",
+        "at": "21:50",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "澳門好熱。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "@熙旺 我在拿行李了。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我在出站口。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "好。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d12",
+        "id": "settling",
+        "day": 12,
+        "chat": "group",
+        "at": "23:02",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "終於到了，行李放哪？"
+          },
+          {
+            "who": "仔仔",
+            "kind": "text",
+            "text": "我給你空了一個角落"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "可以，明天再整理吧"
+          }
+        ]
+      },
+      "after": {
+        "source": "d12",
+        "id": "settling",
+        "day": 12,
+        "chat": "group",
+        "at": "23:02",
+        "lines": [
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "你們都收拾好了，我睡哪呀？"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "老樣子，我隔壁。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "隔音不好？"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "我晚上那個你都可以聽得見。"
+          },
+          {
+            "who": "胡枫",
+            "kind": "text",
+            "text": "我會用狗項圈掐死你。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "我說唱歌啦！！！"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d12",
+        "id": "wang-airport",
+        "day": 12,
+        "chat": "wang",
+        "at": "18:41",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我出門去機場接胡楓了。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "你們先吃，不用等。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "他幾點落地？"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "八點多，路上可能慢一點。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "那你小心開車"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "嗯，幫我留點菜。"
+          }
+        ]
+      },
+      "after": {
+        "source": "d12",
+        "id": "wang-airport",
+        "day": 12,
+        "chat": "wang",
+        "at": "18:41",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "我出門去機場接胡楓了。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "他幾點落地？"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "八點多，路上可能慢一點。"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "那你小心開車。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d15",
+        "id": "room",
+        "day": 15,
+        "chat": "wang",
+        "at": "23:01",
+        "lines": [
+          {
+            "who": "熙旺",
+            "text": "你下午在房裡罵誰？"
+          },
+          {
+            "who": "me",
+            "text": "網上一個神經病黑客。"
+          },
+          {
+            "who": "熙旺",
+            "text": "惹到你了？"
+          },
+          {
+            "who": "me",
+            "text": "他偷看我機房！還嫌我的電腦破！"
+          },
+          {
+            "who": "熙旺",
+            "text": "沒有竊取你的信息造成損失吧？"
+          },
+          {
+            "who": "me",
+            "text": "沒有，被我趕出去了。"
+          },
+          {
+            "who": "熙旺",
+            "text": "那就好。你的電腦真要換就換吧，哥給你報銷"
+          },
+          {
+            "who": "me",
+            "text": "不用，有人給我買單了"
+          },
+          {
+            "who": "熙旺",
+            "text": "誰呀？"
+          },
+          {
+            "who": "me",
+            "text": "那個神經病"
+          },
+          {
+            "who": "熙旺",
+            "text": "神經病給你買單？你們認識？還是你和你朋友開玩笑的？"
+          },
+          {
+            "who": "me",
+            "text": "⋯⋯⋯⋯⋯⋯⋯嗯⋯⋯⋯"
+          },
+          {
+            "who": "me",
+            "text": "一言難盡"
+          },
+          {
+            "who": "me",
+            "text": "有機會再跟你解釋"
+          }
+        ]
+      },
+      "after": {
+        "source": "d15",
+        "id": "room",
+        "day": 15,
+        "chat": "wang",
+        "at": "16:30",
+        "lines": [
+          {
+            "who": "熙旺",
+            "text": "你下午在房裡罵誰？"
+          },
+          {
+            "who": "me",
+            "text": "網上一個神經病黑客。"
+          },
+          {
+            "who": "熙旺",
+            "text": "惹到你了？"
+          },
+          {
+            "who": "me",
+            "text": "他偷看我機房！還嫌我的電腦破！"
+          },
+          {
+            "who": "熙旺",
+            "text": "沒有竊取你的信息造成損失吧？"
+          },
+          {
+            "who": "me",
+            "text": "沒有，被我趕出去了。"
+          },
+          {
+            "who": "熙旺",
+            "text": "那就好。你的電腦真要換就換吧，哥給你報銷。"
+          },
+          {
+            "who": "me",
+            "text": "不用，有人給我買單了。"
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "source": "d16",
+        "id": "briefing",
+        "day": 16,
+        "chat": "group",
+        "at": "10:08",
+        "lines": [
+          {
+            "who": "胡枫",
+            "text": "我把踩點過的撤離路線做好了，不過還有幾個點沒敲定，大家什麼時候有空來看一下，"
+          },
+          {
+            "who": "熙旺",
+            "text": "那就七點半，大屋，我去接乾爹"
+          },
+          {
+            "who": "阿威",
+            "text": "好。"
+          },
+          {
+            "who": "小辛",
+            "text": "我晚十分鐘來"
+          }
+        ]
+      },
+      "after": {
+        "source": "d16",
+        "id": "briefing",
+        "day": 16,
+        "chat": "group",
+        "at": "10:08",
+        "lines": [
+          {
+            "who": "胡枫",
+            "text": "我把之前踩點的撤離路線整理好了，還有幾個地方沒敲定。大家什麼時候有空一起看一下？"
+          },
+          {
+            "who": "熙旺",
+            "text": "那就晚上七點半，大屋。我去接乾爹。"
+          },
+          {
+            "who": "阿威",
+            "text": "好。"
+          },
+          {
+            "who": "小辛",
+            "text": "很強。"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "headphones-promise",
+        "day": 7,
+        "chat": "awei",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "沒問題，哥買單。"
+          },
+          {
+            "who": "阿威",
+            "kind": "text",
+            "text": "謝謝蒙哥！！"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "tableware-promise",
+        "day": 7,
+        "chat": "wang",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "去買十套，記我帳上。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "哈哈，弟弟有錢說話就是不一樣。"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "keyboard-received",
+        "day": 7,
+        "chat": "xiaoxin",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "這麼快就收到了？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "下次打遊戲你必須拿五殺。"
+          },
+          {
+            "who": "小辛",
+            "kind": "text",
+            "text": "包的哥哥！"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "tableware-received",
+        "day": 7,
+        "chat": "wang",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "認真的嗎哥哥？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "我買的是碗，不是垃圾桶。"
+          },
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "那……糖醋排骨？"
+          },
+          {
+            "who": "me",
+            "kind": "text",
+            "text": "我要吃三碗飯。"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "brother-ask",
+        "day": 7,
+        "chat": "wang",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "怎麼了蒙蒙？"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d07-reply",
+        "id": "brother-pat",
+        "day": 7,
+        "chat": "wang",
+        "at": "00:00",
+        "lines": [
+          {
+            "who": "熙旺",
+            "kind": "text",
+            "text": "乖"
+          }
+        ]
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "source": "d16",
+        "id": "after-rehearsal",
+        "day": 16,
+        "chat": "group",
+        "at": "16:00",
+        "lines": [
+          {
+            "who": "熙旺",
+            "text": "下午那趟試走辛苦大家了，配合得挺好。"
+          },
+          {
+            "who": "胡枫",
+            "text": "你們都不知道色誘有多痛苦。"
+          },
+          {
+            "who": "小辛",
+            "text": "誰讓你長得帥呢？"
+          },
+          {
+            "who": "胡枫",
+            "text": "那確實。事成之後我能多分一筆嗎？"
+          },
+          {
+            "who": "me",
+            "text": "你可以拿走小辛的。"
+          },
+          {
+            "who": "小辛",
+            "text": "那不行！！"
+          },
+          {
+            "who": "me",
+            "text": "怎麼不行？你也去色誘啊。"
+          },
+          {
+            "who": "小辛",
+            "text": "我嗎？那我要扮成女的，迷死所有人。"
+          },
+          {
+            "who": "仔仔",
+            "text": "你別說。"
+          },
+          {
+            "who": "仔仔",
+            "text": "我有想法了。"
+          },
+          {
+            "who": "小辛",
+            "text": "？"
+          }
+        ]
+      }
+    }
+  ],
+  "story": [
+    {
+      "before": {
+        "node": {
+          "id": "return",
+          "day": 11,
+          "title": "干爹回来了",
+          "kind": "scene",
+          "requires": [],
+          "at": "08:40",
+          "delivery": "queued",
+          "channel": "wechat",
+          "conversationId": "wang",
+          "gateDay": 11
+        },
+        "lines": [
+          [
+            "wang",
+            "阿蒙，醒了没有？"
+          ],
+          [
+            "wang",
+            "干爹前天晚上就回澳门了，今早刚打电话给我。晚上去老地方，大家碰个面。"
+          ],
+          [
+            "me",
+            "干爹回来了？哥，你怎么现在才告诉我！"
+          ],
+          [
+            "wang",
+            "我也是刚接到电话。他住美景大厦，今天不用过去找他。"
+          ],
+          [
+            "wang",
+            "胡枫还在韩国，明晚落地，我去机场接。你晚上记得过来。"
+          ]
+        ]
+      },
+      "after": {
+        "node": {
+          "id": "return",
+          "day": 11,
+          "title": "干爹回来了",
+          "kind": "scene",
+          "requires": [],
+          "at": "08:40",
+          "delivery": "queued",
+          "channel": "wechat",
+          "conversationId": "wang",
+          "gateDay": 11
+        },
+        "lines": [
+          [
+            "wang",
+            "阿蒙，醒了没有？"
+          ],
+          [
+            "wang",
+            "干爹前天晚上就回澳门了，今早刚打电话给我。晚上去老地方，大家碰个面。"
+          ],
+          [
+            "me",
+            "干爹回来了？哥，你怎么现在才告诉我！"
+          ],
+          [
+            "wang",
+            "我也是刚接到电话。他住美景大厦，今天不用过去找他。"
+          ],
+          [
+            "wang",
+            "你晚上記得過來。"
+          ]
+        ]
+      }
+    },
+    {
+      "before": {
+        "node": {
+          "id": "move",
+          "day": 12,
+          "title": "搬回共同据点",
+          "kind": "scene",
+          "requires": [],
+          "at": "10:10",
+          "delivery": "queued",
+          "channel": "wechat",
+          "conversationId": "group",
+          "gateDay": 12
+        },
+        "lines": [
+          [
+            "wang",
+            "今天先把旧大屋收拾出来，常用的东西各自带，不用一次搬完。"
+          ],
+          [
+            "xin",
+            "我晚上再过去，先把手头的事弄完。"
+          ],
+          [
+            "me",
+            "机房那几台机器你们先别动，我自己整理。"
+          ],
+          [
+            "wang",
+            "知道。胡枫今晚落地，我去机场接他，记得给他留个地方放箱子。"
+          ]
+        ]
+      },
+      "after": {
+        "node": {
+          "id": "move",
+          "day": 12,
+          "title": "搬回共同据点",
+          "kind": "scene",
+          "requires": [],
+          "at": "10:10",
+          "delivery": "queued",
+          "channel": "wechat",
+          "conversationId": "group",
+          "gateDay": 12
+        },
+        "lines": [
+          [
+            "wang",
+            "今天先把舊大屋收拾出來，常用的東西各自帶，不用一次搬完。"
+          ],
+          [
+            "xin",
+            "我已經打包好了，晚上再過去。"
+          ],
+          [
+            "me",
+            "我的東西太多了，我需要一個機房擺我的伺服器。"
+          ],
+          [
+            "wang",
+            "就按昨天說的那樣改造，等我們騰出空間了你再搬。"
+          ],
+          [
+            "me",
+            "我還需要一輛卡車。"
+          ],
+          [
+            "wang",
+            "卡車？"
+          ],
+          [
+            "me",
+            "對，有些操作遠端連線延遲太大，我得帶著設備到現場。"
+          ],
+          [
+            "wang",
+            "好，我去辦。"
+          ],
+          [
+            "awei",
+            "蒙哥，你告訴我哪幾台要搬的，我到時候給你搬上去。"
+          ],
+          [
+            "me",
+            "好。"
+          ]
+        ]
+      }
+    },
+    {
+      "before": {
+        "node": {
+          "id": "loan",
+          "day": 15,
+          "title": "机房与一百万借款",
+          "kind": "scene",
+          "requires": [
+            "code"
+          ],
+          "credit": 1000000,
+          "liability": true,
+          "at": "15:36",
+          "delivery": "queued",
+          "channel": "mirage",
+          "conversationId": "s55-ouroboros",
+          "authorizedProject": "base",
+          "messagePrefix": "s55-loan-v2"
+        },
+        "lines": [
+          [
+            "ouroboros",
+            "部署得怎麼樣，nya？"
+          ],
+          [
+            "me",
+            "你的代码要跑起来，得花不少钱。"
+          ],
+          [
+            "ouroboros",
+            "你干黑客这么多年，居然连台像样的工作站都没攒下来？"
+          ],
+          [
+            "ouroboros",
+            "还不如加入我的团队。至少不用为了几台机器发愁。"
+          ],
+          [
+            "me",
+            "我不会加入你的团队。"
+          ],
+          [
+            "ouroboros",
+            "是吗？我倒想看看你拿什么跑。"
+          ],
+          [
+            "camera",
+            "相機權限異常／遠端畫面連線"
+          ],
+          [
+            "ouroboros",
+            "自己搭的机房吗？第一眼我还以为是货车车厢呢。陈熙蒙，你怎么住在这种破地方？"
+          ],
+          [
+            "me",
+            "谁让你打开我的摄像头的？"
+          ],
+          [
+            "disconnect",
+            "切斷連線"
+          ],
+          [
+            "me",
+            "我们只是合作关系，你不能随随便便侵犯我的隐私。"
+          ],
+          [
+            "ouroboros",
+            "我们不是合作关系，我是你的老板。"
+          ],
+          [
+            "credit",
+            "太平洋銀行：入帳 1,000,000"
+          ],
+          [
+            "ouroboros",
+            "一百万，借你的。去更新你的系统设备。"
+          ],
+          [
+            "offline",
+            "衔尾蛇已下线"
+          ]
+        ]
+      },
+      "after": {
+        "node": {
+          "id": "loan",
+          "day": 15,
+          "title": "机房与一百万借款",
+          "kind": "scene",
+          "requires": [
+            "code"
+          ],
+          "credit": 1000000,
+          "liability": true,
+          "at": "15:36",
+          "delivery": "queued",
+          "channel": "mirage",
+          "conversationId": "s55-ouroboros",
+          "authorizedProject": "base",
+          "messagePrefix": "s55-loan-v2"
+        },
+        "lines": [
+          [
+            "ouroboros",
+            "部署得怎麼樣，nya？"
+          ],
+          [
+            "me",
+            "跑得動，就是慢。"
+          ],
+          [
+            "ouroboros",
+            "慢到什麼程度？"
+          ],
+          [
+            "me",
+            "你給的東西吃配置。這套機器不夠。"
+          ],
+          [
+            "ouroboros",
+            "你做了這麼多年，連台像樣的工作站都沒攢出來？"
+          ],
+          [
+            "me",
+            "你到底想說什麼？"
+          ],
+          [
+            "camera",
+            "相機權限異常／遠端畫面連線"
+          ],
+          [
+            "ouroboros",
+            "自己搭的机房吗？第一眼我还以为是货车车厢呢。陈熙蒙，你怎么住在这种破地方？"
+          ],
+          [
+            "me",
+            "谁让你打开我的摄像头的？"
+          ],
+          [
+            "disconnect",
+            "切斷連線"
+          ],
+          [
+            "me",
+            "我们只是合作关系，你不能随随便便侵犯我的隐私。"
+          ],
+          [
+            "ouroboros",
+            "我们不是合作关系，我是你的老板。"
+          ],
+          [
+            "credit",
+            "太平洋銀行：入帳 1,000,000"
+          ],
+          [
+            "ouroboros",
+            "一百万，借你的。去更新你的系统设备。"
+          ],
+          [
+            "offline",
+            "衔尾蛇已下线"
+          ]
+        ]
+      }
+    }
+  ],
+  "mails": {
+    "before": [
+      {
+        "id": "code-mail",
+        "node": "code",
+        "subject": "Framework package",
+        "body": "別告訴我你不會用。",
+        "project": "base",
+        "from": "Mirage / 系統轉遞",
+        "attachmentName": "Framework package.key"
+      },
+      {
+        "id": "invite-mail",
+        "node": "invite",
+        "subject": "NoApp / PRIVATE BETA",
+        "body": "内测邀请仅供你本人使用。完成安装后，打开陈熙泰的私人联络。"
+      },
+      {
+        "id": "s55-d13-wallet-mail",
+        "node": "d13-wallet-mail",
+        "from": "MIRAGE Wallet",
+        "subject": "數位資產入帳通知",
+        "body": "您的數位資產帳戶已收到一筆轉入款項。\\n\\n入帳金額：50.00000000 BTC\\n資產類型：Bitcoin (BTC)\\n交易狀態：已確認\\n\\n款項已記入您的帳戶。請登入 MIRAGE 錢包查看交易詳情及管理資產。\\n\\n此郵件由系統自動發送，請勿直接回覆。",
+        "link": {
+          "appId": "mirage",
+          "route": "/wallet",
+          "params": {}
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "code-mail",
+        "node": "code",
+        "subject": "Ouroboros’ Tear — Framework Package",
+        "body": "聽說過「Narrenschiff」嗎？這是它的基礎框架「Ouroboros’ Tear」。\n一套能在不同系統之間自行建立通道、繞過常規防護，並在完成操作後抹去痕跡的程序。\n當然，這還不是完整版本。\n別告訴我你連這個都不會用。",
+        "project": "base",
+        "from": "Mirage / 系統轉遞",
+        "attachmentName": "Ouroboros_Tear_package.key"
+      },
+      {
+        "id": "invite-mail",
+        "node": "invite",
+        "subject": "NoApp / PRIVATE BETA",
+        "body": "内测邀请仅供你本人使用。完成安装后，打开陈熙泰的私人联络。"
+      },
+      {
+        "id": "s55-d13-wallet-mail",
+        "node": "d13-wallet-mail",
+        "from": "Mirage Wallet",
+        "subject": "待領取資產通知",
+        "body": "您有一筆數位資產待確認。\n資產數量：50.00000000 BTC\n狀態：待綁定錢包\n請登入 Mirage Wallet，綁定指定錢包以查看資產詳情及辦理後續操作。\n此郵件由系統自動發送，請勿直接回覆。",
+        "attachmentName": "wallet-binding.key",
+        "link": {
+          "appId": "mirage",
+          "route": "/wallet",
+          "params": {}
+        }
+      }
+    ]
+  },
+  "wishes": {
+    "before": {
+      "afternoonDay": [
+        {
+          "id": "d07-errand-01",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "买袋米、洗洁精，还有盐。家里快用完了。",
+          "afterId": "d07-chat-07"
+        },
+        {
+          "id": "d07-errand-02",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "仔仔",
+          "text": "收到，我下午出去的時候順手帶。",
+          "afterId": "d07-errand-01"
+        },
+        {
+          "id": "d07-errand-03",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "小辛你確定不去？",
+          "afterId": "d07-errand-02"
+        },
+        {
+          "id": "d07-errand-04",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "我負責精神支持，謝謝。",
+          "afterId": "d07-errand-03"
+        }
+      ],
+      "dinnerAfter": {
+        "id": "d07-dinner-after",
+        "channel": "wechat",
+        "chat": "group",
+        "from": "小辛",
+        "text": "昨天吃得太撑了，我今天真的不想看见肉了"
+      },
+      "extraDay": [
+        {
+          "id": "d07-awei-01",
+          "channel": "wechat",
+          "chat": "awei",
+          "from": "阿威",
+          "text": "我那副耳机接触不良，昨天开会又断了。准备换副无线耳机。",
+          "wishId": "d07-headphones",
+          "wishText": "无线耳机"
+        },
+        {
+          "id": "d07-wang-01",
+          "channel": "wechat",
+          "chat": "wang",
+          "from": "熙旺",
+          "text": "家里吃饭的碗有几只都磕了口，过两天我去添一套新餐具。",
+          "wishId": "d07-tableware",
+          "wishText": "新餐具"
+        }
+      ],
+      "nextDay": [
+        {
+          "id": "d07-chat-01",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "今天谁有空？"
+        },
+        {
+          "id": "d07-chat-02",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "干嘛"
+        },
+        {
+          "id": "d07-chat-03",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "陪我打把遊戲啊，今天沒課，無聊死了"
+        },
+        {
+          "id": "d07-chat-04",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "昨天玩到三点了，饶了我吧"
+        },
+        {
+          "id": "d07-chat-05",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "你们下午要是出去，顺路帮我买点东西回来"
+        },
+        {
+          "id": "d07-chat-06",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "仔仔",
+          "text": "买什么？"
+        },
+        {
+          "id": "d07-chat-07",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "我晚点发你清单。"
+        }
+      ],
+      "rewardSets": {
+        "d07-headphones": [
+          {
+            "id": "wish-headphones-thanks-1",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "耳机收到了。"
+          },
+          {
+            "id": "wish-headphones-photo",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/headphones-received.jpg",
+            "kind": "image"
+          },
+          {
+            "id": "wish-headphones-thanks-2",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "试过了，声音没问题。谢谢。"
+          }
+        ],
+        "d07-tableware": [
+          {
+            "id": "wish-tableware-thanks-1",
+            "channel": "wechat",
+            "chat": "wang",
+            "from": "熙旺",
+            "text": "阿蒙，家里送来一套餐具。你买的？"
+          },
+          {
+            "id": "wish-tableware-photo",
+            "channel": "wechat",
+            "chat": "wang",
+            "from": "熙旺",
+            "text": "https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/tableware-received.jpg",
+            "kind": "image"
+          },
+          {
+            "id": "wish-tableware-thanks-2",
+            "channel": "wechat",
+            "chat": "wang",
+            "from": "熙旺",
+            "text": "原来那些还能用，不过这套也挺好。晚上回来吃饭。"
+          }
+        ]
+      }
+    },
+    "after": {
+      "afternoonDay": [
+        {
+          "id": "d07-errand-01",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "买袋米、洗洁精，还有盐。家里快用完了。",
+          "afterId": "d07-chat-07"
+        },
+        {
+          "id": "d07-errand-02",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "仔仔",
+          "text": "收到，我下午出去的時候順手帶。",
+          "afterId": "d07-errand-01"
+        },
+        {
+          "id": "d07-errand-03",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "小辛你確定不去？",
+          "afterId": "d07-errand-02"
+        },
+        {
+          "id": "d07-errand-04",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "我負責精神支持，謝謝。",
+          "afterId": "d07-errand-03"
+        }
+      ],
+      "dinnerAfter": {
+        "id": "d07-dinner-after",
+        "channel": "wechat",
+        "chat": "group",
+        "from": "小辛",
+        "text": "昨天吃得太撑了，我今天真的不想看见肉了"
+      },
+      "extraDay": [
+        {
+          "id": "d07-awei-01",
+          "channel": "wechat",
+          "chat": "awei",
+          "from": "阿威",
+          "text": "我那副耳機接觸不良，昨天開會又斷了。準備換副無線耳機。",
+          "wishId": "d07-headphones",
+          "wishText": "無線耳機",
+          "dueClock": "11:12"
+        },
+        {
+          "id": "d07-wang-01",
+          "channel": "wechat",
+          "chat": "wang",
+          "from": "熙旺",
+          "text": "家裡吃飯的碗有幾隻都磕了口，過兩天我去添一套新餐具。",
+          "wishId": "d07-tableware",
+          "wishText": "新餐具",
+          "dueClock": "14:10"
+        }
+      ],
+      "nextDay": [
+        {
+          "id": "d07-chat-01",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "今天谁有空？"
+        },
+        {
+          "id": "d07-chat-02",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "干嘛"
+        },
+        {
+          "id": "d07-chat-03",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "胡枫",
+          "text": "陪我打把遊戲啊，今天沒課，無聊死了"
+        },
+        {
+          "id": "d07-chat-04",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "小辛",
+          "text": "昨天玩到三点了，饶了我吧"
+        },
+        {
+          "id": "d07-chat-05",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "你们下午要是出去，顺路帮我买点东西回来"
+        },
+        {
+          "id": "d07-chat-06",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "仔仔",
+          "text": "买什么？"
+        },
+        {
+          "id": "d07-chat-07",
+          "channel": "wechat",
+          "chat": "group",
+          "from": "熙旺",
+          "text": "我晚点发你清单。"
+        }
+      ],
+      "rewardSets": {
+        "d07-headphones": [
+          {
+            "id": "wish-headphones-thanks-1",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "耳机收到了。"
+          },
+          {
+            "id": "wish-headphones-photo",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/headphones-received.jpg",
+            "kind": "image"
+          },
+          {
+            "id": "wish-headphones-thanks-2",
+            "channel": "wechat",
+            "chat": "awei",
+            "from": "阿威",
+            "text": "试过了，声音没问题。谢谢。"
+          }
+        ],
+        "d07-tableware": [
+          {
+            "id": "wish-tableware-thanks-1",
+            "channel": "wechat",
+            "chat": "wang",
+            "from": "熙旺",
+            "text": "碗到了，今晚給你們做西湖醋魚。"
+          },
+          {
+            "id": "wish-tableware-photo",
+            "channel": "wechat",
+            "chat": "wang",
+            "from": "熙旺",
+            "text": "https://zmnufhswpnreeseyamlv.supabase.co/storage/v1/object/public/ximeng-assets/d06/tableware-received.jpg",
+            "kind": "image"
+          }
+        ]
+      }
+    }
+  }
+}

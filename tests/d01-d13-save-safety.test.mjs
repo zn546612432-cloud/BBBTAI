@@ -36,8 +36,8 @@ test('retiring an old Hu Feng NPC subplot archives NPC messages and preserves ge
 test('D10 pickup is Friday, not Thursday, and delivered NPC text migrates without touching player or customized text',()=>{
  const s=setup();s.day=12;s.clock='09:00';s.story55.d10D13Revision=1;
  const scene=D10_GROUP.find(x=>x.id==='carry');
- assert.equal(scene.lines[2].who,'熙旺');
- assert.equal(scene.lines[2].text,'收到了，後天晚上我去機場接你');
+ assert.equal(scene.lines[2].who,'胡枫');
+ assert.equal(scene.lines[2].text,'嘿嘿，找個時間我回來一趟，給你們買了很多禮物。');
  const chat=group(s);
  const player={id:'d10-carry-2',from:'me',text:'收到了，明晚我去機場接你',day:10,sentDate:'2025-05-28'};
  const npc={id:'d10-carry-2',from:'熙旺',text:'收到了，明晚我去機場接你',day:10,sentDate:'2025-05-28'};

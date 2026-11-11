@@ -45,7 +45,7 @@ test('every D14–D24 WeChat scene uses the existing queue and commits player li
 test('D14 mail stays separate from deployment, exposes one file attachment and never puts a key in its body',()=>{
  const s=at(14,'09:15');tickStory55(s);assert.equal(s.content.mail.some(m=>m.id==='code-mail'),false);
  s.clock='09:16';tickStory55(s);const mail=s.content.mail.find(m=>m.id==='code-mail');
- assert.ok(mail);assert.equal(mail.subject,'Framework package');assert.equal(mail.from,'Mirage / 系統轉遞');
+ assert.ok(mail);assert.equal(mail.subject,'Ouroboros’ Tear — Framework Package');assert.equal(mail.from,'Mirage / 系統轉遞');
  assert.ok(!mail55(s,mail).includes('OUROBOROS-14'));assert.equal(s.story55.projects.base,undefined);
  mail.read=true;assert.throws(()=>authorizeProject(s,'base','OUROBOROS-14'));
  markMail55(s,'code-mail');assert.equal(completed(s,'code'),true);assert.equal(completed(s,'base'),false);

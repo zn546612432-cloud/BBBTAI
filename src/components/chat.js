@@ -28,9 +28,12 @@ export function sendChat(form,{store}){
  const text=String(new FormData(form).get('text')||'').trim();
  if(!text)return null;
  if(form.dataset.channel==='wechat'){
+  const submittedStage=form.elements.text.dataset.storyStage;
   const result=sendNativeWeChatPreset(store,form.dataset.id,text);
   if(result.handled){
-   if(result.messageId)form.elements.text.value='';
+   // A synchronous Store render may already have installed the NEXT draft
+   // in this same input. Never erase that newly offered player turn.
+   if(result.messageId){const input=form.elements.text;if(!input.dataset.storyStage||input.dataset.storyStage===submittedStage)input.value='';}
    else if(result.reason)throw Error(result.reason);
    return result.messageId||null;
   }

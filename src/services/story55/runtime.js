@@ -1,3 +1,4 @@
+import {syncApprovedChatV2} from '../../story/revisions/d05-d17-v2.js';
 import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
@@ -22,7 +23,7 @@ import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js'
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {tickFlowD03,tickFlowD06} from './flow-d03.js';
 import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
-const actors={me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
+const actors={awei:'阿威',me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
 export const actor55=id=>actors[id]||id;
 export function activateStory55(s){
  const c=defaultStory55Config();
@@ -173,7 +174,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:date55(s.day),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:date55(s.day),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -182,7 +183,7 @@ export function payNode55(s,id){
  s.bankData.balance-=n.cost;s.bankData.transactions.unshift({id:'s55-payment-'+id,label:n.title,amount:-n.cost,time:s.clock,date:date55(s.day)});completeNode(s,id);tickStory55(s);
 }
 const mailDefs=s=>story55Config(s).mails.map(m=>({...m,body:m.body.replaceAll('{{projectKey}}',story55Config(s).projects.find(p=>p.id===m.project)?.key||'')}));
-export function markMail55(s,id){const m=s.content.mail.find(m=>m.id===id&&m.story55);if(!m)throw Error('邮件不存在');if(nodeStatus(s,m.storyNode).state==='ready')completeNode(s,m.storyNode);m.read=true;tickStory55(s);}
+export function markMail55(s,id){const m=s.content.mail.find(m=>m.id===id&&m.story55);if(!m)throw Error('邮件不存在');if(nodeStatus(s,m.storyNode).state==='ready')completeNode(s,m.storyNode);if(id==='s55-d13-wallet-mail'&&!s.story55.d13MailFirstOpened){if(s.day===13&&s.clock<'22:30')s.clock='22:30';s.story55.d13MailFirstOpened=true;}m.read=true;tickStory55(s);}
 export function readEvidence55(s,kind,id){
  const table={file:'documents',page:'pages',map:'locations'}[kind],item=story55Config(s)[table]?.find(x=>x.id===id);
  if(!item)throw Error('资料不存在');
@@ -246,6 +247,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
@@ -280,12 +282,12 @@ export function tickStory55(s){
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
-  // Clock-authored mail keeps its original send date/time even if a foreground
-  // tick jumps over the exact minute, or a saved phone resumes after midnight.
+  // D13 shows actual arrival time; other clock-authored mail retains its
+  // scheduled timestamp when the saved phone resumes after midnight.
   // The existing mail ID is the idempotency key; no second queue or scheduler.
   const node=nodeById(s,m.node);
-  const arrivalDay=node?.at?node.day:s.day,arrivalClock=node?.at||s.clock;
-  s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,date:date55(arrivalDay)});
+  const arrivalDay=m.id==='s55-d13-wallet-mail'?s.day:node?.at?node.day:s.day,arrivalClock=m.id==='s55-d13-wallet-mail'?s.clock:node?.at||s.clock;
+  s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,time:arrivalClock,receivedClock:arrivalClock,date:date55(arrivalDay)});
   s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:arrivalDay,clock:arrivalClock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.

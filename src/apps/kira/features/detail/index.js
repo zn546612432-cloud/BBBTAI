@@ -14,7 +14,7 @@ export function kiraDetail(s,id){
  const body=m.id===D01_OPENING
   ?lineBreaks(m.body).replaceAll('bank account','<a href="#" class="kira-d01-inline-link" data-action="kira-d01-bank">bank account</a>')
   :lineBreaks(m.id===D01_ATTACHMENT?D01_ATTACHMENT_BODY:m.id===D02_MAIL?D02_KIRA_BODY[D02_S]:m.id===D02_A_MAIL?D02_KIRA_BODY[D02_A]:m.body);
- const linkedBody=m.id===D13_MAIL_ID?body.replace('MIRAGE 錢包','<button type="button" class="kira-d01-inline-link" data-action="kira-d13-wallet">MIRAGE 錢包</button>'):body;
+ const linkedBody=m.id===D13_MAIL_ID?body.replace('Mirage Wallet','<button type="button" class="kira-d01-inline-link" data-action="kira-d13-wallet">Mirage Wallet</button>'):body;
  const treatment=kiraMailTreatment(m);
  const commissionFile=renderCommissionAttachment(s,m.id);
  // No default attachment button. Only explicitly authorized mission or

@@ -22,8 +22,8 @@ test('D13 mail migrates only old default wording and is a native KIRA detail',()
  mail.body='之前懸賞贏的那個錢包入帳 50 枚比特幣，登入 MIRAGE 錢包快速綁定後可取款。';
  mail.from='MIRAGE';
  applyD13Definition(s.story55.config);
- assert.equal(mail.subject,'數位資產入帳通知');
- assert.equal(mail.from,'MIRAGE Wallet');
+ assert.equal(mail.subject,'待領取資產通知');
+ assert.equal(mail.from,'Mirage Wallet');
  s.content.mail.unshift({...mail,story55:true,storyNode:'d13-wallet-mail',read:false});
  const html=kiraDetail(s,D13_MAIL_ID);
  assert.match(html,/class="kira-mail-detail kira-d13-mail"/);

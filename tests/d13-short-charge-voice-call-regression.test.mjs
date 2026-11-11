@@ -164,15 +164,15 @@ test('D13 time and battery continue after 23:59 despite mandatory pending scenes
  assert.equal(s.content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1,'D13 mail survives recovery');
 });
 
-test('late foreground delivery retains the authored D13 date and never duplicates notices',()=>{
+test('late foreground delivery uses the actual arrival timestamp and never duplicates notices',()=>{
  const s=day13('22:09');delete s.story55.completed.exhibition;
  // Simulate a batched foreground tick that crosses midnight without a 22:10 render.
  s.clock='00:30';s.day=14;
  tickStory55(s);
  const mail=s.content.mail.find(m=>m.id==='s55-d13-wallet-mail');
  const notice=s.notifications.find(n=>n.id==='s55-mail-s55-d13-wallet-mail');
- assert.ok(mail);assert.equal(mail.date,'2025-05-31');
- assert.equal(notice.day,13);assert.equal(notice.clock,'22:10');
+ assert.ok(mail);assert.equal(mail.date,'2025-06-01');
+ assert.equal(notice.day,14);assert.equal(notice.clock,'00:30');
  tickStory55(s);
  assert.equal(s.content.mail.filter(m=>m.id==='s55-d13-wallet-mail').length,1);
  assert.equal(s.notifications.filter(n=>n.id==='s55-mail-s55-d13-wallet-mail').length,1);

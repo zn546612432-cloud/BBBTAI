@@ -5,6 +5,8 @@ export const d13State=s=>s.story55?.d13;
 export function syncD13(s){
  if(!isStory55(s))return;
  applyD13Definition(s.story55.config);
+ const due=s.story55.config.nodes.find(n=>n.id==='d13-wallet-mail');
+ if(s.day===13&&s.story55.d13Chats?.['father-planning']?.completed&&due?.at==='22:10'&&s.clock<'22:10'&&!s.content.mail.some(m=>m.id===D13_MAIL_ID))due.at=s.clock;
  if(s.story55.d13Revision===3)return;
  // Previously authored spoken turns become avatar-only call records.
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
@@ -29,7 +31,7 @@ export function bindD13Wallet(s){
  if(completed(s,'intrusion'))return false;
  if(nodeStatus(s,'d13-wallet-bind').state!=='ready')return false;
  const wallets=s.content.mirage.wallets??=[];
- if(!wallets.some(w=>w.id===D13_WALLET_ID))wallets.push({id:D13_WALLET_ID,address:'MIR-WLT-0013',asset:'BTC',balance:50,status:'available',boundAt:date55(s.day)});
+ if(!wallets.some(w=>w.id===D13_WALLET_ID))wallets.push({id:D13_WALLET_ID,address:'MIR-WLT-0013',asset:'BTC',balance:50,controlledBy:'ouroboros',spendable:false,status:'available',boundAt:date55(s.day)});
  completeNode(s,'d13-wallet-bind');s.story55.d13.phase='bound';return true;
 }
 export function transferD13Wallet(s,now=Date.now()){

@@ -151,11 +151,11 @@ test('Expiry, partial saves and unaccepted tasks never manufacture payments or u
  }
 });
 
-test('Every day has 20 original group bubbles, with standalone remarks and no automatic Ximeng/player line',()=>{
+test('D08/D09 retain20 and the approved D10 has25 group bubbles, with standalone remarks and no automatic Ximeng/player line',()=>{
  const ids=new Set();
  for(const {day,scenes} of DAYS){
   const all=lines(scenes);
-  assert.equal(all.length,20,'day '+day);
+  assert.equal(all.length,day===10?25:20,'day '+day);
   assert.ok(scenes.some(x=>x.lines.length===1),'not every group message gets a reply');
   assert.ok(all.every(x=>x.who!=='me'&&x.who!=='熙蒙'&&x.who!=='熙泰'&&x.who!=='傅隆生'));
   assert.ok(all.every(x=>x.text&&!x.text.includes('玩家')&&!x.text.includes('任务完成')));
@@ -185,14 +185,14 @@ test('Shared scheduler sends one new D08-D10 group bubble per tick, preserving u
     count=n;
    }
   }
-  assert.equal(count,20,'day '+day);
+  assert.equal(count,day===10?25:20,'day '+day);
   assert.equal(messages(s,day).filter(x=>x.from==='me').length,0);
-  assert.equal(group(s).unread,first+20);
-  assert.equal(s.notifications.filter(n=>String(n.messageId).startsWith('d'+String(day).padStart(2,'0')+'-')&&n.conversationId==='group').length,20);
+  assert.equal(group(s).unread,first+(day===10?25:20));
+  assert.equal(s.notifications.filter(n=>String(n.messageId).startsWith('d'+String(day).padStart(2,'0')+'-')&&n.conversationId==='group').length,day===10?25:20);
   assert.ok(messages(s,day).every(m=>m.sentDate===date55(day)));
   const refreshed=structuredClone(s);
   for(let i=0;i<40;i++)tickPhoneStoryMessages(refreshed,now+i*2000);
-  assert.equal(messages(refreshed,day).length,20,'reloading cannot redeliver');
+  assert.equal(messages(refreshed,day).length,day===10?25:20,'reloading cannot redeliver');
   assert.ok(!messages(s,day).some(m=>m.from==='me'),'player lines must never be authored by background scheduler');
  }
 });
@@ -202,7 +202,7 @@ test('Skipping to D10 silently backfills only real D08-D09 NPC messages, never l
  s.day=10;s.clock='09:00';
  for(let i=0;i<10;i++)tickPhoneStoryMessages(s,90000+i*3000);
  for(const day of [8,9]){
-  assert.equal(messages(s,day).length,20);
+  assert.equal(messages(s,day).length,day===10?25:20);
   assert.ok(messages(s,day).every(m=>m.historical&&m.day===day&&m.sentDate===date55(day)));
   assert.ok(s.notifications.filter(n=>String(n.messageId).startsWith('d'+String(day).padStart(2,'0')+'-'))
     .every(n=>n.silent));

@@ -222,7 +222,7 @@ export function tickWishes(s,now=Date.now()){
  if(!st.d07Started&&s.day>=7&&s.clock>='09:00'){
   st.d07Started=true;
   for(const line of nextDay)queue(s,{...line,dueDay:7,dueClock:'09:00',silentAfterDay:true});
-  for(const line of extraDay)queue(s,{...line,dueDay:7,dueClock:'11:00',silentAfterDay:true});
+  for(const line of extraDay)queue(s,{...line,dueDay:7,dueClock:line.dueClock||'11:00',silentAfterDay:true});
   for(const line of afternoonDay)queue(s,{...line,dueDay:7,dueClock:'13:30',silentAfterDay:true});
   changed=true;
  }
