@@ -1,3 +1,4 @@
+import {renderWebArchive} from './web-archive.js';
 import {esc} from '../../system/ui.js';
 import {isStory55,completed,completeNode,nodeStatus} from '../../services/story55/state.js';
 import {D17_FORUM,D17_WEB_PAGES,D17_NOTE_TEXT,D17_MEDIA} from '../../story/d17/content.js';
@@ -21,9 +22,10 @@ const control=(a,label,icon)=>`<button type="button" data-action="${a}" aria-lab
 const photo=(src,alt,attrs='')=>`<img src="${src}" alt="${esc(alt)}" decoding="async" ${attrs}>`;
 
 export function researchSearchResult(p){
- const brand=p.forum?'星月論壇':p.reference?'百度百科':'Mirage';
- const icon=p.forum?'moon':p.reference?'shield':'globe';
- const thumb=p.forum?`<span class="research-result-thumb">${photo(D17_MEDIA.community,'星月論壇情感生活版')}</span>`:'';
+ const brand=p.label;
+ const icon=p.forum||p.kind==='forum'?'moon':p.reference?'shield':p.kind==='music'?'image':'globe';
+ const cover=p.forum?'community':p.article?.hero;
+ const thumb=cover?`<span class="research-result-thumb">${photo(D17_MEDIA[cover],p.forum?'星月論壇情感生活版':p.label+' 配圖')}</span>`:'';
  return `<div class="saf-result-site"><i class="research-favicon is-${p.forum?'forum':'portal'}">${researchIcon(icon)}</i><span class="research-result-brand">${brand}<small>${esc(new URL(p.url).hostname)} ${p.forum?'› 情感生活 › 討論串':''}</small></span><em>⋮</em></div><div class="research-result-content">${thumb}<h2>${esc(p.title)}</h2><p>${p.forum?'<span class="research-result-date">2024年11月8日 — </span>':''}${esc(p.desc)}</p></div>`;
 }
 function author(c,{reply=false}={}){
@@ -52,6 +54,7 @@ export function renderResearchPage(s,p,{expired=false,media=false,directory=fals
   return `<section class="xy-error" role="status"><span class="xy-error-icon">${researchIcon(p.failure==='unsafe'?'shield':'globe')}</span><h1>無法開啟此網頁</h1><p>${text}</p><small>${esc(new URL(p.url).hostname)}</small><button type="button" data-action="browser-back">返回搜尋結果</button></section>`;
  }
  if(p.reference)return reference({media,directory});
+ if(p.article)return renderWebArchive(p);
  return forum();
 }
 // Reading uses the existing store and one ledger; website presentation has no timers.

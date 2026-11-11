@@ -65,9 +65,21 @@ try{
  await loadPhone(prepared);
  const search=screen.locator('.saf-address input');await search.fill('MiRaGe');await search.press('Enter');
  await screen.locator('[data-page="d17-xingyue"]').waitFor();
- assert.equal(await screen.locator('.saf-result').count(),4);
+ assert.equal(await screen.locator('.saf-result').count(),8);
  await capture('01-search.png');
  const initial=await saved(),money=initial.bankData.balance;
+ for(const id of ['d17-mirage-js','d17-mirage-music','d17-mirage-os','d17-mirage-coast']){
+  await screen.locator(`[data-page="${id}"]`).click();await screen.locator('.web-archive').waitFor();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#screen-layer .web-archive img')].every(img=>img.complete&&img.naturalWidth>0));
+  assert.equal((await saved()).story55.browserReadIds,undefined);
+  await capture(id+'.png');
+  for(const width of [320,390,430]){
+   await page.setViewportSize({width,height:750});
+   assert.equal(await page.evaluate(()=>document.querySelector('#screen-layer .saf-content').scrollWidth<=document.querySelector('#screen-layer .saf-content').clientWidth),true);
+  }
+  await page.setViewportSize({width:390,height:664});
+  await action('browser-back').click();await screen.locator('[data-page="d17-xingyue"]').waitFor();
+ }
  for(const id of ['d17-mirage-old','d17-mirage-fake','d17-mirage-outdated']){
   await screen.locator(`[data-page="${id}"]`).click();await screen.getByRole('heading',{name:'無法開啟此網頁',exact:true}).waitFor();
   assert.equal((await saved()).story55.browserReadIds,undefined);await action('browser-back').click();
@@ -140,7 +152,29 @@ try{
  }
  await page.setViewportSize({width:390,height:664});
  assert.deepEqual(errors,[]);
- const result={passed:true,viewport:await page.viewportSize(),resultCount:4,comments:3,invitationLines:30,readOnce:true,websiteImages:true,gallery:true,directory:true,widths:[320,390,430],externalRequestsBlocked:[...new Set(external)],errors};
+ await route(17,'19:00','browser','/search',{query:'azathoth'});
+ await screen.locator('[data-page="d17-azathoth-culture"]').waitFor();
+ assert.equal(await screen.locator('.saf-result').count(),6);
+ await capture('12-azathoth-search.png');
+ for(const id of ['d17-azathoth-culture','d17-azathoth-report','d17-azathoth-notes','d17-azathoth-debate','d17-azathoth-spelling']){
+  await screen.locator(`[data-page="${id}"]`).click();await screen.locator('.web-archive').waitFor();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#screen-layer .web-archive img')].every(img=>img.complete&&img.naturalWidth>0));
+  const before=JSON.stringify((await saved()).content.notes);
+  await capture(id+'.png');
+  for(const width of [320,390,430]){
+   await page.setViewportSize({width,height:750});
+   assert.equal(await page.evaluate(()=>document.querySelector('#screen-layer .saf-content').scrollWidth<=document.querySelector('#screen-layer .saf-content').clientWidth),true);
+  }
+  await page.setViewportSize({width:390,height:664});
+  if(id==='d17-azathoth-culture'){
+   const related=screen.locator('.archive-related [data-page="d17-azathoth-report"]');await related.scrollIntoViewIfNeeded();await related.click();
+   await screen.locator('.archive-news').waitFor();assert.equal(JSON.stringify((await saved()).content.notes),before);
+   await action('browser-back').click();await screen.locator('.archive-feature').waitFor();
+  }
+  await action('browser-back').click();await screen.locator('[data-page="d17-azathoth-culture"]').waitFor();
+ }
+ assert.deepEqual(errors,[]);
+ const result={passed:true,viewport:await page.viewportSize(),resultCount:8,azathothResults:6,backgroundPages:9,comments:3,invitationLines:30,readOnce:true,websiteImages:true,gallery:true,directory:true,widths:[320,390,430],externalRequestsBlocked:[...new Set(external)],errors};
  await writeFile(root+'/result.json',JSON.stringify(result,null,2)+'\n');console.log('PASS_D17_MOBILE',JSON.stringify(result));
 }catch(error){
  await page.screenshot({path:root+'/failure.png'}).catch(()=>{});

@@ -52,3 +52,9 @@ The first review was rejected by the user for looking like a plain document. The
 The old “含 Mirage 的回覆” clue label and encyclopedia organization summary are removed from the website. The three approved comments, unread-content restriction, expired-login result, note idempotency and all 30 invitation lines are preserved. The encyclopedia contains ordinary mythology only. Illustration, photography, licensing and source references are in `public/assets/browser/d17/SOURCES.md`.
 
 The contents state is retained in the existing browser route parameters so phone status redraws cannot collapse it during reading. Visual acceptance now checks image decoding, the expanded contents list, image gallery, and 320/390/430-pixel widths, in addition to the original interaction checks. A passing unit test alone does not count as visual acceptance; review the generated phone screenshots before handing over the preview.
+
+## Search-world revision
+
+Mirage now returns eight results: four unrelated, readable software/music/travel sites, the original forum and three plausibly distinct failed pages. Only the legacy community page is still an entrance. Azathoth now returns six results: mythology, a technical-culture feature, a concrete disputed 2019 incident retrospective, a public-tutorial blog, a forum debate and a spelling clarification. Nine new pages have complete bodies and working related-article navigation. They never record the original forum note or advance the invitation.
+
+The frozen three comments and thirty invitation lines remain unchanged. The new incident, publishers and posters are authored fiction; real software facts and the Astaroth distinction are researched separately. No administrator identity or private NS source code is exposed. Browser checks now open all nine pages at three widths, decode their images and verify a related-article/back journey.

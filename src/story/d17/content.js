@@ -1,3 +1,4 @@
+import {D17_BACKGROUND_PAGES} from './web-content.js';
 // User-approved D17 copy. These are content definitions, never another scheduler.
 export const D17_INVITATION_ID='azathoth-invitation';
 export const D17_INVITATION_NODE={
@@ -52,14 +53,19 @@ export const D17_MEDIA={
  cosmic:'/assets/browser/d17/azathoth-cover.webp',
  community:'/assets/browser/d17/community-cover.webp',
  island:'/assets/browser/d17/avatar-island.webp',
- fish:'/assets/browser/d17/avatar-fish.webp'
+ fish:'/assets/browser/d17/avatar-fish.webp',
+ server:'/assets/browser/d17/server-room.webp',
+ record:'/assets/browser/d17/record-desk.webp'
 };
 export const D17_WEB_PAGES=[
- {id:'d17-mirage-old',title:'Mirage — Community Portal',url:'https://mirage-archive.org/',label:'Mirage',keywords:['mirage'],desc:'Mirage 社群入口與會員登入。',failure:'expired'},
- {id:'d17-mirage-fake',title:'Mirage｜登入',url:'https://mirage-access.net/login',label:'Mirage',keywords:['mirage'],desc:'會員專用入口。登入以繼續瀏覽。',failure:'unsafe'},
+ ...D17_BACKGROUND_PAGES.filter(p=>p.group==='mirage').slice(0,2),
+ {id:'d17-mirage-old',title:'Mirage Photo｜風景與底片作品集',url:'https://mirage-archive.org/',label:'Mirage Photo',keywords:['mirage'],desc:'海岸、城市與旅途中留下的影像。攝影作品、拍攝札記與舊活動紀錄。',failure:'expired'},
+ {id:'d17-mirage-fake',title:'Mirage Plus｜雲端素材與桌布',url:'https://mirage-access.net/login',label:'Mirage Plus',keywords:['mirage'],desc:'圖像素材、桌布與訂閱資源。登入後存取你的下載清單。',failure:'unsafe'},
  {id:D17_FORUM.id,title:D17_FORUM.title+' — 星月論壇',url:'https://bbs.xingyue.club/thread/18427',label:'星月論壇',keywords:['mirage','星月論壇'],desc:'憂傷的魚：這串不是亂碼，是 Base64 編碼。解碼後就是 Mirage……',forum:true},
+ ...D17_BACKGROUND_PAGES.filter(p=>p.group==='mirage').slice(2),
  {id:'d17-mirage-outdated',title:'MIRAGE / 舊版入口',url:'https://mirage-forum.net/index.html',label:'MIRAGE',keywords:['mirage'],desc:'社群公告、舊版入口與連線資訊。',failure:'outdated'},
- {id:'d17-azathoth',title:'阿撒托斯 — 百度百科',url:'https://baike.baidu.com/item/阿撒托斯',label:'百度百科',keywords:['azathoth','阿撒托斯'],reference:true}
+ {id:'d17-azathoth',title:'阿撒托斯 — 百度百科',url:'https://baike.baidu.com/item/阿撒托斯',label:'百度百科',keywords:['azathoth','阿撒托斯'],reference:true},
+ ...D17_BACKGROUND_PAGES.filter(p=>p.group==='azathoth')
 ];
 export const D17_NOTE_TEXT=[
  '星月論壇舊帖：'+D17_FORUM.title,

@@ -13,3 +13,7 @@ Treat `main` as production; D01=2025-05-19, D55=2025-07-12. Older 90-day DEMO ar
 7. Report separately what is designed, what's supported by existing day-specific code, what still needs adapters, what ran in a browser, and what actually shipped.
 
 For general feature code not related to story data, keep the existing architecture and tests.
+
+## Browser websites and search content
+
+Treat each site as an independent website with its own purpose, sources, images and mobile layout. Inspect real references and licensed open-source examples before implementation. Broad searches must mix unrelated same-name results with relevant pages; do not fill the list with portals. Keep fictional reports and disputed attribution separate from real encyclopedia facts. Preserve approved copy and existing story gates. Click every result and inspect rendered mobile screenshots, images, scrolling and state after shell redraws; passing unit tests alone is not acceptance.

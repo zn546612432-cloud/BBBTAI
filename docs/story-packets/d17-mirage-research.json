@@ -31,6 +31,16 @@
       "id": "d17-avatar-fish",
       "source": "bundled-local",
       "path": "public/assets/browser/d17/avatar-fish.webp"
+    },
+    {
+      "id": "d17-server-room",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/server-room.webp"
+    },
+    {
+      "id": "d17-record-desk",
+      "source": "bundled-local",
+      "path": "public/assets/browser/d17/record-desk.webp"
     }
   ],
   "events": [
@@ -888,7 +898,7 @@
     {
       "id": "d17-check-assets",
       "type": "assets",
-      "verify": "四張本地WebP存在且正確解碼，無外部圖片請求；原創插畫及Unsplash來源見資產清單。"
+      "verify": "六張本地WebP正確解碼，無外部圖片請求；插畫與攝影來源見清單。"
     },
     {
       "id": "d17-check-date-clock",
@@ -903,7 +913,7 @@
     {
       "id": "d17-check-mobile",
       "type": "mobile",
-      "verify": "390及320像素驗證論壇照片頭像、百科封面、目錄及圖集，原論壇樓中樓和失效頁可點擊，零橫向溢出。"
+      "verify": "Mirage八條、Azathoth六條結果；九個新增正文均可閱讀及返回，相關文章可跳轉，320/390/430無橫向溢出。論壇、百科、圖集與原生對話保持可用。"
     }
   ]
 }

@@ -58,7 +58,7 @@ test('search unlocks on D17, old entry opens search, and failed sites never reve
  assert.doesNotMatch(renderResearchPage(s,forum),/憂傷的魚|Azathoth/);
  s.day=17;delete s.story55.completed.loan;delete s.story55.completed.code;
  const before=JSON.stringify(s.bankData);const search=render(c,loc);
- assert.equal((search.match(/class="saf-result" data-page="d17-/g)||[]).length,4);
+ assert.equal((search.match(/class="saf-result" data-page="d17-/g)||[]).length,8);
  assert.match(render(c,{route:'/story55',params:{page:'mirage'}}),/d17-xingyue/);
  for(const p of D17_WEB_PAGES.filter(p=>p.failure)){
   handle('browser-open',{dataset:{page:p.id}},c,loc);
@@ -125,4 +125,30 @@ test('the public pages use real bundled imagery and no plot instructions, with a
  handle('browser-research-directory',{dataset:{}},c,s.nav.current);
  assert.match(render(c,s.nav.current),/aria-expanded="false"/);
  assert.equal(s.story55.browserReadIds,undefined);
+});
+
+
+test('search mixes same-name websites and Azathoth public reporting without leaking identity or recording unrelated pages',()=>{
+ const s=phone(),c=ctx(s);
+ const mirage=render(c,{route:'/search',params:{query:'mirage'}});
+ for(const id of ['d17-mirage-js','d17-mirage-music','d17-mirage-os','d17-mirage-coast'])assert.match(mirage,new RegExp('data-page="'+id+'"'));
+ assert.doesNotMatch(mirage,/data-page="d17-azathoth/);
+ const azathoth=render(c,{route:'/search',params:{query:'azathoth'}});
+ for(const id of ['d17-azathoth','d17-azathoth-culture','d17-azathoth-report','d17-azathoth-notes','d17-azathoth-debate'])assert.match(azathoth,new RegExp('data-page="'+id+'"'));
+ assert.doesNotMatch(azathoth,/data-page="d17-mirage/);
+ const balance=JSON.stringify(s.bankData),notes=JSON.stringify(s.content.notes);
+ for(const p of D17_WEB_PAGES.filter(p=>p.article)){
+  assert.ok(p.article.date<'2025-06-05');
+  handle('browser-open',{dataset:{page:p.id}},c,{route:'/search',params:{query:p.group}});
+  const html=render(c,s.nav.current);
+  assert.match(html,/web-archive/);assert.match(html,/<time datetime=/);
+  assert.doesNotMatch(html,/陳熙泰|陈熙泰|現任管理員|玩家|遊戲提示|本地模擬/);
+  for(const id of p.article.related)assert.ok(D17_WEB_PAGES.some(x=>x.id===id));
+ }
+ assert.equal(JSON.stringify(s.bankData),balance);assert.equal(JSON.stringify(s.content.notes),notes);
+ assert.equal(s.story55.browserReadIds,undefined);
+ const report=render(c,{route:'/page',params:{page:'d17-azathoth-report'}});
+ assert.match(report,/2019 年 11 月/);assert.match(report,/三個鏡像/);assert.match(report,/署名是否/);
+ const notesPage=render(c,{route:'/page',params:{page:'d17-azathoth-notes'}});
+ assert.match(notesPage,/我沒有它的原始碼/);
 });

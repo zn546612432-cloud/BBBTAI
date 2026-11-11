@@ -1,0 +1,142 @@
+{
+  "queries": [
+    {
+      "query": "mirage",
+      "broad": true,
+      "results": [
+        {
+          "id": "d17-mirage-js",
+          "title": "Mirage JS — 前端開發的 API 模擬工具",
+          "kind": "docs",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://miragejs.com/",
+          "date": "2024-09-18"
+        },
+        {
+          "id": "d17-mirage-music",
+          "title": "MIRAGE / 03:17 — Glass Hours 新作試聽筆記",
+          "kind": "music",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://halfstep.fm/releases/mirage-0317",
+          "date": "2024-10-26"
+        },
+        {
+          "id": "d17-mirage-old",
+          "title": "Mirage Photo｜風景與底片作品集",
+          "kind": "portfolio",
+          "intent": "unrelated",
+          "status": "expired",
+          "url": "https://mirage-archive.org/",
+          "date": null
+        },
+        {
+          "id": "d17-mirage-fake",
+          "title": "Mirage Plus｜雲端素材與桌布",
+          "kind": "download",
+          "intent": "unrelated",
+          "status": "unsafe",
+          "url": "https://mirage-access.net/login",
+          "date": null
+        },
+        {
+          "id": "d17-xingyue",
+          "title": "求助，男朋友的手機是不是中病毒了？ — 星月論壇",
+          "kind": "forum",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://bbs.xingyue.club/thread/18427",
+          "date": "2024-11-08"
+        },
+        {
+          "id": "d17-mirage-os",
+          "title": "MirageOS：把應用程式組成一個小型系統",
+          "kind": "software",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://mirageos.org/",
+          "date": "2024-06-20"
+        },
+        {
+          "id": "d17-mirage-coast",
+          "title": "Mirage Coast｜把週末留給沒有行程的海邊",
+          "kind": "travel",
+          "intent": "unrelated",
+          "status": "live",
+          "url": "https://slowroute.travel/journal/mirage-coast",
+          "date": "2025-03-16"
+        },
+        {
+          "id": "d17-mirage-outdated",
+          "title": "MIRAGE / 舊版入口",
+          "kind": "download",
+          "intent": "clue",
+          "status": "outdated",
+          "url": "https://mirage-forum.net/index.html",
+          "date": null
+        }
+      ]
+    },
+    {
+      "query": "azathoth",
+      "broad": false,
+      "results": [
+        {
+          "id": "d17-azathoth",
+          "title": "阿撒托斯 — 百度百科",
+          "kind": "encyclopedia",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://baike.baidu.com/item/阿撒托斯",
+          "date": null
+        },
+        {
+          "id": "d17-azathoth-culture",
+          "title": "Azathoth 是哪一派？公開程式碼與封閉社群之間",
+          "kind": "feature",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://digital-margin.net/features/azathoth",
+          "date": "2024-08-19"
+        },
+        {
+          "id": "d17-azathoth-report",
+          "title": "「靜鐘」事件回看：三個鏡像，一份署名 Azathoth 的公告",
+          "kind": "news",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://northline.news/archive/2020/silent-bell",
+          "date": "2020-02-11"
+        },
+        {
+          "id": "d17-azathoth-notes",
+          "title": "我讀過的 Azathoth 公開教程，和那些被倒賣的壓縮包",
+          "kind": "blog",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://outside-stack.blog/notes/azathoth-reading",
+          "date": "2023-07-09"
+        },
+        {
+          "id": "d17-azathoth-debate",
+          "title": "Azathoth 真有那麼神？還是故事傳著傳著變了",
+          "kind": "forum",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://packet-cafe.net/topic/9031",
+          "date": "2024-12-03"
+        },
+        {
+          "id": "d17-azathoth-spelling",
+          "title": "Azathoth、Astaroth：相似名字，別混成同一份安全報告",
+          "kind": "blog",
+          "intent": "clue",
+          "status": "live",
+          "url": "https://digital-margin.net/notes/similar-names",
+          "date": "2022-05-18"
+        }
+      ]
+    }
+  ]
+}
