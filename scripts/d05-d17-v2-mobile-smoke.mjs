@@ -39,14 +39,15 @@ async function trackStatus(prefix,id,chat){return page.evaluate(async({release,p
  const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===prefix).track,q=track.ensure(s)[id];const d=track.defs.find(d=>d.id===id);return {q,draft:track.draft(s,chat),lines:typeof d.lines==='function'?d.lines(s):d.lines};
  },{release,prefix,id,chat});}
 async function finishTrack(prefix,id,chat,shot){
+ console.log('BEGIN_TRACK',prefix+':'+id);
  for(let i=0;i<120;i++){
   const status=await trackStatus(prefix,id,chat);if(status.q.completed)break;
   if(status.draft?.stage.startsWith(prefix+':'+id+':'))await nativeDraft(status.draft.text);
-  else await page.waitForFunction(async({release,prefix,id,index,chat})=>{const {AUTHORED_CHAT_TRACKS}=await import(release.url+'src/services/messaging/lifecycle/registry.js');const s=JSON.parse(localStorage.getItem('ximeng-phone-story55-v1'));const q=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===prefix).track.ensure(s)[id];return q.completed||q.index!==index||AUTHORED_CHAT_TRACKS.find(x=>x.track.name===prefix).track.draft(s,chat)?.stage.startsWith(prefix+':'+id+':');},{release,prefix,id,index:status.q.index,chat},{timeout:30000});
+  else await page.waitForFunction(({prefix,id,index,draftText})=>{const s=JSON.parse(localStorage.getItem('ximeng-phone-story55-v1'));const map=prefix==='d07-reply'?s.story55.d07Replies:Number(prefix.slice(1))>=14?s.story55.authoredDays?.[prefix]:s.story55[prefix+'Chats'];const q=map?.[id];return q?.completed||(q?.index??0)!==index||!!(draftText&&document.querySelector('#screen-layer .wx-composer input')?.value===draftText);},{prefix,id,index:status.q.index,draftText:status.lines[status.q.index]?.who==='me'?status.lines[status.q.index].text:null},{timeout:30000});
  }
  const status=await trackStatus(prefix,id,chat);assert.ok(status.q.completed,prefix+':'+id);
  const s=await state(),messages=s.content.conversations.wechat.find(c=>c.id===chat).messages.filter(m=>m.lifecycleId===prefix+':'+id);
- assert.deepEqual(messages.map(m=>[m.from,m.text]),status.lines.map(l=>[l.who,l.text]));exports.push({scene:prefix+':'+id,messages});await capture(shot||prefix+'-'+id);
+ assert.deepEqual(messages.map(m=>[m.from,m.text]),status.lines.map(l=>[l.who,l.text]));exports.push({scene:prefix+':'+id,messages});await capture(shot||prefix+'-'+id);console.log('PASS_TRACK',prefix+':'+id,messages.length);
 }
 async function signIn(){await screen.locator('.mc-login-panel,.mc-composer').first().waitFor({timeout:16000});const form=screen.locator('form[data-form="mc-login"]');if(await form.isVisible())await form.locator('button[type="submit"]').click();await screen.locator('.mc-composer').waitFor();const decrypt=action('mc-decrypt');if(await decrypt.isVisible())await decrypt.click();}
 async function finishStory(id,channel,chat){
