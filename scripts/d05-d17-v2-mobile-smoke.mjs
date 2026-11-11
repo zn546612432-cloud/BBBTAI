@@ -47,7 +47,7 @@ async function finishTrack(prefix,id,chat,shot){
  }
  const status=await trackStatus(prefix,id,chat);assert.ok(status.q.completed,prefix+':'+id);
  const s=await state(),messages=s.content.conversations.wechat.find(c=>c.id===chat).messages.filter(m=>m.lifecycleId===prefix+':'+id);
- assert.deepEqual(messages.map(m=>[m.from,m.text]),status.lines.map(l=>[l.who,l.text]));exports.push({scene:prefix+':'+id,messages});await capture(shot||prefix+'-'+id);console.log('PASS_TRACK',prefix+':'+id,messages.length);
+ assert.deepEqual(messages.map(m=>[m.from,m.text]),status.lines.map(l=>[l.who,l.text]));const related=prefix==='d07-reply'?s.content.conversations.wechat.find(c=>c.id===chat).messages.filter(m=>m.wishId||m.id.startsWith('wish-')):[];exports.push({scene:prefix+':'+id,messages,...(related.length?{relatedMessages:related}:{})});await capture(shot||prefix+'-'+id);console.log('PASS_TRACK',prefix+':'+id,messages.length);
 }
 async function signIn(){await screen.locator('.mc-login-panel,.mc-composer').first().waitFor({timeout:16000});const form=screen.locator('form[data-form="mc-login"]');if(await form.isVisible())await form.locator('button[type="submit"]').click();await screen.locator('.mc-composer').waitFor();const decrypt=action('mc-decrypt');if(await decrypt.isVisible())await decrypt.click();}
 async function finishStory(id,channel,chat){
@@ -117,9 +117,9 @@ try{
  }
  await prepare(13,'19:03','wechat','/chat/fulongsheng');await finishTrack('d13','father-planning','fulongsheng');
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).content.mail.some(m=>m.id==='s55-d13-wallet-mail'),null,{timeout:10000});
- s=await state();const mail=s.content.mail.find(m=>m.id==='s55-d13-wallet-mail');assert.equal(mail.time,'19:03');s.unlocked=false;s.nav={current:{appId:'kira',route:'/mail/'+mail.id,params:{}},stack:[]};await load(s);
+ s=await state();const mail=s.content.mail.find(m=>m.id==='s55-d13-wallet-mail');assert.equal(mail.time,'19:03');s.unlocked=false;s.nav={current:{appId:'kira',route:'/',params:{}},stack:[]};await load(s);await screen.locator('[data-action="kira-mail"][data-id="'+mail.id+'"]').click();
  await screen.locator('.kira-d13-mail').waitFor();s=await state();assert.equal(s.clock,'22:30');assert.equal(s.content.mail.filter(m=>m.id===mail.id).length,1);await capture('d13-mail-2230');exports.push({scene:'d13-mail',mail,clockAfterOpening:s.clock});
- await prepare(14,'09:16','kira','/mail/code-mail');await screen.getByText('Ouroboros’ Tear — Framework Package',{exact:true}).waitFor();await capture('d14-mail');
+ await prepare(14,'09:16','kira','/mail/code-mail');await screen.getByText('Ouroboros’ Tear — Framework Package',{exact:true}).waitFor();await capture('d14-mail');exports.push({scene:'d14-mail',mail:(await state()).content.mail.find(m=>m.id==='code-mail')});
  await prepare(15,'15:36','mirage','/chat/s55-ouroboros');await signIn();s=await finishStory('loan','mirage','s55-ouroboros');assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);assert.ok(s.notifications.some(n=>n.id==='s55-loan-receipt'));
  s.clock='16:30';s.unlocked=false;s.nav={current:{appId:'wechat',route:'/chat/wang',params:{}},stack:[]};await load(s);await finishTrack('d15','room','wang');
  await prepare(16,'10:08','wechat','/chat/group');await finishTrack('d16','briefing','group');s=await state();s.clock='16:00';s.unlocked=false;await load(s);await finishTrack('d16','after-rehearsal','group');

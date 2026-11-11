@@ -61,12 +61,12 @@ try{
  await page.goto(url);await unlock();
  await page.locator('[data-action="kira-mail"][data-id="s55-d13-wallet-mail"]').click();
  await page.locator('.kira-d13-mail').waitFor();
- assert.match(await page.locator('.kira-d13-mail').innerText(),/數位資產入帳通知/);
+ assert.match(await page.locator('.kira-d13-mail').innerText(),/待領取資產通知/);
  await page.screenshot({path:'qa-results/d13-kira-native-mail.png'});
- await action('kira-d13-wallet').click();await signIn();
+ await action('kira-d13-wallet').last().click();await signIn();
  await page.locator('.mc-wallet-list').waitFor();
  await page.locator('.mc-wallet-back[data-action="mc-wallet-back"]').first().click();await page.locator('.kira-d13-mail').waitFor();
- await action('kira-d13-wallet').click();await signIn();
+ await action('kira-d13-wallet').last().click();await signIn();
  await page.locator('.mc-wallet-list').waitFor();await page.screenshot({path:'qa-results/d13-wallet-list.png'});
  await action('mc-bind-wallet').click();
  await page.locator('form[data-form="mc-wallet-bind"]').waitFor();
