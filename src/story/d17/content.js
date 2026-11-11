@@ -64,7 +64,7 @@ export const D17_WEB_PAGES=[
  {id:D17_FORUM.id,title:D17_FORUM.title+' — 星月論壇',url:'https://bbs.xingyue.club/thread/18427',label:'星月論壇',keywords:['mirage','星月論壇'],desc:'憂傷的魚：這串不是亂碼，是 Base64 編碼。解碼後就是 Mirage……',forum:true},
  ...D17_BACKGROUND_PAGES.filter(p=>p.group==='mirage').slice(2),
  {id:'d17-mirage-outdated',title:'MIRAGE / 舊版入口',url:'https://mirage-forum.net/index.html',label:'MIRAGE',keywords:['mirage'],desc:'社群公告、舊版入口與連線資訊。',failure:'outdated'},
- {id:'d17-azathoth',title:'阿撒托斯 — 百度百科',url:'https://baike.baidu.com/item/阿撒托斯',label:'百度百科',keywords:['azathoth','阿撒托斯'],reference:true},
+ {id:'d17-azathoth',title:'阿撒托斯 — 百度百科',url:'https://baike.baidu.com/item/阿撒托斯',label:'百度百科',keywords:['azathoth','阿撒托斯'],desc:'阿撒托斯（Azathoth），洛夫克拉夫特筆下的虛構存在。詞條整理其文學形象，以及與奈亞拉托提普的關係。',reference:true},
  ...D17_BACKGROUND_PAGES.filter(p=>p.group==='azathoth')
 ];
 export const D17_NOTE_TEXT=[

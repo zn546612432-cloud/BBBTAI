@@ -8,6 +8,11 @@ export const canResearchMirage=s=>isStory55(s)&&s.day>=17;
 export const isResearchPage=p=>!!p&&D17_WEB_PAGES.some(x=>x.id===p.id);
 export const researchUrl=loc=>loc.params?.expired?'https://bbs.xingyue.club/thread/18427/login':null;
 const paths={
+ code:'m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18',
+ record:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-6 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6 9l2 1m8 4 2 1',
+ news:'M4 3h16v18H4zm4 4h8M8 11h8m-8 4h3m3 0h2m-8 3h8',
+ book:'M3 4c4-2 7-1 9 1 2-2 5-3 9-1v16c-4-2-7-1-9 1-2-2-5-3-9-1zm9 1v16',
+ compass:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-5-5-2 7-7 2 2-7z',
  back:'m14 5-7 7 7 7',search:'M20 20l-5-5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
  menu:'M4 6h16M4 12h16M4 18h16',star:'m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z',
  comment:'M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z',
@@ -23,10 +28,11 @@ const photo=(src,alt,attrs='')=>`<img src="${src}" alt="${esc(alt)}" decoding="a
 
 export function researchSearchResult(p){
  const brand=p.label;
- const icon=p.forum||p.kind==='forum'?'moon':p.reference?'shield':p.kind==='music'?'image':'globe';
- const cover=p.forum?'community':p.article?.hero;
+ const icon=p.forum||p.kind==='forum'?'moon':p.reference?'book':({docs:'code',software:'code',music:'record',travel:'compass',feature:'news',news:'news',blog:'book'})[p.kind]||'globe';
+ const cover=p.forum?'community':p.reference?'cosmic':p.article?.hero;
+ const date=p.forum?'2024-11-08':p.article?.date;
  const thumb=cover?`<span class="research-result-thumb">${photo(D17_MEDIA[cover],p.forum?'星月論壇情感生活版':p.label+' 配圖')}</span>`:'';
- return `<div class="saf-result-site"><i class="research-favicon is-${p.forum?'forum':'portal'}">${researchIcon(icon)}</i><span class="research-result-brand">${brand}<small>${esc(new URL(p.url).hostname)} ${p.forum?'› 情感生活 › 討論串':''}</small></span><em>⋮</em></div><div class="research-result-content">${thumb}<h2>${esc(p.title)}</h2><p>${p.forum?'<span class="research-result-date">2024年11月8日 — </span>':''}${esc(p.desc)}</p></div>`;
+ return `<div class="saf-result-site"><i class="research-favicon is-${p.forum||p.kind==='forum'?'forum':p.kind||'portal'}">${researchIcon(icon)}</i><span class="research-result-brand">${brand}<small>${esc(new URL(p.url).hostname)} ${p.forum?'› 情感生活 › 討論串':''}</small></span><em>⋮</em></div><div class="research-result-content">${thumb}<h2>${esc(p.title)}</h2><p>${date?'<span class="research-result-date">'+esc(date)+' — </span>':''}${esc(p.desc)}</p></div>`;
 }
 function author(c,{reply=false}={}){
  const op=c.author==='樓主';
