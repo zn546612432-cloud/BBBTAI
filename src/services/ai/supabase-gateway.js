@@ -66,3 +66,23 @@ export async function taiCloudCall(op,payload={}){
  }
  return data;
 }
+
+/** Player's recording is sent only to the authenticated Supabase ASR route. */
+export async function taiCloudTranscribe(blob,{region='cn'}={}){
+ if(!(blob instanceof Blob)||!blob.size||blob.size>8_000_000)
+  throw Error('语音上传大小需小于 8MB');
+ const session=await taiCloudSession();
+ const form=new FormData();form.append('op','asr');form.append('region',region);
+ const mime=String(blob.type||'audio/wav').toLowerCase();
+ const ext=mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':mime.includes('webm')?'webm':'wav';
+ form.append('file',blob,'ximeng-voice.'+ext);
+ let response;
+ try{response=await fetch(TAI_PROVIDER_ENDPOINT,{method:'POST',mode:'cors',
+  headers:{apikey:TAI_PUBLIC_KEY,Authorization:'Bearer '+session.access_token},
+  body:form,cache:'no-store'});}
+ catch{throw Error('无法连接云端语音识别服务');}
+ let value;try{value=await response.json();}catch{throw Error('语音识别返回了无效响应');}
+ if(!response.ok)throw Error(response.status===429?'今日语音服务已达到使用额度':'语音识别失败：'+String(value?.error||response.status));
+ if(typeof value?.text!=='string'||!value.text.trim())throw Error('未识别出文字');
+ return value.text.trim();
+}
