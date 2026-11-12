@@ -391,11 +391,23 @@ try{
  await unlock();
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:20000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
+ // The old share can still be messaged, but an actual control attempt must
+ // never press GHOST start or complete the legacy automatic countdown.
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:20000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:20000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.phase==='unavailable'&&
    s.ghost.orders['tai-strike-legacy']?.status==='authorized';
- },key,{timeout:13000});
+ },key,{timeout:18000});
  const legacyDone=await state();
  assert.equal(legacyDone.ghost.orders['tai-strike-legacy'].attempts,0);
  assert.equal(legacyDone.story55.ghostShareTakeovers||0,0);
