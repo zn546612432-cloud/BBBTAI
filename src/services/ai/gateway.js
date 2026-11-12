@@ -1,4 +1,5 @@
 import {normalizeTtsSettings,ttsProviderSettings,ttsCueText} from '../voice/tts-settings.js';
+import {isTaiCloudHost,taiCloudCall} from './supabase-gateway.js';
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
@@ -55,12 +56,22 @@ async function directJSON(url,key,body,{timeoutMs=60000}={}){
  }catch(error){if(controller.signal.aborted)throw Error('供应商请求超时（60秒）');throw error;}finally{clearTimeout(timer);}
 }
 export async function aiStatus(){
+ if(isTaiCloudHost())return taiCloudCall('status');
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
 export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,model:c.model,parameters:normalizeAiParameters(c)};
+ if(isTaiCloudHost()){
+  const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
+  const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
+  const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
+  const params=deepseekModelOptions(c.model,c);
+  const answer=await taiCloudCall('chat',{...params,model:c.model,
+   messages:[{role:'system',content:system},...messages],max_tokens:Math.min(2800,c.maxTokens)});
+  return {text:answer.text,channel,day};
+ }
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
  // Cloud V8 is additive and read-only; offline or fetch failure uses current local rules.
  const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
@@ -118,7 +129,7 @@ export async function describeTaiImage({dataUrl,authorLabel=''}={}){
 // The server-side/browse executor separately enforces the allowlist and day gates.
 export async function selectTaiPhoneTool({text='',channel='noapp'}={}){
  const c=apiConfig();
- if(!c.deepseek||channel!=='noapp')return null;
+ if((!c.deepseek&&!isTaiCloudHost())||channel!=='noapp')return null;
  const system=[
   '你在扮演陈熙泰的好奇心决策器。只决定此刻要不要使用一项工具查看已获权限的熙蒙虚拟手机，不输出对玩家的台词。',
   '默认不查。只有话题确实与真实聊天或相册相关，或你有清楚的好奇、怀疑、担心动机时，才偶尔选择查询。不是持续监控。',
@@ -128,11 +139,11 @@ export async function selectTaiPhoneTool({text='',channel='noapp'}={}){
   '以JSON对象返回 {"name":"search_messages","arguments":{"query":"熙旺"}} 或 {"name":"none","arguments":{}}，不要其他文字。',
  ].join('\\n');
  try{
-  const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
-   ...deepseekModelOptions(c.model,c),
+  const body={...deepseekModelOptions(c.model,c),
    messages:[{role:'system',content:system},{role:'user',content:String(text).slice(0,400)}],
-   response_format:{type:'json_object'},max_tokens:170,stream:false,
-  },{timeoutMs:15000});
+   response_format:{type:'json_object'},max_tokens:170,stream:false};
+  const response=isTaiCloudHost()?{choices:[{message:{content:(await taiCloudCall('decision',body)).text}}]}:
+   await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,body,{timeoutMs:15000});
   const raw=String(response.choices?.[0]?.message?.content||'').trim();
   const parsed=JSON.parse(raw);
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return null;
@@ -149,7 +160,7 @@ export async function selectTaiPhoneTool({text='',channel='noapp'}={}){
 // rather than pretending it has executed a two-stage decision.
 export async function chooseTaiAction(args={}){
  const c=apiConfig();
- if(!c.deepseek)return null;
+ if(!c.deepseek&&!isTaiCloudHost())return null;
  const {taiActionDecisionPrompt,validateTaiAction}=await import('./action-protocol-v10.js');
  const {taiKnowledgeContext}=await import('./tai-profile.js');
  const mode=args.outputMode==='call'?'call':'text';
@@ -162,11 +173,11 @@ export async function chooseTaiAction(args={}){
  const system=(approvedV8?approvedV8+'\n\n':'')+director;
  let raw;
  try{
-  const response=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{
-   ...deepseekModelOptions(c.model,c),
+  const body={...deepseekModelOptions(c.model,c),
    messages:[{role:'system',content:system},...(Array.isArray(args.messages)?args.messages.slice(-16):[])],
-   response_format:{type:'json_object'},max_tokens:450,stream:false
-  });
+   response_format:{type:'json_object'},max_tokens:450,stream:false};
+  const response=isTaiCloudHost()?{choices:[{message:{content:(await taiCloudCall('decision',body)).text}}]}:
+   await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,body);
   raw=response.choices?.[0]?.message?.content;
  }catch(error){
   console.warn('Xitai decision phase unavailable; safe legacy response path:',error?.message);
@@ -195,6 +206,12 @@ export async function voicePreview({text,voiceId,model,tone='neutral',...overrid
   const spokenWithoutTags=text.replace(/\([a-z-]+\)/gi,'');
   if(containsPortuguese(spokenWithoutTags)&&!/[\u3400-\u9fff]/u.test(spokenWithoutTags))language='Portuguese';
   else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
+ }
+ if(isTaiCloudHost()){
+  const opts=ttsProviderSettings({...settings,language});
+  return taiCloudCall('tts',{text:String(text).slice(0,1400),
+   voiceId:normalizeXitaiVoiceId(voiceId||c.voiceId),model,
+   region:c.region,settings:opts});
  }
  if(!c.minimax){
   // GitHub Pages does not have a /api/voice/tts server route. Never mistake
