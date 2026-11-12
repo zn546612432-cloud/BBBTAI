@@ -6,7 +6,6 @@ import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {canSendGhostShareRemoteText} from './services/story55/ghost-share.js';
 import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
 import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
@@ -686,16 +685,7 @@ $('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noti
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
-$('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{
-   // An authorized Tai takeover uses the SAME Mirage.submit() as the player.
-   // Dispatch synchronously before the unrelated async Story55-form handler,
-   // so an intervening screen patch cannot erase the remote-typed value.
-   if(e.target.dataset.form==='mc-send'&&
-      canSendGhostShareRemoteText(store.get(),String(new FormData(e.target).get('text')||''))){
-     registry.get('mirage')?.submit(e.target,ctx(),store.get().nav.current);
-     return;
-   }
-   if(await submitStory55Form(e.target,ctx()))return;
+$('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(await submitStory55Form(e.target,ctx()))return;
   if(e.target.dataset.storyScene){
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
    if(!conversationId)throw Error('预设聊天尚未选中联系人');
