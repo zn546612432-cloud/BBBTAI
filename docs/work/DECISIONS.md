@@ -20,3 +20,14 @@
 - 固定为四个真实 UI 用例：手机端 M-008 原生完成前置 CIPHER 后接管 8 张 EXTRACT、手机 20 张 EXTRACT、桌面 8 张 EXTRACT、手机空棋盘失败恢复。
 - 测试故意不设置 d13.phase=chat，要求接管返回后无需额外解密/登录。
 - 使用独立 feature 分支的相关 CI，仅运行指定 22 项和本任务浏览器用例，不运行项目全量测试；本轮 PR 以 #142 分支为基准，不擅自合并 main。
+
+## 2026-11-13 · 用户补充确认与最终验收
+- 用户确认中断发生在进入 Ghost 之后，画面是翻牌配对；与本轮测试复现的 extract-memory 入口拒绝一致。
+- 验收命令：`node --test tests/tai-remote-extract-entry.test.mjs tests/ghost-mirage-share.test.mjs` → 22/22；`node .github/test-scripts/tai-remote-extract-regression-browser.mjs` → 4/4；`npm run build:pages`、`git diff --check` → 通过。
+- 实际结果：手机真实 M-008 原生前置 CIPHER 后的 C8 翻牌 12 次点击成功、S20 翻牌 30 次点击成功、桌面 C8 12 次点击成功；每次只有 1 条完成历史，余额不变，M-008 为 READY 待手动提交。
+- 空棋盘异常：0 次点击、0 次结算，原关卡保持 running；控制权释放，返回仍为解密对话；不伪造成功。
+- 图像审查：桌面、手机、空棋盘、异常通知与返回截图均已检查；沿用现有 UI，无新组件/视觉样式。
+- CI 与截图包：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43273558148 ，artifact `mirage-extract-focused-browser`（id 13970040876，保留 14 天）。
+- 截图包内路径：`desktop-C8-returned.png`（桌面）、`mobile-real-M008-returned.png`（手机）、`mobile-empty-error-board.png`（空）、`mobile-empty-error-returned.png`（错）；另有棋盘过程截图及 results.json。
+- PR #143：https://github.com/zn546612432-cloud/BBBTAI/pull/143 ，目标为 #142 分支，未合并 main；交付预览 https://77654a34.bbbtai.pages.dev 。
+- 验证范围限制：Chromium 桌面与手机尺寸；未在用户的 iOS 实机与本地存档上直接运行。未运行项目全量测试。
