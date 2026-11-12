@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createArcadeBoard,arcadeAction,arcadeTick} from '../src/apps/ghost/games/arcade.js';
 import {solveCipherSlideTiles} from '../src/system/remote-control/cipher-solver.js';
+import {puzzleNeighbors} from '../src/apps/ghost/games/vendor/puzzle-slide.js';
 import {veilPlan} from '../src/system/remote-control/veil-solver.js';
 import {extractNextTap} from '../src/system/remote-control/extract-solver.js';
 import {createTaiLivePhoneTools} from '../src/system/remote-control/mcp.js';
@@ -55,8 +56,8 @@ test('Xi Tai sliding CIPHER uses real permutation planner, never direct board mu
  assert.equal(view.data.board.kind,'cipher-slide');
  assert.equal(view.data.board.empty,o.board.arcade.empty);
  const plan=solveCipherSlideTiles(view.data.board);
- const old=[...o.board.arcade.tiles],bad=(o.board.arcade.empty+2)%9;
- if(!plan.includes(bad))assert.equal(call('remote_tap_cipher_tile',{index:bad}).ok,false);
+ const old=[...o.board.arcade.tiles],bad=Array.from({length:9},(_,i)=>i).find(i=>!puzzleNeighbors(o.board.arcade.empty).includes(i));
+ assert.equal(call('remote_tap_cipher_tile',{index:bad}).ok,false);
  assert.equal(call('remote_tap_cipher_tile',{index:plan[0]}).ok,true);
  assert.notDeepEqual(o.board.arcade.tiles,old);
  assert.equal(o.moves,1);
