@@ -109,7 +109,6 @@ let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
-const taiRemote=createTaiRemoteController({store,router,tasks,toast,document});
 // Opening the display always requires a new unlock, without removing saved content.
 if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
@@ -149,6 +148,7 @@ const toast=message=>{
  const appId=s.nav.current.appId;
  showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
 };
+const taiRemote=createTaiRemoteController({store,router,tasks,toast,document});
 let imageOptions={maxEdge:1200,quality:.82,cropAspect:0};
 const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82)),cropAspect:Number(options.cropAspect)||0};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 mountHoldToTalk($('#root'),ctx);
