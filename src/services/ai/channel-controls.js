@@ -1,5 +1,8 @@
-// Opt-in developer testing; missing flags in existing saves mean OFF.
-export const mirageAIEnabled=s=>s?.developerSettings?.mirageAIReplies===true;
+// Existing Story55 D15+ uses the same AI gateway as NoApp when Tai is online.
+// Older saves and other story versions stay opt-in; explicit OFF still wins.
+export const mirageAIEnabled=s=>typeof s?.developerSettings?.mirageAIReplies==='boolean'
+ ?s.developerSettings.mirageAIReplies
+ :s?.story55?.version===1&&s.day>=15&&s.day<=55;
 export const mirageAIRevision=s=>Number.isSafeInteger(s?.developerSettings?.mirageAIRevision)?s.developerSettings.mirageAIRevision:0;
 export function setMirageAIEnabled(store,enabled){
  store.update(s=>{
