@@ -3,7 +3,7 @@
 // Only this same-page controller can inject the temporary live tool adapter.
 // It drives native task-switcher + real Ghost buttons (never Ghost.finish()).
 import {dispatchTaiPhoneMcp} from '../../services/ai/phone-mcp/protocol.js';
-import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../services/story55/ghost-share.js';
+import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE,canSendGhostShareRemoteText} from '../../services/story55/ghost-share.js';
 import {deploymentReadiness,deployment} from '../../services/story55/projects.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {date55} from '../../services/story55/state.js';
@@ -160,7 +160,20 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   // method as the execution channel, while the visible fingertip presses SEND.
   // Never write an outgoing bubble or change a project from this controller.
   if(typeof submitMirageForm!=='function')throw Error('mirage_submit_not_wired');
+  const target=String(new FormData(form).get('text')||'');
+  console.warn('[TAI remote send check]',JSON.stringify({
+   authenticated:isMirageAuthenticated(),formConnected:form.isConnected,
+   valueLength:target.length,exact:target===TAI_REMOTE_TYPED_LINE,
+   canSend:canSendGhostShareRemoteText(store.get(),target),
+   stage:store.get().story55?.ghostShare?.remote?.stage,
+   phase:store.get().story55?.ghostShare?.phase,
+   formScene:form.dataset.storyScene||null
+  }));
   submitMirageForm(form);
+  console.warn('[TAI remote send outcome]',JSON.stringify({
+   stage:store.get().story55?.ghostShare?.remote?.stage,
+   lastId:store.get().content.conversations.mirage.find(c=>c.id===TAI_GHOST_THREAD)?.messages.at(-1)?.id
+  }));
   // main.js delegates submit asynchronously; wait for the canonical
   // outgoing-message acknowledgment before swiping to the background.
   for(let i=0;i<35;i++){
