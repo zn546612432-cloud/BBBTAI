@@ -34,10 +34,11 @@ if(!seed.content.conversations.mirage.some(c=>c.id==='s55-ouroboros')){
  });
 }
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-const page=await browser.newPage({
+const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
 });
+const page=await context.newPage();
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
