@@ -374,6 +374,25 @@ try{
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
  await screenshot('12-strike-moving-target');
+ const phoneBackgroundTab=await page.context().newPage();
+ await phoneBackgroundTab.bringToFront();
+ assert.equal(await page.evaluate(()=>document.hidden),true);
+ const strikePaused=await state(),strikeBefore=strikePaused.ghost.orders['tai-strike-1'];
+ assert.ok(Number.isFinite(strikePaused.story55.ghostShare.remote.pausedAt));
+ const oldDeadline=strikeBefore.deadline,oldHits=strikeBefore.board.arcade.hits;
+ await page.waitForTimeout(2200);
+ const strikeStillHidden=await state();
+ assert.equal(strikeStillHidden.ghost.orders['tai-strike-1'].board.arcade.hits,oldHits);
+ assert.equal(strikeStillHidden.ghost.orders['tai-strike-1'].status,'running');
+ await page.bringToFront();
+ await phoneBackgroundTab.close();
+ await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.ghostShare.remote.pausedAt===null,key);
+ const strikeResumed=await state();
+ assert.ok(strikeResumed.ghost.orders['tai-strike-1'].deadline-oldDeadline>=2000,
+  'only the running STRIKE order should regain the exact hidden interval');
+ assert.equal(strikeResumed.story55.ghostShareTakeovers,1);
+ console.log('PASS B: real browser switch freezes STRIKE hit count and compensates its deadline');
+
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-strike-1'];
   return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
