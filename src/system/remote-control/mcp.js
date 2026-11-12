@@ -47,9 +47,9 @@ function runId(s){
  const id=project?.active;
  return id&&s.ghost?.orders?.[id]?.story55Project===p.source.projectId?id:null;
 }
-function authorizedOrder(s){
+function authorizedOrder(s,options){
  const p=s.story55.ghostShare,id=runId(s),o=s.ghost?.orders?.[id];
- if(!id||!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type)||!taiRemoteOrderAllowed(s,o))return null;
+ if(!id||!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type)||!taiRemoteOrderAllowed(s,o,options))return null;
  if(p.source.type==='ghost-order'&&id!==p.source.orderId)return null;
  if(p.source.type==='ghost-project'&&o.story55Project!==p.source.projectId)return null;
  return o;
@@ -101,7 +101,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{action:args.action}};
   }
   if(name==='remote_read_link'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='route')return bad('link_order_not_ready');
    const board=o.board;
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
@@ -119,7 +119,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_read_cipher'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='cipher')return bad('cipher_order_not_ready');
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
     board:o.status==='running'&&o.board?.arcade?.kind==='cipher-slide'?{kind:'cipher-slide',tiles:[...o.board.arcade.tiles],empty:o.board.arcade.empty,selected:null}:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles],selected:o.board.selected??null}:null}};
@@ -139,7 +139,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_read_veil'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='veil')return bad('veil_order_not_ready');
    if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,board:null,deadline:o.deadline}};
    const a=o.board?.arcade;
@@ -188,7 +188,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{orderId:o.id,key}};
   }
   if(name==='remote_read_extract'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='extract')return bad('extract_order_not_ready');
    if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,board:null}};
    const a=o.board?.arcade;
@@ -238,7 +238,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_read_strike'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='strike')return bad('strike_order_not_ready');
    const b=o.board?.arcade;
    return {ok:true,data:{orderId:o.id,type:'strike',status:o.status,deadline:o.deadline,
@@ -259,7 +259,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_read_verify'){
-   const o=authorizedOrder(state);
+   const o=authorizedOrder(state,{allowCompletedRead:true});
    if(!o||o.type!=='verify')return bad('verify_order_not_ready');
    const b=o.board;
    if(o.status==='running'&&(!Array.isArray(b?.target)||!Array.isArray(b?.tokens)||

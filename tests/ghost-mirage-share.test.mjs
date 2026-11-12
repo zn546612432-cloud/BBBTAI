@@ -101,16 +101,31 @@ test('Ghost shows share button on authorized project only within D15-D24',()=>{
  assert.doesNotMatch(renderGhost({store:store(s)},{route:'/deployment',params:{project:'base'}}),/data-action="gh-share"/);
 });
 
-test('forbidden character name disappears without creating a normal MIRAGE message',()=>{
- const s=fixture(),before=chat(s).messages.length;setMirageAuthenticated(true);
- const original=globalThis.FormData;
+test('anonymous MIRAGE spoiler Send silently clears input/draft without messages, notifications or requests',()=>{
+ const original=globalThis.FormData,oldFetch=globalThis.fetch;
+ setMirageAuthenticated(true);
+ globalThis.fetch=()=>assert.fail('spoiler input cannot request AI');
  try{
-  globalThis.FormData=class{get(n){return n==='text'?'陳熙泰':'';}};
-  const input={value:'陳熙泰'};
-  submitMirage({dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}},{store:store(s)},{route:'/chat/s55-ouroboros'});
-  assert.equal(input.value,'');
-  assert.equal(chat(s).messages.length,before);
- }finally{globalThis.FormData=original;setMirageAuthenticated(false);}
+  for(const day of [6,16,24,30])for(const text of ['陳熙泰','熙 泰','我是你哥','我是你的親哥哥','三胞胎','我們是兄弟']){
+   const s=fixture(day);s.drafts={'s55-ouroboros':text};
+   const input={value:text},before=structuredClone({messages:chat(s).messages,events:s.events,notifications:s.notifications});
+   globalThis.FormData=class{get(n){return n==='text'?text:'';}};
+   submitMirage({dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}},
+    {store:store(s),toast:()=>assert.fail('spoiler input must be silent')},s.nav.current);
+   assert.equal(input.value,'');assert.equal(s.drafts['s55-ouroboros'],undefined);
+   assert.deepEqual({messages:chat(s).messages,events:s.events,notifications:s.notifications},before);
+  }
+ }finally{globalThis.FormData=original;globalThis.fetch=oldFetch;setMirageAuthenticated(false);}
+});
+
+test('spoiler gate respects recognition and only targets the anonymous MIRAGE contact',async()=>{
+ const {blocksAnonymousMirageInput}=await import('../src/services/story55/mirage-input.js');
+ const s=fixture();
+ assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我哥今晚回來'),false);
+ assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我是你哥'),true);
+ assert.equal(blocksAnonymousMirageInput(s,'other-contact','我是你哥'),false);
+ s.story55.completed.recognition={day:30,clock:'20:00'};
+ assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','熙泰，我是你哥'),false);
 });
 
 test('native MessageDelivery releases NPC bubble only in the authenticated conversation and state survives reload',()=>{

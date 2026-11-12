@@ -1,3 +1,4 @@
+import {blocksAnonymousMirageInput} from '../../services/story55/mirage-input.js';
 import {walletPage} from './features/wallet/index.js';
 import {bindD13Wallet,transferD13Wallet,D13_WALLET_ID} from '../../story/d13/runtime.js';
 import {exchange} from '../../services/bank.js';
@@ -6,8 +7,6 @@ import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01Cont
 import {D02_S,D02_A,D02_STAGES,D02_MAIL,D02_TALIA,acceptD02,submitD02,armD02Ghost,d02StepId,d02State,d02TaliaDraft,onD02TaliaMessage} from '../../story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,D03_STAGES,acceptD03Contract,submitD03Contract,armD03Ghost,d03StepId} from '../../story/d03/contract.js';
 import {DAILY_CONTRACTS as D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
-import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
-import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {isStory55,nodeStatus} from '../../services/story55/state.js';
 import {anonymousPresence55} from '../../services/story55/runtime.js';
@@ -242,7 +241,7 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
   const text=val('text'),id=form.dataset.id;
   if(text){
    form.elements.text.value='';decrypted.add(id);
-   if(id===TAI_GHOST_THREAD&&isStory55(ctx.store.get())&&ctx.store.get().day>=15&&ctx.store.get().day<=24&&/熙泰/u.test(text)){
+   if(blocksAnonymousMirageInput(ctx.store.get(),id,text)){
     ctx.store.update(s=>{if(s.drafts)delete s.drafts[id];});return;
    }
    // During Tai's first takeover, the phone's real SEND action commits an
@@ -271,11 +270,9 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
     if(!completed)ctx.toast('请先发送已经输入的内容');
     return;
    }
-   const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
+   sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
    if(id===D01_CONTACT)ctx.store.update(s=>queueD01ContactReply(s,id));
    if(id===D02_TALIA)ctx.store.update(s=>onD02TaliaMessage(s,id,text));
-   const contact=ctx.store.get().content.conversations.mirage?.find(c=>c.id===id);
-   if(mirageAIEnabled(ctx.store.get())&&/(ouroboros|衔尾蛇)/i.test(contact?.name||''))setTimeout(()=>replyToOuroboros(ctx,id,messageId).catch(e=>ctx.toast('MIRAGE AI：'+e.message)),3200);
   }
  }
  if(f==='mc-wallet-bind'){

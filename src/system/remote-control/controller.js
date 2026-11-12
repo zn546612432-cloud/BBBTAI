@@ -49,7 +49,7 @@ export function recoverTaiRemoteSession(store){
 
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,window:win=doc.defaultView??globalThis.window,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
- let busy=false,queued=false,callId=0,cursor=null,sessionToken=null,cancellation=null;
+ let busy=false,queued=false,callId=0,cursor=null,flash=null,sessionToken=null,cancellation=null;
  // Visibility is a pause, NOT an interruption: keep the same in-memory
  // controller and let GHOST's existing board/deadline resume on foreground.
  function visibility(hidden){
@@ -149,6 +149,17 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   tool(action==='gh-pipe'?'remote_rotate_pipe':'remote_tap_cipher_tile',{index});
   pointer.classList.remove('is-tapping');
   await delay(action==='gh-arcade-tap'?110:360);
+ }
+ async function signalTakeover(){
+  const phone=doc.querySelector('#phone');
+  if(!phone)throw Error('phone_surface_not_visible');
+  flash=doc.createElement('span');flash.className='tai-remote-alert';
+  flash.setAttribute('aria-hidden','true');phone.append(flash);
+  for(let pulse=0;pulse<2;pulse++){
+   assertRunning();flash.classList.add('is-lit');await delay(180);
+   assertRunning();flash.classList.remove('is-lit');await delay(220);
+  }
+  flash.remove();flash=null;assertRunning();moveStage('typing');
  }
  async function typeRemote(){
   const p=store.get().story55?.ghostShare;
@@ -431,7 +442,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   pointer.style.left=(box.left+box.width/2-frame.left)+'px';
   pointer.style.top=(box.top+box.height/2-frame.top)+'px';
   pointer.classList.add('is-visible');
-  const moving=store.get().ghost?.orders?.[store.get().story55?.ghostShare?.source?.orderId]?.board?.arcade?.kind==='strike-mole';
+  const moving=store.get().ghost?.orders?.[selectedOrderId(store.get())]?.board?.arcade?.kind==='strike-mole';
   await delay(moving?85:180);assertRunning();
   pointer.classList.add('is-tapping');
   await delay(moving?40:90);assertRunning();
@@ -631,6 +642,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   throw Error('link_completion_timeout');
  }
  function close(){
+  flash?.remove();flash=null;
   cursor?.remove();cursor=null;
   if(tasks.visible)tasks.hide();
   const s=store.get();
@@ -666,18 +678,22 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     begun=beginGhostShareControl(next);
     if(!begun)return;
     next.story55.ghostShare.remote={
-     active:true,stage:'typing',origin,authorizedDay:next.day,
+     active:true,stage:'announcing',origin,authorizedDay:next.day,
      warningShown:false,orderId:null,token:sessionToken
     };
    });
    if(!begun)return;
+   await signalTakeover();
    await typeRemote();
    const id=await openAndStart();
    const success=await solve(id);
    if(!success)throw Error('link_not_completed');
+   store.update(next=>{const p=next.story55?.ghostShare;if(p?.remote?.token===sessionToken){p.remote.outcome='success';p.remote.errorCode=null;}});
    tool('remote_release');
   }catch(error){
    console.warn('[TAI remote session]',error?.message||error);
+   if(isRunning(store.get())&&store.get().story55?.ghostShare?.remote?.token===sessionToken)
+    store.update(next=>{const p=next.story55.ghostShare;p.remote.outcome='interrupted';p.remote.errorCode=String(error?.message||'remote_error').slice(0,100);});
    if(isRunning(store.get())&&store.get().story55?.ghostShare?.remote?.token===sessionToken){
     try{tool('remote_release');}catch{
      store.update(next=>{
@@ -689,7 +705,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    // A dropped connection never claims the LINK puzzle was completed.
    if(!cancellation?.signal.aborted&&!['strike_insufficient_time','strike_legacy_not_controllable'].includes(error?.message))toast('遠端連線已中斷');
   }finally{
-   if(cancellation?.signal.aborted){cursor?.remove();cursor=null;if(tasks.visible)tasks.hide();}
+   if(cancellation?.signal.aborted){flash?.remove();flash=null;cursor?.remove();cursor=null;if(tasks.visible)tasks.hide();}
    else if(!isRunning(store.get())||store.get().story55?.ghostShare?.remote?.token===sessionToken)close();
    sessionToken=null;cancellation=null;busy=false;sync();
   }
