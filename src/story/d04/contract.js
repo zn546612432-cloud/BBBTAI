@@ -152,7 +152,7 @@ export function armD04Ghost(s,id,index){
   id:step,mailId:D04_MAIL(id),type:c.stages[index],key:c.key,
   status:'authorized',attempts:0,
   requiresKeyEntry:c.id===D06_ORDER_ID&&index===0,keyVerified:c.id!==D06_ORDER_ID||index>0,
-  settings:{seconds:null,rounds:1,retries:99,...(c.marketDaily?{arcadeV3:true,grade:c.grade}:{}),...(c.stages[index]==='route'?{pipeNetwork:true,pipeSize:5}:{})}
+  settings:{seconds:null,rounds:1,retries:99,...(c.marketDaily?{arcadeV3:true,grade:c.grade,...(c.stages[index]==='cipher'?{cipherSwaps:{C:2,B:3,A:4,S:4}[c.grade]}:{})}:{}),...(c.stages[index]==='route'?{pipeNetwork:true,pipeSize:5}:{})}
  };
  return step;
 }
