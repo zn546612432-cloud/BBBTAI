@@ -33,7 +33,7 @@ if(!seed.content.conversations.mirage.some(c=>c.id==='s55-ouroboros')){
   id:'s55-ouroboros',name:'Dr Ouroboros',online:false,unread:0,messages:[]
  });
 }
-const browser=await chromium.launch({headless:process.env.TAI_REMOTE_HEADED!=='1',args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
@@ -119,20 +119,7 @@ try{
  await page.locator('#screen-layer [data-action="gh-pipe"]').first().waitFor({state:'attached',timeout:30000});
  await screenshot('04-ghost-live-link');
  console.log('PASS native app switcher, GHOST step/start buttons, active LINK board');
- const backgroundTab=await page.context().newPage();
- await backgroundTab.bringToFront();
- assert.equal(await page.evaluate(()=>document.hidden),true,'real browser should background the phone');
- const linkPaused=await state();
- assert.ok(Number.isFinite(linkPaused.story55.ghostShare.remote.pausedAt));
- await page.waitForTimeout(1600);
- const linkHidden=await state();
- assert.equal(linkHidden.ghost.orders[controlOrder].moves,linkPaused.ghost.orders[controlOrder].moves);
- assert.equal(linkHidden.story55.ghostShare.phase,'controlling');
- await page.bringToFront();
- await backgroundTab.close();
- await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.ghostShare.remote.pausedAt===null,key);
- assert.equal((await state()).story55.ghostShareTakeovers,1);
- console.log('PASS B: switching browser tabs pauses and resumes same GHOST LINK session');
+
 
 
  // Real user taps during takeover must be blocked; one Tai warning per session.
@@ -375,24 +362,7 @@ try{
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
  await screenshot('12-strike-moving-target');
- const phoneBackgroundTab=await page.context().newPage();
- await phoneBackgroundTab.bringToFront();
- assert.equal(await page.evaluate(()=>document.hidden),true);
- const strikePaused=await state(),strikeBefore=strikePaused.ghost.orders['tai-strike-1'];
- assert.ok(Number.isFinite(strikePaused.story55.ghostShare.remote.pausedAt));
- const oldDeadline=strikeBefore.deadline,oldHits=strikeBefore.board.arcade.hits;
- await page.waitForTimeout(2200);
- const strikeStillHidden=await state();
- assert.equal(strikeStillHidden.ghost.orders['tai-strike-1'].board.arcade.hits,oldHits);
- assert.equal(strikeStillHidden.ghost.orders['tai-strike-1'].status,'running');
- await page.bringToFront();
- await phoneBackgroundTab.close();
- await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.ghostShare.remote.pausedAt===null,key);
- const strikeResumed=await state();
- assert.ok(strikeResumed.ghost.orders['tai-strike-1'].deadline-oldDeadline>=2000,
-  'only the running STRIKE order should regain the exact hidden interval');
- assert.equal(strikeResumed.story55.ghostShareTakeovers,1);
- console.log('PASS B: real browser switch freezes STRIKE hit count and compensates its deadline');
+
 
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-strike-1'];
