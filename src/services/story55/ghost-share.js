@@ -108,6 +108,11 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
 // cannot be skipped, and player lines are never sent from an automatic tick.
 export function ghostShareScriptLine(s){
  const p=s.story55?.ghostShare;
+ // The native composer is reserved for Tai's controlled typing once remote
+ // ownership begins. Real player events are blocked by the phone operator.
+ // Returning a 'wait' line here would DISABLE the form input, and FormData
+ // deliberately omits disabled fields, losing the remotely typed sentence.
+ if(p?.phase==='controlling')return null;
  if(!active(p)||!p.script)return null;
  if(!pendingDelivered(s,p))return {id:'ghost-share',kind:'wait',index:p.index,text:''};
  const lines=dialogues[p.script]||[];
