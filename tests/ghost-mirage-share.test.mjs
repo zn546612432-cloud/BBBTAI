@@ -163,3 +163,25 @@ test('first takeover uses the native MIRAGE Send path, displays Xi Meng as sende
   assert.equal(chat(s).messages.length,before+1);
  }finally{globalThis.FormData=original;setMirageAuthenticated(false);}
 });
+
+test('remote takeover removes wait-only input disabling while exclusive control owns the phone',()=>{
+ const s=fixture();
+ shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10000});
+ deliverNpc(s);sendNext(s);
+ deliverNpc(s);sendNext(s);
+ deliverNpc(s);sendNext(s);
+ assert.equal(ghostShareReadyForControl(s),true);
+ assert.equal(ghostShareScriptLine(s)?.kind,'wait','before takeover player is still waiting');
+ beginGhostShareControl(s);
+ s.story55.ghostShare.remote={active:true,stage:'typing',authorizedDay:16};
+ assert.equal(ghostShareScriptLine(s),null,'remote control must not disable native composer');
+ s.story55.d13={phase:'chat'};
+ s.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
+ setMirageAuthenticated(true);
+ try{
+  const html=renderMirage({store:store(s)},{route:'/chat/s55-ouroboros'});
+  const nativeForm=html.match(/<form class="mc-composer[\s\S]*?<\/form>/)?.[0]||'';
+  assert.ok(nativeForm.includes('name="text"'));
+  assert.doesNotMatch(nativeForm,/<input[^>]*\sdisabled(?:\s|>)/,'HTML FormData must include the input while Tai types');
+ }finally{setMirageAuthenticated(false);}
+});
