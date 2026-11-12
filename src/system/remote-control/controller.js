@@ -51,6 +51,10 @@ export function recoverTaiRemoteSession(store){
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},document:doc=globalThis.document}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null;
+ // Native HTML form submit is browser-generated even when our script clicks
+ // SEND. Allow exactly this synchronous, explicitly targeted remote submit;
+ // all genuine player gestures remain blocked during takeover.
+ let remoteSubmittingForm=null;
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -88,6 +92,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
  // Trusted player events are stopped before native Ghost handlers see them.
  // Programmatic .click() is untrusted and remains subject to the same handlers.
  const blockUser=e=>{
+  if(e.type==='submit'&&e.target===remoteSubmittingForm)return;
   if(!e.isTrusted||!isRunning(store.get()))return;
   const phone=e.target?.closest?.('#phone');
   if(!phone&&e.type!=='keydown')return;
@@ -151,7 +156,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
    pointer.style.top=(box.top+box.height/2-frame.top)+'px';
    pointer.classList.add('is-visible','is-tapping');
   }
-  sendButton.click();
+  remoteSubmittingForm=form;
+  try{sendButton.click();}finally{remoteSubmittingForm=null;}
   // main.js delegates submit asynchronously; wait for the canonical
   // outgoing-message acknowledgment before swiping to the background.
   for(let i=0;i<35;i++){
@@ -261,6 +267,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
    if(!success)throw Error('link_not_completed');
    tool('remote_release');
   }catch(error){
+   console.warn('[TAI remote session]',error?.message||error);
    if(isRunning(store.get())){
     try{tool('remote_release');}catch{
      store.update(next=>{
