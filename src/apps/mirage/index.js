@@ -11,7 +11,7 @@ import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {isStory55,nodeStatus} from '../../services/story55/state.js';
 import {anonymousPresence55} from '../../services/story55/runtime.js';
-import {TAI_GHOST_THREAD} from '../../services/story55/ghost-share.js';
+import {TAI_GHOST_THREAD,canSendGhostShareRemoteText,sendGhostShareRemoteText} from '../../services/story55/ghost-share.js';
 import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './data.js';
 import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
@@ -230,6 +230,12 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
    form.elements.text.value='';decrypted.add(id);
    if(id===TAI_GHOST_THREAD&&isStory55(ctx.store.get())&&ctx.store.get().day>=15&&ctx.store.get().day<=24&&/熙泰/u.test(text)){
     ctx.store.update(s=>{if(s.drafts)delete s.drafts[id];});return;
+   }
+   // During Tai's first takeover, the phone's real SEND action commits an
+   // Xi Meng outgoing bubble. This is not a Tai/NPC reply or a free-chat turn.
+   if(id===TAI_GHOST_THREAD&&canSendGhostShareRemoteText(ctx.store.get(),text)){
+    ctx.store.update(s=>sendGhostShareRemoteText(s,text));
+    return;
    }
    const scripted=scriptedDraft55(ctx.store.get(),'mirage',id);
    if(scripted){
