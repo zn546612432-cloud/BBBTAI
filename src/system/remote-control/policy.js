@@ -29,7 +29,8 @@ export function taiRemoteOrderAllowed(s,o){
  if(TAI_REMOTE_SCOPED_TYPES.includes(o.type)){
   // Never operate the separate D01 repair / D06 wallet challenge settlement.
   if(!(o.story55Project||o.story55Commission||
-       s?.content?.mirage?.linkedMissions?.[o.id]))return false;
+       s?.content?.mirage?.linkedMissions?.[o.id]||
+       s?.content?.orders?.some(parent=>parent.id===d04OrderOfStep(o.id)&&parent.marketDaily)))return false;
  }
  if(o.type==='strike'){
   // The old STRIKE runs to completion automatically. The phone operator

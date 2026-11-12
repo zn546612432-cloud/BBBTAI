@@ -2,6 +2,7 @@ import {D05_CONTRACTS} from '../d05/commissions.js';
 import {D08_CONTRACTS} from '../d08/commissions.js';
 import {D09_CONTRACTS} from '../d09/commissions.js';
 import {D10_CONTRACTS} from '../d10/commissions.js';
+import {D15_D55_CONTRACTS,D15_D55_RESTRICTED} from '../d15-d55/commissions.js';
 import {D06_CONTRACT,D06_ORDER_ID} from '../d06/commission.js';
 import {completeNode,completed} from '../../services/story55/state.js';
 import {settleStory55Wallet} from '../../services/story55/projects.js';
@@ -21,7 +22,7 @@ export const D04_CONTRACTS=[
 ];
 const DAY=4;
 // Register daily definitions in the existing commission runner, with no new UI/steps.
-export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT,...D08_CONTRACTS,...D09_CONTRACTS,...D10_CONTRACTS];
+export const DAILY_CONTRACTS=[...D04_CONTRACTS,...D05_CONTRACTS,D06_CONTRACT,...D08_CONTRACTS,...D09_CONTRACTS,...D10_CONTRACTS,...D15_D55_CONTRACTS];
 const publishDay=c=>c.day??DAY;
 const storyTag=c=>'storyD'+String(publishDay(c)).padStart(2,'0');
 const dateOf=day=>new Date(Date.UTC(2025,4,19)+(day-1)*86400000).toISOString().slice(0,10);
@@ -45,7 +46,7 @@ const issueMail=(s,c)=>{
  if(mail.some(m=>m.id===mailId))return false;
  mail.unshift({id:mailId,orderId:c.id,from:c.owner+' / MIRAGE',
   subject:'【mirage】委託資料已發送',
-  body:'您已接取委託。\n\n'+c.letter+'\n\n完成後請在 MIRAGE 手動提交驗收。',
+  body:c.marketDaily?c.letter:'您已接取委託。\n\n'+c.letter+'\n\n完成後請在 MIRAGE 手動提交驗收。',
   attachments:[c.attachment],read:false,[storyTag(c)]:true,
   day:s.day,time:s.clock,date:dateOf(s.day)});
  const nid='d04-order-mail-'+c.id;
@@ -76,7 +77,18 @@ export function seedD04Contracts(s){
   s.content.orders.push({id:c.id,title:c.title,owner:c.owner,category:c.grade,reward:c.reward,
    status:completed(s,'wallet')&&c.id===D06_ORDER_ID?'COMPLETED':'OPEN',
    description:c.description,[storyTag(c)]:true,storyDay:publishDay(c),publishedClock:'00:00',
+    ...(c.marketDaily?{marketDaily:true}:{}),
    ...(c.deadline?{deadlineDay:c.deadline.day,deadlineClock:c.deadline.clock}:{})});
+  changed=true;
+ }
+ // Restricted listings use the same market store and daily world clock, but
+ // never enter the playable commission, mail or Ghost settlement pipeline.
+ for(const c of D15_D55_RESTRICTED){
+  if(s.day<c.day||s.content.orders.some(o=>o.id===c.id))continue;
+  s.content.orders.push({id:c.id,title:c.title,owner:c.owner,category:c.grade,
+   reward:c.reward,status:'RESTRICTED',description:c.description,
+   marketRestricted:true,restrictedReason:c.restrictedReason,
+   storyDay:c.day,endDay:c.endDay,publishedClock:'00:00'});
   changed=true;
  }
  return changed;
@@ -109,7 +121,7 @@ export function tickD04Contracts(s){
   }
   if(o?.status==='ACCEPTED'&&!s.content.mail?.some(m=>m.id===D04_MAIL(c.id)))
    changed=issueMail(s,c)||changed;
-  if(o&&expired(s,c)&&['OPEN','ACCEPTED','READY'].includes(o.status)){
+  if(o&&expired(s,c)&&['OPEN','ACCEPTED',...(c.marketDaily?[]:['READY'])].includes(o.status)){
    o.status='EXPIRED';changed=true;
   }
  }
@@ -151,6 +163,7 @@ export function onD04GhostWin(s,step){
  if(i<0||s.ghost?.orders?.[step]?.status!=='success')return false;
  if(i<c.stages.length-1){armD04Ghost(s,id,i+1);return true;}
  const o=order(s,id);o.status='READY';
+ if(c.marketDaily){o.completedDay=s.day;o.completedClock=s.clock;}
  const files=s.content.missionFiles??(s.content.missionFiles=[]);
  if(!files.some(f=>f.id==='d04-artifact-'+id))files.push({
   id:'d04-artifact-'+id,orderId:id,title:'ANALYSIS_'+id.toUpperCase()+'.enc',
@@ -160,7 +173,7 @@ export function onD04GhostWin(s,step){
 }
 export function submitD04Contract(s,id){
  const c=cOf(id),o=order(s,id);
- if(!c||!story(s)||!o||o.status!=='READY'||expired(s,c)
+ if(!c||!story(s)||!o||o.status!=='READY'||(expired(s,c)&&!c.marketDaily)
    ||c.stages.some((_,i)=>s.ghost?.orders?.[D04_STEP(id,i)]?.status!=='success'))return false;
  o.status='COMPLETED';
  const receiptId=D04_RECEIPT(id);
@@ -171,7 +184,7 @@ export function submitD04Contract(s,id){
   const tx=s.bankData.transactions??(s.bankData.transactions=[]);
   if(!tx.some(t=>t.id===receiptId)){
    s.bankData.balance=(Number(s.bankData.balance)||0)+c.amount;
-   tx.unshift({id:receiptId,label:'MIRAGE · '+c.grade+' 級委託',amount:c.amount,
+   tx.unshift({id:receiptId,label:c.marketDaily?'MIRAGE / '+id:'MIRAGE · '+c.grade+' 級委託',amount:c.amount,
     time:s.clock,date:dateOf(s.day),[storyTag(c)]:true});
   }
  }
