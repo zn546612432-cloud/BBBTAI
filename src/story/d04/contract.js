@@ -150,7 +150,7 @@ export function armD04Ghost(s,id,index){
  s.ghost.orders??={};
  s.ghost.orders[step]??={
   id:step,mailId:D04_MAIL(id),type:c.stages[index],key:c.key,
-  status:'authorized',attempts:0,story55Commission:!!c.marketDaily,
+  status:'authorized',attempts:0,
   requiresKeyEntry:c.id===D06_ORDER_ID&&index===0,keyVerified:c.id!==D06_ORDER_ID||index>0,
   settings:{seconds:null,rounds:1,retries:99,...(c.stages[index]==='route'?{pipeNetwork:true,pipeSize:5}:{})}
  };
