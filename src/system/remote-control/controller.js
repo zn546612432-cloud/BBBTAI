@@ -11,6 +11,7 @@ import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {solveCipherTiles} from './cipher-solver.js';
 import {veilPlan} from './veil-solver.js';
+import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
 
@@ -18,10 +19,10 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
 const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
-const eligibleOrder=(s,o)=>!!(o&&['route','cipher','veil'].includes(o.type)&&
+const eligibleOrder=(s,o)=>!!(o&&['route','cipher','veil','extract'].includes(o.type)&&
  ['authorized','failed','running'].includes(o.status)&&
  (!o.requiresKeyEntry||o.keyVerified)&&
- (o.type!=='veil'||o.id!=='mirage001'&&
+ (!['veil','extract'].includes(o.type)||o.id!=='mirage001'&&
   o.id!=='mirage-ouroboros-10btc-d05'&&
   (o.story55Project||o.story55Commission||s.content?.mirage?.linkedMissions?.[o.id])));
 function possibleLink(s){
@@ -35,7 +36,7 @@ function possibleLink(s){
  if(!ready.canStart||!project)return false;
  const batch=deployment(s,source.projectId).batches?.[ready.batch],
   step=project.steps.findIndex((_,i)=>!batch?.steps?.[i]);
- return ['route','cipher','veil'].includes(project.steps[step])&&source.projectId!=='wallet';
+ return ['route','cipher','veil','extract'].includes(project.steps[step])&&source.projectId!=='wallet';
 }
 
 // One safe reconciliation for browser reloads or abandoned phone tabs.
@@ -221,13 +222,15 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   tool('remote_press_ghost',{action:'gh-start'});
   await delay(350);assertRunning();
   const run=store.get().ghost?.orders?.[id];
-  if(!run||!['route','cipher','veil'].includes(run.type))throw Error('unsupported_ghost_order');
+  if(!run||!['route','cipher','veil','extract'].includes(run.type))throw Error('unsupported_ghost_order');
   const target=tool(run.type==='route'?'remote_read_link':
-    run.type==='cipher'?'remote_read_cipher':'remote_read_veil');
+    run.type==='cipher'?'remote_read_cipher':
+    run.type==='veil'?'remote_read_veil':'remote_read_extract');
   if(target.status!=='running'||!(run.type==='route'?
       target.board?.masks?.length:run.type==='cipher'?
-      target.board?.tiles?.length:target.board?.kind==='veil'||
-      target.board?.kind==='legacy-keypad'))
+      target.board?.tiles?.length:run.type==='veil'?
+      (target.board?.kind==='veil'||target.board?.kind==='legacy-keypad'):
+      (target.board?.kind==='extract'||target.board?.kind==='legacy-fingerprint')))
    throw Error('ghost_board_not_running');
   moveStage('running',target.orderId);
   return target.orderId;
@@ -319,6 +322,76 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   }
   throw Error('veil_max_steps_exceeded');
  }
+ async function tapExtractVisual(index,legacy=false){
+  assertRunning();
+  const action=legacy?'gh-match':'gh-arcade-tap';
+  const attribute=legacy?'data-index':'data-value';
+  // Do not hold a stale DOM element: GHOST tick can replace the screen.
+  const button=doc.querySelector('#screen-layer [data-action="'+action+'"]['+attribute+'="'+index+'"]');
+  const phone=doc.querySelector('#phone'),pointer=finger();
+  if(!button||button.disabled||!button.isConnected||!phone||!pointer)
+   throw Error('extract_button_not_visible');
+  const frame=phone.getBoundingClientRect(),box=button.getBoundingClientRect();
+  pointer.style.left=(box.left+box.width/2-frame.left)+'px';
+  pointer.style.top=(box.top+box.height/2-frame.top)+'px';
+  pointer.classList.add('is-visible');
+  await delay(135);
+  assertRunning();
+  pointer.classList.add('is-tapping');
+  tool(legacy?'remote_choose_extract_legacy':'remote_tap_extract',{index});
+  pointer.classList.remove('is-tapping');
+  await delay(190);
+ }
+ async function solveExtract(id){
+  // A physical-memory strategy: remember only GHOST faces that were displayed.
+  // No direct board.cards lookup and no scripted completion call.
+  let known={},stalls=0;
+  for(let count=0;count<80;count++){
+   assertRunning();
+   const current=tool('remote_read_extract');
+   if(current.orderId!==id)throw Error('extract_order_changed');
+   if(['success','paid'].includes(current.status))return;
+   if(current.status!=='running'||!current.board)throw Error('extract_run_not_active');
+   const board=current.board,deadline=current.deadline;
+   if(board.kind==='legacy-fingerprint'){
+    const index=extractLegacyChoice(board);
+    if(index===null)throw Error('extract_legacy_fingerprint_not_found');
+    if(Number.isFinite(deadline)&&deadline-Date.now()<600)
+     throw Error('extract_insufficient_time');
+    const before=store.get().ghost?.orders?.[id]?.moves||0;
+    await tapExtractVisual(index,true);
+    const after=tool('remote_read_extract');
+    if(['success','paid'].includes(after.status))return;
+    stalls=store.get().ghost.orders[id].moves>before?0:stalls+1;
+   }else if(board.kind==='extract'){
+    const plan=extractNextTap(board,known);
+    if(!plan)throw Error('extract_memory_plan_invalid');
+    known=plan.known;
+    if(plan.done)throw Error('extract_settlement_pending');
+    if(plan.waitUntil!==undefined){
+     // Two mismatched cards stay face-up for 720ms. Learn their symbols,
+     // then allow the original GHOST tick to turn them back over.
+     await delay(Math.max(75,Math.min(230,plan.waitUntil-Date.now()+30)));
+     continue;
+    }
+    const unseen=board.cardCount-board.matched.length;
+    if(Number.isFinite(deadline)&&deadline-Date.now()<unseen*185+700)
+     throw Error('extract_insufficient_time');
+    const before=store.get().ghost?.orders?.[id]?.moves||0;
+    await tapExtractVisual(plan.index);
+    const after=tool('remote_read_extract');
+    if(['success','paid'].includes(after.status))return;
+    stalls=store.get().ghost.orders[id].moves>before?0:stalls+1;
+    if(after.board?.kind==='extract'){
+     const learned=extractNextTap(after.board,known);
+     if(!learned)throw Error('extract_visible_memory_invalid');
+     known=learned.known;
+    }
+   }else throw Error('extract_unknown_board');
+   if(stalls>=3)throw Error('extract_three_stalled_clicks');
+  }
+  throw Error('extract_max_taps_exceeded');
+ }
  async function solve(id){
   const run=store.get().ghost.orders[id],initial=run?.board;
   if(run?.type==='route'){
@@ -344,6 +417,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    }
   }else if(run?.type==='veil'){
    await solveVeil(id);
+  }else if(run?.type==='extract'){
+   await solveExtract(id);
   }else throw Error('unsupported_ghost_order');
   // The original GHOST handlers own success and settlement (LINK also
   // requires a preview delay). The operator must never call finish().

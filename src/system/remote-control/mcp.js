@@ -12,9 +12,12 @@ export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_read_link',description:'Read only the LINK board shared in this takeover',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_read_cipher',description:'Read only the displayed CIPHER tile positions for this shared order',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_read_veil',description:'Read only the authorized VEIL arcade maze or legacy keypad state',inputSchema:{type:'object',properties:{},additionalProperties:false}},
+ {name:'remote_read_extract',description:'Read only face-up EXTRACT cards or visible legacy fingerprint choices',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_rotate_pipe',description:'Click one real GHOST pipe button for the shared LINK board',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:80}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_cipher_tile',description:'Click one real GHOST tile of the authorized CIPHER order',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:8}},required:['index'],additionalProperties:false}},
  {name:'remote_step_veil',description:'Press one safe native VEIL direction or WAIT button',inputSchema:{type:'object',properties:{direction:{type:'string',enum:['up','down','left','right','wait']}},required:['direction'],additionalProperties:false}},
+ {name:'remote_tap_extract',description:'Flip one still-available EXTRACT card in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:9}},required:['index'],additionalProperties:false}},
+ {name:'remote_choose_extract_legacy',description:'Press a visible legacy fingerprint option with the native GHOST button',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:3}},required:['index'],additionalProperties:false}},
  {name:'remote_press_veil_key',description:'Press a native legacy VEIL numeric key, never set its solution directly',inputSchema:{type:'object',properties:{key:{type:'string',pattern:'^[0-9]$'}},required:['key'],additionalProperties:false}},
  {name:'remote_release',description:'Finish current virtual phone takeover and release exclusive control',inputSchema:{type:'object',properties:{},additionalProperties:false}}
 ]);
@@ -35,16 +38,16 @@ function runId(s){
  const id=project?.active;
  return id&&s.ghost?.orders?.[id]?.story55Project===p.source.projectId?id:null;
 }
-function veilAllowlisted(s,o){
+function remoteArcadeAllowlisted(s,o){
  // D01 repair and the D06 wallet challenge have authored settlement effects.
- return !!(o?.type==='veil'&&o.id!=='mirage001'&&
+ return !!(['veil','extract'].includes(o?.type)&&o.id!=='mirage001'&&
   o.id!=='mirage-ouroboros-10btc-d05'&&
   (o.story55Project||o.story55Commission||s.content?.mirage?.linkedMissions?.[o.id]));
 }
 function authorizedOrder(s){
  const p=s.story55.ghostShare,id=runId(s),o=s.ghost?.orders?.[id];
- if(!id||!o||!['route','cipher','veil'].includes(o.type))return null;
- if(o.type==='veil'&&!veilAllowlisted(s,o))return null;
+ if(!id||!o||!['route','cipher','veil','extract'].includes(o.type))return null;
+ if(['veil','extract'].includes(o.type)&&!remoteArcadeAllowlisted(s,o))return null;
  if(p.source.type==='ghost-order'&&id!==p.source.orderId)return null;
  if(p.source.type==='ghost-project'&&o.story55Project!==p.source.projectId)return null;
  return o;
@@ -174,6 +177,56 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(!button||button.disabled||!button.isConnected)return bad('veil_key_button_not_found');
    button.click();
    return {ok:true,data:{orderId:o.id,key}};
+  }
+  if(name==='remote_read_extract'){
+   const o=authorizedOrder(state);
+   if(!o||o.type!=='extract')return bad('extract_order_not_ready');
+   if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,board:null}};
+   const a=o.board?.arcade;
+   if(a){
+    if(a.kind!=='extract'||!Array.isArray(a.cards)||a.cards.length!==10||
+       !Array.isArray(a.matched)||!Array.isArray(a.revealed))return bad('invalid_extract_board');
+    const faceUp=new Set([...a.matched,...a.revealed]);
+    const visible=[...faceUp].filter(i=>Number.isInteger(i)&&i>=0&&i<10)
+     .map(index=>({index,symbol:a.cards[index]}));
+    // Never return the hidden cards list from the stored board.
+    return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,
+     board:{kind:'extract',cardCount:a.cards.length,
+      revealed:[...a.revealed],matched:[...a.matched],visible,
+      lockUntil:a.lockUntil||0,errors:a.errors||0}}};
+   }
+   const b=o.board;
+   if(typeof b?.target!=='string'||!Array.isArray(b.options)||
+      b.options.length!==4)return bad('invalid_extract_board');
+   return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,
+    board:{kind:'legacy-fingerprint',target:b.target,options:[...b.options],round:b.round||0}}};
+  }
+  if(name==='remote_tap_extract'){
+   const o=authorizedOrder(state),index=args.index,a=o?.board?.arcade;
+   if(!o||o.type!=='extract'||o.status!=='running'||a?.kind!=='extract'||
+      !Array.isArray(a.cards)||a.cards.length!==10||
+      !Number.isInteger(index)||index<0||index>=a.cards.length||
+      (a.lockUntil||0)>0||a.matched.includes(index)||a.revealed.includes(index)||
+      o.deadline!==null&&Date.now()>=o.deadline||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('extract_tap_not_permitted');
+   const button=dom?.querySelector('#screen-layer [data-action="gh-arcade-tap"][data-value="'+index+'"]');
+   if(!button||button.disabled||!button.isConnected)return bad('extract_button_not_found');
+   button.click();
+   return {ok:true,data:{orderId:o.id,index}};
+  }
+  if(name==='remote_choose_extract_legacy'){
+   const o=authorizedOrder(state),index=args.index;
+   if(!o||o.type!=='extract'||o.status!=='running'||o.board?.arcade||
+      !Array.isArray(o.board?.options)||o.board.options.length!==4||
+      !Number.isInteger(index)||index<0||index>=4||
+      o.deadline!==null&&Date.now()>=o.deadline||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('extract_option_not_permitted');
+   const button=dom?.querySelector('#screen-layer [data-action="gh-match"][data-index="'+index+'"]');
+   if(!button||button.disabled||!button.isConnected)return bad('extract_option_not_visible');
+   button.click();
+   return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_release'){
    let released=false;

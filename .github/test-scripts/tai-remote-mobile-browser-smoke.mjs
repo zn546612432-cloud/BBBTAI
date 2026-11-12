@@ -262,6 +262,63 @@ try{
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
  await screenshot('09-veil-returned-to-mirage');
  console.log('PASS third iPhone run: native VEIL path, moving scanners, zero catches, one Ghost settlement and Mirage return');
+ 
+ // Fourth isolated run: EXTRACT is a genuine face-down ten-card memory board.
+ // The model has no tool to read hidden faces. Only native taps reveal them.
+ const extractSeed=structuredClone(seed);
+ extractSeed.ghost.orders['tai-extract-1']={
+  id:'tai-extract-1',type:'extract',key:'GH-EXTRACT',
+  story55Project:'extract-demo',status:'authorized',attempts:0,
+  settings:{seconds:110,retries:1000,rounds:1,arcadeV2:true}
+ };
+ extractSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-extract-1'}};
+ extractSeed.nav.stack=[];extractSeed.unlocked=false;
+ await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
+  key,json:JSON.stringify(extractSeed)
+ });
+ await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ await unlock();
+ await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.script==='first'&&
+   s.story55.ghostShare.source.orderId==='tai-extract-1';
+ },key,{timeout:15000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
+  return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
+   o?.status==='running'&&o.board?.arcade?.kind==='extract'&&
+   o.board.arcade.cards.length===10;
+ },key,{timeout:40000});
+ await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
+  .waitFor({state:'attached',timeout:15000});
+ await screenshot('10-extract-memory-cards');
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
+  return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
+   s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
+ },key,{timeout:115000});
+ const extractDone=await state(),extractOrder=extractDone.ghost.orders['tai-extract-1'];
+ assert.equal(extractOrder.board.arcade.kind,'extract');
+ assert.equal(extractOrder.board.arcade.matched.length,10);
+ assert.ok(extractOrder.moves>=10&&extractOrder.moves<50,'native card flip count must be realistic');
+ assert.equal(extractDone.ghost.history.filter(h=>h.orderId==='tai-extract-1').length,1);
+ assert.equal(extractDone.story55.ghostShareTakeovers,1);
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ await screenshot('11-extract-returned-to-mirage');
+ console.log('PASS fourth iPhone run: EXTRACT face-up card memory, original Ghost matching and single settlement');
+
 
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
