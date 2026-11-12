@@ -142,9 +142,9 @@ export function resolveGhostShare(s,{random=Math.random}={}){
  const daily=s.story55.ghostShareDaily;
  const eligible=takeovers<2||daily?.day!==s.day;
  const sourceAvailable=!!ghostShareSource(s,p.source);
- const accepted=sourceAvailable&&eligible&&random()<0.5;
- // Every online refusal uses the existing approved refusal text, including
- // the first two attempts and repeat shares after today's one decision.
+ const accepted=sourceAvailable&&eligible&&(takeovers<2||random()<0.5);
+ // The first two takeovers are guaranteed for valid sources; later shares
+ // retain the daily decision and use the existing authored refusal text.
  const script=accepted?(takeovers===0?'first':takeovers===1?'second':'dailyYes'):'dailyNo';
  const started=Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)]));
  p.script=script;p.phase='dialogue';

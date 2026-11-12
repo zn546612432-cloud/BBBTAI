@@ -39,3 +39,13 @@
 - [x] 线上release.json与正式入口指向c68a550f491c9572，source_commit=544b111。
 - [x] 线上controller.js和ghost-share.js与通过测试版本逐字节一致。
 - [x] 状态、决策、任务卡写回；不修改其他PR或业务代码。
+## 本轮修复任务卡 · 2026-11-13
+目标：前两次有效接管必同意；第三次起保持现有规则。
+- [x] 读取状态、决策、任务卡；提交计划。
+- [ ] 测试先行真实失败；覆盖首次/第二次、第三次50%边界、旧拒绝存档、离线及来源失效。
+- [ ] 最小改动共享判定；不改计数与对白。
+- [ ] 相关测试及Pages构建通过；无UI布局变更。
+- [ ] 提交PR；写回状态与决策；不合并main。
+相关文件：三份记录、AGENTS.md、src/services/story55/ghost-share.js、tests/ghost-mirage-share.test.mjs、package.json；第8个文件仅在需要浏览器验证时使用。
+
+

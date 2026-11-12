@@ -21,3 +21,13 @@
 - 线上验证：release.json source_commit=544b11173977f8ac9888ddaa5c95d4e1fc5a0053，version=c68a550f491c9572；正式入口绑定该版本。
 - 线上controller.js及ghost-share.js返回HTTP 200，内容与通过测试的本地代码逐字节一致。
 - 本次收尾仅更新三份Markdown记录；不改运行代码。
+## 当前修复 · 2026-11-13
+- 当前任务：恢复前两次接管必定同意。
+- 当前步骤：最小实现及相关单测、构建通过；等待GitHub浏览器验证。
+- 已完成：用户确认规则；前两次绕过随机，第三次起不变；触屏回归脚本补充在线/离线的0/1/2次三组场景。
+- 下一步：提交隔离分支并通过既有GitHub触屏浏览器工作流验证。
+- 阻塞：本地Chromium启动被环境限制socket() Operation not permitted；改用既有GitHub Actions。
+- 相关文件：本状态、REMOTE_FIX_DECISIONS.md、REMOTE_FIX_TASK.md、AGENTS.md、ghost-share.js、ghost-mirage-share.test.mjs、package.json；最多8个。
+- 最近验证：测试先行17通过/8失败；修复后分享、接管集成、日单完成及可见性四组43/43通过；npm run build:pages、语法检查与git diff --check通过。
+
+
