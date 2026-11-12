@@ -47,20 +47,29 @@ export function recoverTaiRemoteSession(store){
  return true;
 }
 
-export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
+export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,window:win=doc.defaultView??globalThis.window,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null,sessionToken=null,cancellation=null;
  // Visibility is a pause, NOT an interruption: keep the same in-memory
  // controller and let GHOST's existing board/deadline resume on foreground.
- doc.addEventListener('visibilitychange',()=>{
+ function visibility(hidden){
   if(!isRunning(store.get()))return;
-  if(doc.hidden){
+  const paused=Number.isFinite(store.get().story55.ghostShare.remote.pausedAt);
+  if(hidden===paused)return; // repeated lifecycle events do not rewrite saves
+  if(hidden){
    store.update(s=>pauseTaiRemoteOnHide(s));
   }else{
    store.update(s=>resumeTaiRemoteOnShow(s));
   }
- });
- const foregroundDelay=createTaiForegroundDelay(doc);
+ }
+ // Registered before main's later battery/pageshow listeners. pagehide is
+ // also a pause when WebKit has not updated document.hidden yet; BFCache
+ // pageshow resumes the same in-memory operator rather than interrupting it.
+ doc.addEventListener('visibilitychange',()=>visibility(doc.hidden));
+ win?.addEventListener('pagehide',()=>visibility(true));
+ win?.addEventListener('pageshow',()=>visibility(doc.hidden));
+ const foregroundDelay=createTaiForegroundDelay(doc,{window:win,
+  isPaused:()=>Number.isFinite(store.get().story55?.ghostShare?.remote?.pausedAt)});
  const delay=ms=>foregroundDelay(ms,cancellation?.signal);
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{

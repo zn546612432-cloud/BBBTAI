@@ -32,7 +32,7 @@ export function pauseTaiRemoteOnHide(s,now=Date.now()){
  p.remote.pausedAt=now;
  return true;
 }
-export function resumeTaiRemoteOnShow(s,now=Date.now()){
+export function settleTaiRemotePause(s,now=Date.now()){
  const p=s?.story55?.ghostShare;
  if(!active(p)||!Number.isFinite(p.remote.pausedAt)||!Number.isFinite(now))
   return false;
@@ -49,22 +49,27 @@ export function resumeTaiRemoteOnShow(s,now=Date.now()){
  p.remote.pausedAt=null;
  return true;
 }
+export function resumeTaiRemoteOnShow(s,now=Date.now()){
+ return settleTaiRemotePause(s,now);
+}
 
 
 // A small foreground-only timer used by the existing operator's animations.
 // It is not a new storyline clock. On hidden tabs, Chrome may throttle or
 // freeze timers; the remaining delay resumes when the SAME page is visible.
-export function createTaiForegroundDelay(doc){
+export function createTaiForegroundDelay(doc,{window:win=doc.defaultView,isPaused=()=>false}={}){
+ const suspended=()=>doc.hidden||isPaused();
  function waitVisible(signal){
   signal?.throwIfAborted();
-  if(!doc.hidden)return Promise.resolve();
+  if(!suspended())return Promise.resolve();
   return new Promise((resolve,reject)=>{
-   const cleanup=()=>{doc.removeEventListener('visibilitychange',onVisible);signal?.removeEventListener('abort',onAbort);};
+   const cleanup=()=>{doc.removeEventListener('visibilitychange',onVisible);win?.removeEventListener('pageshow',onVisible);signal?.removeEventListener('abort',onAbort);};
    const onAbort=()=>{cleanup();reject(signal.reason);};
    const onVisible=()=>{
-    if(!doc.hidden){cleanup();resolve();}
+    if(!suspended()){cleanup();resolve();}
    };
    doc.addEventListener('visibilitychange',onVisible);
+   win?.addEventListener('pageshow',onVisible);
    signal?.addEventListener('abort',onAbort,{once:true});
    onVisible();
   });
@@ -82,6 +87,7 @@ export function createTaiForegroundDelay(doc){
      done=true;
      clearTimeout(timer);
      doc.removeEventListener('visibilitychange',onHide);
+     win?.removeEventListener('pagehide',onHide);
      signal?.removeEventListener('abort',onAbort);
      resolve(Math.max(0,Date.now()-start));
     };
@@ -89,13 +95,15 @@ export function createTaiForegroundDelay(doc){
      if(done)return;
      done=true;clearTimeout(timer);
      doc.removeEventListener('visibilitychange',onHide);
+     win?.removeEventListener('pagehide',onHide);
      reject(signal.reason);
     };
-    const onHide=()=>{if(doc.hidden)complete();};
+    const onHide=()=>{if(suspended())complete();};
     doc.addEventListener('visibilitychange',onHide);
+    win?.addEventListener('pagehide',onHide);
     signal?.addEventListener('abort',onAbort,{once:true});
     if(signal?.aborted){onAbort();return;}
-    if(doc.hidden)complete();
+    if(suspended())complete();
     else timer=setTimeout(complete,remaining);
    });
    remaining=Math.max(0,remaining-elapsed);

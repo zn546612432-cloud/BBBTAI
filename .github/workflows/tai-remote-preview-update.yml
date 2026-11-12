@@ -1,0 +1,111 @@
+name: Manually update reviewed Tai Ghost preview
+
+# Explicit publication only: a reviewed-SHA tag, or a manual dispatch.
+# Ordinary branch pushes and pull requests never deploy.
+on:
+  push:
+    tags: ['preview/tai-remote-review-*']
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Full 40-character commit SHA with green Story55 and browser checks
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-latest-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: tai-remote-review-preview
+      url: https://zn546612432-cloud.github.io/BBBTAI/preview/
+    steps:
+      - name: Require a fixed, green tested commit
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'NODE'
+          const sha=process.env.REVIEWED_SHA;
+          if(!/^[a-f0-9]{40}$/.test(sha))throw Error('Use the complete reviewed commit SHA');
+          if(process.env.GITHUB_EVENT_NAME==='push'&&process.env.GITHUB_REF_NAME!=='preview/tai-remote-review-'+sha)
+            throw Error('Preview tag must name its exact tested commit');
+          const repo=process.env.GITHUB_REPOSITORY;
+          const response=await fetch(`https://api.github.com/repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`,{
+            headers:{Authorization:`Bearer ${process.env.GH_TOKEN}`,Accept:'application/vnd.github+json'}
+          });
+          if(!response.ok)throw Error('Unable to verify tested commit');
+          const data=await response.json();
+          for(const path of ['.github/workflows/story55-developer.yml','.github/workflows/tai-remote-mobile-browser-qa.yml']){
+            const run=data.workflow_runs.filter(r=>r.path===path).sort((a,b)=>b.id-a.id)[0];
+            if(run?.status!=='completed'||run.conclusion!=='success')throw Error('Tests are not green for '+path);
+          }
+          console.log('Verified exact reviewed SHA and both test workflows');
+          NODE
+      - name: Check out unchanged production
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production-source
+      - name: Check out exact tested repair
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_sha || github.sha }}
+          path: review-source
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build formal entry and retained Tai Vision from main
+        working-directory: production-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" npm run build:pages
+          mv dist assembled
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p assembled/review/tai-vision-20261105
+          cp -a dist/. assembled/review/tai-vision-20261105/
+      - name: Verify and build exact repair for existing latest preview
+        working-directory: review-source
+        run: |
+          npm ci
+          node scripts/audit-story-skill.mjs
+          npm test
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mkdir -p ../production-source/assembled/preview
+          cp -a dist/. ../production-source/assembled/preview/
+      - name: Preserve existing Story55 comparison
+        working-directory: story55-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+          mkdir -p ../production-source/assembled/review/55-20261101
+          cp -a dist/. ../production-source/assembled/review/55-20261101/
+      - name: Audit same four entries and reject stale production rebuild
+        working-directory: production-source
+        run: |
+          python3 -m pip install Pillow==11.3.0
+          python3 scripts/optimize-icon-atlases.py assembled
+          node scripts/audit-pages-site.mjs assembled
+          test "$(git rev-parse HEAD)" = "$(git ls-remote origin refs/heads/main | cut -f1)"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production-source/assembled
+      - uses: actions/deploy-pages@v4
+        with:
+          timeout: '1800000'

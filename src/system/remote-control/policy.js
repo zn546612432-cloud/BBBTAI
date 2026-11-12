@@ -2,7 +2,9 @@
 // MCP tool adapter. No independent story scheduler or GHOST mechanics.
 import {configFor} from '../../apps/ghost/state.js';
 import {D06_ORDER_ID} from '../../story/d06/commission.js';
-import {d04OrderOfStep} from '../../story/d04/contract.js';
+import {d04OrderOfStep,d04CanRun} from '../../story/d04/contract.js';
+import {d03OrderOfStep,d03CanRun} from '../../story/d03/contract.js';
+import {d02OrderOfStep,D02_DEADLINES} from '../../story/d02/runtime.js';
 import {D01_REPAIR} from '../../story/d01/runtime.js';
 import {WALLET_CHALLENGE_ID} from '../../apps/mirage/contacts-seed.js';
 
@@ -13,6 +15,17 @@ export function taiRemoteOrderAllowed(s,o){
  if(!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type))return false;
  if([D01_REPAIR,D06_ORDER_ID,WALLET_CHALLENGE_ID].includes(o.id)||
     d04OrderOfStep(o.id)===D06_ORDER_ID)return false;
+ // Early accepted commissions can leave an authorized/failed GHOST child
+ // after the parent expires. Apply the existing runner's gates only inside
+ // the sharing window; never change D01–D14 gameplay or ban whole types.
+ if(s?.day>=15&&s.day<=24){
+  const d02=d02OrderOfStep(o.id),deadline=D02_DEADLINES[d02];
+  if(d02&&(!s.story55?.d02?.deployed?.[d02]||
+   s.content?.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||
+   s.day>deadline.day||s.day===deadline.day&&s.clock>deadline.clock))return false;
+  if(d03OrderOfStep(o.id)&&!d03CanRun(s,o.id))return false;
+  if(d04OrderOfStep(o.id)&&!d04CanRun(s,o.id))return false;
+ }
  if(TAI_REMOTE_SCOPED_TYPES.includes(o.type)){
   // Never operate the separate D01 repair / D06 wallet challenge settlement.
   if(!(o.story55Project||o.story55Commission||
