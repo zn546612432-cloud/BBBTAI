@@ -21,3 +21,13 @@
 - 线上验证：release.json source_commit=544b11173977f8ac9888ddaa5c95d4e1fc5a0053，version=c68a550f491c9572；正式入口绑定该版本。
 - 线上controller.js及ghost-share.js返回HTTP 200，内容与通过测试的本地代码逐字节一致。
 - 本次收尾仅更新三份Markdown记录；不改运行代码。
+
+## 当前排查 · 2026-11-13
+- 当前任务：解释截图中持续拒绝接管的原因；仅排查。
+- 当前步骤：代码条件核对完成，实际存档分支未确认。
+- 已完成：读取三份记录；核对main 1f57cb6中ghost-share.js及既有测试。
+- 下一步：如进入修复，先确认是否调整概率/每日次数规则。
+- 阻塞：没有用户实际存档，无法判定截图属于概率未中、当日次数限制或来源失效。
+- 相关文件：AGENTS.md、本状态、决策记录、任务卡、ghost-share.js、ghost-mirage-share.test.mjs（共6个）。
+- 最近验证：只读核对，未运行测试、浏览器或改业务代码；证据ghost-share.js:141-151，tests/ghost-mirage-share.test.mjs:64-83。
+- 记录保存在隔离文档分支；未修改main。
