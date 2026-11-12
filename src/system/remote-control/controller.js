@@ -10,10 +10,12 @@ import {date55} from '../../services/story55/state.js';
 import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
+import {isMirageAuthenticated} from '../../apps/mirage/session.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
+const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
 const eligibleOrder=o=>o?.type==='route'&&['authorized','failed','running'].includes(o.status)&&
  (!o.requiresKeyEntry||o.keyVerified);
 function possibleLink(s){
@@ -233,7 +235,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
  }
  async function start(){
   if(busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
-   !store.get().unlocked||doc.hidden)return;
+   !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   busy=true;
   const s=store.get(),source=s.story55.ghostShare.source;
   if(!possibleLink(s)){
@@ -275,7 +277,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
  }
  function sync(){
   if(queued||busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
-   !store.get().unlocked||doc.hidden)return;
+   !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   queued=true;
   queueMicrotask(()=>{queued=false;void start();});
  }
