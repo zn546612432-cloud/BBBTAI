@@ -149,7 +149,7 @@ const toast=message=>{
  showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
 };
 const taiRemote=createTaiRemoteController({
- store,router,tasks,toast,document,
+ store,router,tasks,toast,document,refresh:render,
  // Same form submission function as a genuine MIRAGE user SEND; the remote
  // controller owns input focus and visual fingertip, not a second message API.
  submitMirageForm:form=>registry.get('mirage')?.submit(form,ctx(),store.get().nav.current)
