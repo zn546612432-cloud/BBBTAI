@@ -33,7 +33,7 @@ if(!seed.content.conversations.mirage.some(c=>c.id==='s55-ouroboros')){
   id:'s55-ouroboros',name:'Dr Ouroboros',online:false,unread:0,messages:[]
  });
 }
-const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await chromium.launch({headless:process.env.TAI_REMOTE_HEADED!=='1',args:['--no-sandbox','--disable-dev-shm-usage']});
 const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
