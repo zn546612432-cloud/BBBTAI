@@ -158,7 +158,7 @@ test('existing D01–D14 and persisted legacy Ghost boards keep the old engine',
  const veil=createArcadeBoard('veil',rng(5));
  assert.equal(extract.kind,'extract');assert.equal(veil.kind,'veil');
 });
-test('real D15 CIPHER passes through KIRA, new arcade tap, READY, manual bank payout once',()=>{
+test('real D15 CIPHER keeps original nine-tile two-click exchange, and pays only on Mirage submission',()=>{
  const s=activateStory55(initialState());
  s.day=15;s.clock='12:00';seedD04Contracts(s);
  const id='M-001';
@@ -168,17 +168,23 @@ test('real D15 CIPHER passes through KIRA, new arcade tap, READY, manual bank pa
  const now=Date.now();
  assert.equal(begin(s,step,now),true);
  const run=s.ghost.orders[step];
- assert.equal(run.board.arcade?.kind,'cipher-slide');
+ assert.equal(run.board.arcade,undefined);
+ assert.equal(run.board.tiles.length,9);
+ assert.equal(run.settings.cipherSwaps,2);
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
  const loc={appId:'ghost',route:'/run',params:{orderId:step}};
  const html=renderGhost(ctx,loc);
- assert.match(html,/gh-arcade-slide/);
- assert.ok(!html.includes('data-action="gh-tile"'));
- run.board.arcade.tiles=[0,1,2,3,4,5,6,8,7];run.board.arcade.empty=7;
+ assert.match(html,/data-action="gh-tile"/);
+ assert.doesNotMatch(html,/gh-arcade-slide/);
  const balance=s.bankData.balance;
- handleGhost('gh-arcade-tap',{dataset:{value:'8'}},ctx,loc);
+ for(let i=0;i<9&&run.status==='running';i++){
+  if(run.board.tiles[i]===i)continue;
+  const j=run.board.tiles.indexOf(i);
+  handleGhost('gh-tile',{dataset:{index:String(i)}},ctx,loc);
+  handleGhost('gh-tile',{dataset:{index:String(j)}},ctx,loc);
+ }
  assert.equal(s.content.orders.find(o=>o.id===id).status,'READY');
- assert.equal(s.bankData.balance,balance,'no early $20k grant');
+ assert.equal(s.bankData.balance,balance,'no early payout');
  assert.equal(submitD04Contract(s,id),true);
  assert.equal(s.bankData.balance,balance+650);
  assert.equal(submitD04Contract(s,id),false);
@@ -199,12 +205,17 @@ test('D16 A-tier progresses original LINK into OSS CIPHER and scanner maze, pays
  const cipher=D04_STEP(orderId,1);
  assert.equal(s.ghost.orders[cipher].type,'cipher');
  assert.equal(begin(s,cipher,now+200),true);
- assert.equal(s.ghost.orders[cipher].board.arcade?.kind,'cipher-slide');
- s.ghost.orders[cipher].board.arcade.tiles=[0,1,2,3,4,5,6,8,7];
- s.ghost.orders[cipher].board.arcade.empty=7;
+ assert.equal(s.ghost.orders[cipher].board.arcade,undefined);
+ assert.equal(s.ghost.orders[cipher].settings.cipherSwaps,4);
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
  let loc={appId:'ghost',route:'/run',params:{orderId:cipher}};
- handleGhost('gh-arcade-tap',{dataset:{value:'8'}},ctx,loc);
+ const run=s.ghost.orders[cipher];
+ for(let i=0;i<9&&run.status==='running';i++){
+  if(run.board.tiles[i]===i)continue;
+  const j=run.board.tiles.indexOf(i);
+  handleGhost('gh-tile',{dataset:{index:String(i)}},ctx,loc);
+  handleGhost('gh-tile',{dataset:{index:String(j)}},ctx,loc);
+ }
  assert.equal(s.ghost.orders[cipher].status,'success');
  const veil=D04_STEP(orderId,2);
  assert.equal(s.ghost.orders[veil].type,'veil');
