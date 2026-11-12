@@ -90,15 +90,16 @@ try{
  await screenshot('01-ghost-project-share-button');
  console.log('PASS iPhone unlocked into native GHOST project with real share button');
  await share.click();
-  await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
+ await screenshot('01b-share-confirmation');
+ const choices=await page.locator('.gh-share-actions button').evaluateAll(buttons=>buttons.map(b=>{const r=b.getBoundingClientRect();return {y:r.y,height:r.height,width:r.width};}));
+ assert.equal(choices.length,2);assert.equal(choices[0].y,choices[1].y);assert.equal(choices[0].height,choices[1].height);assert.equal(choices[0].width,choices[1].width);
+ await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k))?.story55?.ghostShare?.script==='first',key);
  assert.equal((await state()).story55.ghostShareTakeovers||0,0);
  console.log('PASS Ghost real project card sent, 50% roll selected the first authored dialogue');
 
- // The Mirage session login must be done by the tester, never bypassed by Tai.
- const login=page.locator('form[data-form="mc-login"] button[type="submit"]');
- await login.waitFor({state:'visible',timeout:22000});
- await login.click();
+ // Confirming a native Ghost share enters the existing chat directly.
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'confirmed share opens Tai directly');
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:25000});
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  await screenshot('02-mirage-ghost-card');
@@ -221,8 +222,8 @@ try{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-cipher-1';
  },key,{timeout:15000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  for(const line of lines){
   await page.waitForFunction(expected=>{
@@ -270,8 +271,8 @@ try{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-veil-1';
  },key,{timeout:15000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  for(const line of lines){
   await page.waitForFunction(expected=>{
@@ -324,8 +325,8 @@ try{
   return s.story55?.ghostShare?.script==='first'&&
    s.story55.ghostShare.source.orderId==='tai-extract-1';
  },key,{timeout:15000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  for(const line of lines){
   await page.waitForFunction(expected=>{
@@ -377,8 +378,8 @@ try{
   return s.story55?.ghostShare?.script==='first'&&
    s.story55.ghostShare.source.orderId==='tai-strike-1';
  },key,{timeout:15000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  for(const line of lines){
   await page.waitForFunction(expected=>{
@@ -472,8 +473,8 @@ try{
   return s.story55?.ghostShare?.script==='first'&&
    s.story55.ghostShare.source.orderId==='tai-verify-1';
  },key,{timeout:15000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
  await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
  for(const line of lines){
   await page.waitForFunction(expected=>{
@@ -534,8 +535,8 @@ try{
   await unlock();
   await page.locator('#screen-layer [data-action="gh-share"]').click();
    await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
-  await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible'});
-  await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+  await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+  assert.equal(await page.locator('form[data-form="mc-login"]').count(),0,'share must not require another sign-in');
   for(const line of lines){
    await page.waitForFunction(expected=>{
     const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');

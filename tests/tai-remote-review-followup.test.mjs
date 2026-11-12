@@ -174,10 +174,10 @@ for(const script of Object.keys(GHOST_SHARE_DIALOGUES)){
  });
 }
 
-test('an unaccepted/offline share card does not lock any script; current #133 historical lines still protect their own script',()=>{
- const s=fresh();shareGhostToTai(s,{projectId:'base'},{random:()=>.99});
+test('an offline share card does not lock any script; current #133 historical lines still protect their own script',()=>{
+ const s=fresh();s.clock='11:00';shareGhostToTai(s,{projectId:'base'},{random:()=>.99});
  assert.ok(readChatSources(s,15).filter(x=>x.type==='ghost-share').every(x=>!x.reason));
- delete s.story55.ghostShare;
+ delete s.story55.ghostShare;s.clock='08:20';
  shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10000});
  delete s.story55.ghostShareScriptsStarted;
  for(const m of s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages)delete m.ghostShareScript;
