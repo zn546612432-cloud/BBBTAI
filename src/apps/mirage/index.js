@@ -53,7 +53,10 @@ function bountyPage(s){
  const d=mirageData(s),all=s.content.orders||[];
   const list=isStory55(s)&&s.day>=15
    ?all.filter(o=>o.marketDaily&&o.storyDay===s.day&&o.status==='OPEN'
-      ||o.marketRestricted&&o.storyDay<=s.day&&s.day<=o.endDay)
+      ||o.marketRestricted&&o.storyDay<=s.day&&s.day<=o.endDay
+      // Preserve still-live developer-authored and legacy open contracts.
+      ||!o.marketDaily&&!o.marketRestricted&&o.status==='OPEN'&&linkedMissionVisible(s,o.id)
+        &&(!o.deadlineDay||s.day<o.deadlineDay||s.day===o.deadlineDay&&s.clock<=String(o.deadlineClock||'23:59')))
    :all.filter(o=>o.status==='OPEN'&&linkedMissionVisible(s,o.id));
  return `${header('BOUNTY EXCHANGE')}<div class="mc-scroll mc-board"><button class="mc-wallet-summary" data-action="mc-wallet"><span>AVAILABLE FUNDS <small>USD</small></span><strong>$ ${money(s.bankData?.balance||0)}</strong><span>VIEW LEDGER <b>↗</b></span></button>${btn('mc-my-orders','MY ORDERS · 我的订单　›','mc-my-orders')}<div class="mc-board-label"><span>OPEN CONTRACTS (${list.length})</span></div>${list.map(orderRow).join('')||'<div class="mc-empty">NO CONTRACTS AVAILABLE</div>'}</div>${tabs('/bounties',s)}`;
 }
