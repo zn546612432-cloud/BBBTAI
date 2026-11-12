@@ -66,7 +66,7 @@ test('stdio MCP stays read-only; only an injected, granted same-page session can
  const tools=createTaiLivePhoneTools({store,router,tasks,document:doc});
  assert.equal(listTaiPhoneTools().length,6);
  assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'}).result.tools.length,6);
- assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'},{liveTools:tools}).result.tools.length,20);
+ assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'},{liveTools:tools}).result.tools.length,22);
  assert.equal(call(s,'remote_read_link',{},undefined).ok,false);
  const first=call(s,'remote_read_link',{},tools);
  assert.equal(first.ok,true);assert.equal(first.data.orderId,'shared');
