@@ -114,9 +114,17 @@ test('game-clock mining accrues once, survives backwards inspection and caps at 
  s.clock='20:00';accrueMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);
  for(let i=1;i<10;i++)upgradeMining(s);assert.equal(s.story55.mining.level,10);assert.throws(()=>upgradeMining(s));const before=s.bankData.balance;sellMining(s);assert.equal(s.bankData.balance-before,6000);
 });
-test('anonymous 25-minute window persists independently of plot time and cannot start beforeD15',()=>{
- const s=fixture();previewNode55(s,'loan');assert.equal(anonymousPresence55(s,1000).online,false);s.story55.anonymousWindows={[s.day]:1000};assert.equal(anonymousPresence55(s,1000+1499000).online,true);assert.equal(anonymousPresence55(s,1000+1500000).online,false);
- s.day=14;assert.equal(anonymousPresence55(s,1000).online,false);
+test('anonymous Mirage presence uses D15-D24 game-time windows and keeps D15 loan exit scoped',()=>{
+ const s=fixture();previewNode55(s,'loan');
+ for(const [clock,online] of [['07:59',false],['08:00',true],['09:25',false],['12:00',true],['12:30',false],['22:00',true],['23:00',false]]){
+  s.clock=clock;assert.equal(anonymousPresence55(s,1000).online,online,clock);
+ }
+ s.story55.anonymousWindows={[s.day]:1000};s.clock='08:20';
+ assert.equal(anonymousPresence55(s,1000+1500000).online,true);
+ s.story55.loanOfflineDay=s.day;s.story55.loanOfflineClock='08:10';
+ assert.equal(anonymousPresence55(s).online,false);
+ s.clock='12:00';assert.equal(anonymousPresence55(s).online,true);
+ s.day=14;assert.equal(anonymousPresence55(s).online,false);
 });
 
 test('developer location stays open while home widget keeps native reminders',async()=>{
