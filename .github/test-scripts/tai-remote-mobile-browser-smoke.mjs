@@ -55,6 +55,24 @@ async function unlock(){
   await page.locator('#screen-layer [data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('is-locked'),null,{timeout:30000});
 }
+// External fixture replacement is not the phone's import lifecycle. Close
+// the old runtime before seeding another scenario so its pending persistence
+// cannot overwrite the next test. Live PhoneStore.replace is tested below.
+async function resetPage(nextSeed){
+ await page.context().close();
+ const clean=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
+  isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'});
+ page=await clean.newPage();page.setDefaultTimeout(30000);
+ page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+ page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
+ await page.addInitScript(({key,seed})=>{
+  if(!localStorage.getItem(key))localStorage.setItem(key,seed);
+  Math.random=()=>.02;
+ },{key,seed:JSON.stringify(nextSeed)});
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+ await page.locator('#phone').waitFor({state:'attached',timeout:45000});
+ await unlock();
+}
 const messageCount=s=>s.content.conversations.mirage
  .find(c=>c.id==='s55-ouroboros')?.messages||[];
 try{
@@ -190,11 +208,7 @@ try{
  };
  cipherSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-cipher-1'}};
  cipherSeed.nav.stack=[];cipherSeed.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
-  key,json:JSON.stringify(cipherSeed)
- });
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
- await unlock();
+ await resetPage(cipherSeed);
  await page.locator('#screen-layer [data-action="gh-start"]').click();
  await page.locator('#screen-layer [data-action="gh-tile"][data-index="2"]').click();
  assert.equal((await state()).ghost.orders['tai-cipher-1'].board.selected,2);
@@ -246,11 +260,7 @@ try{
  };
  veilSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-veil-1'}};
  veilSeed.nav.stack=[];veilSeed.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
-  key,json:JSON.stringify(veilSeed)
- });
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
- await unlock();
+ await resetPage(veilSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
  await page.waitForFunction(k=>{
@@ -302,11 +312,7 @@ try{
  };
  extractSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-extract-1'}};
  extractSeed.nav.stack=[];extractSeed.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
-  key,json:JSON.stringify(extractSeed)
- });
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
- await unlock();
+ await resetPage(extractSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
  await page.waitForFunction(k=>{
@@ -358,11 +364,7 @@ try{
  };
  strikeSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-strike-1'}};
  strikeSeed.nav.stack=[];strikeSeed.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
-  key,json:JSON.stringify(strikeSeed)
- });
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
- await unlock();
+ await resetPage(strikeSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
  await page.waitForFunction(k=>{
@@ -417,9 +419,7 @@ try{
  };
  oldStrike.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-strike-legacy'}};
  oldStrike.nav.stack=[];oldStrike.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{key,json:JSON.stringify(oldStrike)});
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
- await unlock();
+ await resetPage(oldStrike);
  await page.locator('#screen-layer [data-action="gh-start"]').waitFor({state:'visible',timeout:20000});
  assert.equal(await page.locator('#screen-layer [data-action="gh-share"]').count(),0,
   'unsupported legacy STRIKE must be rejected by the share entry as well as the executor');
