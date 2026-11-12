@@ -4,6 +4,9 @@
 // Nothing here is exposed on the public network or accesses the real device.
 import {finishGhostShareControl} from '../../services/story55/ghost-share.js';
 import {veilNextCell,veilScanners} from '../../apps/ghost/games/arcade.js';
+import {openGamesMazeStep} from '../../apps/ghost/games/vendor/opengames-mechanics.js';
+import {upstreamScannerPositions} from '../../apps/ghost/games/arcade-upstream.js';
+import {puzzleNeighbors} from '../../apps/ghost/games/vendor/puzzle-slide.js';
 import {taiRemoteOrderAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
 import {visibleLinkBoard} from './link-solver.js';
 
@@ -20,7 +23,7 @@ export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_rotate_pipe',description:'Click one real GHOST pipe button for the shared LINK board',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:80}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_cipher_tile',description:'Click one real GHOST tile of the authorized CIPHER order',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:8}},required:['index'],additionalProperties:false}},
  {name:'remote_step_veil',description:'Press one safe native VEIL direction or WAIT button',inputSchema:{type:'object',properties:{direction:{type:'string',enum:['up','down','left','right','wait']}},required:['direction'],additionalProperties:false}},
- {name:'remote_tap_extract',description:'Flip one still-available EXTRACT card in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:9}},required:['index'],additionalProperties:false}},
+ {name:'remote_tap_extract',description:'Flip one still-available EXTRACT card in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:19}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_strike',description:'Click only the current, visible moving STRIKE target in its native GHOST grid',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:15}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_verify_token',description:'Press only the next correct visible VERIFY module in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:3}},required:['index'],additionalProperties:false}},
  {name:'remote_choose_extract_legacy',description:'Press a visible legacy fingerprint option with the native GHOST button',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:3}},required:['index'],additionalProperties:false}},
@@ -119,15 +122,18 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    const o=authorizedOrder(state);
    if(!o||o.type!=='cipher')return bad('cipher_order_not_ready');
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
-    board:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles],selected:o.board.selected??null}:null}};
+    board:o.status==='running'&&o.board?.arcade?.kind==='cipher-slide'?{kind:'cipher-slide',tiles:[...o.board.arcade.tiles],empty:o.board.arcade.empty,selected:null}:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles],selected:o.board.selected??null}:null}};
   }
   if(name==='remote_tap_cipher_tile'){
    const o=authorizedOrder(state),index=args.index;
    if(!o||o.type!=='cipher'||o.status!=='running'||!Number.isInteger(index)||
-      index<0||index>8||!Array.isArray(o.board?.tiles)||
+      index<0||index>8||!(Array.isArray(o.board?.tiles)||o.board?.arcade?.kind==='cipher-slide')||
+      (o.board?.arcade?.kind==='cipher-slide'&&!puzzleNeighbors(o.board.arcade.empty).includes(index))||
       state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
       state.nav.current.params?.orderId!==o.id)return bad('tile_not_permitted');
-   const tile=dom?.querySelector('#screen-layer [data-action="gh-tile"][data-index="'+index+'"]');
+   const slide=o.board?.arcade?.kind==='cipher-slide';
+   const selector=slide?'#screen-layer [data-action="gh-arcade-tap"][data-value="'+index+'"]':'#screen-layer [data-action="gh-tile"][data-index="'+index+'"]';
+   const tile=dom?.querySelector(selector);
    if(!tile||tile.disabled||!tile.isConnected)return bad('tile_button_not_found');
    tile.click();
    return {ok:true,data:{orderId:o.id,index}};
@@ -138,6 +144,11 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,board:null,deadline:o.deadline}};
    const a=o.board?.arcade;
    if(a){
+    if(a.kind==='veil-maze')return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,
+     deadline:o.deadline,board:{kind:'veil-maze',size:a.size,
+      maze:{size:a.maze.size,cells:a.maze.cells.map(c=>[...c])},
+      start:a.start,player:a.player,phase:a.phase,exit:a.exit,
+      scanners:a.scanners.map(path=>[...path]),steps:a.steps,heat:a.heat}}};
     if(a.kind!=='veil')return bad('invalid_veil_board');
     return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,
      deadline:o.deadline,board:{kind:'veil',player:a.player,phase:a.phase,
@@ -151,14 +162,14 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
   }
   if(name==='remote_step_veil'){
    const o=authorizedOrder(state),direction=args.direction,a=o?.board?.arcade;
-   if(!o||o.type!=='veil'||o.status!=='running'||a?.kind!=='veil'||
+   if(!o||o.type!=='veil'||o.status!=='running'||!['veil','veil-maze'].includes(a?.kind)||
       !['up','down','left','right','wait'].includes(direction)||
       o.deadline!==null&&Date.now()>=o.deadline||
       state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
       state.nav.current.params?.orderId!==o.id)return bad('veil_step_not_permitted');
-   const cell=veilNextCell(a.player,direction,a.walls);
-   if(cell===null)return bad('invalid_veil_step');
-   if(veilScanners((a.phase+1)%3).includes(cell))return bad('unsafe_veil_step');
+   const cell=a.kind==='veil-maze'?(direction==='wait'?a.player:openGamesMazeStep(a.maze,a.player,direction)):veilNextCell(a.player,direction,a.walls);
+   if(cell===null||cell===a.player&&direction!=='wait')return bad('invalid_veil_step');
+   if(a.kind==='veil-maze'?upstreamScannerPositions(a,(a.phase+1)%5).includes(cell):veilScanners((a.phase+1)%3).includes(cell))return bad('unsafe_veil_step');
    const button=dom?.querySelector('#screen-layer [data-action="gh-arcade-step"][data-value="'+direction+'"]');
    if(!button||button.disabled||!button.isConnected)return bad('veil_button_not_found');
    button.click();
@@ -182,10 +193,10 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,board:null}};
    const a=o.board?.arcade;
    if(a){
-    if(a.kind!=='extract'||!Array.isArray(a.cards)||a.cards.length!==10||
+    if(!['extract','extract-memory'].includes(a.kind)||!Array.isArray(a.cards)||a.cards.length<8||a.cards.length>20||a.cards.length%2!==0||
        !Array.isArray(a.matched)||!Array.isArray(a.revealed))return bad('invalid_extract_board');
     const faceUp=new Set([...a.matched,...a.revealed]);
-    const visible=[...faceUp].filter(i=>Number.isInteger(i)&&i>=0&&i<10)
+    const visible=[...faceUp].filter(i=>Number.isInteger(i)&&i>=0&&i<a.cards.length)
      .map(index=>({index,symbol:a.cards[index]}));
     // Never return the hidden cards list from the stored board.
     return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,
@@ -201,8 +212,8 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
   }
   if(name==='remote_tap_extract'){
    const o=authorizedOrder(state),index=args.index,a=o?.board?.arcade;
-   if(!o||o.type!=='extract'||o.status!=='running'||a?.kind!=='extract'||
-      !Array.isArray(a.cards)||a.cards.length!==10||
+   if(!o||o.type!=='extract'||o.status!=='running'||!['extract','extract-memory'].includes(a?.kind)||
+      !Array.isArray(a.cards)||a.cards.length<8||a.cards.length>20||a.cards.length%2!==0||
       !Number.isInteger(index)||index<0||index>=a.cards.length||
       (a.lockUntil||0)>0||a.matched.includes(index)||a.revealed.includes(index)||
       o.deadline!==null&&Date.now()>=o.deadline||
@@ -231,12 +242,12 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(!o||o.type!=='strike')return bad('strike_order_not_ready');
    const b=o.board?.arcade;
    return {ok:true,data:{orderId:o.id,type:'strike',status:o.status,deadline:o.deadline,
-    board:b?.kind==='strike'?{kind:'strike',target:b.target,hits:b.hits,
+    board:['strike','strike-mole'].includes(b?.kind)?{kind:'strike',target:b.target,hits:b.hits,
       misses:b.misses,goal:b.goal,maxMisses:b.maxMisses}:null}};
   }
   if(name==='remote_tap_strike'){
    const o=authorizedOrder(state),index=args.index,b=o?.board?.arcade;
-   if(!o||o.type!=='strike'||o.status!=='running'||b?.kind!=='strike'||
+   if(!o||o.type!=='strike'||o.status!=='running'||!['strike','strike-mole'].includes(b?.kind)||
       !Number.isInteger(index)||index<0||index>=16||index!==b.target||
       b.hits>=b.goal||b.misses>=b.maxMisses||
       o.deadline===null||!Number.isFinite(o.deadline)||Date.now()>=o.deadline||
