@@ -408,7 +408,7 @@ try{
  console.log('PASS fifth iPhone run: six true STRIKE target clicks, zero misses, one native settlement, Mirage restored');
 
  // Sixth isolated legacy STRIKE: no takeover, and crucially no automated
- // start/time-based win. Share card may send; remote operator must refuse.
+ // start/time-based win. The shared allowlist now blocks the entry itself.
  const oldStrike=structuredClone(seed);
  oldStrike.ghost.orders['tai-strike-legacy']={
   id:'tai-strike-legacy',type:'strike',key:'GH-OLD',
@@ -420,25 +420,9 @@ try{
  await page.evaluate(({key,json})=>localStorage.setItem(key,json),{key,json:JSON.stringify(oldStrike)});
  await page.reload({waitUntil:'domcontentloaded',timeout:60000});
  await unlock();
- await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:20000});
- await page.locator('#screen-layer [data-action="gh-share"]').click();
- // The old share can still be messaged, but an actual control attempt must
- // never press GHOST start or complete the legacy automatic countdown.
- await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:20000});
- await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
- await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:20000});
- for(const line of lines){
-  await page.waitForFunction(expected=>{
-   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
-   return input?.value===expected&&!input.disabled;
-  },line,{timeout:45000});
-  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
- }
- await page.waitForFunction(k=>{
-  const s=JSON.parse(localStorage.getItem(k));
-  return s.story55?.ghostShare?.phase==='unavailable'&&
-   s.ghost.orders['tai-strike-legacy']?.status==='authorized';
- },key,{timeout:18000});
+ await page.locator('#screen-layer [data-action="gh-start"]').waitFor({state:'visible',timeout:20000});
+ assert.equal(await page.locator('#screen-layer [data-action="gh-share"]').count(),0,
+  'unsupported legacy STRIKE must be rejected by the share entry as well as the executor');
  const legacyDone=await state();
  assert.equal(legacyDone.ghost.orders['tai-strike-legacy'].attempts,0);
  assert.equal(legacyDone.story55.ghostShareTakeovers||0,0);
@@ -457,9 +441,8 @@ try{
  };
  verifySeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-verify-1'}};
  verifySeed.nav.stack=[];verifySeed.unlocked=false;
- // The preceding legacy refusal leaves an asynchronous Mirage runtime
- // running. Give VERIFY its own isolated browser context and saved state,
- // rather than writing a replacement snapshot into that live page.
+ // Give VERIFY its own isolated browser context and saved state, rather
+ // than mixing asynchronous work from preceding scenarios into its save.
  await page.close();
  const verifyContext=await browser.newContext({
   viewport:{width:390,height:844},deviceScaleFactor:2,
