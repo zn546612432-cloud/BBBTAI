@@ -1,0 +1,72 @@
+name: Tai Ghost mobile takeover browser QA
+
+on:
+  push:
+    branches:
+      - feature/tai-remote-mobile-qa-20261112
+    paths:
+      - 'src/system/remote-control/**'
+      - 'src/apps/ghost/**'
+      - 'src/apps/mirage/**'
+      - 'src/services/story55/**'
+      - 'src/services/ai/phone-mcp/**'
+      - 'src/main.js'
+      - 'src/system/power/**'
+      - '.github/test-scripts/tai-remote-mobile-browser-smoke.mjs'
+      - '.github/workflows/tai-remote-mobile-browser-qa.yml'
+  pull_request:
+    branches:
+      - feature/tai-remote-link-20261112
+    paths:
+      - 'src/system/remote-control/**'
+      - 'src/apps/ghost/**'
+      - 'src/apps/mirage/**'
+      - 'src/services/story55/**'
+      - '.github/test-scripts/tai-remote-mobile-browser-smoke.mjs'
+      - '.github/workflows/tai-remote-mobile-browser-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  iphone-touch-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build exact feature branch
+        run: npm run build
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start isolated local phone
+        run: |
+          PORT=5173 node server/dev.mjs > /tmp/bbbtai-phone.log 2>&1 &
+          echo $! > /tmp/bbbtai-phone.pid
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:5173/ -o /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/bbbtai-phone.log
+          exit 1
+      - name: Touch-browser QA, real MIRAGE Send and GHOST LINK actions
+        env:
+          TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
+        run: node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
+      - name: Retain iPhone screenshots and local server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tai-remote-iphone-touch-qa
+          path: |
+            tai-remote-mobile-results/
+            /tmp/bbbtai-phone.log
+          if-no-files-found: ignore
+          retention-days: 14

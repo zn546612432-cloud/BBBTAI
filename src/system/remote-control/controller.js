@@ -10,10 +10,12 @@ import {date55} from '../../services/story55/state.js';
 import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
+import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
+const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
 const eligibleOrder=o=>o?.type==='route'&&['authorized','failed','running'].includes(o.status)&&
  (!o.requiresKeyEntry||o.keyVerified);
 function possibleLink(s){
@@ -46,7 +48,7 @@ export function recoverTaiRemoteSession(store){
  return true;
 }
 
-export function createTaiRemoteController({store,router,tasks,toast=()=>{},document:doc=globalThis.document}){
+export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null;
  function tool(name,args={}){
@@ -149,7 +151,18 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
    pointer.style.top=(box.top+box.height/2-frame.top)+'px';
    pointer.classList.add('is-visible','is-tapping');
   }
-  sendButton.click();
+  // The focused composer may be repatched by the normal phone runtime while
+  // letters animate; ensure its final DOM value matches the exact draft when
+  // the native form snapshots FormData for SEND.
+  input.value=TAI_REMOTE_TYPED_LINE;
+  // A browser-generated form-submit event is indistinguishable from a human
+  // submit to the exclusive-control guard. Use the *existing* MIRAGE submit
+  // method as the execution channel, while the visible fingertip presses SEND.
+  // Never write an outgoing bubble or change a project from this controller.
+  if(typeof submitMirageForm!=='function')throw Error('mirage_submit_not_wired');
+  const value=String(new FormData(form).get('text')||'');
+  if(value!==TAI_REMOTE_TYPED_LINE)throw Error('mirage_remote_text_not_ready');
+  submitMirageForm(form);
   // main.js delegates submit asynchronously; wait for the canonical
   // outgoing-message acknowledgment before swiping to the background.
   for(let i=0;i<35;i++){
@@ -228,12 +241,21 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   if(tasks.visible)tasks.hide();
   const s=store.get();
   const origin=s.story55?.ghostShare?.remote?.origin;
-  if(origin&&s.unlocked&&!s.poweredOff&&s.nav.current.appId==='ghost')
+  if(origin&&s.unlocked&&!s.poweredOff&&s.nav.current.appId==='ghost'){
+   // A forced takeover temporarily leaves the authenticated MIRAGE chat.
+   // Returning to that same chat must not strand the user at its login
+   // screen; ordinary voluntary app entries still use onEnter logout.
+   const authenticated=isMirageAuthenticated()&&origin.appId==='mirage';
    router.open(origin);
+   if(authenticated){
+    setMirageAuthenticated(true);
+    refresh();
+   }
+  }
  }
  async function start(){
   if(busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
-   !store.get().unlocked||doc.hidden)return;
+   !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   busy=true;
   const s=store.get(),source=s.story55.ghostShare.source;
   if(!possibleLink(s)){
@@ -259,6 +281,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
    if(!success)throw Error('link_not_completed');
    tool('remote_release');
   }catch(error){
+   console.warn('[TAI remote session]',error?.message||error);
    if(isRunning(store.get())){
     try{tool('remote_release');}catch{
      store.update(next=>{
@@ -275,7 +298,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
  }
  function sync(){
   if(queued||busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
-   !store.get().unlocked||doc.hidden)return;
+   !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   queued=true;
   queueMicrotask(()=>{queued=false;void start();});
  }
