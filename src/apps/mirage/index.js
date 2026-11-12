@@ -16,7 +16,7 @@ import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './da
 import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
 import {linkedMission,linkedMissionVisible,linkedMailId,acceptLinkedMission} from './linked-missions.js';
-import {isMirageAuthenticated,setMirageAuthenticated} from './session.js';
+import {isMirageAuthenticated,setMirageAuthenticated,consumeMirageGhostShareEntry} from './session.js';
 import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
 import {timestampLabel} from '../../services/messaging/timestamps.js';
@@ -30,7 +30,7 @@ import {initializeMirage,mirageData,contacts,money,cipher,saveRecord,purchase,MI
 import {acceptHackerBounty,HACKER_BOUNTY_ID,HACKER_MAIL_ID} from './mission.js';
 export const manifest={id:'mirage',name:'MIRAGE',icon:8,defaultRoute:'/',supportsDeepLink:true,kicker:'CIPHER NETWORK'};
 let decrypted=new Set(),decrypting=new Set(),pendingDelete=null,newMailNotice=false,filter='ALL',query='',draftAvatar,accountTapCount=0,lastAccountTap=0;
-export function onEnter(){setMirageAuthenticated(false);decrypted.clear();decrypting.clear();pendingDelete=null;newMailNotice=false;draftAvatar=undefined;accountTapCount=0;}
+export function onEnter(){const shared=consumeMirageGhostShareEntry();setMirageAuthenticated(shared);decrypted.clear();if(shared)decrypted.add(TAI_GHOST_THREAD);decrypting.clear();pendingDelete=null;newMailNotice=false;draftAvatar=undefined;accountTapCount=0;}
 export function accountTap(input){const now=Date.now();accountTapCount=now-lastAccountTap<=850?accountTapCount+1:1;lastAccountTap=now;if(accountTapCount>=3){input.value=MIRAGE_ACCOUNT;accountTapCount=0;}}
 const at=(action,label,icon,attrs='')=>btn(action,glyph(icon),'mc-icon-button',`aria-label="${label}" title="${label}" ${attrs}`);
 const route=(ctx,path='/',params={})=>ctx.router.open({appId:'mirage',route:path,params});

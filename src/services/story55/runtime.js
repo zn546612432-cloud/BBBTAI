@@ -1,4 +1,4 @@
-import {expireGhostShare} from './ghost-share.js';
+import {expireGhostShare,resolveGhostShare} from './ghost-share.js';
 import {syncApprovedChatV2} from '../../story/revisions/d05-d17-v2.js';
 import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
@@ -283,6 +283,7 @@ export function tickStory55(s){
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
+ resolveGhostShare(s);
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   // D13 shows actual arrival time; other clock-authored mail retains its
   // scheduled timestamp when the saved phone resumes after midnight.

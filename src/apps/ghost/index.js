@@ -4,6 +4,7 @@ import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {d03OrderOfStep,d03NextStep} from '../../story/d03/contract.js';
 import {d04OrderOfStep,d04NextStep} from '../../story/d04/contract.js';
 import {isStory55} from '../../services/story55/state.js';
+import {prepareMirageGhostShareEntry} from '../mirage/session.js';
 import {shareGhostToTai,ghostShareSource} from '../../services/story55/ghost-share.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
@@ -30,7 +31,7 @@ const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConf
   ((shareConfirmFor.source.projectId&&shareConfirmFor.source.projectId===loc.params?.project)||
    (shareConfirmFor.source.orderId&&shareConfirmFor.source.orderId===loc.params?.orderId))&&
   ghostShareSource(s,shareConfirmFor.source)
-  ?'<div class="gh-share-overlay" role="presentation"><section class="gh-share-dialog" role="dialog" aria-modal="true" aria-label="分享到 MIRAGE"><p>是否分享到 MIRAGE？</p><div class="gh-share-actions">'+button('share-no','否','','gh-secondary')+button('share-yes','是','','gh-primary')+'</div></section></div>':'';
+  ?'<div class="gh-share-overlay" role="presentation"><section class="gh-share-dialog" role="dialog" aria-modal="true" aria-label="分享到 MIRAGE"><p>是否分享到 MIRAGE？</p><div class="gh-share-actions">'+button('share-no','否','','gh-share-choice')+button('share-yes','是','','gh-share-choice gh-share-accept')+'</div></section></div>':'';
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
@@ -102,6 +103,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
   if(currentScript55(s,'mirage','s55-ouroboros')){ctx.toast?.('請先完成目前對話');return ctx.refresh();}
   let result;ctx.store.update(next=>{result=shareGhostToTai(next,pending.source);});
   if(!result?.ok){ctx.toast?.(result?.error||'無法分享');return ctx.refresh();}
+  prepareMirageGhostShareEntry();
   return ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
  }
  if(a==='home')return nav(ctx);

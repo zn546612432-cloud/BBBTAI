@@ -9,7 +9,8 @@ import {taiRemoteOrderAllowed} from '../../system/remote-control/policy.js';
 import {settleTaiRemotePause} from '../../system/remote-control/visibility.js';
 
 export const TAI_GHOST_THREAD='s55-ouroboros';
-const WAIT_MS=1900;
+const WAIT_MS=2200;
+const responseSeconds=text=>Math.min(5,2.5+Array.from(text).length*.045);
 export const GHOST_SHARE_DIALOGUES={
  first:[
   ['tai','？'],
@@ -59,10 +60,10 @@ export function ghostShareScriptStarted(s,script){
 const shareDay=s=>isStory55(s)&&s.day>=15&&s.day<=24&&!s.story55.ended;
 export function expireGhostShare(s){
  const p=s?.story55?.ghostShare;
- if(shareDay(s)||!['dialogue','ready-control'].includes(p?.phase))return false;
+ if(shareDay(s)||!['awaiting-online','dialogue','ready-control'].includes(p?.phase))return false;
  p.phase='expired';return true;
 }
-const active=p=>p&&['dialogue','ready-control','controlling'].includes(p.phase);
+const active=p=>p&&['awaiting-online','dialogue','ready-control','controlling'].includes(p.phase);
 const chat=s=>s.content?.conversations?.mirage?.find(c=>c.id===TAI_GHOST_THREAD);
 const pendingDelivered=(s,p)=>!(p?.pendingIds||[]).some(id=>!chat(s)?.messages?.find(m=>m.id===id)?.delivery);
 const noAccess=()=>({ok:false,error:'目前無法分享此項目'});
@@ -92,12 +93,13 @@ function queueNpc(s,p){
  while(p.index<lines.length&&lines[p.index][0]==='tai'){
   const index=p.index++,messageId=`${p.cardId}-tai-${index}`;
   // The canonical MessageDelivery owns delay, unread and notification.
+  pause+=responseSeconds(lines[index][1]);
   const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
    messageId,from:TAI_GHOST_THREAD,text:lines[index][1],storyTag:'story55',
    day:s.day,clock:s.clock,sentDate:date55(s.day),
-   schedule:{mode:'chat-delay',seconds:.45+pause*WAIT_MS/1000}});
+   schedule:{mode:'chat-delay',seconds:pause}});
   if(message)message.ghostShareScript=p.script;
-  p.pendingIds.push(messageId);pause++;
+  p.pendingIds.push(messageId);pause+=WAIT_MS/1000;
  }
  if(p.index>=lines.length)p.phase=p.script==='dailyNo'?'refused':'ready-control';
 }
@@ -106,10 +108,10 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
  const item=ghostShareSource(s,source);
  if(!item||s.story55?.activeScene)return noAccess();
  const prior=s.story55?.ghostShare;
- if(active(prior))return {ok:false,error:'當前對話尚未結束'};
  if(prior?.lastShareDay===s.day&&prior.lastSource===JSON.stringify(item)&&
   Number.isFinite(prior.lastShareAt)&&now-prior.lastShareAt>=0&&now-prior.lastShareAt<2000)
   return {ok:true,duplicate:true,cardId:prior.lastCardId};
+ if(active(prior)||prior?.lastShareDay===s.day&&!pendingDelivered(s,prior))return {ok:false,error:'當前對話尚未結束'};
  const serial=(Number(s.story55.ghostShareSerial)||0)+1;
  s.story55.ghostShareSerial=serial;
  const cardId=`s55-ghost-share-${s.day}-${serial}`;
@@ -118,24 +120,39 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
   day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55',notify:false,
   attachment:item});
  if(!message)return noAccess();
+ const p={phase:'awaiting-online',script:null,index:0,pendingIds:[],cardId,source:item,
+  lastShareDay:s.day,lastShareAt:now,lastSource:JSON.stringify(item),lastCardId:cardId};
+ s.story55.ghostShare=p;
+ const result=resolveGhostShare(s,{random});
+ return {ok:true,cardId,...(result||{accepted:false,script:null,online:false,pending:true})};
+}
+
+// Called by the existing Story55 tick: an offline share survives reload and
+// waits for the same anonymous-presence window. Never add another timer/queue.
+export function resolveGhostShare(s,{random=Math.random}={}){
+ const p=s.story55?.ghostShare;
+ // Repair the last unanswered card from older saves, without replaying cards
+ // or overwriting any dialogue that already started.
+ if(shareDay(s)&&p?.phase==='idle'&&!p.script&&p.cardId&&
+    chat(s)?.messages?.some(m=>m.id===p.cardId&&m.from==='me'&&m.kind==='ghost-project'))
+  p.phase='awaiting-online';
+ if(!shareDay(s)||p?.phase!=='awaiting-online'||s.story55.activeScene||!chat(s))return null;
+ if(!anonymousPresence55(s).online)return null;
  const takeovers=Number(s.story55.ghostShareTakeovers)||0;
  const daily=s.story55.ghostShareDaily;
  const eligible=takeovers<2||daily?.day!==s.day;
- const online=anonymousPresence55(s).online;
- const accepted=online&&eligible&&random()<0.5;
- const script=accepted?(takeovers===0?'first':takeovers===1?'second':'dailyYes'):
-  online&&eligible&&takeovers>=2?'dailyNo':null;
- const p={phase:script?'dialogue':'idle',script,index:0,pendingIds:[],cardId,source:item,
-  lastShareDay:s.day,lastShareAt:now,lastSource:JSON.stringify(item),lastCardId:cardId};
- const started=script?Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)])):null;
- s.story55.ghostShare=p;
- if(takeovers>=2&&eligible&&online)s.story55.ghostShareDaily={day:s.day,accepted,cardId};
- if(script){
-  s.story55.ghostShareScriptsStarted=started;
-  s.story55.ghostShareScriptsStarted[script]=true;
-  queueNpc(s,p);
- }
- return {ok:true,cardId,accepted,script,online};
+ const sourceAvailable=!!ghostShareSource(s,p.source);
+ const accepted=sourceAvailable&&eligible&&random()<0.5;
+ // Every online refusal uses the existing approved refusal text, including
+ // the first two attempts and repeat shares after today's one decision.
+ const script=accepted?(takeovers===0?'first':takeovers===1?'second':'dailyYes'):'dailyNo';
+ const started=Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)]));
+ p.script=script;p.phase='dialogue';
+ if(takeovers>=2&&eligible)s.story55.ghostShareDaily={day:s.day,accepted,cardId:p.cardId};
+ s.story55.ghostShareScriptsStarted=started;
+ s.story55.ghostShareScriptsStarted[script]=true;
+ queueNpc(s,p);
+ return {accepted,script,online:true};
 }
 
 // Plug this into the existing Mirage native scripted composer. NPC lines

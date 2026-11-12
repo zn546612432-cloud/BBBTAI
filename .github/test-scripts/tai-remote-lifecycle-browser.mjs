@@ -47,7 +47,8 @@ try{
    for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
    await page.locator('#screen-layer [data-action="gh-share"]').click();
    await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
-   await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+   await page.locator('#screen-layer .mc-composer').waitFor({state:'visible'});
+   assert.equal(await page.locator('form[data-form="mc-login"]').count(),0);
    for(const line of lines){
     await page.waitForFunction(text=>{const input=document.querySelector('.mc-composer input[name="text"]');return input?.value===text&&!input.disabled;},line);
     await page.locator('.mc-composer button[type="submit"]').click();

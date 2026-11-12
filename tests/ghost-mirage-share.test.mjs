@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
-import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource,TAI_REMOTE_TYPED_LINE} from '../src/services/story55/ghost-share.js';
+import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource,resolveGhostShare,expireGhostShare,TAI_REMOTE_TYPED_LINE} from '../src/services/story55/ghost-share.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
-import {render as renderMirage,handle as handleMirage,submit as submitMirage} from '../src/apps/mirage/index.js';
+import {render as renderMirage,handle as handleMirage,submit as submitMirage,onEnter as enterMirage} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
 
@@ -39,7 +39,9 @@ test('shares a real authorized Ghost project only in D15-D24; offline does not c
 test('failed 50% check preserves first story; native Send and delayed NPC delivery are required',()=>{
  const s=fixture();
  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>.95,now:10000}).accepted,false);
+ assert.equal(s.story55.ghostShare.script,'dailyNo');
  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10030}).duplicate,true);
+ deliverNpc(s);
  const yes=shareGhostToTai(s,{projectId:'base'},{random:()=>.1,now:13000});
  assert.equal(yes.script,'first');
  assert.equal(s.story55.ghostShareTakeovers||0,0);
@@ -70,7 +72,9 @@ test('second exact dialogue and third-stage one decision per game day',()=>{
  assert.equal(beginGhostShareControl(s),true);finishGhostShareControl(s);
  assert.equal(s.story55.ghostShareTakeovers,2);
  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>.8,now:20000}).script,'dailyNo');
- assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:25000}).script,null);
+ deliverNpc(s);
+ assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>{throw Error('must not reroll');},now:25000}).script,'dailyNo');
+ deliverNpc(s);
  s.day=17;s.clock='08:20';
  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:27000}).script,'dailyYes');
  deliverNpc(s);assert.equal(sendNext(s),'謝囉');
@@ -84,7 +88,7 @@ test('MIRAGE renders share card and returns to the real GHOST project',()=>{
   const html=renderMirage({store:store(s)},{route:'/chat/s55-ouroboros'});
   assert.match(html,/mc-ghost-card/);assert.match(html,/data-action="mc-ghost-project"/);
   const calls=[],ctx={store:store(s),router:{open:x=>calls.push(x)}};
-  handleMirage('mc-ghost-project',{dataset:{messageId:chat(s).messages.at(-1).id}},ctx,{route:'/chat/s55-ouroboros'});
+  handleMirage('mc-ghost-project',{dataset:{messageId:chat(s).messages.find(m=>m.kind==='ghost-project').id}},ctx,{route:'/chat/s55-ouroboros'});
   assert.equal(calls[0].appId,'ghost');
   assert.equal(calls[0].route,'/deployment');
  }finally{setMirageAuthenticated(false);}
@@ -119,7 +123,7 @@ test('native MessageDelivery releases NPC bubble only in the authenticated conve
  setMirageAuthenticated(true);
  try{
   delivery.tick(31000,true);
-  delivery.tick(31500,true);
+  delivery.tick(34000,true);
   assert.ok(chat(s).messages.find(m=>m.id===id).delivery);
  }finally{setMirageAuthenticated(false);}
  const restored=structuredClone(s);
@@ -207,4 +211,53 @@ test('share icon asks Yes or No before creating a MIRAGE card on the existing pr
  assert.equal(navigated.length,1);
  assert.equal(navigated[0].appId,'mirage');
  assert.equal(navigated[0].route,'/chat/s55-ouroboros');
+ enterMirage();
+ const html=renderMirage(ctx,navigated[0]);
+ assert.doesNotMatch(html,/data-form="mc-login"/);
+ assert.match(html,/mc-composer/);
+ assert.match(html,/mc-ghost-card/);
+ enterMirage(); // The one-use handoff cannot bypass an ordinary later login.
+ assert.match(renderMirage(ctx,navigated[0]),/data-form="mc-login"/);
+});
+
+for(const count of [0,1,2])test(`online rejection always responds without consuming takeover ${count}`,()=>{
+ const s=fixture();s.story55.ghostShareTakeovers=count;
+ const result=shareGhostToTai(s,{projectId:'base'},{random:()=>.99});
+ assert.equal(result.script,'dailyNo');assert.equal(result.accepted,false);
+ const replies=chat(s).messages.filter(m=>m.id.startsWith(result.cardId+'-tai-'));
+ assert.deepEqual(replies.map(m=>m.text),['你真的會寫代碼嗎？','我很忙，你自己處理']);
+ assert.ok(replies[0].schedule.seconds>=2.5);
+ assert.ok(replies[1].schedule.seconds-replies[0].schedule.seconds>=2);
+ assert.equal(ghostShareReadyForControl(s),false);
+ assert.equal(s.story55.ghostShareTakeovers,count);
+});
+
+test('offline share survives reload, resumes once on existing story tick, and keeps original card',()=>{
+ const s=fixture(16,'11:00');
+ const result=shareGhostToTai(s,{projectId:'base'},{random:()=>{throw Error('offline cannot roll');}});
+ assert.equal(result.pending,true);assert.equal(s.story55.ghostShare.phase,'awaiting-online');
+ const restored=structuredClone(s);assert.equal(resolveGhostShare(restored),null);
+ restored.clock='12:00';
+ assert.equal(resolveGhostShare(restored,{random:()=>0}).script,'first');
+ assert.equal(resolveGhostShare(restored,{random:()=>{throw Error('must not reroll');}}),null);
+ assert.equal(chat(restored).messages.filter(m=>m.kind==='ghost-project').length,1);
+ assert.equal(chat(restored).messages.filter(m=>m.id===result.cardId+'-tai-0').length,1);
+ assert.equal(restored.story55.ghostShareTakeovers||0,0);
+});
+
+test('old unanswered share is repaired once; expired offline shares cannot take over',()=>{
+ const s=fixture(16,'11:00');shareGhostToTai(s,{projectId:'base'});
+ s.story55.ghostShare.phase='idle';s.clock='12:00';
+ assert.equal(resolveGhostShare(s,{random:()=>.99}).script,'dailyNo');
+ assert.equal(resolveGhostShare(s),null);
+ const late=fixture(24,'23:30');shareGhostToTai(late,{projectId:'base'});
+ late.day=25;assert.equal(expireGhostShare(late),true);
+ assert.equal(resolveGhostShare(late),null);assert.equal(late.story55.ghostShare.phase,'expired');
+});
+
+test('expired source receives refusal after coming online, never a stale takeover',()=>{
+ const s=fixture(16,'11:00');shareGhostToTai(s,{projectId:'base'});
+ delete s.story55.projects.base;s.clock='12:00';
+ assert.equal(resolveGhostShare(s,{random:()=>{throw Error('invalid source cannot roll');}}).script,'dailyNo');
+ assert.equal(ghostShareReadyForControl(s),false);
 });

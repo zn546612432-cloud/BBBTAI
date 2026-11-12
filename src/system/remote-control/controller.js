@@ -153,6 +153,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
  async function typeRemote(){
   const p=store.get().story55?.ghostShare;
   if(p?.script!=='first')return;
+  await delay(900);
   const selector='#screen-layer .mc-composer input[name="text"]';
   for(let i=1;i<=TAI_REMOTE_TYPED_LINE.length;i++){
    assertRunning();
@@ -160,7 +161,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    if(!input||!input.isConnected)throw Error('mirage_composer_not_visible');
    input.readOnly=true;
    input.value=TAI_REMOTE_TYPED_LINE.slice(0,i);
-   await delay(73);
+   await delay(165);
   }
   assertRunning();
   const input=doc.querySelector(selector),form=input?.form;
@@ -200,7 +201,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   if(store.get().story55?.ghostShare?.remote?.stage!=='sent')
    throw Error('mirage_takeover_send_failed');
   pointer?.classList.remove('is-tapping');
-  await delay(450);
+  await delay(1100);
  }
  async function showTasks(){
   assertRunning();
