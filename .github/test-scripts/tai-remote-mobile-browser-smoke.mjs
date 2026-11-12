@@ -207,6 +207,62 @@ try{
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
  await screenshot('07-cipher-returned-to-mirage');
  console.log('PASS second iPhone run: native CIPHER 3x3 tile swaps, original settlement once, Mirage restored');
+ // Third isolated run: a real VEIL arcade order, not a synthetic success
+ // result. The operator must use each native direction control.
+ const veilSeed=structuredClone(seed);
+ veilSeed.ghost.orders['tai-veil-1']={
+  id:'tai-veil-1',type:'veil',key:'GH-VEIL',story55Project:'veil-demo',
+  status:'authorized',attempts:0,
+  settings:{seconds:120,retries:1000,rounds:1,arcadeV2:true}
+ };
+ veilSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-veil-1'}};
+ veilSeed.nav.stack=[];veilSeed.unlocked=false;
+ await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
+  key,json:JSON.stringify(veilSeed)
+ });
+ await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ await unlock();
+ await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-veil-1';
+ },key,{timeout:15000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  const o=s.ghost?.orders?.['tai-veil-1'];
+  return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
+   o?.type==='veil'&&o.status==='running'&&o.board?.arcade?.kind==='veil';
+ },key,{timeout:40000});
+ await page.locator('#screen-layer [data-action="gh-arcade-step"][data-value="wait"]').waitFor({state:'attached',timeout:15000});
+ await screenshot('08-veil-active-scan');
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s?.ghost?.orders?.['tai-veil-1'];
+  return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
+    s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
+ },key,{timeout:110000});
+ const veilDone=await state(),veilOrder=veilDone.ghost.orders['tai-veil-1'];
+ assert.equal(veilOrder.board.arcade.kind,'veil');
+ assert.equal(veilOrder.board.arcade.player,veilOrder.board.arcade.exit);
+ assert.equal(veilOrder.board.arcade.heat,0,'planned scans must not catch Tai');
+ assert.ok(veilOrder.moves>=8&&veilOrder.moves<=75);
+ assert.equal(veilOrder.moves,veilOrder.board.arcade.steps);
+ assert.equal(veilDone.ghost.history.filter(h=>h.orderId==='tai-veil-1').length,1);
+ assert.equal(veilDone.story55.ghostShareTakeovers,1);
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ await screenshot('09-veil-returned-to-mirage');
+ console.log('PASS third iPhone run: native VEIL path, moving scanners, zero catches, one Ghost settlement and Mirage return');
+
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
 }catch(error){
