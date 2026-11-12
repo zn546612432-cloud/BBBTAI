@@ -149,7 +149,12 @@ const toast=message=>{
  const appId=s.nav.current.appId;
  showBanner({title:registry.get(appId)?.manifest.name||'iPhone',body,link:{appId}});
 };
-const taiRemote=createTaiRemoteController({store,router,tasks,toast,document});
+const taiRemote=createTaiRemoteController({
+ store,router,tasks,toast,document,
+ // Same form submission function as a genuine MIRAGE user SEND; the remote
+ // controller owns input focus and visual fingertip, not a second message API.
+ submitMirageForm:form=>registry.get('mirage')?.submit(form,ctx(),store.get().nav.current)
+});
 let imageOptions={maxEdge:1200,quality:.82,cropAspect:0};
 const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82)),cropAspect:Number(options.cropAspect)||0};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 mountHoldToTalk($('#root'),ctx);
