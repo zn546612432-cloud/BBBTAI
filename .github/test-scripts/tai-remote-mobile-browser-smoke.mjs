@@ -5,6 +5,7 @@ import {mkdirSync} from 'node:fs';
 import {chromium} from 'playwright';
 import {initialState} from '../../src/services/storage.js';
 import {activateStory55} from '../../src/services/story55/runtime.js';
+import {seedD04Contracts,acceptD04Contract,markD04AttachmentOpened,armD04Ghost} from '../../src/story/d04/contract.js';
 
 const url=process.env.TAI_REMOTE_LOCAL_URL||'http://127.0.0.1:5173/';
 const key='ximeng-phone-story55-v1'; // localhost: isolated browser origin
@@ -108,6 +109,20 @@ try{
   '嫌低級，那倒是做做看',
   '為了部署你給我的程序，我得努力賺錢才行，還是說你打算再給我一百萬？'
  ];
+ // Observe the actual phone overlay, without modifying controller state.
+ await page.evaluate(()=>{
+  window.takeoverPulses=[];
+  const phone=document.querySelector('#phone');
+  new MutationObserver(records=>{
+   for(const record of records){
+    const el=record.target;
+    if(record.type==='attributes'&&el.classList?.contains('tai-remote-alert')){
+     window.takeoverPulses.push({lit:el.classList.contains('is-lit'),
+      input:document.querySelector('.mc-composer input[name="text"]')?.value||''});
+    }
+   }
+  }).observe(phone,{subtree:true,attributes:true,attributeFilter:['class']});
+ });
  for(const [i,line] of lines.entries()){
   await page.waitForFunction(expected=>{
    const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
@@ -129,6 +144,11 @@ try{
     s?.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros')?.messages
       .some(m=>m.id===s.story55.ghostShare.cardId+'-remote-typing'&&m.from==='me');
  },key,{timeout:30000});
+ const pulses=await page.evaluate(()=>window.takeoverPulses);
+ assert.deepEqual(pulses.map(p=>p.lit),[true,false,true,false],'exactly two red pulses');
+ assert.ok(pulses.every(p=>!p.input.startsWith('閉嘴')),'both pulses precede remote typing');
+ assert.equal(await page.locator('.tai-remote-alert').count(),0,'flash overlay removed before native SEND');
+ console.log('PASS two whole-phone red pulses complete before visible remote typing');
  console.log('PASS visible remote typing, native SEND, Xi Meng sender and red island');
 
  await page.waitForFunction(k=>{
@@ -308,11 +328,13 @@ try{
  
  // Fourth isolated run: EXTRACT is a genuine face-down ten-card memory board.
  // The model has no tool to read hidden faces. Only native taps reveal them.
+ for(const upstream of [false,true]){
+ const extractKind=upstream?'extract-memory':'extract';
  const extractSeed=structuredClone(seed);
  extractSeed.ghost.orders['tai-extract-1']={
   id:'tai-extract-1',type:'extract',key:'GH-EXTRACT',
   story55Project:'extract-demo',status:'authorized',attempts:0,
-  settings:{seconds:110,retries:1000,rounds:1,arcadeV2:true}
+  settings:{seconds:110,retries:1000,rounds:1,arcadeV2:true,...(upstream?{arcadeV3:true,grade:'C'}:{})}
  };
  extractSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-extract-1'}};
  extractSeed.nav.stack=[];extractSeed.unlocked=false;
@@ -338,26 +360,30 @@ try{
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
   return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
-   o?.status==='running'&&o.board?.arcade?.kind==='extract'&&
-   o.board.arcade.cards.length===10;
+   o?.status==='running'&&['extract','extract-memory'].includes(o.board?.arcade?.kind)&&
+   o.board.arcade.cards.length>=8;
  },key,{timeout:40000});
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
- await screenshot('10-extract-memory-cards');
+ assert.equal((await state()).ghost.orders['tai-extract-1'].board.arcade.kind,extractKind);
+ await screenshot('10-'+extractKind+'-cards');
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
   return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
    s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
  },key,{timeout:115000});
  const extractDone=await state(),extractOrder=extractDone.ghost.orders['tai-extract-1'];
- assert.equal(extractOrder.board.arcade.kind,'extract');
- assert.equal(extractOrder.board.arcade.matched.length,10);
- assert.ok(extractOrder.moves>=10&&extractOrder.moves<50,'native card flip count must be realistic');
+ assert.equal(extractOrder.board.arcade.kind,extractKind);
+ assert.equal(extractDone.story55.ghostShare.remote.outcome,'success');
+ assert.equal(extractDone.story55.ghostShare.remote.errorCode,null);
+ assert.equal(extractOrder.board.arcade.matched.length,extractOrder.board.arcade.cards.length);
+ assert.ok(extractOrder.moves>=extractOrder.board.arcade.cards.length&&extractOrder.moves<50,'native card flip count must be realistic');
  assert.equal(extractDone.ghost.history.filter(h=>h.orderId==='tai-extract-1').length,1);
  assert.equal(extractDone.story55.ghostShareTakeovers,1);
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
- await screenshot('11-extract-returned-to-mirage');
- console.log('PASS fourth iPhone run: EXTRACT face-up card memory, original Ghost matching and single settlement');
+ await screenshot('11-'+extractKind+'-returned-to-mirage');
+ console.log('PASS iPhone '+extractKind+': real controller entry, native taps, successful release, single settlement and Mirage return');
+ }
 
  // Fifth isolated browser run: live moving-target STRIKE.
  // The original GHOST handler, not the operator, counts six cumulative hits.
@@ -510,6 +536,40 @@ try{
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
  await screenshot('15-verify-returned-to-mirage');
  console.log('PASS sixth playable GHOST type: four real VERIFY module taps, zero mistakes, one settlement, Mirage restored');
+ // Regression: a genuine daily commission's final native win changes its
+ // parent from ACCEPTED to READY. The controller must read that terminal state
+ // successfully and release, without paying or replaying the order.
+ const dailySeed=structuredClone(seed);
+ seedD04Contracts(dailySeed);
+ assert.equal(acceptD04Contract(dailySeed,'M-001'),true);
+ assert.equal(markD04AttachmentOpened(dailySeed,'M-001'),true);
+ const dailyId=armD04Ghost(dailySeed,'M-001',0);
+ dailySeed.story55.ghostShareTakeovers=2; // existing later-share authored branch
+ dailySeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:dailyId}};
+ const dailyBalance=dailySeed.bankData.balance;
+ await resetPage(dailySeed);
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
+ assert.equal(await page.locator('form[data-form="mc-login"]').count(),0);
+ await page.waitForFunction(()=>{
+  const input=document.querySelector('.mc-composer input[name="text"]');
+  return input?.value==='謝囉'&&!input.disabled;
+ },null,{timeout:45000});
+ await page.locator('.mc-composer button[type="submit"]').click();
+ await page.waitForFunction(({key,id})=>{
+  const s=JSON.parse(localStorage.getItem(key));
+  return s?.ghost?.orders?.[id]?.status==='success'&&s.story55?.ghostShare?.remote?.active===false&&s.nav?.current?.appId==='mirage';
+ },{key,id:dailyId},{timeout:90000});
+ const dailyDone=await state(),dailyRemote=dailyDone.story55.ghostShare.remote;
+ assert.equal(dailyRemote.outcome,'success','final READY read must not be reported as an interruption');
+ assert.equal(dailyRemote.errorCode,null);
+ assert.equal(dailyDone.content.orders.find(o=>o.id==='M-001').status,'READY');
+ assert.equal(dailyDone.bankData.balance,dailyBalance,'settlement still requires manual submit');
+ assert.equal(dailyDone.ghost.history.filter(h=>h.orderId===dailyId).length,1);
+ assert.equal(dailyDone.content.missionFiles.filter(f=>f.orderId==='M-001').length,1);
+ assert.equal(await page.locator('.tai-remote-alert').count(),0);
+ await screenshot('15b-real-daily-commission-complete');
+ console.log('PASS real M-001 final native win: READY, successful release, one artifact, no automatic payment');
  // Current default LINK, then replacement of a live paused controller. Each
  // case gets its own browser context, with the same original phone handlers.
  for(const mode of ['link-3x3','live-restore']){

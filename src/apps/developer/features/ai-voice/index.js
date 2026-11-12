@@ -2,7 +2,6 @@ import {ttsParameterFields,readTtsForm} from '../../../noapp/settings/parameters
 import {btn,card,esc} from '../../../../system/ui.js';
 import {aiStatus,voicePreview,XITAI_VOICE_ID,XITAI_VOICE_OPTIONS,normalizeXitaiVoiceId,apiConfig,saveApiConfig} from '../../../../services/ai/gateway.js';
 import {taiReviewPanel,handleTaiReview,submitTaiReview} from '../ai-profile/index.js';
-import {mirageAIEnabled} from '../../../../services/ai/channel-controls.js';
 
 const defaults={voiceId:XITAI_VOICE_ID,model:'speech-2.8-turbo',language:'Chinese',speed:1};
 const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===value?' selected':'')+'>'+esc(label)+'</option>';
@@ -10,7 +9,7 @@ const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===v
 export function aiVoicePanel(s){
   const p={...defaults,...apiConfig(),model:apiConfig().ttsModel||defaults.model};
   return '<div class="editor-panel">'+
-    card('<h3>MIRAGE · AI 回复</h3><label style="display:flex;align-items:center;gap:10px"><input type="checkbox" style="width:18px;height:18px;flex:none;padding:0" data-mirage-ai '+(mirageAIEnabled(s)?'checked':'')+'> 开启 MIRAGE AI 回复（开发测试）</label><p class="editor-help">默认关闭。关闭时不调用 AI，固定剧情照常运行；关闭开关后，尚未送达的 AI 回复会停止。此开关保存在当前手机存档，不影响 NoApp 和国际象棋。</p>')+
+    card('<h3>MIRAGE · 固定對話</h3><p class="editor-help">MIRAGE 使用既有固定劇情與分享預設對白，不接入自由聊天 AI；NoApp、電話與國際象棋沿用原 AI 設定。</p>')+
     card('<span class="eyebrow">DEEPSEEK × MINIMAX / LOCAL GATEWAY</span><h2>熙泰 · AI 接口与音色实验室</h2>'+
     '<p class="editor-help">文字大脑：DeepSeek · 语音合成：MiniMax。GitHub Pages 可在 NoApp → AI 设置配置会话密钥；开发服务器也可使用环境变量。此处可调整声音并试听。</p>'+
     '<p>文字接口 <code>POST /api/ai/chat</code><br>语音接口 <code>POST /api/voice/tts</code><br>检查接口 <code>GET /api/ai/status</code></p>'+

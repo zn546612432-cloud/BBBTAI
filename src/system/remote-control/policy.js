@@ -11,14 +11,14 @@ import {WALLET_CHALLENGE_ID} from '../../apps/mirage/contacts-seed.js';
 export const TAI_REMOTE_GHOST_TYPES=Object.freeze(['route','cipher','veil','extract','strike','verify']);
 export const TAI_REMOTE_SCOPED_TYPES=Object.freeze(['veil','extract','strike','verify']);
 
-export function taiRemoteOrderAllowed(s,o){
+export function taiRemoteOrderAllowed(s,o,{allowCompletedRead=false}={}){
  if(!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type))return false;
  if([D01_REPAIR,D06_ORDER_ID,WALLET_CHALLENGE_ID].includes(o.id)||
     d04OrderOfStep(o.id)===D06_ORDER_ID)return false;
  // Early accepted commissions can leave an authorized/failed GHOST child
  // after the parent expires. Apply the existing runner's gates only inside
  // the sharing window; never change D01–D14 gameplay or ban whole types.
- if(s?.day>=15&&s.day<=24){
+ if(s?.day>=15&&s.day<=24&&!(allowCompletedRead&&['success','paid','settling'].includes(o.status))){
   const d02=d02OrderOfStep(o.id),deadline=D02_DEADLINES[d02];
   if(d02&&(!s.story55?.d02?.deployed?.[d02]||
    s.content?.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||

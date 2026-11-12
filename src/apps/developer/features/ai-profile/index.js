@@ -31,7 +31,7 @@ export async function handleTaiReview(action,target,ctx){
   const {day,channel,d}=testContext(ctx);
   if(action==='ai-preview-prompt'){const el=document.getElementById('ai-test-prompt');if(el){el.textContent=buildTaiPrompt({day,channel,profile:d.profile,memories:d.memories});el.hidden=false;}return true;}
   const revision=mirageAIRevision(ctx.store.get());
-  if(channel==='mirage'&&!mirageAIEnabled(ctx.store.get()))throw Error('请先开启上方的 MIRAGE AI 回复开关');
+  if(channel==='mirage'&&!mirageAIEnabled(ctx.store.get()))throw Error('MIRAGE 僅使用固定對話，請選擇 NoApp 測試 AI');
   const sample=document.getElementById('ai-chat-sample')?.value?.trim();if(!sample)throw Error('请先输入测试消息');
   const result=document.getElementById('ai-chat-result');if(result)result.textContent='正在生成回复…';
   const messages=[...d.testTurns.filter(t=>t.channel===channel&&t.day===day).slice(-10).map(t=>({role:t.role,content:t.content})),{role:'user',content:sample}];

@@ -28,3 +28,7 @@
  .island-remote .island-remote-dot{animation:none}
  .tai-remote-finger{transition:none}
 }
+/* The same operator toggles this twice before native MIRAGE typing begins. */
+.tai-remote-alert{position:absolute;inset:0;z-index:160;pointer-events:none;border-radius:inherit;opacity:0;background:radial-gradient(ellipse at center,#ff33491a 20%,#ed173e85 100%);box-shadow:inset 0 0 70px #f324474d;transition:opacity .08s linear}
+.tai-remote-alert.is-lit{opacity:1}
+@media(prefers-reduced-motion:reduce){.tai-remote-alert{transition:none}.tai-remote-alert.is-lit{opacity:.35}}
