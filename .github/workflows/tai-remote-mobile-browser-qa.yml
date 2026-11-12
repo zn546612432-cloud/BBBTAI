@@ -17,6 +17,7 @@ on:
   pull_request:
     branches:
       - feature/tai-remote-link-20261112
+      - feature/tai-remote-mobile-qa-20261112
     paths:
       - 'src/system/remote-control/**'
       - 'src/apps/ghost/**'
@@ -56,7 +57,7 @@ jobs:
           done
           cat /tmp/bbbtai-phone.log
           exit 1
-      - name: Touch-browser QA, real MIRAGE Send and GHOST LINK actions
+      - name: Touch-browser QA, real MIRAGE Send and GHOST LINK/CIPHER actions
         env:
           TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
         run: node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs

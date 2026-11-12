@@ -9,7 +9,9 @@ export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_open_ghost',description:'Open only the shared GHOST project or current LINK order',inputSchema:{type:'object',properties:{route:{type:'string',enum:['/deployment','/contract','/run']}},required:['route'],additionalProperties:false}},
  {name:'remote_press_ghost',description:'Press the existing GHOST start/next-step button; never change a board directly',inputSchema:{type:'object',properties:{action:{type:'string',enum:['s55-run-step','gh-start']}},required:['action'],additionalProperties:false}},
  {name:'remote_read_link',description:'Read only the LINK board shared in this takeover',inputSchema:{type:'object',properties:{},additionalProperties:false}},
+ {name:'remote_read_cipher',description:'Read only the displayed CIPHER tile positions for this shared order',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_rotate_pipe',description:'Click one real GHOST pipe button for the shared LINK board',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:80}},required:['index'],additionalProperties:false}},
+ {name:'remote_tap_cipher_tile',description:'Click one real GHOST tile of the authorized CIPHER order',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:8}},required:['index'],additionalProperties:false}},
  {name:'remote_release',description:'Finish current virtual phone takeover and release exclusive control',inputSchema:{type:'object',properties:{},additionalProperties:false}}
 ]);
 const toolNames=new Map(TAI_REMOTE_TOOLS.map(tool=>[tool.name,tool]));
@@ -31,7 +33,7 @@ function runId(s){
 }
 function authorizedOrder(s){
  const p=s.story55.ghostShare,id=runId(s),o=s.ghost?.orders?.[id];
- if(!id||!o||o.type!=='route')return null;
+ if(!id||!o||!['route','cipher'].includes(o.type))return null;
  if(p.source.type==='ghost-order'&&id!==p.source.orderId)return null;
  if(p.source.type==='ghost-project'&&o.story55Project!==p.source.projectId)return null;
  return o;
@@ -83,7 +85,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
   }
   if(name==='remote_read_link'){
    const o=authorizedOrder(state);
-   if(!o)return bad('link_order_not_ready');
+   if(!o||o.type!=='route')return bad('link_order_not_ready');
    const board=o.board;
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
     board:o.status==='running'&&board?.size?{
@@ -92,13 +94,30 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
   }
   if(name==='remote_rotate_pipe'){
    const o=authorizedOrder(state),index=args.index;
-   if(!Number.isInteger(index)||!o||o.status!=='running'||!o.board?.size||
+   if(!Number.isInteger(index)||!o||o.type!=='route'||o.status!=='running'||!o.board?.size||
     index<0||index>=o.board.masks.length||index===o.board.source||index===o.board.sink||
     state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
     state.nav.current.params?.orderId!==o.id)return bad('pipe_not_permitted');
    const pipe=dom?.querySelector('#screen-layer [data-action="gh-pipe"][data-index="'+index+'"]');
    if(!pipe||pipe.disabled||!pipe.isConnected)return bad('pipe_button_not_found');
    pipe.click();
+   return {ok:true,data:{orderId:o.id,index}};
+  }
+  if(name==='remote_read_cipher'){
+   const o=authorizedOrder(state);
+   if(!o||o.type!=='cipher')return bad('cipher_order_not_ready');
+   return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
+    board:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles]}:null}};
+  }
+  if(name==='remote_tap_cipher_tile'){
+   const o=authorizedOrder(state),index=args.index;
+   if(!o||o.type!=='cipher'||o.status!=='running'||!Number.isInteger(index)||
+      index<0||index>8||!Array.isArray(o.board?.tiles)||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('tile_not_permitted');
+   const tile=dom?.querySelector('#screen-layer [data-action="gh-tile"][data-index="'+index+'"]');
+   if(!tile||tile.disabled||!tile.isConnected)return bad('tile_button_not_found');
+   tile.click();
    return {ok:true,data:{orderId:o.id,index}};
   }
   if(name==='remote_release'){

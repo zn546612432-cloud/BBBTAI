@@ -155,6 +155,58 @@ try{
  assert.equal(persisted.ghost.history.filter(x=>x.orderId===controlOrder).length,1);
  assert.equal(persisted.story55.ghostShare.remote.active,false);
  console.log('PASS reload keeps original checkpoint and settled Ghost history');
+ // A second isolated synthetic scenario checks actual CIPHER tile clicks
+ // through the same iPhone screen, not an in-memory mutation of the board.
+ const cipherSeed=structuredClone(seed);
+ cipherSeed.ghost.orders['tai-cipher-1']={
+  id:'tai-cipher-1',type:'cipher',key:'GH-TEST',status:'authorized',
+  attempts:0,settings:{seconds:null,retries:1000,rounds:1}
+ };
+ cipherSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-cipher-1'}};
+ cipherSeed.nav.stack=[];cipherSeed.unlocked=false;
+ await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
+  key,json:JSON.stringify(cipherSeed)
+ });
+ await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ await unlock();
+ const cipherShare=page.locator('#screen-layer [data-action="gh-share"]');
+ await cipherShare.waitFor({state:'visible',timeout:25000});
+ await cipherShare.click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-cipher-1';
+ },key,{timeout:15000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
+   s.ghost?.orders?.['tai-cipher-1']?.type==='cipher'&&
+   s.ghost.orders['tai-cipher-1'].board?.tiles?.length===9;
+ },key,{timeout:40000});
+ await screenshot('06-cipher-remote-tiles');
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s?.ghost?.orders?.['tai-cipher-1']?.status==='success'&&
+   s.story55?.ghostShare?.phase==='complete'&&s.story55?.ghostShare?.remote?.active===false&&
+   s.nav?.current?.appId==='mirage';
+ },key,{timeout:60000});
+ const cipherDone=await state(),order=cipherDone.ghost.orders['tai-cipher-1'];
+ assert.deepEqual(order.board.tiles,[0,1,2,3,4,5,6,7,8]);
+ assert.ok(order.moves>=2&&order.moves<=4,'original Ghost must receive 1-2 tile-swap pairs');
+ assert.equal(cipherDone.ghost.history.filter(h=>h.orderId==='tai-cipher-1').length,1);
+ assert.equal(cipherDone.story55.ghostShareTakeovers,1);
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ await screenshot('07-cipher-returned-to-mirage');
+ console.log('PASS second iPhone run: native CIPHER 3x3 tile swaps, original settlement once, Mirage restored');
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
 }catch(error){
