@@ -105,3 +105,34 @@ test('uncompleted S contracts expire at midnight without duplicate payouts',()=>
  assert.equal(submitD04Contract(s,c.id),false);
  assert.ok(!s.bankData.transactions.some(x=>x.id.endsWith(c.id)));
 });
+
+test('Mirage shows exactly five daily rows and never offers acceptance on restricted details',async()=>{
+ const {setMirageAuthenticated}=await import('../src/apps/mirage/session.js');
+ const {render}=await import('../src/apps/mirage/index.js');
+ const s=state(15,'08:00'),store={get:()=>s};
+ seedD04Contracts(s);
+ setMirageAuthenticated(true);
+ try{
+  let html=render({store},{route:'/bounties'});
+  assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
+  for(const id of ['M-001','M-002','M-003','M-004','M-005'])assert.ok(html.includes(id),id);
+  const restricted=render({store},{route:'/order/M-003'});
+  assert.ok(restricted.includes('非技術委託'));
+  assert.ok(!restricted.includes('data-action="mc-accept-bounty"'));
+  assert.ok(render({store},{route:'/order/M-001'}).includes('data-action="mc-accept-bounty"'));
+
+  s.day=16;tickD04Contracts(s);
+  html=render({store},{route:'/bounties'});
+  assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
+  assert.ok(html.includes('M-006')&&html.includes('M-007'));
+  assert.ok(!html.includes('M-001'));
+  assert.ok(get(s,'M-001'),'yesterday\'s listing remains saved');
+  assert.equal(render({store},{route:'/my-orders/active'}).includes('M-003'),false);
+
+  s.day=23;tickD04Contracts(s);
+  html=render({store},{route:'/bounties'});
+  assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
+  assert.ok(html.includes('R-004')&&html.includes('R-005')&&html.includes('R-006'));
+  assert.ok(!html.includes('M-003'));
+ }finally{setMirageAuthenticated(false);}
+});
