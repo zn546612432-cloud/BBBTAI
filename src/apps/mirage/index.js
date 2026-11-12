@@ -10,6 +10,7 @@ import {mirageAIEnabled} from '../../services/ai/channel-controls.js';
 import {replyToOuroboros} from './features/ai-replies/index.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {isStory55,nodeStatus} from '../../services/story55/state.js';
+import {anonymousPresence55} from '../../services/story55/runtime.js';
 import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './data.js';
 import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
@@ -40,7 +41,7 @@ function tabs(active,s){const count=mirageData(s).cart.reduce((a,b)=>a+b.qty,0);
 function header(title,tools='',back=false){return `<header class="mc-header">${back?at('mc-contacts','BACK','back'):`${at('mc-exit','BACK TO PHONE','back')}<span class="mc-header-mark">${web()}</span>`}<div><strong>${esc(title)}</strong><small><i></i> ENCRYPTED CONNECTION</small></div><div class="mc-header-tools">${tools}</div></header>`;}
 function contactsPage(s){
  const list=contacts(s);
- const row=c=>`<div class="mc-contact" data-key="contact-${esc(c.id)}">${btn('mc-chat',`${face(c)}<span><strong>${esc(c.name)}</strong><small>${Number(c.unread||0)>0?'<i class="mc-unread-green"></i> NEW MESSAGE':c.online?'ONLINE':'NO NEW MESSAGE'}</small></span><i class="mc-contact-dot ${c.online?'is-online':''}"></i>`,'mc-contact-open',`data-id="${esc(c.id)}" aria-label="Chat with ${esc(c.name)}"`)}</div>`;
+ const row=c=>{const online=isStory55(s)&&c.id==='s55-ouroboros'?anonymousPresence55(s).online:c.online;return `<div class="mc-contact" data-key="contact-${esc(c.id)}">${btn('mc-chat',`${face(c)}<span><strong>${esc(c.name)}</strong><small>${Number(c.unread||0)>0?'<i class="mc-unread-green"></i> NEW MESSAGE':online?'ONLINE':'NO NEW MESSAGE'}</small></span><i class="mc-contact-dot ${online?'is-online':''}"></i>`,'mc-contact-open',`data-id="${esc(c.id)}" aria-label="Chat with ${esc(c.name)}"`)}</div>`;};
  return `${header('MIRAGE CIPHER')}<div class="mc-contact-scroll mc-scroll"><div class="mc-online-list">${list.length?list.map(row).join(''):'<div class="mc-list-label">NO CONTACTS</div>'}</div><div class="mc-list-end">END OF DIRECTORY / ${list.length} IDENTITIES</div></div>${tabs('/',s)}`;
 }
 const flowMarkup=m=>m.id===FLOW_INVITE?esc(m.text).replace('测试','<button type="button" class="mc-flow-link" data-action="mc-flow-test">测试</button>'):/^s55-d17-invitation-/.test(m.id||'')?esc(m.text).replaceAll('Azathoth','<button type="button" class="mc-flow-link" data-action="mc-azathoth-reference">Azathoth</button>'):esc(m.text);
