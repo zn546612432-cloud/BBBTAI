@@ -242,7 +242,8 @@ for(const count of [0,1,2])test(`online rejection always responds without consum
  const replies=chat(s).messages.filter(m=>m.id.startsWith(result.cardId+'-tai-'));
  assert.deepEqual(replies.map(m=>m.text),['你真的會寫代碼嗎？','我很忙，你自己處理']);
  assert.ok(replies[0].schedule.seconds>=2.5);
- assert.ok(replies[1].schedule.seconds-replies[0].schedule.seconds>=2);
+ assert.ok(Math.abs(replies[1].schedule.seconds-replies[0].schedule.seconds-2.2)<1e-9,
+  'consecutive replies use the existing 2.2 second pause without a second reading delay');
  assert.equal(ghostShareReadyForControl(s),false);
  assert.equal(s.story55.ghostShareTakeovers,count);
 });

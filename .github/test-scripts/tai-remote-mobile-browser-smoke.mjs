@@ -328,11 +328,13 @@ try{
  
  // Fourth isolated run: EXTRACT is a genuine face-down ten-card memory board.
  // The model has no tool to read hidden faces. Only native taps reveal them.
+ for(const upstream of [false,true]){
+ const extractKind=upstream?'extract-memory':'extract';
  const extractSeed=structuredClone(seed);
  extractSeed.ghost.orders['tai-extract-1']={
   id:'tai-extract-1',type:'extract',key:'GH-EXTRACT',
   story55Project:'extract-demo',status:'authorized',attempts:0,
-  settings:{seconds:110,retries:1000,rounds:1,arcadeV2:true}
+  settings:{seconds:110,retries:1000,rounds:1,arcadeV2:true,...(upstream?{arcadeV3:true,grade:'C'}:{})}
  };
  extractSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-extract-1'}};
  extractSeed.nav.stack=[];extractSeed.unlocked=false;
@@ -358,26 +360,30 @@ try{
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
   return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
-   o?.status==='running'&&o.board?.arcade?.kind==='extract'&&
+   o?.status==='running'&&['extract','extract-memory'].includes(o.board?.arcade?.kind)&&
    o.board.arcade.cards.length===10;
  },key,{timeout:40000});
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
- await screenshot('10-extract-memory-cards');
+ assert.equal((await state()).ghost.orders['tai-extract-1'].board.arcade.kind,extractKind);
+ await screenshot('10-'+extractKind+'-cards');
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
   return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
    s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
  },key,{timeout:115000});
  const extractDone=await state(),extractOrder=extractDone.ghost.orders['tai-extract-1'];
- assert.equal(extractOrder.board.arcade.kind,'extract');
+ assert.equal(extractOrder.board.arcade.kind,extractKind);
+ assert.equal(extractDone.story55.ghostShare.remote.outcome,'success');
+ assert.equal(extractDone.story55.ghostShare.remote.errorCode,null);
  assert.equal(extractOrder.board.arcade.matched.length,10);
  assert.ok(extractOrder.moves>=10&&extractOrder.moves<50,'native card flip count must be realistic');
  assert.equal(extractDone.ghost.history.filter(h=>h.orderId==='tai-extract-1').length,1);
  assert.equal(extractDone.story55.ghostShareTakeovers,1);
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
- await screenshot('11-extract-returned-to-mirage');
- console.log('PASS fourth iPhone run: EXTRACT face-up card memory, original Ghost matching and single settlement');
+ await screenshot('11-'+extractKind+'-returned-to-mirage');
+ console.log('PASS iPhone '+extractKind+': real controller entry, native taps, successful release, single settlement and Mirage return');
+ }
 
  // Fifth isolated browser run: live moving-target STRIKE.
  // The original GHOST handler, not the operator, counts six cumulative hits.
