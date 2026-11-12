@@ -21,6 +21,7 @@ on:
       - feature/tai-remote-cipher-20261112
       - feature/tai-remote-veil-20261112
       - feature/tai-remote-extract-20261112
+      - feature/tai-remote-strike-20261112
     paths:
       - 'src/system/remote-control/**'
       - 'src/apps/ghost/**'

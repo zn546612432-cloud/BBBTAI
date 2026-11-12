@@ -34,10 +34,11 @@ if(!seed.content.conversations.mirage.some(c=>c.id==='s55-ouroboros')){
  });
 }
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-const page=await browser.newPage({
+const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
 });
+const page=await context.newPage();
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
@@ -118,6 +119,8 @@ try{
  await page.locator('#screen-layer [data-action="gh-pipe"]').first().waitFor({state:'attached',timeout:30000});
  await screenshot('04-ghost-live-link');
  console.log('PASS native app switcher, GHOST step/start buttons, active LINK board');
+
+
 
  // Real user taps during takeover must be blocked; one Tai warning per session.
  await page.touchscreen.tap(16,220);
@@ -359,6 +362,8 @@ try{
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
  await screenshot('12-strike-moving-target');
+
+
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-strike-1'];
   return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&

@@ -15,8 +15,8 @@ import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {taiRemoteCanOperateOrder,taiRemoteUpcomingProjectStepAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
+import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow,createTaiForegroundDelay} from './visibility.js';
 
-const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
 const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
@@ -54,6 +54,17 @@ export function recoverTaiRemoteSession(store){
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null,sessionToken=null;
+ // Visibility is a pause, NOT an interruption: keep the same in-memory
+ // controller and let GHOST's existing board/deadline resume on foreground.
+ doc.addEventListener('visibilitychange',()=>{
+  if(!isRunning(store.get()))return;
+  if(doc.hidden){
+   store.update(s=>pauseTaiRemoteOnHide(s));
+  }else{
+   store.update(s=>resumeTaiRemoteOnShow(s));
+  }
+ });
+ const delay=createTaiForegroundDelay(doc);
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -64,7 +75,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
  }
  function valid(){
   const s=store.get();
-  return isRunning(s)&&!doc.hidden&&
+  return isRunning(s)&&
    (!sessionToken||s.story55?.ghostShare?.remote?.token===sessionToken);
  }
  function assertRunning(){if(!valid())throw Error('remote_session_interrupted');}
