@@ -233,8 +233,13 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
    }
    // During Tai's first takeover, the phone's real SEND action commits an
    // Xi Meng outgoing bubble. This is not a Tai/NPC reply or a free-chat turn.
-   if(id===TAI_GHOST_THREAD&&canSendGhostShareRemoteText(ctx.store.get(),text)){
-    ctx.store.update(s=>sendGhostShareRemoteText(s,text));
+   if(id===TAI_GHOST_THREAD&&
+      ctx.store.get().story55?.ghostShare?.phase==='controlling'&&
+      ctx.store.get().story55?.ghostShare?.remote?.active){
+    // During exclusive control no human/free-chat fallback is permitted.
+    // Only Tai's one authored sentence can pass the native outgoing path.
+    if(canSendGhostShareRemoteText(ctx.store.get(),text))
+     ctx.store.update(s=>sendGhostShareRemoteText(s,text));
     return;
    }
    const scripted=scriptedDraft55(ctx.store.get(),'mirage',id);
