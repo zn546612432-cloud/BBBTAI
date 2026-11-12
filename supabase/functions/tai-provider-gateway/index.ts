@@ -2,6 +2,7 @@
 // clock, bank, or phone state is stored or scheduled here.
 // DEEPSEEK_API_KEY and MINIMAX_API_KEY stay only in Supabase Edge Secrets.
 import {createClient} from "npm:@supabase/supabase-js@2.95.0";
+import {deepseekReply} from "./deepseek-reply.js";
 const URL=Deno.env.get('SUPABASE_URL')||'';
 function adminKey(){
  try{
@@ -156,15 +157,13 @@ Deno.serve(async(req)=>{
    const kind=operation==='chat'?'chat':'decision';
    await reserve(user.id,kind);
    const selected=model(payload.model);
-   const result=await sendProvider(DEEPSEEK,secret,{
+   const content=await deepseekReply({
     model:selected,thinking:{type:'disabled'},
     temperature:num(payload.temperature,0,2,1.1),
     ...(selected==='deepseek-v4-pro'?{top_p:num(payload.top_p,.01,1,1)}:{}),
     messages:history,max_tokens:Math.floor(num(payload.max_tokens,64,2800,1200)),
     response_format:{type:'json_object'},stream:false
-   });
-   const content=String(result?.choices?.[0]?.message?.content||'').trim();
-   if(!content)throw error(502,'empty_model_reply');
+   },{operation,send:request=>sendProvider(DEEPSEEK,secret,request)});
    return respond(req,200,{text:content});
   }
   if(operation==='tts'){
