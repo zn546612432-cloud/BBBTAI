@@ -10,6 +10,7 @@ import {date55} from '../../services/story55/state.js';
 import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {solveCipherTiles} from './cipher-solver.js';
+import {veilPlan} from './veil-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
 
@@ -17,20 +18,24 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
 const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
-const eligibleOrder=o=>['route','cipher'].includes(o?.type)&&['authorized','failed','running'].includes(o.status)&&
- (!o.requiresKeyEntry||o.keyVerified);
+const eligibleOrder=(s,o)=>!!(o&&['route','cipher','veil'].includes(o.type)&&
+ ['authorized','failed','running'].includes(o.status)&&
+ (!o.requiresKeyEntry||o.keyVerified)&&
+ (o.type!=='veil'||o.id!=='mirage001'&&
+  o.id!=='mirage-ouroboros-10btc-d05'&&
+  (o.story55Project||o.story55Commission||s.content?.mirage?.linkedMissions?.[o.id])));
 function possibleLink(s){
  const source=s.story55?.ghostShare?.source;
  if(!source)return false;
- if(source.type==='ghost-order')return eligibleOrder(s.ghost?.orders?.[source.orderId]);
+ if(source.type==='ghost-order')return eligibleOrder(s,s.ghost?.orders?.[source.orderId]);
  if(source.type!=='ghost-project'||!s.story55.projects?.[source.projectId]?.authorized)return false;
  const running=deployment(s,source.projectId).active;
- if(running&&eligibleOrder(s.ghost?.orders?.[running]))return true;
+ if(running&&eligibleOrder(s,s.ghost?.orders?.[running]))return true;
  const ready=deploymentReadiness(s,source.projectId),project=s.story55.config?.projects?.find(p=>p.id===source.projectId);
  if(!ready.canStart||!project)return false;
  const batch=deployment(s,source.projectId).batches?.[ready.batch],
   step=project.steps.findIndex((_,i)=>!batch?.steps?.[i]);
- return ['route','cipher'].includes(project.steps[step]);
+ return ['route','cipher','veil'].includes(project.steps[step])&&source.projectId!=='wallet';
 }
 
 // One safe reconciliation for browser reloads or abandoned phone tabs.
@@ -51,7 +56,7 @@ export function recoverTaiRemoteSession(store){
 
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
- let busy=false,queued=false,callId=0,cursor=null;
+ let busy=false,queued=false,callId=0,cursor=null,sessionToken=null;
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -60,7 +65,11 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   if(!result?.ok)throw Error(result?.error||'remote_tool_error');
   return result.data;
  }
- function valid(){return isRunning(store.get())&&!doc.hidden;}
+ function valid(){
+  const s=store.get();
+  return isRunning(s)&&!doc.hidden&&
+   (!sessionToken||s.story55?.ghostShare?.remote?.token===sessionToken);
+ }
  function assertRunning(){if(!valid())throw Error('remote_session_interrupted');}
  function moveStage(stage,orderId){
   store.update(s=>{
@@ -200,7 +209,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    tool('remote_open_ghost',{route:'/deployment'});
    await delay(330);assertRunning();
    id=selectedOrderId(store.get());
-   if(!id||!eligibleOrder(store.get().ghost?.orders?.[id])){
+   if(!id||!eligibleOrder(store.get(),store.get().ghost?.orders?.[id])){
     tool('remote_press_ghost',{action:'s55-run-step'});
     await delay(380);assertRunning();
     id=selectedOrderId(store.get());
@@ -212,13 +221,103 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   tool('remote_press_ghost',{action:'gh-start'});
   await delay(350);assertRunning();
   const run=store.get().ghost?.orders?.[id];
-  if(!run||!['route','cipher'].includes(run.type))throw Error('unsupported_ghost_order');
-  const target=tool(run.type==='route'?'remote_read_link':'remote_read_cipher');
+  if(!run||!['route','cipher','veil'].includes(run.type))throw Error('unsupported_ghost_order');
+  const target=tool(run.type==='route'?'remote_read_link':
+    run.type==='cipher'?'remote_read_cipher':'remote_read_veil');
   if(target.status!=='running'||!(run.type==='route'?
-      target.board?.masks?.length:target.board?.tiles?.length))
+      target.board?.masks?.length:run.type==='cipher'?
+      target.board?.tiles?.length:target.board?.kind==='veil'||
+      target.board?.kind==='legacy-keypad'))
    throw Error('ghost_board_not_running');
   moveStage('running',target.orderId);
   return target.orderId;
+ }
+ async function tapVeilVisual(direction,delayMs){
+  assertRunning();
+  const action='gh-arcade-step';
+  // Each tap queries the freshly rendered button. The Ghost timer can repaint.
+  const button=doc.querySelector('#screen-layer [data-action="'+action+'"][data-value="'+direction+'"]');
+  const phone=doc.querySelector('#phone'),pointer=finger();
+  if(!button||!button.isConnected||button.disabled||!phone||!pointer)
+   throw Error('veil_direction_button_not_visible');
+  const frame=phone.getBoundingClientRect(),box=button.getBoundingClientRect();
+  pointer.style.left=(box.left+box.width/2-frame.left)+'px';
+  pointer.style.top=(box.top+box.height/2-frame.top)+'px';
+  pointer.classList.add('is-visible');
+  await delay(Math.min(145,Math.max(65,delayMs*.4)));
+  assertRunning();
+  pointer.classList.add('is-tapping');
+  const result=tool('remote_step_veil',{direction});
+  pointer.classList.remove('is-tapping');
+  await delay(Math.max(45,delayMs-145));
+  return result;
+ }
+ async function pressVeilKey(key){
+  assertRunning();
+  const button=doc.querySelector('#screen-layer [data-action="gh-key"][data-key="'+key+'"]');
+  const phone=doc.querySelector('#phone'),pointer=finger();
+  if(!button||!button.isConnected||button.disabled||!phone||!pointer)
+   throw Error('veil_legacy_key_not_visible');
+  const frame=phone.getBoundingClientRect(),box=button.getBoundingClientRect();
+  pointer.style.left=(box.left+box.width/2-frame.left)+'px';
+  pointer.style.top=(box.top+box.height/2-frame.top)+'px';
+  pointer.classList.add('is-visible','is-tapping');
+  await delay(65);
+  assertRunning();
+  tool('remote_press_veil_key',{key});
+  pointer.classList.remove('is-tapping');
+  await delay(95);
+ }
+ async function solveVeil(id){
+  let stalls=0;
+  // A changing scanner is re-evaluated after EVERY acknowledged native move.
+  // 160 is a fail-closed total limit; the theoretical state graph has 75 nodes.
+  for(let count=0;count<160;count++){
+   assertRunning();
+   const current=tool('remote_read_veil');
+   if(current.orderId!==id)throw Error('veil_order_changed');
+   if(current.status==='success'||current.status==='paid')return;
+   if(current.status!=='running'||!current.board)throw Error('veil_run_not_active');
+   const board=current.board,deadline=current.deadline;
+   if(board.kind==='legacy-keypad'){
+    const remaining=board.code.slice(board.input.length);
+    if(!board.code.startsWith(board.input)||!remaining.length)throw Error('veil_legacy_input_mismatch');
+    if(Number.isFinite(deadline)&&deadline-Date.now()<remaining.length*170+650)
+     throw Error('veil_insufficient_time');
+    const before=board.input,round=board.round;
+    await pressVeilKey(remaining[0]);
+    const next=tool('remote_read_veil');
+    if(next.status==='success'||next.status==='paid')return;
+    if(next.status!=='running'||next.board?.kind!=='legacy-keypad')
+     throw Error('veil_legacy_stage_changed');
+    const moved=next.board.round>round||next.board.input!==before;
+    stalls=moved?0:stalls+1;
+   }else if(board.kind==='veil'){
+    const plan=veilPlan(board);
+    if(!plan)throw Error('veil_path_unreachable');
+    if(!plan.length)throw Error('veil_exit_not_settled');
+    const remaining=Number.isFinite(deadline)?deadline-Date.now():Infinity;
+    const minMs=plan.length*140+650;
+    if(remaining<minMs)throw Error('veil_insufficient_time');
+    const period=Number.isFinite(remaining)?
+     Math.min(450,Math.max(140,(remaining-650)/plan.length-80)):350;
+    const oldSteps=board.steps;
+    await tapVeilVisual(plan[0],period);
+    let next=tool('remote_read_veil'),ack=next.status!=='running'||next.board?.steps>oldSteps;
+    // The original Ghost store should acknowledge synchronously; tolerate
+    // a queued render while avoiding double-clicks on a stale board.
+    for(let i=0;i<7&&!ack;i++){
+     await delay(65);assertRunning();
+     next=tool('remote_read_veil');
+     ack=next.status!=='running'||next.board?.steps>oldSteps;
+    }
+    stalls=ack?0:stalls+1;
+    if(ack&&next.board?.kind==='veil'&&next.board.heat>board.heat)
+     throw Error('veil_scanner_caught_operator');
+   }else throw Error('veil_unknown_board');
+   if(stalls>=3)throw Error('veil_three_stalled_inputs');
+  }
+  throw Error('veil_max_steps_exceeded');
  }
  async function solve(id){
   const run=store.get().ghost.orders[id],initial=run?.board;
@@ -243,6 +342,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     assertRunning();
     await tapVisual(second,'gh-tile');
    }
+  }else if(run?.type==='veil'){
+   await solveVeil(id);
   }else throw Error('unsupported_ghost_order');
   // The original GHOST handlers own success and settlement (LINK also
   // requires a preview delay). The operator must never call finish().
@@ -284,13 +385,14 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   }
   try{
    const origin=structuredClone(s.nav.current);
+   sessionToken=s.story55.ghostShare.cardId+':'+Date.now().toString(36);
    let begun=false;
    store.update(next=>{
     begun=beginGhostShareControl(next);
     if(!begun)return;
     next.story55.ghostShare.remote={
      active:true,stage:'typing',origin,authorizedDay:next.day,
-     warningShown:false,orderId:null
+     warningShown:false,orderId:null,token:sessionToken
     };
    });
    if(!begun)return;
@@ -301,7 +403,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    tool('remote_release');
   }catch(error){
    console.warn('[TAI remote session]',error?.message||error);
-   if(isRunning(store.get())){
+   if(isRunning(store.get())&&store.get().story55?.ghostShare?.remote?.token===sessionToken){
     try{tool('remote_release');}catch{
      store.update(next=>{
       const p=next.story55?.ghostShare;
@@ -312,7 +414,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    // A dropped connection never claims the LINK puzzle was completed.
    toast('遠端連線已中斷');
   }finally{
-   close();busy=false;
+   if(!isRunning(store.get())||store.get().story55?.ghostShare?.remote?.token===sessionToken)close();
+   sessionToken=null;busy=false;
   }
  }
  function sync(){
