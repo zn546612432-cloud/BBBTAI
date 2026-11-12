@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow} from '../src/system/remote-control/visibility.js';
+import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow,createTaiForegroundDelay} from '../src/system/remote-control/visibility.js';
+import {createTaiRemoteController} from '../src/system/remote-control/controller.js';
 
 function fixture({sourceType='ghost-order',stage='running',status='running'}={}){
  const orderId='s55:base:0:0';
@@ -89,4 +90,69 @@ test('B repeated hide/show, inactive, stale order and clock reversals are safe',
  assert.equal(pauseTaiRemoteOnHide(s,30000),true);
  assert.equal(resumeTaiRemoteOnShow(s,34000),true);
  assert.equal(control.deadline,56000,'mismatched order cannot gain a time extension');
+});
+
+function visibilityDocument(){
+ const listeners=new Map();
+ return {
+  hidden:false,
+  addEventListener(name,fn){
+   if(!listeners.has(name))listeners.set(name,new Set());
+   listeners.get(name).add(fn);
+  },
+  removeEventListener(name,fn){listeners.get(name)?.delete(fn);},
+  querySelector(){return null;},
+  toggle(hidden){
+   this.hidden=hidden;
+   for(const fn of [...(listeners.get('visibilitychange')||[])])fn();
+  },
+  count(name){return listeners.get(name)?.size||0;}
+ };
+}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+test('controller listens to actual visibility events and preserves the same active session',()=>{
+ const {s,control,other}=fixture(),doc=visibilityDocument(),beforeOther=structuredClone(other);
+ const store={get:()=>s,update:fn=>fn(s)};
+ const tasks={visible:false,show(){},hide(){},action(){}};
+ const controller=createTaiRemoteController({
+  store,router:{open(){}},tasks,document:doc,toast:()=>{}
+ });
+ assert.equal(controller.busy,false);
+ doc.toggle(true);
+ assert.ok(Number.isFinite(s.story55.ghostShare.remote.pausedAt));
+ assert.equal(s.story55.ghostShare.phase,'controlling');
+ // The store retains the previous board and count while hidden.
+ assert.equal(control.moves,2);
+ doc.toggle(false);
+ assert.equal(s.story55.ghostShare.remote.pausedAt,null);
+ assert.equal(s.story55.ghostShare.remote.active,true);
+ assert.equal(s.story55.ghostShare.remote.token,'stable-token');
+ assert.equal(s.story55.ghostShareTakeovers,1);
+ assert.deepEqual(other,beforeOther);
+});
+test('animation timer stays frozen while hidden, then resumes on foreground',async()=>{
+ const doc=visibilityDocument(),delay=createTaiForegroundDelay(doc);
+ doc.toggle(true);
+ let finished=false;
+ const pending=delay(45).then(()=>finished=true);
+ await sleep(95);
+ assert.equal(finished,false,'must not consume hidden time or fire an old click');
+ doc.toggle(false);
+ await pending;
+ assert.equal(finished,true);
+ assert.equal(doc.count('visibilitychange'),0,'all temporary visibility listeners removed');
+});
+test('partial animation progress is retained across hidden interval',async()=>{
+ const doc=visibilityDocument(),delay=createTaiForegroundDelay(doc);
+ let done=false;
+ const pending=delay(200).then(()=>done=true);
+ await sleep(50);
+ doc.toggle(true);
+ await sleep(235);
+ assert.equal(done,false,'hidden background cannot complete an unfinished tap');
+ const visibleAt=Date.now();
+ doc.toggle(false);
+ await pending;
+ assert.ok(Date.now()-visibleAt>=55,'remaining foreground time must still elapse');
+ assert.equal(doc.count('visibilitychange'),0);
 });
