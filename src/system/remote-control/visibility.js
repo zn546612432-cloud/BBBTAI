@@ -44,3 +44,44 @@ export function resumeTaiRemoteOnShow(s,now=Date.now()){
  p.remote.pausedAt=null;
  return true;
 }
+
+
+// A small foreground-only timer used by the existing operator's animations.
+// It is not a new storyline clock. On hidden tabs, Chrome may throttle or
+// freeze timers; the remaining delay resumes when the SAME page is visible.
+export function createTaiForegroundDelay(doc){
+ function waitVisible(){
+  if(!doc.hidden)return Promise.resolve();
+  return new Promise(resolve=>{
+   const onVisible=()=>{
+    if(!doc.hidden){doc.removeEventListener('visibilitychange',onVisible);resolve();}
+   };
+   doc.addEventListener('visibilitychange',onVisible);
+   onVisible();
+  });
+ }
+ return async function foregroundDelay(ms){
+  let remaining=Math.max(0,Number(ms)||0);
+  while(remaining>0){
+   await waitVisible();
+   const start=Date.now();
+   const elapsed=await new Promise(resolve=>{
+    let done=false;
+    let timer;
+    const complete=()=>{
+     if(done)return;
+     done=true;
+     clearTimeout(timer);
+     doc.removeEventListener('visibilitychange',onHide);
+     resolve(Math.max(0,Date.now()-start));
+    };
+    const onHide=()=>{if(doc.hidden)complete();};
+    doc.addEventListener('visibilitychange',onHide);
+    if(doc.hidden)complete();
+    else timer=setTimeout(complete,remaining);
+   });
+   remaining=Math.max(0,remaining-elapsed);
+  }
+  await waitVisible();
+ };
+}
