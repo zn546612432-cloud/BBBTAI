@@ -3,11 +3,11 @@
 目标：恢复新版 EXTRACT 原生接管，缩短连续拒绝消息间隔。
 
 验收：
-- [ ] 原版与新版配对关卡均经真实控制器进入、原生点按、完成、返回 Mirage。
-- [ ] 首句延迟保留，连续拒绝句严格相隔 2.2 秒。
-- [ ] 边界及异常：旧格式、失效/无权限来源、中断行为不回退。
-- [ ] 相关回归通过；截图及 PR 证据齐全。
-- [ ] 状态与决策记录更新；不合并 main。
+- [x] 原版与新版配对关卡均经真实控制器进入、原生点按、完成、返回 Mirage。
+- [x] 首句延迟保留，连续拒绝句严格相隔 2.2 秒（排程回归通过）。
+- [x] 边界及异常：旧格式、失效/无权限来源、中断行为不回退（相关44项测试通过）。
+- [x] 相关回归通过；截图及 PR 证据齐全。
+- [x] 状态与决策记录更新；不合并 main。
 
 相关文件（最多8个）：
 1. docs/REMOTE_FIX_STATE.md
@@ -18,3 +18,15 @@
 6. tests/ghost-mirage-share.test.mjs
 7. .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
 8. .github/workflows/tai-remote-mobile-browser-qa.yml
+
+## 验证证据
+
+- 修改实现前：`node --test tests/ghost-mirage-share.test.mjs`，14通过/3失败，失败均为连续句间隔。
+- 修改实现后：`node --test tests/ghost-mirage-share.test.mjs tests/tai-remote-extract.test.mjs tests/tai-remote-upstream.test.mjs tests/tai-remote-daily-completion.test.mjs tests/tai-remote-visibility.test.mjs tests/tai-remote-integration.test.mjs`，44/44通过。
+- `npm run build:pages`、`node --check .github/test-scripts/tai-remote-mobile-browser-smoke.mjs`、`git diff --check`均通过。
+- GitHub完整回归与构建：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43275470666 ，1112/1112通过。
+- 真实浏览器工作流：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43275470742 ，成功。
+- 本次未改布局/样式；视觉验证聚焦现有手机的分享、接管、原生关卡及返回状态。
+
+- 截图证据：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43275470742/artifacts/13969969643 。已人工检查新版配对关卡及返回聊天截图。
+- 六步：一读、二写、三做、四测、五交、六记均已留证据；合并尚未执行。
