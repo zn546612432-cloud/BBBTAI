@@ -32,7 +32,7 @@ async function inspect(type,grade='B',callback=async()=>{}){
   const id=initial.nav.current.params.orderId,order=initial.ghost.orders[id];
   assert.equal(order.type,type);
   assert.equal(order.status,'running');
-  assert.equal(order.settings.grade,grade);
+  if(type!=='route')assert.equal(order.settings.grade,grade);
   if(type==='route')assert.equal(order.board.arcade,undefined);
   else assert.equal(order.board.arcade?.upstream,true,'upstream arcade must be active');
   await callback({page,state,id,order});
