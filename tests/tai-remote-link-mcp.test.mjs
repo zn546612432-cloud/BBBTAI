@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generatePipeNetwork,pipeSolved} from '../src/apps/ghost/games/pipe-network.js';
 import {solveLinkPipe,rotatePipe} from '../src/system/remote-control/link-solver.js';
+import {solveCipherTiles} from '../src/system/remote-control/cipher-solver.js';
+import {createBoard,puzzleSolved} from '../src/apps/ghost/games/logic.js';
 import {createTaiLivePhoneTools} from '../src/system/remote-control/mcp.js';
 import {recoverTaiRemoteSession} from '../src/system/remote-control/controller.js';
 import {dispatchTaiPhoneMcp} from '../src/services/ai/phone-mcp/protocol.js';
@@ -47,9 +49,9 @@ function session(){
  const ctx={store,router,toast:()=>{}};
  const doc={querySelector:selector=>{
   const match=selector.match(/\[data-index="(\d+)"\]/);
-  if(match&&selector.includes('gh-pipe'))return {
+  if(match&&(selector.includes('gh-pipe')||selector.includes('gh-tile')))return {
    disabled:false,isConnected:true,
-   click:()=>ghostHandle('gh-pipe',{dataset:{index:match[1]}},ctx,s.nav.current)
+   click:()=>ghostHandle(selector.includes('gh-pipe')?'gh-pipe':'gh-tile',{dataset:{index:match[1]}},ctx,s.nav.current)
   };
   return null;
  }};
@@ -64,7 +66,7 @@ test('stdio MCP stays read-only; only an injected, granted same-page session can
  const tools=createTaiLivePhoneTools({store,router,tasks,document:doc});
  assert.equal(listTaiPhoneTools().length,6);
  assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'}).result.tools.length,6);
- assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'},{liveTools:tools}).result.tools.length,12);
+ assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:1,method:'tools/list'},{liveTools:tools}).result.tools.length,14);
  assert.equal(call(s,'remote_read_link',{},undefined).ok,false);
  const first=call(s,'remote_read_link',{},tools);
  assert.equal(first.ok,true);assert.equal(first.data.orderId,'shared');
@@ -147,4 +149,59 @@ test('refresh abandons a controlling session without replaying a reward or reset
  assert.equal(s.story55.ghostShareTakeovers,2);
  assert.deepEqual(s.ghost.history,[]);
  assert.doesNotMatch(dynamicIsland(s),/island-remote/);
+});
+
+test('CIPHER pure planner produces only visible tile swaps; board remains untouched',()=>{
+ for(let i=0;i<120;i++){
+  const board=createBoard('cipher',{cipherSwaps:i%2?1:2}),before=[...board.tiles];
+  const plan=solveCipherTiles(board);
+  assert.ok(plan?.length>=1&&plan.length<=2);
+  assert.deepEqual(board.tiles,before);
+  const work=[...board.tiles];
+  for(const {first,second} of plan){[work[first],work[second]]=[work[second],work[first]];}
+  assert.equal(puzzleSolved(work),true);
+ }
+ assert.equal(solveCipherTiles({tiles:[0,1,1,3,4,5,6,7,8]}),null);
+ assert.equal(solveCipherTiles({tiles:[0,1,2]}),null);
+});
+
+test('CIPHER live MCP clicks the original Ghost tile handler, settles exactly once',()=>{
+ for(let n=0;n<24;n++){
+  const {s,store,router,tasks,doc}=session();
+  const run=s.ghost.orders.shared;
+  run.type='cipher';run.board=createBoard('cipher',{cipherSwaps:n%2?1:2});
+  const original=[...run.board.tiles],live=createTaiLivePhoneTools({store,router,tasks,document:doc});
+  const state=call(s,'remote_read_cipher',{},live);
+  assert.equal(state.ok,true);
+  assert.deepEqual(state.data.board.tiles,original);
+  assert.equal(call(s,'remote_read_link',{},live).ok,false,'LINK data must remain type-scoped');
+  assert.equal(call(s,'remote_rotate_pipe',{index:0},live).ok,false);
+  assert.equal(call(s,'remote_tap_cipher_tile',{index:9},live).ok,false);
+  assert.equal(call(s,'remote_tap_cipher_tile',{index:0,unsafe:true},live).ok,false);
+  const plan=solveCipherTiles(state.data.board);
+  for(const {first,second} of plan){
+   assert.equal(call(s,'remote_tap_cipher_tile',{index:first},live).ok,true);
+   assert.equal(call(s,'remote_tap_cipher_tile',{index:second},live).ok,true);
+  }
+  assert.equal(run.status,'success','only original Ghost handler decides success');
+  assert.equal(puzzleSolved(run.board.tiles),true);
+  assert.equal(s.ghost.history.filter(h=>h.orderId==='shared').length,1,'exactly one settlement');
+  assert.equal(run.moves,plan.length*2,'each native tile click counts as a game move');
+  assert.equal(call(s,'remote_tap_cipher_tile',{index:0},live).ok,false,'cannot move after win');
+  assert.equal(call(s,'remote_release',{},live).ok,true);
+  assert.equal(s.ghost.history.filter(h=>h.orderId==='shared').length,1);
+ }
+});
+
+test('CIPHER MCP cannot control unrelated order or read when takeover is inactive',()=>{
+ const {s,store,router,tasks,doc}=session();
+ s.ghost.orders.shared.type='cipher';
+ s.ghost.orders.shared.board=createBoard('cipher',{cipherSwaps:2});
+ const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
+ s.story55.ghostShare.source.orderId='other';
+ assert.equal(call(s,'remote_read_cipher',{},live).ok,false);
+ s.story55.ghostShare.source.orderId='shared';
+ s.story55.ghostShare.remote.active=false;
+ assert.equal(call(s,'remote_tap_cipher_tile',{index:0},live).error,'remote_control_locked');
+ assert.equal(dispatchTaiPhoneMcp(s,{jsonrpc:'2.0',id:9,method:'tools/list'}).result.tools.length,6);
 });
