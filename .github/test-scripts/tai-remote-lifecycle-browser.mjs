@@ -123,7 +123,7 @@ try{
    assert.equal(actual.attempts,1);assert.equal(actual.moves,paused.ghost.orders['timed-strike'].moves);
    assert.equal(recovered.state.story55.ghostShareTakeovers,1);
    assert.deepEqual(recovered.state.ghost.history,paused.ghost.history);
-   assert.deepEqual(recovered.state.bankData,paused.bankData);
+   assert.equal(JSON.stringify(recovered.state.bankData),JSON.stringify(paused.bankData));
    assert.equal(recovered.state.story55.ghostShare.remote.pausedAt,null);
    if(mode==='foreground'){
     assert.equal(recovered.state.story55.ghostShare.remote.token,paused.story55.ghostShare.remote.token);
@@ -138,7 +138,9 @@ try{
    console.log('PASS real-deadline STRIKE background recovery: '+mode);
   }catch(error){
    await page.screenshot({path:output+'/FAILED-lifecycle-'+mode.replaceAll(' ','-')+'.png',fullPage:true}).catch(()=>{});
-   console.error('LIFECYCLE STATE',JSON.stringify(await state().catch(()=>null)));
+   const failed=await state().catch(()=>null);
+   console.error('LIFECYCLE STATE',JSON.stringify({mode,nav:failed?.nav?.current,
+    share:failed?.story55?.ghostShare,order:failed?.ghost?.orders?.['timed-strike'],history:failed?.ghost?.history}));
    throw error;
   }finally{await context.close();}
  }
