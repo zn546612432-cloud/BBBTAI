@@ -3,14 +3,14 @@
 // Only this same-page controller can inject the temporary live tool adapter.
 // It drives native task-switcher + real Ghost buttons (never Ghost.finish()).
 import {dispatchTaiPhoneMcp} from '../../services/ai/phone-mcp/protocol.js';
-import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE,canSendGhostShareRemoteText} from '../../services/story55/ghost-share.js';
+import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../services/story55/ghost-share.js';
 import {deploymentReadiness,deployment} from '../../services/story55/projects.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {date55} from '../../services/story55/state.js';
 import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
-import {isMirageAuthenticated} from '../../apps/mirage/session.js';
+import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
@@ -48,7 +48,7 @@ export function recoverTaiRemoteSession(store){
  return true;
 }
 
-export function createTaiRemoteController({store,router,tasks,toast=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
+export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null;
  function tool(name,args={}){
@@ -160,20 +160,9 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   // method as the execution channel, while the visible fingertip presses SEND.
   // Never write an outgoing bubble or change a project from this controller.
   if(typeof submitMirageForm!=='function')throw Error('mirage_submit_not_wired');
-  const target=String(new FormData(form).get('text')||'');
-  console.warn('[TAI remote send check]',JSON.stringify({
-   authenticated:isMirageAuthenticated(),formConnected:form.isConnected,
-   valueLength:target.length,exact:target===TAI_REMOTE_TYPED_LINE,
-   canSend:canSendGhostShareRemoteText(store.get(),target),
-   stage:store.get().story55?.ghostShare?.remote?.stage,
-   phase:store.get().story55?.ghostShare?.phase,
-   formScene:form.dataset.storyScene||null
-  }));
+  const value=String(new FormData(form).get('text')||'');
+  if(value!==TAI_REMOTE_TYPED_LINE)throw Error('mirage_remote_text_not_ready');
   submitMirageForm(form);
-  console.warn('[TAI remote send outcome]',JSON.stringify({
-   stage:store.get().story55?.ghostShare?.remote?.stage,
-   lastId:store.get().content.conversations.mirage.find(c=>c.id===TAI_GHOST_THREAD)?.messages.at(-1)?.id
-  }));
   // main.js delegates submit asynchronously; wait for the canonical
   // outgoing-message acknowledgment before swiping to the background.
   for(let i=0;i<35;i++){
@@ -252,8 +241,17 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   if(tasks.visible)tasks.hide();
   const s=store.get();
   const origin=s.story55?.ghostShare?.remote?.origin;
-  if(origin&&s.unlocked&&!s.poweredOff&&s.nav.current.appId==='ghost')
+  if(origin&&s.unlocked&&!s.poweredOff&&s.nav.current.appId==='ghost'){
+   // A forced takeover temporarily leaves the authenticated MIRAGE chat.
+   // Returning to that same chat must not strand the user at its login
+   // screen; ordinary voluntary app entries still use onEnter logout.
+   const authenticated=isMirageAuthenticated()&&origin.appId==='mirage';
    router.open(origin);
+   if(authenticated){
+    setMirageAuthenticated(true);
+    refresh();
+   }
+  }
  }
  async function start(){
   if(busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
