@@ -15,8 +15,8 @@ import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {taiRemoteCanOperateOrder,taiRemoteUpcomingProjectStepAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
+import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow} from './visibility.js';
 
-const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
 const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
@@ -54,6 +54,54 @@ export function recoverTaiRemoteSession(store){
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null,sessionToken=null;
+ // Visibility is a pause, NOT an interruption: keep the same in-memory
+ // controller and let GHOST's existing board/deadline resume on foreground.
+ doc.addEventListener('visibilitychange',()=>{
+  if(!isRunning(store.get()))return;
+  if(doc.hidden){
+   store.update(s=>pauseTaiRemoteOnHide(s));
+  }else{
+   store.update(s=>resumeTaiRemoteOnShow(s));
+  }
+ });
+ function waitVisible(){
+  if(!doc.hidden)return Promise.resolve();
+  return new Promise(resolve=>{
+   const onVisible=()=>{
+    if(!doc.hidden){doc.removeEventListener('visibilitychange',onVisible);resolve();}
+   };
+   doc.addEventListener('visibilitychange',onVisible);
+   // Handle a visibility flip between the initial check and registration.
+   onVisible();
+  });
+ }
+ // Each animation wait counts *foreground* milliseconds only. A browser
+ // may throttle suspended timers; do not consume the remaining animation,
+ // rerun a click, or let a suspended callback abort the session.
+ async function delay(ms){
+  let remaining=Math.max(0,Number(ms)||0);
+  while(remaining>0){
+   await waitVisible();
+   const start=Date.now();
+   const elapsed=await new Promise(resolve=>{
+    let done=false;
+    let timer;
+    const complete=()=>{
+     if(done)return;
+     done=true;
+     clearTimeout(timer);
+     doc.removeEventListener('visibilitychange',onHide);
+     resolve(Math.max(0,Date.now()-start));
+    };
+    const onHide=()=>{if(doc.hidden)complete();};
+    doc.addEventListener('visibilitychange',onHide);
+    if(doc.hidden)complete();
+    else timer=setTimeout(complete,remaining);
+   });
+   remaining=Math.max(0,remaining-elapsed);
+  }
+  await waitVisible();
+ }
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -64,7 +112,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
  }
  function valid(){
   const s=store.get();
-  return isRunning(s)&&!doc.hidden&&
+  return isRunning(s)&&
    (!sessionToken||s.story55?.ghostShare?.remote?.token===sessionToken);
  }
  function assertRunning(){if(!valid())throw Error('remote_session_interrupted');}
