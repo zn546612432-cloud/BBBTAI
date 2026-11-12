@@ -78,3 +78,27 @@ test('no sensitive secrets or public unauthenticated paid calls are present in E
  assert.match(code,/MINIMAX_API_KEY/);
  assert.doesNotMatch(code,/sk-api-[a-zA-Z0-9_-]{16,}/);
 });
+
+test('cloud MiniMax ASR uses the same user JWT, no browser key, and preserves text',async()=>installMocks(async()=>{
+ globalThis.fetch=async(url,init)=>{
+  if(String(url).endsWith('/auth/v1/signup'))
+   return new Response(JSON.stringify({session:{access_token:'jwt-asr',refresh_token:'refresh-asr',expires_in:3600}}),{status:200});
+  if(String(url)!==TAI_PROVIDER_ENDPOINT)throw Error('unexpected endpoint');
+  assert.equal(init.headers.Authorization,'Bearer jwt-asr');
+  assert.equal(init.headers.apikey,TAI_PUBLIC_KEY);
+  assert.ok(init.body instanceof FormData);
+  assert.equal(init.body.get('op'),'asr');
+  assert.equal(init.body.get('region'),'cn');
+  assert.ok(init.body.get('file').size>0);
+  return new Response(JSON.stringify({text:'測試完成'}));
+ };
+ const {taiCloudTranscribe}=await import('../src/services/ai/supabase-gateway.js');
+ const result=await taiCloudTranscribe(new Blob(['some-audio'],{type:'audio/webm'}));
+ assert.equal(result,'測試完成');
+}));
+test('existing Tai character system prompt stays under the protected backend length cap',async()=>{
+ const {buildTaiPrompt}=await import('../src/services/ai/tai-profile.js');
+ const text=buildTaiPrompt({channel:'mirage',day:16,recognized:false,
+  messages:[{role:'user',content:'繼續'}]});
+ assert.ok(text.length+14500<50000,'V8 and the existing character/worldbook must both fit');
+});
