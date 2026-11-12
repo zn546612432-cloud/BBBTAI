@@ -33,7 +33,7 @@ async function inspect(type,grade='B',callback=async()=>{}){
   assert.equal(order.type,type);
   assert.equal(order.status,'running');
   if(type!=='route')assert.equal(order.settings.grade,grade);
-  if(type==='route')assert.equal(order.board.arcade,undefined);
+  if(type==='route'||type==='cipher')assert.equal(order.board.arcade,undefined);
   else assert.equal(order.board.arcade?.upstream,true,'upstream arcade must be active');
   await callback({page,state,id,order});
   await page.screenshot({path:output+'/ghost-upstream-'+type+'-iphone.png',fullPage:true});
@@ -50,13 +50,17 @@ try{
   assert.ok(await page.locator('[data-action="gh-pipe"]').count()>=9);
  });
  await inspect('cipher','C',async({page,state,order,id})=>{
-  const b=order.board.arcade,neighbor=puzzleNeighbors(b.empty,b.size)[0];
-  assert.ok(neighbor!==undefined);
-  assert.equal(await page.locator('.gh-arcade-slide .gh-arcade-cell').count(),9);
-  await page.locator('[data-action="gh-arcade-tap"][data-value="'+neighbor+'"]').tap();
+  const tiles=order.board.tiles;
+  assert.equal(order.settings.cipherSwaps,2);
+  assert.equal(await page.locator('#gh-puzzle [data-action="gh-tile"]').count(),9);
+  assert.equal(await page.locator('.gh-arcade-slide').count(),0);
+  const i=tiles.findIndex((x,j)=>x!==j),j=tiles.indexOf(i);
+  assert.ok(i>=0&&j>=0);
+  await page.locator('[data-action="gh-tile"][data-index="'+i+'"]').tap();
+  await page.locator('[data-action="gh-tile"][data-index="'+j+'"]').tap();
   const updated=(await state()).ghost.orders[id];
-  assert.equal(updated.board.arcade.steps,1);
-  assert.notDeepEqual(updated.board.arcade.tiles,b.tiles);
+  assert.notDeepEqual(updated.board.tiles,tiles);
+  assert.equal(updated.board.selected,null);
  });
  await inspect('extract','A',async({page,state,order,id})=>{
   const b=order.board.arcade;
