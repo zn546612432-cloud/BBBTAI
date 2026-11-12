@@ -134,5 +134,8 @@ test('Mirage shows exactly five daily rows and never offers acceptance on restri
   assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
   assert.ok(html.includes('R-004')&&html.includes('R-005')&&html.includes('R-006'));
   assert.ok(!html.includes('M-003'));
+  s.content.orders.push({id:'editor-custom-open',title:'私人掛單',owner:'@private',reward:'500 USD',status:'OPEN',authored:true});
+  html=render({store},{route:'/bounties'});
+  assert.ok(html.includes('私人掛單'),'developer-authored custom offers must remain accessible');
  }finally{setMirageAuthenticated(false);}
 });
