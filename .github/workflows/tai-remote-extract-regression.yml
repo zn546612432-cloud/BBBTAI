@@ -1,0 +1,50 @@
+name: Focused Mirage EXTRACT controller regression
+on:
+  push:
+    branches: [feature/mirage-remote-extract-followup-20261113]
+    paths:
+      - 'src/system/remote-control/controller.js'
+      - 'src/services/story55/ghost-share.js'
+      - 'tests/tai-remote-extract-entry.test.mjs'
+      - 'tests/ghost-mirage-share.test.mjs'
+      - '.github/test-scripts/tai-remote-extract-regression-browser.mjs'
+      - '.github/workflows/tai-remote-extract-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused-extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Only related regression tests
+        run: node --test tests/tai-remote-extract-entry.test.mjs tests/ghost-mirage-share.test.mjs
+      - run: npm run build
+      - name: Prepare browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start isolated phone
+        run: |
+          PORT=5173 node server/dev.mjs > /tmp/extract-phone-server.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:5173/ -o /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Mobile, desktop, empty board and error return
+        run: node .github/test-scripts/tai-remote-extract-regression-browser.mjs
+      - run: npm run build:pages
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mirage-extract-focused-browser
+          path: tai-remote-extract-results/
+          if-no-files-found: ignore
+          retention-days: 14
