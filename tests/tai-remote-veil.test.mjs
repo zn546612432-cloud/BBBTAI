@@ -129,6 +129,9 @@ test('VEIL scoped MCP denies D01, wallet, unlinked or expired orders and unsafe 
  assert.equal(call(s,live,'remote_step_veil',{direction:'left',extra:true}).ok,false);
  s.ghost.orders[id].board.arcade.player=6;
  s.ghost.orders[id].board.arcade.phase=2;
+ // Cell 6 is scanned in the next phase. The random maze may also put a
+ // wall there; isolate scanner rejection from the separate wall rule.
+ s.ghost.orders[id].board.arcade.walls=s.ghost.orders[id].board.arcade.walls.filter(cell=>cell!==6);
  assert.equal(call(s,live,'remote_step_veil',{direction:'wait'}).error,'unsafe_veil_step');
  s.ghost.orders[id].board.arcade.player=0;
  assert.equal(call(s,live,'remote_step_veil',{direction:'left'}).error,'invalid_veil_step');

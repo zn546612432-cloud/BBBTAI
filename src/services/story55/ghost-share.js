@@ -5,10 +5,11 @@ import {isStory55,projectById,date55} from './state.js';
 import {anonymousPresence55} from './runtime.js';
 import {deployment,deploymentPercent} from './projects.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
+import {taiRemoteOrderAllowed} from '../../system/remote-control/policy.js';
 
 export const TAI_GHOST_THREAD='s55-ouroboros';
 const WAIT_MS=1900;
-const dialogues={
+export const GHOST_SHARE_DIALOGUES={
  first:[
   ['tai','？'],
   ['me','我想驗證一下你是不是azathoth'],
@@ -34,6 +35,16 @@ const dialogues={
   ['tai','我很忙，你自己處理']
  ]
 };
+export function ghostShareDialogue(s,script){
+ const base=GHOST_SHARE_DIALOGUES[script]||[],edit=s.story55?.chatSceneEdits?.['ghost-share:'+script]?.lines;
+ return edit?.length===base.length?base.map(([who,text],i)=>[who,edit[i].who===who&&typeof edit[i].text==='string'?edit[i].text:text]):base;
+}
+const shareDay=s=>isStory55(s)&&s.day>=15&&s.day<=24&&!s.story55.ended;
+export function expireGhostShare(s){
+ const p=s?.story55?.ghostShare;
+ if(shareDay(s)||!['dialogue','ready-control'].includes(p?.phase))return false;
+ p.phase='expired';return true;
+}
 const active=p=>p&&['dialogue','ready-control','controlling'].includes(p.phase);
 const chat=s=>s.content?.conversations?.mirage?.find(c=>c.id===TAI_GHOST_THREAD);
 const pendingDelivered=(s,p)=>!(p?.pendingIds||[]).some(id=>!chat(s)?.messages?.find(m=>m.id===id)?.delivery);
@@ -41,16 +52,16 @@ const noAccess=()=>({ok:false,error:'目前無法分享此項目'});
 
 // Only a real authorized GHOST project or existing order can be shared.
 export function ghostShareSource(s,{projectId,orderId}={}){
- if(!isStory55(s)||s.day<15||s.day>24||!chat(s))return null;
+ if(!shareDay(s)||!chat(s))return null;
  if(typeof projectId==='string'){
   const p=projectById(s,projectId),r=deployment(s,projectId);
-  if(!p||!r.authorized)return null;
+  if(!p||!r.authorized||p.id==='wallet')return null;
   return {type:'ghost-project',projectId:p.id,title:String(p.title||p.id).slice(0,120),
    percent:Math.max(0,Math.min(100,Math.round(deploymentPercent(s,p.id)))),route:'/deployment'};
  }
  if(typeof orderId==='string'){
   const o=s.ghost?.orders?.[orderId];
-  if(!o||!['authorized','running','preview-win','failed'].includes(o.status))return null;
+  if(!o||!taiRemoteOrderAllowed(s,o)||!['authorized','running','preview-win','failed'].includes(o.status))return null;
   return {type:'ghost-order',orderId:o.id,title:String(o.title||o.type||'GHOST').slice(0,120),
    status:o.status,route:'/contract'};
  }
@@ -58,7 +69,7 @@ export function ghostShareSource(s,{projectId,orderId}={}){
 }
 
 function queueNpc(s,p){
- const lines=dialogues[p.script]||[];
+ const lines=ghostShareDialogue(s,p.script);
  p.pendingIds=[];
  let pause=0;
  while(p.index<lines.length&&lines[p.index][0]==='tai'){
@@ -113,9 +124,9 @@ export function ghostShareScriptLine(s){
  // Returning a 'wait' line here would DISABLE the form input, and FormData
  // deliberately omits disabled fields, losing the remotely typed sentence.
  if(p?.phase==='controlling')return null;
- if(!active(p)||!p.script)return null;
+ if(!shareDay(s)||!active(p)||!p.script)return null;
  if(!pendingDelivered(s,p))return {id:'ghost-share',kind:'wait',index:p.index,text:''};
- const lines=dialogues[p.script]||[];
+ const lines=ghostShareDialogue(s,p.script);
  if(p.phase==='dialogue'&&lines[p.index]?.[0]==='me')
   return {id:'ghost-share',kind:'me',index:p.index,text:lines[p.index][1]};
  return {id:'ghost-share',kind:'wait',index:p.index,text:''};
@@ -163,7 +174,7 @@ export function sendGhostShareRemoteText(s,text){
 // A random win or a scripted text reply alone cannot consume this counter.
 export function ghostShareReadyForControl(s){
  const p=s.story55?.ghostShare;
- return !!(p?.phase==='ready-control'&&pendingDelivered(s,p));
+ return !!(shareDay(s)&&p?.phase==='ready-control'&&pendingDelivered(s,p));
 }
 export function beginGhostShareControl(s){
  if(!ghostShareReadyForControl(s))return false;

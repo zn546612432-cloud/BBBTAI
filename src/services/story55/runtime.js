@@ -1,3 +1,4 @@
+import {expireGhostShare} from './ghost-share.js';
 import {syncApprovedChatV2} from '../../story/revisions/d05-d17-v2.js';
 import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
@@ -243,6 +244,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
 }
 export function tickStory55(s){
  if(!isStory55(s))return;
+ expireGhostShare(s);
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);

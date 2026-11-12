@@ -5,6 +5,7 @@
 import {finishGhostShareControl} from '../../services/story55/ghost-share.js';
 import {veilNextCell,veilScanners} from '../../apps/ghost/games/arcade.js';
 import {taiRemoteOrderAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
+import {visibleLinkBoard} from './link-solver.js';
 
 export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_show_tasks',description:'Show native virtual iPhone app switcher',inputSchema:{type:'object',properties:{},additionalProperties:false}},
@@ -61,6 +62,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
  function call(state,name,args={}){
   if(!toolNames.has(name))return bad('tool_not_allowed');
   if(!grant(state))return bad('remote_control_locked');
+  if(Number.isFinite(state.story55.ghostShare.remote.pausedAt)&&name!=='remote_release')return bad('remote_control_paused');
   const schema=toolNames.get(name).inputSchema;
   if(!args||Array.isArray(args)||typeof args!=='object'||
    Object.keys(args).some(k=>!Object.hasOwn(schema.properties,k)))return bad('invalid_arguments');
@@ -100,14 +102,12 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(!o||o.type!=='route')return bad('link_order_not_ready');
    const board=o.board;
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
-    board:o.status==='running'&&board?.size?{
-     size:board.size,source:board.source,sink:board.sink,masks:[...board.masks]
-    }:null}};
+    board:o.status==='running'?visibleLinkBoard(board):null}};
   }
   if(name==='remote_rotate_pipe'){
    const o=authorizedOrder(state),index=args.index;
-   if(!Number.isInteger(index)||!o||o.type!=='route'||o.status!=='running'||!o.board?.size||
-    index<0||index>=o.board.masks.length||index===o.board.source||index===o.board.sink||
+   if(!Number.isInteger(index)||!o||o.type!=='route'||o.status!=='running'||!visibleLinkBoard(o.board)||
+    index<0||index>=o.board.masks.length||o.board.size&&(index===o.board.source||index===o.board.sink)||
     state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
     state.nav.current.params?.orderId!==o.id)return bad('pipe_not_permitted');
    const pipe=dom?.querySelector('#screen-layer [data-action="gh-pipe"][data-index="'+index+'"]');
@@ -119,7 +119,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    const o=authorizedOrder(state);
    if(!o||o.type!=='cipher')return bad('cipher_order_not_ready');
    return {ok:true,data:{orderId:o.id,type:o.type,status:o.status,
-    board:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles]}:null}};
+    board:o.status==='running'&&Array.isArray(o.board?.tiles)?{tiles:[...o.board.tiles],selected:o.board.selected??null}:null}};
   }
   if(name==='remote_tap_cipher_tile'){
    const o=authorizedOrder(state),index=args.index;

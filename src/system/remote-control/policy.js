@@ -1,15 +1,20 @@
 // Single allowlist for the existing Story55 remote controller and in-page
 // MCP tool adapter. No independent story scheduler or GHOST mechanics.
 import {configFor} from '../../apps/ghost/state.js';
+import {D06_ORDER_ID} from '../../story/d06/commission.js';
+import {d04OrderOfStep} from '../../story/d04/contract.js';
+import {D01_REPAIR} from '../../story/d01/runtime.js';
+import {WALLET_CHALLENGE_ID} from '../../apps/mirage/contacts-seed.js';
 
 export const TAI_REMOTE_GHOST_TYPES=Object.freeze(['route','cipher','veil','extract','strike','verify']);
 export const TAI_REMOTE_SCOPED_TYPES=Object.freeze(['veil','extract','strike','verify']);
 
 export function taiRemoteOrderAllowed(s,o){
  if(!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type))return false;
+ if([D01_REPAIR,D06_ORDER_ID,WALLET_CHALLENGE_ID].includes(o.id)||
+    d04OrderOfStep(o.id)===D06_ORDER_ID)return false;
  if(TAI_REMOTE_SCOPED_TYPES.includes(o.type)){
   // Never operate the separate D01 repair / D06 wallet challenge settlement.
-  if(o.id==='mirage001'||o.id==='mirage-ouroboros-10btc-d05')return false;
   if(!(o.story55Project||o.story55Commission||
        s?.content?.mirage?.linkedMissions?.[o.id]))return false;
  }

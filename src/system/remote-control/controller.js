@@ -7,7 +7,7 @@ import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl
 import {deploymentReadiness,deployment} from '../../services/story55/projects.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {date55} from '../../services/story55/state.js';
-import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
+import {interruptTaiRemoteSession} from './session.js';
 import {solveLinkPipe} from './link-solver.js';
 import {solveCipherTiles} from './cipher-solver.js';
 import {veilPlan} from './veil-solver.js';
@@ -42,19 +42,14 @@ export function recoverTaiRemoteSession(store){
  const old=store.get().story55?.ghostShare;
  if(old?.phase!=='controlling'&&!old?.remote?.active)return false;
  store.update(s=>{
-  const p=s.story55?.ghostShare;
-  if(!p)return;
-  p.phase='interrupted';
-  p.remote??={};
-  p.remote.active=false;
-  p.remote.stage='ended';
+  interruptTaiRemoteSession(s);
  });
  return true;
 }
 
 export function createTaiRemoteController({store,router,tasks,toast=()=>{},refresh=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
- let busy=false,queued=false,callId=0,cursor=null,sessionToken=null;
+ let busy=false,queued=false,callId=0,cursor=null,sessionToken=null,cancellation=null;
  // Visibility is a pause, NOT an interruption: keep the same in-memory
  // controller and let GHOST's existing board/deadline resume on foreground.
  doc.addEventListener('visibilitychange',()=>{
@@ -65,7 +60,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    store.update(s=>resumeTaiRemoteOnShow(s));
   }
  });
- const delay=createTaiForegroundDelay(doc);
+ const foregroundDelay=createTaiForegroundDelay(doc);
+ const delay=ms=>foregroundDelay(ms,cancellation?.signal);
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -76,8 +72,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
  }
  function valid(){
   const s=store.get();
-  return isRunning(s)&&
-   (!sessionToken||s.story55?.ghostShare?.remote?.token===sessionToken);
+  return !cancellation?.signal.aborted&&isRunning(s)&&
+   s.story55?.ghostShare?.remote?.token===sessionToken;
  }
  function assertRunning(){if(!valid())throw Error('remote_session_interrupted');}
  function moveStage(stage,orderId){
@@ -550,14 +546,34 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     }
    }
   }else if(run?.type==='cipher'){
-   const plan=solveCipherTiles(initial);
-   if(!plan?.length)throw Error('cipher_solution_not_found');
-   for(const {first,second} of plan){
+   for(let step=0;step<12;step++){
     assertRunning();
-    if(store.get().ghost?.orders?.[id]?.status!=='running')break;
+    const current=tool('remote_read_cipher');
+    if(current.orderId!==id)throw Error('cipher_order_changed');
+    if(['success','paid'].includes(current.status))break;
+    const board=current.board;
+    if(current.status!=='running'||!board)throw Error('cipher_run_not_active');
+    // Clicking the selected tile again uses Ghost's own no-op swap to
+    // release the selection, without rewriting any tile or selection field.
+    if(board.selected!==null){
+     if(!Number.isInteger(board.selected)||board.selected<0||board.selected>8)
+      throw Error('cipher_selection_invalid');
+     await tapVisual(board.selected,'gh-tile');
+     const cleared=store.get().ghost?.orders?.[id]?.board;
+     if(cleared?.selected!==null||cleared.tiles.some((x,i)=>x!==board.tiles[i]))
+      throw Error('cipher_selection_not_cleared');
+     continue;
+    }
+    const plan=solveCipherTiles(board);
+    if(!plan?.length)throw Error('cipher_solution_not_found');
+    const {first,second}=plan[0],expected=[...board.tiles];
+    [expected[first],expected[second]]=[expected[second],expected[first]];
     await tapVisual(first,'gh-tile');
     assertRunning();
     await tapVisual(second,'gh-tile');
+    const after=store.get().ghost?.orders?.[id]?.board;
+    if(after?.selected!==null||after.tiles.some((x,i)=>x!==expected[i]))
+     throw Error('cipher_swap_not_acknowledged');
    }
   }else if(run?.type==='veil'){
    await solveVeil(id);
@@ -600,6 +616,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   if(busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
    !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   busy=true;
+  cancellation=new AbortController();
   const s=store.get(),source=s.story55.ghostShare.source;
   if(!possibleLink(s)){
    store.update(next=>{if(next.story55?.ghostShare?.phase==='ready-control')
@@ -635,13 +652,16 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     }
    }
    // A dropped connection never claims the LINK puzzle was completed.
-   if(!['strike_insufficient_time','strike_legacy_not_controllable'].includes(error?.message))toast('遠端連線已中斷');
+   if(!cancellation?.signal.aborted&&!['strike_insufficient_time','strike_legacy_not_controllable'].includes(error?.message))toast('遠端連線已中斷');
   }finally{
-   if(!isRunning(store.get())||store.get().story55?.ghostShare?.remote?.token===sessionToken)close();
-   sessionToken=null;busy=false;
+   if(cancellation?.signal.aborted){cursor?.remove();cursor=null;if(tasks.visible)tasks.hide();}
+   else if(!isRunning(store.get())||store.get().story55?.ghostShare?.remote?.token===sessionToken)close();
+   sessionToken=null;cancellation=null;busy=false;sync();
   }
  }
  function sync(){
+  const current=store.get().story55?.ghostShare;
+  if(busy&&(current?.remote?.token!==sessionToken||current?.phase==='interrupted'))cancellation?.abort();
   if(queued||busy||!ghostShareReadyForControl(store.get())||!navLink(store.get())||
    !store.get().unlocked||doc.hidden||!composerReady(doc))return;
   queued=true;

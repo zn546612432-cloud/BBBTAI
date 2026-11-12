@@ -1,4 +1,5 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
+import {isTaiRemoteOrderPaused} from '../../system/remote-control/visibility.js';
 import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {d03OrderOfStep,d03NextStep} from '../../story/d03/contract.js';
 import {d04OrderOfStep,d04NextStep} from '../../story/d04/contract.js';
@@ -28,8 +29,8 @@ let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=n
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
- if(o?.status==='preview-win'&&now>=o.previewUntil){ctx.store.update(n=>finish(n,o.id,true,now));return;}
- if(o?.status==='running'){
+ if(!isTaiRemoteOrderPaused(s,o)&&o?.status==='preview-win'&&now>=o.previewUntil){ctx.store.update(n=>finish(n,o.id,true,now));return;}
+ if(!isTaiRemoteOrderPaused(s,o)&&o?.status==='running'){
   if(o.board?.arcade?.kind==='extract'&&o.board.arcade.lockUntil&&now>=o.board.arcade.lockUntil){
    ctx.store.update(n=>arcadeTick(n.ghost.orders[o.id].board.arcade,now));return;
   }
