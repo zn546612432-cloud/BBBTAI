@@ -9,7 +9,7 @@ import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-message
 import {date55} from '../../services/story55/state.js';
 import {interruptTaiRemoteSession} from './session.js';
 import {solveLinkPipe} from './link-solver.js';
-import {solveCipherTiles} from './cipher-solver.js';
+import {solveCipherTiles,solveCipherSlideTiles} from './cipher-solver.js';
 import {veilPlan} from './veil-solver.js';
 import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {verifyNextToken} from './verify-solver.js';
@@ -132,22 +132,23 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   return cursor;
  }
  async function tapVisual(index,action='gh-pipe'){
-  if(!['gh-pipe','gh-tile'].includes(action))throw Error('remote_action_not_allowed');
-  const btn=doc.querySelector('#screen-layer [data-action="'+action+'"][data-index="'+index+'"]');
+  if(!['gh-pipe','gh-tile','gh-arcade-tap'].includes(action))throw Error('remote_action_not_allowed');
+  const attr=action==='gh-arcade-tap'?'data-value':'data-index';
+  const btn=doc.querySelector('#screen-layer [data-action="'+action+'"]['+attr+'="'+index+'"]');
   const phone=doc.querySelector('#phone'),pointer=finger();
   if(!btn||!phone||!pointer)throw Error('pipe_button_not_visible');
   const frame=phone.getBoundingClientRect(),box=btn.getBoundingClientRect();
   pointer.style.left=(box.left+box.width/2-frame.left)+'px';
   pointer.style.top=(box.top+box.height/2-frame.top)+'px';
   pointer.classList.add('is-visible');
-  await delay(220);
+  await delay(action==='gh-arcade-tap'?110:220);
   assertRunning();
   pointer.classList.add('is-tapping');
-  await delay(120);
+  await delay(action==='gh-arcade-tap'?60:120);
   assertRunning();
   tool(action==='gh-pipe'?'remote_rotate_pipe':'remote_tap_cipher_tile',{index});
   pointer.classList.remove('is-tapping');
-  await delay(360);
+  await delay(action==='gh-arcade-tap'?110:360);
  }
  async function typeRemote(){
   const p=store.get().story55?.ghostShare;
@@ -253,7 +254,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   if(target.status!=='running'||!(run.type==='route'?
       target.board?.masks?.length:run.type==='cipher'?
       target.board?.tiles?.length:run.type==='veil'?
-      (target.board?.kind==='veil'||target.board?.kind==='legacy-keypad'):
+      (target.board?.kind==='veil'||target.board?.kind==='veil-maze'||target.board?.kind==='legacy-keypad'):
       run.type==='extract'?
       (target.board?.kind==='extract'||target.board?.kind==='legacy-fingerprint'):
       run.type==='strike'?target.board?.kind==='strike':
@@ -302,7 +303,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   let stalls=0;
   // A changing scanner is re-evaluated after EVERY acknowledged native move.
   // 160 is a fail-closed total limit; the theoretical state graph has 75 nodes.
-  for(let count=0;count<160;count++){
+  for(let count=0;count<320;count++){
    assertRunning();
    const current=tool('remote_read_veil');
    if(current.orderId!==id)throw Error('veil_order_changed');
@@ -322,7 +323,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
      throw Error('veil_legacy_stage_changed');
     const moved=next.board.round>round||next.board.input!==before;
     stalls=moved?0:stalls+1;
-   }else if(board.kind==='veil'){
+   }else if(board.kind==='veil'||board.kind==='veil-maze'){
     const plan=veilPlan(board);
     if(!plan)throw Error('veil_path_unreachable');
     if(!plan.length)throw Error('veil_exit_not_settled');
@@ -342,7 +343,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
      ack=next.status!=='running'||next.board?.steps>oldSteps;
     }
     stalls=ack?0:stalls+1;
-    if(ack&&next.board?.kind==='veil'&&next.board.heat>board.heat)
+    if(ack&&['veil','veil-maze'].includes(next.board?.kind)&&next.board.heat>board.heat)
      throw Error('veil_scanner_caught_operator');
    }else throw Error('veil_unknown_board');
    if(stalls>=3)throw Error('veil_three_stalled_inputs');
@@ -373,7 +374,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   // A physical-memory strategy: remember only GHOST faces that were displayed.
   // No direct board.cards lookup and no scripted completion call.
   let known={},stalls=0;
-  for(let count=0;count<80;count++){
+  for(let count=0;count<140;count++){
    assertRunning();
    const current=tool('remote_read_extract');
    if(current.orderId!==id)throw Error('extract_order_changed');
@@ -429,12 +430,21 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   pointer.style.left=(box.left+box.width/2-frame.left)+'px';
   pointer.style.top=(box.top+box.height/2-frame.top)+'px';
   pointer.classList.add('is-visible');
-  await delay(180);assertRunning();
+  const moving=store.get().ghost?.orders?.[store.get().story55?.ghostShare?.source?.orderId]?.board?.arcade?.kind==='strike-mole';
+  await delay(moving?85:180);assertRunning();
   pointer.classList.add('is-tapping');
-  await delay(90);assertRunning();
+  await delay(moving?40:90);assertRunning();
+  if(moving){
+   const view=tool('remote_read_strike');
+   if(view.board?.target!==target){
+    pointer.classList.remove('is-tapping');
+    return false; // target moved: re-read and reposition before tapping
+   }
+  }
   tool('remote_tap_strike',{index:target});
   pointer.classList.remove('is-tapping');
-  await delay(285);
+  await delay(moving?150:285);
+  return true;
  }
  async function solveStrike(id){
   let stalls=0;
@@ -453,7 +463,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
       current.deadline-Date.now()<remainingHits*900+1500)
     throw Error('strike_insufficient_time');
    const lastHits=board.hits,lastMisses=board.misses,lastTarget=board.target;
-   await tapStrikeVisual(lastTarget);
+   if(await tapStrikeVisual(lastTarget)===false)continue;
    let next=tool('remote_read_strike');
    if(next.orderId!==id)throw Error('strike_order_changed');
    if(next.board&&next.board.misses>lastMisses)
@@ -555,13 +565,28 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     }
    }
   }else if(run?.type==='cipher'){
-   for(let step=0;step<12;step++){
+   let slidePlan=null;
+   for(let step=0;step<100;step++){
     assertRunning();
     const current=tool('remote_read_cipher');
     if(current.orderId!==id)throw Error('cipher_order_changed');
     if(['success','paid'].includes(current.status))break;
     const board=current.board;
     if(current.status!=='running'||!board)throw Error('cipher_run_not_active');
+    if(board.kind==='cipher-slide'){
+     if(!slidePlan?.length)slidePlan=solveCipherSlideTiles(board);
+     if(!slidePlan?.length)throw Error('cipher_slide_path_unreachable');
+     const index=slidePlan.shift(),expected=[...board.tiles];
+     [expected[board.empty],expected[index]]=[expected[index],expected[board.empty]];
+     await tapVisual(index,'gh-arcade-tap');
+     const next=tool('remote_read_cipher');
+     if(!['running','success','paid'].includes(next.status))throw Error('cipher_slide_run_changed');
+     if(next.status==='running'&&(!next.board||
+       next.board.kind!=='cipher-slide'||
+       next.board.tiles.some((x,i)=>x!==expected[i])))
+      throw Error('cipher_slide_tap_not_acknowledged');
+     continue;
+    }
     // Clicking the selected tile again uses Ghost's own no-op swap to
     // release the selection, without rewriting any tile or selection field.
     if(board.selected!==null){
