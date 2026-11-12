@@ -10,7 +10,8 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {seedD04Contracts,acceptD04Contract,submitD04Contract,D04_MAIL,D04_STEP} from '../src/story/d04/contract.js';
 import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
-import {authorize,begin} from '../src/apps/ghost/state.js';
+import {authorize,begin,finish} from '../src/apps/ghost/state.js';
+import {veilPlan} from '../src/system/remote-control/veil-solver.js';
 import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
 
 const rng=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
@@ -181,4 +182,48 @@ test('real D15 CIPHER passes through KIRA, new arcade tap, READY, manual bank pa
  assert.equal(submitD04Contract(s,id),true);
  assert.equal(s.bankData.balance,balance+650);
  assert.equal(submitD04Contract(s,id),false);
+});
+
+test('D16 A-tier progresses original LINK into OSS CIPHER and scanner maze, pays only after Mirage submission',()=>{
+ const s=activateStory55(initialState());s.day=16;s.clock='12:00';
+ seedD04Contracts(s);
+ const orderId='M-007';
+ assert.equal(acceptD04Contract(s,orderId),true);
+ const first=openCommissionWithGhost(s,D04_MAIL(orderId));
+ assert.equal(first,D04_STEP(orderId,0));
+ const now=Date.now();
+ assert.equal(begin(s,first,now),true);
+ assert.equal(s.ghost.orders[first].type,'route');
+ assert.equal(s.ghost.orders[first].board?.size,5,'original pipe generator must remain active');
+ finish(s,first,true,now+100);
+ const cipher=D04_STEP(orderId,1);
+ assert.equal(s.ghost.orders[cipher].type,'cipher');
+ assert.equal(begin(s,cipher,now+200),true);
+ assert.equal(s.ghost.orders[cipher].board.arcade?.kind,'cipher-slide');
+ s.ghost.orders[cipher].board.arcade.tiles=[0,1,2,3,4,5,6,8,7];
+ s.ghost.orders[cipher].board.arcade.empty=7;
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
+ let loc={appId:'ghost',route:'/run',params:{orderId:cipher}};
+ handleGhost('gh-arcade-tap',{dataset:{value:'8'}},ctx,loc);
+ assert.equal(s.ghost.orders[cipher].status,'success');
+ const veil=D04_STEP(orderId,2);
+ assert.equal(s.ghost.orders[veil].type,'veil');
+ assert.equal(begin(s,veil,Date.now()),true);
+ const board=s.ghost.orders[veil].board.arcade;
+ assert.equal(board.kind,'veil-maze');
+ assert.equal(board.size,7);
+ const path=veilPlan(board);
+ assert.ok(Array.isArray(path)&&path.length>0);
+ loc={appId:'ghost',route:'/run',params:{orderId:veil}};
+ const startingBalance=s.bankData.balance;
+ for(const direction of path){
+  handleGhost('gh-arcade-step',{dataset:{value:direction}},ctx,loc);
+ }
+ assert.equal(s.ghost.orders[veil].status,'success');
+ assert.equal(s.content.orders.find(x=>x.id===orderId).status,'READY');
+ assert.equal(s.bankData.balance,startingBalance,'no early bank payouts');
+ assert.equal(submitD04Contract(s,orderId),true);
+ assert.equal(s.bankData.balance,startingBalance+6800);
+ assert.equal(submitD04Contract(s,orderId),false);
+ assert.equal(s.bankData.transactions.filter(x=>x.id.endsWith(orderId)).length,1);
 });
