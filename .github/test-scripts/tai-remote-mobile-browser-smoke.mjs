@@ -136,6 +136,9 @@ try{
    s.story55?.ghostShare?.remote?.active===false;
  },{key,orderId:controlOrder},{timeout:155000});
  await page.locator('#status-layer .island-remote').waitFor({state:'detached',timeout:15000});
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ assert.equal(await page.locator('#screen-layer form[data-form="mc-login"]').count(),0,
+  'remote return must restore the signed-in MIRAGE conversation, not the login screen');
  await screenshot('05-returned-to-mirage');
  const done=await state(),run=done.ghost.orders[controlOrder];
  assert.equal(run.status,'success');
