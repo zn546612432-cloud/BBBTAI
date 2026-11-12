@@ -33,3 +33,32 @@ Mechanics research references (each upstream project identifies an MIT license):
 This is **not** a GitHub-native fork operation; it is an **in-repository reimplementation of game-mechanics ideas**. No upstream source files, images, audio, fonts, or other assets are copied into the project. This project supplies its own UI, game engine and validation tests. Source licenses are not substituted for a license covering unrelated parts of BBBTAI.
 
 Existing completed or in-progress orders retain their persisted legacy board and UI. The D01 pipe puzzle, fixed flow-deployment UI and associated mission/financial handlers remain separate.
+
+## November 2026 — Ghost Arcade 3 / locally ported upstream engines
+
+Arcade 2.0 above remains accurate **for legacy attempts and historical screenshots**.
+New D15–D55 market contracts opt into the actual, locally integrated source ports
+rather than merely referencing game ideas:
+
+- CIPHER: MIT Classic Puzzle Maker (Krish Lalwani), legal empty-slot shuffling
+  and tile moves ported from `fifteen_puzzle.js`. Keeps Ghost's circuit imagery
+  and shared result handler; no unsolvable permutation or fixed two-swap limit.
+- VEIL: MIT OpenGames Labyrinth `labyrinth/logic.js` DFS maze generator and
+  reciprocal-wall movement ported directly to `vendor/opengames-mechanics.js`;
+  Ghost adds per-board scanner trails and checks reachable exit with time phase.
+- EXTRACT: MIT OpenGames Memory `memory/game.js` two-of-each deck, true
+  Fisher–Yates shuffle and timed mismatch reset; pair counts vary with tier.
+- STRIKE: MIT OpenGames Whac-A-Mole `whac-a-mole/game.js` uniform nonrepeat
+  target spawn and progressively shortening reaction window; Ghost's existing
+  application tick (not a second clock) advances moving targets.
+
+The local engine wrappers live in `arcade-upstream.js` and
+`vendor/puzzle-slide.js`, with full upstream MIT notices preserved in
+`vendor/OPEN_SOURCE_LICENSES.md`. No third-party page, runtime network call,
+iframe, media asset or separate game store is added. Source attribution and
+licenses apply only to credited ports, not the rest of the repository.
+
+**Activation:** newly begun D15–D55 authored Ghost stages set
+`arcadeV3: true`. Earlier storyline stages, old saved boards and previously
+running attempts preserve their existing play and checkpoint logic.
+LINK/Pipe Puzzle was deliberately untouched, as requested.
