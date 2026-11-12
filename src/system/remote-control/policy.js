@@ -22,9 +22,15 @@ export function taiRemoteOrderAllowed(s,o){
  return true;
 }
 export function taiRemoteCanOperateOrder(s,o){
- return taiRemoteOrderAllowed(s,o)&&
-  ['authorized','failed','running'].includes(o.status)&&
-  (!o.requiresKeyEntry||o.keyVerified);
+ if(!taiRemoteOrderAllowed(s,o)||!['authorized','failed','running'].includes(o.status)||
+    (o.requiresKeyEntry&&!o.keyVerified))return false;
+ if(o.type==='strike'&&o.status==='running'){
+  const b=o.board.arcade;
+  // A midway share cannot take over a target sequence it cannot finish.
+  return Number.isFinite(o.deadline)&&
+   o.deadline-Date.now()>=Math.max(0,b.goal-b.hits)*900+1500;
+ }
+ return true;
 }
 export function taiRemoteUpcomingProjectStepAllowed(s,type,projectId){
  return TAI_REMOTE_GHOST_TYPES.includes(type)&&
