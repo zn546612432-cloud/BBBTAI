@@ -9,6 +9,7 @@ import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-message
 import {date55} from '../../services/story55/state.js';
 import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
+import {solveCipherTiles} from './cipher-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
 
@@ -16,7 +17,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
 const composerReady=doc=>isMirageAuthenticated()&&!!doc?.querySelector?.('#screen-layer .mc-composer input[name="text"]');
-const eligibleOrder=o=>o?.type==='route'&&['authorized','failed','running'].includes(o.status)&&
+const eligibleOrder=o=>['route','cipher'].includes(o?.type)&&['authorized','failed','running'].includes(o.status)&&
  (!o.requiresKeyEntry||o.keyVerified);
 function possibleLink(s){
  const source=s.story55?.ghostShare?.source;
@@ -29,7 +30,7 @@ function possibleLink(s){
  if(!ready.canStart||!project)return false;
  const batch=deployment(s,source.projectId).batches?.[ready.batch],
   step=project.steps.findIndex((_,i)=>!batch?.steps?.[i]);
- return project.steps[step]==='route';
+ return ['route','cipher'].includes(project.steps[step]);
 }
 
 // One safe reconciliation for browser reloads or abandoned phone tabs.
@@ -107,8 +108,9 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   phone.append(cursor);
   return cursor;
  }
- async function tapVisual(index){
-  const btn=doc.querySelector('#screen-layer [data-action="gh-pipe"][data-index="'+index+'"]');
+ async function tapVisual(index,action='gh-pipe'){
+  if(!['gh-pipe','gh-tile'].includes(action))throw Error('remote_action_not_allowed');
+  const btn=doc.querySelector('#screen-layer [data-action="'+action+'"][data-index="'+index+'"]');
   const phone=doc.querySelector('#phone'),pointer=finger();
   if(!btn||!phone||!pointer)throw Error('pipe_button_not_visible');
   const frame=phone.getBoundingClientRect(),box=btn.getBoundingClientRect();
@@ -120,7 +122,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   pointer.classList.add('is-tapping');
   await delay(120);
   assertRunning();
-  tool('remote_rotate_pipe',{index});
+  tool(action==='gh-pipe'?'remote_rotate_pipe':'remote_tap_cipher_tile',{index});
   pointer.classList.remove('is-tapping');
   await delay(360);
  }
@@ -208,25 +210,41 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   await delay(320);assertRunning();
   tool('remote_press_ghost',{action:'gh-start'});
   await delay(350);assertRunning();
-  const target=tool('remote_read_link');
-  if(target.status!=='running'||!target.board?.masks?.length)throw Error('link_board_not_running');
+  const run=store.get().ghost?.orders?.[id];
+  if(!run||!['route','cipher'].includes(run.type))throw Error('unsupported_ghost_order');
+  const target=tool(run.type==='route'?'remote_read_link':'remote_read_cipher');
+  if(target.status!=='running'||!(run.type==='route'?
+      target.board?.masks?.length:target.board?.tiles?.length))
+   throw Error('ghost_board_not_running');
   moveStage('running',target.orderId);
   return target.orderId;
  }
  async function solve(id){
-  const initial=store.get().ghost.orders[id]?.board;
-  const plan=solveLinkPipe(initial);
-  if(!plan)throw Error('link_solution_not_found');
-  for(const item of plan){
-   for(let turn=0;turn<item.turns;turn++){
-    assertRunning();
-    const o=store.get().ghost?.orders?.[id];
-    if(!o||o.status!=='running')break;
-    await tapVisual(item.index);
+  const run=store.get().ghost.orders[id],initial=run?.board;
+  if(run?.type==='route'){
+   const plan=solveLinkPipe(initial);
+   if(!plan)throw Error('link_solution_not_found');
+   for(const item of plan){
+    for(let turn=0;turn<item.turns;turn++){
+     assertRunning();
+     const o=store.get().ghost?.orders?.[id];
+     if(!o||o.status!=='running')break;
+     await tapVisual(item.index);
+    }
    }
-  }
-  // Original GHOST tick completes preview-win after three real seconds;
-  // the runner never calls finish() or posts a reward.
+  }else if(run?.type==='cipher'){
+   const plan=solveCipherTiles(initial);
+   if(!plan?.length)throw Error('cipher_solution_not_found');
+   for(const {first,second} of plan){
+    assertRunning();
+    if(store.get().ghost?.orders?.[id]?.status!=='running')break;
+    await tapVisual(first,'gh-tile');
+    assertRunning();
+    await tapVisual(second,'gh-tile');
+   }
+  }else throw Error('unsupported_ghost_order');
+  // The original GHOST handlers own success and settlement (LINK also
+  // requires a preview delay). The operator must never call finish().
   for(let i=0;i<36;i++){
    assertRunning();
    const o=store.get().ghost?.orders?.[id];
