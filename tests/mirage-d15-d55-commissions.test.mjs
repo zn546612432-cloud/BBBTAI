@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
+import {finish} from '../src/apps/ghost/state.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {D15_D55_CONTRACTS,D15_D55_RESTRICTED} from '../src/story/d15-d55/commissions.js';
 import {
@@ -73,13 +74,16 @@ test('D15 commissions take the original KIRA attachment, GHOST stages and one ba
  const first=openCommissionWithGhost(s,D04_MAIL(c.id));
  assert.equal(first,D04_STEP(c.id,0));
  assert.equal(commissionAttachment(s,D04_MAIL(c.id)).name,c.attachment);
- assert.equal(s.ghost.orders[first].story55Commission,true);
+ assert.equal(s.ghost.orders[first].story55Commission,undefined);
  assert.equal(taiRemoteOrderAllowed(s,s.ghost.orders[first]),true);
  for(let i=0;i<c.stages.length;i++){
   const step=D04_STEP(c.id,i);
   assert.equal(s.ghost.orders[step].type,c.stages[i]);
-  s.ghost.orders[step].status='success';
-  assert.equal(onD04GhostWin(s,step),true);
+  s.ghost.orders[step].status='running';
+  const balance=s.bankData.balance;
+  finish(s,step,true,1000+i*1000);
+  assert.equal(s.bankData.balance,balance,'no payout before submitting whole order');
+  assert.equal(s.ghost.orders[step].status,'success');
  }
  assert.equal(get(s,c.id).status,'READY');
  // Completion on time, submission after the deadline: retain completed work.
@@ -91,6 +95,7 @@ test('D15 commissions take the original KIRA attachment, GHOST stages and one ba
  assert.equal(s.bankData.balance,before+c.amount);
  assert.equal(submitD04Contract(s,c.id),false);
  assert.equal(s.bankData.transactions.filter(x=>x.id.endsWith(c.id)).length,1);
+ assert.ok(!s.bankData.transactions.some(x=>x.amount===20000&&x.id.startsWith(c.id)), 'no legacy $20k shortcut');
  assert.equal(s.content.mail.filter(m=>m.id==='d04-receipt-'+c.id).length,1);
 });
 test('uncompleted S contracts expire at midnight without duplicate payouts',()=>{
