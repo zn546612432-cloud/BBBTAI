@@ -88,6 +88,8 @@ function d03BountyActions(s,o){
 function d04BountyActions(s,o){
  const def=D04_CONTRACTS.find(x=>x.id===o.id);if(!def)return '';
  const done=def.stages.filter((_,i)=>s.ghost?.orders?.[D04_STEP(o.id,i)]?.status==='success').length;
+ if(def.marketDaily&&o.status==='ACCEPTED')return '<p class="mc-brief">密鑰附件已寄送 · 等待交付</p>'+btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
+ if(def.marketDaily&&o.status==='READY')return '<p class="mc-brief">成果待提交 · 未結算</p>';
  if(o.status==='ACCEPTED')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · '+def.stages.map(x=>({cipher:'破譯',veil:'隱匿',route:'連結',extract:'竊取',strike:'攻擊'})[x]||x).join(' → ')+'</p>'
   +btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
  if(o.status==='READY')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · READY TO SUBMIT</p>';
