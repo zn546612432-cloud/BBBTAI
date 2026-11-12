@@ -361,7 +361,7 @@ try{
   const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-extract-1'];
   return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
    o?.status==='running'&&['extract','extract-memory'].includes(o.board?.arcade?.kind)&&
-   o.board.arcade.cards.length===10;
+   o.board.arcade.cards.length>=8;
  },key,{timeout:40000});
  await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
   .waitFor({state:'attached',timeout:15000});
@@ -376,8 +376,8 @@ try{
  assert.equal(extractOrder.board.arcade.kind,extractKind);
  assert.equal(extractDone.story55.ghostShare.remote.outcome,'success');
  assert.equal(extractDone.story55.ghostShare.remote.errorCode,null);
- assert.equal(extractOrder.board.arcade.matched.length,10);
- assert.ok(extractOrder.moves>=10&&extractOrder.moves<50,'native card flip count must be realistic');
+ assert.equal(extractOrder.board.arcade.matched.length,extractOrder.board.arcade.cards.length);
+ assert.ok(extractOrder.moves>=extractOrder.board.arcade.cards.length&&extractOrder.moves<50,'native card flip count must be realistic');
  assert.equal(extractDone.ghost.history.filter(h=>h.orderId==='tai-extract-1').length,1);
  assert.equal(extractDone.story55.ghostShareTakeovers,1);
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});

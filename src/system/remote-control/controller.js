@@ -268,7 +268,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
       target.board?.tiles?.length:run.type==='veil'?
       (target.board?.kind==='veil'||target.board?.kind==='veil-maze'||target.board?.kind==='legacy-keypad'):
       run.type==='extract'?
-      (target.board?.kind==='extract'||target.board?.kind==='legacy-fingerprint'):
+      (target.board?.kind==='extract'||target.board?.kind==='extract-memory'||target.board?.kind==='legacy-fingerprint'):
       run.type==='strike'?target.board?.kind==='strike':
       target.board?.target?.length===4&&target.board?.tokens?.length===4))
    throw Error('ghost_board_not_running');
