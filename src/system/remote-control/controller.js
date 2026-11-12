@@ -193,12 +193,13 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
  }
  async function openAndStart(){
   const source=store.get().story55.ghostShare.source;
+  let id=selectedOrderId(store.get());
   await showTasks();
   assertRunning();
   if(source.type==='ghost-project'){
    tool('remote_open_ghost',{route:'/deployment'});
    await delay(330);assertRunning();
-   let id=selectedOrderId(store.get());
+   id=selectedOrderId(store.get());
    if(!id||!eligibleOrder(store.get().ghost?.orders?.[id])){
     tool('remote_press_ghost',{action:'s55-run-step'});
     await delay(380);assertRunning();
