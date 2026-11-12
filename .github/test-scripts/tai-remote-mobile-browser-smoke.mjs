@@ -33,7 +33,9 @@ if(!seed.content.conversations.mirage.some(c=>c.id==='s55-ouroboros')){
   id:'s55-ouroboros',name:'Dr Ouroboros',online:false,unread:0,messages:[]
  });
 }
-const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await chromium.launch({headless:true,
+ ...(process.env.TAI_REMOTE_CHROMIUM_PATH?{executablePath:process.env.TAI_REMOTE_CHROMIUM_PATH}:{}),
+ args:['--no-sandbox','--disable-dev-shm-usage']});
 const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
@@ -132,6 +134,27 @@ try{
  assert.equal(messageCount(await state()).filter(m=>m.id.endsWith('-remote-warning')).length,1);
  console.log('PASS competing real touch blocked, only one Tai warning delivered');
 
+ // Exercise the real app poll during a simulated visibility interval, with
+ // the original three-second preview due while hidden. This is Chromium
+ // integration coverage, not a claim of physical iOS lock-screen testing.
+ await page.waitForFunction(({key,id})=>JSON.parse(localStorage.getItem(key))?.ghost?.orders?.[id]?.status==='preview-win',
+  {key,id:controlOrder},{timeout:150000});
+ await page.evaluate(()=>{
+  Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+  document.dispatchEvent(new Event('visibilitychange'));
+ });
+ const paused=await state();
+ await page.waitForTimeout(3700);
+ const stillPaused=await state();
+ assert.equal(stillPaused.ghost.orders[controlOrder].status,'preview-win');
+ assert.equal(stillPaused.story55.ghostShare.remote.token,paused.story55.ghostShare.remote.token);
+ assert.equal(stillPaused.ghost.history.filter(h=>h.orderId===controlOrder).length,0);
+ await page.evaluate(()=>{
+  delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+ });
+ console.log('PASS original Ghost poll did not settle the LINK preview while visibility was paused');
+
  await page.waitForFunction(({key,orderId})=>{
   const s=JSON.parse(localStorage.getItem(key));
   return s?.ghost?.orders?.[orderId]?.status==='success'&&
@@ -172,6 +195,9 @@ try{
  });
  await page.reload({waitUntil:'domcontentloaded',timeout:60000});
  await unlock();
+ await page.locator('#screen-layer [data-action="gh-start"]').click();
+ await page.locator('#screen-layer [data-action="gh-tile"][data-index="2"]').click();
+ assert.equal((await state()).ghost.orders['tai-cipher-1'].board.selected,2);
  const cipherShare=page.locator('#screen-layer [data-action="gh-share"]');
  await cipherShare.waitFor({state:'visible',timeout:25000});
  await cipherShare.click();
@@ -204,7 +230,7 @@ try{
  },key,{timeout:60000});
  const cipherDone=await state(),order=cipherDone.ghost.orders['tai-cipher-1'];
  assert.deepEqual(order.board.tiles,[0,1,2,3,4,5,6,7,8]);
- assert.ok(order.moves>=2&&order.moves<=4,'original Ghost must receive 1-2 tile-swap pairs');
+ assert.ok(order.moves>=4&&order.moves<=6,'original Ghost receives user selection, native deselection, and 1-2 swap pairs');
  assert.equal(cipherDone.ghost.history.filter(h=>h.orderId==='tai-cipher-1').length,1);
  assert.equal(cipherDone.story55.ghostShareTakeovers,1);
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
@@ -494,6 +520,78 @@ try{
  await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
  await screenshot('15-verify-returned-to-mirage');
  console.log('PASS sixth playable GHOST type: four real VERIFY module taps, zero mistakes, one settlement, Mirage restored');
+ // Current default LINK, then replacement of a live paused controller. Each
+ // case gets its own browser context, with the same original phone handlers.
+ for(const mode of ['link-3x3','live-restore']){
+  await page.close();
+  const edgeContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
+   isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'});
+  page=await edgeContext.newPage();page.setDefaultTimeout(30000);
+  page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+  const edgeSeed=structuredClone(seed),id='tai-'+mode;
+  edgeSeed.ghost.orders[id]={id,type:'route',key:'GH-EDGE',status:'authorized',attempts:0,
+   settings:{seconds:null,...(mode==='live-restore'?{pipeNetwork:true,pipeSize:7}:{})}};
+  edgeSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:id}};
+  await page.addInitScript(({key,seed})=>{
+   if(!localStorage.getItem(key))localStorage.setItem(key,seed);
+   Math.random=()=>.02;
+  },{key,seed:JSON.stringify(edgeSeed)});
+  await page.goto(url,{waitUntil:'domcontentloaded'});
+  if(mode==='live-restore')await page.evaluate(async()=>{
+   const {PhoneStore}=await import('/src/services/storage.js');
+   const get=PhoneStore.prototype.get;
+   PhoneStore.prototype.get=function(){globalThis.__taiQAStore=this;return get.call(this);};
+  });
+  await unlock();
+  await page.locator('#screen-layer [data-action="gh-share"]').click();
+  await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible'});
+  await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+  for(const line of lines){
+   await page.waitForFunction(expected=>{
+    const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+    return input?.value===expected&&!input.disabled;
+   },line,{timeout:45000});
+   await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+  }
+  await page.waitForFunction(({key,id})=>{
+   const s=JSON.parse(localStorage.getItem(key));
+   return s?.ghost?.orders?.[id]?.status==='running'&&s.story55?.ghostShare?.remote?.orderId===id;
+  },{key,id},{timeout:45000});
+  if(mode==='link-3x3'){
+   assert.equal((await state()).ghost.orders[id].board.size,undefined);
+   await page.waitForFunction(({key,id})=>{
+    const s=JSON.parse(localStorage.getItem(key));
+    return s?.ghost?.orders?.[id]?.status==='success'&&s.story55?.ghostShare?.phase==='complete';
+   },{key,id},{timeout:90000});
+   const edgeDone=await state();
+   assert.equal(edgeDone.ghost.orders[id].attempts,1);
+   assert.equal(edgeDone.ghost.history.filter(h=>h.orderId===id).length,1);
+   await screenshot('16-current-default-3x3-link');
+   console.log('PASS current default 3x3 LINK finishes through original buttons, without converting its board');
+  }else{
+   const restoredOrder=await page.evaluate(id=>{
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+    document.dispatchEvent(new Event('visibilitychange'));
+    const backup=structuredClone(globalThis.__taiQAStore.get());
+    globalThis.__taiQAStore.replace(backup);
+    delete document.hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+    return backup.ghost.orders[id];
+   },id);
+   await page.waitForTimeout(1100);
+   const replaced=await state();
+   assert.equal(replaced.story55.ghostShare.phase,'interrupted');
+   assert.equal(replaced.story55.ghostShare.remote.active,false);
+   assert.equal(replaced.story55.ghostShareTakeovers,1);
+   assert.deepEqual(replaced.ghost.orders[id],restoredOrder,'old controller must not click after restore');
+   assert.equal(await page.locator('.tai-remote-finger').count(),0);
+   assert.equal(await page.locator('#status-layer .island-remote').count(),0);
+   await page.locator('#screen-layer [data-action="gh-exit"]').click();
+   await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k))?.nav?.current?.route!=='/run',key);
+   await screenshot('17-live-restore-input-released');
+   console.log('PASS restoring an active paused backup cancels old clicks and unlocks real phone navigation');
+  }
+ }
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
 }catch(error){

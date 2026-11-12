@@ -16,6 +16,11 @@ function sharedOrder(s,p){
  if(source.type==='ghost-project'&&o.story55Project!==source.projectId)return null;
  return o;
 }
+// Both the app's 250ms poll and the world tick must honor this SAME pause.
+export function isTaiRemoteOrderPaused(s,o){
+ const p=s?.story55?.ghostShare;
+ return !!(o&&active(p)&&Number.isFinite(p.remote.pausedAt)&&sharedOrder(s,p)?.id===o.id);
+}
 function shiftTimestamp(target,key,elapsed){
  if(Number.isFinite(target?.[key])&&target[key]>0)
   target[key]+=elapsed;
@@ -50,22 +55,26 @@ export function resumeTaiRemoteOnShow(s,now=Date.now()){
 // It is not a new storyline clock. On hidden tabs, Chrome may throttle or
 // freeze timers; the remaining delay resumes when the SAME page is visible.
 export function createTaiForegroundDelay(doc){
- function waitVisible(){
+ function waitVisible(signal){
+  signal?.throwIfAborted();
   if(!doc.hidden)return Promise.resolve();
-  return new Promise(resolve=>{
+  return new Promise((resolve,reject)=>{
+   const cleanup=()=>{doc.removeEventListener('visibilitychange',onVisible);signal?.removeEventListener('abort',onAbort);};
+   const onAbort=()=>{cleanup();reject(signal.reason);};
    const onVisible=()=>{
-    if(!doc.hidden){doc.removeEventListener('visibilitychange',onVisible);resolve();}
+    if(!doc.hidden){cleanup();resolve();}
    };
    doc.addEventListener('visibilitychange',onVisible);
+   signal?.addEventListener('abort',onAbort,{once:true});
    onVisible();
   });
  }
- return async function foregroundDelay(ms){
+ return async function foregroundDelay(ms,signal){
   let remaining=Math.max(0,Number(ms)||0);
   while(remaining>0){
-   await waitVisible();
+   await waitVisible(signal);
    const start=Date.now();
-   const elapsed=await new Promise(resolve=>{
+   const elapsed=await new Promise((resolve,reject)=>{
     let done=false;
     let timer;
     const complete=()=>{
@@ -73,15 +82,24 @@ export function createTaiForegroundDelay(doc){
      done=true;
      clearTimeout(timer);
      doc.removeEventListener('visibilitychange',onHide);
+     signal?.removeEventListener('abort',onAbort);
      resolve(Math.max(0,Date.now()-start));
+    };
+    const onAbort=()=>{
+     if(done)return;
+     done=true;clearTimeout(timer);
+     doc.removeEventListener('visibilitychange',onHide);
+     reject(signal.reason);
     };
     const onHide=()=>{if(doc.hidden)complete();};
     doc.addEventListener('visibilitychange',onHide);
+    signal?.addEventListener('abort',onAbort,{once:true});
+    if(signal?.aborted){onAbort();return;}
     if(doc.hidden)complete();
     else timer=setTimeout(complete,remaining);
    });
    remaining=Math.max(0,remaining-elapsed);
   }
-  await waitVisible();
+  await waitVisible(signal);
  };
 }
