@@ -116,3 +116,11 @@
 .gh-arcade-maze .gh-arcade-tile{border-radius:0;font-size:clamp(11px,3.3vw,16px);aspect-ratio:1;min-width:0}
 .gh-arcade-maze .gh-arcade-tile.scanner{box-shadow:inset 0 0 12px #ff564166}
 .gh-arcade-maze .gh-arcade-tile.player{box-shadow:inset 0 0 12px #86f3d36b}
+
+/* Ghost's native in-phone confirmation; no new route, global dialog or share flow. */
+.app-ghost .gh-share-overlay{position:absolute;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(2,10,9,.76);backdrop-filter:blur(5px)}
+.app-ghost .gh-share-dialog{width:min(100%,300px);border:1px solid #567a6d;border-radius:10px;background:#10251e;color:#d5eee3;box-shadow:0 15px 48px #0009;padding:24px 18px}
+.app-ghost .gh-share-dialog p{margin:0 0 22px;text-align:center;line-height:1.5;font-size:15px}
+.app-ghost .gh-share-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app-ghost .gh-share-actions .gh-button{min-height:44px;border:1px solid #47756b;border-radius:6px;background:#173830;color:#c9e8dd;font-size:15px}
+.app-ghost .gh-share-actions .gh-primary{background:#a2d1bd;color:#10231d;border-color:#a2d1bd}

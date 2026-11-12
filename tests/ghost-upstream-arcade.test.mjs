@@ -10,7 +10,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {seedD04Contracts,acceptD04Contract,submitD04Contract,D04_MAIL,D04_STEP} from '../src/story/d04/contract.js';
 import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
-import {authorize,begin,finish} from '../src/apps/ghost/state.js';
+import {authorize,begin,finish,restoreCipherSwapBoard} from '../src/apps/ghost/state.js';
 import {veilPlan} from '../src/system/remote-control/veil-solver.js';
 import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
 
@@ -158,7 +158,7 @@ test('existing D01–D14 and persisted legacy Ghost boards keep the old engine',
  const veil=createArcadeBoard('veil',rng(5));
  assert.equal(extract.kind,'extract');assert.equal(veil.kind,'veil');
 });
-test('real D15 CIPHER passes through KIRA, new arcade tap, READY, manual bank payout once',()=>{
+test('real D15 CIPHER keeps original nine-tile two-click exchange, and pays only on Mirage submission',()=>{
  const s=activateStory55(initialState());
  s.day=15;s.clock='12:00';seedD04Contracts(s);
  const id='M-001';
@@ -168,17 +168,23 @@ test('real D15 CIPHER passes through KIRA, new arcade tap, READY, manual bank pa
  const now=Date.now();
  assert.equal(begin(s,step,now),true);
  const run=s.ghost.orders[step];
- assert.equal(run.board.arcade?.kind,'cipher-slide');
+ assert.equal(run.board.arcade,undefined);
+ assert.equal(run.board.tiles.length,9);
+ assert.equal(run.settings.cipherSwaps,2);
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
  const loc={appId:'ghost',route:'/run',params:{orderId:step}};
  const html=renderGhost(ctx,loc);
- assert.match(html,/gh-arcade-slide/);
- assert.ok(!html.includes('data-action="gh-tile"'));
- run.board.arcade.tiles=[0,1,2,3,4,5,6,8,7];run.board.arcade.empty=7;
+ assert.match(html,/data-action="gh-tile"/);
+ assert.doesNotMatch(html,/gh-arcade-slide/);
  const balance=s.bankData.balance;
- handleGhost('gh-arcade-tap',{dataset:{value:'8'}},ctx,loc);
+ for(let i=0;i<9&&run.status==='running';i++){
+  if(run.board.tiles[i]===i)continue;
+  const j=run.board.tiles.indexOf(i);
+  handleGhost('gh-tile',{dataset:{index:String(i)}},ctx,loc);
+  handleGhost('gh-tile',{dataset:{index:String(j)}},ctx,loc);
+ }
  assert.equal(s.content.orders.find(o=>o.id===id).status,'READY');
- assert.equal(s.bankData.balance,balance,'no early $20k grant');
+ assert.equal(s.bankData.balance,balance,'no early payout');
  assert.equal(submitD04Contract(s,id),true);
  assert.equal(s.bankData.balance,balance+650);
  assert.equal(submitD04Contract(s,id),false);
@@ -199,12 +205,17 @@ test('D16 A-tier progresses original LINK into OSS CIPHER and scanner maze, pays
  const cipher=D04_STEP(orderId,1);
  assert.equal(s.ghost.orders[cipher].type,'cipher');
  assert.equal(begin(s,cipher,now+200),true);
- assert.equal(s.ghost.orders[cipher].board.arcade?.kind,'cipher-slide');
- s.ghost.orders[cipher].board.arcade.tiles=[0,1,2,3,4,5,6,8,7];
- s.ghost.orders[cipher].board.arcade.empty=7;
+ assert.equal(s.ghost.orders[cipher].board.arcade,undefined);
+ assert.equal(s.ghost.orders[cipher].settings.cipherSwaps,4);
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
  let loc={appId:'ghost',route:'/run',params:{orderId:cipher}};
- handleGhost('gh-arcade-tap',{dataset:{value:'8'}},ctx,loc);
+ const run=s.ghost.orders[cipher];
+ for(let i=0;i<9&&run.status==='running';i++){
+  if(run.board.tiles[i]===i)continue;
+  const j=run.board.tiles.indexOf(i);
+  handleGhost('gh-tile',{dataset:{index:String(i)}},ctx,loc);
+  handleGhost('gh-tile',{dataset:{index:String(j)}},ctx,loc);
+ }
  assert.equal(s.ghost.orders[cipher].status,'success');
  const veil=D04_STEP(orderId,2);
  assert.equal(s.ghost.orders[veil].type,'veil');
@@ -226,4 +237,40 @@ test('D16 A-tier progresses original LINK into OSS CIPHER and scanner maze, pays
  assert.equal(s.bankData.balance,startingBalance+6800);
  assert.equal(submitD04Contract(s,orderId),false);
  assert.equal(s.bankData.transactions.filter(x=>x.id.endsWith(orderId)).length,1);
+});
+
+test('upgrade an existing running 8+empty slide into the original 9-module swap without resetting order progress',()=>{
+ const s=activateStory55(initialState());s.day=15;s.clock='08:57';
+ s.ghost.orders['M-001-stage-1']={
+  id:'M-001-stage-1',type:'cipher',status:'running',attempts:3,
+  moves:10,startedAt:1000,deadline:null,settings:{arcadeV3:true},
+  board:{tiles:[1,0,2,3,4,5,6,7,8],selected:null,
+   arcade:{kind:'cipher-slide',upstream:true,size:3,
+    tiles:[5,1,6,0,2,3,8,4,7],empty:6,steps:10}}
+ };
+ const before=structuredClone(s.ghost.orders['M-001-stage-1']);
+ assert.equal(restoreCipherSwapBoard(s,'M-001-stage-1'),true);
+ const after=s.ghost.orders['M-001-stage-1'];
+ assert.deepEqual(after.board.tiles,before.board.arcade.tiles);
+ assert.equal(after.board.arcade,undefined);
+ assert.equal(after.moves,10);
+ assert.equal(after.attempts,3);
+ assert.equal(after.startedAt,1000);
+ assert.equal(after.deadline,null);
+ assert.equal(restoreCipherSwapBoard(s,'M-001-stage-1'),false);
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{}};
+ assert.match(renderGhost(ctx,{appId:'ghost',route:'/run',params:{orderId:after.id}}),/data-action="gh-tile"/);
+});
+test('SABC CIPHER swap puzzles have no blank slot and use randomized but solvable pairs',async()=>{
+ const {createBoard}=await import('../src/apps/ghost/games/logic.js');
+ for(const swaps of [2,3,4]){
+  const signatures=new Set();
+  for(let seed=1;seed<90;seed++){
+   const b=createBoard('cipher',{cipherSwaps:swaps},rng(seed*7919));
+   assert.deepEqual([...b.tiles].sort((x,y)=>x-y),[0,1,2,3,4,5,6,7,8]);
+   assert.equal(b.tiles.filter((x,i)=>x!==i).length,swaps*2);
+   signatures.add(b.tiles.join(''));
+  }
+  assert.ok(signatures.size>=60,'grade '+swaps+' should have many random layouts');
+ }
 });

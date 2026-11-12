@@ -7,7 +7,7 @@ import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scrip
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
 import {render as renderMirage,handle as handleMirage,submit as submitMirage} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
-import {render as renderGhost} from '../src/apps/ghost/index.js';
+import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
 
 function fixture(day=16,clock='08:20'){
  const s=initialState();activateStory55(s);s.day=day;s.clock=clock;s.unlocked=true;
@@ -184,4 +184,27 @@ test('remote takeover removes wait-only input disabling while exclusive control 
   assert.ok(nativeForm.includes('name="text"'));
   assert.doesNotMatch(nativeForm,/<input[^>]*\sdisabled(?:\s|>)/,'HTML FormData must include the input while Tai types');
  }finally{setMirageAuthenticated(false);}
+});
+
+test('share icon asks Yes or No before creating a MIRAGE card on the existing project screen',()=>{
+ const s=fixture();s.nav.current={appId:'ghost',route:'/deployment',params:{project:'base'}};
+ const loc={appId:'ghost',route:'/deployment',params:{project:'base'}};
+ const navigated=[],ctx={store:store(s),router:{open:entry=>navigated.push(entry)},refresh(){}};
+ const count=()=>chat(s).messages.filter(m=>m.kind==='ghost-project').length;
+ const original=count();
+ handleGhost('gh-share',{dataset:{}},ctx,loc);
+ assert.equal(count(),original,'tap alone must not transmit');
+ assert.match(renderGhost(ctx,loc),/是否分享到 MIRAGE？/);
+ assert.match(renderGhost(ctx,loc),/data-action="gh-share-yes"/);
+ assert.match(renderGhost(ctx,loc),/data-action="gh-share-no"/);
+ handleGhost('gh-share-no',{dataset:{}},ctx,loc);
+ assert.equal(count(),original);
+ assert.doesNotMatch(renderGhost(ctx,loc),/是否分享到 MIRAGE？/);
+ assert.equal(navigated.length,0,'No must not change app');
+ handleGhost('gh-share',{dataset:{}},ctx,loc);
+ handleGhost('gh-share-yes',{dataset:{}},ctx,loc);
+ assert.equal(count(),original+1,'Yes must create exactly one original share card');
+ assert.equal(navigated.length,1);
+ assert.equal(navigated[0].appId,'mirage');
+ assert.equal(navigated[0].route,'/chat/s55-ouroboros');
 });

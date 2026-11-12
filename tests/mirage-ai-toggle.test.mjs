@@ -67,3 +67,31 @@ test('MIRAGE scripted dialogue can progress while AI is OFF',()=>{
  assert.equal(mirageAIEnabled(s),false);advanceScene55(s,'invitation');
  assert.ok(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-invitation-0'));
 });
+
+test('Story55 D15 free Mirage chat now responds while online, but developer OFF and older days remain respected',async()=>{
+ const s=activateStory55(initialState());
+ s.day=16;s.clock='08:54';s.story55.activeScene=null;
+ s.story55.config={...s.story55.config,nodes:[]};
+ const c=s.content.conversations.mirage.find(x=>x.id==='s55-ouroboros')||
+  {id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};
+ if(!s.content.conversations.mirage.includes(c))s.content.conversations.mirage.push(c);
+ const id='human-hello';
+ c.messages.push({id,from:'me',text:'厲害',kind:'text',actual:true,day:s.day,time:s.clock});
+ const ctx={store:{get:()=>s,update:fn=>fn(s)}};
+ assert.equal(mirageAIEnabled(s),true,'online Story55 free chat should not require developer opt-in');
+ const previous=globalThis.fetch;
+ let n=0;
+ globalThis.fetch=async url=>{n++;return String(url).includes('/api/ai/status')?status():response('當然。')};
+ setMirageAuthenticated(true);
+ try{
+  assert.equal(await replyToOuroboros(ctx,c.id,id),1);
+  assert.equal(c.messages.at(-1).text,'當然。');
+  assert.equal(n,2);
+  setMirageAIEnabled(ctx.store,false);
+  const after=c.messages.length;
+  assert.equal(await replyToOuroboros(ctx,c.id,id),0);
+  assert.equal(c.messages.length,after);
+  s.day=14;delete s.developerSettings?.mirageAIReplies;
+  assert.equal(mirageAIEnabled(s),false,'D01-D14 remain unchanged');
+ }finally{globalThis.fetch=previous;setMirageAuthenticated(false);}
+});

@@ -13,6 +13,16 @@ import {pipeSolved} from './games/pipe-network.js';
 import {createArcadeBoard} from './games/arcade.js';
 import {upstreamArcadeSignature} from './games/arcade-upstream.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
+// One-time in-place compatibility for active sliding-CIPHER saves: all nine
+// modules and session metadata stay intact; only swap input is restored.
+export function restoreCipherSwapBoard(s,id){
+ const o=s.ghost?.orders?.[id],b=o?.board;
+ if(o?.type!=='cipher'||o.status!=='running'||b?.arcade?.kind!=='cipher-slide')return false;
+ const tiles=b.arcade.tiles;
+ if(!Array.isArray(tiles)||tiles.length!==9||new Set(tiles).size!==9||tiles.some(x=>!Number.isInteger(x)||x<0||x>8))return false;
+ b.tiles=[...tiles];b.selected=null;delete b.arcade;
+ return true;
+}
 export function configFor(s,type,id){return {...defaultConfig,...s.ghost?.config?.[type],...s.ghost?.orders?.[id]?.settings};}
 export function authorize(s,{orderId,mailId,type}){const g=ensureGhost(s);const selected=type||g.missionTypes?.[orderId]||'cipher';if(!g.orders[orderId])g.orders[orderId]={id:orderId,mailId,type:selected,key:'GH-'+orderId.replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase(),status:'authorized',attempts:0,settings:{...defaultConfig,...g.config[selected],...g.orderConfigs?.[orderId],...(linkedMission(s,orderId)?{retries:Number.MAX_SAFE_INTEGER}:{})}};return g.orders[orderId];}
 const boardSignature=(type,b)=>JSON.stringify(type==='cipher'?b.tiles:type==='route'?b.masks:type==='extract'?b.target:type==='veil'?b.code:type==='verify'?b.target:b.signature);
@@ -57,7 +67,7 @@ export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id]
  const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);
  // Keep the old board fields for existing story contracts and saved fixtures.
  // New attempts use the playable arcade engine; pre-existing attempts resume their old UI.
- if((['extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false)||o.type==='cipher'&&cfg.arcadeV3===true){
+ if(['extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false){
   let arcade=createArcadeBoard(o.type,Math.random,{upstream:cfg.arcadeV3===true,grade:cfg.grade||'B',now});
   if(cfg.arcadeV3===true){
    const used=g.usedArcadeSignatures??=( {} );

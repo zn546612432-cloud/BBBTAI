@@ -40,9 +40,10 @@ Arcade 2.0 above remains accurate **for legacy attempts and historical screensho
 New D15–D55 market contracts opt into the actual, locally integrated source ports
 rather than merely referencing game ideas:
 
-- CIPHER: MIT Classic Puzzle Maker (Krish Lalwani), legal empty-slot shuffling
-  and tile moves ported from `fifteen_puzzle.js`. Keeps Ghost's circuit imagery
-  and shared result handler; no unsolvable permutation or fixed two-swap limit.
+- CIPHER: the original BBBTAI nine-piece, two-tap exchange puzzle is restored
+  as requested. D15–D55 scramble 2–4 disjoint tile pairs by SABC grade;
+  the MIT sliding-puzzle source port remains in the repository for historical
+  compatibility but is **not** the currently presented player mechanic.
 - VEIL: MIT OpenGames Labyrinth `labyrinth/logic.js` DFS maze generator and
   reciprocal-wall movement ported directly to `vendor/opengames-mechanics.js`;
   Ghost adds per-board scanner trails and checks reachable exit with time phase.
