@@ -319,6 +319,89 @@ try{
  await screenshot('11-extract-returned-to-mirage');
  console.log('PASS fourth iPhone run: EXTRACT face-up card memory, original Ghost matching and single settlement');
 
+ // Fifth isolated browser run: live moving-target STRIKE.
+ // The original GHOST handler, not the operator, counts six cumulative hits.
+ const strikeSeed=structuredClone(seed);
+ strikeSeed.ghost.orders['tai-strike-1']={
+  id:'tai-strike-1',type:'strike',key:'GH-STRIKE',
+  story55Project:'strike-demo',status:'authorized',attempts:0,
+  settings:{seconds:45,retries:1000,rounds:1,arcadeV2:true}
+ };
+ strikeSeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-strike-1'}};
+ strikeSeed.nav.stack=[];strikeSeed.unlocked=false;
+ await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
+  key,json:JSON.stringify(strikeSeed)
+ });
+ await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ await unlock();
+ await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.script==='first'&&
+   s.story55.ghostShare.source.orderId==='tai-strike-1';
+ },key,{timeout:15000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-strike-1'];
+  return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
+   o?.status==='running'&&o.board?.arcade?.kind==='strike';
+ },key,{timeout:40000});
+ await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first()
+  .waitFor({state:'attached',timeout:15000});
+ await screenshot('12-strike-moving-target');
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-strike-1'];
+  return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
+   s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
+ },key,{timeout:80000});
+ const strikeDone=await state(),strikeOrder=strikeDone.ghost.orders['tai-strike-1'];
+ assert.equal(strikeOrder.board.arcade.kind,'strike');
+ assert.equal(strikeOrder.board.arcade.hits,6,'six cumulative hits');
+ assert.equal(strikeOrder.board.arcade.misses,0,'remote control must not miss');
+ assert.equal(strikeOrder.moves,6,'only six real Ghost target taps');
+ assert.equal(strikeOrder.attempts,1,'no restarting the original board');
+ assert.equal(strikeDone.ghost.history.filter(h=>h.orderId==='tai-strike-1').length,1);
+ assert.equal(strikeDone.story55.ghostShareTakeovers,1);
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ await screenshot('13-strike-returned-to-mirage');
+ console.log('PASS fifth iPhone run: six true STRIKE target clicks, zero misses, one native settlement, Mirage restored');
+
+ // Sixth isolated legacy STRIKE: no takeover, and crucially no automated
+ // start/time-based win. Share card may send; remote operator must refuse.
+ const oldStrike=structuredClone(seed);
+ oldStrike.ghost.orders['tai-strike-legacy']={
+  id:'tai-strike-legacy',type:'strike',key:'GH-OLD',
+  story55Project:'strike-demo',status:'authorized',attempts:0,
+  settings:{seconds:45,retries:1000,rounds:1,arcadeV2:false}
+ };
+ oldStrike.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-strike-legacy'}};
+ oldStrike.nav.stack=[];oldStrike.unlocked=false;
+ await page.evaluate(({key,json})=>localStorage.setItem(key,json),{key,json:JSON.stringify(oldStrike)});
+ await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ await unlock();
+ await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:20000});
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.phase==='unavailable'&&
+   s.ghost.orders['tai-strike-legacy']?.status==='authorized';
+ },key,{timeout:13000});
+ const legacyDone=await state();
+ assert.equal(legacyDone.ghost.orders['tai-strike-legacy'].attempts,0);
+ assert.equal(legacyDone.story55.ghostShareTakeovers||0,0);
+ console.log('PASS old STRIKE: no fake clicks, no start, no automatic win, no consumed takeover');
+
+
 
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
