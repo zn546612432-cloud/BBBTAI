@@ -200,7 +200,7 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
      .map(index=>({index,symbol:a.cards[index]}));
     // Never return the hidden cards list from the stored board.
     return {ok:true,data:{orderId:o.id,type:'extract',status:o.status,deadline:o.deadline,
-     board:{kind:'extract',cardCount:a.cards.length,
+     board:{kind:a.kind==='extract-memory'?'extract-memory':'extract',cardCount:a.cards.length,
       revealed:[...a.revealed],matched:[...a.matched],visible,
       lockUntil:a.lockUntil||0,errors:a.errors||0}}};
    }
