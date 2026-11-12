@@ -77,6 +77,7 @@ export function seedD04Contracts(s){
   s.content.orders.push({id:c.id,title:c.title,owner:c.owner,category:c.grade,reward:c.reward,
    status:completed(s,'wallet')&&c.id===D06_ORDER_ID?'COMPLETED':'OPEN',
    description:c.description,[storyTag(c)]:true,storyDay:publishDay(c),publishedClock:'00:00',
+    ...(c.marketDaily?{marketDaily:true}:{}),
    ...(c.deadline?{deadlineDay:c.deadline.day,deadlineClock:c.deadline.clock}:{})});
   changed=true;
  }
