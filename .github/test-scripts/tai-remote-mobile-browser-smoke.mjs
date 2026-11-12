@@ -41,7 +41,7 @@ const page=await browser.newPage({
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
-page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
+page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());if(m.type()==='warning')console.warn('BROWSER WARNING: '+m.text());});
 const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
 const screenshot=name=>page.screenshot({path:path+'/'+name+'.png',fullPage:true});
 async function unlock(){
@@ -158,6 +158,13 @@ try{
  console.error('TAI REMOTE MOBILE BROWSER FAILED:',error.stack||error);
  try{
   await screenshot('FAILED-browser-state');
+  const ui=await page.evaluate(()=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return {inputValue:input?.value,inputReadonly:input?.readOnly,storyStage:input?.dataset.storyStage,
+    formDataset:input?.form?.dataset?{...input.form.dataset}:null,
+    sendDisabled:input?.form?.querySelector('button[type="submit"]')?.disabled};
+  }).catch(()=>null);
+  console.error('MIRAGE UI:',JSON.stringify(ui));
   const s=await state();console.error('STORY STATE:',JSON.stringify({
    day:s?.day,clock:s?.clock,nav:s?.nav?.current,
    ghostShare:s?.story55?.ghostShare,
