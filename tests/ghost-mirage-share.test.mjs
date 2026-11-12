@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
-import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource} from '../src/services/story55/ghost-share.js';
+import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource,TAI_REMOTE_TYPED_LINE} from '../src/services/story55/ghost-share.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
 import {render as renderMirage,handle as handleMirage,submit as submitMirage} from '../src/apps/mirage/index.js';
@@ -126,4 +126,40 @@ test('native MessageDelivery releases NPC bubble only in the authenticated conve
  assert.equal(restored.story55.ghostShareTakeovers||0,0);
  assert.equal(ghostShareScriptLine(restored).text,'我想驗證一下你是不是azathoth');
  assert.equal(restored.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id===id).length,1);
+});
+
+test('first takeover uses the native MIRAGE Send path, displays Xi Meng as sender and never triggers scripted AI',()=>{
+ const s=fixture(),reply=shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10000});
+ assert.equal(reply.script,'first');
+ deliverNpc(s);sendNext(s);
+ deliverNpc(s);sendNext(s);
+ deliverNpc(s);sendNext(s);
+ assert.equal(ghostShareReadyForControl(s),true);
+ assert.equal(beginGhostShareControl(s),true);
+ s.story55.ghostShare.remote={active:true,stage:'typing',authorizedDay:16,warningShown:false};
+ s.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
+ const original=globalThis.FormData;
+ setMirageAuthenticated(true);
+ try{
+  globalThis.FormData=class {get(name){return name==='text'?TAI_REMOTE_TYPED_LINE:'';}};
+  const input={value:TAI_REMOTE_TYPED_LINE},form={dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}};
+  const ctx={store:store(s),toast:()=>{}};
+  const before=chat(s).messages.length;
+  submitMirage(form,ctx,{route:'/chat/s55-ouroboros'});
+  assert.equal(input.value,'','the native form clears after SEND');
+  assert.equal(chat(s).messages.length,before+1);
+  const outgoing=chat(s).messages.at(-1);
+  assert.equal(outgoing.id,reply.cardId+'-remote-typing');
+  assert.equal(outgoing.from,'me','Tai has used Xi Meng\'s signed-in account');
+  assert.equal(outgoing.text,TAI_REMOTE_TYPED_LINE);
+  assert.equal(s.story55.ghostShare.remote.stage,'sent');
+  assert.equal(s.events.filter(e=>e.type==='message_sent'&&e.messageId===outgoing.id).length,1);
+  assert.match(renderMirage({store:store(s)},{route:'/chat/s55-ouroboros'}),/閉嘴吧，熙蒙，現在我來操控你的手機/);
+  const rendered=renderMirage({store:store(s)},{route:'/chat/s55-ouroboros'});
+  assert.match(rendered,new RegExp('mc-clear-row message-row is-mine mine[^>]*data-key="message-'+outgoing.id+'"'));
+  // A second synthetic SEND cannot duplicate the bubble or produce a new NPC answer.
+  submitMirage(form,ctx,{route:'/chat/s55-ouroboros'});
+  assert.equal(chat(s).messages.filter(m=>m.id===outgoing.id).length,1);
+  assert.equal(chat(s).messages.length,before+1);
+ }finally{globalThis.FormData=original;setMirageAuthenticated(false);}
 });

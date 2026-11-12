@@ -127,6 +127,33 @@ export function sendGhostShareDraft(s,text){
  if(s.drafts)delete s.drafts[TAI_GHOST_THREAD];
  return 'ghost-share';
 }
+// Tai is controlling Xi Meng's phone and sends from Xi Meng's account.
+// Only the real MIRAGE composer submit path may call this during the authored
+// first takeover. It cannot trigger free-chat AI or NPC scripted replies.
+export const TAI_REMOTE_TYPED_LINE='閉嘴吧，熙蒙，現在我來操控你的手機';
+export function canSendGhostShareRemoteText(s,text){
+ const p=s.story55?.ghostShare;
+ return !!(p?.phase==='controlling'&&p.script==='first'&&p.remote?.active===true&&
+  p.remote.stage==='typing'&&s.nav?.current?.appId==='mirage'&&
+  s.nav.current.route==='/chat/'+TAI_GHOST_THREAD&&
+  String(text||'').trim()===TAI_REMOTE_TYPED_LINE);
+}
+export function sendGhostShareRemoteText(s,text){
+ if(!canSendGhostShareRemoteText(s,text))return false;
+ const p=s.story55.ghostShare;
+ const message=appendAuthoredPhoneMessage(s,{
+  channel:'mirage',conversationId:TAI_GHOST_THREAD,
+  messageId:p.cardId+'-remote-typing',from:'me',text:TAI_REMOTE_TYPED_LINE,
+  storyTag:'story55',day:s.day,clock:s.clock,sentDate:date55(s.day),notify:false
+ });
+ if(!message)return false;
+ // Record the real outgoing message once. The controller waits for this
+ // acknowledgement before it switches Apps and starts operating GHOST.
+ p.remote.stage='sent';
+ if(s.drafts)delete s.drafts[TAI_GHOST_THREAD];
+ return true;
+}
+
 // Stage 3 must drive the REAL phone operator before calling this handoff.
 // A random win or a scripted text reply alone cannot consume this counter.
 export function ghostShareReadyForControl(s){
