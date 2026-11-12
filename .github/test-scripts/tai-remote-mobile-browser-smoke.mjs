@@ -90,6 +90,7 @@ try{
  await screenshot('01-ghost-project-share-button');
  console.log('PASS iPhone unlocked into native GHOST project with real share button');
  await share.click();
+  await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k))?.story55?.ghostShare?.script==='first',key);
  assert.equal((await state()).story55.ghostShareTakeovers||0,0);
  console.log('PASS Ghost real project card sent, 50% roll selected the first authored dialogue');
@@ -215,6 +216,7 @@ try{
  const cipherShare=page.locator('#screen-layer [data-action="gh-share"]');
  await cipherShare.waitFor({state:'visible',timeout:25000});
  await cipherShare.click();
+  await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-cipher-1';
@@ -263,6 +265,7 @@ try{
  await resetPage(veilSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
+   await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&s.story55.ghostShare.source.orderId==='tai-veil-1';
@@ -315,6 +318,7 @@ try{
  await resetPage(extractSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
+   await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&
@@ -367,6 +371,7 @@ try{
  await resetPage(strikeSeed);
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
+   await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&
@@ -461,6 +466,7 @@ try{
  await unlock();
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
+   await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
   return s.story55?.ghostShare?.script==='first'&&
@@ -527,6 +533,7 @@ try{
   });
   await unlock();
   await page.locator('#screen-layer [data-action="gh-share"]').click();
+   await page.locator('#screen-layer [data-action="gh-share-yes"]').click();
   await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible'});
   await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
   for(const line of lines){
