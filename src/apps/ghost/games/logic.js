@@ -26,12 +26,12 @@ export function randomRouteSolution(random=Math.random){
 }
 export function createBoard(type,config,random=Math.random){
  if(type==='cipher'){
-  // Restore the original swap-to-repair circuit. Only 1–2 disjoint swaps
-  // rather than scrambling every tile, so it is immediately legible.
+  // Keep the original two-tile exchange puzzle; randomize more independent
+  // pairs for higher grades without changing how any piece is moved.
   const tiles=[0,1,2,3,4,5,6,7,8];
   const places=shuffle([...tiles],random);
   const requested=Math.floor(Number(config?.cipherSwaps??2));
-  const swapCount=Math.max(1,Math.min(2,Number.isFinite(requested)?requested:2));
+  const swapCount=Math.max(1,Math.min(4,Number.isFinite(requested)?requested:2));
   for(let i=0;i<swapCount*2;i+=2){
    const a=places[i],b=places[i+1];
    [tiles[a],tiles[b]]=[tiles[b],tiles[a]];
