@@ -64,7 +64,7 @@ jobs:
       - name: Touch-browser QA, real MIRAGE Send and GHOST LINK/CIPHER/VEIL/EXTRACT/STRIKE actions
         env:
           TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
-        run: node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
+        run: TAI_REMOTE_HEADED=1 xvfb-run -a -s '-screen 0 1440x1000x24' node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
       - name: Retain iPhone screenshots and local server log
         if: always()
         uses: actions/upload-artifact@v4
