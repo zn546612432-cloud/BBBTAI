@@ -33,7 +33,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-preview-node'){await saveTestSnapshotDurable(c.store.storage,c.store.get(),'节点预览前 · D'+c.store.get().day);c.store.update(s=>previewNode55(s,id));return true;}
  if(a==='s55-day'){const day=Number(t.dataset.day);if(!Number.isInteger(day)||day<1||day>55)throw Error('目标剧情日无效');await saveTestSnapshotDurable(c.store.storage,c.store.get(),'日期跳转前 · D'+c.store.get().day);c.store.update(s=>rebuildStory55AtDay(s,day,'08:00'));return true;}
  if(a==='s55-node'){const state=nodeStatus(c.store.get(),id);if(state.state==='locked')throw Error(state.reason);if(id==='recognition')c.store.update(s=>s.story55.noappInstalled=true);c.router.open(nodeLink55(c.store.get(),id));return true;}
- if(a==='s55-anonymous-chat'){c.store.update(s=>{s.story55.anonymousWindows??={};if(s.day>=15&&s.day<=24)s.story55.anonymousWindows[s.day]??=Date.now();});open(c,'mirage','/chat/s55-ouroboros');return true;}
+ if(a==='s55-anonymous-chat'){open(c,'mirage','/chat/s55-ouroboros');return true;}
  if(a==='s55-objectives'){open(c,'reminders','/');return true;}
  if(a==='s55-projects'){open(c,'ghost','/deployments');return true;}
  if(a==='s55-project'){open(c,'ghost','/deployment',{project});return true;}
