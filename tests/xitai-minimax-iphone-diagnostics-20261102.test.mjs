@@ -34,12 +34,12 @@ test('NoApp failed voice displays real explanation as visible text rather than a
  assert.match(html,/data-action="tai-convert-voice" data-id="failed"/);
  assert.doesNotMatch(html,/title="当前 iPhone 浏览器无法直连 MiniMax"/);
 });
-test('GitHub Pages missing MiniMax Key fails before a non-existent /api/voice/tts fetch',async()=>{
+test('Unconfigured third-party GitHub Pages host still fails before a non-existent local TTS endpoint',async()=>{
  const oldSession=globalThis.sessionStorage,oldLocation=globalThis.location,oldFetch=globalThis.fetch;
  let fetched=0;
  try{
   globalThis.sessionStorage={getItem(){return '{}';},setItem(){},removeItem(){}};
-  globalThis.location={hostname:'zn546612432-cloud.github.io'};
+  globalThis.location={hostname:'other.github.io'};
   globalThis.fetch=()=>{fetched++;throw Error('should not fetch')};
   await assert.rejects(voicePreview({text:'嗯。'}),/没有可用的 MiniMax API Key/);
   assert.equal(fetched,0);
