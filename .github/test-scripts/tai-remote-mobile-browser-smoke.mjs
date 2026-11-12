@@ -542,6 +542,9 @@ try{
   },{key,id},{timeout:45000});
   if(mode==='link-3x3'){
    assert.equal((await state()).ghost.orders[id].board.size,undefined);
+   await page.locator('#screen-layer [data-action="gh-pipe"]').first().waitFor({state:'visible'});
+   assert.equal(await page.locator('#screen-layer [data-action="gh-pipe"]').count(),9);
+   await screenshot('16-current-default-3x3-link');
    await page.waitForFunction(({key,id})=>{
     const s=JSON.parse(localStorage.getItem(key));
     return s?.ghost?.orders?.[id]?.status==='success'&&s.story55?.ghostShare?.phase==='complete';
@@ -549,7 +552,9 @@ try{
    const edgeDone=await state();
    assert.equal(edgeDone.ghost.orders[id].attempts,1);
    assert.equal(edgeDone.ghost.history.filter(h=>h.orderId===id).length,1);
-   await screenshot('16-current-default-3x3-link');
+   await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible'});
+   await page.locator('#status-layer .island-remote').waitFor({state:'detached'});
+   await screenshot('16b-current-default-3x3-returned');
    console.log('PASS current default 3x3 LINK finishes through original buttons, without converting its board');
   }else{
    const restoredOrder=await page.evaluate(id=>{
