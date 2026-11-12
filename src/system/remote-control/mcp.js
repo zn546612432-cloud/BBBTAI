@@ -3,6 +3,7 @@
 // JSON-RPC dispatcher only while a story-authorized GHOST session is active.
 // Nothing here is exposed on the public network or accesses the real device.
 import {finishGhostShareControl} from '../../services/story55/ghost-share.js';
+import {veilNextCell,veilScanners} from '../../apps/ghost/games/arcade.js';
 
 export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_show_tasks',description:'Show native virtual iPhone app switcher',inputSchema:{type:'object',properties:{},additionalProperties:false}},
@@ -10,8 +11,11 @@ export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_press_ghost',description:'Press the existing GHOST start/next-step button; never change a board directly',inputSchema:{type:'object',properties:{action:{type:'string',enum:['s55-run-step','gh-start']}},required:['action'],additionalProperties:false}},
  {name:'remote_read_link',description:'Read only the LINK board shared in this takeover',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_read_cipher',description:'Read only the displayed CIPHER tile positions for this shared order',inputSchema:{type:'object',properties:{},additionalProperties:false}},
+ {name:'remote_read_veil',description:'Read only the authorized VEIL arcade maze or legacy keypad state',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_rotate_pipe',description:'Click one real GHOST pipe button for the shared LINK board',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:80}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_cipher_tile',description:'Click one real GHOST tile of the authorized CIPHER order',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:8}},required:['index'],additionalProperties:false}},
+ {name:'remote_step_veil',description:'Press one safe native VEIL direction or WAIT button',inputSchema:{type:'object',properties:{direction:{type:'string',enum:['up','down','left','right','wait']}},required:['direction'],additionalProperties:false}},
+ {name:'remote_press_veil_key',description:'Press a native legacy VEIL numeric key, never set its solution directly',inputSchema:{type:'object',properties:{key:{type:'string',pattern:'^[0-9]$'}},required:['key'],additionalProperties:false}},
  {name:'remote_release',description:'Finish current virtual phone takeover and release exclusive control',inputSchema:{type:'object',properties:{},additionalProperties:false}}
 ]);
 const toolNames=new Map(TAI_REMOTE_TOOLS.map(tool=>[tool.name,tool]));
@@ -31,9 +35,16 @@ function runId(s){
  const id=project?.active;
  return id&&s.ghost?.orders?.[id]?.story55Project===p.source.projectId?id:null;
 }
+function veilAllowlisted(s,o){
+ // D01 repair and the D06 wallet challenge have authored settlement effects.
+ return !!(o?.type==='veil'&&o.id!=='mirage001'&&
+  o.id!=='mirage-ouroboros-10btc-d05'&&
+  (o.story55Project||o.story55Commission||s.content?.mirage?.linkedMissions?.[o.id]));
+}
 function authorizedOrder(s){
  const p=s.story55.ghostShare,id=runId(s),o=s.ghost?.orders?.[id];
- if(!id||!o||!['route','cipher'].includes(o.type))return null;
+ if(!id||!o||!['route','cipher','veil'].includes(o.type))return null;
+ if(o.type==='veil'&&!veilAllowlisted(s,o))return null;
  if(p.source.type==='ghost-order'&&id!==p.source.orderId)return null;
  if(p.source.type==='ghost-project'&&o.story55Project!==p.source.projectId)return null;
  return o;
@@ -119,6 +130,50 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
    if(!tile||tile.disabled||!tile.isConnected)return bad('tile_button_not_found');
    tile.click();
    return {ok:true,data:{orderId:o.id,index}};
+  }
+  if(name==='remote_read_veil'){
+   const o=authorizedOrder(state);
+   if(!o||o.type!=='veil')return bad('veil_order_not_ready');
+   if(o.status!=='running')return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,board:null,deadline:o.deadline}};
+   const a=o.board?.arcade;
+   if(a){
+    if(a.kind!=='veil')return bad('invalid_veil_board');
+    return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,
+     deadline:o.deadline,board:{kind:'veil',player:a.player,phase:a.phase,
+      exit:a.exit,walls:[...a.walls],steps:a.steps,heat:a.heat}}};
+   }
+   const b=o.board;
+   if(typeof b?.code!=='string'||!/^\d{1,12}$/.test(b.code))return bad('invalid_veil_board');
+   return {ok:true,data:{orderId:o.id,type:'veil',status:o.status,
+    deadline:o.deadline,board:{kind:'legacy-keypad',code:b.code,
+     input:String(b.input||''),round:Number(b.round)||0}}};
+  }
+  if(name==='remote_step_veil'){
+   const o=authorizedOrder(state),direction=args.direction,a=o?.board?.arcade;
+   if(!o||o.type!=='veil'||o.status!=='running'||a?.kind!=='veil'||
+      !['up','down','left','right','wait'].includes(direction)||
+      o.deadline!==null&&Date.now()>=o.deadline||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('veil_step_not_permitted');
+   const cell=veilNextCell(a.player,direction,a.walls);
+   if(cell===null)return bad('invalid_veil_step');
+   if(veilScanners((a.phase+1)%3).includes(cell))return bad('unsafe_veil_step');
+   const button=dom?.querySelector('#screen-layer [data-action="gh-arcade-step"][data-value="'+direction+'"]');
+   if(!button||button.disabled||!button.isConnected)return bad('veil_button_not_found');
+   button.click();
+   return {ok:true,data:{orderId:o.id,direction}};
+  }
+  if(name==='remote_press_veil_key'){
+   const o=authorizedOrder(state),key=args.key;
+   if(!o||o.type!=='veil'||o.status!=='running'||o.board?.arcade||
+      typeof key!=='string'||! /^[0-9]$/.test(key)||
+      typeof o.board?.code!=='string'||o.deadline!==null&&Date.now()>=o.deadline||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('veil_key_not_permitted');
+   const button=dom?.querySelector('#screen-layer [data-action="gh-key"][data-key="'+key+'"]');
+   if(!button||button.disabled||!button.isConnected)return bad('veil_key_button_not_found');
+   button.click();
+   return {ok:true,data:{orderId:o.id,key}};
   }
   if(name==='remote_release'){
    let released=false;
