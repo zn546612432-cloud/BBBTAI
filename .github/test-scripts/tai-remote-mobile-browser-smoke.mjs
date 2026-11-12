@@ -38,7 +38,7 @@ const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
 });
-const page=await context.newPage();
+let page=await context.newPage();
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
@@ -431,10 +431,24 @@ try{
  };
  verifySeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-verify-1'}};
  verifySeed.nav.stack=[];verifySeed.unlocked=false;
- await page.evaluate(({key,json})=>localStorage.setItem(key,json),{
-  key,json:JSON.stringify(verifySeed)
+ // The preceding legacy refusal leaves an asynchronous Mirage runtime
+ // running. Give VERIFY its own isolated browser context and saved state,
+ // rather than writing a replacement snapshot into that live page.
+ await page.close();
+ const verifyContext=await browser.newContext({
+  viewport:{width:390,height:844},deviceScaleFactor:2,
+  isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'
  });
- await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+ page=await verifyContext.newPage();
+ page.setDefaultTimeout(30000);
+ page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+ page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
+ await page.addInitScript(({key,seed})=>{
+  if(!localStorage.getItem(key))localStorage.setItem(key,seed);
+  Math.random=()=>0.02;
+ },{key,seed:JSON.stringify(verifySeed)});
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+ await page.locator('#phone').waitFor({state:'attached',timeout:45000});
  await unlock();
  await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
  await page.locator('#screen-layer [data-action="gh-share"]').click();
