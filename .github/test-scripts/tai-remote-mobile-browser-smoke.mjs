@@ -118,6 +118,21 @@ try{
  await page.locator('#screen-layer [data-action="gh-pipe"]').first().waitFor({state:'attached',timeout:30000});
  await screenshot('04-ghost-live-link');
  console.log('PASS native app switcher, GHOST step/start buttons, active LINK board');
+ const backgroundTab=await page.context().newPage();
+ await backgroundTab.bringToFront();
+ assert.equal(await page.evaluate(()=>document.hidden),true,'real browser should background the phone');
+ const linkPaused=await state();
+ assert.ok(Number.isFinite(linkPaused.story55.ghostShare.remote.pausedAt));
+ await page.waitForTimeout(1600);
+ const linkHidden=await state();
+ assert.equal(linkHidden.ghost.orders[controlOrder].moves,linkPaused.ghost.orders[controlOrder].moves);
+ assert.equal(linkHidden.story55.ghostShare.phase,'controlling');
+ await page.bringToFront();
+ await backgroundTab.close();
+ await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.ghostShare.remote.pausedAt===null,key);
+ assert.equal((await state()).story55.ghostShareTakeovers,1);
+ console.log('PASS B: switching browser tabs pauses and resumes same GHOST LINK session');
+
 
  // Real user taps during takeover must be blocked; one Tai warning per session.
  await page.touchscreen.tap(16,220);
