@@ -221,7 +221,7 @@ function early(kind,status='authorized'){
  return {s,id,parent};
 }
 test('genuine D02–D10 accepted children left authorized/failed after expiry cannot be shared, consume control or start',()=>{
- const kinds=['d02','d03',...DAILY_CONTRACTS.filter(c=>c.id!=='s55-mirage-wallet-bounty').map(c=>c.id)];
+ const kinds=['d02','d03',...DAILY_CONTRACTS.filter(c=>c.id!=='s55-mirage-wallet-bounty'&&(c.day??4)<=10).map(c=>c.id)];
  for(const kind of kinds)for(const status of ['authorized','failed'])for(const day of [15,24]){
   const {s,id,parent}=early(kind,status);s.day=day;
   assert.equal(s.content.orders.find(o=>o.id===parent).status,'EXPIRED',kind);
