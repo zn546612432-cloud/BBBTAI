@@ -56,7 +56,10 @@ try{
    await page.evaluate(async()=>{const {tickStory55}=await import('/src/services/story55/runtime.js');window.__shareFeedbackStore.update(s=>{s.clock='12:00';tickStory55(s);});});
   }
   if(takeovers<2){
-   await page.getByText(takeovers===0?'？':'又來？',{exact:true}).waitFor({state:'visible'});
+   const cardId=(await saved()).story55.ghostShare.cardId;
+   const firstReply=page.locator('.mc-clear-messages [data-key="message-'+cardId+'-tai-0"] .mc-clear-text');
+   await firstReply.waitFor({state:'visible'});
+   assert.equal(await firstReply.textContent(),takeovers===0?'？':'又來？');
    const final=await saved(),p=final.story55.ghostShare;
    assert.equal(p.script,takeovers===0?'first':'second');
    assert.equal(final.story55.ghostShareTakeovers,takeovers);
