@@ -391,7 +391,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     const after=tool('remote_read_extract');
     if(['success','paid'].includes(after.status))return;
     stalls=store.get().ghost.orders[id].moves>before?0:stalls+1;
-   }else if(board.kind==='extract'){
+   }else if(board.kind==='extract'||board.kind==='extract-memory'){
     const plan=extractNextTap(board,known);
     if(!plan)throw Error('extract_memory_plan_invalid');
     known=plan.known;
@@ -410,7 +410,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
     const after=tool('remote_read_extract');
     if(['success','paid'].includes(after.status))return;
     stalls=store.get().ghost.orders[id].moves>before?0:stalls+1;
-    if(after.board?.kind==='extract'){
+    if(after.board?.kind==='extract'||after.board?.kind==='extract-memory'){
      const learned=extractNextTap(after.board,known);
      if(!learned)throw Error('extract_visible_memory_invalid');
      known=learned.known;
