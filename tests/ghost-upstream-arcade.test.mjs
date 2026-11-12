@@ -266,7 +266,7 @@ test('SABC CIPHER swap puzzles have no blank slot and use randomized but solvabl
  for(const swaps of [2,3,4]){
   const signatures=new Set();
   for(let seed=1;seed<90;seed++){
-   const b=createBoard('cipher',{cipherSwaps:swaps},rng(seed));
+   const b=createBoard('cipher',{cipherSwaps:swaps},rng(seed*7919));
    assert.deepEqual([...b.tiles].sort((x,y)=>x-y),[0,1,2,3,4,5,6,7,8]);
    assert.equal(b.tiles.filter((x,i)=>x!==i).length,swaps*2);
    signatures.add(b.tiles.join(''));
