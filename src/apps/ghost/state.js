@@ -11,6 +11,7 @@ import {defaultConfig} from './catalog.js';
 import {createBoard,connected} from './games/logic.js';
 import {pipeSolved} from './games/pipe-network.js';
 import {createArcadeBoard} from './games/arcade.js';
+import {upstreamArcadeSignature} from './games/arcade-upstream.js';
 export function ensureGhost(s){return s.ghost??={orders:{},history:[],balance:0,config:{}};}
 export function configFor(s,type,id){return {...defaultConfig,...s.ghost?.config?.[type],...s.ghost?.orders?.[id]?.settings};}
 export function authorize(s,{orderId,mailId,type}){const g=ensureGhost(s);const selected=type||g.missionTypes?.[orderId]||'cipher';if(!g.orders[orderId])g.orders[orderId]={id:orderId,mailId,type:selected,key:'GH-'+orderId.replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase(),status:'authorized',attempts:0,settings:{...defaultConfig,...g.config[selected],...g.orderConfigs?.[orderId],...(linkedMission(s,orderId)?{retries:Number.MAX_SAFE_INTEGER}:{})}};return g.orders[orderId];}
@@ -56,8 +57,19 @@ export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id]
  const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);
  // Keep the old board fields for existing story contracts and saved fixtures.
  // New attempts use the playable arcade engine; pre-existing attempts resume their old UI.
- if(['extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false){
-  o.board.arcade=createArcadeBoard(o.type);
+ if((['extract','veil','strike'].includes(o.type)&&cfg.arcadeV2!==false)||o.type==='cipher'&&cfg.arcadeV3===true){
+  let arcade=createArcadeBoard(o.type,Math.random,{upstream:cfg.arcadeV3===true,grade:cfg.grade||'B',now});
+  if(cfg.arcadeV3===true){
+   const used=g.usedArcadeSignatures??=( {} );
+   const signatures=used[o.type]??=( [] );
+   if(o.type!=='strike'){
+    for(let tries=0;tries<32&&signatures.includes(upstreamArcadeSignature(arcade));tries++)
+     arcade=createArcadeBoard(o.type,Math.random,{upstream:true,grade:cfg.grade||'B',now});
+    signatures.push(upstreamArcadeSignature(arcade));
+    if(signatures.length>1200)signatures.shift();
+   }
+  }
+  o.board.arcade=arcade;
   if(o.type==='strike')o.deadline=now+Math.max(30000,Number.isFinite(cfg.seconds)&&cfg.seconds>0?cfg.seconds*1000:cfg.attackMs*6);
  }
  o.moves=0;o.errors=0;return true;}

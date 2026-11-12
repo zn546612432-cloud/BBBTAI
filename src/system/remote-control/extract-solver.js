@@ -4,7 +4,7 @@ const validIndex=(n,count)=>Number.isInteger(n)&&n>=0&&n<count;
 const validSymbol=s=>typeof s==='string'&&s.length>0&&s.length<=32;
 export function extractNextTap(board,previous={}){
  const count=board?.cardCount;
- if(!Number.isInteger(count)||count!==10||
+ if(!Number.isInteger(count)||(board?.kind==='extract'?count!==10:board?.kind==='extract-memory'?count<8||count>20||count%2!==0:true)||
     !Array.isArray(board.revealed)||!Array.isArray(board.matched)||
     !Array.isArray(board.visible)||!previous||typeof previous!=='object'||
     Array.isArray(previous)||board.revealed.length>2||board.matched.length>count||

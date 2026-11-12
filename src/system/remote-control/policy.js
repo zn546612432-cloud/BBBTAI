@@ -35,7 +35,7 @@ export function taiRemoteOrderAllowed(s,o){
  if(o.type==='strike'){
   // The old STRIKE runs to completion automatically. The phone operator
   // MUST refuse it before pressing GHOST start, not claim to be clicking.
-  if(o.status==='running')return o.board?.arcade?.kind==='strike';
+  if(o.status==='running')return ['strike','strike-mole'].includes(o.board?.arcade?.kind);
   return configFor(s,'strike',o.id).arcadeV2!==false;
  }
  return true;

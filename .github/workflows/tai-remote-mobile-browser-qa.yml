@@ -76,6 +76,7 @@ jobs:
         env:
           TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
         run: |
+          node .github/test-scripts/ghost-upstream-touch-browser.mjs
           node .github/test-scripts/tai-remote-lifecycle-browser.mjs
           node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
       - name: Retain iPhone screenshots and local server log
