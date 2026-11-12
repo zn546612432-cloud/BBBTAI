@@ -261,7 +261,7 @@ test('upgrade an existing running 8+empty slide into the original 9-module swap 
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{}};
  assert.match(renderGhost(ctx,{appId:'ghost',route:'/run',params:{orderId:after.id}}),/data-action="gh-tile"/);
 });
-test('SABC CIPHER swap puzzles have no blank slot and use randomized but solvable pairs',()=>{
+test('SABC CIPHER swap puzzles have no blank slot and use randomized but solvable pairs',async()=>{
  const {createBoard}=await import('../src/apps/ghost/games/logic.js');
  for(const swaps of [2,3,4]){
   const signatures=new Set();
