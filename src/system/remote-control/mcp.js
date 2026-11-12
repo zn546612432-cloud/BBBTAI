@@ -16,7 +16,8 @@ const toolNames=new Map(TAI_REMOTE_TOOLS.map(tool=>[tool.name,tool]));
 const bad=error=>({ok:false,error});
 function grant(s){
  const p=s?.story55?.ghostShare;
- return !!(s?.unlocked&&!s.poweredOff&&!s.story55?.ended&&s.day>=15&&s.day<=24&&
+ return !!(s?.unlocked&&!s.poweredOff&&!s.story55?.ended&&
+  Number.isInteger(p?.remote?.authorizedDay)&&p.remote.authorizedDay>=15&&p.remote.authorizedDay<=24&&
   p?.phase==='controlling'&&p.remote?.active&&
   ['ghost-project','ghost-order'].includes(p.source?.type));
 }
