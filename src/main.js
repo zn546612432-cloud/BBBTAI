@@ -45,6 +45,7 @@ import {isNativeTabSwitch} from './system/navigation.js';
 import {errorHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
+import {createTaiRemoteController,recoverTaiRemoteSession} from './system/remote-control/controller.js';
 import {plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortChargeStoryInterrupted,settleOfflineShortCharge} from './system/power/battery.js';
 import {advanceGameMinutes,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,shortChargeBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
@@ -54,6 +55,9 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// Abandoned browser sessions never replay a takeover, duplicate a GHOST
+// receipt or leave the dynamic island red after the next boot.
+recoverTaiRemoteSession(store);
 // Reconcile wish entries affected by older home-widget checkbox behavior.
 if(isStory55(store.get()))store.update(s=>syncWishReminders(s));
 // A closed browser does not advance the story clock. A plugged-in battery does.
@@ -105,6 +109,7 @@ let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation
 const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
+const taiRemote=createTaiRemoteController({store,router,tasks,toast,document});
 // Opening the display always requires a new unlock, without removing saved content.
 if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
@@ -263,7 +268,7 @@ function mountStory55Incoming(){
  const s=store.get(),loc=s.nav.current,channel=loc.appId;
  const conversationId=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  const line=s.unlocked&&conversationId?currentScript55(s,channel,conversationId):null;
- if(!line||line.managed||line.kind==='me'||line.kind==='watch'){
+ if(!line||line.id==='ghost-share'||line.managed||line.kind==='me'||line.kind==='watch'){
   if(pendingStory55Incoming){clearTimeout(pendingStory55Incoming.timer);pendingStory55Incoming=null;}
   return;
  }
@@ -380,7 +385,7 @@ store.subscribe(()=>{
  const shown=$('#toast')?.dataset.noticeId;
  if(shown&&s.notifications.some(n=>n.id===shown&&n.silent)){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
  if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
- if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);});render();
+ if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);taiRemote.sync();});render();taiRemote.sync();
  // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.
  const closeBoot=()=>{
