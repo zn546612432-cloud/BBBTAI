@@ -15,7 +15,7 @@ import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {taiRemoteCanOperateOrder,taiRemoteUpcomingProjectStepAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
-import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow} from './visibility.js';
+import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow,createTaiForegroundDelay} from './visibility.js';
 
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
@@ -64,44 +64,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    store.update(s=>resumeTaiRemoteOnShow(s));
   }
  });
- function waitVisible(){
-  if(!doc.hidden)return Promise.resolve();
-  return new Promise(resolve=>{
-   const onVisible=()=>{
-    if(!doc.hidden){doc.removeEventListener('visibilitychange',onVisible);resolve();}
-   };
-   doc.addEventListener('visibilitychange',onVisible);
-   // Handle a visibility flip between the initial check and registration.
-   onVisible();
-  });
- }
- // Each animation wait counts *foreground* milliseconds only. A browser
- // may throttle suspended timers; do not consume the remaining animation,
- // rerun a click, or let a suspended callback abort the session.
- async function delay(ms){
-  let remaining=Math.max(0,Number(ms)||0);
-  while(remaining>0){
-   await waitVisible();
-   const start=Date.now();
-   const elapsed=await new Promise(resolve=>{
-    let done=false;
-    let timer;
-    const complete=()=>{
-     if(done)return;
-     done=true;
-     clearTimeout(timer);
-     doc.removeEventListener('visibilitychange',onHide);
-     resolve(Math.max(0,Date.now()-start));
-    };
-    const onHide=()=>{if(doc.hidden)complete();};
-    doc.addEventListener('visibilitychange',onHide);
-    if(doc.hidden)complete();
-    else timer=setTimeout(complete,remaining);
-   });
-   remaining=Math.max(0,remaining-elapsed);
-  }
-  await waitVisible();
- }
+ const delay=createTaiForegroundDelay(doc);
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
