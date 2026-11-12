@@ -22,6 +22,7 @@ on:
       - feature/tai-remote-veil-20261112
       - feature/tai-remote-extract-20261112
       - feature/tai-remote-strike-20261112
+      - feature/tai-remote-background-pause-20261112
     paths:
       - 'src/system/remote-control/**'
       - 'src/apps/ghost/**'
@@ -61,7 +62,7 @@ jobs:
           done
           cat /tmp/bbbtai-phone.log
           exit 1
-      - name: Touch-browser QA, real MIRAGE Send and GHOST LINK/CIPHER/VEIL/EXTRACT/STRIKE actions
+      - name: Touch-browser QA, real MIRAGE Send and GHOST LINK/CIPHER/VEIL/EXTRACT/STRIKE/VERIFY actions
         env:
           TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
         run: node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
