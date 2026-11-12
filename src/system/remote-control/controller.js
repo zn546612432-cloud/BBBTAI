@@ -3,7 +3,7 @@
 // Only this same-page controller can inject the temporary live tool adapter.
 // It drives native task-switcher + real Ghost buttons (never Ghost.finish()).
 import {dispatchTaiPhoneMcp} from '../../services/ai/phone-mcp/protocol.js';
-import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD} from '../../services/story55/ghost-share.js';
+import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../services/story55/ghost-share.js';
 import {deploymentReadiness,deployment} from '../../services/story55/projects.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {date55} from '../../services/story55/state.js';
@@ -11,7 +11,6 @@ import {pipeSolved} from '../../apps/ghost/games/pipe-network.js';
 import {solveLinkPipe} from './link-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 
-const TYPE_LINE='閉嘴吧，熙蒙，現在我來操控你的手機';
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
 const navLink=s=>s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+TAI_GHOST_THREAD;
@@ -127,23 +126,41 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   const p=store.get().story55?.ghostShare;
   if(p?.script!=='first')return;
   const selector='#screen-layer .mc-composer input[name="text"]';
-  for(let i=1;i<=TYPE_LINE.length;i++){
+  for(let i=1;i<=TAI_REMOTE_TYPED_LINE.length;i++){
    assertRunning();
    const input=doc.querySelector(selector);
-   if(input){input.value=TYPE_LINE.slice(0,i);input.readOnly=true;}
+   if(!input||!input.isConnected)throw Error('mirage_composer_not_visible');
+   input.readOnly=true;
+   input.value=TAI_REMOTE_TYPED_LINE.slice(0,i);
    await delay(73);
   }
   assertRunning();
-  // This is a Tai-origin message, never an auto-sent Xi Meng draft.
-  store.update(s=>{
-   const p=s.story55?.ghostShare;
-   appendAuthoredPhoneMessage(s,{
-    channel:'mirage',conversationId:TAI_GHOST_THREAD,
-    messageId:p.cardId+'-remote-typing',from:TAI_GHOST_THREAD,
-    text:TYPE_LINE,storyTag:'story55',
-    day:s.day,clock:s.clock,sentDate:date55(s.day),notify:false
-   });
-  });
+  const input=doc.querySelector(selector),form=input?.form;
+  const sendButton=form?.querySelector('button[type="submit"]');
+  if(!form?.isConnected||!sendButton||sendButton.disabled)
+   throw Error('mirage_send_not_available');
+  // Tai is typing on Xi Meng's phone: the existing MIRAGE SEND button is
+  // actually pressed, then the normal app submit route writes a 'me' bubble.
+  // Never forge an NPC reply or bypass the native message pipeline.
+  const phone=doc.querySelector('#phone'),pointer=finger();
+  if(phone&&pointer){
+   const frame=phone.getBoundingClientRect(),box=sendButton.getBoundingClientRect();
+   pointer.style.left=(box.left+box.width/2-frame.left)+'px';
+   pointer.style.top=(box.top+box.height/2-frame.top)+'px';
+   pointer.classList.add('is-visible','is-tapping');
+  }
+  sendButton.click();
+  // main.js delegates submit asynchronously; wait for the canonical
+  // outgoing-message acknowledgment before swiping to the background.
+  for(let i=0;i<35;i++){
+   assertRunning();
+   const next=store.get().story55?.ghostShare;
+   if(next?.remote?.stage==='sent')break;
+   await delay(80);
+  }
+  if(store.get().story55?.ghostShare?.remote?.stage!=='sent')
+   throw Error('mirage_takeover_send_failed');
+  pointer?.classList.remove('is-tapping');
   await delay(450);
  }
  async function showTasks(){
