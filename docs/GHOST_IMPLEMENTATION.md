@@ -34,7 +34,8 @@ See `src/apps/ghost/games/OPEN_SOURCE_CREDITS.md` for research references and pr
 
 ## November 2026 / Source-ported Arcade 3
 
-For new D15–D55 market contracts, CIPHER (solvable sliding circuit), EXTRACT
+For new D15–D55 market contracts, CIPHER retains the original 3×3 circuit
+exchange and randomizes 2–4 independent tile swaps by SABC grade; EXTRACT
 (variable memory deck), VEIL (DFS-carved labyrinth with scanner-aware
 solvability) and STRIKE (real-time random moving targets) execute through
 the existing Ghost order and its single timer. MIT source ports live in
