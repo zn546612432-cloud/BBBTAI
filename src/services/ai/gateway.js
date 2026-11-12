@@ -1,5 +1,5 @@
 import {normalizeTtsSettings,ttsProviderSettings,ttsCueText} from '../voice/tts-settings.js';
-import {isTaiCloudHost,taiCloudCall} from './supabase-gateway.js';
+import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway.js';
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
@@ -167,7 +167,7 @@ export async function chooseTaiAction(args={}){
  const context={...args,mode,channel:args.channel||'noapp'};
  const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
  const approvedV8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:args.recognized===true,outputMode:mode});
- const director=taiActionDecisionPrompt({...context,allowVoice:args.allowVoice!==false&&!!c.minimax,
+ const director=taiActionDecisionPrompt({...context,allowVoice:args.allowVoice!==false&&(!!c.minimax||isTaiCloudHost()),
   relationshipContext:(taiKnowledgeContext({day:args.day,channel:context.channel,recognized:args.recognized})+'\\n'+String(args.relationshipContext||'')).slice(0,4100)});
  // Persona informs intent; the action protocol remains last and authoritative.
  const system=(approvedV8?approvedV8+'\n\n':'')+director;
@@ -185,7 +185,7 @@ export async function chooseTaiAction(args={}){
  }
  const result=validateTaiAction(raw,{mode,channel:context.channel,
   recognized:args.recognized===true,sourceMessageId:args.sourceMessageId||'',
-  allowCall:args.allowCall!==false,allowVoice:args.allowVoice!==false&&!!c.minimax,
+  allowCall:args.allowCall!==false,allowVoice:args.allowVoice!==false&&(!!c.minimax||isTaiCloudHost()),
   allowDefer:args.allowDefer!==false,hasIncoming:args.hasIncoming!==false,
   playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true});
  if(!result.ok){console.warn('Xitai rejected invalid behavior decision:',result.reason);return null;}
@@ -246,6 +246,7 @@ export async function voicePreview({text,voiceId,model,tone='neutral',...overrid
 export async function speechToText(blob){
  if(!(blob instanceof Blob)||!blob.size||blob.size>25_000_000)throw Error('语音上传大小必须小于25MB');
  const c=apiConfig();
+ if(isTaiCloudHost())return taiCloudTranscribe(blob,{region:c.region});
  if(!c.minimax)throw Error('语音识别需要在 NoApp 设置 MiniMax Key');
  const root=c.region==='intl'?'https://api.minimax.io':'https://api.minimaxi.com';
  const form=new FormData();form.append('model','asr-1.0');
