@@ -156,6 +156,10 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
    pointer.style.top=(box.top+box.height/2-frame.top)+'px';
    pointer.classList.add('is-visible','is-tapping');
   }
+  // The focused composer may be repatched by the normal phone runtime while
+  // letters animate; ensure its final DOM value matches the exact draft when
+  // the native form snapshots FormData for SEND.
+  input.value=TAI_REMOTE_TYPED_LINE;
   remoteSubmittingForm=form;
   try{sendButton.click();}finally{remoteSubmittingForm=null;}
   // main.js delegates submit asynchronously; wait for the canonical
