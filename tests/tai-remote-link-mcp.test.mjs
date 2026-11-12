@@ -7,7 +7,7 @@ import {recoverTaiRemoteSession} from '../src/system/remote-control/controller.j
 import {dispatchTaiPhoneMcp} from '../src/services/ai/phone-mcp/protocol.js';
 import {listTaiPhoneTools} from '../src/services/ai/phone-mcp/index.js';
 import {dynamicIsland} from '../src/system/power/island.js';
-import {handle as ghostHandle} from '../src/apps/ghost/index.js';
+import {handle as ghostHandle,tick as ghostTick} from '../src/apps/ghost/index.js';
 
 test('LINK planner solves generated 5, 6 and 7 grids only through rotations, leaving endpoints fixed',()=>{
  for(const size of [5,6,7])for(let attempt=0;attempt<35;attempt++){
@@ -81,6 +81,31 @@ test('stdio MCP stays read-only; only an injected, granted same-page session can
  assert.equal(call(s,'remote_rotate_pipe',{index:81},tools).ok,false);
  assert.equal(call(s,'remote_rotate_pipe',{index,private:'diary'},tools).ok,false);
  assert.equal(call(s,'get_schedule',{},tools).ok,false);
+});
+
+test('full MCP LINK sequence changes only through Ghost.handle and original preview settlement',()=>{
+ for(let repeat=0;repeat<12;repeat++){
+  const {s,store,router,tasks,doc}=session();
+  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
+  const steps=solveLinkPipe(s.ghost.orders.shared.board);
+  assert.ok(steps?.length>0);
+  for(const {index,turns} of steps){
+   for(let t=0;t<turns;t++){
+    if(s.ghost.orders.shared.status!=='running')break;
+    assert.equal(call(s,'remote_rotate_pipe',{index},live).ok,true);
+   }
+  }
+  const o=s.ghost.orders.shared;
+  assert.ok(['success','preview-win'].includes(o.status),'GHOST must accept the path');
+  if(o.status==='preview-win'){
+   o.previewUntil=Date.now()-1;
+   ghostTick({store,router,toast:()=>{},refresh:()=>{}});
+  }
+  assert.equal(o.status,'success');
+  assert.equal(s.ghost.history.filter(h=>h.orderId==='shared').length,1);
+  assert.equal(call(s,'remote_release',{},live).ok,true);
+  assert.equal(s.ghost.history.filter(h=>h.orderId==='shared').length,1);
+ }
 });
 
 test('remote session permission is bound to the shared order, not global phone access',()=>{
