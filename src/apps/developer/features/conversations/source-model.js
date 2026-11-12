@@ -5,6 +5,7 @@ import {celebration,privateScenes as d06Private,rewardSets as d06Rewards} from '
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../../../story/d07/life-content.js';
 import {saveTrackValues,trackSource} from '../../../../story/d14-d24/editor-overrides.js';
 import {D06_DINNER_PLAYER_LINE} from '../../../../services/wishes/index.js';
+import {GHOST_SHARE_DIALOGUES,ghostShareDialogue,ghostShareScriptStarted,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../../../services/story55/ghost-share.js';
 
 const TIME=/^([01]\d|2[0-3]):[0-5]\d$/;
 const labelDay=day=>'D'+String(day).padStart(2,'0')+' · '+date55(day);
@@ -135,7 +136,25 @@ function nodeSources(s,day){
 }
 export function readChatSources(s,day){
  if(!Number.isInteger(day)||day<1||day>55)return [];
- return [...(day===1?d01Sources(s):[]),...trackSources(s,day),...wishSources(s,day),...scriptedPlayerSources(day),...nodeSources(s,day)];
+ return [...(day===1?d01Sources(s):[]),...trackSources(s,day),...wishSources(s,day),...scriptedPlayerSources(day),...nodeSources(s,day),...ghostShareSources(s,day)];
+}
+function ghostShareSources(s,day){
+ // One source entry per branch, listed at the earliest possible day. Runtime
+ // availability is D15–D24, not a new D15 time trigger or duplicated script.
+ if(day!==15)return [];
+ const rows=Object.keys(GHOST_SHARE_DIALOGUES).map(script=>({
+  key:'ghost-share:'+script,type:'ghost-share',day,channel:'mirage',chat:TAI_GHOST_THREAD,
+  title:'GHOST 分享 · '+({first:'首次接管',second:'第二次接管',dailyYes:'日常接受',dailyNo:'日常拒絕'}[script]),
+  at:'',timingLabel:'D15–D24 分享後，沿用在線時段、50% 判定及既有次數規則',
+  deliveryLabel:'NPC 逐條排隊；熙蒙親自點擊發送',
+  lines:ghostShareDialogue(s,script).map(([who,text])=>({who,text,kind:'text',clock:'',clockLocked:true})),
+  reason:ghostShareScriptStarted(s,script)?'本周目此分享腳本已開始，原稿受保護；請在未播放周目編輯。':''
+ }));
+ rows.push({key:'ghost-share:remote-typing',type:'scripted-player',day,channel:'mirage',chat:TAI_GHOST_THREAD,
+  title:'GHOST 首次接管 · 受控輸入',at:'',timingLabel:'首次合法接管開始後，由既有控制器輸入並提交',
+  deliveryLabel:'經原 MIRAGE 表單送出',lines:[{who:'me',text:TAI_REMOTE_TYPED_LINE,kind:'text'}],
+  reason:'固定接管動作，只提供原稿閱讀。'});
+ return rows;
 }
 export function daySourceSummary(s,day){
  const rows=readChatSources(s,day);
@@ -195,7 +214,10 @@ export function saveChatSource(s,key,input){
   }
  }
  s.story55.chatSceneEdits??={};
- if(entry.type==='track'){
+ if(entry.type==='ghost-share'){
+  if(input.at||times.some(Boolean))throw Error('分享對話沿用事件觸發與原消息間隔，不能指定固定時間');
+  s.story55.chatSceneEdits[key]={lines:valid};
+ }else if(entry.type==='track'){
   const time=input.at==null?entry.baseAt:input.at;
   if(!TIME.test(time))throw Error('发送时间应为 HH:MM');
   const edited={at:time,lines:valid,...(times.some(Boolean)?{lineTimes:[...times]}:{})};

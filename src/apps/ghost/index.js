@@ -1,8 +1,11 @@
 import {D01_REPAIR,deployD01} from '../../story/d01/runtime.js';
+import {isTaiRemoteOrderPaused} from '../../system/remote-control/visibility.js';
 import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {d03OrderOfStep,d03NextStep} from '../../story/d03/contract.js';
 import {d04OrderOfStep,d04NextStep} from '../../story/d04/contract.js';
 import {isStory55} from '../../services/story55/state.js';
+import {shareGhostToTai,ghostShareSource} from '../../services/story55/ghost-share.js';
+import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {miningView55} from '../../services/story55/mining-view.js';
@@ -21,12 +24,13 @@ const button=(action,label,attrs='',cls='')=>`<button class="gh-button ${cls}" d
 const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params});
 const fmt=ms=>`${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor(Math.max(0,ms)/1000%60).toString().padStart(2,'0')}`;
 const title=(back,label,right='')=>`<div class="gh-top">${button(back,'‹','aria-label="返回"','gh-back')}<span>${label}</span><span>${right||'●'}</span></div>`;
+const shareBtn=(s,source)=>ghostShareSource(s,source)?button('share','↗','aria-label="分享至 MIRAGE" title="分享至 MIRAGE"','gh-share-button'):'';
 let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=null;
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
- if(o?.status==='preview-win'&&now>=o.previewUntil){ctx.store.update(n=>finish(n,o.id,true,now));return;}
- if(o?.status==='running'){
+ if(!isTaiRemoteOrderPaused(s,o)&&o?.status==='preview-win'&&now>=o.previewUntil){ctx.store.update(n=>finish(n,o.id,true,now));return;}
+ if(!isTaiRemoteOrderPaused(s,o)&&o?.status==='running'){
   if(o.board?.arcade?.kind==='extract'&&o.board.arcade.lockUntil&&now>=o.board.arcade.lockUntil){
    ctx.store.update(n=>arcadeTick(n.ghost.orders[o.id].board.arcade,now));return;
   }
@@ -43,16 +47,16 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
   body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>导入来自 KIRA 或授权联系人提供的接入凭证，验证后安装并初始化工具。</p><p>请选择已获授权的项目凭证。</p></div>';
  }
  else if(loc.route==='/contract'||loc.route==='/tool'){
-  body=title('home',`GHOST / ${tool?.name||'工具'}`)+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.requiresKeyEntry&&!o.keyVerified?'':o?.key||'')}" autocomplete="off" spellcheck="false" ${o&&(!o.requiresKeyEntry||o.keyVerified)?'readonly':''}/><p>${o?.requiresKeyEntry&&!o.keyVerified?'請輸入 KIRA 郵件內的授權密鑰':o?'已載入密鑰':'需要密鑰'}</p></div>${o?button('start',(o.status==='running'||o.status==='preview-win')?'繼續':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?(s.story55?.d01?.deployed?'繼續修復':'部署'):'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
+  body=title('home',`GHOST / ${tool?.name||'工具'}`,shareBtn(s,{orderId:o?.id}))+`<h1>${tool?.name||'工具'}<span>执行授权</span></h1><div class="gh-key-art">${emblem()}</div><div class="gh-keybox"><small>授权密钥</small><input id="gh-key" aria-label="授权密钥" placeholder="•••• — ••••" value="${esc(o?.requiresKeyEntry&&!o.keyVerified?'':o?.key||'')}" autocomplete="off" spellcheck="false" ${o&&(!o.requiresKeyEntry||o.keyVerified)?'readonly':''}/><p>${o?.requiresKeyEntry&&!o.keyVerified?'請輸入 KIRA 郵件內的授權密鑰':o?'已載入密鑰':'需要密鑰'}</p></div>${o?button('start',(o.status==='running'||o.status==='preview-win')?'繼續':o.status==='success'||['settling','paid'].includes(o.status)?'查看报告':o.id===D01_REPAIR?(s.story55?.d01?.deployed?'繼續修復':'部署'):'开始',`data-id="${esc(o.id)}"`,'gh-primary'):button('locked','开始','','gh-primary')}<p class="gh-hint">${o?esc(o.id):'请先从 KIRA 获取授权密钥'}</p>`;
  }
  else if(loc.route==='/run'&&o){
   const cfg=configFor(s,o.type,o.id),remaining=o.deadline-Date.now();
   if(o.status!=='running'&&o.status!=='preview-win'){
-   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`)+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成'):d03OrderOfStep(o.id)?(d03NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):d04OrderOfStep(o.id)?(d04NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 KIRA',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d03OrderOfStep(o.id)?button('d03-next',d03NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d04OrderOfStep(o.id)?button('d04-next',d04NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
+   const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`,shareBtn(s,{orderId:o?.id}))+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成'):d03OrderOfStep(o.id)?(d03NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):d04OrderOfStep(o.id)?(d04NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 KIRA',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d03OrderOfStep(o.id)?button('d03-next',d03NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d04OrderOfStep(o.id)?button('d04-next',d04NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
-   body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,devSkipTop||(o.deadline!==null?fmt(remaining):'')))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'会话 '+String(o.attempts).padStart(2,'0')}</small><h1>${tool.name}</h1><p>${{cipher:'根据参考映射调整模块排列，恢复完整的数据结构',route:'调整路径组件，使源点与目标端建立连接',extract:'校验数据块指纹并提取匹配内容',veil:'分析监测路径，调整访问序列以维持隐匿',strike:'正在进行定向测试，收集目标响应',verify:'根据依赖关系验证模块顺序'}[o.type]}</p></div>`;
+   body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,(devSkipTop|| (o.deadline!==null?fmt(remaining):''))+shareBtn(s,{orderId:o?.id})))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'会话 '+String(o.attempts).padStart(2,'0')}</small><h1>${tool.name}</h1><p>${{cipher:'根据参考映射调整模块排列，恢复完整的数据结构',route:'调整路径组件，使源点与目标端建立连接',extract:'校验数据块指纹并提取匹配内容',veil:'分析监测路径，调整访问序列以维持隐匿',strike:'正在进行定向测试，收集目标响应',verify:'根据依赖关系验证模块顺序'}[o.type]}</p></div>`;
    const b=o.board;
    if(o.type==='cipher')body+=`<p class="gh-cipher-tip">点选两个模块以调整排列。依据右下角编号 01–09 校准参考结构。</p><div class="gh-reference">${circuit()}<small>参考图</small></div><div class="gh-grid" id="gh-puzzle">${b.tiles.map((tile,i)=>button('tile',circuit(tile)+`<small class="gh-tile-id">${String(tile+1).padStart(2,'0')}</small>`,`data-index="${i}" aria-label="方块 ${tile+1}，当前位置 ${i+1}"`,b.selected===i?'selected':'')).join('')}</div>${b.arcade?button('cipher-easy-reset','重新解析','','gh-primary'):''}`;
    if(o.type==='route'){
@@ -76,6 +80,14 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}</div>`;
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
+ if(a==='share'){
+  const source=loc.route==='/deployment'?{projectId:loc.params?.project||t.dataset.project}:
+   {orderId:loc.params?.orderId};
+  if(currentScript55(s,'mirage','s55-ouroboros')){ctx.toast?.('請先完成目前對話');return;}
+  let result;ctx.store.update(next=>{result=shareGhostToTai(next,source);});
+  if(!result?.ok){ctx.toast?.(result?.error||'無法分享');return;}
+  return ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
+ }
  if(a==='home')return nav(ctx);
  if(a==='deployments')return nav(ctx,'/deployments');
  if(a==='mining')return nav(ctx,'/mining');

@@ -98,3 +98,7 @@
 .gh-fw-shell .gh-fw-button:disabled{opacity:.33;cursor:default}
 .gh-fw-shell .gh-fw-upgrade{margin-top:17px;padding-top:17px;border-top:1px solid var(--gh-line)}
 .gh-fw-shell .gh-flow-dialog p{font-size:12px;letter-spacing:.03em}
+
+/* Shared header button for the existing GHOST project and run pages. */
+.gh-share-button{min-width:34px;min-height:30px;padding:2px 9px!important;border:1px solid #517c72!important;border-radius:5px;color:#c5e7d8!important;font-size:20px!important;line-height:1!important}
+.gh-top .gh-share-button{margin-left:auto}.gh-top:has(.gh-share-button){gap:8px}

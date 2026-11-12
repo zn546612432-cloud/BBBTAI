@@ -1,0 +1,30 @@
+/* Visual affordances only. Operation ownership and game rules live in
+   Story55 and the existing GHOST handlers, not in CSS. */
+.dynamic-island.island-remote{
+ box-shadow:0 0 0 1px rgba(234,57,66,.6),0 0 15px rgba(234,22,48,.4);
+}
+.island-remote .island-remote-dot{
+ position:absolute;right:8px;top:50%;transform:translateY(-50%);
+ width:7px;height:7px;border-radius:50%;
+ background:#f02743;box-shadow:0 0 8px 2px #ea2746;
+ animation:tai-island-remote-pulse 1.05s ease-in-out infinite alternate;
+}
+@keyframes tai-island-remote-pulse{
+ from{opacity:.45;box-shadow:0 0 2px #ff3c57}
+ to{opacity:1;box-shadow:0 0 13px 4px #f02743}
+}
+.tai-remote-finger{
+ position:absolute;left:50%;top:50%;z-index:96;pointer-events:none;
+ display:block;width:22px;height:22px;opacity:0;
+ transform:translate(-50%,-50%) scale(.85);
+ border-radius:50%;border:2px solid #fefefecf;
+ background:radial-gradient(circle,#eaf8ffd9,#7b9aabd9);
+ box-shadow:0 0 0 5px #ffffff26,0 0 14px #ffffffa3;
+ transition:left .22s ease,top .22s ease,opacity .14s ease,transform .14s ease;
+}
+.tai-remote-finger.is-visible{opacity:.9;transform:translate(-50%,-50%) scale(1)}
+.tai-remote-finger.is-tapping{transform:translate(-50%,-50%) scale(.67);box-shadow:0 0 0 11px #ffffff30}
+@media(prefers-reduced-motion:reduce){
+ .island-remote .island-remote-dot{animation:none}
+ .tai-remote-finger{transition:none}
+}

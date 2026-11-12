@@ -76,3 +76,7 @@
 .mc-wallet-transfer-confirm .mc-wallet-confirm-actions button:last-child{background:#b1d2a4;border-color:#c2ddb1;color:#173c34;font-weight:700}
 @media(max-width:360px){.mc-wallet-confirm-head{flex-direction:column;gap:4px}}
 @media(max-height:650px){.mc-channel.is-decrypted .mc-decoded{top:auto;bottom:auto}}
+
+/* Native decrypted MIRAGE attachment: a real GHOST project reference. */
+.mc-clear-text .mc-ghost-card{display:flex;flex-direction:column;gap:5px;width:min(100%,260px);padding:13px;text-align:left;border:1px solid #9ec4a8;background:#103a2f;color:#e4eed9;cursor:pointer;white-space:normal;font-family:ui-monospace,monospace;min-height:0}
+.mc-clear-text .mc-ghost-card>span{font-size:9px;letter-spacing:1.5px;color:#a4c3b4}.mc-clear-text .mc-ghost-card>strong{font-size:15px;overflow-wrap:anywhere}.mc-clear-text .mc-ghost-card>small{font-size:12px;color:#a4c3b4}.mc-clear-text .mc-ghost-card>b{font-size:11px;font-weight:400;text-decoration:underline;margin-top:5px}.mc-clear-text .mc-ghost-card:focus-visible{outline:2px solid #e1efb7}

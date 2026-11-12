@@ -11,7 +11,8 @@ const optionDay=(s,day)=>{
 };
 const note=(x)=>x.type==='track'?'已接入统一微信消息生命週期':
  x.type==='d01'?'D01 原生互动聊天':
- x.type==='wish'?'由既有心愿、奖励及生活消息系统触发':'Story55 主线剧情节点';
+ x.type==='wish'?'由既有心愿、奖励及生活消息系统触发':
+ x.type==='ghost-share'?'由既有 GHOST 分享與接管流程觸發':'Story55 主线剧情节点';
 function sceneCard(x,{first=false}={}){
  const locked=!!x.reason;
  return '<details class="chat-source-card" '+(first?'open':'')+'><summary><span class="chat-source-caption">'+esc(x.title)+'</span>'+
@@ -20,7 +21,7 @@ function sceneCard(x,{first=false}={}){
   '<p class="editor-help">'+esc(note(x))+'；'+esc(x.deliveryLabel||'')+'</p>'+
   '<p class="chat-source-trigger"><strong>触发方式：</strong>'+esc(x.timingLabel)+'</p>'+
   (x.details?.length?'<p class="editor-help">'+esc(x.details.join(' · '))+'</p>':'')+
-  (x.at!==undefined&&x.type!=='wish'&&x.type!=='d01'
+  (x.at!==undefined&&!['wish','d01','ghost-share'].includes(x.type)
    ?'<label class="chat-source-time">触发时间 <input type="time" name="at" value="'+esc(x.at)+'" '+(locked?'disabled':'')+
     (x.type==='track'?'required':'')+'></label>':'')+
   '<div class="chat-source-line-list">'+x.lines.map((line,i)=>{
@@ -30,7 +31,7 @@ function sceneCard(x,{first=false}={}){
      (line.id&&x.type==='d01'?' · '+line.id:'');
     const delay=x.type==='d01';
     const units=line.timeMode==='game-minutes'?'遊戲分鐘':'秒';
-    const timing=locked||x.type==='scripted-player'?'':delay?
+    const timing=locked||['scripted-player','ghost-share'].includes(x.type)?'':delay?
      '<label class="chat-source-line-timing"><span>這句前的等待（'+units+'）</span><input type="number" name="wait-'+i+
       '" min="'+(units==='秒'?'0.5':'1')+'" max="'+(units==='秒'?'3600':'120')+'" step="'+(units==='秒'?'0.05':'1')+
       '" value="'+esc(line.waitSeconds)+'" required></label>':
