@@ -78,6 +78,7 @@ jobs:
         run: |
           node .github/test-scripts/tai-remote-lifecycle-browser.mjs
           node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
+          node .github/test-scripts/ghost-upstream-touch-browser.mjs
       - name: Retain iPhone screenshots and local server log
         if: always()
         uses: actions/upload-artifact@v4
