@@ -1,0 +1,12 @@
+# 工作状态
+- 当前任务：PR #143，修复 #142 预览新版翻牌接管中断、返回重新加密、连续拒绝对白间隔过长。
+- 当前步骤：1 ☑ 阅读定位；2 ☑ 失败测试→最小修复；3 ☑ 定向浏览器验收；4 ☑ 证据、决策及交付材料已备齐，待合并决定。
+- 已完成：接管入口接受 extract-memory；复用已有分享交接保持返回解密；连续两句间隔从 5.105 秒改为 2.2 秒；不改对白、不改结算、不清空存档。
+- 下一步：等待用户决定将 #143 合入 #142；main 未变。
+- 阻塞：无实施阻塞。iPhone 实机 Safari 尚未直接回测。
+- 相关文件：TASK-MIRAGE-REMOTE-143.md 列出的 8 个以内代码/测试文件；业务改动只有 controller.js、ghost-share.js。
+- 最近验证：相关 22/22 通过；定向 Chromium 浏览器四例全部通过（手机 M-008 C8、手机 S20、桌面 C8、手机空棋盘异常）；build:pages 与 diff --check 通过。
+- 浏览器验证提交：908219eb2077e2aa09e113da00c5867fbb8a5f57；CI https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43273558148 。
+- PR：https://github.com/zn546612432-cloud/BBBTAI/pull/143 （base 为 #142 分支，未合并）。
+- 新预览：https://77654a34.bbbtai.pages.dev ；用户截图中的 9905b0d0 是修复前快照。
+- 日期：2026-11-13，Asia/Shanghai。
