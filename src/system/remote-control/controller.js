@@ -12,6 +12,7 @@ import {solveLinkPipe} from './link-solver.js';
 import {solveCipherTiles} from './cipher-solver.js';
 import {veilPlan} from './veil-solver.js';
 import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
+import {verifyNextToken} from './verify-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {taiRemoteCanOperateOrder,taiRemoteUpcomingProjectStepAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
 import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
@@ -242,14 +243,16 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   const target=tool(run.type==='route'?'remote_read_link':
     run.type==='cipher'?'remote_read_cipher':
     run.type==='veil'?'remote_read_veil':
-    run.type==='extract'?'remote_read_extract':'remote_read_strike');
+    run.type==='extract'?'remote_read_extract':
+    run.type==='strike'?'remote_read_strike':'remote_read_verify');
   if(target.status!=='running'||!(run.type==='route'?
       target.board?.masks?.length:run.type==='cipher'?
       target.board?.tiles?.length:run.type==='veil'?
       (target.board?.kind==='veil'||target.board?.kind==='legacy-keypad'):
       run.type==='extract'?
       (target.board?.kind==='extract'||target.board?.kind==='legacy-fingerprint'):
-      target.board?.kind==='strike'))
+      run.type==='strike'?target.board?.kind==='strike':
+      target.board?.target?.length===4&&target.board?.tokens?.length===4))
    throw Error('ghost_board_not_running');
   moveStage('running',target.orderId);
   return target.orderId;
@@ -472,6 +475,67 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   }
   throw Error('strike_tap_limit');
  }
+ async function tapVerifyVisual(index){
+  assertRunning();
+  // Every press targets a newly queried DOM button. Timer redraws can
+  // replace the previous button; the native Ghost handler owns all progress.
+  const button=doc.querySelector('#screen-layer [data-action="gh-verify-token"][data-index="'+index+'"]');
+  const phone=doc.querySelector('#phone'),pointer=finger();
+  if(!button||button.disabled||!button.isConnected||!phone||!pointer)
+   throw Error('verify_button_not_visible');
+  const frame=phone.getBoundingClientRect(),box=button.getBoundingClientRect();
+  pointer.style.left=(box.left+box.width/2-frame.left)+'px';
+  pointer.style.top=(box.top+box.height/2-frame.top)+'px';
+  pointer.classList.add('is-visible');
+  await delay(190);assertRunning();
+  pointer.classList.add('is-tapping');
+  await delay(85);assertRunning();
+  tool('remote_tap_verify_token',{index});
+  pointer.classList.remove('is-tapping');
+  await delay(225);
+ }
+ async function solveVerify(id){
+  let stalls=0;
+  for(let n=0;n<16;n++){
+   assertRunning();
+   const current=tool('remote_read_verify');
+   if(current.orderId!==id)throw Error('verify_order_changed');
+   if(['success','paid'].includes(current.status))return;
+   if(current.status!=='running')throw Error('verify_run_not_active');
+   const plan=verifyNextToken(current.board);
+   if(!plan||plan.done)throw Error('verify_board_invalid');
+   const left=current.board.target.length-plan.progress;
+   if(Number.isFinite(current.deadline)&&current.deadline-Date.now()<left*600+850)
+    throw Error('verify_insufficient_time');
+   const before=store.get().ghost?.orders?.[id];
+   const moves=before?.moves||0,errors=before?.errors||0;
+   await tapVerifyVisual(plan.index);
+   let next=tool('remote_read_verify');
+   if(next.orderId!==id)throw Error('verify_order_changed');
+   if(store.get().ghost.orders[id].errors!==errors)
+    throw Error('verify_wrong_token');
+   let progressed=store.get().ghost.orders[id].moves===moves+1&&
+    (next.status==='success'||next.board?.input?.length===plan.progress+1);
+   for(let k=0;k<4&&!progressed;k++){
+    await delay(65);assertRunning();
+    next=tool('remote_read_verify');
+    if(store.get().ghost.orders[id].errors!==errors)
+     throw Error('verify_wrong_token');
+    progressed=store.get().ghost.orders[id].moves===moves+1&&
+     (next.status==='success'||next.board?.input?.length===plan.progress+1);
+   }
+   if(!progressed)stalls++;
+   else stalls=0;
+   if(stalls>=3)throw Error('verify_three_stalled_taps');
+   if(next.status==='success')return;
+   if(progressed){
+    const after=verifyNextToken(next.board);
+    if(!after||after.progress!==plan.progress+1)
+     throw Error('verify_progress_corrupt');
+   }
+  }
+  throw Error('verify_tap_limit');
+ }
  async function solve(id){
   const run=store.get().ghost.orders[id],initial=run?.board;
   if(run?.type==='route'){
@@ -501,6 +565,8 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    await solveExtract(id);
   }else if(run?.type==='strike'){
    await solveStrike(id);
+  }else if(run?.type==='verify'){
+   await solveVerify(id);
   }else throw Error('unsupported_ghost_order');
   // The original GHOST handlers own success and settlement (LINK also
   // requires a preview delay). The operator must never call finish().

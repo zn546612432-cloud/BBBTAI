@@ -15,11 +15,13 @@ export const TAI_REMOTE_TOOLS=Object.freeze([
  {name:'remote_read_veil',description:'Read only the authorized VEIL arcade maze or legacy keypad state',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_read_extract',description:'Read only face-up EXTRACT cards or visible legacy fingerprint choices',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_read_strike',description:'Read only the displayed STRIKE target, hit/miss counters and deadline',inputSchema:{type:'object',properties:{},additionalProperties:false}},
+ {name:'remote_read_verify',description:'Read only the visible VERIFY target module sequence, tokens and current progress',inputSchema:{type:'object',properties:{},additionalProperties:false}},
  {name:'remote_rotate_pipe',description:'Click one real GHOST pipe button for the shared LINK board',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:80}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_cipher_tile',description:'Click one real GHOST tile of the authorized CIPHER order',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:8}},required:['index'],additionalProperties:false}},
  {name:'remote_step_veil',description:'Press one safe native VEIL direction or WAIT button',inputSchema:{type:'object',properties:{direction:{type:'string',enum:['up','down','left','right','wait']}},required:['direction'],additionalProperties:false}},
  {name:'remote_tap_extract',description:'Flip one still-available EXTRACT card in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:9}},required:['index'],additionalProperties:false}},
  {name:'remote_tap_strike',description:'Click only the current, visible moving STRIKE target in its native GHOST grid',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:15}},required:['index'],additionalProperties:false}},
+ {name:'remote_tap_verify_token',description:'Press only the next correct visible VERIFY module in original GHOST interface',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:3}},required:['index'],additionalProperties:false}},
  {name:'remote_choose_extract_legacy',description:'Press a visible legacy fingerprint option with the native GHOST button',inputSchema:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:3}},required:['index'],additionalProperties:false}},
  {name:'remote_press_veil_key',description:'Press a native legacy VEIL numeric key, never set its solution directly',inputSchema:{type:'object',properties:{key:{type:'string',pattern:'^[0-9]$'}},required:['key'],additionalProperties:false}},
  {name:'remote_release',description:'Finish current virtual phone takeover and release exclusive control',inputSchema:{type:'object',properties:{},additionalProperties:false}}
@@ -242,6 +244,35 @@ export function createTaiLivePhoneTools({store,router,tasks,document:dom=globalT
       state.nav.current.params?.orderId!==o.id)return bad('strike_tap_not_permitted');
    const button=dom?.querySelector('#screen-layer [data-action="gh-arcade-tap"][data-value="'+index+'"]');
    if(!button||button.disabled||!button.isConnected)return bad('strike_button_not_found');
+   button.click();
+   return {ok:true,data:{orderId:o.id,index}};
+  }
+  if(name==='remote_read_verify'){
+   const o=authorizedOrder(state);
+   if(!o||o.type!=='verify')return bad('verify_order_not_ready');
+   const b=o.board;
+   if(o.status==='running'&&(!Array.isArray(b?.target)||!Array.isArray(b?.tokens)||
+      !Array.isArray(b?.input)||!Array.isArray(b?.used)))return bad('invalid_verify_board');
+   return {ok:true,data:{orderId:o.id,type:'verify',status:o.status,
+    deadline:o.deadline,board:o.status==='running'?{
+     target:[...b.target],tokens:[...b.tokens],
+     input:[...b.input],used:[...b.used]
+    }:null}};
+  }
+  if(name==='remote_tap_verify_token'){
+   const o=authorizedOrder(state),index=args.index,b=o?.board;
+   if(!o||o.type!=='verify'||o.status!=='running'||
+      !Number.isInteger(index)||index<0||index>3||
+      !Array.isArray(b?.target)||b.target.length!==4||
+      !Array.isArray(b?.tokens)||b.tokens.length!==4||
+      !Array.isArray(b?.input)||!Array.isArray(b?.used)||
+      b.input.length>=4||b.used.includes(index)||
+      b.tokens[index]!==b.target[b.input.length]||
+      o.deadline!==null&&Date.now()>=o.deadline||
+      state.nav.current.appId!=='ghost'||state.nav.current.route!=='/run'||
+      state.nav.current.params?.orderId!==o.id)return bad('verify_tap_not_permitted');
+   const button=dom?.querySelector('#screen-layer [data-action="gh-verify-token"][data-index="'+index+'"]');
+   if(!button||button.disabled||!button.isConnected)return bad('verify_button_not_found');
    button.click();
    return {ok:true,data:{orderId:o.id,index}};
   }

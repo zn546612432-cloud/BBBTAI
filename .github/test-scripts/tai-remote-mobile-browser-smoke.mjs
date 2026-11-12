@@ -38,7 +38,7 @@ const context=await browser.newContext({
  viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,
  locale:'zh-TW',reducedMotion:'reduce'
 });
-const page=await context.newPage();
+let page=await context.newPage();
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
@@ -420,6 +420,80 @@ try{
 
 
 
+
+ // Sixth playable Ghost type: an existing four-token VERIFY order. Inspect
+ // its visible target order and press the ORIGINAL gh-verify-token buttons.
+ const verifySeed=structuredClone(seed);
+ verifySeed.ghost.orders['tai-verify-1']={
+  id:'tai-verify-1',type:'verify',key:'GH-VERIFY',
+  story55Project:'verify-demo',status:'authorized',attempts:0,
+  settings:{seconds:60,retries:1000,rounds:1}
+ };
+ verifySeed.nav.current={appId:'ghost',route:'/contract',params:{orderId:'tai-verify-1'}};
+ verifySeed.nav.stack=[];verifySeed.unlocked=false;
+ // The preceding legacy refusal leaves an asynchronous Mirage runtime
+ // running. Give VERIFY its own isolated browser context and saved state,
+ // rather than writing a replacement snapshot into that live page.
+ await page.close();
+ const verifyContext=await browser.newContext({
+  viewport:{width:390,height:844},deviceScaleFactor:2,
+  isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'
+ });
+ page=await verifyContext.newPage();
+ page.setDefaultTimeout(30000);
+ page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+ page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
+ await page.addInitScript(({key,seed})=>{
+  if(!localStorage.getItem(key))localStorage.setItem(key,seed);
+  Math.random=()=>0.02;
+ },{key,seed:JSON.stringify(verifySeed)});
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+ await page.locator('#phone').waitFor({state:'attached',timeout:45000});
+ await unlock();
+ await page.locator('#screen-layer [data-action="gh-share"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('#screen-layer [data-action="gh-share"]').click();
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55?.ghostShare?.script==='first'&&
+   s.story55.ghostShare.source.orderId==='tai-verify-1';
+ },key,{timeout:15000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').waitFor({state:'visible',timeout:25000});
+ await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
+ await page.locator('.mc-ghost-card').waitFor({state:'visible',timeout:25000});
+ for(const line of lines){
+  await page.waitForFunction(expected=>{
+   const input=document.querySelector('#screen-layer form.mc-composer input[name="text"]');
+   return input?.value===expected&&!input.disabled;
+  },line,{timeout:45000});
+  await page.locator('#screen-layer .mc-composer button[type="submit"]').click();
+ }
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-verify-1'];
+  return s.nav?.current?.appId==='ghost'&&s.nav.current.route==='/run'&&
+   o?.status==='running'&&o.board?.target?.length===4&&
+   o.board?.tokens?.length===4;
+ },key,{timeout:40000});
+ await page.locator('#screen-layer [data-action="gh-verify-token"]').first()
+  .waitFor({state:'attached',timeout:15000});
+ await screenshot('14-verify-real-modules');
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),o=s.ghost?.orders?.['tai-verify-1'];
+  return o?.status==='success'&&s.story55?.ghostShare?.phase==='complete'&&
+   s.story55.ghostShare.remote?.active===false&&s.nav?.current?.appId==='mirage';
+ },key,{timeout:80000});
+ const verifyDone=await state(),verifyOrder=verifyDone.ghost.orders['tai-verify-1'];
+ assert.equal(verifyOrder.status,'success');
+ assert.equal(verifyOrder.board.input.length,4);
+ assert.deepEqual(verifyOrder.board.input,verifyOrder.board.target);
+ assert.equal(verifyOrder.board.used.length,4);
+ assert.equal(verifyOrder.moves,4,'only four original Ghost native token taps');
+ assert.equal(verifyOrder.errors,0,'Tai must never click the wrong module');
+ assert.equal(verifyOrder.attempts,1,'existing board never restarts');
+ assert.equal(verifyDone.ghost.history.filter(h=>h.orderId==='tai-verify-1').length,1);
+ assert.equal(verifyDone.story55.ghostShareTakeovers,1);
+ await page.locator('#screen-layer .mc-composer input[name="text"]').waitFor({state:'visible',timeout:15000});
+ await screenshot('15-verify-returned-to-mirage');
+ console.log('PASS sixth playable GHOST type: four real VERIFY module taps, zero mistakes, one settlement, Mirage restored');
  assert.deepEqual(errors,[],'browser console errors: '+errors.join(' | '));
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
 }catch(error){

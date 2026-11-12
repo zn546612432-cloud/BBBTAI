@@ -2,8 +2,8 @@
 // MCP tool adapter. No independent story scheduler or GHOST mechanics.
 import {configFor} from '../../apps/ghost/state.js';
 
-export const TAI_REMOTE_GHOST_TYPES=Object.freeze(['route','cipher','veil','extract','strike']);
-export const TAI_REMOTE_SCOPED_TYPES=Object.freeze(['veil','extract','strike']);
+export const TAI_REMOTE_GHOST_TYPES=Object.freeze(['route','cipher','veil','extract','strike','verify']);
+export const TAI_REMOTE_SCOPED_TYPES=Object.freeze(['veil','extract','strike','verify']);
 
 export function taiRemoteOrderAllowed(s,o){
  if(!o||!TAI_REMOTE_GHOST_TYPES.includes(o.type))return false;
