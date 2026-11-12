@@ -4,7 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource} from '../src/services/story55/ghost-share.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
-import {visibleMessages} from '../src/services/messaging/delivery.js';
+import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
 import {render as renderMirage,handle as handleMirage,submit as submitMirage} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {render as renderGhost} from '../src/apps/ghost/index.js';
@@ -107,4 +107,23 @@ test('forbidden character name disappears without creating a normal MIRAGE messa
   assert.equal(input.value,'');
   assert.equal(chat(s).messages.length,before);
  }finally{globalThis.FormData=original;setMirageAuthenticated(false);}
+});
+
+test('native MessageDelivery releases NPC bubble only in the authenticated conversation and state survives reload',()=>{
+ const s=fixture();
+ const r=shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:1000});
+ const id=r.cardId+'-tai-0';
+ const delivery=new MessageDelivery(store(s));
+ delivery.tick(30000,true);
+ assert.equal(chat(s).messages.find(m=>m.id===id).delivery,undefined);
+ setMirageAuthenticated(true);
+ try{
+  delivery.tick(31000,true);
+  delivery.tick(31500,true);
+  assert.ok(chat(s).messages.find(m=>m.id===id).delivery);
+ }finally{setMirageAuthenticated(false);}
+ const restored=structuredClone(s);
+ assert.equal(restored.story55.ghostShareTakeovers||0,0);
+ assert.equal(ghostShareScriptLine(restored).text,'我想驗證一下你是不是azathoth');
+ assert.equal(restored.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id===id).length,1);
 });
