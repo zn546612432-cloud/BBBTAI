@@ -15,7 +15,7 @@ import {extractNextTap,extractLegacyChoice} from './extract-solver.js';
 import {verifyNextToken} from './verify-solver.js';
 import {createTaiLivePhoneTools} from './mcp.js';
 import {taiRemoteCanOperateOrder,taiRemoteUpcomingProjectStepAllowed,TAI_REMOTE_GHOST_TYPES} from './policy.js';
-import {isMirageAuthenticated,setMirageAuthenticated} from '../../apps/mirage/session.js';
+import {isMirageAuthenticated,setMirageAuthenticated,prepareMirageGhostShareEntry} from '../../apps/mirage/session.js';
 import {pauseTaiRemoteOnHide,resumeTaiRemoteOnShow,createTaiForegroundDelay} from './visibility.js';
 
 const isRunning=s=>s?.story55?.ghostShare?.phase==='controlling'&&s.story55.ghostShare.remote?.active===true;
@@ -268,7 +268,7 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
       target.board?.tiles?.length:run.type==='veil'?
       (target.board?.kind==='veil'||target.board?.kind==='veil-maze'||target.board?.kind==='legacy-keypad'):
       run.type==='extract'?
-      (target.board?.kind==='extract'||target.board?.kind==='legacy-fingerprint'):
+      (target.board?.kind==='extract'||target.board?.kind==='extract-memory'||target.board?.kind==='legacy-fingerprint'):
       run.type==='strike'?target.board?.kind==='strike':
       target.board?.target?.length===4&&target.board?.tokens?.length===4))
    throw Error('ghost_board_not_running');
@@ -652,6 +652,9 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    // Returning to that same chat must not strand the user at its login
    // screen; ordinary voluntary app entries still use onEnter logout.
    const authenticated=isMirageAuthenticated()&&origin.appId==='mirage';
+   // Reuse the scoped native share handoff: onEnter restores authentication
+   // AND this same conversation's decryption on success or error return.
+   if(authenticated)prepareMirageGhostShareEntry();
    router.open(origin);
    if(authenticated){
     setMirageAuthenticated(true);

@@ -276,3 +276,12 @@ test('expired source receives refusal after coming online, never a stale takeove
  assert.equal(resolveGhostShare(s,{random:()=>{throw Error('invalid source cannot roll');}}).script,'dailyNo');
  assert.equal(ghostShareReadyForControl(s),false);
 });
+
+test('consecutive refusal lines use the existing 2.2-second bubble gap, without adding another reading delay',()=>{
+ const s=fixture();shareGhostToTai(s,{projectId:'base'},{random:()=>.99,now:1000});
+ const replies=chat(s).messages.filter(m=>m.ghostShareScript==='dailyNo');
+ assert.deepEqual(replies.map(m=>m.text),['你真的會寫代碼嗎？','我很忙，你自己處理']);
+ const gap=replies[1].schedule.seconds-replies[0].schedule.seconds;
+ assert.ok(gap>=2&&gap<=2.3,'consecutive bubbles should be ~2.2 seconds apart, got '+gap);
+ assert.ok(replies[0].schedule.seconds>=2.5,'keep first-response pacing');
+});

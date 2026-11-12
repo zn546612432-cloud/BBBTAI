@@ -93,13 +93,13 @@ function queueNpc(s,p){
  while(p.index<lines.length&&lines[p.index][0]==='tai'){
   const index=p.index++,messageId=`${p.cardId}-tai-${index}`;
   // The canonical MessageDelivery owns delay, unread and notification.
-  pause+=responseSeconds(lines[index][1]);
+  pause+=p.pendingIds.length?WAIT_MS/1000:responseSeconds(lines[index][1]);
   const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
    messageId,from:TAI_GHOST_THREAD,text:lines[index][1],storyTag:'story55',
    day:s.day,clock:s.clock,sentDate:date55(s.day),
    schedule:{mode:'chat-delay',seconds:pause}});
   if(message)message.ghostShareScript=p.script;
-  p.pendingIds.push(messageId);pause+=WAIT_MS/1000;
+  p.pendingIds.push(messageId);
  }
  if(p.index>=lines.length)p.phase=p.script==='dailyNo'?'refused':'ready-control';
 }
