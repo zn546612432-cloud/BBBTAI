@@ -4,6 +4,7 @@
  * CIPHER retains the older circuit-swap game in logic.js.
  * No external runtime, network access, or upstream visual assets.
  */
+import {createUpstreamArcadeBoard,upstreamArcadeAction,upstreamArcadeTick,upstreamArcadeNeedsTick} from './arcade-upstream.js';
 const draw=(random,max)=>Math.max(0,Math.min(max-1,Math.floor(random()*max)));
 const mix=(values,random)=>{const a=[...values];for(let i=a.length-1;i>0;i--){const j=draw(random,i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const targetSymbols=['A1','B7','C3','D9','E4','F2','G8','H5','J6','K0','M3','N7'];
@@ -38,7 +39,8 @@ function createVeil(random){
  }
  return {kind:'veil',size:5,walls:[],player:0,phase:0,heat:0,steps:0,exit:24};
 }
-export function createArcadeBoard(type,random=Math.random){
+export function createArcadeBoard(type,random=Math.random,options={}){
+ if(options.upstream)return createUpstreamArcadeBoard(type,random,options);
  if(type==='extract'){
   const symbols=mix(targetSymbols,random).slice(0,5);
   return {kind:'extract',cards:mix([...symbols,...symbols],random),revealed:[],matched:[],lockUntil:0,errors:0};
@@ -47,13 +49,15 @@ export function createArcadeBoard(type,random=Math.random){
  if(type==='strike')return {kind:'strike',target:draw(random,16),hits:0,misses:0,goal:6,maxMisses:3,started:0};
  return null;
 }
-export function arcadeTick(board,now=Date.now()){
+export function arcadeTick(board,now=Date.now(),random=Math.random){
+ if(board?.upstream)return upstreamArcadeTick(board,now,random);
  if(board?.kind==='extract'&&board.lockUntil&&now>=board.lockUntil){board.revealed=[];board.lockUntil=0;return true;}
  return false;
 }
 /** Updates a serializable board. Caller owns the success/failure transitions. */
 export function arcadeAction(board,action,value,now=Date.now(),random=Math.random){
  if(!board)return {changed:false};
+ if(board.upstream)return upstreamArcadeAction(board,action,value,now,random);
  if(board.kind==='extract'&&action==='tap'){
   arcadeTick(board,now);
   const i=Number(value);
@@ -87,3 +91,5 @@ export function arcadeAction(board,action,value,now=Date.now(),random=Math.rando
  }
  return {changed:false};
 }
+
+export const arcadeNeedsTick=(board,now)=>board?.upstream?upstreamArcadeNeedsTick(board,now):board?.kind==='extract'&&board.lockUntil&&now>=board.lockUntil;
