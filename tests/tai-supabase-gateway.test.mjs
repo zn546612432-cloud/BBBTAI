@@ -102,3 +102,10 @@ test('existing Tai character system prompt stays under the protected backend len
   messages:[{role:'user',content:'繼續'}]});
  assert.ok(text.length+14500<50000,'V8 and the existing character/worldbook must both fit');
 });
+
+test('exhausted cloud recovery shows readable failure without a raw provider code',async()=>installMocks(async()=>{
+ globalThis.fetch=async url=>String(url).endsWith('/auth/v1/signup')
+  ?new Response(JSON.stringify({session:{access_token:'jwt-empty',refresh_token:'refresh-empty',expires_in:3600}}))
+  :new Response(JSON.stringify({error:'empty_model_reply'}),{status:502});
+ await assert.rejects(()=>taiCloudCall('chat'),e=>e.message==='暫時未收到有效回覆，請稍後再試。'&&!e.message.includes('empty_model_reply'));
+}));
