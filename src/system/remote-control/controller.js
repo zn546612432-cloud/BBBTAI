@@ -48,13 +48,9 @@ export function recoverTaiRemoteSession(store){
  return true;
 }
 
-export function createTaiRemoteController({store,router,tasks,toast=()=>{},document:doc=globalThis.document}){
+export function createTaiRemoteController({store,router,tasks,toast=()=>{},document:doc=globalThis.document,submitMirageForm=null}){
  const live=createTaiLivePhoneTools({store,router,tasks,document:doc});
  let busy=false,queued=false,callId=0,cursor=null;
- // Native HTML form submit is browser-generated even when our script clicks
- // SEND. Allow exactly this synchronous, explicitly targeted remote submit;
- // all genuine player gestures remain blocked during takeover.
- let remoteSubmittingForm=null;
  function tool(name,args={}){
   const result=dispatchTaiPhoneMcp(store.get(),{
    jsonrpc:'2.0',id:++callId,method:'tools/call',
@@ -92,7 +88,6 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
  // Trusted player events are stopped before native Ghost handlers see them.
  // Programmatic .click() is untrusted and remains subject to the same handlers.
  const blockUser=e=>{
-  if(e.type==='submit'&&e.target===remoteSubmittingForm)return;
   if(!e.isTrusted||!isRunning(store.get()))return;
   const phone=e.target?.closest?.('#phone');
   if(!phone&&e.type!=='keydown')return;
@@ -160,8 +155,12 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},docum
   // letters animate; ensure its final DOM value matches the exact draft when
   // the native form snapshots FormData for SEND.
   input.value=TAI_REMOTE_TYPED_LINE;
-  remoteSubmittingForm=form;
-  try{sendButton.click();}finally{remoteSubmittingForm=null;}
+  // A browser-generated form-submit event is indistinguishable from a human
+  // submit to the exclusive-control guard. Use the *existing* MIRAGE submit
+  // method as the execution channel, while the visible fingertip presses SEND.
+  // Never write an outgoing bubble or change a project from this controller.
+  if(typeof submitMirageForm!=='function')throw Error('mirage_submit_not_wired');
+  submitMirageForm(form);
   // main.js delegates submit asynchronously; wait for the canonical
   // outgoing-message acknowledgment before swiping to the background.
   for(let i=0;i<35;i++){
