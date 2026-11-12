@@ -93,7 +93,10 @@ try{
      await page.close();page=await context.newPage();attach();
      await page.clock.install({time:new Date(virtualNow)});await page.goto(url,{waitUntil:'domcontentloaded'});
     }
-    await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first().waitFor({state:'visible'});
+    // A real reload/reopen returns to the phone's lock screen. Inspect the
+    // persisted recovery immediately; waiting for an app button while locked
+    // would consume the very countdown this test is meant to preserve.
+    await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k))?.story55?.ghostShare?.phase==='interrupted',key);
     recovered={now:await page.evaluate(()=>Date.now()),state:await state()};
    }else{
     recovered=await page.evaluate(async({mode,backup})=>{
@@ -130,6 +133,11 @@ try{
     await page.waitForFunction(k=>{const s=JSON.parse(localStorage.getItem(k));return s.ghost.orders['timed-strike'].status==='success'&&s.story55.ghostShare.phase==='complete';},key);
     assert.equal((await state()).ghost.history.filter(h=>h.orderId==='timed-strike').length,1);
    }else{
+    if(mode==='reload'||mode==='reopen'){
+     await page.locator('[data-action="unlock"]').click();
+     for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+     await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first().waitFor({state:'visible'});
+    }
     await page.waitForTimeout(650);
     assert.equal((await state()).ghost.orders['timed-strike'].status,'running');
     assert.equal((await state()).ghost.history.filter(h=>h.orderId==='timed-strike').length,0);
