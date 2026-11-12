@@ -144,3 +144,19 @@ test('Mirage shows exactly five daily rows and never offers acceptance on restri
   assert.ok(html.includes('私人掛單'),'developer-authored custom offers must remain accessible');
  }finally{setMirageAuthenticated(false);}
 });
+
+test('Mirage puts SABC tiers directly in both the new bounty titles and their details',async()=>{
+ const {setMirageAuthenticated}=await import('../src/apps/mirage/session.js');
+ const {render}=await import('../src/apps/mirage/index.js');
+ const s=state(15);seedD04Contracts(s);setMirageAuthenticated(true);
+ try{
+  const ctx={store:{get:()=>s}};
+  const board=render(ctx,{route:'/bounties'});
+  assert.match(board,/【C級】 收私人會所會員資料/);
+  assert.match(board,/【B級】 碼頭倉庫監控處理/);
+  assert.match(board,/【S級】 收非法入境人員完整名冊/);
+  const detail=render(ctx,{route:'/order/M-001'});
+  assert.match(detail,/<h1>【C級】 收私人會所會員資料<\/h1>/);
+  assert.equal(s.content.orders.find(x=>x.id==='M-001').title,'收私人會所會員資料','source copy stays untouched');
+ }finally{setMirageAuthenticated(false);}
+});
