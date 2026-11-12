@@ -4,6 +4,7 @@
 import {isStory55,nodeStatus,story55Config,nodeById} from './state.js';
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
+import {ghostShareScriptLine,sendGhostShareDraft} from './ghost-share.js';
 import {endingReplyDue55} from './finale.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
@@ -46,6 +47,7 @@ export function currentScript55(s,channel,conversationId){
   if(clock&&s.clock<clock)continue; // Only offer the native player draft once it is due.
   return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
+ if(channel==='mirage'&&conversationId==='s55-ouroboros')return ghostShareScriptLine(s);
  return null;
 }
 export function scriptedDraft55(s,channel,conversationId){
@@ -56,7 +58,8 @@ export function sendScriptedDraft55(s,channel,conversationId,text){
  const line=currentScript55(s,channel,conversationId);
  if(!line||line.kind!=='me'||s.phoneCall?.speaking||s.phoneCall?.resumeRequired)throw Error('当前没有等待熙蒙发送的预设消息');
  if(String(text||'').trim()!==line.text.trim())throw Error('訊息未發送');
- if(line.id==='flow-d03')sendFlowReply(s,text);
+ if(line.id==='ghost-share')sendGhostShareDraft(s,text);
+ else if(line.id==='flow-d03')sendFlowReply(s,text);
  else if(line.id==='questions')sendQuestion55(s);
  else advanceScene55(s,line.id);
  if(s.drafts)s.drafts[conversationId]='';
