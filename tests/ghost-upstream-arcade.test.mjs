@@ -10,7 +10,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {seedD04Contracts,acceptD04Contract,submitD04Contract,D04_MAIL,D04_STEP} from '../src/story/d04/contract.js';
 import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
-import {authorize,begin,finish} from '../src/apps/ghost/state.js';
+import {authorize,begin,finish,restoreCipherSwapBoard} from '../src/apps/ghost/state.js';
 import {veilPlan} from '../src/system/remote-control/veil-solver.js';
 import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
 
@@ -237,4 +237,40 @@ test('D16 A-tier progresses original LINK into OSS CIPHER and scanner maze, pays
  assert.equal(s.bankData.balance,startingBalance+6800);
  assert.equal(submitD04Contract(s,orderId),false);
  assert.equal(s.bankData.transactions.filter(x=>x.id.endsWith(orderId)).length,1);
+});
+
+test('upgrade an existing running 8+empty slide into the original 9-module swap without resetting order progress',()=>{
+ const s=activateStory55(initialState());s.day=15;s.clock='08:57';
+ s.ghost.orders['M-001-stage-1']={
+  id:'M-001-stage-1',type:'cipher',status:'running',attempts:3,
+  moves:10,startedAt:1000,deadline:null,settings:{arcadeV3:true},
+  board:{tiles:[1,0,2,3,4,5,6,7,8],selected:null,
+   arcade:{kind:'cipher-slide',upstream:true,size:3,
+    tiles:[5,1,6,0,2,3,8,4,7],empty:6,steps:10}}
+ };
+ const before=structuredClone(s.ghost.orders['M-001-stage-1']);
+ assert.equal(restoreCipherSwapBoard(s,'M-001-stage-1'),true);
+ const after=s.ghost.orders['M-001-stage-1'];
+ assert.deepEqual(after.board.tiles,before.board.arcade.tiles);
+ assert.equal(after.board.arcade,undefined);
+ assert.equal(after.moves,10);
+ assert.equal(after.attempts,3);
+ assert.equal(after.startedAt,1000);
+ assert.equal(after.deadline,null);
+ assert.equal(restoreCipherSwapBoard(s,'M-001-stage-1'),false);
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{}};
+ assert.match(renderGhost(ctx,{appId:'ghost',route:'/run',params:{orderId:after.id}}),/data-action="gh-tile"/);
+});
+test('SABC CIPHER swap puzzles have no blank slot and use randomized but solvable pairs',()=>{
+ const {createBoard}=await import('../src/apps/ghost/games/logic.js');
+ for(const swaps of [2,3,4]){
+  const signatures=new Set();
+  for(let seed=1;seed<90;seed++){
+   const b=createBoard('cipher',{cipherSwaps:swaps},rng(seed));
+   assert.deepEqual([...b.tiles].sort((x,y)=>x-y),[0,1,2,3,4,5,6,7,8]);
+   assert.equal(b.tiles.filter((x,i)=>x!==i).length,swaps*2);
+   signatures.add(b.tiles.join(''));
+  }
+  assert.ok(signatures.size>=60,'grade '+swaps+' should have many random layouts');
+ }
 });
