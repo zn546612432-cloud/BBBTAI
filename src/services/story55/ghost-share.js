@@ -6,6 +6,7 @@ import {anonymousPresence55} from './runtime.js';
 import {deployment,deploymentPercent} from './projects.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {taiRemoteOrderAllowed} from '../../system/remote-control/policy.js';
+import {settleTaiRemotePause} from '../../system/remote-control/visibility.js';
 
 export const TAI_GHOST_THREAD='s55-ouroboros';
 const WAIT_MS=1900;
@@ -38,6 +39,22 @@ export const GHOST_SHARE_DIALOGUES={
 export function ghostShareDialogue(s,script){
  const base=GHOST_SHARE_DIALOGUES[script]||[],edit=s.story55?.chatSceneEdits?.['ghost-share:'+script]?.lines;
  return edit?.length===base.length?base.map(([who,text],i)=>[who,edit[i].who===who&&typeof edit[i].text==='string'?edit[i].text:text]):base;
+}
+export function ghostShareScriptStarted(s,script){
+ if(!Object.hasOwn(GHOST_SHARE_DIALOGUES,script))return false;
+ const flags=s.story55?.ghostShareScriptsStarted,p=s.story55?.ghostShare;
+ if(flags&&Object.hasOwn(flags,script))return flags[script]===true;
+ if(p?.script===script)return true;
+ // Current #133 saves already have authored chat IDs, but no per-script
+ // marker yet. Their first NPC line is identifiable in the same source
+ // (including its saved author override). No generic share card locks a script.
+ return !!chat(s)?.messages?.some(m=>{
+  if(m.ghostShareScript)return m.ghostShareScript===script;
+  if(!/^s55-ghost-share-\d+-\d+-tai-0$/.test(m.id||'')||m.from!==TAI_GHOST_THREAD)return false;
+  if(p?.cardId&&m.id.startsWith(p.cardId+'-'))return p.script===script;
+  const candidates=Object.keys(GHOST_SHARE_DIALOGUES).filter(name=>ghostShareDialogue(s,name)[0]?.[1]===m.text);
+  return candidates.length===1&&candidates[0]===script;
+ });
 }
 const shareDay=s=>isStory55(s)&&s.day>=15&&s.day<=24&&!s.story55.ended;
 export function expireGhostShare(s){
@@ -75,10 +92,11 @@ function queueNpc(s,p){
  while(p.index<lines.length&&lines[p.index][0]==='tai'){
   const index=p.index++,messageId=`${p.cardId}-tai-${index}`;
   // The canonical MessageDelivery owns delay, unread and notification.
-  appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
+  const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
    messageId,from:TAI_GHOST_THREAD,text:lines[index][1],storyTag:'story55',
    day:s.day,clock:s.clock,sentDate:date55(s.day),
    schedule:{mode:'chat-delay',seconds:.45+pause*WAIT_MS/1000}});
+  if(message)message.ghostShareScript=p.script;
   p.pendingIds.push(messageId);pause++;
  }
  if(p.index>=lines.length)p.phase=p.script==='dailyNo'?'refused':'ready-control';
@@ -109,9 +127,14 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
   online&&eligible&&takeovers>=2?'dailyNo':null;
  const p={phase:script?'dialogue':'idle',script,index:0,pendingIds:[],cardId,source:item,
   lastShareDay:s.day,lastShareAt:now,lastSource:JSON.stringify(item),lastCardId:cardId};
+ const started=script?Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)])):null;
  s.story55.ghostShare=p;
  if(takeovers>=2&&eligible&&online)s.story55.ghostShareDaily={day:s.day,accepted,cardId};
- if(script)queueNpc(s,p);
+ if(script){
+  s.story55.ghostShareScriptsStarted=started;
+  s.story55.ghostShareScriptsStarted[script]=true;
+  queueNpc(s,p);
+ }
  return {ok:true,cardId,accepted,script,online};
 }
 
@@ -182,7 +205,8 @@ export function beginGhostShareControl(s){
  s.story55.ghostShareTakeovers=(Number(s.story55.ghostShareTakeovers)||0)+1;
  return true;
 }
-export function finishGhostShareControl(s){
+export function finishGhostShareControl(s,now=Date.now()){
  if(s.story55?.ghostShare?.phase!=='controlling')return false;
+ settleTaiRemotePause(s,now);
  s.story55.ghostShare.phase='complete';return true;
 }

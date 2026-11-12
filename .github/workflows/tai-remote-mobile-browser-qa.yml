@@ -12,12 +12,13 @@ on:
       - 'src/services/ai/phone-mcp/**'
       - 'src/main.js'
       - 'src/system/power/**'
-      - '.github/test-scripts/tai-remote-mobile-browser-smoke.mjs'
+      - '.github/test-scripts/tai-remote-*.mjs'
       - 'tests/tai-remote-*.test.mjs'
       - '.github/workflows/tai-remote-mobile-browser-qa.yml'
   pull_request:
     branches:
       - main
+      - fix/tai-remote-integration-20261112
       - feature/tai-remote-verify-20261112
       - feature/tai-remote-link-20261112
       - feature/tai-remote-mobile-qa-20261112
@@ -36,7 +37,7 @@ on:
       - 'src/apps/developer/features/conversations/**'
       - 'src/main.js'
       - 'src/system/power/**'
-      - '.github/test-scripts/tai-remote-mobile-browser-smoke.mjs'
+      - '.github/test-scripts/tai-remote-*.mjs'
       - 'tests/tai-remote-*.test.mjs'
       - '.github/workflows/tai-remote-mobile-browser-qa.yml'
   workflow_dispatch:
@@ -74,7 +75,9 @@ jobs:
       - name: Touch-browser QA, real MIRAGE Send and GHOST LINK/CIPHER/VEIL/EXTRACT/STRIKE/VERIFY actions
         env:
           TAI_REMOTE_LOCAL_URL: http://127.0.0.1:5173/
-        run: node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
+        run: |
+          node .github/test-scripts/tai-remote-lifecycle-browser.mjs
+          node .github/test-scripts/tai-remote-mobile-browser-smoke.mjs
       - name: Retain iPhone screenshots and local server log
         if: always()
         uses: actions/upload-artifact@v4
@@ -85,78 +88,3 @@ jobs:
             /tmp/bbbtai-phone.log
           if-no-files-found: ignore
           retention-days: 14
-
-  isolated-latest-preview:
-    # Publish only this repair's approved review branch, after browser QA.
-    # Rebuild the formal entry from main; only /preview/ uses the PR head.
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/tai-remote-integration-20261112'
-    needs: iphone-touch-browser
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    concurrency:
-      group: github-pages
-      cancel-in-progress: false
-    environment:
-      name: tai-remote-review-preview
-      url: https://zn546612432-cloud.github.io/BBBTAI/preview/
-    steps:
-      - name: Check out unchanged production
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: production-source
-      - name: Check out exact tested repair
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: review-source
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/story55-dev-snapshot-safety-20261101
-          path: story55-source
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build formal entry and retained Tai Vision from main
-        working-directory: production-source
-        run: |
-          npm ci
-          GITHUB_SHA="$(git rev-parse HEAD)" npm run build:pages
-          mv dist assembled
-          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
-          mkdir -p assembled/review/tai-vision-20261105
-          cp -a dist/. assembled/review/tai-vision-20261105/
-      - name: Verify and build exact repair for existing latest preview
-        working-directory: review-source
-        run: |
-          npm ci
-          node scripts/audit-story-skill.mjs
-          npm test
-          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
-          mkdir -p ../production-source/assembled/preview
-          cp -a dist/. ../production-source/assembled/preview/
-      - name: Preserve existing Story55 comparison
-        working-directory: story55-source
-        run: |
-          npm ci
-          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
-          mkdir -p ../production-source/assembled/review/55-20261101
-          cp -a dist/. ../production-source/assembled/review/55-20261101/
-      - name: Audit same four entries and reject stale production rebuild
-        working-directory: production-source
-        run: |
-          python3 -m pip install Pillow==11.3.0
-          python3 scripts/optimize-icon-atlases.py assembled
-          node scripts/audit-pages-site.mjs assembled
-          test "$(git rev-parse HEAD)" = "$(git ls-remote origin refs/heads/main | cut -f1)"
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: production-source/assembled
-      - uses: actions/deploy-pages@v4
-        with:
-          timeout: '1800000'

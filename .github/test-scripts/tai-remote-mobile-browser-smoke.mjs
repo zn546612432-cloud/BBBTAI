@@ -564,14 +564,22 @@ try{
     globalThis.__taiQAStore.replace(backup);
     delete document.hidden;
     document.dispatchEvent(new Event('visibilitychange'));
-    return backup.ghost.orders[id];
+    return {order:backup.ghost.orders[id],
+     elapsedLimit:Date.now()-backup.story55.ghostShare.remote.pausedAt};
    },id);
    await page.waitForTimeout(1100);
    const replaced=await state();
    assert.equal(replaced.story55.ghostShare.phase,'interrupted');
    assert.equal(replaced.story55.ghostShare.remote.active,false);
    assert.equal(replaced.story55.ghostShareTakeovers,1);
-   assert.deepEqual(replaced.ghost.orders[id],restoredOrder,'old controller must not click after restore');
+   const expected=restoredOrder.order,actual=replaced.ghost.orders[id];
+   const shifted=actual.startedAt-expected.startedAt;
+   assert.ok(shifted>=0&&shifted<=restoredOrder.elapsedLimit,'only the observed paused interval may be compensated');
+   for(const timestamp of ['startedAt','deadline','previewUntil'])
+    if(Number.isFinite(expected[timestamp])&&expected[timestamp]>0)expected[timestamp]+=shifted;
+   if(Number.isFinite(expected.board?.arcade?.lockUntil)&&expected.board.arcade.lockUntil>0)
+    expected.board.arcade.lockUntil+=shifted;
+   assert.deepEqual(actual,expected,'only paused timestamps may change; the old controller must not click after restore');
    assert.equal(await page.locator('.tai-remote-finger').count(),0);
    assert.equal(await page.locator('#status-layer .island-remote').count(),0);
    await page.locator('#screen-layer [data-action="gh-exit"]').click();

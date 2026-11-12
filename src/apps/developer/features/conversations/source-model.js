@@ -5,7 +5,7 @@ import {celebration,privateScenes as d06Private,rewardSets as d06Rewards} from '
 import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from '../../../../story/d07/life-content.js';
 import {saveTrackValues,trackSource} from '../../../../story/d14-d24/editor-overrides.js';
 import {D06_DINNER_PLAYER_LINE} from '../../../../services/wishes/index.js';
-import {GHOST_SHARE_DIALOGUES,ghostShareDialogue,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../../../services/story55/ghost-share.js';
+import {GHOST_SHARE_DIALOGUES,ghostShareDialogue,ghostShareScriptStarted,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../../../services/story55/ghost-share.js';
 
 const TIME=/^([01]\d|2[0-3]):[0-5]\d$/;
 const labelDay=day=>'D'+String(day).padStart(2,'0')+' · '+date55(day);
@@ -142,15 +142,13 @@ function ghostShareSources(s,day){
  // One source entry per branch, listed at the earliest possible day. Runtime
  // availability is D15–D24, not a new D15 time trigger or duplicated script.
  if(day!==15)return [];
- const history=s.content?.conversations?.mirage?.find(c=>c.id===TAI_GHOST_THREAD)?.messages||[];
- const played=history.some(m=>/^s55-ghost-share-/.test(m.id||''))||!!s.story55?.ghostShare;
- const reason=played?'本周目分享已開始，原稿受保護；請在未播放周目編輯。':'';
  const rows=Object.keys(GHOST_SHARE_DIALOGUES).map(script=>({
   key:'ghost-share:'+script,type:'ghost-share',day,channel:'mirage',chat:TAI_GHOST_THREAD,
   title:'GHOST 分享 · '+({first:'首次接管',second:'第二次接管',dailyYes:'日常接受',dailyNo:'日常拒絕'}[script]),
   at:'',timingLabel:'D15–D24 分享後，沿用在線時段、50% 判定及既有次數規則',
   deliveryLabel:'NPC 逐條排隊；熙蒙親自點擊發送',
-  lines:ghostShareDialogue(s,script).map(([who,text])=>({who,text,kind:'text',clock:'',clockLocked:true})),reason
+  lines:ghostShareDialogue(s,script).map(([who,text])=>({who,text,kind:'text',clock:'',clockLocked:true})),
+  reason:ghostShareScriptStarted(s,script)?'本周目此分享腳本已開始，原稿受保護；請在未播放周目編輯。':''
  }));
  rows.push({key:'ghost-share:remote-typing',type:'scripted-player',day,channel:'mirage',chat:TAI_GHOST_THREAD,
   title:'GHOST 首次接管 · 受控輸入',at:'',timingLabel:'首次合法接管開始後，由既有控制器輸入並提交',

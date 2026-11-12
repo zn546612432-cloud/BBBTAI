@@ -158,7 +158,8 @@ test('live PhoneStore.replace clears the imported input lock without replaying o
  s.ghost.orders.shared.deadline=null;
  tickStory55(s);
  const before=structuredClone(s.ghost),ledger=structuredClone(s.bankData);
- store.replace(s);
+ withNow(60000,()=>store.replace(s));
+ before.orders.shared.startedAt+=40000;
  const restored=store.get();
  assert.equal(restored.story55.ghostShare.phase,'interrupted');
  assert.equal(restored.story55.ghostShare.remote.active,false);
