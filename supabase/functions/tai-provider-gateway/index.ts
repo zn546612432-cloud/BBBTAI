@@ -32,7 +32,7 @@ function messages(input,allowSystem=true){
  return input.map((m,i)=>{
   const role=m?.role;
   if(!['system','user','assistant'].includes(role)||role==='system'&&(!allowSystem||i!==0)
-   ||!goodString(m?.content,i===0&&role==='system'?25000:2200))
+   ||!goodString(m?.content,i===0&&role==='system'?50000:2200))
    throw error(400,'invalid_message');
   return {role,content:m.content};
  });
@@ -82,7 +82,7 @@ async function speech(req,body){
   voice_setting:{
    voice_id:body.voiceId,speed:num(voice.speed,.5,2,1),
    vol:num(voice.vol,.01,10,1),pitch:Math.round(num(voice.pitch,-12,12,0)),
-   ...(['calm','happy','sad','angry','fearful','disgusted','surprised'].includes(voice.emotion)?{emotion:voice.emotion}:{})
+   ...(['happy','sad','angry','fearful','disgusted','surprised'].includes(voice.emotion)?{emotion:voice.emotion}:{})
   },
   audio_setting:{sample_rate:[8000,16000,22050,24000,32000,44100].includes(options.sample_rate)?options.sample_rate:32000,
    bitrate:[32000,64000,128000,256000].includes(options.bitrate)?options.bitrate:128000,
@@ -108,8 +108,36 @@ Deno.serve(async(req)=>{
   if(!token||token.startsWith('sb_publishable_'))throw error(401,'sign_in_required');
   const {data:{user},error:authError}=await admin.auth.getUser(token);
   if(authError||!user)throw error(401,'invalid_session');
+  if((req.headers.get('content-type')||'').startsWith('multipart/form-data')){
+   if(Number(req.headers.get('content-length')||0)>8_500_000)throw error(413,'audio_too_large');
+   const key=Deno.env.get('MINIMAX_API_KEY')?.trim();
+   if(!key)throw error(503,'minimax_not_configured');
+   let data;
+   try{data=await req.formData();}catch{throw error(400,'invalid_audio_upload');}
+   const file=data.get('file');
+   if(data.get('op')!=='asr'||!(file instanceof File)||file.size<10||file.size>8_000_000||
+     !/^audio\//.test(file.type))throw error(400,'invalid_audio_upload');
+   await reserve(user.id,'tts');
+   const region=data.get('region')==='intl'?'intl':'cn';
+   const url=region==='intl'?'https://api.minimax.io/v1/speech_to_text':'https://api.minimaxi.com/v1/speech_to_text';
+   const requestBody=new FormData();
+   requestBody.append('model','asr-1.0');
+   requestBody.append('file',file,'ximeng-voice.'+(file.name.split('.').pop()||'wav'));
+   requestBody.append('response_format','json');
+   let provider;
+   try{provider=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+key},
+    body:requestBody,signal:AbortSignal.timeout(50000)});}
+   catch{throw error(502,'asr_provider_unreachable');}
+   let result;
+   try{result=await provider.json();}catch{throw error(502,'asr_provider_invalid_response');}
+   if(!provider.ok||Number(result?.base_resp?.status_code||0)!==0)
+    throw error(502,'asr_provider_rejected');
+   const transcript=String(result?.text||result?.data?.text||result?.result?.text||'').trim();
+   if(!transcript)throw error(502,'asr_empty_transcript');
+   return respond(req,200,{text:transcript.slice(0,6000)});
+  }
   const raw=await req.text();
-  if(raw.length>65000)throw error(413,'payload_too_large');
+  if(raw.length>90000)throw error(413,'payload_too_large');
   let input;
   try{input=JSON.parse(raw);}catch{throw error(400,'invalid_json');}
   if(!input||typeof input!=='object'||Array.isArray(input))throw error(400,'invalid_body');
