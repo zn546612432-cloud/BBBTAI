@@ -60,7 +60,7 @@ test('B pause works when an already-started project or preview result is active'
  assert.equal(control.status,'preview-win');
 });
 test('B pause during Mirage typing does not invent a GHOST deadline or consume a stage',()=>{
- const {s,control}=fixture({stage:'typing'});
+ const {s,control}=fixture({stage:'typing',status:'authorized'});
  const before=structuredClone(control);
  assert.equal(pauseTaiRemoteOnHide(s,500),true);
  assert.equal(resumeTaiRemoteOnShow(s,3500),true);
