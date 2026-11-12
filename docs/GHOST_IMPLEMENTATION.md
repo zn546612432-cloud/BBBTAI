@@ -31,3 +31,17 @@ Fresh EXTRACT, VEIL and STRIKE attempts now create an additional serializable `b
 - Module and integration tests: `tests/ghost-arcade.test.mjs`.
 
 See `src/apps/ghost/games/OPEN_SOURCE_CREDITS.md` for research references and provenance.
+
+## November 2026 / Source-ported Arcade 3
+
+For new D15–D55 market contracts, CIPHER (solvable sliding circuit), EXTRACT
+(variable memory deck), VEIL (DFS-carved labyrinth with scanner-aware
+solvability) and STRIKE (real-time random moving targets) execute through
+the existing Ghost order and its single timer. MIT source ports live in
+`src/apps/ghost/games/vendor`; the complete licenses are retained there.
+The original route/pipe puzzle was not changed. The `arcadeV3` setting
+is bound when a new eligible Ghost stage begins, so existing active boards,
+legacy attempts, Story55 D01–D14 and their saved results are left untouched.
+Daily commissions continue through KIRA attachment, Ghost, manual submission,
+and the original one-time banking ledger. See
+`tests/ghost-upstream-arcade.test.mjs` for the actual mounted UI flow.
