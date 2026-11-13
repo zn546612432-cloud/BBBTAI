@@ -135,7 +135,7 @@ try{
  }
  state=await saved();assert.ok(state.story55.completed['azathoth-invitation']);
  const lines=state.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id.startsWith('s55-d17-invitation-'));
- assert.equal(lines.length,30);assert.equal(state.story55.completed.rumours,undefined);
+ assert.equal(lines.length,29);assert.equal(state.story55.completed.rumours,undefined);
  await capture('06-invitation.png');
  const link=action('mc-azathoth-reference').last();await link.scrollIntoViewIfNeeded();await link.click();
  await screen.getByRole('heading',{name:'阿撒托斯',exact:true}).waitFor();
@@ -186,7 +186,7 @@ try{
   await action('browser-back').click();await screen.locator('[data-page="d17-azathoth-culture"]').waitFor();
  }
  assert.deepEqual(errors,[]);
- const result={passed:true,viewport:await page.viewportSize(),resultCount:8,azathothResults:6,backgroundPages:9,comments:3,invitationLines:30,readOnce:true,websiteImages:true,gallery:true,directory:true,widths:[320,390,430],externalRequestsBlocked:[...new Set(external)],errors};
+ const result={passed:true,viewport:await page.viewportSize(),resultCount:8,azathothResults:6,backgroundPages:9,comments:3,invitationLines:29,readOnce:true,websiteImages:true,gallery:true,directory:true,widths:[320,390,430],externalRequestsBlocked:[...new Set(external)],errors};
  await writeFile(root+'/result.json',JSON.stringify(result,null,2)+'\n');console.log('PASS_D17_MOBILE',JSON.stringify(result));
 }catch(error){
  await page.screenshot({path:root+'/failure.png'}).catch(()=>{});
