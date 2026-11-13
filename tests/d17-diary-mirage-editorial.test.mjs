@@ -40,9 +40,20 @@ test('D14 diary is available; D15 and D17 diaries wait for their source events',
  assert.equal(entryFor(s,15).title,'奇怪的人');
  assert.match(entryFor(s,15).body,/一百萬美元/);
  s.day=17;
+ s.clock='21:40';
  assert.equal(entryFor(s,17),null);
- s.story55.authoredDays??={};
- s.story55.authoredDays.D17={'bank-followup':{completed:true}};
+ const track=D14_D24_TRACKS.find(x=>x.track.day===17).track;
+ const progress=track.ensure(s);
+ for(const def of track.defs)if(def.id!=='bank-followup')progress[def.id].completed=true;
+ const store={get:()=>s,update:fn=>fn(s)};
+ let time=Date.now();
+ for(let i=0;i<30&&!progress['bank-followup'].completed;i++){
+  track.tick(s,time+=3000);
+  const draft=track.draft(s,'hufeng');
+  if(draft)assert.equal(track.send(store,'hufeng',draft.text,time+=3000).handled,true);
+ }
+ assert.equal(progress['bank-followup'].completed,true,'actual lifecycle finishes the approved bank dialogue');
+ assert.equal(s.story55.authoredDays?.d17?.['bank-followup']?.completed,true);
  assert.equal(entryFor(s,17).title,'下雨了');
  assert.match(entryFor(s,17).body,/資料有些地方對不上/);
  assert.equal(entryFor(s,19),null);
@@ -79,4 +90,28 @@ test('Mirage must not duplicate a persisted NEW SESSION marker',()=>{
  const result=withMirageSessionDividers(rows,s);
  assert.equal(result.filter(x=>x.text==='── NEW SESSION ──').length,1);
  assert.equal(result.filter(x=>x.id==='a').length,1);
+});
+
+test('D13 story-owned intrusion session marker survives even after same-day chat',()=>{
+ const s=state();s.day=13;
+ const items=[
+  {id:'earlier',from:'ouroboros',text:'前面的訊息',day:13,sentDate:'2025-05-31',time:'20:00'},
+  {id:'s55-intrusion-divider',kind:'divider',from:'system',text:'── NEW SESSION ──',systemOwned:true,day:13,sentDate:'2025-05-31',time:'22:30'},
+  {id:'intrusion',from:'ouroboros',text:'入侵之後',day:13,sentDate:'2025-05-31',time:'22:31'}
+ ];
+ const result=withMirageSessionDividers(items,s);
+ assert.deepEqual(result.map(x=>x.id),['mirage-session-2025-05-31','earlier','s55-intrusion-divider','intrusion']);
+ assert.equal(result.find(x=>x.id==='s55-intrusion-divider'),items[1],'system-owned marker is not replaced');
+ assert.equal(result.filter(x=>x.kind==='divider').length,2,'different-purpose divider is retained');
+ assert.deepEqual(items.map(x=>x.id),['earlier','s55-intrusion-divider','intrusion'],'persisted records are untouched');
+});
+
+test('D13 system-owned marker at first message of the day is not duplicated',()=>{
+ const s=state();s.day=13;
+ const items=[
+  {id:'s55-intrusion-divider',kind:'divider',from:'system',text:'── NEW SESSION ──',systemOwned:true,day:13,sentDate:'2025-05-31',time:'22:30'},
+  {id:'intrusion',from:'ouroboros',text:'回來了',day:13,sentDate:'2025-05-31',time:'22:31'}
+ ];
+ const result=withMirageSessionDividers(items,s);
+ assert.deepEqual(result.map(x=>x.id),items.map(x=>x.id));
 });
