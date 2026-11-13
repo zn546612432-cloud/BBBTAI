@@ -68,7 +68,7 @@ export function entryFor(s,day){
  // Approved authored entries appear only when their source scene has happened.
  // User-edited diary entries remain independent and visible as written.
  if(!extra&&authored?.afterNode&&!Object.hasOwn(s.story55?.completed||{},authored.afterNode))return null;
- const authoredChat=s.story55?.authoredDays?.['D'+String(day).padStart(2,'0')]?.[authored?.afterChat];
+ const authoredChat=s.story55?.authoredDays?.['d'+String(day).padStart(2,'0')]?.[authored?.afterChat];
  if(!extra&&authored?.afterChat&&!authoredChat?.completed)return null;
  const overrides=extra?.stages||{};
  const parts=[base.body];
