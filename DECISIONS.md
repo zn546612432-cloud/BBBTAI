@@ -183,3 +183,17 @@
 - 用户边界：傅隆生的大会保持线下，D23 Mirage 22句不改，Stockfish 不需玩家新配置 API。
 - 不做：不合并 main、不覆盖无授权日期的现有聊天、不把视觉截图测试等同真实设备性能测量。
 - 负责人：ChatGPT 进行测试证据核验；用户决定最终文案和合并。
+
+
+## 2026-11-14：D21–D22 简短群聊获批、MIRAGE 联系人按订单增长（新需求）
+- 背景：用户回复「可以，給mirage的也加一點」，确认上轮 D21、D22 两段短微信聊天，提出原电影截图中的 Mirage 多位联系人应随着熙蒙承接悬赏逐步增加；每位雇主在接单、结单、失败时出现对应私聊。
+- 已确认 D21 候选群聊 6句：阿威「累死了。」；小辛「誰讓你下午還要加練。」；阿威「閉嘴。」；胡楓「醫療包還有嗎？」；熙旺「有，儲物櫃第二格。」；胡楓「謝了。」。
+- 已确认 D22 候选群聊 5句：小辛「今天誰還去練？」；阿威「不去了，腿要廢了。」；仔仔「昨天不是還說不累？」；阿威「你們能不能放過我。」；小辛「哈哈哈哈。」。
+- 已确认行为方向：真实 MIRAGE 联系人列表不是只有 Ouroboros/Flow；根据委托实际成交逐步出现其他雇主与历史联系，离线联系人/历史记录保留。每份订单的真实状态转移 ACCEPTED、COMPLETED、失败或已接单后 EXPIRED，都要能产生对应雇主固定私讯；未接的 OPEN 过期不产生“你失败了”的假消息，GHOST 失败时不假称整份订单逾期。
+- 截图既定姓名：Isolde Mirage、Rookery 13、Nyx Voidwalker、Cipher-7、Vesper Nocturne、Dr. Ouroboros、Thalia Liminal、Orion Echo、Iris 404、Silas Rook、Lyra Null。现存 src/apps/mirage/data.js 有 contactNames，但不等于 Story55 真实私信均已开放；src/apps/mirage/contacts-seed.js 的旧演示联系人不应直接全量注入 Story55。
+- 现有 D21 正式悬赏 M-016（@rancor，B級，2300 USD）、M-017（@ledger_8，C級，620 USD）；D22 M-018（@deadletter，B級，1950 USD）、M-019（@oldmoney，A級，6400 USD）；均已由 src/story/d15-d55/commissions.js 提供，不能再造一份订单。雇主 @handle 不得擅自认定就是电影中某位实名联系人。
+- 实施设计候选（尚未批准具体台词）：通过现有 src/story/d04/contract.js 状态转换一次性投递 NPC 私信；沿用 src/services/messaging/phone-messages.js / MIRAGE contacts，会话按 owner 合并多订单历史；KIRA 仍独占附件/密钥/结算回执提醒，MIRAGE 仅真实雇主个人聊天，禁止重复系统通知与重复发钱。每个订单按 orderId+eventKind 去重，复用现有时钟与状态，非自由 AI。
+- 未决：D21 既有 clothes 群聊是否原位替换、D22 原熙旺 headache 私聊是否保留（未经明确授权不能删除）；四位雇主每个状态的逐句文案仍须审核；其余日期的订单联系人长期按同一模式扩展，不一次性上架11位。
+- 不做：不改现有 Ghost/银行/委托结算、不预发成功或失败聊天、不提前暴露 Ouroboros 身份、不将讨论稿伪装为已落地功能。
+- 下一步：给用户审核 D21–D22 四位真实雇主的 ACCEPTED/COMPLETED/EXPIRED 分支短私信，再写测试并按最小范围实现。
+- 负责人：用户定稿文案，ChatGPT 实施；截止：未指定。
