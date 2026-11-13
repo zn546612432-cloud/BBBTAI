@@ -36,13 +36,11 @@ test('shares a real authorized Ghost project only in D15-D24; offline does not c
  assert.equal(s.story55.ghostShareTakeovers||0,0);
 });
 
-test('failed 50% check preserves first story; native Send and delayed NPC delivery are required',()=>{
+test('first takeover is guaranteed; native Send and delayed NPC delivery are required',()=>{
  const s=fixture();
- assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>.95,now:10000}).accepted,false);
- assert.equal(s.story55.ghostShare.script,'dailyNo');
+ const yes=shareGhostToTai(s,{projectId:'base'},{random:()=>.99,now:10000});
+ assert.equal(yes.accepted,true);
  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10030}).duplicate,true);
- deliverNpc(s);
- const yes=shareGhostToTai(s,{projectId:'base'},{random:()=>.1,now:13000});
  assert.equal(yes.script,'first');
  assert.equal(s.story55.ghostShareTakeovers||0,0);
  assert.equal(chat(s).messages.at(-1).text,'？');
@@ -56,7 +54,7 @@ test('failed 50% check preserves first story; native Send and delayed NPC delive
  deliverNpc(s);
  assert.equal(sendNext(s),'為了部署你給我的程序，我得努力賺錢才行，還是說你打算再給我一百萬？');
  assert.equal(ghostShareReadyForControl(s),true);
- assert.equal(s.story55.ghostShareTakeovers||0,0,'random win must not consume a takeover');
+ assert.equal(s.story55.ghostShareTakeovers||0,0,'agreement must not consume a takeover');
  assert.equal(beginGhostShareControl(s),true);
  assert.equal(beginGhostShareControl(s),false);
  assert.equal(s.story55.ghostShareTakeovers,1);
@@ -65,7 +63,7 @@ test('failed 50% check preserves first story; native Send and delayed NPC delive
 
 test('second exact dialogue and third-stage one decision per game day',()=>{
  const s=fixture();s.story55.ghostShareTakeovers=1;
- assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10000}).script,'second');
+ assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>.99,now:10000}).script,'second');
  deliverNpc(s);assert.equal(sendNext(s),'你的千面之神在召喚你');
  deliverNpc(s);assert.equal(sendNext(s),'你還沒有證明自己是不是azathoth，我還不信任你，我反而好奇，你為什麼對我感興趣');
  deliverNpc(s);assert.equal(ghostShareReadyForControl(s),true);
@@ -235,7 +233,7 @@ test('share icon asks Yes or No before creating a MIRAGE card on the existing pr
  assert.match(renderMirage(ctx,navigated[0]),/data-form="mc-login"/);
 });
 
-for(const count of [0,1,2])test(`online rejection always responds without consuming takeover ${count}`,()=>{
+for(const count of [2,3])test(`online rejection always responds without consuming takeover ${count}`,()=>{
  const s=fixture();s.story55.ghostShareTakeovers=count;
  const result=shareGhostToTai(s,{projectId:'base'},{random:()=>.99});
  assert.equal(result.script,'dailyNo');assert.equal(result.accepted,false);
@@ -254,7 +252,7 @@ test('offline share survives reload, resumes once on existing story tick, and ke
  assert.equal(result.pending,true);assert.equal(s.story55.ghostShare.phase,'awaiting-online');
  const restored=structuredClone(s);assert.equal(resolveGhostShare(restored),null);
  restored.clock='12:00';
- assert.equal(resolveGhostShare(restored,{random:()=>0}).script,'first');
+ assert.equal(resolveGhostShare(restored,{random:()=>{throw Error('first takeover cannot roll');}}).script,'first');
  assert.equal(resolveGhostShare(restored,{random:()=>{throw Error('must not reroll');}}),null);
  assert.equal(chat(restored).messages.filter(m=>m.kind==='ghost-project').length,1);
  assert.equal(chat(restored).messages.filter(m=>m.id===result.cardId+'-tai-0').length,1);
@@ -264,16 +262,56 @@ test('offline share survives reload, resumes once on existing story tick, and ke
 test('old unanswered share is repaired once; expired offline shares cannot take over',()=>{
  const s=fixture(16,'11:00');shareGhostToTai(s,{projectId:'base'});
  s.story55.ghostShare.phase='idle';s.clock='12:00';
- assert.equal(resolveGhostShare(s,{random:()=>.99}).script,'dailyNo');
+ assert.equal(resolveGhostShare(s,{random:()=>.99}).script,'first');
  assert.equal(resolveGhostShare(s),null);
  const late=fixture(24,'23:30');shareGhostToTai(late,{projectId:'base'});
  late.day=25;assert.equal(expireGhostShare(late),true);
  assert.equal(resolveGhostShare(late),null);assert.equal(late.story55.ghostShare.phase,'expired');
 });
 
-test('expired source receives refusal after coming online, never a stale takeover',()=>{
+for(const count of [0,1])test(`expired source cannot bypass validation during guaranteed takeover ${count+1}`,()=>{
  const s=fixture(16,'11:00');shareGhostToTai(s,{projectId:'base'});
+ s.story55.ghostShareTakeovers=count;
  delete s.story55.projects.base;s.clock='12:00';
  assert.equal(resolveGhostShare(s,{random:()=>{throw Error('invalid source cannot roll');}}).script,'dailyNo');
  assert.equal(ghostShareReadyForControl(s),false);
+});
+
+for(const count of [0,1])test(`guaranteed takeover ${count+1} ignores old daily refusal without using randomness`,()=>{
+ const s=fixture();s.story55.ghostShareTakeovers=count;
+ s.story55.ghostShareDaily={day:s.day,accepted:false,cardId:'old-refusal'};
+ const reply=shareGhostToTai(s,{projectId:'base'},{random:()=>{throw Error('first two cannot roll');}});
+ assert.equal(reply.accepted,true);
+ assert.equal(reply.script,count===0?'first':'second');
+ assert.equal(s.story55.ghostShareTakeovers,count);
+ assert.equal(s.story55.ghostShareDaily.cardId,'old-refusal');
+});
+
+for(const count of [0,1])test(`saved refusal preserves history and allows guaranteed takeover ${count+1} on retry`,()=>{
+ const s=fixture(16,'11:00');s.story55.ghostShareTakeovers=count;
+ shareGhostToTai(s,{projectId:'base'},{now:10000});
+ delete s.story55.projects.base;s.clock='12:00';
+ assert.equal(resolveGhostShare(s).script,'dailyNo');
+ deliverNpc(s);
+ const restored=structuredClone(s),history=structuredClone(chat(restored).messages);
+ restored.story55.projects.base={authorized:true,batches:[],active:null};
+ const reply=shareGhostToTai(restored,{projectId:'base'},{
+  random:()=>{throw Error('retry before two takeovers cannot roll');},now:20000
+ });
+ assert.equal(reply.accepted,true);
+ assert.equal(reply.script,count===0?'first':'second');
+ assert.deepEqual(chat(restored).messages.slice(0,history.length),history);
+ assert.equal(restored.story55.ghostShareTakeovers,count);
+});
+
+for(const roll of [0,.499999,.5,.999999])test(`third-stage acceptance retains 50% boundary for roll ${roll}`,()=>{
+ const s=fixture();s.story55.ghostShareTakeovers=2;
+ let rolls=0;
+ const reply=shareGhostToTai(s,{projectId:'base'},{random:()=>{rolls++;return roll;}});
+ assert.equal(reply.accepted,roll<.5);
+ assert.equal(reply.script,roll<.5?'dailyYes':'dailyNo');
+ assert.equal(rolls,1);
+ assert.equal(s.story55.ghostShareDaily.accepted,roll<.5);
+ assert.equal(s.story55.ghostShareDaily.day,s.day);
+ assert.equal(s.story55.ghostShareTakeovers,2);
 });

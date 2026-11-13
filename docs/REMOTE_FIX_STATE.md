@@ -21,3 +21,16 @@
 - 线上验证：release.json source_commit=544b11173977f8ac9888ddaa5c95d4e1fc5a0053，version=c68a550f491c9572；正式入口绑定该版本。
 - 线上controller.js及ghost-share.js返回HTTP 200，内容与通过测试的本地代码逐字节一致。
 - 本次收尾仅更新三份Markdown记录；不改运行代码。
+## 当前修复 · 2026-11-13
+- 当前任务：恢复前两次接管必定同意。
+- 当前步骤：修复及验收通过；PR #144待用户决定合并。
+- 已完成：用户确认规则；前两次绕过随机，第三次起不变；触屏回归脚本补充在线/离线的0/1/2次三组场景。
+- 下一步：用户如授权合并，再复核PR状态并发布验证；本轮不合并。
+- 阻塞：无；本地Chromium限制通过既有GitHub Actions完成验证。
+- 相关文件：本状态、REMOTE_FIX_DECISIONS.md、REMOTE_FIX_TASK.md、AGENTS.md、ghost-share.js、ghost-mirage-share.test.mjs、package.json；最多8个。
+- 最近验证：测试先行17通过/8失败；修复后分享、接管集成、日单完成及可见性四组43/43通过；npm run build:pages、语法检查与git diff --check通过。
+- 最终验证：GitHub自动回归1120/1120通过；196aee0浏览器Actions 43330572782成功；前两次在线/离线必同意、后续拒绝、原生关卡及六种后台恢复均通过。
+- 证据：PR https://github.com/zn546612432-cloud/BBBTAI/pull/144 ；截图artifact 13995671692（14天保留）。人工查看share-guaranteed-0-online.png、share-guaranteed-1-offline.png，分别显示首次“？”和第二次“又來？”及原生发送草稿。
+- 剩余风险：实体iPhone Safari未真机验证；正式main及Pages尚未更新。收尾仅文档改动，业务代码仍为已验收版本。
+
+

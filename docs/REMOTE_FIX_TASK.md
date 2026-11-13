@@ -39,3 +39,15 @@
 - [x] 线上release.json与正式入口指向c68a550f491c9572，source_commit=544b111。
 - [x] 线上controller.js和ghost-share.js与通过测试版本逐字节一致。
 - [x] 状态、决策、任务卡写回；不修改其他PR或业务代码。
+## 本轮修复任务卡 · 2026-11-13
+目标：前两次有效接管必同意；第三次起保持现有规则。
+- [x] 读取状态、决策、任务卡；提交计划。
+- [x] 测试先行真实17通过/8失败；覆盖首次/第二次、第三次50%边界、旧拒绝存档、离线及来源失效。
+- [x] 最小改动共享判定；不改计数与对白。
+- [x] 相关43项测试及Pages构建通过；GitHub自动回归1120/1120通过；无UI布局变更。
+- [x] 触屏浏览器六种分享场景及原生接管/恢复全流程通过：Actions 43330572782，提交196aee0。
+- [x] 截图artifact 13995671692已下载检查首次在线与第二次离线恢复；无UI布局改动。
+- [x] 提交PR #144；写回状态与决策；不合并main。
+相关文件：三份记录、src/services/story55/ghost-share.js、tests/ghost-mirage-share.test.mjs、package.json、.github/test-scripts/tai-remote-share-feedback-browser.mjs、既有浏览器工作流；另遵循根AGENTS.md。
+
+
