@@ -138,3 +138,11 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 风险：D13 wallet mobile acceptance skipped，Tai Ghost remote browser workflow 仍需查最终结论；D29 旧棋局触发仍未修改；未经正式 Pages 发布环境实机测量性能。D21/D22 无具体获批台词。
 - 下一步：提供 PR #146 与真实测试截图供用户审核；D21/D22 短闲聊逐句确认后再修改，未经批准不得合并 main。
 - 阻塞：无实质 Stockfish Node 和 Chromium 浏览器回归阻塞；旧 Ghost QA 与 D29 兼容性另列风险，PR 保持 Draft。
+
+
+## 2026-11-13：D23 棋盘截图复验与提交收束
+- 当前步骤：已复测并人工查看四张 UI 证据图，PR #146 保持 Draft、main 未合并。
+- 本轮修正：首次浏览器功能通过后发现3张截图仍覆盖手机解锁过渡层，属于截图采集时机错误；仅修改 .github/test-scripts/d23-chess-browser.mjs 等待真实解锁、过渡动画和消息横幅结束，不改业务代码。
+- 最近验证：最新代码提交 58e7b77209e8baaf3647fa864a96be3b54bc9cf2；D23 Chess Stockfish browser QA run 43454628028 success，日志 PASS D23 real Stockfish Web Worker move, 64-square board, desktop/mobile, empty/error states；Story55 developer regression、AI gateway branch checks、Check feature branches 同次均 success；D13 workflow skipped，Tai Ghost browser QA 查验时仍 in_progress。
+- 截图：GitHub artifact 14052178973 d23-chess-browser-screenshots，含 mobile-stockfish-move.png、desktop-chess.png、mobile-empty.png、mobile-engine-error.png；实际下载并查看四图，解锁过渡层消失。产物保存在本次对话工作区 /mnt/data/d23-chess-final/，不进入项目仓库。
+- 下一步：用户审核 D21–D22 少量闲聊的逐句文案，并按需审批 PR #146 的合并。不能把 D21–D22 未定稿的例句当作已经写入手机。
