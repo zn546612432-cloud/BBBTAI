@@ -33,11 +33,15 @@ function drain(s,track,id,chatId){
  return chat(s,chatId).messages.filter(m=>m.lifecycleId===track.name+':'+id);
 }
 
-test('unlisted scenes, D06, D13 call, frozen D17 and D18–D19 remain exact main sources',()=>{
+test('unlisted scenes and D13 remain frozen; D17 differs only by the withdrawn line',()=>{
  const s=phone(5,'08:00');const modified=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));
  for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,old.lines,old.source+':'+old.id);}
- for(const id of ['intrusion','azathoth-invitation'])assert.deepEqual(s.story55.config.scenes[id],baseline.story.find(x=>x.node.id===id).lines);
- assert.equal(s.story55.config.scenes['azathoth-invitation'].length,30);
+ assert.deepEqual(s.story55.config.scenes.intrusion,baseline.story.find(x=>x.node.id==='intrusion').lines);
+ const originalD17=baseline.story.find(x=>x.node.id==='azathoth-invitation').lines;
+ const approvedD17=originalD17.filter(([who,text])=>!(who==='ouroboros'&&text==='呵呵……'));
+ assert.equal(originalD17.length-approvedD17.length,1);
+ assert.deepEqual(s.story55.config.scenes['azathoth-invitation'],approvedD17);
+ assert.equal(s.story55.config.scenes['azathoth-invitation'].length,29);
 });
 
 test('D07 saving wishes unlocks native Send; purchase, delivery, photos and thanks are distinct',()=>{
