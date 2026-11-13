@@ -80,3 +80,7 @@
 /* Native decrypted MIRAGE attachment: a real GHOST project reference. */
 .mc-clear-text .mc-ghost-card{display:flex;flex-direction:column;gap:5px;width:min(100%,260px);padding:13px;text-align:left;border:1px solid #9ec4a8;background:#103a2f;color:#e4eed9;cursor:pointer;white-space:normal;font-family:ui-monospace,monospace;min-height:0}
 .mc-clear-text .mc-ghost-card>span{font-size:9px;letter-spacing:1.5px;color:#a4c3b4}.mc-clear-text .mc-ghost-card>strong{font-size:15px;overflow-wrap:anywhere}.mc-clear-text .mc-ghost-card>small{font-size:12px;color:#a4c3b4}.mc-clear-text .mc-ghost-card>b{font-size:11px;font-weight:400;text-decoration:underline;margin-top:5px}.mc-clear-text .mc-ghost-card:focus-visible{outline:2px solid #e1efb7}
+
+/* Session boundaries reuse the original terminal palette at all viewport sizes. */
+.mc-session-divider{display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;margin:16px 0;padding:5px 0;color:var(--mc-bright);font:inherit;font-size:10px;letter-spacing:.09em;text-align:center;overflow-wrap:anywhere}
+.mc-session-divider::before,.mc-session-divider::after{content:'';height:1px;min-width:8px;flex:1;background:var(--mc-line)}
