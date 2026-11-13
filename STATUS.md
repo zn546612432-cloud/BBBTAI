@@ -30,4 +30,6 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 ## 最近验证
 - GitHub 分支回读 source SHA：7b436898d82eb3ced35bf39b65d4a0fad60472fa；D19 逐句比对 10/10。
 - 写入前后 JSON 解析、原有其他剧情内容不变、日期与身份检查通过。
-- GitHub Actions PR 检查启动，最终结果尚待确认；未在本地运行全量 npm test。
+- 首轮 GitHub Actions 的 npm test：1122 通过、1 失败；失败来自原版冻结测试误将已授权修改的 d19:dessert 当作未变节点。
+- 已在 tests/d05-d17-v2.test.mjs 仅豁免 d19:dessert，继续对其他节点执行原样比较；修复后的 CI 正在重新运行。
+- 未在本地运行全量 npm test，最终以 GitHub Actions 结果为准。
