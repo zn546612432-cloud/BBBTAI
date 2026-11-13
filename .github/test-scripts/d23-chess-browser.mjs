@@ -39,6 +39,9 @@ async function open(state,{width,height}){
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
+ // Phone boot intentionally relocks restored sessions; unlock through the real UI.
+ await page.locator('[data-action="unlock"]').click();
+ for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  return {page,context};
 }
 try{
