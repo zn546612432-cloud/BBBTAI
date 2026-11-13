@@ -3,6 +3,20 @@ import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.j
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  14:{
+    title:"最近有點忙",
+    body:"搬回來以後，總覺得以前的東西越來越不夠用了。\n\n工作站那幾台機器還能撐一陣子，就是吵得要命。有時候半夜安靜下來，聽著風扇轉，還挺催眠的。\n\n家裡又熱鬧起來了。\n\n哥最近很忙，乾爹回來以後，好像有操不完的心。\n\n感覺接下來有很長一段時間都閒不下來了。"
+  },
+  15:{
+    title:"奇怪的人",
+    body:"今天遇到一個很奇怪的人。\n\n明明是第一次認識，說話卻一副跟我很熟的樣子。\n\n自大，嘴欠，還特別愛管閒事。\n\n不過技術確實不錯。\n\n他說那一百萬美元是借給我的。\n\n我又沒說要借。\n\n……有錢人的腦子是不是都有點問題？",
+    afterNode:"loan"
+  },
+  17:{
+    title:"下雨了",
+    body:"下午突然下了好大的雨。\n\n小辛又在群裡嚷嚷他的鞋。這人也真是，穿那麼貴的鞋去訓練，淋濕了還怪天氣。\n\n哥說今天不練了，晚上大家一起吃燒烤。\n\n胡楓帶回來的資料有些地方對不上。原本以為已經弄清楚的事情，好像又多了點麻煩。\n\n算了，明天再看。\n\n今天還是先吃飯。",
+    afterChat:"bank-followup"
+  },
   6:{
     title:'今天有点意思',
     body:'昨天整理的东西还有一点没弄完，今天抽空处理一下。\n\n最近 MIRAGE 的单子还行，不过小委托做多了也挺烦的。看看今天有没有什么值得接的，最好来个奖金高一点的。\n\n哥昨天还叫我出去走走。再说吧，先把手里的事情忙完。',
@@ -51,6 +65,11 @@ export function entryFor(s,day){
  const authored=DEFAULT_DIARY_ENTRIES[day];
  const base=extra||authored;
  if(!base)return null;
+ // Approved authored entries appear only when their source scene has happened.
+ // User-edited diary entries remain independent and visible as written.
+ if(!extra&&authored?.afterNode&&!Object.hasOwn(s.story55?.completed||{},authored.afterNode))return null;
+ const authoredChat=s.story55?.authoredDays?.['D'+String(day).padStart(2,'0')]?.[authored?.afterChat];
+ if(!extra&&authored?.afterChat&&!authoredChat?.completed)return null;
  const overrides=extra?.stages||{};
  const parts=[base.body];
  // Preserve the existing D02 delayed sections unchanged; only their source
