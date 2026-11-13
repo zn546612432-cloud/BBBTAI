@@ -36,7 +36,6 @@ export const D17_INVITATION_LINES=[
  ['me','你是說……加入 Azathoth？'],
  ['ouroboros','不然呢？'],
  ['me','你先證明你真的是管理員。'],
- ['ouroboros','呵呵……'],
  ['ouroboros','等你把程序部署完，我會讓你親眼看看。']
 ];
 
