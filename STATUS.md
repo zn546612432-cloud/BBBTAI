@@ -42,3 +42,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞：尚未授权实施；未逐项核对 Mirage 原始节点和日程实际存储位置。
 - 相关文件：DECISIONS.md、STATUS.md；未来候选剧情文件需在授权后定位。
 - 最近验证：仅文件记录编辑，未运行程序测试；GitHub 提交 9c3bc749b0e0bdfa5c17d1ccc9fc8afaeeee92a7，准备回读。PR #145 D19 对话改动保持原样，main 未合并。
+
+
+## 2026-11-13 追加状态：获得实施与合并授权
+- 当前任务：将 D17 胡枫资金线、D14/D15/D17 三篇日程、Mirage 跨日分隔与熙泰独立「呵呵……」删除写入正式剧情，保留此前 D19 私聊。
+- 当前步骤：实施与自动化验证。已修改剧情、日记、Mirage 渲染及针对性测试，等待 CI 验证后执行经授权的 PR 合并。
+- 已完成：D17 21:40 七句使用统一微信队列；日程在剧情完成后开放；Mirage 派生分隔不写消息库；D17 已删除单句并精准更新审稿基线；PR #145 D19 仍保留。
+- 下一步：查验最新 GitHub Actions 检查；若通过，合并 PR #145 至 main 并回读校验。
+- 阻塞：CI 未出最终结论前不得声称通过；无桌面/移动实际运行截图。
+- 相关文件：src/story/d14-d24/content.json、src/story/d17/content.js、src/story/d17/definition.js、src/story/diary/entries.js、src/apps/mirage/index.js、src/apps/mirage/styles.css、tests/d17-diary-mirage-editorial.test.mjs、tests/d17-mirage-research.test.mjs。
+- 最近验证：GitHub compare main...content/d19-wang-dialogue-20261113 状态 ahead、behind_by=0；授权范围内变更文件可核实；真实程序测试待 GitHub Actions 完成。
