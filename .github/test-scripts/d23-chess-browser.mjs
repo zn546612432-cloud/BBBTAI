@@ -42,6 +42,11 @@ async function open(state,{width,height}){
  // Phone boot intentionally relocks restored sessions; unlock through the real UI.
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+ // All screenshots must show the settled phone, not the unlock transition or banner.
+ await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('show-passcode'));
+ await page.waitForTimeout(1100);
+ const banner=page.locator('#toast.visible');
+ if(await banner.count())await banner.waitFor({state:'hidden',timeout:7000});
  return {page,context};
 }
 try{
