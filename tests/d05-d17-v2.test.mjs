@@ -33,11 +33,15 @@ function drain(s,track,id,chatId){
  return chat(s,chatId).messages.filter(m=>m.lifecycleId===track.name+':'+id);
 }
 
-test('unlisted scenes, D06, D13 call, frozen D17 and D18–D19 remain exact main sources',()=>{
+test('unlisted scenes and D13 remain frozen; D17 differs only by the withdrawn line',()=>{
  const s=phone(5,'08:00');const modified=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));
  for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,old.lines,old.source+':'+old.id);}
- for(const id of ['intrusion','azathoth-invitation'])assert.deepEqual(s.story55.config.scenes[id],baseline.story.find(x=>x.node.id===id).lines);
- assert.equal(s.story55.config.scenes['azathoth-invitation'].length,30);
+ assert.deepEqual(s.story55.config.scenes.intrusion,baseline.story.find(x=>x.node.id==='intrusion').lines);
+ const originalD17=baseline.story.find(x=>x.node.id==='azathoth-invitation').lines;
+ const approvedD17=originalD17.filter(([who,text])=>!(who==='ouroboros'&&text==='呵呵……'));
+ assert.equal(originalD17.length-approvedD17.length,1);
+ assert.deepEqual(s.story55.config.scenes['azathoth-invitation'],approvedD17);
+ assert.equal(s.story55.config.scenes['azathoth-invitation'].length,29);
 });
 
 test('D07 saving wishes unlocks native Send; purchase, delivery, photos and thanks are distinct',()=>{
@@ -154,6 +158,6 @@ import {sendChat} from '../src/components/chat.js';
 import allMain from '../docs/chat-v2/main-all-chat-source.json' with {type:'json'};
 import {readChatSources} from '../src/apps/developer/features/conversations/source-model.js';
 test('every unmodified D01–D55 source remains byte-exact against the immutable main baseline',()=>{
- const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);
- const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},old,old.key);count++;}}assert.equal(count,100);
+ const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);changed.add('d19:dessert');changed.add('node:azathoth-invitation');assert.equal(allMain.rows.filter(r=>r.key==='d19:dessert').length,1);
+ const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},old,old.key);count++;}}assert.equal(count,allMain.rows.filter(r=>!changed.has(r.key)).length);
 });

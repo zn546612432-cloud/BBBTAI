@@ -20,7 +20,7 @@ function phone(day=17,clock='19:00'){
 function ctx(s){return {store:{get:()=>s,update:f=>f(s)},router:{open:loc=>{s.nav.current=normalizeAppLink(loc,new Map([['browser',{}]]))},back:()=>{}},refresh:()=>{}};}
 const forum=D17_WEB_PAGES.find(p=>p.forum);
 
-test('D17 invitation is the approved 30 lines and waits for time and the completed loan',()=>{
+test('D17 invitation is the approved 29 lines and waits for time and the completed loan',()=>{
  assert.deepEqual(D17_INVITATION_LINES,JSON.parse(readFileSync(new URL('fixtures/d17-approved-lines.json',import.meta.url))));
  const s=phone(17,'18:59');assert.equal(nodeStatus(s,D17_INVITATION_ID).state,'locked');
  s.clock='19:00';delete s.story55.completed.loan;
@@ -31,7 +31,7 @@ test('D17 invitation is the approved 30 lines and waits for time and the complet
  assert.equal(s.story55.hardware,1);assert.equal(s.content.mirage.assets?.length||0,0);
 });
 
-test('all 30 D17 messages use the existing queue and native Send, survive reload and remain unique',()=>{
+test('all 29 D17 messages use the existing queue and native Send, survive reload and remain unique',()=>{
  let s=phone();let now=Date.now()+100000;
  for(let i=0;i<100&&!completed(s,D17_INVITATION_ID);i++){
   const line=currentScript55(s,'mirage','s55-ouroboros');
@@ -45,10 +45,10 @@ test('all 30 D17 messages use the existing queue and native Send, survive reload
  }
  assert.ok(completed(s,D17_INVITATION_ID));
  const messages=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id.startsWith('s55-d17-invitation-'));
- assert.equal(messages.length,30);assert.equal(new Set(messages.map(m=>m.id)).size,30);
+ assert.equal(messages.length,29);assert.equal(new Set(messages.map(m=>m.id)).size,29);
  assert.deepEqual(messages.map(m=>[m.from==='me'?'me':'ouroboros',m.text]),D17_INVITATION_LINES);
  tickStory55(s);tickQueuedStoryScenes55(s,now+=3000);
- assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id.startsWith('s55-d17-invitation-')).length,30);
+ assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id.startsWith('s55-d17-invitation-')).length,29);
 });
 
 test('search unlocks on D17, old entry opens search, and failed sites never reveal clues or change money',()=>{
