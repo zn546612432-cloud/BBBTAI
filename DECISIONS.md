@@ -41,3 +41,14 @@
 - 验证策略：新增针对性主流程/边界/异常测试，修订已过时的 D17 30句审稿基线为29句；最终以 GitHub Actions 的实际结果为准。
 - 负责人：本轮实施 ChatGPT；合并授权由用户给出。
 - 截止：未指定。
+
+
+## 2026-11-13：CI 阻塞与停止决策
+- 背景：用户授权实施并合并，PR #145 已包含完整获批范围；合并前检查五个相关工作流。
+- 验证：Story55 developer regression、AI gateway branch checks、Check feature branches、D17 Mirage search and invitation review 均通过；Tai Ghost mobile takeover browser QA 在 run 43420992075 的首次与一次复测中连续失败。
+- 两次一致错误：.github/test-scripts/tai-remote-lifecycle-browser.mjs:71；the background interval must cross the OLD deadline。未证实根因，不把这个失败擅自归因于 Mirage 展示改动或当作可忽略的偶发错误。
+- 决定：按用户“同一错误修2次仍失败立即停止”的保守规则停止本轮尝试，不合并 main；保留 PR #145 的授权改动待独立时间测试排查。
+- 不做：不自行取消失败门禁、不改远程操控/计时系统、不伪称全部测试通过，不追加未经用户批准的剧情。
+- 待办：独立排查 runner 虚拟时钟和原 STRIKE deadline 是否对齐，复核后再提交验证与合并判断。
+- 负责人：ChatGPT 记录阻塞；后续处理需按用户工作流程。
+- 截止：未指定。
