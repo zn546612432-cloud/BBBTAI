@@ -52,3 +52,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞：CI 未出最终结论前不得声称通过；无桌面/移动实际运行截图。
 - 相关文件：src/story/d14-d24/content.json、src/story/d17/content.js、src/story/d17/definition.js、src/story/diary/entries.js、src/apps/mirage/index.js、src/apps/mirage/styles.css、tests/d17-diary-mirage-editorial.test.mjs、tests/d17-mirage-research.test.mjs。
 - 最近验证：GitHub compare main...content/d19-wang-dialogue-20261113 状态 ahead、behind_by=0；授权范围内变更文件可核实；真实程序测试待 GitHub Actions 完成。
+
+
+## 2026-11-13 最终状态：阻塞，未合并
+- 当前任务：D17 银行后续、D14/D15/D17 日程、Mirage 跨日分隔及独立笑声删除（连同已批准 D19 修改）。
+- 当前步骤：已提交 PR #145，代码与文案已更新；自动化验证发现阻塞，遵照同一错误失败两次即停止的规则，不合并 main。
+- 已完成：Story55 developer regression、AI gateway branch checks、Check feature branches、D17 Mirage search and invitation review 均 success；D17 mobile-review 实测完成29句并生成图片；D13 wallet and system call mobile acceptance 因工作流条件 skipped，不计成功。
+- 阻塞：Tai Ghost mobile takeover browser QA，run 43420992075，首次与单次复测均失败，断言 the background interval must cross the OLD deadline，定位 .github/test-scripts/tai-remote-lifecycle-browser.mjs:71。失败与后台时间补偿测试有关，是否由本分支影响尚未证实。
+- 下一步：另开单独审查步骤复核该时间断言所用虚拟时钟与原 deadline 的对应关系，明确根因后再判断是否能重测并合并 PR #145；不在此任务中盲改 Ghost 时钟。
+- 改动文件：本 PR 可在 GitHub #145 的 Files changed 查看；本轮无额外功能修改。
+- 最近验证：2026-11-13 GitHub Actions，四组 success，D13 skipped，一组失败两次。main 未合并；D17 截图证据 run 43420991970，截图包 d17-review-evidence。
