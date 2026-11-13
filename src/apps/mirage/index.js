@@ -52,14 +52,17 @@ export function withMirageSessionDividers(messages,s){
  const rows=[];
  let previousDate=null;
  for(const m of chronologicalMessages(messages,s)){
-  // Older authored records may contain this divider as a stored message.
-  // Keep exactly one presentation divider per date instead of duplicating it.
-  if(m.kind==='divider'&&String(m.text||'').trim()==='── NEW SESSION ──')continue;
   const date=messageDate(m,s);
+  const isSessionDivider=m.kind==='divider'&&String(m.text||'').trim()==='── NEW SESSION ──';
+  const isStoryDivider=isSessionDivider&&m.systemOwned===true;
   if(date!==previousDate){
-   rows.push({id:'mirage-session-'+date,from:'system',kind:'divider',text:'── NEW SESSION ──',sentDate:date});
+   // A D13 story divider can start the day; don't add a second one before it.
+   if(!isStoryDivider)rows.push({id:'mirage-session-'+date,from:'system',kind:'divider',text:'── NEW SESSION ──',sentDate:date});
    previousDate=date;
   }
+  // Keep story-owned intrusion boundaries even inside an existing chat day.
+  // Old ordinary dividers are replaced by the day marker in this view only.
+  if(isSessionDivider&&!isStoryDivider)continue;
   rows.push(m);
  }
  return rows;
