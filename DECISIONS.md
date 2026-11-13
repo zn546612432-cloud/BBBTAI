@@ -64,3 +64,13 @@
 - 独立阻塞：Tai Ghost mobile takeover 浏览器测试此前两次失败原因仍未查明；本次不绕过门禁，若仍失败则维持 PR 草稿且不合并。
 - 负责人：ChatGPT 提交定向修复；用户授权修复，合并仍需测试满足验收标准。
 - 截止：未指定。
+
+
+## 2026-11-13 合并决定 · PR #145
+- 背景：P1/P2 定向修复后已取得 Story55、AI gateway、feature branches、D17 Mirage 四组 success，D13 专项 skipped；Tai Ghost 浏览器验收仍运行中。
+- 用户明确指示：「合并吧」。据此将 PR #145 从 Draft 改为 Ready 并通过 GitHub merge 方法合并 main；合并 commit b06f8ab38caf92dc26bdd0ddf954c1edbd464b47。
+- 决定：采纳此次用户最终合并授权，同时保留尚未通过的浏览器验收风险。不能将 skipped 或 in_progress 声称为成功。
+- 未做：不改变 Ghost 计时及远程控制，不擅自加入其他剧情、不修改先前用户确认的正文。
+- 待办：检查 Tai Ghost 最新运行结果，失败则作为独立工作单处理；D13 专项与 D17 日程/胡枫 UI 视觉验收另行补齐。
+- 负责人：ChatGPT 执行合并，用户明确授权。
+- 截止：未指定。
