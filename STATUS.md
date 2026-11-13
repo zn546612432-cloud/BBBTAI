@@ -146,3 +146,14 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 最近验证：最新代码提交 58e7b77209e8baaf3647fa864a96be3b54bc9cf2；D23 Chess Stockfish browser QA run 43454628028 success，日志 PASS D23 real Stockfish Web Worker move, 64-square board, desktop/mobile, empty/error states；Story55 developer regression、AI gateway branch checks、Check feature branches 同次均 success；D13 workflow skipped，Tai Ghost browser QA 查验时仍 in_progress。
 - 截图：GitHub artifact 14052178973 d23-chess-browser-screenshots，含 mobile-stockfish-move.png、desktop-chess.png、mobile-empty.png、mobile-engine-error.png；实际下载并查看四图，解锁过渡层消失。产物保存在本次对话工作区 /mnt/data/d23-chess-final/，不进入项目仓库。
 - 下一步：用户审核 D21–D22 少量闲聊的逐句文案，并按需审批 PR #146 的合并。不能把 D21–D22 未定稿的例句当作已经写入手机。
+
+
+## 2026-11-14：MIRAGE 雇主随订单增长 · 需求核验阶段
+- 当前任务：D21/D22 少量微信聊天定稿，MIRAGE 多联系人随悬赏关系增长及接单/结单/失败对应私聊方案。
+- 当前步骤：已回读 STATUS/DECISIONS/PR #146 相关结构和 D15–D55 正式委托定义；本步只调查、定位及记录，不擅自实现尚未确认的雇主台词。
+- 已完成：用户批准 D21 6句、D22 5句短群聊，全文录入 DECISIONS；查明 src/apps/mirage/data.js 有11个联系人名称，但 55天版联系人不会直接采用旧演示数据；D21订单 M-016 @rancor、M-017 @ledger_8，D22订单 M-018 @deadletter、M-019 @oldmoney 已预置，并共享 D04 commission runner。
+- 已确认触发点：acceptD04Contract 状态 OPEN→ACCEPTED、submitD04Contract READY→COMPLETED、tickD04Contracts accepted order 过期→EXPIRED；均不应独立改变 Ghost/银行逻辑。下单邮件、验收回执 KIRA 负责，MIRAGE 雇主使用现有消息渠道。
+- 下一步：审查并获准四位雇主按每份订单三种结果的示例短私信和 D21/D22 原节点保留策略，再补 tests 首次/重复/失败与移动端界面证据。
+- 阻塞风险：新联系人消息还没有实现，也未完成测试/截图；PR #146 真实 Stockfish 功能保持 Draft；D29 原棋局触发仍需另核；不声称代码已完成。
+- 相关文件：STATUS.md、DECISIONS.md、src/apps/mirage/data.js、src/apps/mirage/contacts-seed.js、src/story/d15-d55/commissions.js、src/story/d04/contract.js、src/story/d14-d24/content.json、src/services/messaging/phone-messages.js。
+- 最近验证：GitHub connector 回读各文件定位状态转移和业主字段，本轮未提交运行时代码或执行新测试。
