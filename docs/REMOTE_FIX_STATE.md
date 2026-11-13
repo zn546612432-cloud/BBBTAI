@@ -34,3 +34,19 @@
 - 剩余风险：实体iPhone Safari未真机验证；正式main及Pages尚未更新。收尾仅文档改动，业务代码仍为已验收版本。
 
 
+
+## PR #144 合并执行 · 2026-11-13
+- 当前任务：用户已明确授权合并PR #144并发布验证。
+- 当前步骤：PR #144合并、正式发布、线上核对均完成。
+- 已完成：head 103491a无冲突；完整回归1120项通过；前两次必同意六种场景再次通过。
+- 阻塞：无；最终head浏览器失败job重跑已通过，没有修改业务代码。
+- 下一步：用户刷新正式页，用原存档再次有效分享。
+- 相关文件：三份记录、tai-remote-lifecycle-browser.mjs、ghost-share.js、release.json、index.html；最多8个。
+- 最近验证：103491a全部检查通过、mergeable_state=clean；浏览器43332267999第2次成功，六种分享与六种真实截止时间后台恢复均通过。
+- 合并结果：仅PR #144，expected_head_sha=103491a4ef6055420c9f57021402e8740628fb1e，main合并提交751d81dcd60ae7d32a94c70c012868c4025ce73a。
+- 正式发布：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43334169209 成功。
+- 线上核对：release.json、入口、ghost-share.js均HTTP200；version=5ecddd980958136f；source_commit=751d81d；入口版本一致；线上脚本git blob=218768bcf7d8ff3b37786622cc887e749e56417f，与验收代码完全一致。
+- 截图：https://github.com/zn546612432-cloud/BBBTAI/actions/runs/43332267999/artifacts/13995609055 ；本轮无UI改动，沿用已人工检查的相同运行代码截图。
+- 剩余风险：实体iPhone Safari未真机验证。收尾提交仅三份文档，使用[skip ci]避免为记录重复构建；运行代码不变，正式源提交仍为751d81d。
+
+

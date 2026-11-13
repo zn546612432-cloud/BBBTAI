@@ -51,3 +51,13 @@
 相关文件：三份记录、src/services/story55/ghost-share.js、tests/ghost-mirage-share.test.mjs、package.json、.github/test-scripts/tai-remote-share-feedback-browser.mjs、既有浏览器工作流；另遵循根AGENTS.md。
 
 
+
+## PR #144 合并任务卡 · 2026-11-13
+- [x] 用户明确授权合并，复核当前head 103491a及无冲突状态。
+- [x] 完整回归通过，前两次必同意六种场景复核通过。
+- [x] 最新head浏览器失败job重跑通过：43332267999，第2次。
+- [x] 使用expected_head_sha合并仅PR #144，合并提交751d81d。
+- [x] Pages正式发布43334169209成功；release.json source_commit=751d81d，version=5ecddd980958136f；入口版本与线上ghost-share.js字节哈希核对通过。
+- [x] 状态、决策及本任务卡最终写回；仅文档，运行代码不变。
+
+
