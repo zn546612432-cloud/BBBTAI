@@ -62,3 +62,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 下一步：另开单独审查步骤复核该时间断言所用虚拟时钟与原 deadline 的对应关系，明确根因后再判断是否能重测并合并 PR #145；不在此任务中盲改 Ghost 时钟。
 - 改动文件：本 PR 可在 GitHub #145 的 Files changed 查看；本轮无额外功能修改。
 - 最近验证：2026-11-13 GitHub Actions，四组 success，D13 skipped，一组失败两次。main 未合并；D17 截图证据 run 43420991970，截图包 d17-review-evidence。
+
+
+## 2026-11-13 状态追加：定向修复 D17 日程门控与 Mirage D13 剧情分隔
+- 当前任务：PR #145 上 P1 / P2 回归修复，不更改 Ghost 计时与未授权内容。
+- 当前步骤：代码与测试已提交，GitHub CI 正在核验；main 尚未合并。
+- 已完成：真实微信 track 驱动的 D17 解锁测试；systemOwned D13 入侵分隔保存测试和首项去重测试；源码修复 authoredDays 小写 d17 和 Mirage 显示层保留 D13 原始分隔。
+- 下一步：查验当前分支最后一次提交的 GitHub Actions 回归、D17 手机端和 Tai Ghost 浏览器验收；按结果决定是否合并。
+- 阻塞：之前 Tai Ghost 的背景时间断言连续两次失败，本轮没有修该系统；D13 mobile acceptance 工作流此前因条件跳过，不能声称实机完全验收。
+- 相关文件：src/story/diary/entries.js、src/apps/mirage/index.js、tests/d17-diary-mirage-editorial.test.mjs、STATUS.md、DECISIONS.md。
+- 最近验证：红色测试提交 c6b27085314bc54fb226ec9cc570b8c0822d75fc 的 Story55 regression 报日程 null 与 D13 分隔消失；修复提交 f47af6ff12ea1f4e21ba38040f87c7a9709273ca 的 Story55 regression、AI gateway branch checks、Check feature branches 均 success，D17 手机端和 Tai Ghost 浏览器在记录时仍运行，详见 GitHub Actions。
