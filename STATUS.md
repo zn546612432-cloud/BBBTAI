@@ -72,3 +72,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞：之前 Tai Ghost 的背景时间断言连续两次失败，本轮没有修该系统；D13 mobile acceptance 工作流此前因条件跳过，不能声称实机完全验收。
 - 相关文件：src/story/diary/entries.js、src/apps/mirage/index.js、tests/d17-diary-mirage-editorial.test.mjs、STATUS.md、DECISIONS.md。
 - 最近验证：红色测试提交 c6b27085314bc54fb226ec9cc570b8c0822d75fc 的 Story55 regression 报日程 null 与 D13 分隔消失；修复提交 f47af6ff12ea1f4e21ba38040f87c7a9709273ca 的 Story55 regression、AI gateway branch checks、Check feature branches 均 success，D17 手机端和 Tai Ghost 浏览器在记录时仍运行，详见 GitHub Actions。
+
+
+## 2026-11-13 合并后状态 · PR #145
+- 当前任务：BBBTAI D17–D19 文案、已选日程与 Mirage 日期分隔修复，用户再次明确指示「合并吧」。
+- 当前步骤：已合并 main，PR #145 显示 merged=true、closed，merge commit b06f8ab38caf92dc26bdd0ddf954c1edbd464b47。
+- 已完成：D17 胡枫21:40资金线索、D14/D15/D17 日程、Mirage 跨天分隔、D17 独立「呵呵……」删除、D19 熙旺对话、P1 小写 d17 门控与 P2 D13 systemOwned 分隔保留。
+- 最近验证：合并前提交 37496068be6f5086a436baacd9c7d66b55bab017 的 Story55 developer regression、AI gateway branch checks、Check feature branches、D17 Mirage search and invitation review 均 success；D13 wallet and system call mobile acceptance skipped；Tai Ghost mobile takeover browser QA 仍 in_progress，未宣称通过。GitHub PR 回读 merge_commit_sha 与合并结果一致。
+- 阻塞/风险：先前 Tai Ghost 后台 STRIKE 时间断言曾两次失败，新验收尚未最终成功；D13 被跳过的专项移动验收仍需单独验证。此次按用户明确要求合并，未绕过 GitHub 的合并校验。
+- 下一步：核实 Tai Ghost 最新跑测结论，如仍失败则单独调查虚拟时钟与旧 deadline，禁止直接重做时间系统；补上 D13 及新增日程的界面验收。
+- 相关文件：STATUS.md、DECISIONS.md、PR #145。
