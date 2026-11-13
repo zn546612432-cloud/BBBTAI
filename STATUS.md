@@ -127,3 +127,14 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞与风险：D20 10:45 用户原先上半段仍需在实施前核验现有节点、角色与条数；本轮仅冻结文案，无 runtime 测试、截图或已发布剧情更改。
 - 相关文件：STATUS.md、DECISIONS.md；实施时另定位 src/story/d14-d24/content.json。
 - 最近验证：D20 用户本轮尾段人工逐句计数14句，GitHub 更新 DECISIONS.md commit 6650defcfead04ef68533b4cf6988b282452bf57。
+
+
+## 2026-11-13：D23 Stockfish 实际棋局实现与验收
+- 当前任务：D21–D22 简短日常方向记录；D23 已确认22句 Mirage 聊天 + 真实国际象棋 AI。
+- 当前步骤：D23 已在独立分支完成定向实现，草稿 PR #146 供审核；main 尚未合并。
+- 已完成：复用现有 chess.js 棋盘与比赛存档，Stockfish 19 lite 单线程 WASM 引擎回合、失败/超时错误和重试；D23 22句统一剧情场景及匿名 Ouroboros 邀棋卡、可继续同一局、无需解锁熙泰真实身份；D21/D22 未改内容。
+- 实施文件：src/services/chess-stockfish.js、src/services/chess.js、src/apps/chess/index.js、src/services/invitations.js、src/apps/mirage/index.js、src/story/d14-d24/content.json/definition.js/migrate.js、src/services/story55/runtime.js、package*.json、scripts/build.mjs、server/dev.mjs；测试与 CI、GPL 来源文件。
+- 最近验证：真实 GitHub Actions Story55 regression 1138 tests pass/0 fail（run 43452516282）；AI gateway branch、feature branches success；D23 Chess Stockfish browser QA run 43453690924 success，真实浏览器 Worker 走合法黑棋、64格棋盘、移动/桌面/空/错误截图 artifact 14053921030。
+- 风险：D13 wallet mobile acceptance skipped，Tai Ghost remote browser workflow 仍需查最终结论；D29 旧棋局触发仍未修改；未经正式 Pages 发布环境实机测量性能。D21/D22 无具体获批台词。
+- 下一步：提供 PR #146 与真实测试截图供用户审核；D21/D22 短闲聊逐句确认后再修改，未经批准不得合并 main。
+- 阻塞：无实质 Stockfish Node 和 Chromium 浏览器回归阻塞；旧 Ghost QA 与 D29 兼容性另列风险，PR 保持 Draft。
