@@ -52,7 +52,7 @@ test('browser worker UCI request validates bestmove without simulated fallback',
 });
 
 test('invalid or timed-out engine response rejects instead of moving a random piece',async()=>{
- const fen=new Chess().fen();
+ const testGame=new Chess();testGame.move('e4');const fen=testGame.fen();
  const invalid={postMessage(cmd){if(cmd==='uci')queueMicrotask(()=>this.onmessage({data:'uciok'}));else if(cmd==='isready')queueMicrotask(()=>this.onmessage({data:'readyok'}));else if(cmd.startsWith('go '))queueMicrotask(()=>this.onmessage({data:'bestmove wrong'}));},terminate(){}};
  await assert.rejects(()=>bestStockfishMove(fen,{workerFactory:()=>invalid,timeoutMs:200}),/Stockfish|引擎|非法/);
  const silent={postMessage(){},terminate(){this.terminated=true;}};
