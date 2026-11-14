@@ -52,7 +52,11 @@ export function chargingBlock(s){
  if(isStory55(s)){
   // A forced 03:00 emergency is physical recovery, not an authored skip.
   // Keep every incomplete node pending while permitting the battery to recover.
-  if((s.emergencyCharge||s.poweredOff)&&s.day<55&&!s.story55?.ended)return null;
+  if((s.emergencyCharge||s.poweredOff)&&s.day<55&&!s.story55?.ended){
+    // A 03:00 emergency must never bypass the unfinished D23 chess mainline.
+    if(s.day>=23&&!s.story55?.completed?.['d23-chess-finish'])return 'plot';
+    return null;
+   }
   return story55ChargeGate(s);
  }
  if(s.day===DEATH_DAY||deathLocked(s))return 'death';
