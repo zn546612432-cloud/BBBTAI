@@ -129,11 +129,10 @@ export function predeterminedChessReply(match,text,facts){
 // A dubious generated recommendation falls back to the local facts.
 export function chessReplyUsesLegalMoves(text,facts){
  const legal=new Set((facts.legalMoves||[]).map(m=>m.san.replace(/[+#]$/,'')));
- const history=new Set((facts.history||[]).map(m=>m.san.replace(/[+#]$/,'')));
  const re=/(?:建議|建议|推薦|推荐|可以走|不如走|試試|试试|下一步走|直接走)\s*[：:「『“"']?\s*(O-O-O|O-O|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-9](?:=[QRBN])?[+#]?)/gi;
  for(const found of String(text||'').matchAll(re)){
   const san=found[1].replace(/[+#]$/,'');
-  if(!legal.has(san)&&!history.has(san))return false;
+  if(!legal.has(san))return false;
  }
  return true;
 }
