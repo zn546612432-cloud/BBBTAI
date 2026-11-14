@@ -101,7 +101,8 @@ test('Mirage can request an early goodbye without fabricating a second player me
  deliverOne(f.store,1000);
  const sentBefore=f.store.get().content.conversations.mirage.find(c=>c.id===contact).messages.filter(m=>m.from==='me').length;
  f.store.update(s=>{
-  s.story55.activeScene='invitation'; // D06 incomplete in legacy saves.
+  delete s.story55.completed.invitation;
+  s.story55.activeScene='invitation'; // D06 genuinely incomplete in a legacy save.
   assert.equal(endD23MirageConversation(s),true);
   assert.equal(s.story55.d23Postgame.previousActiveScene,'invitation');
   assert.equal(s.story55.activeScene,'d23-chess-finish');
