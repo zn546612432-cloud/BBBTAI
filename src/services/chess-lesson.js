@@ -82,6 +82,13 @@ export function finishD23ChessLesson(match,clock,game){
  texts.forEach((text,i)=>appendChessTutorLine(match,text,clock,'ending-'+i));
  return true;
 }
+export function noteD23HangingPiece(match,hanging,clock){
+ if(!isD23ChessLesson(match)||match.status!=='active')return false;
+ const exposed=(hanging||[]).find(p=>p.owner==='熙蒙');
+ if(!exposed)return false;
+ // Socratic first-level hint: the player must identify and save the piece.
+ return appendChessTutorLine(match,'有枚棋子現在被盯上了，還沒人護著。你確定不先想想？',clock,'exposed-'+match.history.length);
+}
 export function resignD23ChessLesson(match,clock){
  if(!isD23ChessLesson(match))return false;
  beginD23ChessLesson(match,clock);
@@ -118,7 +125,7 @@ export function prewrittenChessReply(match,text,facts){
  if(facts.checkmate)return '棋局已經將死，沒有合法的下一步了。';
  if(facts.stalemate)return '這是逼和，沒有合法著法，結果只能是平局。';
  if(facts.turn==='b')return '輪到我走了。等我落完子，你再看看盤面。';
- const picks=facts.legalMoves.slice(0,3).map(m=>m.san).join('、');
+ const picks=(facts.recommendations||facts.legalMoves||[]).slice(0,3).map(m=>m.san).join('、');
  return picks?'先看看你能走的棋，例如 '+picks+'。這些只是合法選項，不代表每一步都一樣好。':'先看看你的王是不是被將軍。';
 }
 export function predeterminedChessReply(match,text,facts){
