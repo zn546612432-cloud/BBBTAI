@@ -226,8 +226,14 @@ test('checkmate ends all further chess replies, with a chess-accurate finish',as
  });
  const facts=chessFacts(match());
  assert.equal(facts.checkmate,true);assert.equal(facts.legalMoves.length,0);
- postMatchMessage(store,matchId,'你在嗎');
- assert.equal(await replyToMatch(store,matchId),false);
+ assert.equal(postMatchMessage(store,matchId,'你在嗎'),false,'do not allow player chat before the result introduction');
+ const oldFetch=globalThis.fetch;
+ globalThis.fetch=async()=>({ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'將死了。這次是我贏。',mode:'text'}]})})});
+ try{
+  assert.equal(await startD23PostgameReply(store,matchId),true);
+  assert.equal(match().lesson.postgame.phase,'intro-delivering');
+  assert.equal(match().lesson.postgame.rounds,0);
+ }finally{globalThis.fetch=oldFetch;}
 });
 
 test('when a rook takes the White queen, the fallback says the actual pieces and capture square',async()=>{

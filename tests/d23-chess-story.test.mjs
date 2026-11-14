@@ -131,6 +131,7 @@ test('King’s Gambit replaces Queen’s Gambit without changing the 22-turn D23
 });
 test('D23 remains unsent until native Send, including after 03:00 and old saved bubbles',()=>{
  const s=activateStory55(initialState());s.day=23;s.clock='22:20';s.unlocked=true;s.story55.activeScene='d23-chess';
+ s.story55.completed.wallet={day:6,clock:'20:00'};tickStory55(s);
  const c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  c.messages.push({id:'s55-d23-chess-0',from:'me',text:'你會下國際象棋嗎？',time:'22:17'});
  tickStory55(s);
