@@ -34,8 +34,10 @@ async function open(state,viewport){
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('show-passcode'));
  await page.waitForTimeout(1800);
- const toast=page.locator('#toast.visible');
- if(await toast.count())await toast.waitFor({state:'hidden',timeout:8000});
+ // D21/D22 may surface a backlog of unrelated historical banners after a day jump.
+ // Keep screenshot evidence on the native chat surface without waiting for an
+ // unrelated, continuously rotating notification queue to clear.
+ await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
  return {page,context};
 }
 try{
