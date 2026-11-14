@@ -230,3 +230,14 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 風險：D20上半段非用戶舊稿原文；合併前要最後確認 Ghost browser QA 是否通過和 PR 是否 mergeable；真實 iPhone 未驗收。
 - 相關文件：src/story/d14-d24/content.json、tests/d23-chess-story.test.mjs、STATUS.md、DECISIONS.md；PR #146。
 - 下一步：通過剩餘驗收後合併 PR #146 到 main，回讀核實並更新發佈狀態。
+
+
+## 2026-11-14：PR #146 D20＋D23 已合併 main；待 Pages 發佈核實
+- 當前任務：補全 D20 銀行分工並與 PR #146 的 D23 邀棋 Stockfish 一併完成合併。
+- 當前步驟：已合併；正在核實正式 Pages 發佈與記錄剩餘驗收風險。
+- 已完成：PR #146 於2026-11-14合併 main，merge commit `a96a6ac2e598f32e3f77bb1302fc63fbe4466617`；main `content.json` 原有 D20 10:45 monitoring 節點新增18句補寫分工，再接原14句定稿；保留 D23 22句邀棋及本地 Stockfish 真正落子機制、AI 重入與終局狀態修復。
+- 資料來源限制：D20 上半段舊稿逐字版仍不可查；18句是此次新補寫，不冒稱原稿復原。
+- 最近驗證：GitHub PR merged=true、main 回讀 D20 文本與 Stockfish 模組；合併前 Story55 回歸1148/1148、D23 Chess browser success、MIRAGE 70 owner browser success、AI gateway/branch success。
+- 相關文件：src/story/d14-d24/content.json、tests/d23-chess-story.test.mjs、src/services/chess-stockfish.js、STATUS.md、DECISIONS.md。
+- 剩餘風險：Ghost 遠端操控 QA 於合併前仍在進行中、D13 phone 專項 skipped；未查明 Pages 最新部署結果、未進行實機 iPhone 測試，D29 需獨立核對與 D23 初局的連貫性。
+- 下一步：確認 GitHub Pages 最新自動發佈，必要時定向修復部署失敗而非修改已定稿對話。
