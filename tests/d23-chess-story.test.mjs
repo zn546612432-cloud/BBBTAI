@@ -7,20 +7,27 @@ import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scrip
 import {startAcceptedInvitation} from '../src/services/invitations.js';
 import fs from 'node:fs';
 
-test('D20 uses only approved copy with separate wake-up timing and no soup thread',()=>{
+const D20_NEW_BRIDGE=[["熙旺","昨晚說的兩個地方，我們先分開理一遍。"],["胡楓","澳亞銀行，還有澳興大廈的金輝資金中心。"],["me","銀行那邊是筆記本，另一半密碼的線索在金輝。兩處都得確認。"],["小辛","所以不是找到筆記本就完事？"],["me","只拿一半，你能把另一半猜出來？"],["小辛","當我沒問。"],["熙旺","現在連細節都還沒核實，別急著排哪天動手。"],["胡楓","我先把兩邊的資料分開對一遍，有出入的再跟你們說。"],["小辛","我去問問有沒有新的消息。"],["熙旺","問歸問，別把我們的打算往外說。"],["小辛","知道了。"],["阿威","我把車和需要的東西整理一下，有缺的提前講。"],["仔仔","衣服和清單我來管，別到時候又臨時改。"],["熙旺","阿蒙，監控那部分你先說說。"],["me","我在試一個方向，但還沒確認能不能用。"],["胡楓","那就先記成待確認。"],["me","尤其是畫面處理，還有幾個地方對不上。"],["小辛","我大概明白了。"]];
+
+test('D20 bridges the bank preparation into the previously approved closing without mislabeling the bridge as recovered copy with separate wake-up timing and no soup thread',()=>{
  const content=JSON.parse(fs.readFileSync(new URL('../src/story/d14-d24/content.json',import.meta.url)));
  const scenes=content.wechat.filter(x=>x.day===20);
  assert.deepEqual(scenes.find(x=>x.id==='early').lines,[{who:'阿威',text:'今天練習提前半小時。'},{who:'熙旺',text:'收到。'}]);
  assert.deepEqual(scenes.find(x=>x.id==='awake'),{day:20,id:'awake',chat:'group',at:'09:06',lines:[{who:'小辛',text:'我才剛醒⋯'}]});
- const group=scenes.find(x=>x.id==='monitoring');assert.equal(group.at,'10:45');assert.equal(group.chat,'group');assert.equal(group.lines.length,14);
- assert.equal(group.lines[1].who,'me');assert.equal(group.lines[1].text,'理論上⋯用 AI 輔助是可行的，但現在還不能保證效果。');
- assert.deepEqual(group.lines.map(l=>[l.who,l.text]),[
+ const group=scenes.find(x=>x.id==='monitoring');assert.equal(group.at,'10:45');assert.equal(group.chat,'group');assert.equal(group.lines.length,D20_NEW_BRIDGE.length+14);
+ assert.deepEqual(group.lines.slice(0,D20_NEW_BRIDGE.length).map(l=>[l.who,l.text]),D20_NEW_BRIDGE);
+ const ending=group.lines.slice(-14);
+ assert.equal(ending[1].who,'me');assert.equal(ending[1].text,'理論上⋯用 AI 輔助是可行的，但現在還不能保證效果。');
+ assert.deepEqual(ending.map(l=>[l.who,l.text]),[
   ['小辛','但我還是沒搞懂你說的監控那部分，蒙哥講得太深奧了。'],['me','理論上⋯用 AI 輔助是可行的，但現在還不能保證效果。'],
   ['小辛','所以就是還沒搞定？'],['me','我沒說過搞定了'],['胡楓','你早上那個語氣很像搞定了'],['me','你能不能先讓我說完？'],
   ['阿威','哈哈哈哈'],['熙旺','行了，先把沒確認的地方記下來，晚上再談。'],['小辛','收到收到。'],
   ['小辛','不過下次可以講簡單一點嗎，我腦袋快炸了。'],['me','那我盡量用你能聽懂的方式。'],['小辛','你是不是在罵我？'],['胡楓','是。'],['阿威','是。']
  ]);
- assert.equal(group.lines.filter(x=>x.who==='me').length,4);
+ assert.equal(group.lines.filter(x=>x.who==='me').length,8);
+ assert.equal(scenes.filter(x=>x.id==='monitoring').length,1,'the two halves must live in one scheduler scene');
+ assert.ok(group.lines.some(l=>l.text.includes('澳亞銀行'))&&group.lines.some(l=>l.text.includes('金輝資金中心')),'both distinct locations must remain visible');
+ assert.ok(['熙旺','熙蒙','胡楓','小辛','阿威','仔仔'].every(name=>name==='熙蒙'?group.lines.some(l=>l.who==='me'):group.lines.some(l=>l.who===name)),'all participants retained');
  assert.equal(scenes.some(x=>x.id==='soup'||x.at==='22:42'||x.at==='22:08'),false);
  const s=activateStory55(initialState());assert.equal(taiRecognized(s),false);
  assert.equal(JSON.stringify(s.content.conversations.wechat).includes('理論上⋯用 AI 輔助是可行的，但現在還不能保證效果。'),false,'future player text is not injected at D01');
