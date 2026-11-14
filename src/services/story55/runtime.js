@@ -15,6 +15,7 @@ import {tickMacauCycloneSMS} from '../weather/cyclone-signals.js';
 import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {offerD23ChessInvitation} from '../invitations.js';
+import {tickD23ChessLesson} from '../chess-lesson.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
@@ -71,6 +72,16 @@ export function activateStory55(s){
 export function plannedSceneLineClock55(s,id,index){
  const t=s.story55?.chatSceneEdits?.['node:'+id]?.lineTimes?.[index];
  return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:null;
+}
+// Use the existing Story55 delivery clock, with a more human response cadence
+// for Ouroboros in MIRAGE. All other conversations keep the shared policy.
+export function scene55ReplyDelay(s,id,index,{initial=false}={}){
+ const node=nodeById(s,id),line=sceneLines(s,id)[index];
+ if(node?.channel==='mirage'&&node.conversationId==='s55-ouroboros'&&line?.[0]==='ouroboros'){
+  const length=String(line[1]||'').length;
+  return Math.max(4300,Math.min(6500,2800+length*95));
+ }
+ return initial?CHAT_LIFECYCLE_POLICY.initialDelayMs:CHAT_LIFECYCLE_POLICY.pauseMs;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){return story55Config(s).scenes[id]||[];}
@@ -155,7 +166,7 @@ function creditScene55(s,n){
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
  // The player must explicitly send their own line before any next NPC line.
- if(n.delivery==='queued'&&r.index<lines.length)r.nextAt=now+CHAT_LIFECYCLE_POLICY.pauseMs;
+ if(n.delivery==='queued'&&r.index<lines.length)r.nextAt=now+scene55ReplyDelay(s,id,r.index);
  if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
@@ -236,7 +247,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   const planned=plannedSceneLineClock55(s,n.id,q.index);
   if(planned&&s.clock<planned)continue;
   if(!Number.isFinite(q.nextAt)){
-   q.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;
+   q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;
   }
   if(now<q.nextAt)continue;
@@ -288,6 +299,7 @@ export function tickStory55(s){
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
  tickQueuedStoryScenes55(s);
+ tickD23ChessLesson(s);
  resolveGhostShare(s);
  for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   // D13 shows actual arrival time; other clock-authored mail retains its
