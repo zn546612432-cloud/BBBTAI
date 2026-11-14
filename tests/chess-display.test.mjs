@@ -22,7 +22,7 @@ test('accepted chess invitation resumes after expiry while a pending one expires
  assert.throws(()=>receiveInvitation(store,'unknown'),/来源/);
 });
 
-test('concurrent replies share one request and a failure permits retry',async()=>{
+test('concurrent replies share one request and failed AI falls back silently',async()=>{
  const store=chessStore();store.update(s=>s.matches.push({id:'concurrent',opponent:'tai',pgn:'',status:'active',history:[],chat:[]}));
  postMatchMessage(store,'concurrent','等你落子');
  const prior=globalThis.fetch;let calls=0,fail=false;
@@ -31,8 +31,10 @@ test('concurrent replies share one request and a failure permits retry',async()=
   await Promise.all([replyToMatch(store,'concurrent'),replyToMatch(store,'concurrent')]);
   assert.equal(calls,1);assert.equal(store.get().matches[0].chat.filter(m=>m.from==='tai').length,1);
   postMatchMessage(store,'concurrent','再來');fail=true;
-  await assert.rejects(replyToMatch(store,'concurrent'),/本机 AI 后端未连接/);
-  fail=false;assert.equal(await replyToMatch(store,'concurrent'),true);assert.equal(calls,3);
+  assert.equal(await replyToMatch(store,'concurrent'),true);
+  assert.match(store.get().matches[0].chat.at(-1).text,/先看清棋盤/);
+  fail=false;assert.equal(await replyToMatch(store,'concurrent'),false,'fallback already answered the message');
+  assert.equal(calls,2);
  }finally{globalThis.fetch=prior;}
 });
 test('last move highlights both squares and pieces have explicit image assets',()=>{let state=initialState();const store={get:()=>state,update(fn){state=structuredClone(state);fn(state);}};const id=createSoloMatch(store);playMove(store,id,'e2','e4');const html=render({store},{route:'/match/'+id});assert.match(html,/last-move[^>]*data-square="e2"/);assert.match(html,/last-move[^>]*data-square="e4"/);assert.match(html,/\/apps\/chess\/pieces\/wP.png/);});
