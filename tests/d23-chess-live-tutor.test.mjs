@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {offerD23ChessInvitation,receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
-import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame} from '../src/services/chess.js';
+import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame,startD23PostgameReply} from '../src/services/chess.js';
 import {chessReplyUsesLegalMoves,prewrittenChessReply,tickD23ChessLesson} from '../src/services/chess-lesson.js';
 import {Chess} from 'chess.js';
 import {render,handle} from '../src/apps/chess/index.js';
@@ -131,9 +131,9 @@ test('first actual move of each of the six piece types has a one-time authored t
   assert.equal(match().history.at(-1).by,'player',type);
  }
 });
-test('the D23 Queen\'s Gambit can be explained even when the model is unavailable',()=>{
+test('the D23 King\'s Gambit can be explained even when the model is unavailable',()=>{
  const {match}=d23Store();
- assert.match(prewrittenChessReply(match(),'後翼棄兵是什麼？',chessFacts(match())),/爭奪中心/);
+ assert.match(prewrittenChessReply(match(),'王翼棄兵是什麼？',chessFacts(match())),/f4/);
 });
 test('illegal model recommendations are rejected; current legal SAN is allowed',()=>{
  const {match}=d23Store(),facts=chessFacts(match());
@@ -179,34 +179,43 @@ test('off-topic chess chat uses deterministic replies once the current lecture i
  assert.equal(await replyToMatch(store,matchId),true);
  assert.match(match().lesson.outbox.at(-1).text,/晚餐|餓|填不飽/);
 });
-test('resignation is idempotent, has Tai taunts, persists result, and permanently disables replies',async()=>{
- const {store,matchId,match}=d23Store();
- playOpening(store,matchId);
- assert.equal(resignChessMatch(store,matchId),true);
- assert.equal(match().status,'finished');assert.equal(match().result,'player-resigned');
- assert.equal(match().chat.filter(m=>m.from==='tai').length,3,'endings do not arrive all at once');
- assert.equal(match().lesson.outbox.length,3,'three taunts are queued in the existing match');
- assert.equal(resignChessMatch(store,matchId),false);
- assert.equal(match().lesson.outbox.length,3,'resignation cannot enqueue duplicates');
- store.update(s=>tickD23ChessLesson(s,10000));
- store.update(s=>tickD23ChessLesson(s,11200));
- assert.equal(match().chat.filter(m=>m.from==='tai').length,4,'first taunt only');
- store.update(s=>tickD23ChessLesson(s,14300));
- assert.equal(match().chat.filter(m=>m.from==='tai').length,5);
- store.update(s=>tickD23ChessLesson(s,17400));
- assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
- assert.equal(match().lesson.outbox.length,0);
- assert.match(match().chat.at(-1).text,/下課/);
- postMatchMessage(store,matchId,'親親');
- assert.equal(await replyToMatch(store,matchId),false);
- assert.equal(match().chat.at(-1).from,'player');
- assert.equal(store.get().events.filter(e=>e.type==='chess_resigned').length,1);
- store.update(s=>tickD23ChessLesson(s,20000));
- assert.equal(store.get().nav.current.route,'/match/'+matchId,'finished game never exits automatically');
- assert.match(render({store},{route:'/match/'+matchId}),/結束對局/);
- const router={open(location){store.update(s=>s.nav.current=location);}};
- handle('end-match',{dataset:{id:matchId}},{store,router},{route:'/match/'+matchId});
- assert.equal(store.get().nav.current.route,'/');
+test('resignation starts a result-aware AI exchange and exactly three bounded reply rounds before farewell',async()=>{
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ const oldFetch=globalThis.fetch;
+ globalThis.fetch=async()=>({ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'這局我贏了。你認輸倒是挺乾脆。',mode:'text'}]})})});
+ try{
+  assert.equal(resignChessMatch(store,matchId),true);
+  assert.equal(match().status,'finished');assert.equal(match().result,'player-resigned');
+  assert.equal(resignChessMatch(store,matchId),false,'cannot resign twice');
+  assert.equal(match().lesson.postgame.phase,'intro');
+  assert.equal(match().lesson.outbox.length,0,'no canned taunts before the result AI');
+  assert.equal(await startD23PostgameReply(store,matchId),true);
+  assert.equal(match().lesson.postgame.phase,'intro-delivering');
+  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
+  assert.equal(match().lesson.postgame.phase,'chat');
+  assert.match(match().chat.at(-1).text,/我贏了/);
+  for(let turn=1;turn<=3;turn++){
+   assert.equal(postMatchMessage(store,matchId,'再說一句 '+turn),true);
+   assert.equal(match().lesson.postgame.rounds,turn);
+   assert.equal(await replyToMatch(store,matchId),true);
+   const at=12000+turn*5000;
+   store.update(s=>tickD23ChessLesson(s,at));
+   store.update(s=>tickD23ChessLesson(s,at+1200));
+   assert.equal(match().lesson.postgame.phase,turn===3?'closing':'chat');
+  }
+  assert.equal(postMatchMessage(store,matchId,'第四輪'),false,'never accept a fourth exchange');
+  store.update(s=>tickD23ChessLesson(s,30000));
+  store.update(s=>tickD23ChessLesson(s,31200));
+  store.update(s=>tickD23ChessLesson(s,33100));
+  assert.equal(match().lesson.postgame.closed,true);
+  assert.equal(store.get().story55.completed['d23-chess-finish']?.day,23);
+  assert.match(match().chat.at(-1).text,/下次有機會再切磋/);
+  assert.equal(store.get().events.filter(e=>e.type==='chess_resigned').length,1);
+  assert.equal(store.get().nav.current.route,'/match/'+matchId,'board never auto exits');
+  const router={open(location){store.update(s=>s.nav.current=location);}};
+  handle('end-match',{dataset:{id:matchId}},{store,router},{route:'/match/'+matchId});
+  assert.equal(store.get().nav.current.route,'/');
+ }finally{globalThis.fetch=oldFetch;}
 });
 test('checkmate ends all further chess replies, with a chess-accurate finish',async()=>{
  const {store,matchId,match}=d23Store();
@@ -329,10 +338,10 @@ test('a real final capture is named before the individually queued checkmate rec
  store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));});
  const outcome=playMove(store,matchId,'h5','f7');
  assert.equal(outcome.finished,true);assert.equal(match().result,'player-win');
- assert.match(match().lesson.outbox[0].text,/兵/);assert.equal(match().lesson.outbox.length,3);
+ assert.match(match().lesson.outbox[0].text,/兵/);assert.equal(match().lesson.outbox.length,1);
  assert.deepEqual(match().feedbackEvents.map(x=>x.kind),['capture','win']);
  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
- assert.equal(match().lesson.outbox.length,2);assert.match(match().chat.at(-1).text,/兵/);
+ assert.equal(match().lesson.outbox.length,0);assert.match(match().chat.at(-1).text,/兵/);
 });
 test('capture and terminal feedback are attached once to actual moves, and resign is a terminal effect',()=>{
  const {store,matchId,match}=d23Store();
