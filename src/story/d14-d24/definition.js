@@ -15,7 +15,14 @@ export function applyD14D24Definition(c,{force=false}={}){
  let changed=false;
  // This is another scene in the existing Story55 scheduler, not a second chat engine.
  if(!c.nodes.some(n=>n.id==='d23-chess')){
-  c.nodes.push({id:'d23-chess',day:23,title:'與 Ouroboros 下棋',kind:'scene',requires:[],at:'22:16',delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-d23-chess'});
+  c.nodes.push({id:'d23-chess',day:23,title:'與 Ouroboros 下棋',kind:'scene',requires:[],at:'22:16',gateDay:23,delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-d23-chess'});
+  changed=true;
+ }
+ // Native Story55 checkpoint: the invitation is NOT the end of the mainline.
+ const d23=c.nodes.find(n=>n.id==='d23-chess');
+ if(d23&&d23.gateDay!==23){d23.gateDay=23;changed=true;}
+ if(!c.nodes.some(n=>n.id==='d23-chess-finish')){
+  c.nodes.push({id:'d23-chess-finish',day:23,title:'棋局與道別',kind:'checkpoint',requires:['d23-chess'],gateDay:23});
   changed=true;
  }
  for(const [id,lines] of Object.entries(content.scenes)){

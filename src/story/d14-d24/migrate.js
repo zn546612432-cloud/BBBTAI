@@ -6,7 +6,7 @@ export function syncD14D24Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
  // Add the approved D23 scene to active saves without resetting other story nodes.
- if(s.story55.config&&!s.story55.config.nodes.some(n=>n.id==='d23-chess')){
+ if(s.story55.config&&(!s.story55.config.nodes.some(n=>n.id==='d23-chess')||!s.story55.config.nodes.some(n=>n.id==='d23-chess-finish')||s.story55.config.nodes.find(n=>n.id==='d23-chess')?.gateDay!==23)){
   changed=applyD14D24Definition(s.story55.config)||changed;
  }
  if(s.story55.d14D24Revision!==1){
@@ -39,6 +39,17 @@ export function syncD14D24Content(s){
   }
   s.story55.d14D24Revision=1;changed=true;
  }
+ // Exact-only correction of the shipped D23 King's Gambit dialogue.
+ // Never overwrite an edited line or synthesize any player Send action.
+ const corrected=D14_D24_CONTENT.scenes['d23-chess'];
+ const legacyD23=[
+  [7,'後翼棄兵，你知道吧？'],[8,"Queen's Gambit？"],
+  [10,'白方以后翼兵爭奪中心。名字叫棄兵，但不是說你把兵送出去就完事了。'],
+  [12,'那就換一種局面繼續下。']
+ ];
+ const currentD23=s.story55.config?.scenes?.['d23-chess'];
+ if(Array.isArray(currentD23))for(const [index,old] of legacyD23)
+  if(currentD23[index]?.[1]===old){currentD23[index]=[currentD23[index][0],corrected[index][1]];changed=true;}
  // Exact-match migration. An in-progress D15 conversation keeps its old
  // script and current index; all prior real Send messages remain untouched.
  // A not-yet-started scene adopts the newly approved sequence.

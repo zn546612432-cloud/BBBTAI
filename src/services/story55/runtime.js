@@ -132,7 +132,7 @@ function creditScene55(s,n){
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
- if(planned&&s.clock<planned)throw Error('這條消息預定於 '+planned+' 發送');
+ if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))throw Error('這條消息預定於 '+planned+' 發送');
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
@@ -239,7 +239,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
-  if(planned&&s.clock<planned)continue;
+  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;
