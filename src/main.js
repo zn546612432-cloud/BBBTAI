@@ -6,7 +6,7 @@ import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {advanceScene55,chatNodeLink55,tickStory55} from './services/story55/runtime.js';
+import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55} from './services/story55/runtime.js';
 import {chessLessonDue,tickD23ChessLesson} from './services/chess-lesson.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
 import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
@@ -281,7 +281,13 @@ function mountStory55Incoming(){
  const identity=[line.id,line.index,channel,conversationId].join(':');
  if(pendingStory55Incoming?.identity===identity)return;
  if(pendingStory55Incoming)clearTimeout(pendingStory55Incoming.timer);
- const time=line.kind==='system'?540:line.kind==='call'?800:Math.min(2200,900+line.text.length*18);
+ // D23 uses the same persisted queued-scene due time as Story55. The
+ // existing visible-chat timer must not race ahead with its shorter default.
+ const pacedD23=line.id==='d23-chess'&&channel==='mirage'&&line.kind==='ouroboros';
+ const nextAt=pacedD23?s.story55.scenes?.[line.id]?.nextAt:null;
+ const time=pacedD23
+  ? Number.isFinite(nextAt)?Math.max(0,nextAt-Date.now()):scene55ReplyDelay(s,line.id,line.index,{initial:true})
+  : line.kind==='system'?540:line.kind==='call'?800:Math.min(2200,900+line.text.length*18);
  const timer=setTimeout(()=>{
   pendingStory55Incoming=null;
   const current=store.get(),route=current.nav.current;
