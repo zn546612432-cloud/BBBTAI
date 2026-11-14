@@ -251,3 +251,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 最近验证：Story55 regression 1153/1153 pass/0 fail（run43576534104）；专用 D21 D22 Chromium browser run43576886636 success，五张手机、桌面、未触发、错误截图 artifact14107110509 已下载并查看；最初 QA toast 队列等待失败修复于测试脚本，未改业务逻辑。
 - 合并门槛：本分支最后一次 CI 全绿、PR 改动文件限定本次聊天/测试/文档、无合并冲突；届时按用户此轮授权合并 main 并回读。
 - 阻塞及剩余风险：D13 手机电话专项仍 skipped（未由本PR处理）；Ghost远程控制与 D29 邀棋另案；Pages 主站发布必须按正式工作流检查，不能把合并自动等同已经部署。
+
+
+## 2026-11-14：PR #148 D21／D22 十一句聊天正式合并 main
+- 当前任务：补齐 D21/D22 之前已确认但未接入的微信狼崽团聊天；用户授权后合并。
+- 已完成：PR #148 merged=true，merge commit `d3403c6b2dbb7b194eae0b474d228d3387fc62cd`。main 回读：D21 18:42 新6句；D22 15:20 新5句。D21 13:07 clothes、D22 21:38 headache、D20 32句及 D23 邀棋继续保留，未删原话。
+- 改动文件：`src/story/d14-d24/content.json`、`tests/d21-d22-approved-chats.test.mjs`、`.github/test-scripts/d21-d22-chat-browser.mjs`、`.github/workflows/d21-d22-chat-browser.yml`、STATUS.md、DECISIONS.md。
+- 最近验证：最后受测 PR head 625308c810abda304ce972f1f54b03d4994c06b2；Story55 regression run43577155756 pass1153/1153 fail0；D21 D22 Chromium run43577155726 success；D23 Chess browser run43577155791 success；AI gateway/feature branch checks success。D13 wallet call mobile acceptance skipped，不列通过。
+- UI证据：D21/D22 手机与桌面实际运行取证5张，artifact14107110509（run43576886636）。截图脚本过滤了开发者跳日带来的无关通知banner；实际显示的11句原文及时间戳为真。
+- 下一步：确认 GitHub Pages main 自动发布是否真正成功，核对生产站点；另单独验收 D13 电话，解决 D29 重复首局与 Ghost 剩余风险。
+- 尚存风险：未做真实 iPhone 性能验收，D20 新补18句尚非用户旧稿复原，其他未批准日期文案不改。
