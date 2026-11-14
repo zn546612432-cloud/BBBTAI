@@ -149,3 +149,14 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 剩餘風險：main 仍是舊版；沒有正式手機設備性能驗證；已有進度存檔的 owner 刻意不覆寫；D13 專項驗收 skipped（另案）。
 - 下一步：取得用戶是否合併 PR #147 的明確指示；不自動合併。
 - 阻塞：無本次功能/瀏覽器回歸阻塞。截止：未指定。
+
+
+## 2026-11-14：PR #147 Mirage 70位雇主已合併 main
+- 當前任務：82單／70雇主分配與接單、驗收及逾期 Mirage 私聊功能合併。
+- 當前步驟：合併提交已成功；核實 GitHub PR 與 main 生效文件，更新狀態及決策。
+- 已完成：PR #147 從草稿轉 Ready 後以 merge commit `3e2b8688c6dd89e0e46733c336bc5522e12cc71a` 合併至 main。main 現包含50個普通 owner +20個特色 owner、82份現有可接訂單與15份不可接單、按真實委託狀態觸發的 NEW CONTACT／驗收／逾期私訊。
+- 最近驗證：PR #147 merged=true（2026-11-14T05:16:51Z）；回讀 main 的 commissions.js 與 employers.js 確認載入 owner 映射和系統訊息；合併前 Story55 回歸1137/1137、MIRAGE Chromium UI run 43559101722 success。
+- 範圍：PR #147 共10個授權文件；PR #146 國際象棋仍 open、未合併。main 之外不再修改其他分支。
+- 殘餘風險：尚未查明正式 GitHub Pages 部署成功與否；沒有實體手機操作驗收；舊接受單保留既有 owner；D13 專項 workflow skipped。
+- 相關文件：src/story/d15-d55/commissions.js、src/story/d15-d55/employers.js、src/story/d04/contract.js、tests/mirage-70-employers.test.mjs、STATUS.md、DECISIONS.md。
+- 下一步：如有要求，再獨立驗證 GitHub Pages 發佈與手機端載入；不替用戶合併 PR #146。
