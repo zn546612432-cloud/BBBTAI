@@ -12,6 +12,7 @@ const key='ximeng-phone-story55-v1',out='d23-chess-browser-results';
 mkdirSync(out,{recursive:true});
 function seed({empty=false,failed=false}={}){
  const s=activateStory55(initialState());s.day=23;s.clock='22:30';s.unlocked=true;s.story55.minutesPerSecond=0;
+ Object.assign(s.story55.completed,{wallet:{day:6,clock:'15:00'},return:{day:11,clock:'22:20'},move:{day:12,clock:'18:00'}});
  if(!empty){
   s.story55.activeScene='d23-chess';
   for(const [who,text] of story55Config(s).scenes['d23-chess']){
@@ -49,6 +50,11 @@ async function open(state,{width,height}){
  if(await banner.count())await banner.waitFor({state:'hidden',timeout:7000});
  return {page,context};
 }
+async function capture(page,name){
+ // Class removal starts a CSS fade; wait for the actual opacity before capture.
+ await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
+ await page.screenshot({path:out+'/'+name,fullPage:true});
+}
 try{
  const storyState=seed({empty:true});
  // D23 is reached after the D06 wallet introduction. Restoring that real
@@ -74,7 +80,7 @@ try{
  await story.page.locator('.board-grid').waitFor();
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
- await story.page.screenshot({path:out+'/mobile-story-card-to-board.png',fullPage:true});
+ await capture(story.page,'mobile-story-card-to-board.png');
  await story.context.close();
 
  const mobile=await open(seed(),{width:390,height:844});
@@ -90,23 +96,24 @@ try{
  assert.equal(played.history.length,2);
  assert.equal(played.history.at(-1).by,'stockfish');
  assert.equal(played.engineError,undefined);
- await mobile.page.screenshot({path:out+'/mobile-stockfish-move.png',fullPage:true});
+ await capture(mobile.page,'mobile-stockfish-move.png');
  await mobile.context.close();
 
  const desktop=await open(seed(),{width:1280,height:900});
  await desktop.page.locator('.board-grid [data-action="square"]').first().waitFor();
  assert.equal(await desktop.page.locator('.board-grid [data-action="square"]').count(),64);
- await desktop.page.screenshot({path:out+'/desktop-chess.png',fullPage:true});
+ await capture(desktop.page,'desktop-chess.png');
  await desktop.context.close();
 
  const empty=await open(seed({empty:true}),{width:390,height:844});
  await empty.page.locator('.chess-home').waitFor();
- await empty.page.screenshot({path:out+'/mobile-empty.png',fullPage:true});
+ await capture(empty.page,'mobile-empty.png');
  await empty.context.close();
 
  const failed=await open(seed({failed:true}),{width:390,height:844});
  await failed.page.locator('[data-action="retry-engine"]').waitFor();
- await failed.page.screenshot({path:out+'/mobile-engine-error.png',fullPage:true});
+ await failed.page.locator('[data-action="retry-engine"]').scrollIntoViewIfNeeded();
+ await capture(failed.page,'mobile-engine-error.png');
  await failed.page.locator('[data-action="retry-engine"]').click();
  await failed.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches.some(m=>m.history.at(-1)?.by==='stockfish'&&!m.engineError),key,{timeout:30000});
  await failed.context.close();
