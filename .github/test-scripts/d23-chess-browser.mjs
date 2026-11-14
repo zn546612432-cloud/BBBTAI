@@ -138,10 +138,16 @@ try{
  assert.equal(afterSpoiler.length,chatBeforeSpoiler,'spoiler must be blocked before the real Send');
  await capture(mobile.page,'mobile-tai-lesson-reminder.png');
  await mobile.page.locator('[data-action="resign-match"]').click();
+ const immediately=await mobile.page.evaluate(k=>{
+  const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
+  return {finished:m.status==='finished',queue:m.lesson.outbox.length,last:m.chat.at(-1)?.text};
+ },key);
+ assert.equal(immediately.finished,true);
+ assert.equal(immediately.queue,3,'no ending line is frontloaded');
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
   return m.status==='finished'&&m.result==='player-resigned'&&m.chat.some(x=>x.text.includes('下課'));
- },key,{timeout:5000});
+ },key,{timeout:18000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
  await mobile.page.locator('[data-form="chess-chat"] input[name="text"]').fill('今天吃什麼');
