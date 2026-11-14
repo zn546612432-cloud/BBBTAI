@@ -71,6 +71,17 @@ try{
    const input=story.page.locator('[data-form="mc-send"] input[name="text"]');
    await input.fill(text);
    await story.page.locator('[data-form="mc-send"] button[type="submit"]').click();
+   if(index===0){
+    const pacing=await story.page.evaluate(key=>{
+     const s=JSON.parse(localStorage.getItem(key));
+     return {index:s.story55.scenes['d23-chess']?.index,remaining:s.story55.scenes['d23-chess']?.nextAt-Date.now()};
+    },key);
+    assert.equal(pacing.index,1,'player Send should commit only the authored player line');
+    assert.ok(pacing.remaining>=2800&&pacing.remaining<=6700,'D23 must use its authored slower reply cadence');
+    await story.page.waitForTimeout(1500);
+    const stillWaiting=await story.page.evaluate(key=>JSON.parse(localStorage.getItem(key)).story55.scenes['d23-chess']?.index,key);
+    assert.equal(stillWaiting,1,'visible-chat timer must not bypass Story55 pacing');
+   }
   }
   try{
    await story.page.waitForFunction(({key,index})=>{
