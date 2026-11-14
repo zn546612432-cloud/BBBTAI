@@ -358,3 +358,14 @@ test('saved chess replies are due in the shared message heartbeat even when game
  store.update(s=>s.nav.current.appId='mirage');assert.equal(chessLessonDue(store.get(),20000),false);
  store.update(s=>{s.nav.current.appId='chess';s.unlocked=false;});assert.equal(chessLessonDue(store.get(),20000),false);
 });
+
+test('a pawn tutorial arriving after Send cannot swallow the pending player reply',async()=>{
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ playMove(store,matchId,'e2','e4');
+ postMatchMessage(store,matchId,'親親');
+ store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
+ assert.equal(match().chat.at(-1).from,'tai','scheduled piece explanation overtakes the delayed reply request');
+ assert.equal(await replyToMatch(store,matchId),true,'latest unanswered player message is still handled');
+ assert.equal(await replyToMatch(store,matchId),false,'one answer per outgoing message');
+ assert.ok(match().lesson.outbox.some(m=>m.sourceMessageId));
+});

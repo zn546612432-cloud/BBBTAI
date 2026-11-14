@@ -119,10 +119,13 @@ try{
  const composer=mobile.page.locator('[data-form="chess-chat"]');
  await composer.locator('input[name="text"]').fill('親親');
  await composer.locator('button[type="submit"]').click();
- await mobile.page.waitForFunction(k=>{
+ try{await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
   return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住|想得倒美|先保住|嘴倒是甜|撒嬌/.test(x.text));
- },key,{timeout:10000});
+ },key,{timeout:10000});}catch(error){
+  console.log('CHESS REPLY DIAGNOSTICS',await mobile.page.evaluate(k=>{const s=JSON.parse(localStorage.getItem(k)),m=s.matches.find(m=>m.opponent==='tai');return {nav:s.nav.current,chat:m.chat.slice(-6),lesson:m.lesson,errors:document.getElementById('toast')?.textContent};},key));
+  await mobile.page.screenshot({path:out+'/mobile-reply-failure.png',fullPage:true});throw error;
+ }
  const latestMessageVisible=await mobile.page.evaluate(()=>{
   const el=document.querySelector('.chess-chat-messages');
   const newest=el?.querySelector('.chess-chat-line');

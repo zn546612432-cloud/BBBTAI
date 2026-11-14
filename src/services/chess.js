@@ -154,12 +154,20 @@ export function postMatchMessage(store,matchId,text){
  return accepted;
 }
 const pendingMatchReplies=new WeakMap();
+function playerAwaitingChessReply(match){
+ const player=isD23ChessLesson(match)?match.chat?.filter(m=>m.from==='player').at(-1):match.chat?.at(-1);
+ if(player?.from!=='player')return null;
+ if([...(match.chat||[]),...(match.lesson?.outbox||[])].some(m=>m.sourceMessageId===player.id))return null;
+ return player;
+}
 export function replyToMatch(store,matchId){
  const match=store.get().matches.find(m=>m.id===matchId);
- if(!match||match.opponent!=='tai'||match.status!=='active'||match.chat?.at(-1)?.from!=='player')return Promise.resolve(false);
+ if(!match||match.opponent!=='tai'||match.status!=='active')return Promise.resolve(false);
+ const player=playerAwaitingChessReply(match);
+ if(!player)return Promise.resolve(false);
  let pending=pendingMatchReplies.get(store);
  if(!pending){pending=new Map();pendingMatchReplies.set(store,pending);}
- const key=JSON.stringify([matchId,match.chat.at(-1).id]);
+ const key=JSON.stringify([matchId,player.id]);
  if(pending.has(key))return pending.get(key);
  const reply=generateMatchReply(store,matchId).finally(()=>pending.delete(key));
  pending.set(key,reply);
@@ -173,9 +181,10 @@ async function boundedAI(promise,ms){
 }
 async function generateMatchReply(store,matchId){
  let current=store.get(),match=current.matches.find(m=>m.id===matchId);
- if(!match||match.status!=='active'||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return false;
- const lastId=match.chat.at(-1).id,lastText=match.chat.at(-1).text;
- if([...(match.chat||[]),...(match.lesson?.outbox||[])].some(m=>m.sourceMessageId===lastId))return false;
+ if(!match||match.status!=='active'||match.opponent!=='tai')return false;
+ const player=playerAwaitingChessReply(match);
+ if(!player)return false;
+ const lastId=player.id,lastText=player.text;
  const initialFacts=chessFacts(match),originalFen=initialFacts.fen;
  let canned=null;
  if(isD23ChessLesson(match)){
