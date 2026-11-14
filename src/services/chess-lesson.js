@@ -128,6 +128,7 @@ export function noteD23PlayerMove(match,move,clock,game){
  }else lesson.teaching=false;
  lesson.reminderAtPly=-1;
  const ply=match.history.length;
+ if(move.captured)appendChessTutorLine(match,'你用'+chessPieceName(move.piece)+'在 '+move.to+' 吃掉了我的'+chessPieceName(move.captured)+'。不錯，總算看得見盤面了。',clock,'capture-white-'+ply);
  if(game.isCheck()&&!game.isCheckmate())appendChessTutorLine(match,'將軍。這一次你把我的王逼得必須先應對。記住，這還不等於將死。',clock,'check-white-'+ply);
  if(move.flags?.includes('e'))appendChessTutorLine(match,'剛才那步叫「吃過路兵」。兵剛從起點跨兩格，對手緊接著可以像它只走一格那樣斜吃。',clock,'enpassant-'+ply);
  if(move.promotion)appendChessTutorLine(match,'你把兵送到底線了。升變可以選后、車、象或馬，不一定非要選后。',clock,'promotion-'+ply);
@@ -136,8 +137,14 @@ export function noteD23PlayerMove(match,move,clock,game){
 export function noteD23OpponentMove(match,move,clock,game){
  if(!isD23ChessLesson(match)||match.status!=='active')return;
  const ply=match.history.length;
- if(game.isCheck()&&!game.isCheckmate())appendChessTutorLine(match,'將軍了，nya。想想怎樣把你的王從威脅裡救出來。',clock,'check-black-'+ply);
- else if(move.captured)appendChessTutorLine(match,'這枚棋子我就收下了。下次先看看它是不是被盯上。',clock,'capture-black-'+ply);
+ if(move.captured){
+  const victim=chessPieceName(move.captured),attacker=chessPieceName(move.piece);
+  const sting=move.captured==='q'?'連后都讓我吃掉，你是真不怕輸。':
+   move.captured==='r'?'車就這麼送給我了？':
+   ['b','n'].includes(move.captured)?'這枚子力丟得有點可惜。':'你的兵我收下了。';
+  appendChessTutorLine(match,'我剛用'+attacker+'在 '+move.to+' 吃掉了你的'+victim+'。'+sting,clock,'capture-black-'+ply);
+ }
+ if(game.isCheck()&&!game.isCheckmate())appendChessTutorLine(match,'將軍了，nya。你的王正在受威脅，看看有沒有合法的解法。',clock,'check-black-'+ply);
 }
 export function finishD23ChessLesson(match,clock,game){
  if(!isD23ChessLesson(match))return false;
@@ -158,10 +165,23 @@ export function finishD23ChessLesson(match,clock,game){
 }
 export function noteD23HangingPiece(match,hanging,clock){
  if(!isD23ChessLesson(match)||match.status!=='active')return false;
- const exposed=(hanging||[]).find(p=>p.owner==='熙蒙');
+ const last=match.history?.at(-1);
+ if(!last||last.by!=='player')return false;
+ const options=(hanging||[]).filter(p=>p.owner==='熙蒙'&&p.piece!=='p');
+ // Only warn on clear material danger, not every imperfect strategic move:
+ // a newly moved piece left undefended, or a high-value exposed major piece.
+ const exposed=options.find(p=>p.square===last.to)||
+  options.find(p=>['q','r'].includes(p.piece)&&!(match.lesson?.warnedThreats||[]).includes(p.square+':'+p.piece));
  if(!exposed)return false;
- // Socratic first-level hint: the player must identify and save the piece.
- return appendChessTutorLine(match,'有枚棋子現在被盯上了，還沒人護著。你確定不先想想？',clock,'exposed-'+match.history.length);
+ const token=exposed.square+':'+exposed.piece;
+ const seen=(match.lesson.warnedThreats??=[]);
+ if(seen.includes(token))return false;
+ seen.push(token);
+ const name=chessPieceName(exposed.piece);
+ const phrase=exposed.square===last.to
+  ?'你剛把'+name+'走到 '+exposed.square+'，那個位置正被我的棋子攻擊，還沒人保護它。'
+  :'留意你的'+name+'，它現在在 '+exposed.square+' 被盯上，而且沒有棋子守住。';
+ return appendChessTutorLine(match,phrase+'這步你真的想清楚了？',clock,'exposed-'+match.history.length);
 }
 export function resignD23ChessLesson(match,clock){
  if(!isD23ChessLesson(match))return false;
@@ -186,6 +206,15 @@ export function prewrittenChessReply(match,text,facts){
   }
   return OTHER.find(([re])=>re.test(value))?.[1]||'其他的事待會再說。先好好下棋。';
  }
+ if(/看不懂|看不明白|不太懂|完全不懂|我不懂|沒看懂|没看懂|不會下|不会下/i.test(value)){
+  const last=facts.lastMove;
+  if(!last)return '還沒開始呢。先認清兵和馬，再看看你能從哪裡走。';
+  if(last.captured){
+   const attacked=chessPieceName(last.captured),by=chessPieceName(last.piece);
+   return (last.actor==='Ouroboros'?'你剛才丟了':'我剛才丟了')+attacked+'，'+by+'在 '+last.to+' 把它吃掉了。先看看那個格子，想想為什麼它沒有被保護。';
+  }
+  return (last.actor==='Ouroboros'?'我剛才':'你剛才')+'把'+chessPieceName(last.piece)+'從 '+last.from+' 走到 '+last.to+'。先看這枚棋子攻擊哪些格子。哪裡不懂，直接問。';
+ }
  if(/(?:后翼|後翼)(?:棄兵|弃兵)|Queen['’]?s Gambit/i.test(value))return '後翼棄兵通常從白方 d4、接著 c4 開始，目的在爭奪中心。名字裡有棄兵，不代表你該隨便把兵送掉。';
  if(/馬|马|knight/i.test(value))return PIECE_LESSONS.n;
  if(/車|车|rook/i.test(value))return PIECE_LESSONS.r;
@@ -201,8 +230,13 @@ export function prewrittenChessReply(match,text,facts){
  if(facts.checkmate)return '棋局已經將死，沒有合法的下一步了。';
  if(facts.stalemate)return '這是逼和，沒有合法著法，結果只能是平局。';
  if(facts.turn==='b')return '輪到我走了。等我落完子，你再看看盤面。';
- const picks=(facts.recommendations||facts.legalMoves||[]).slice(0,3).map(m=>m.san).join('、');
- return picks?'先看看你能走的棋，例如 '+picks+'。這些只是合法選項，不代表每一步都一樣好。':'先看看你的王是不是被將軍。';
+ const suggestion=facts.recommendations?.[0]||facts.legalMoves?.[0];
+ if(/哪一步|怎麼走|怎么走|走哪|走什麼|走什么|給點提示|给点提示|下一步/i.test(value)&&suggestion){
+  const move=facts.legalMoves?.find(m=>m.san===suggestion.san)||suggestion;
+  return '你可以先看看'+chessPieceName(move.piece)+'從 '+move.from+' 到 '+move.to+' 這一步。它是合法的，但值不值得下，還要看看我的反擊。';
+ }
+ if(facts.lastMove)return '別急。'+(facts.lastMove.actor==='Ouroboros'?'我剛才走的是':'你剛才走的是')+chessPieceName(facts.lastMove.piece)+'從 '+facts.lastMove.from+' 到 '+facts.lastMove.to+'。你先告訴我，這一步讓誰受到威脅？';
+ return '先別急著猜。我們從棋盤中央開始看，兵和馬的路你還記得嗎？';
 }
 export function predeterminedChessReply(match,text,facts){
  if(!isD23ChessLesson(match))return null;
