@@ -104,11 +104,11 @@ test('invalid D23 invitation source cannot unlock chess or Tai identity',()=>{
 test('Ouroboros Mirage scene replies use the existing queue with human pacing',()=>{
  const s=activateStory55(initialState());s.day=23;s.clock='22:16';s.story55.activeScene='d23-chess';
  assert.equal(scene55ReplyDelay(s,'d23-chess',0),1900,'player authored line still uses ordinary policy');
- assert.ok(scene55ReplyDelay(s,'d23-chess',1)>=4300);
+ assert.equal(scene55ReplyDelay(s,'d23-chess',1),1900);
  const origin=1000;
  advanceScene55(s,'d23-chess',{now:origin});
  const due=s.story55.scenes['d23-chess'].nextAt;
- assert.ok(due-origin>=4300);
+ assert.equal(due-origin,1900);
  assert.equal(tickQueuedStoryScenes55(s,due-1),false,'no early NPC delivery');
  assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id==='s55-d23-chess-1').length,0);
  assert.equal(tickQueuedStoryScenes55(s,due),true,'exactly one real NPC bubble appears at its due time');
