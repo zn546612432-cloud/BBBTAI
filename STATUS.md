@@ -218,3 +218,15 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞/风险：尚未批准 owner 映射，更改已有 owner 可能影响既有订单快照与联系人历史；需先写边界/异常测试，不能直接覆盖订单资料。
 - 相关文件：STATUS.md、DECISIONS.md、src/story/d15-d55/commissions.js、src/story/d04/contract.js、src/services/messaging/phone-messages.js、src/apps/mirage/data.js。
 - 测试/UI：本轮未改代码，所以没有新程序测试及截图；PR #146 仍为独立未合并开发分支。
+
+
+## 2026-11-14：D20 10:45 前段18句補齊與 PR #146 整合驗證
+- 當前任務：完成 Work 遺漏的 D20 銀行行動分工上半段，接上已確認14句收尾，驗證後合併 PR #146。
+- 當前步驟：已補測試並實施；等分支最後檢查，尚未合併時不得視為正式上線。
+- 已完成：`tests/d23-chess-story.test.mjs` 先新增18句銜接和14句原文的逐句斷言，後在 `src/story/d14-d24/content.json` 原有 D20 10:45 monitoring 節點插入18句；原14句不改、其他所有劇情節點不動，仍透過同一 Story55 系統。
+- 原稿限制：原分工逐字稿未在聊天索引、決策紀錄或已保存文案檔找到，這18句是本輪新寫銜接稿，不能稱為舊稿原位復原。
+- 最近驗證：GitHub Story55 regression run 43568685011 pass 1148/1148；D23 真 Chromium run 43568685013 success；MIRAGE 70雇主 run 43568685017 success；AI gateway / feature branches success。D13 mobile acceptance skipped（另案）。
+- 未改：PR #147 70雇主、D21/D22 既有聊天、D23/ D29 未授權主線內容；D23 Stockfish 僅沿用 PR #146 已實作版本。
+- 風險：D20上半段非用戶舊稿原文；合併前要最後確認 Ghost browser QA 是否通過和 PR 是否 mergeable；真實 iPhone 未驗收。
+- 相關文件：src/story/d14-d24/content.json、tests/d23-chess-story.test.mjs、STATUS.md、DECISIONS.md；PR #146。
+- 下一步：通過剩餘驗收後合併 PR #146 到 main，回讀核實並更新發佈狀態。
