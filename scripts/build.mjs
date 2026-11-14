@@ -9,4 +9,6 @@ await rm('dist/src/legacy',{recursive:true,force:true});
 await cp('index.html','dist/index.html');
 await mkdir('dist/vendor',{recursive:true});
 await cp('node_modules/chess.js/dist/esm/chess.js','dist/vendor/chess.js');
+await cp('node_modules/stockfish/bin/stockfish-19-lite-single.js','dist/vendor/stockfish-19-lite-single.js');
+await cp('node_modules/stockfish/bin/stockfish-19-lite-single.wasm','dist/vendor/stockfish-19-lite-single.wasm');
 console.log('Built single-entry phone in dist/');

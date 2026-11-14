@@ -13,6 +13,7 @@ import {seedD02,tickD02Contracts} from '../../story/d02/runtime.js';
 import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
+import {offerD23ChessInvitation} from '../invitations.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
@@ -81,6 +82,7 @@ export function finishScene55(s,id){
  if(n.credit)creditScene55(s,n);
  if(id==='ending')startFinale55(s);
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
+ if(id==='d23-chess')offerD23ChessInvitation(s);
  if(id==='loan'){s.story55.loanOfflineDay=s.day;s.story55.loanOfflineClock??=s.clock;}
  tickStory55(s);return true;
 }

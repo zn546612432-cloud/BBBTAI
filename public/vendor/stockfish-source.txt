@@ -1,0 +1,14 @@
+Stockfish.js / Stockfish 19.0.1 — browser chess engine
+
+These files are distributed as unmodified, browser-executable engine assets:
+- stockfish-19-lite-single.js
+- stockfish-19-lite-single.wasm
+
+Engine project and corresponding source:
+https://github.com/nmrugg/stockfish.js
+
+License: GNU General Public License, version 3.
+License text: https://www.gnu.org/licenses/gpl-3.0.html
+
+Stockfish runs inside a local browser Web Worker. The Xi Meng phone's
+chess board and story script remain separate from its calculation of moves.

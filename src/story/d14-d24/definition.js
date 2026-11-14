@@ -13,6 +13,11 @@ const nodeUpdates={
 };
 export function applyD14D24Definition(c,{force=false}={}){
  let changed=false;
+ // This is another scene in the existing Story55 scheduler, not a second chat engine.
+ if(!c.nodes.some(n=>n.id==='d23-chess')){
+  c.nodes.push({id:'d23-chess',day:23,title:'與 Ouroboros 下棋',kind:'scene',requires:[],at:'22:16',delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-d23-chess'});
+  changed=true;
+ }
  for(const [id,lines] of Object.entries(content.scenes)){
   if(force||same(c.scenes[id],legacy.scenes[id])){c.scenes[id]=structuredClone(lines);changed=true;}
  }

@@ -1,0 +1,48 @@
+name: D23 Chess Stockfish browser QA
+on:
+  pull_request:
+    paths:
+      - 'src/apps/chess/**'
+      - 'src/apps/mirage/index.js'
+      - 'src/services/chess*.js'
+      - 'src/services/invitations.js'
+      - 'src/services/story55/runtime.js'
+      - 'src/story/d14-d24/**'
+      - 'scripts/build.mjs'
+      - 'package*.json'
+      - '.github/test-scripts/d23-chess-browser.mjs'
+      - '.github/workflows/d23-chess-browser.yml'
+  workflow_dispatch:
+
+jobs:
+  stockfish-chess:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start phone preview
+        run: |
+          node server/dev.mjs > /tmp/bbbtai-chess-qa.log 2>&1 &
+          for i in {1..25}; do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/bbbtai-chess-qa.log
+          exit 1
+      - name: Play real Stockfish browser move and screenshot UI states
+        run: node .github/test-scripts/d23-chess-browser.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d23-chess-browser-screenshots
+          path: d23-chess-browser-results/
+          if-no-files-found: warn

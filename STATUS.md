@@ -1,5 +1,15 @@
 # BBBTAI 项目状态记录
 
+## 2026-11-14 象棋＋已確認文案整合
+- 當前任務：用戶要求象棋與文案同一輪實施；基準 main 6ec7b42，接續 PR #146 b107ed3。
+- 當前步驟：第4步定向驗收通過；第5步交付PR #146與五張已人工核對截圖。
+- 已完成：隔離 worktree 合入 PR #146；衝突只在狀態/決策文檔，保留兩側記錄，功能檔自動整合。
+- 下一步：用戶審核PR #146後決定是否合併與發布。
+- 阻塞：D20 10:45 分工上半段查無原文，本輪只實施14句已確認稿；D21–D22 未定稿保留。
+- 相關文件：象棋 app/service、invitations、D14–D24 content、chess-display/d23-chess-story tests、STATUS、DECISIONS。
+- 最近驗證：本地57/57相關測試通過；GitHub Story55 regression run43566439994 success（同組測試前一head實測1148/1148）；Pages構建成功（92條路徑重寫），story audit 25 apps/18 checks通過；D23 Chromium run43566440100 success，artifact14102647102，五張桌面/手機/邀棋跳轉/空/錯截圖已下載人工核對，通知遮罩清除、錯誤重試按鈕可見；原生Send→卡片→棋盤、真Stockfish落子、錯誤重試均通過。受測head52198d20，後續只補文檔。
+- 保留與限制：70雇主run43566439988、AI網關run43566439981、分支檢查run43566440057 success；Ghost run43566439985尚在進行，D13 run43566440001 skipped，不列為本輪通過；沒有合併main/正式發布，沒有實體iPhone測量。
+
 更新：2026-11-13
 
 ## 当前任务
@@ -160,3 +170,63 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 殘餘風險：尚未查明正式 GitHub Pages 部署成功與否；沒有實體手機操作驗收；舊接受單保留既有 owner；D13 專項 workflow skipped。
 - 相關文件：src/story/d15-d55/commissions.js、src/story/d15-d55/employers.js、src/story/d04/contract.js、tests/mirage-70-employers.test.mjs、STATUS.md、DECISIONS.md。
 - 下一步：如有要求，再獨立驗證 GitHub Pages 發佈與手機端載入；不替用戶合併 PR #146。
+## 2026-11-13：D23 Stockfish 实际棋局实现与验收
+- 当前任务：D21–D22 简短日常方向记录；D23 已确认22句 Mirage 聊天 + 真实国际象棋 AI。
+- 当前步骤：D23 已在独立分支完成定向实现，草稿 PR #146 供审核；main 尚未合并。
+- 已完成：复用现有 chess.js 棋盘与比赛存档，Stockfish 19 lite 单线程 WASM 引擎回合、失败/超时错误和重试；D23 22句统一剧情场景及匿名 Ouroboros 邀棋卡、可继续同一局、无需解锁熙泰真实身份；D21/D22 未改内容。
+- 实施文件：src/services/chess-stockfish.js、src/services/chess.js、src/apps/chess/index.js、src/services/invitations.js、src/apps/mirage/index.js、src/story/d14-d24/content.json/definition.js/migrate.js、src/services/story55/runtime.js、package*.json、scripts/build.mjs、server/dev.mjs；测试与 CI、GPL 来源文件。
+- 最近验证：真实 GitHub Actions Story55 regression 1138 tests pass/0 fail（run 43452516282）；AI gateway branch、feature branches success；D23 Chess Stockfish browser QA run 43453690924 success，真实浏览器 Worker 走合法黑棋、64格棋盘、移动/桌面/空/错误截图 artifact 14053921030。
+- 风险：D13 wallet mobile acceptance skipped，Tai Ghost remote browser workflow 仍需查最终结论；D29 旧棋局触发仍未修改；未经正式 Pages 发布环境实机测量性能。D21/D22 无具体获批台词。
+- 下一步：提供 PR #146 与真实测试截图供用户审核；D21/D22 短闲聊逐句确认后再修改，未经批准不得合并 main。
+- 阻塞：无实质 Stockfish Node 和 Chromium 浏览器回归阻塞；旧 Ghost QA 与 D29 兼容性另列风险，PR 保持 Draft。
+
+
+## 2026-11-13：D23 棋盘截图复验与提交收束
+- 当前步骤：已复测并人工查看四张 UI 证据图，PR #146 保持 Draft、main 未合并。
+- 本轮修正：首次浏览器功能通过后发现3张截图仍覆盖手机解锁过渡层，属于截图采集时机错误；仅修改 .github/test-scripts/d23-chess-browser.mjs 等待真实解锁、过渡动画和消息横幅结束，不改业务代码。
+- 最近验证：最新代码提交 58e7b77209e8baaf3647fa864a96be3b54bc9cf2；D23 Chess Stockfish browser QA run 43454628028 success，日志 PASS D23 real Stockfish Web Worker move, 64-square board, desktop/mobile, empty/error states；Story55 developer regression、AI gateway branch checks、Check feature branches 同次均 success；D13 workflow skipped，Tai Ghost browser QA 查验时仍 in_progress。
+- 截图：GitHub artifact 14052178973 d23-chess-browser-screenshots，含 mobile-stockfish-move.png、desktop-chess.png、mobile-empty.png、mobile-engine-error.png；实际下载并查看四图，解锁过渡层消失。产物保存在本次对话工作区 /mnt/data/d23-chess-final/，不进入项目仓库。
+- 下一步：用户审核 D21–D22 少量闲聊的逐句文案，并按需审批 PR #146 的合并。不能把 D21–D22 未定稿的例句当作已经写入手机。
+
+
+## 2026-11-14：MIRAGE 雇主随订单增长 · 需求核验阶段
+- 当前任务：D21/D22 少量微信聊天定稿，MIRAGE 多联系人随悬赏关系增长及接单/结单/失败对应私聊方案。
+- 当前步骤：已回读 STATUS/DECISIONS/PR #146 相关结构和 D15–D55 正式委托定义；本步只调查、定位及记录，不擅自实现尚未确认的雇主台词。
+- 已完成：用户批准 D21 6句、D22 5句短群聊，全文录入 DECISIONS；查明 src/apps/mirage/data.js 有11个联系人名称，但 55天版联系人不会直接采用旧演示数据；D21订单 M-016 @rancor、M-017 @ledger_8，D22订单 M-018 @deadletter、M-019 @oldmoney 已预置，并共享 D04 commission runner。
+- 已确认触发点：acceptD04Contract 状态 OPEN→ACCEPTED、submitD04Contract READY→COMPLETED、tickD04Contracts accepted order 过期→EXPIRED；均不应独立改变 Ghost/银行逻辑。下单邮件、验收回执 KIRA 负责，MIRAGE 雇主使用现有消息渠道。
+- 下一步：审查并获准四位雇主按每份订单三种结果的示例短私信和 D21/D22 原节点保留策略，再补 tests 首次/重复/失败与移动端界面证据。
+- 阻塞风险：新联系人消息还没有实现，也未完成测试/截图；PR #146 真实 Stockfish 功能保持 Draft；D29 原棋局触发仍需另核；不声称代码已完成。
+- 相关文件：STATUS.md、DECISIONS.md、src/apps/mirage/data.js、src/apps/mirage/contacts-seed.js、src/story/d15-d55/commissions.js、src/story/d04/contract.js、src/story/d14-d24/content.json、src/services/messaging/phone-messages.js。
+- 最近验证：GitHub connector 回读各文件定位状态转移和业主字段，本轮未提交运行时代码或执行新测试。
+
+
+## 2026-11-14：MIRAGE 接單英文系統提示确认
+- 当前任务：D21–D22 和后续委托联系人随接单逐步增长。
+- 当前步骤：用户新增并确认 Mirage 接单成功系统消息 `── NEW CONTACT ──`；仅更新设计记录，尚未接入 runtime。
+- 已确认：每次真实成功接单后，雇主会话先出现一条 system 分隔消息，再开始雇主私信；每 orderId 一次，重复载入不重复发送。旧雇主复用原会话但新订单仍按用户要求显示此系统讯息。
+- 下一步：审核雇主在接单/结单/失败三种状态的候选私聊文案，然后仅在已有 OPEN→ACCEPTED、COMPLETED、EXPIRED 触发点最小实现。
+- 风险：对同一旧联系人显示 NEW CONTACT 属于用户明确要求的固定文字，不代表创建了重复联系人。尚无实现测试或 UI 截图。
+- 最近验证：核对状态文件与决策记录后按原句写入，本轮未改代码或合并 PR #146。
+
+
+## 2026-11-14：MIRAGE 联系人规模纠正（70+名）
+- 当前任务：规划 D15–D55 MIRAGE 82份可接悬赏的70位以上不同雇主及订单事件消息。
+- 当前步骤：仅讨论/核算与记录，不修改委托与联系人运行逻辑。
+- 已确认：至少70名不同雇主＝20名有特色＋至少50名通用模板雇主。系统提示每个已接订单一次 `── NEW CONTACT ──`，同人复单继续旧线程。
+- 最近验证：GitHub 逐项解析 src/story/d15-d55/commissions.js authored 82笔可接订单、15笔不可接订单、当前唯一 owner 共20位；达到70人至少新建50个稳定 owner handle，若恰好70人则82份订单仅余12份同雇主复单。
+- 下一步：给用户70+位雇主分配方案（哪些现有20位重复出现、哪些订单改为新雇主）及普通模板具体句式供确认。
+- 阻塞/风险：尚未批准 owner 映射，更改已有 owner 可能影响既有订单快照与联系人历史；需先写边界/异常测试，不能直接覆盖订单资料。
+- 相关文件：STATUS.md、DECISIONS.md、src/story/d15-d55/commissions.js、src/story/d04/contract.js、src/services/messaging/phone-messages.js、src/apps/mirage/data.js。
+- 测试/UI：本轮未改代码，所以没有新程序测试及截图；PR #146 仍为独立未合并开发分支。
+
+
+## 2026-11-14：D20 10:45 前段18句補齊與 PR #146 整合驗證
+- 當前任務：完成 Work 遺漏的 D20 銀行行動分工上半段，接上已確認14句收尾，驗證後合併 PR #146。
+- 當前步驟：已補測試並實施；等分支最後檢查，尚未合併時不得視為正式上線。
+- 已完成：`tests/d23-chess-story.test.mjs` 先新增18句銜接和14句原文的逐句斷言，後在 `src/story/d14-d24/content.json` 原有 D20 10:45 monitoring 節點插入18句；原14句不改、其他所有劇情節點不動，仍透過同一 Story55 系統。
+- 原稿限制：原分工逐字稿未在聊天索引、決策紀錄或已保存文案檔找到，這18句是本輪新寫銜接稿，不能稱為舊稿原位復原。
+- 最近驗證：GitHub Story55 regression run 43568685011 pass 1148/1148；D23 真 Chromium run 43568685013 success；MIRAGE 70雇主 run 43568685017 success；AI gateway / feature branches success。D13 mobile acceptance skipped（另案）。
+- 未改：PR #147 70雇主、D21/D22 既有聊天、D23/ D29 未授權主線內容；D23 Stockfish 僅沿用 PR #146 已實作版本。
+- 風險：D20上半段非用戶舊稿原文；合併前要最後確認 Ghost browser QA 是否通過和 PR 是否 mergeable；真實 iPhone 未驗收。
+- 相關文件：src/story/d14-d24/content.json、tests/d23-chess-story.test.mjs、STATUS.md、DECISIONS.md；PR #146。
+- 下一步：通過剩餘驗收後合併 PR #146 到 main，回讀核實並更新發佈狀態。

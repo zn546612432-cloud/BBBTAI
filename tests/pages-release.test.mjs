@@ -19,6 +19,11 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   await put('src/styles/child.css','body{color:black}');
   await put('public/assets/icon.svg','<svg/>');
   await put('node_modules/chess.js/dist/esm/chess.js','export class Chess{}');
+  // Copy the real bundled engine, not simulated worker assets.
+  for(const name of ['stockfish-19-lite-single.js','stockfish-19-lite-single.wasm']){
+   await mkdir(path.join(folder,'node_modules/stockfish/bin'),{recursive:true});
+   await cp(new URL('../node_modules/stockfish/bin/'+name,import.meta.url),path.join(folder,'node_modules/stockfish/bin',name));
+  }
   const build=()=>execFileSync(process.execPath,['scripts/build-pages.mjs'],{cwd:folder,env:{...process.env,GITHUB_REPOSITORY:'owner/AAATAI',GITHUB_PAGES_BASE:'/AAATAI/',GITHUB_SHA:'test-sha'},stdio:'pipe'});
   const read=name=>readFile(path.join(folder,name),'utf8');
   build();

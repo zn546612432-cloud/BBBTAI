@@ -5,6 +5,10 @@ import previousLoan from './previous-loan-v1.json' with {type:'json'};
 export function syncD14D24Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
+ // Add the approved D23 scene to active saves without resetting other story nodes.
+ if(s.story55.config&&!s.story55.config.nodes.some(n=>n.id==='d23-chess')){
+  changed=applyD14D24Definition(s.story55.config)||changed;
+ }
  if(s.story55.d14D24Revision!==1){
   const c=s.story55.config;
   if(!c)return seedAuthoredNotes(s,D14_D24_CONTENT.notes);
