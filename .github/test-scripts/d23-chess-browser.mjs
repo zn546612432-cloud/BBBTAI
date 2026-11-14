@@ -50,6 +50,25 @@ async function open(state,{width,height}){
  if(await banner.count())await banner.waitFor({state:'hidden',timeout:7000});
  return {page,context};
 }
+async function assertPiecesLoad(page){
+ await page.waitForFunction(()=>{
+  const imgs=[...document.querySelectorAll('.board-grid .chess-piece img')];
+  return imgs.length===32&&imgs.every(img=>img.complete&&img.naturalWidth>0);
+ },null,{timeout:12000});
+ const assets=await page.locator('.board-grid .chess-piece img').evaluateAll(imgs=>imgs.map(img=>({src:img.src,width:img.naturalWidth,visible:getComputedStyle(img).opacity==='1'})));
+ assert.equal(assets.length,32);
+ assert.ok(assets.every(x=>x.width>0&&x.visible),'every real chess piece must be loaded and visible');
+ assert.ok(assets.every(x=>x.src.includes('/apps/chess/pieces/')),'all chess pieces must resolve from bundled image assets');
+}
+async function assertMobileChatVisible(page){
+ const visible=await page.evaluate(()=>{
+  const chat=document.querySelector('.chess-chat'),viewport=document.querySelector('.app-content');
+  if(!chat||!viewport)return false;
+  const a=chat.getBoundingClientRect(),b=viewport.getBoundingClientRect();
+  return a.top>=b.top&&a.top<=b.bottom-55&&a.bottom<=b.bottom+3;
+ });
+ assert.ok(visible,'mobile chess chat must be visible without scrolling past the board');
+}
 async function capture(page,name){
  // Class removal starts a CSS fade; wait for the actual opacity before capture.
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
@@ -111,6 +130,8 @@ try{
  assert.deepEqual(preAccept,{status:'pending',count:0});
  await card.click();
  await story.page.locator('.board-grid').waitFor();
+ await assertPiecesLoad(story.page);
+ await assertMobileChatVisible(story.page);
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
  assert.equal(routed.matches[0].lesson.started,true);
@@ -127,6 +148,16 @@ try{
 
  const mobile=await open(seed(),{width:390,height:844});
  await mobile.page.locator('.board-grid [data-action="square"]').first().waitFor();
+ await assertPiecesLoad(mobile.page);
+ await assertMobileChatVisible(mobile.page);
+ // A missing iOS image must show a chess glyph, never a broken-image icon.
+ const missing=mobile.page.locator('.board-grid .chess-piece img').first();
+ const originalSrc=await missing.getAttribute('src');
+ await missing.evaluate(img=>{img.src='/__test_chess_piece_missing.png';});
+ await mobile.page.waitForFunction(()=>{const img=document.querySelector('.board-grid .chess-piece img');return img?.complete&&!img.classList.contains('is-loaded')&&img.previousElementSibling?.textContent?.length>0;});
+ await capture(mobile.page,'mobile-piece-symbol-fallback.png');
+ await missing.evaluate((img,src)=>{img.src=src;},originalSrc);
+ await assertPiecesLoad(mobile.page);
  await mobile.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
  assert.equal(await mobile.page.locator('.board-grid [data-action="square"]').count(),64);
  await mobile.page.locator('[data-action="square"][data-square="e2"]').click();
@@ -228,6 +259,7 @@ try{
 
  const desktop=await open(seed(),{width:1280,height:900});
  await desktop.page.locator('.board-grid [data-action="square"]').first().waitFor();
+ await assertPiecesLoad(desktop.page);
  assert.equal(await desktop.page.locator('.board-grid [data-action="square"]').count(),64);
  await capture(desktop.page,'desktop-chess.png');
  await desktop.context.close();
