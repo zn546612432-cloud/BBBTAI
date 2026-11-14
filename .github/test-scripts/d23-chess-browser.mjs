@@ -72,9 +72,24 @@ try{
    await input.fill(text);
    await story.page.locator('[data-form="mc-send"] button[type="submit"]').click();
   }
-  await story.page.waitForFunction(({key,index})=>{
-   const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
-  },{key,index},{timeout:15000});
+  try{
+   await story.page.waitForFunction(({key,index})=>{
+    const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
+   },{key,index},{timeout:15000});
+  }catch(error){
+   const diag=await story.page.evaluate(({key,index})=>{
+    const s=JSON.parse(localStorage.getItem(key));
+    const chat=s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros');
+    return {expectedIndex:index,expectedLine:s.story55.config.scenes['d23-chess']?.[index],day:s.day,clock:s.clock,activeScene:s.story55.activeScene,
+     scene:s.story55.scenes['d23-chess'],completed:s.story55.completed['d23-chess'],nav:s.nav.current,
+     lastMessages:chat?.messages?.slice(-5).map(m=>({from:m.from,text:m.text,id:m.id})),
+     currentDraft:document.querySelector('[data-form="mc-send"] input[name="text"]')?.value,
+     toast:document.getElementById('toast')?.textContent};
+   },{key,index});
+   console.log('D23 STORY PROGRESSION DIAGNOSTICS',JSON.stringify(diag));
+   await story.page.screenshot({path:out+'/mobile-story-stall.png',fullPage:true});
+   throw error;
+  }
  }
  const card=story.page.locator('[data-action="mc-chess-invite"]');
  assert.match(await card.innerText(),/接受邀請/,'the invitation should be unaccepted until tapped');
