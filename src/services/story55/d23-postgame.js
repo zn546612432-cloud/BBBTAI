@@ -74,7 +74,7 @@ export function tickD23MiragePostgame(s,now=Date.now()){
  const line=pg.aiOutbox.shift();
  const delivered=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:D23_MIRAGE_CONTACT,
   messageId:line.id,from:D23_MIRAGE_CONTACT,text:line.text,day:s.day,clock:s.clock,
-  sentDate:date55(s.day),storyTag:'story55'});
+  sentDate:date55(s.day+(s.day===23&&s.story55?.d23?.nightAfterMidnight?1:0)),storyTag:'story55'});
  if(delivered)delivered.aiGenerated=line.aiGenerated===true;
  pg.nextAt=pg.aiOutbox.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
  if(!pg.aiOutbox.length){

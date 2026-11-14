@@ -190,7 +190,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:date55(s.day),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:(['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight?date55(s.day+1):date55(s.day)),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -360,6 +360,11 @@ export const ANONYMOUS_MIRAGE_WINDOWS_55=Object.freeze([
  ['08:00','09:25'],['12:00','12:30'],['22:00','23:00']
 ]);
 export function anonymousPresence55(s,now=Date.now()){
+ // D23's late, player-initiated chess conversation stays connected until
+ // the second authored Mirage farewell, even if midnight passed.
+ if(s.day===23&&s.story55?.d23Postgame){
+  return completed(s,'d23-chess-finish')?{online:false,reason:'已下線'}:{online:true,reason:'在線'};
+ }
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
  if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};

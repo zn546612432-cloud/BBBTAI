@@ -10,6 +10,8 @@ import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {canCharge,canShortCharge,plugIn} from '../src/system/power/battery.js';
 import {powerFullscreen} from '../src/system/power/controls.js';
 import {completed,nodeStatus} from '../src/services/story55/state.js';
+import {dateParts} from '../src/services/calendar.js';
+import {chronologicalMessages} from '../src/services/messaging/timestamps.js';
 import {tickStory55} from '../src/services/story55/runtime.js';
 
 const D20_APPROVED_DIALOGUE=[
@@ -174,4 +176,15 @@ test('D23 invitation alone is insufficient; only the postgame farewell releases 
  assert.equal(plugIn(s),true);
  assert.equal(s.day,24,'overnight D23 charge enters D24 exactly once');
  assert.equal(s.clock,'08:00');assert.equal(s.batteryPercent,100);
+});
+
+test('a D23 03:00 late send keeps the story day but displays its genuine next-calendar-day date',()=>{
+ const s=activateStory55(initialState());s.day=23;s.clock='03:00';s.story55.d23={nightAfterMidnight:true};
+ assert.equal(dateParts(s).iso,'2025-06-11');
+ s.clock='22:16';s.story55.d23.nightAfterMidnight=false;
+ const yesterday={id:'last-night',day:23,time:'22:16',sentDate:'2025-06-10',text:'昨晚的邀請'};
+ s.clock='03:00';s.story55.d23.nightAfterMidnight=true;
+ const after={id:'after-midnight',day:23,time:'03:00',sentDate:dateParts(s).iso,text:'凌晨才發'};
+ assert.deepEqual(chronologicalMessages([after,yesterday],s).map(m=>m.id),['last-night','after-midnight']);
+ assert.equal(s.day,23,'the story day never skips while the required match is unfinished');
 });
