@@ -188,7 +188,24 @@ export function replyToMatch(store,matchId){
 
 const pendingD23Postgame=new WeakMap();
 const postgameFallback=(match,intro)=>{
- if(!intro)return [chessReaction(match,'other')].flat().slice(0,1);
+ if(!intro)return [chessReaction(match,'postgame-'+match.result,{},
+  (match.result==='player-win'?[
+   '贏了就這麼高興？好吧，今天讓你得意一下。',
+   '這回你有本事笑了。下次我再看看。',
+   '別急著開香檳。才一盤而已。'
+  ]:match.result==='player-resigned'?[
+   '認輸不丟人。剛才哪一步沒看懂，下次再問。',
+   '至少這次你知道什麼時候該收手。',
+   '你還有話？嗯，我聽著。'
+  ]:match.result==='opponent-win'?[
+   '輸一盤而已，別急著替自己找藉口。',
+   '你倒是很能說。下次也把這股勁用在棋盤上。',
+   '先記住這局。下一次再看看。'
+  ]:[
+   '誰都沒贏。你倒是還挺有話說。',
+   '平局而已，下回再分勝負。',
+   '嗯，還要說什麼？'
+  ]))].flat().slice(0,1);
  const kind=match.result==='player-win'?'playerWin':
   match.result==='opponent-win'?'opponentWin':
   match.result==='player-resigned'?'resigned':'draw';
