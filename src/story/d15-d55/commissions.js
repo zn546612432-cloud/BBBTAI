@@ -1,3 +1,4 @@
+import {MIRAGE_OWNER_OVERRIDES} from './employers.js';
 // Authored MIRAGE listings for D15–D55. Text only; all playable orders use
 // the existing D04–D55 commission runner (KIRA attachment → GHOST → settlement).
 // Do not put gameplay instructions or narrative commentary into player-facing fields.
@@ -1614,6 +1615,8 @@ const locked=[
 const EXTENSION={cipher:'enc',route:'pkg',extract:'bin',veil:'enc',strike:'pkg',verify:'pkg'};
 export const D15_D55_CONTRACTS=authored.map((o)=>({
  ...o,marketDaily:true,
+ owner:MIRAGE_OWNER_OVERRIDES[o.id]||o.owner,
+ originalOwner:o.owner,
  reward:o.amount.toLocaleString('en-US')+' USD',
  key:'MIRAGE-'+o.id,
  attachment:o.id.toLowerCase()+'.'+EXTENSION[o.stages[0]],

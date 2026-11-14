@@ -3,6 +3,7 @@ import {D08_CONTRACTS} from '../d08/commissions.js';
 import {D09_CONTRACTS} from '../d09/commissions.js';
 import {D10_CONTRACTS} from '../d10/commissions.js';
 import {D15_D55_CONTRACTS,D15_D55_RESTRICTED} from '../d15-d55/commissions.js';
+import {emitMirageEmployerMessage} from '../d15-d55/employers.js';
 import {D06_CONTRACT,D06_ORDER_ID} from '../d06/commission.js';
 import {completeNode,completed} from '../../services/story55/state.js';
 import {settleStory55Wallet} from '../../services/story55/projects.js';
@@ -64,6 +65,11 @@ export function seedD04Contracts(s){
   if(s.day<publishDay(c))continue;
   const previous=s.content.orders.find(o=>o.id===c.id);
   if(previous){
+   // Previously published OPEN listings may adopt the reviewed owner;
+   // accepted/settled or player-edited orders keep their existing identity.
+   if(c.marketDaily&&previous.status==='OPEN'&&!previous.wasAccepted&&previous.owner===c.originalOwner&&previous.owner!==c.owner){
+    previous.owner=c.owner;changed=true;
+   }
    // Migrate the old prototype wallet listing without resetting saved progress.
    if(c.id===D06_ORDER_ID&&previous.title==='10 BTC / WALLET CHALLENGE'){
     Object.assign(previous,{title:c.title,owner:c.owner,category:c.grade,reward:c.reward,
@@ -122,7 +128,9 @@ export function tickD04Contracts(s){
   if(o?.status==='ACCEPTED'&&!s.content.mail?.some(m=>m.id===D04_MAIL(c.id)))
    changed=issueMail(s,c)||changed;
   if(o&&expired(s,c)&&['OPEN','ACCEPTED',...(c.marketDaily?[]:['READY'])].includes(o.status)){
+   const prior=o.status;
    o.status='EXPIRED';changed=true;
+   if(c.marketDaily&&prior==='ACCEPTED')emitMirageEmployerMessage(s,o,'expired');
   }
  }
  return changed;
@@ -132,6 +140,7 @@ export function acceptD04Contract(s,id){
  if(!story(s)||!c||!o||o.status!=='OPEN'||s.day<publishDay(c)||expired(s,c))return false;
  o.status='ACCEPTED';o.wasAccepted=true;o.acceptedDay=s.day;o.acceptedClock=s.clock;
  issueMail(s,c);
+ if(c.marketDaily)emitMirageEmployerMessage(s,o,'accepted');
  // Only the single encrypted KIRA attachment may activate GHOST.
  return true;
 }
@@ -200,5 +209,6 @@ export function submitD04Contract(s,id){
   id:nid,title:'KIRA',body:'【mirage】委託已完成 · '+(c.asset==='BTC'?'10 BTC':'US$ '+c.amount.toLocaleString('en-US')),
   day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+receiptId,params:{}}
  });
+ if(c.marketDaily)emitMirageEmployerMessage(s,o,'completed');
  return true;
 }

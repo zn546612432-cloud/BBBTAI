@@ -127,3 +127,25 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞与风险：D20 10:45 用户原先上半段仍需在实施前核验现有节点、角色与条数；本轮仅冻结文案，无 runtime 测试、截图或已发布剧情更改。
 - 相关文件：STATUS.md、DECISIONS.md；实施时另定位 src/story/d14-d24/content.json。
 - 最近验证：D20 用户本轮尾段人工逐句计数14句，GitHub 更新 DECISIONS.md commit 6650defcfead04ef68533b4cf6988b282452bf57。
+
+
+## 2026-11-14：82单／70雇主分配表制作及静态校验
+- 当前任务：为 D15–D55 82份可接 Mirage 委托制作至少70位雇主的审核分配表。
+- 当前步骤：第4步｜验收静态分配数据、提交审稿材料；未进入运行时实现。
+- 已完成：在独立文案分支 `planning/mirage-70-employers-20261114` 新增 MD 与 CSV 两份审稿表；20现有特色雇主保留32份归属（含12次复单），50份指定新普通雇主，总计70个独立昵称。
+- 下一步：等待用户审核拟调整的50份订单归属和通用私讯措辞；批准后先补订单接单/结单/失败/异常及移动端测试。
+- 阻塞：雇主归属尚未得到逐单确认，严禁改正式委托数据或上线；仍需评估先前存档 owner 映射与同一联系人历史保留。
+- 相关文件：`docs/mirage-d15-d55-owner-allocation-proposal.md`、`.csv`、`src/story/d15-d55/commissions.js`、`DECISIONS.md`、`STATUS.md`。本轮未改 runtime。
+- 最近验证：以 main 委托源完整解析：82单、D15–D55共41天每天2单、20特色owner、50普通owner、70独立雇主、12次重复合作；15份不可接 R 单不动。校验通过；没有游戏测试、UI截图或发布。
+
+
+## 2026-11-14：70位 MIRAGE 雇主已接入獨立 PR 並通過驗收
+- 當前任務：落地已核准 D15–D55 82單 × 70位雇主配置及 Mirage 接單／成功／逾期聯動。
+- 當前步驟：第5步｜驗收通過，交付獨立草稿 PR #147；main 未合併。
+- 已完成：50位新普通雇主＋20位既有特色雇主共70位；82單保持每日2筆，15筆不可接不變；同一雇主歷史復用，接單 system 分隔 `── NEW CONTACT ──`、成功驗收、已接單逾期各有不同預設私聊；保留 Kira/Ghost/銀行原機制。
+- 改動：`src/story/d15-d55/employers.js`（新增）、`src/story/d15-d55/commissions.js`、`src/story/d04/contract.js`；`tests/mirage-70-employers.test.mjs`（6項）、`.github/test-scripts/mirage-70-employers-browser.mjs` 與 `.github/workflows/mirage-70-employers-browser.yml`（UI驗收）。兩份既有雇主分配審稿文檔保留。
+- 最近驗證：GitHub Story55 regression run 43559101711：1137 tests passed / 0 failed；AI gateway/Check feature branches success；MIRAGE 真實 Chromium run 43559101722：pass，5張 screenshot artifact 14099387965 已下載核對（desktop、mobile、未接單、逾期、無效聯繫人）。
+- 交付：PR https://github.com/zn546612432-cloud/BBBTAI/pull/147；截圖 `/mnt/data/mirage-70-ui-final/`，壓縮包 `/mnt/data/mirage-70-employers-final-evidence.zip`。
+- 剩餘風險：main 仍是舊版；沒有正式手機設備性能驗證；已有進度存檔的 owner 刻意不覆寫；D13 專項驗收 skipped（另案）。
+- 下一步：取得用戶是否合併 PR #147 的明確指示；不自動合併。
+- 阻塞：無本次功能/瀏覽器回歸阻塞。截止：未指定。
