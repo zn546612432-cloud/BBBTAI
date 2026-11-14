@@ -1,0 +1,42 @@
+name: D21 D22 Story55 chat browser QA
+on:
+  pull_request:
+    paths:
+      - 'src/story/d14-d24/content.json'
+      - 'tests/d21-d22-approved-chats.test.mjs'
+      - '.github/test-scripts/d21-d22-chat-browser.mjs'
+      - '.github/workflows/d21-d22-chat-browser.yml'
+  workflow_dispatch:
+
+jobs:
+  wechat-scenes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start local phone preview
+        run: |
+          node server/dev.mjs >/tmp/bbbtai-wechat-qa.log 2>&1 &
+          for i in {1..25}; do
+            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/bbbtai-wechat-qa.log
+          exit 1
+      - name: Verify native D21/D22 group chat in Chromium
+        run: node .github/test-scripts/d21-d22-chat-browser.mjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d21-d22-native-wechat-screenshots
+          path: d21-d22-browser-results/
+          if-no-files-found: warn
