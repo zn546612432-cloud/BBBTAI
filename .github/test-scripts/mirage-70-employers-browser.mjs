@@ -66,14 +66,14 @@ try{
  const desktop=await open(scenario('desktop'),{width:1280,height:900});
  await desktop.page.locator('.mc-online-list').waitFor();
  assert.equal(await desktop.page.locator('.mc-contact').count()>0,true);
- assert.equal(await desktop.page.getByText('@rancor',{exact:true}).count(),1);
- assert.equal(await desktop.page.getByText('@ledger_8',{exact:true}).count(),1);
+ assert.equal(await desktop.page.locator('#screen-layer .mc-contact [data-action="mc-chat"][data-id="mc-employer-rancor"]').count(),1);
+ assert.equal(await desktop.page.locator('#screen-layer .mc-contact [data-action="mc-chat"][data-id="mc-employer-ledger_8"]').count(),1);
  await desktop.page.screenshot({path:output+'/desktop-contacts.png',fullPage:true});
  await desktop.context.close();
 
  const empty=await open(scenario('empty'),{width:390,height:844});
  await empty.page.locator('.mc-online-list').waitFor();
- assert.equal(await empty.page.getByText('@rancor',{exact:true}).count(),0,'employer not yet contacted');
+ assert.equal(await empty.page.locator('#screen-layer .mc-contact [data-id="mc-employer-rancor"]').count(),0,'employer not yet contacted');
  await empty.page.screenshot({path:output+'/mobile-before-first-order.png',fullPage:true});
  await empty.context.close();
 
