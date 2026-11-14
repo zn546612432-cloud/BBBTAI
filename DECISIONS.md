@@ -317,3 +317,15 @@
 - 驗證：精確比對21句的 `tests/d23-chess-story.test.mjs`、調整 `tests/d21-d22-approved-chats.test.mjs` 已過時的 D20 32句斷言。Story55 regression run43578805614 pass1153/1153，0 fail；D21/D22真Chromium run43578805618 success、D23 Chess Stockfish browser run43578805622 success、AI gateway/feature branch checks success。D13 mobile acceptance skipped，不列通過。
 - 合併：PR #149 https://github.com/zn546612432-cloud/BBBTAI/pull/149 回報 merged=true；merge commit `d27ec26f25b6dca2cbf62ba0e239393a8b1b178f`。依本輪「改進BBBTAI」及此前明確合併意向實施。
 - 風險：未獨立確認 GitHub Pages 最新正式部署及實機 iPhone；既有已發訊息存檔是否逐句替換，不在本輪改動範圍內。
+
+
+## 2026-11-14：胡楓頭像 + D23–D25 澳門天氣／風球短信聯動（PR #150 待審）
+- 使用者提供兩張截圖：D20 微信狼崽團胡楓出現灰底「胡」替代頭像；以及2025-09-23澳門三語紅色風暴潮短信作為 UI 語境參考。使用者要求 D23 6月10日「三十多度」與 D24 6月11日「風球掛了」應跟天氣 App 和短信提醒聯動。
+- 缺陷原因：`wechat/avatars.js` 資源表只有簡體 `胡枫`，而 D20 部分劇情發言人寫繁體 `胡楓`；原圖片 `public/apps/wechat/avatars/originals/hufeng.jpeg` 實際存在。修復雙字體別名和資源指向，不重新生成圖片、不改歷史頭像／聊天文案。
+- 已查證2025年實際歷史：澳門氣象局颱風「蝴蝶」報告 `https://cms.smg.gov.mo/uploads/sync/pdf/tc/2025/c_2501.pdf`：D24 2025-06-11 06:00 一號風球；D25 2025-06-12 06:00 三號、18:00 一號；D27 2025-06-14 08:00 三號；D28 2025-06-15 15:30 取消。該氣旋期間沒有發出風暴潮戒備訊息及警告，不得把9月23日紅色風暴潮警報搬到6月；D23尚未發出氣旋信號。
+- 現有 Open-Meteo ERA5 再分析逐時氣象數據顯示 D23 11點室外約32°C、體感約39°C，與「外面熱得要命，三十多度」相符。天氣 App 保留既有逐時氣溫／條件與編輯器覆寫，另顯示真實的時間制風球標示，D24 08:20「風球掛了」由06:00正式警報支持。
+- 同一系統：新增靜態 `src/services/weather/cyclone-signals.js` 作為 Weather 與 SMS 唯一信號時間線，沿用既有 `tickStory55`、`appendAuthoredPhoneMessage`、SMS 會話、通知、存檔；沒有另建天氣時鐘、短信引擎或第二套事件調度器。
+- 每次實際風球信號變更均在 native Messages 的「澳門地球物理氣象局」會話加入葡語、英語、繁中三則原創的遊戲內資訊短信（不是原公告原文，也不用截圖中2025年9月的電話號碼）；當日只有一則橫幅通知，跨日補發歷史短信不推送舊橫幅。採固定 message ID 與 story ledger 去重，尊重已刪除的短信會話，不清除其他短信。
+- D23 11:41 狼崽團3句、D24 08:20 狼崽團4句及所有 Mirage／Ghost／Kira／象棋／時間／短充／原存檔，均不更動。為維持 D25後天氣連續性，D27及D28風球真實變化也採用同一信號時間線；沒有額外新增微信劇情。
+- 驗證：8項新精確測試，最新 Story55回歸 run43581533853 1161/1161 pass 0 fail；真實 Chromium Weather、原頭像及 SMS 行為 run43581533918 success，六張 mobile 截圖 artifact14108273728已下載檢查，初版被解鎖淡出遮蔽的 Weather 截圖已修正採集等待；D23 Chess QA run43581533863 success；AI gateway 和 branch checks success。D13電話專項仍 skipped，Tai Ghost QA 尚待最終回報。
+- 狀態：獨立分支 `fix/d23-d25-weather-sms-avatar-20261114`、草稿 PR #150；本輪未經明確合併許可，不自動合併 main；Pages尚未發佈此 PR。
