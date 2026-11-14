@@ -259,7 +259,7 @@ function quarantineUnsentD23Bubbles(s){
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
  if(!chat?.messages?.length)return false;
  const stale=chat.messages.filter(m=>{
-  const id=/^s55-d23-chess-(\\d+)$/.exec(String(m.id||''));
+  const id=/^s55-d23-chess-(\d+)$/.exec(String(m.id||''));
   return id&&Number(id[1])>=limit;
  });
  if(!stale.length)return false;
@@ -347,6 +347,7 @@ export const ANONYMOUS_MIRAGE_WINDOWS_55=Object.freeze([
 ]);
 export function anonymousPresence55(s,now=Date.now()){
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
+ if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
  if(s.day>=15&&s.day<=24){
   const clock=typeof s.clock==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s.clock)?s.clock:'';
