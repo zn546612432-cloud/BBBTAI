@@ -42,7 +42,7 @@ test('chess pieces have native-symbol fallback and module-relative asset URLs',(
  const store=chessStore(),id=createSoloMatch(store);
  const html=render({store},{route:'/match/'+id});
  assert.equal((html.match(/chess-piece-fallback/g)||[]).length,32);
- assert.equal((html.match(/<img src=/g)||[]).length,32);
+ assert.equal((html.match(/<img\b[^>]*\bsrc=/g)||[]).length,32);
  assert.match(html,/♟/);
  assert.match(html,/♙/);
  assert.doesNotMatch(html,/src="\/apps\/chess\/pieces\//,'production images may not use origin-root URLs');
