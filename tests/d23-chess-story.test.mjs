@@ -127,7 +127,7 @@ test('King’s Gambit replaces Queen’s Gambit without changing the 22-turn D23
  assert.deepEqual(lines[7],['me','王翼棄兵，你知道吧？']);
  assert.deepEqual(lines[8],['ouroboros',"King's Gambit？"]);
  assert.match(lines[10][1],/e4.*e5.*f/);
- assert.match(lines[12][1],/不吃就不吃/);
+ assert.match(lines[12][1],/別指望對方照著你的劇本走/);
 });
 test('D23 remains unsent until native Send, including after 03:00 and old saved bubbles',()=>{
  const s=activateStory55(initialState());s.day=23;s.clock='22:20';s.unlocked=true;s.story55.activeScene='d23-chess';
