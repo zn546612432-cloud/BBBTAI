@@ -1,5 +1,6 @@
 // D23 authored chess teaching content. The existing match/PGN remains the only
 // source of board state; this module owns no chess engine or story clock.
+import {CHAT_LIFECYCLE_POLICY} from './messaging/lifecycle/engine.js';
 export const D23_CHESS_INVITATION='s55-d23-chess-invite';
 export const isD23ChessLesson=match=>match?.invitationId===D23_CHESS_INVITATION;
 const OPENING=[
@@ -41,8 +42,44 @@ export function appendChessTutorLine(match,text,clock,key){
 }
 export function beginD23ChessLesson(match,clock){
  if(!isD23ChessLesson(match)||match.lesson?.started)return false;
- match.lesson={started:true,teaching:true,seenPieces:[],reminderCount:0,reminderAtPly:-1,finishedNotified:false};
- OPENING.forEach((text,i)=>appendChessTutorLine(match,text,clock,'opening-'+i));
+ match.lesson={started:true,teaching:true,seenPieces:[],reminderCount:0,reminderAtPly:-1,finishedNotified:false,
+  openingIndex:0,openingNextAt:null,openingDone:false};
+ // Start only the lesson state here. The established Story55 tick delivers
+ // the actual lines after the accepted chess board is open, never beforehand.
+ return true;
+}
+/**
+ * Existing Story55 heartbeat owns delivery; no second timer or message store.
+ * One bubble is committed per due tick, with a stable ID across reloads.
+ */
+export function tickD23ChessLesson(s,now=Date.now()){
+ const nav=s.nav?.current;
+ if(nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/'))return false;
+ const id=nav.route.slice('/match/'.length);
+ const match=s.matches?.find(m=>m.id===id);
+ if(!isD23ChessLesson(match)||match.status!=='active')return false;
+ if(!match.lesson?.started)beginD23ChessLesson(match,s.clock);
+ const lesson=match.lesson;
+ // Previously accepted matches already contained every opening line. Never
+ // replay those messages when loading an earlier save.
+ if(!Number.isInteger(lesson.openingIndex)){
+  lesson.openingIndex=OPENING.filter((_,i)=>(match.chat||[]).some(m=>m.id===stableId(match,'opening-'+i))).length;
+ }
+ if(lesson.openingIndex>=OPENING.length){
+  if(lesson.openingDone)return false;
+  lesson.openingDone=true;lesson.openingNextAt=null;lesson.teaching=false;
+  return true;
+ }
+ if(!Number.isFinite(lesson.openingNextAt)){
+  lesson.openingNextAt=now+Math.max(1100,CHAT_LIFECYCLE_POLICY.initialDelayMs);
+  return true;
+ }
+ if(now<lesson.openingNextAt)return false;
+ const line=lesson.openingIndex;
+ appendChessTutorLine(match,OPENING[line],s.clock,'opening-'+line);
+ lesson.openingIndex=line+1;
+ lesson.openingNextAt=line+1<OPENING.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
+ if(line+1===OPENING.length){lesson.openingDone=true;lesson.teaching=false;}
  return true;
 }
 export function noteD23PlayerMove(match,move,clock,game){
