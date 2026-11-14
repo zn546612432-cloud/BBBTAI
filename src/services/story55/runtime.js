@@ -241,6 +241,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
  if(!isStory55(s)||s.story55.ended)return false;
  for(const n of story55Config(s).nodes){
   if(n.kind!=='scene'||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready')continue;
+  if(n.id==='d23-chess-finish'&&!(s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/s55-ouroboros'))continue;
   if(s.story55.activeScene&&s.story55.activeScene!==n.id)continue;
   const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
   const next=lines[q.index];if(!next)continue;

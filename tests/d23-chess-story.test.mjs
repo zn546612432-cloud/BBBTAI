@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {canCharge,canShortCharge,plugIn} from '../src/system/power/battery.js';
 import {powerFullscreen} from '../src/system/power/controls.js';
-import {completeNode} from '../src/services/story55/state.js';
+import {completed,nodeStatus} from '../src/services/story55/state.js';
 import {tickStory55} from '../src/services/story55/runtime.js';
 
 const D20_APPROVED_DIALOGUE=[
@@ -165,7 +165,11 @@ test('D23 invitation alone is insufficient; only the postgame farewell releases 
  assert.equal(s.story55.completed['d23-chess-finish'],undefined);
  assert.equal(canCharge(s),false,'invitation alone cannot skip actual chess');
  s.clock='23:59';advanceGameMinutes(s,500);assert.equal(s.clock,'03:00');
- completeNode(s,'d23-chess-finish');
+ s.story55.d23Postgame={phase:'closing',matchId:'test-finished-board'};
+ assert.equal(nodeStatus(s,'d23-chess-finish').state,'ready');
+ advanceScene55(s,'d23-chess-finish',{now:1000});
+ assert.equal(completed(s,'d23-chess-finish'),false);
+ advanceScene55(s,'d23-chess-finish',{now:4000});
  assert.equal(canCharge(s),true);
  assert.equal(plugIn(s),true);
  assert.equal(s.day,24,'overnight D23 charge enters D24 exactly once');
