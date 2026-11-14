@@ -77,6 +77,17 @@ export function advanceGameMinutes(s,requested){
   if(target===1440+180){d.frozenAt03=true;return {minutes:target-from,event:'d01-hold'};}
   return {minutes:target-from,event:short&&target===1439?'short-charge-end':'none'};
  }
+ // Keep mandatory D23 available through 03:00 without advancing the story
+ // day. This uses the same shared clock and overnight convention as D01.
+ if(isStory55(s)&&s.day===23&&(!s.story55?.completed?.['d23-chess-finish']||s.story55?.d23?.nightAfterMidnight)){
+  const night=s.story55.d23??={},from=clockMinutes(s.clock)+(night.nightAfterMidnight?1440:0);
+  const target=Math.min(1440+180,from+Math.max(0,Math.floor(requested)));
+  if(target<=from)return {minutes:0,event:'d23-hold'};
+  s.clock=isoTime(target%1440);night.nightAfterMidnight=target>=1440;
+  if(!short)drainGameBattery(s,target-from);
+  if(target===1440+180){s.batteryPercent=1;return {minutes:target-from,event:'d23-hold'};}
+  return {minutes:target-from,event:'none'};
+ }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(short)target=Math.min(target,s.day*DAY_MINUTES-1);
  // Mandatory nodes gate next-day long charging, never the physical clock.

@@ -131,9 +131,9 @@ test('first actual move of each of the six piece types has a one-time authored t
   assert.equal(match().history.at(-1).by,'player',type);
  }
 });
-test('the D23 Queen\'s Gambit can be explained even when the model is unavailable',()=>{
+test('the D23 King\'s Gambit can be explained even when the model is unavailable',()=>{
  const {match}=d23Store();
- assert.match(prewrittenChessReply(match(),'後翼棄兵是什麼？',chessFacts(match())),/爭奪中心/);
+ assert.match(prewrittenChessReply(match(),'王翼棄兵是什麼？',chessFacts(match())),/f4/);
 });
 test('illegal model recommendations are rejected; current legal SAN is allowed',()=>{
  const {match}=d23Store(),facts=chessFacts(match());
@@ -197,16 +197,16 @@ test('resignation is idempotent, has Tai taunts, persists result, and permanentl
  assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
  assert.equal(match().lesson.outbox.length,0);
  assert.match(match().chat.at(-1).text,/下課/);
- postMatchMessage(store,matchId,'親親');
+ assert.equal(postMatchMessage(store,matchId,'親親'),false);
  assert.equal(await replyToMatch(store,matchId),false);
- assert.equal(match().chat.at(-1).from,'player');
+ assert.notEqual(match().chat.at(-1).from,'player');
  assert.equal(store.get().events.filter(e=>e.type==='chess_resigned').length,1);
  store.update(s=>tickD23ChessLesson(s,20000));
  assert.equal(store.get().nav.current.route,'/match/'+matchId,'finished game never exits automatically');
  assert.match(render({store},{route:'/match/'+matchId}),/結束對局/);
  const router={open(location){store.update(s=>s.nav.current=location);}};
  handle('end-match',{dataset:{id:matchId}},{store,router},{route:'/match/'+matchId});
- assert.equal(store.get().nav.current.route,'/');
+ assert.equal(store.get().nav.current.route,'/chat/s55-ouroboros');
 });
 test('checkmate ends all further chess replies, with a chess-accurate finish',async()=>{
  const {store,matchId,match}=d23Store();
@@ -217,7 +217,7 @@ test('checkmate ends all further chess replies, with a chess-accurate finish',as
  });
  const facts=chessFacts(match());
  assert.equal(facts.checkmate,true);assert.equal(facts.legalMoves.length,0);
- postMatchMessage(store,matchId,'你在嗎');
+ assert.equal(postMatchMessage(store,matchId,'你在嗎'),false);
  assert.equal(await replyToMatch(store,matchId),false);
 });
 
@@ -340,7 +340,8 @@ test('capture and terminal feedback are attached once to actual moves, and resig
  assert.deepEqual(match().feedbackEvents.map(x=>[x.id,x.kind,x.square,x.piece,x.color]),[['capture-3','capture','d5','p','b']]);
  const restored=structuredClone(match());recordChessFeedback(restored,{captured:'p',color:'w',to:'d5'});assert.equal(restored.feedbackEvents.length,1);
  resignChessMatch(store,matchId);assert.equal(match().feedbackEvents.at(-1).kind,'loss');
- const html=render({store},{route:'/match/'+matchId});assert.match(html,/結束對局/);assert.doesNotMatch(html,/data-form="chess-chat"/);
+ const html=render({store},{route:'/match/'+matchId});assert.doesNotMatch(html,/data-form="chess-chat"/);
+ assert.doesNotMatch(html,/data-action="end-match"/,'wait for all terminal presets before exit');
 });
 
 test('saved chess replies are due in the shared message heartbeat even when game time is frozen',async()=>{

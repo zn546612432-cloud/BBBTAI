@@ -103,8 +103,9 @@ export function plugIn(s){
  // Midnight already advanced the civil date. Charging at 03:00 wakes on
  // that same date; charging before midnight starts the next date.
  if(s.story55?.version===1&&s.day===1){closeD01WeChat(s);s.day=2;s.story55.d01.nightAfterMidnight=false;}
- else if(Number(s.clock.slice(0,2))>=8)s.day+=1;
- s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;s.shortCharge=null;
+ else if(s.story55?.d23?.nightAfterMidnight||Number(s.clock.slice(0,2))>=8)s.day+=1;
+ if(s.story55?.d23)s.story55.d23.nightAfterMidnight=false;
+  s.clock='08:00';s.batteryPercent=100;s.dayChargeRemainingMs=1200;s.shortCharge=null;
  s.powerMode='idle';s.emergencyCharge=false;s.poweredOff=false;s.powerActiveMs=0;s.powerGameMinuteFraction=0;s.powerClockVersion=PHONE_RUNTIME_POLICY.version;s.worldMinuteFraction=0;s.chargeFraction=0;
  s.sleepWakeAt=null;s.alarmRinging=null;s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  syncDeathNight(s);

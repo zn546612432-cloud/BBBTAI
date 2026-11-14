@@ -148,6 +148,7 @@ export function postMatchMessage(store,matchId,text){
   // Exactly the original MIRAGE Send gate: no ghost bubble, no persisted
   // record and no model call for a pre-recognition spoiler.
   if(isD23ChessLesson(match)&&blocksAnonymousMirageInput(s,'s55-ouroboros',value))return;
+  if(match.status!=='active')return;
   (match.chat??=[]).push({id:globalThis.crypto?.randomUUID?.()||String(Date.now()),from:'player',text:value,time:s.clock});
   accepted=true;
  });
@@ -173,6 +174,7 @@ export function replyToMatch(store,matchId){
  pending.set(key,reply);
  return reply;
 }
+
 const FALLBACK='先看清棋盤再動。別只顧著聊天。';
 async function boundedAI(promise,ms){
  let timeout;

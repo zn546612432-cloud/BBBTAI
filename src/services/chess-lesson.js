@@ -4,6 +4,7 @@ import {chessReaction} from './chess-dialogue.js';
 import {CHAT_LIFECYCLE_POLICY} from './messaging/lifecycle/engine.js';
 export const D23_CHESS_INVITATION='s55-d23-chess-invite';
 export const isD23ChessLesson=match=>match?.invitationId===D23_CHESS_INVITATION;
+export const d23ChessBoardReadyToExit=match=>!!(isD23ChessLesson(match)&&match.status==='finished'&&match.lesson?.finishedNotified&&!(match.lesson?.outbox?.length));
 const OPENING=[
  '先講規矩。你執白，我執黑，白棋先走，之後輪流各走一步。自己的王不能留在被攻擊的位置。',
  '王受到攻擊叫「將軍」；如果沒有任何合法的辦法化解，就是「將死」。想在棋盤上贏我，就得把我的王將死。',
@@ -230,7 +231,7 @@ export function prewrittenChessReply(match,text,facts){
   const last=facts.lastMove,who=last.actor==='Ouroboros'?'我吃掉的是你的':'你吃掉的是我的';
   return who+chessPieceName(last.captured)+'。'+chessPieceName(last.piece)+'從 '+last.from+' 到 '+last.to+'，這是剛才實際發生的那一步。'+pieceRule(match,last.piece);
  }
- if(/(?:后翼|後翼)(?:棄兵|弃兵)|Queen['’]?s Gambit/i.test(value))return '後翼棄兵通常從白方 d4、接著 c4 開始，目的在爭奪中心。名字裡有棄兵，不代表你該隨便把兵送掉。';
+ if(/(?:王翼)(?:棄兵|弃兵)|King['’]?s Gambit/i.test(value))return '王翼棄兵是白方先走 e4、黑方 e5，然後白方推 f4。黑方可以吃也可以不吃，白方換取主動權，但王也更容易暴露。';
  if(/王車易位|王车易位|castle|易位/i.test(value))return chessReaction(match,'castle');
  if(/馬|马|knight/i.test(value))return pieceRule(match,'n');
  if(/車|车|rook/i.test(value))return pieceRule(match,'r');

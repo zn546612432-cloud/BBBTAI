@@ -6,7 +6,7 @@ export function syncD14D24Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
  // Add the approved D23 scene to active saves without resetting other story nodes.
- if(s.story55.config&&!s.story55.config.nodes.some(n=>n.id==='d23-chess')){
+ if(s.story55.config&&(!s.story55.config.nodes.some(n=>n.id==='d23-chess')||!s.story55.config.nodes.some(n=>n.id==='d23-chess-finish')||s.story55.config.nodes.find(n=>n.id==='d23-chess')?.gateDay!==23||s.story55.config.nodes.find(n=>n.id==='d23-chess-finish')?.kind!=='scene')){
   changed=applyD14D24Definition(s.story55.config)||changed;
  }
  if(s.story55.d14D24Revision!==1){
@@ -38,6 +38,30 @@ export function syncD14D24Content(s){
    if(m.id==='s55-lead-0'&&m.from!=='me'&&m.text===D14_D24_LEGACY.scenes.lead[0][1])m.text=D14_D24_CONTENT.scenes.lead[5][1];
   }
   s.story55.d14D24Revision=1;changed=true;
+ }
+ // Exact-only correction of the shipped D23 King's Gambit dialogue.
+ // Never overwrite an edited line or synthesize any player Send action.
+ const corrected=D14_D24_CONTENT.scenes['d23-chess'];
+ const legacyD23=[
+  [7,'後翼棄兵，你知道吧？'],[8,"Queen's Gambit？"],
+  [10,'白方以后翼兵爭奪中心。名字叫棄兵，但不是說你把兵送出去就完事了。'],
+  [12,'那就換一種局面繼續下。']
+ ];
+ const currentD23=s.story55.config?.scenes?.['d23-chess'];
+ if(Array.isArray(currentD23))for(const [index,old] of legacyD23)
+  if(currentD23[index]?.[1]===old){currentD23[index]=[currentD23[index][0],corrected[index][1]];changed=true;}
+ // V4's full literary/strategic King's Gambit narrative replaces only
+ // the exact shipped shorter lines; author-edited variants remain untouched.
+ if(Array.isArray(currentD23)&&currentD23[10]?.[1]==="白方先走 e4，等黑方走 e5，再把 f 兵推上去。夠冒險的，連自己的王都不怎麼顧。"){
+  currentD23[10][1]=D14_D24_CONTENT.scenes['d23-chess'][10][1];changed=true;
+ }
+ if(Array.isArray(currentD23)&&currentD23[12]?.[1]==="不吃就不吃。你還能逼對方收下不成？"){
+  currentD23[12][1]=D14_D24_CONTENT.scenes['d23-chess'][12][1];changed=true;
+ }
+ // V4 revises exactly one previously shipped narrative line, never other authored prose.
+ const v4Line=D14_D24_CONTENT.scenes['d23-chess'][13][1];
+ if(Array.isArray(currentD23)&&/若能打通 f 線，車就有機會直指黑方的 f7。/.test(currentD23[13]?.[1]||'')){
+  currentD23[13][1]=v4Line;changed=true;
  }
  // Exact-match migration. An in-progress D15 conversation keeps its old
  // script and current index; all prior real Send messages remain untouched.

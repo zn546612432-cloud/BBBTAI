@@ -16,6 +16,7 @@ import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {offerD23ChessInvitation} from '../invitations.js';
 import {tickD23ChessLesson} from '../chess-lesson.js';
+import {tickD23MiragePostgame} from './d23-postgame.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
@@ -89,6 +90,12 @@ export function finishScene55(s,id){
  if(id==='ending')startFinale55(s);
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
  if(id==='d23-chess')offerD23ChessInvitation(s);
+ if(id==='d23-chess-finish'&&s.story55?.d23Postgame){
+  const postgame=s.story55.d23Postgame;
+  postgame.phase='closed';postgame.closed=true;
+  const resume=postgame.previousActiveScene;
+  if(resume&&nodeStatus(s,resume).state==='ready')s.story55.activeScene=resume;
+ }
  if(id==='loan'){s.story55.loanOfflineDay=s.day;s.story55.loanOfflineClock??=s.clock;}
  tickStory55(s);return true;
 }
@@ -132,7 +139,7 @@ function creditScene55(s,n){
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
- if(planned&&s.clock<planned)throw Error('這條消息預定於 '+planned+' 發送');
+ if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))throw Error('這條消息預定於 '+planned+' 發送');
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
@@ -183,7 +190,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:date55(s.day),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:(['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight?date55(s.day+1):date55(s.day)),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -222,7 +229,12 @@ export function chatNodeLink55(s,id){
  const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
-export function nodeLink55(s,id){if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){
+ if(id==='d23-chess-finish'){
+  const match=s.matches?.find(m=>m.invitationId==='s55-d23-chess-invite'&&!m.closedAt);
+  return match?{appId:'chess',route:'/match/'+match.id,params:{}}:
+   {appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
+ }if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  if(n.kind==='project'&&n.project==='base')return {appId:'ghost',route:deployment(s,'base').authorized?'/deployment':'/flow-deploy',params:{project:'base'}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 // Every scene with delivery:"queued" uses this common messaging scheduler.
@@ -232,6 +244,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
  if(!isStory55(s)||s.story55.ended)return false;
  for(const n of story55Config(s).nodes){
   if(n.kind!=='scene'||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready')continue;
+  if(n.id==='d23-chess-finish'&&!(s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/s55-ouroboros'))continue;
   if(s.story55.activeScene&&s.story55.activeScene!==n.id)continue;
   const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
   const next=lines[q.index];if(!next)continue;
@@ -239,7 +252,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
-  if(planned&&s.clock<planned)continue;
+  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;
@@ -250,6 +263,25 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
  }
  return false;
 }
+// A saved scene index is the sole proof that its player SEND actually happened.
+// Quarantine old D23 scripted bubbles beyond that index instead of displaying
+// sent-looking messages before the user presses Send. Preserve originals in save.
+function quarantineUnsentD23Bubbles(s){
+ const q=s.story55?.scenes?.['d23-chess'],limit=q?.index||0;
+ if(s.story55?.completed?.['d23-chess'])return false;
+ const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
+ if(!chat?.messages?.length)return false;
+ const stale=chat.messages.filter(m=>{
+  const id=/^s55-d23-chess-(\d+)$/.exec(String(m.id||''));
+  return id&&Number(id[1])>=limit;
+ });
+ if(!stale.length)return false;
+ const backup=(s.story55.d23QuarantinedMessages??=[]),known=new Set(backup.map(m=>m.id));
+ for(const m of stale)if(!known.has(m.id))backup.push(structuredClone(m));
+ const removed=new Set(stale.map(m=>m.id));
+ chat.messages=chat.messages.filter(m=>!removed.has(m.id));
+ return true;
+}
 export function tickStory55(s){
  if(!isStory55(s))return;
  expireGhostShare(s);
@@ -257,6 +289,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ quarantineUnsentD23Bubbles(s);
  syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
@@ -292,6 +325,7 @@ export function tickStory55(s){
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
+ tickD23MiragePostgame(s);
  tickQueuedStoryScenes55(s);
  tickD23ChessLesson(s);
  resolveGhostShare(s);
@@ -326,7 +360,13 @@ export const ANONYMOUS_MIRAGE_WINDOWS_55=Object.freeze([
  ['08:00','09:25'],['12:00','12:30'],['22:00','23:00']
 ]);
 export function anonymousPresence55(s,now=Date.now()){
+ // D23's late, player-initiated chess conversation stays connected until
+ // the second authored Mirage farewell, even if midnight passed.
+ if(s.day===23&&s.story55?.d23Postgame){
+  return completed(s,'d23-chess-finish')?{online:false,reason:'已下線'}:{online:true,reason:'在線'};
+ }
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
+ if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
  if(s.day>=15&&s.day<=24){
   const clock=typeof s.clock==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s.clock)?s.clock:'';

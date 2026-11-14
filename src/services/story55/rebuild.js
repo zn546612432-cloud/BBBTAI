@@ -236,6 +236,10 @@ function simulateNode(s,node){
   else{transferD13Wallet(s,0);enterD13Chat(s);}
   return completed(s,node.id);
  }
+ if(node.id==='d23-chess-finish'){
+  // Developer date jump only; don't insert a fake player chat or match.
+  completeNode(s,node.id,{test:true});return true;
+ }
  if(node.kind==='project')return simulateProjectBatch(s,node);
  if(node.kind==='flow'){simulateFlowD03(s);return true;}
  if(node.kind==='scene')simulateScene(s,node);

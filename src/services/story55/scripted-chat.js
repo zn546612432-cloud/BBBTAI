@@ -44,7 +44,7 @@ export function currentScript55(s,channel,conversationId){
   if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
   const clock=n.delivery==='queued'&&kind==='me'?plannedSceneLineClock55(s,n.id,index):null;
-  if(clock&&s.clock<clock)continue; // Only offer the native player draft once it is due.
+  if(clock&&s.clock<clock&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))continue; // Only offer the native player draft once it is due.
   return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
  if(channel==='mirage'&&conversationId==='s55-ouroboros')return ghostShareScriptLine(s);
