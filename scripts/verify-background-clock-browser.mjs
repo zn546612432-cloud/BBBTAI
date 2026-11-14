@@ -35,10 +35,12 @@ try{
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   await context.addInitScript(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),s);
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  // Install before app startup so its intervals belong to the controlled clock.
+  await page.clock.install();
   await page.goto('http://127.0.0.1:'+server.address().port+'/BBBTAI/',{waitUntil:'domcontentloaded'});
   await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
   await page.locator('.lock-screen').waitFor({timeout:10000});
-  await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+1000));
+  await page.clock.pauseAt(new Date(Date.now()+1000));
   const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
   const before=await saved();
   // iOS can suspend timers; explicitly dispatch the browser's visibility /
