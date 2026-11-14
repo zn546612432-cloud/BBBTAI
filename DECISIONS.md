@@ -307,3 +307,13 @@
 - 五张 D21/D22 浏览器证据来自之前成功的同脚本 run43576886636（artifact14107110509），包括手机 D21、手机 D22、桌面 D21、未触发、未知聊天。测试存档跳到 D21 会产生其他旧剧情通知，浏览器截图脚本只对这些无关弹窗做临时可见性过滤，不修改产品代码。
 - 范围：本轮 PR 仅修改 `content.json`、5个测试、browser QA 脚本及 workflow、`STATUS.md`、`DECISIONS.md`，未改 Mirage/70雇主、Ghost、KIRA/银行、D13电话、D29旧邀棋。
 - 余项：GitHub Pages main 部署状态仍需独立确认；真机 iPhone 未验收；旧 D20 18句仍为新写文案；D13专项与 D29 邀棋逻辑留待后续。
+
+
+## 2026-11-14：D20 10:45 作者原稿恢復及重複監控對話去除 · PR #149 已合併
+- 來源：使用者當輪親自提供 D20 10:45 上半段9句原稿，明確指出 PR #146 自行補寫的18句不是她的文案；之後指示「接我們後面的14句」，再明確要求重複的「但我還是沒搞懂…／理論上⋯用ai」去重並改進 BBBTAI。
+- 最終正文規則：保留作者原稿前8句逐字原樣（角色映射 `熙蒙`→`me`），把原稿第9句尚未寫完的「理論上⋯用ai」和原確認收尾第2句整合為唯一完整回答「理論上⋯用 AI 輔助是可行的，但現在還不能保證效果。」；原14句收尾第1句重複監控提問刪除，第3–14句原樣延續；共21句。
+- 已刪除：PR #146 18句未經作者確認的銜接稿，不能再用它冒充作者原文，也不准在同日或跨日重複注入。
+- 實作：只修改 `src/story/d14-d24/content.json` 的 D20 10:45 `monitoring` 同一節點；維持既有 `D14_D24_TRACKS` 和 `createConversationTrack` 單一生命周期。保留 D20 08:34 / 09:06，以及 D21–D23 全部原聊天、Ghost/Mirage/銀行、預設點擊發送、時鐘/通知及存檔。
+- 驗證：精確比對21句的 `tests/d23-chess-story.test.mjs`、調整 `tests/d21-d22-approved-chats.test.mjs` 已過時的 D20 32句斷言。Story55 regression run43578805614 pass1153/1153，0 fail；D21/D22真Chromium run43578805618 success、D23 Chess Stockfish browser run43578805622 success、AI gateway/feature branch checks success。D13 mobile acceptance skipped，不列通過。
+- 合併：PR #149 https://github.com/zn546612432-cloud/BBBTAI/pull/149 回報 merged=true；merge commit `d27ec26f25b6dca2cbf62ba0e239393a8b1b178f`。依本輪「改進BBBTAI」及此前明確合併意向實施。
+- 風險：未獨立確認 GitHub Pages 最新正式部署及實機 iPhone；既有已發訊息存檔是否逐句替換，不在本輪改動範圍內。
