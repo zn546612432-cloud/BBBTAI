@@ -187,6 +187,8 @@ async function generateMatchReply(store,matchId){
      scene:isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。'}),9000);
     parts=unpackTaiReply(response,'chess').slice(0,3);
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
+    // Anonymous D23 chess must never leak the hidden name or family relation.
+    if(isD23ChessLesson(match)&&!taiRecognized(current)&&parts.some(p=>/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i.test(p.text)))parts=[];
    }
   }catch{parts=[];}
   if(!parts.length){
