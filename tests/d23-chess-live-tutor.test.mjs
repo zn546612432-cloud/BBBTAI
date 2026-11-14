@@ -4,7 +4,8 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {offerD23ChessInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
 import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame} from '../src/services/chess.js';
-import {chessReplyUsesLegalMoves} from '../src/services/chess-lesson.js';
+import {chessReplyUsesLegalMoves,prewrittenChessReply} from '../src/services/chess-lesson.js';
+import {Chess} from 'chess.js';
 import {render} from '../src/apps/chess/index.js';
 
 function d23Store(){
@@ -46,6 +47,32 @@ test('ChessFacts reports real White and Black moves, threatened pieces and verif
  assert.ok(facts.legalMoves.some(m=>m.san==='Nf3'));
  assert.equal(applyStockfishMove(store,matchId,fen,'b8c6'),null,'an older engine reply cannot corrupt the board');
  assert.equal(match().pgn,loadGame(match()).pgn());
+});
+test('first actual move of each of the six piece types has a one-time authored tutorial',()=>{
+ const cases=[
+  ['p','','e2','e4','兵通常只能向前'],
+  ['n','','g1','f3','馬走「日」字'],
+  ['b','1. e4 e5','f1','c4','象只走斜線'],
+  ['r','1. a4 a5','a1','a3','車沿著橫線'],
+  ['q','1. e4 e5','d1','h5','后既能直走'],
+  ['k','1. e4 e5','e1','e2','王平時每次']
+ ];
+ for(const [type,pgn,from,to,expected] of cases){
+  const {store,matchId,match}=d23Store();
+  if(pgn)store.update(s=>{
+   const m=s.matches.find(m=>m.id===matchId),game=new Chess();game.loadPgn(pgn);
+   m.pgn=pgn;
+   m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
+  });
+  playMove(store,matchId,from,to);
+  assert.equal(match().lesson.seenPieces.includes(type),true,type);
+  assert.equal(match().chat.filter(m=>m.text.includes(expected)).length,1,type);
+  assert.equal(match().history.at(-1).by,'player',type);
+ }
+});
+test('the D23 Queen\'s Gambit can be explained even when the model is unavailable',()=>{
+ const {match}=d23Store();
+ assert.match(prewrittenChessReply(match(),'後翼棄兵是什麼？',chessFacts(match())),/爭奪中心/);
 });
 test('illegal model recommendations are rejected; current legal SAN is allowed',()=>{
  const {match}=d23Store(),facts=chessFacts(match());
