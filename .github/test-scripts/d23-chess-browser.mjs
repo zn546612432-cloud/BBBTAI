@@ -203,26 +203,32 @@ try{
  await mobile.page.locator('[data-action="resign-match"]').click();
  const immediately=await mobile.page.evaluate(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return {finished:m.status==='finished',queue:m.lesson.outbox.length,last:m.chat.at(-1)?.text};
+  return {finished:m.status==='finished',phase:m.lesson.postgame?.phase};
  },key);
  assert.equal(immediately.finished,true);
- assert.equal(immediately.queue,3,'no ending line is frontloaded');
+ assert.ok(['intro','intro-delivering'].includes(immediately.phase),'AI introduction follows resignation');
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return m.status==='finished'&&m.result==='player-resigned'&&m.chat.some(x=>x.text.includes('下課'));
- },key,{timeout:18000});
+  return m.lesson.postgame?.phase==='chat';
+ },key,{timeout:26000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
- assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),0,'finished chat has no input');
- await mobile.page.waitForTimeout(6000);
- assert.equal(await mobile.page.locator('.board-grid').count(),1,'no automatic exit after recap');
+ assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),1);
+ await mobile.page.waitForTimeout(1300);
+ assert.equal(await mobile.page.locator('.board-grid').count(),1,'no automatic exit after the result');
  const beforeRefresh=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
- assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed),'render consumes feedback once');
+ assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed));
  await mobile.page.reload();
  await mobile.page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await mobile.page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await mobile.page.locator('.board-grid').waitFor();
- assert.equal(await mobile.page.locator('.chess-feedback').count(),0,'refresh must not replay terminal effect');
+ assert.equal(await mobile.page.locator('.chess-feedback').count(),0);
+ await mobile.page.locator('[data-action="end-match"]').click();
+ await mobile.page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),m=s.matches.find(m=>m.opponent==='tai');
+  return m.lesson.postgame?.closed===true&&!!s.story55.completed['d23-chess-finish'];
+ },key,{timeout:18000});
+ assert.match(await mobile.page.locator('.chess-chat-messages').innerText(),/下次有機會再切磋/);
  await mobile.page.locator('[data-action="end-match"]').click();
  await mobile.page.locator('.chess-home').waitFor({timeout:3000});
  await mobile.context.close();
@@ -251,12 +257,13 @@ try{
  assert.ok(feedback.effects.some(x=>x.kind.includes('win')));
  assert.ok(feedback.effects.every(x=>x.text===''),'effects have no text');
  assert.ok(feedback.haptics>=2);assert.ok(feedback.tones>=2,'short sounds use an unlocked audio context');
- await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.outbox.length===0,key,{timeout:18000});
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.postgame?.phase==='chat',key,{timeout:26000});
  const won=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0],key);
  assert.equal(won.result,'player-win');assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
  assert.ok(won.feedbackEvents.every(x=>x.consumed));
  await capture(mate.page,'mobile-capture-checkmate.png');
- await mate.page.waitForTimeout(4000);assert.equal(await mate.page.locator('.board-grid').count(),1);
+ await mate.page.locator('[data-action="end-match"]').click();
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.postgame?.closed===true,key,{timeout:16000});
  await mate.page.locator('[data-action="end-match"]').click();await mate.page.locator('.chess-home').waitFor();
  await mate.context.close();
 
