@@ -222,7 +222,12 @@ export function chatNodeLink55(s,id){
  const conversation=channel==='wechat'?'group':channel==='noapp'?'tai':'s55-ouroboros';
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
-export function nodeLink55(s,id){if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
+export function nodeLink55(s,id){
+ if(id==='d23-chess-finish'){
+  const match=s.matches?.find(m=>m.invitationId==='s55-d23-chess-invite'&&!m.closedAt);
+  return match?{appId:'chess',route:'/match/'+match.id,params:{}}:
+   {appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
+ }if(id.startsWith('d13-wallet'))return {appId:'mirage',route:'/wallet',params:{}};if(id==='intrusion'&&s.story55?.d13?.phase!=='chat'&&!completed(s,id))return {appId:'kira',route:'/mail/s55-d13-wallet-mail',params:{}};if(id==='wallet')return {appId:'mirage',route:'/order/'+STORY55_BOUNTY_ID,params:{}};if(id==='recognition'||id==='ending')return {appId:'noapp',route:'/chat/tai',params:{node:id}};const n=nodeById(s,id);if(!n)return {appId:'reminders',route:'/',params:{}};
  if(n.kind==='project'&&n.project==='base')return {appId:'ghost',route:deployment(s,'base').authorized?'/deployment':'/flow-deploy',params:{project:'base'}};
  const map={flow:{appId:'mirage',route:'/chat/mc-flow-d03',params:{}},project:{appId:'ghost',route:'/deployment',params:{project:n.project}},mail:{appId:'kira',route:'/mail/'+n.mail,params:{}},file:{appId:'files',route:'/story55',params:{document:n.document}},page:{appId:'browser',route:'/story55',params:{page:n.page}},map:{appId:'maps',route:'/place',params:{id:n.location}},questions:{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}},payment:{appId:'mirage',route:'/story55/payment',params:{node:id}},scene:chatNodeLink55(s,id)};return map[n.kind];}
 // Every scene with delivery:"queued" uses this common messaging scheduler.
