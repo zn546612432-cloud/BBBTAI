@@ -50,3 +50,37 @@
 .chess-feedback-win{box-shadow:inset 0 0 36px 9px #d2b274cc;border:3px solid #d5b77b}
 .chess-feedback-loss{box-shadow:inset 0 0 28px 7px #8d4b4bcc;border:3px solid #9e5f58}
 .chess-feedback-draw{box-shadow:inset 0 0 28px 7px #b5c3bbcc;border:3px solid #bdcec3}
+
+/* D23 mobile reading and artwork fixes: same app and match, no second chat UI. */
+.chess-piece-fallback{
+ position:relative;z-index:0;display:grid;place-items:center;width:100%;height:100%;
+ font-family:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2",serif;
+ font-size:clamp(31px,8.7vw,48px);line-height:1;font-weight:400;
+}
+.chess-piece img{
+ position:absolute;inset:4%;width:92%;height:92%;
+ opacity:0;transition:opacity .1s ease;z-index:1;
+}
+.chess-piece img.is-loaded{opacity:1}
+@media (max-width:600px){
+ .match-view{padding:8px 12px 30px;min-height:100%}
+ .match-card{min-height:43px;padding:3px 4px 7px}
+ .match-avatar{width:34px;height:34px;border-radius:10px;font-size:21px}
+ .match-avatar.player{font-size:13px}
+ .board-frame{width:min(100%,350px);margin:0 auto 7px}
+ .move-history{margin-top:5px;padding:5px 9px;min-height:27px}
+ .chess-chat{
+  position:sticky;bottom:0;z-index:8;margin-top:7px;
+  background:#fffefa;border-color:#dce4d9;box-shadow:0 -8px 22px #1b30251c;
+ }
+ .chess-chat header{height:32px;padding-inline:12px}
+ .chess-chat-messages{min-height:66px;max-height:min(142px,20dvh);padding:9px 11px;gap:7px}
+ .chess-chat-line{font-size:12px;line-height:1.42}
+ .chess-chat-line>span{padding:7px 9px}
+ .chess-chat-form{height:44px}
+ .match-footer{margin-top:9px;padding-bottom:4px}
+}
+@media (max-width:375px){
+ .board-frame{width:min(100%,312px)}
+ .chess-chat-messages{max-height:100px}
+}

@@ -17,7 +17,7 @@ on:
 jobs:
   stockfish-chess:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,19 +26,23 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm install --no-save playwright@1.55.0
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      # Test the actual versioned Pages URL and bundled images, not just / dev URLs.
+      - run: npm run build:pages
+      - run: ln -s . dist/BBBTAI
       - name: Start phone preview
         run: |
           node server/dev.mjs > /tmp/bbbtai-chess-qa.log 2>&1 &
           for i in {1..25}; do
-            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            if curl --fail --silent http://127.0.0.1:5173/BBBTAI/index.html > /dev/null; then exit 0; fi
             sleep 1
           done
           cat /tmp/bbbtai-chess-qa.log
           exit 1
       - name: Play real Stockfish browser move and screenshot UI states
-        run: node .github/test-scripts/d23-chess-browser.mjs
+        run: CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
+      - name: Verify iOS WebKit chess board, piece art and Tai tutoring
+        run: CHESS_BROWSER=webkit CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
