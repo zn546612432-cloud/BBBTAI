@@ -6,6 +6,11 @@ import {story55Config,taiRecognized} from '../src/services/story55/state.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
 import fs from 'node:fs';
+import {advanceGameMinutes} from '../src/system/time/clock.js';
+import {canCharge,canShortCharge,plugIn} from '../src/system/power/battery.js';
+import {powerFullscreen} from '../src/system/power/controls.js';
+import {completeNode} from '../src/services/story55/state.js';
+import {tickStory55} from '../src/services/story55/runtime.js';
 
 const D20_APPROVED_DIALOGUE=[
  ['me','人員安排都做好了嗎？'],
@@ -113,4 +118,55 @@ test('Ouroboros Mirage scene replies use the existing queue with human pacing',(
  assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id==='s55-d23-chess-1').length,0);
  assert.equal(tickQueuedStoryScenes55(s,due),true,'exactly one real NPC bubble appears at its due time');
  assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id==='s55-d23-chess-1').length,1);
+});
+
+test('King’s Gambit replaces Queen’s Gambit without changing the 22-turn D23 scene',()=>{
+ const s=activateStory55(initialState());
+ const lines=story55Config(s).scenes['d23-chess'];
+ assert.equal(lines.length,22);
+ assert.deepEqual(lines[7],['me','王翼棄兵，你知道吧？']);
+ assert.deepEqual(lines[8],['ouroboros',"King's Gambit？"]);
+ assert.match(lines[10][1],/e4.*e5.*f/);
+ assert.match(lines[12][1],/不吃就不吃/);
+});
+test('D23 remains unsent until native Send, including after 03:00 and old saved bubbles',()=>{
+ const s=activateStory55(initialState());s.day=23;s.clock='22:20';s.unlocked=true;s.story55.activeScene='d23-chess';
+ const c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ c.messages.push({id:'s55-d23-chess-0',from:'me',text:'你會下國際象棋嗎？',time:'22:17'});
+ tickStory55(s);
+ assert.equal(c.messages.filter(m=>m.id==='s55-d23-chess-0').length,0,'unsent-looking old message must be quarantined');
+ assert.equal(s.story55.d23QuarantinedMessages.length,1);
+ assert.equal(s.story55.scenes['d23-chess']?.index||0,0);
+ assert.equal(tickQueuedStoryScenes55(s,50000),false,'NPC never starts a player-initiated scene');
+ assert.equal(c.messages.filter(m=>/^s55-d23-chess-/.test(m.id)).length,0);
+ const result=advanceGameMinutes(s,99999);
+ assert.equal(result.event,'d23-hold');assert.equal(s.day,23);assert.equal(s.clock,'03:00');
+ assert.equal(s.batteryPercent,1);assert.equal(s.story55.d23.nightAfterMidnight,true);
+ assert.equal(canCharge(s),false);assert.equal(canShortCharge(s),false);
+ assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/,'1% must remain playable');
+ assert.equal(scriptedDraft55(s,'mirage','s55-ouroboros')?.text,'你會下國際象棋嗎？');
+ sendScriptedDraft55(s,'mirage','s55-ouroboros','你會下國際象棋嗎？');
+ assert.equal(c.messages.filter(m=>m.id==='s55-d23-chess-0').length,1);
+ assert.equal(tickQueuedStoryScenes55(s,Date.now()+10000),true);
+ assert.equal(c.messages.filter(m=>m.id==='s55-d23-chess-1').length,1);
+ assert.equal(advanceGameMinutes(s,1000).minutes,0,'03:00 cannot move until completion');
+});
+test('D23 invitation alone is insufficient; only the postgame farewell releases long charge',()=>{
+ const s=activateStory55(initialState());s.day=23;s.clock='22:16';
+ for(const n of story55Config(s).nodes)
+  if(n.gateDay&&n.gateDay<23)s.story55.completed[n.id]={day:n.day,clock:'20:00',test:true};
+ s.story55.activeScene='d23-chess';
+ for(const [who,text] of story55Config(s).scenes['d23-chess']){
+  if(who==='me')sendScriptedDraft55(s,'mirage','s55-ouroboros',text);
+  else advanceScene55(s,'d23-chess');
+ }
+ assert.ok(s.story55.completed['d23-chess'],'the invitation dialogue finished');
+ assert.equal(s.story55.completed['d23-chess-finish'],undefined);
+ assert.equal(canCharge(s),false,'invitation alone cannot skip actual chess');
+ s.clock='23:59';advanceGameMinutes(s,500);assert.equal(s.clock,'03:00');
+ completeNode(s,'d23-chess-finish');
+ assert.equal(canCharge(s),true);
+ assert.equal(plugIn(s),true);
+ assert.equal(s.day,24,'overnight D23 charge enters D24 exactly once');
+ assert.equal(s.clock,'08:00');assert.equal(s.batteryPercent,100);
 });
