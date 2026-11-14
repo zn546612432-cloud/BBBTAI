@@ -48,6 +48,32 @@ test('ChessFacts reports real White and Black moves, threatened pieces and verif
  assert.equal(applyStockfishMove(store,matchId,fen,'b8c6'),null,'an older engine reply cannot corrupt the board');
  assert.equal(match().pgn,loadGame(match()).pgn());
 });
+test('threatened, hanging, tactical and 3 candidate moves come from a verifiable PGN',()=>{
+ const {store,matchId,match}=d23Store();
+ store.update(s=>{
+  const m=s.matches.find(m=>m.id===matchId);
+  m.pgn='1. e4 e5 2. Qh5 Nf6';
+ });
+ const facts=chessFacts(match());
+ assert.equal(facts.turn,'w');
+ assert.ok(facts.threatened.some(x=>x.square==='h5'&&x.owner==='熙蒙'));
+ assert.ok(facts.hanging.some(x=>x.square==='h5'&&x.owner==='熙蒙'));
+ assert.equal(facts.recommendations.length,3);
+ for(const candidate of facts.recommendations)assert.ok(facts.legalMoves.some(m=>m.san===candidate.san));
+ for(const tactic of facts.tactics)assert.ok(facts.legalMoves.some(m=>m.san===tactic.san));
+});
+test('an undefended attacked piece produces a one-time implicit Tai warning',()=>{
+ const {store,matchId,match}=d23Store();
+ store.update(s=>{
+  const m=s.matches.find(m=>m.id===matchId),g=new Chess();
+  g.loadPgn('1. e4 d5');
+  m.pgn=g.pgn();
+  m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
+ });
+ playMove(store,matchId,'d2','d4');
+ assert.equal(match().chat.filter(x=>x.text.includes('被盯上了')).length,1);
+ assert.ok(match().lesson.seenPieces.includes('p'));
+});
 test('first actual move of each of the six piece types has a one-time authored tutorial',()=>{
  const cases=[
   ['p','','e2','e4','兵通常只能向前'],
