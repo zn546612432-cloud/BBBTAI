@@ -369,3 +369,32 @@ test('a pawn tutorial arriving after Send cannot swallow the pending player repl
  assert.equal(await replyToMatch(store,matchId),false,'one answer per outgoing message');
  assert.ok(match().lesson.outbox.some(m=>m.sourceMessageId));
 });
+
+test('typing in the chess composer suspends queued NPC text until the draft clears',async()=>{
+ const {chessLessonDue}=await import('../src/services/chess-lesson.js');
+ const {store,matchId,match}=d23Store();
+ playOpening(store,matchId);
+ store.update(s=>{
+  s.unlocked=true;
+  const m=s.matches.find(x=>x.id===matchId);
+  m.lesson.outbox.push({id:'qa-typing',from:'tai',text:'先看清楚。',time:s.clock});
+  m.lesson.outboxNextAt=4000;
+ });
+ const input={value:'我還沒打完'};
+ const oldDocument=globalThis.document;
+ try{
+  globalThis.document={activeElement:input,querySelector:()=>input};
+  assert.equal(chessLessonDue(store.get(),6000),false,'no interruption of an active draft');
+  store.update(s=>tickD23ChessLesson(s,6000));
+  assert.equal(match().lesson.outbox.length,1);
+  assert.equal(match().chat.some(m=>m.id==='qa-typing'),false);
+  input.value='';
+  assert.equal(chessLessonDue(store.get(),6000),true);
+  store.update(s=>tickD23ChessLesson(s,6000));
+  assert.equal(match().lesson.outbox.length,0);
+  assert.equal(match().chat.at(-1).text,'先看清楚。');
+ }finally{
+  if(oldDocument===undefined)delete globalThis.document;
+  else globalThis.document=oldDocument;
+ }
+});

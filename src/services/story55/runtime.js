@@ -73,14 +73,8 @@ export function plannedSceneLineClock55(s,id,index){
  const t=s.story55?.chatSceneEdits?.['node:'+id]?.lineTimes?.[index];
  return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:null;
 }
-// Use the existing Story55 delivery clock, with a more human response cadence
-// for Ouroboros in MIRAGE. All other conversations keep the shared policy.
+// Restore the single existing lifecycle cadence; no special slow D23 timer.
 export function scene55ReplyDelay(s,id,index,{initial=false}={}){
- const node=nodeById(s,id),line=sceneLines(s,id)[index];
- if(node?.channel==='mirage'&&node.conversationId==='s55-ouroboros'&&line?.[0]==='ouroboros'){
-  const length=String(line[1]||'').length;
-  return Math.max(4300,Math.min(6500,2800+length*95));
- }
  return initial?CHAT_LIFECYCLE_POLICY.initialDelayMs:CHAT_LIFECYCLE_POLICY.pauseMs;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}

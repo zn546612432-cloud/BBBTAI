@@ -60,9 +60,15 @@ export function beginD23ChessLesson(match,clock){
 }
 // Real-time message delivery must not depend on advancing the game clock or
 // unrelated App updates. The existing phone message heartbeat asks this gate.
+// Don't interrupt a reply the human is still typing. Keep the shared queue.
+function chessComposerBusy(){
+ if(typeof document==='undefined')return false;
+ const input=document.querySelector('.match-view .chess-chat-form input[name="text"]');
+ return !!input&&document.activeElement===input&&input.value.trim().length>0;
+}
 export function chessLessonDue(s,now=Date.now()){
  const nav=s.nav?.current;
- if(!s.unlocked||nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/'))return false;
+ if(!s.unlocked||nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/')||chessComposerBusy())return false;
  const match=s.matches?.find(m=>m.id===nav.route.slice(7));
  if(!isD23ChessLesson(match))return false;
  const lesson=match.lesson;
@@ -77,7 +83,7 @@ export function chessLessonDue(s,now=Date.now()){
  */
 export function tickD23ChessLesson(s,now=Date.now()){
  const nav=s.nav?.current;
- if(nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/'))return false;
+ if(nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/')||chessComposerBusy())return false;
  const id=nav.route.slice('/match/'.length);
  const match=s.matches?.find(m=>m.id===id);
  if(!isD23ChessLesson(match))return false;
@@ -98,7 +104,7 @@ export function tickD23ChessLesson(s,now=Date.now()){
   const index=lesson.openingIndex;
   appendChessTutorLine(match,OPENING[index],s.clock,'opening-'+index);
   lesson.openingIndex=index+1;
-  lesson.openingNextAt=index+1<OPENING.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
+  lesson.openingNextAt=index+1<OPENING.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
   if(index+1===OPENING.length){lesson.openingDone=true;lesson.teaching=false;}
   return true;
  }
@@ -116,7 +122,7 @@ export function tickD23ChessLesson(s,now=Date.now()){
   }
   line.time=s.clock;
   if(!(match.chat||[]).some(m=>m.id===line.id))(match.chat??=[]).push(line);
-  lesson.outboxNextAt=pending.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
+  lesson.outboxNextAt=pending.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
   if(!pending.length)lesson.teaching=false;
   return true;
  }

@@ -68,14 +68,17 @@ async function assertPiecesLoad(page){
  assert.ok(assets.every(x=>x.width>0&&x.visible),'every real chess piece must be loaded and visible');
  assert.ok(assets.every(x=>x.src.includes('/apps/chess/pieces/')),'all chess pieces must resolve from bundled image assets');
 }
-async function assertMobileChatVisible(page){
- const visible=await page.evaluate(()=>{
-  const chat=document.querySelector('.chess-chat'),viewport=document.querySelector('.app-content');
-  if(!chat||!viewport)return false;
-  const a=chat.getBoundingClientRect(),b=viewport.getBoundingClientRect();
-  return a.top>=b.top&&a.top<=b.bottom-55&&a.bottom<=b.bottom+3;
+async function assertNoStackedBoardOrChat(page){
+ const state=await page.evaluate(()=>{
+  const board=document.querySelector('.board-frame'),chat=document.querySelector('.chess-chat');
+  const pieces=[...document.querySelectorAll('.board-grid .chess-piece')];
+  return {piecesStacked:pieces.some(p=>p.querySelectorAll('img').length>1||p.querySelector('.chess-piece-fallback')),
+   chatOverlapsBoard:board&&chat&&chat.getBoundingClientRect().top<board.getBoundingClientRect().bottom-2,
+   chatIsSticky:chat&&getComputedStyle(chat).position==='sticky'};
  });
- assert.ok(visible,'mobile chess chat must be visible without scrolling past the board');
+ assert.equal(state.piecesStacked,false,'no chess glyph/image stack');
+ assert.equal(state.chatOverlapsBoard,false,'chat may not cover board');
+ assert.equal(state.chatIsSticky,false,'revert sticky phone chat layout');
 }
 async function capture(page,name){
  // Class removal starts a CSS fade; wait for the actual opacity before capture.
@@ -104,7 +107,7 @@ try{
      return {index:s.story55.scenes['d23-chess']?.index,remaining:s.story55.scenes['d23-chess']?.nextAt-Date.now()};
     },key);
     assert.equal(pacing.index,1,'player Send should commit only the authored player line');
-    assert.ok(pacing.remaining>=2800&&pacing.remaining<=6700,'D23 must use its authored slower reply cadence');
+    assert.ok(pacing.remaining>=1600&&pacing.remaining<=2100,'D23 restores shared message pacing');
     await story.page.waitForTimeout(1500);
     const stillWaiting=await story.page.evaluate(key=>JSON.parse(localStorage.getItem(key)).story55.scenes['d23-chess']?.index,key);
     assert.equal(stillWaiting,1,'visible-chat timer must not bypass Story55 pacing');
@@ -139,7 +142,7 @@ try{
  await card.click();
  await story.page.locator('.board-grid').waitFor();
  await assertPiecesLoad(story.page);
- await assertMobileChatVisible(story.page);
+ await assertNoStackedBoardOrChat(story.page);
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
  assert.equal(routed.matches[0].lesson.started,true);
@@ -157,15 +160,7 @@ try{
  const mobile=await open(seed(),{width:390,height:844});
  await mobile.page.locator('.board-grid [data-action="square"]').first().waitFor();
  await assertPiecesLoad(mobile.page);
- await assertMobileChatVisible(mobile.page);
- // A missing iOS image must show a chess glyph, never a broken-image icon.
- const missing=mobile.page.locator('.board-grid .chess-piece img').first();
- const originalSrc=await missing.getAttribute('src');
- await missing.evaluate(img=>{img.src='/__test_chess_piece_missing.png';});
- await mobile.page.waitForFunction(()=>{const img=document.querySelector('.board-grid .chess-piece img');return img?.complete&&!img.classList.contains('is-loaded')&&img.previousElementSibling?.textContent?.length>0;});
- await capture(mobile.page,'mobile-piece-symbol-fallback.png');
- await missing.evaluate((img,src)=>{img.src=src;},originalSrc);
- await assertPiecesLoad(mobile.page);
+ await assertNoStackedBoardOrChat(mobile.page);
  await mobile.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
  assert.equal(await mobile.page.locator('.board-grid [data-action="square"]').count(),64);
  await mobile.page.locator('[data-action="square"][data-square="e2"]').click();
