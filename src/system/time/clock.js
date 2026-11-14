@@ -139,7 +139,7 @@ export function tickWorld(s,realMilliseconds,options={}){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
- if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge||s.poweredOff||options.hidden||options.restarting)return {minutes:0};
+ if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge||s.poweredOff||options.hidden&&!options.background||options.restarting)return {minutes:0};
  const rate=worldMinuteRate(s,options);
  if(rate===0)return {minutes:0};
  // Batches carry already-scaled game minutes, so switching App/Home cannot

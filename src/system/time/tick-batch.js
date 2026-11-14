@@ -7,6 +7,10 @@ import {BATTERY_DRAIN_INTERVAL_MS} from '../power/battery.js';
 export class WorldTickBatch{
  reset(){this.elapsed=0;this.gameMinutes=0;this.anchor=null;this.context=null;}
  constructor(){this.reset();}
+ flush(){
+  const frame=this.elapsed>0?{elapsedMs:this.elapsed,gameMinutes:this.gameMinutes}:null;
+  this.reset();return frame;
+ }
  take(s,elapsed,options={}){
   if(!Number.isFinite(elapsed)||elapsed<=0)return null;
   const anchor=[s.day,s.clock,s.powerMode,s.deathPhase,s.dayChargeRemainingMs].join(':');
