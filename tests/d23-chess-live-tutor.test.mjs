@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
-import {offerD23ChessInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
+import {offerD23ChessInvitation,receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
 import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame} from '../src/services/chess.js';
-import {chessReplyUsesLegalMoves,prewrittenChessReply} from '../src/services/chess-lesson.js';
+import {chessReplyUsesLegalMoves,prewrittenChessReply,tickD23ChessLesson} from '../src/services/chess-lesson.js';
 import {Chess} from 'chess.js';
 import {render} from '../src/apps/chess/index.js';
 
@@ -14,14 +14,36 @@ function d23Store(){
  state.story55.completed['d23-chess']={day:23,clock:'22:20'};
  assert.equal(offerD23ChessInvitation(state),true);
  const store={get:()=>state,update(fn){state=structuredClone(state);fn(state);}};
- const matchId=startAcceptedInvitation(store,'s55-d23-chess-invite');
+ const matchId=receiveInvitation(store,'s55-d23-chess-invite');
  return {store,matchId,match:()=>store.get().matches.find(x=>x.id===matchId)};
 }
-test('D23 accepted MIRAGE match is the only tutorial entry and opens with rule and win-condition copy',()=>{
+function playOpening(store,id){
+ store.update(s=>{s.nav.current={appId:'chess',route:'/match/'+id,params:{}};tickD23ChessLesson(s,1000);});
+ store.update(s=>tickD23ChessLesson(s,2200));
+ store.update(s=>tickD23ChessLesson(s,5400));
+ store.update(s=>tickD23ChessLesson(s,8600));
+}
+test('D23 rules appear only inside the entered chess board and are paced one at a time',()=>{
  const {store,matchId,match}=d23Store();
  assert.equal(match().opponent,'tai');
  assert.equal(match().lesson.started,true);
- assert.equal(match().chat.filter(m=>m.from==='tai').length,3);
+ assert.equal(match().chat.length,0,'not a single tutorial line is injected before entry');
+ store.update(s=>tickD23ChessLesson(s,1000));
+ assert.equal(match().chat.length,0,'leaving match unopened may not deliver anything');
+ store.update(s=>{s.nav.current={appId:'chess',route:'/match/'+matchId,params:{}};tickD23ChessLesson(s,1000);});
+ assert.equal(match().chat.length,0,'first line is scheduled on entry, not instantly injected');
+ store.update(s=>tickD23ChessLesson(s,2200));
+ assert.equal(match().chat.length,1);
+ assert.equal(match().lesson.openingDone,false);
+ store.update(s=>tickD23ChessLesson(s,2400));
+ assert.equal(match().chat.length,1,'do not batch remaining lines in one heartbeat');
+ store.update(s=>{s.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}};tickD23ChessLesson(s,5400);});
+ assert.equal(match().chat.length,1,'pauses when the user leaves chess');
+ store.update(s=>{s.nav.current={appId:'chess',route:'/match/'+matchId,params:{}};tickD23ChessLesson(s,5400);});
+ assert.equal(match().chat.length,2);
+ store.update(s=>tickD23ChessLesson(s,8600));
+ assert.equal(match().chat.length,3);
+ assert.equal(match().lesson.openingDone,true);
  assert.ok(match().chat.some(m=>m.text.includes('將死')));
  assert.ok(match().chat.some(m=>m.text.includes('逼和')));
  assert.equal(chessFacts(match()).legalMoves.length,20);
@@ -29,6 +51,15 @@ test('D23 accepted MIRAGE match is the only tutorial entry and opens with rule a
  assert.equal(match().chat.length,3,'opening must not duplicate on reopen');
  assert.match(render({store},{route:'/match/'+matchId}),/認輸/);
  assert.doesNotMatch(render({store},{route:'/match/'+matchId}),/AI 回复失败|請先配置/);
+});
+test('D23 accepted MIRAGE match is the only tutorial entry and opens with rule and win-condition copy',()=>{
+ const {store,matchId,match}=d23Store();
+ playOpening(store,matchId);
+ assert.equal(match().lesson.openingDone,true);
+ assert.equal(match().chat.filter(m=>m.from==='tai').length,3);
+ assert.equal(match().chat.filter(m=>/opening-/.test(m.id)).length,3);
+ assert.equal(startAcceptedInvitation(store,'s55-d23-chess-invite'),matchId);
+ assert.equal(match().chat.length,3,'resuming the accepted invitation never duplicates the lesson');
 });
 test('ChessFacts reports real White and Black moves, threatened pieces and verified legal continuations',()=>{
  const {store,matchId,match}=d23Store();
@@ -145,6 +176,7 @@ test('off-topic chess chat uses deterministic replies once the current lecture i
 });
 test('resignation is idempotent, has Tai taunts, persists result, and permanently disables replies',async()=>{
  const {store,matchId,match}=d23Store();
+ playOpening(store,matchId);
  assert.equal(resignChessMatch(store,matchId),true);
  assert.equal(match().status,'finished');assert.equal(match().result,'player-resigned');
  assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
