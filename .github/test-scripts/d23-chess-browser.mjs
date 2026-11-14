@@ -203,34 +203,48 @@ try{
  await mobile.page.locator('[data-action="resign-match"]').click();
  const immediately=await mobile.page.evaluate(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return {finished:m.status==='finished',phase:m.lesson.postgame?.phase};
+  return {finished:m.status==='finished',queued:m.lesson.outbox.length,postgame:m.lesson.postgame};
  },key);
  assert.equal(immediately.finished,true);
- assert.ok(['intro','intro-delivering'].includes(immediately.phase),'AI introduction follows resignation');
+ assert.equal(immediately.queued,3,'original resignation preset must remain on chess board');
+ assert.equal(immediately.postgame,undefined,'AI cannot start inside chess');
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return m.lesson.postgame?.phase==='chat';
- },key,{timeout:26000});
+  return m.lesson.outbox.length===0&&m.chat.some(x=>/下課|下次/.test(x.text));
+ },key,{timeout:18000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
- assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),1);
- await mobile.page.waitForTimeout(1300);
- assert.equal(await mobile.page.locator('.board-grid').count(),1,'no automatic exit after the result');
+ assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),0,'no postgame AI composer in chess');
+ assert.equal(await mobile.page.locator('[data-action="end-match"]').count(),1,'player manually exits after the preset');
  const beforeRefresh=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
  assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed));
  await mobile.page.reload();
  await mobile.page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await mobile.page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await mobile.page.locator('.board-grid').waitFor();
- assert.equal(await mobile.page.locator('.chess-feedback').count(),0);
+ assert.equal(await mobile.page.locator('.chess-feedback').count(),0,'refresh must not replay terminal effect');
  await mobile.page.locator('[data-action="end-match"]').click();
+ await mobile.page.locator('[data-form="mc-send"]').waitFor({timeout:6000});
  await mobile.page.waitForFunction(k=>{
-  const s=JSON.parse(localStorage.getItem(k)),m=s.matches.find(m=>m.opponent==='tai');
-  return m.lesson.postgame?.closed===true&&!!s.story55.completed['d23-chess-finish'];
- },key,{timeout:18000});
- assert.match(await mobile.page.locator('.chess-chat-messages').innerText(),/下次有機會再切磋/);
- await mobile.page.locator('[data-action="end-match"]').click();
- await mobile.page.locator('.chess-home').waitFor({timeout:3000});
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.nav.current.appId==='mirage'&&s.nav.current.route==='/chat/s55-ouroboros'&&s.story55.d23Postgame?.phase==='chat';
+ },key,{timeout:30000});
+ const entered=await mobile.page.evaluate(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+  return {rounds:s.story55.d23Postgame.rounds,AI:chat.messages.filter(m=>/^s55-d23-mirage-intro-/.test(m.id)).length,
+   farewell:!!s.story55.completed['d23-chess-finish']};
+ },key);
+ assert.equal(entered.rounds,0);assert.ok(entered.AI>=1);
+ assert.equal(entered.farewell,false,'board completion never releases the next day');
+ await capture(mobile.page,'mobile-d23-mirage-postgame.png');
+ await mobile.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await mobile.page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+  return !!s.story55.completed['d23-chess-finish']&&chat.messages.filter(m=>/^s55-d23-chess-finish-/.test(m.id)).length===2;
+ },key,{timeout:15000});
+ const farewell=await mobile.page.locator('.mc-clear-messages').innerText();
+ assert.match(farewell,/我還有點事，得下線了/);assert.match(farewell,/下次有機會再切磋/);
+ await capture(mobile.page,'mobile-d23-mirage-farewell.png');
  await mobile.context.close();
 
  // Valid opening position; the winning move is clicked in the actual board.
@@ -257,14 +271,23 @@ try{
  assert.ok(feedback.effects.some(x=>x.kind.includes('win')));
  assert.ok(feedback.effects.every(x=>x.text===''),'effects have no text');
  assert.ok(feedback.haptics>=2);assert.ok(feedback.tones>=2,'short sounds use an unlocked audio context');
- await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.postgame?.phase==='chat',key,{timeout:26000});
+ await mate.page.waitForFunction(k=>{
+  const m=JSON.parse(localStorage.getItem(k)).matches[0];
+  return m.status==='finished'&&m.lesson.outbox.length===0&&m.chat.some(x=>/贏|輸/.test(x.text));
+ },key,{timeout:18000});
  const won=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0],key);
- assert.equal(won.result,'player-win');assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
+ assert.equal(won.result,'player-win');
+ assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
+ assert.ok(won.chat.some(m=>m.id.includes('ending-')),'original board endgame reply survives');
  assert.ok(won.feedbackEvents.every(x=>x.consumed));
  await capture(mate.page,'mobile-capture-checkmate.png');
  await mate.page.locator('[data-action="end-match"]').click();
- await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.postgame?.closed===true,key,{timeout:16000});
- await mate.page.locator('[data-action="end-match"]').click();await mate.page.locator('.chess-home').waitFor();
+ await mate.page.locator('[data-form="mc-send"]').waitFor({timeout:6000});
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.d23Postgame?.phase==='chat',key,{timeout:30000});
+ const phase=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).story55.d23Postgame,key);
+ assert.equal(phase.rounds,0);assert.equal(phase.closed,false);
+ await mate.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await mate.page.waitForFunction(k=>!!JSON.parse(localStorage.getItem(k)).story55.completed['d23-chess-finish'],key,{timeout:15000});
  await mate.context.close();
 
  const desktop=await open(seed(),{width:1280,height:900});
