@@ -41,10 +41,10 @@ test('last move highlights both squares and pieces have explicit image assets',(
 test('chess pieces use exactly one release-relative visual per square',()=>{
  const store=chessStore(),id=createSoloMatch(store);
  const html=render({store},{route:'/match/'+id});
- assert.equal((html.match(/<img\\b[^>]*\\bsrc=/g)||[]).length,32);
+ assert.equal((html.match(/<img\b[^>]*\bsrc=/g)||[]).length,32);
  assert.equal((html.match(/data-piece="/g)||[]).length,32);
  assert.doesNotMatch(html,/chess-piece-fallback|is-loaded/,'no layered glyph below PNG');
- assert.doesNotMatch(html,/src="\\/apps\\/chess\\/pieces\\//,'no origin-root assets in Pages releases');
+ assert.doesNotMatch(html,/src="\/apps\/chess\/pieces\//,'no origin-root assets in Pages releases');
 });
 test('instagram is not installed or shown on the home screen',()=>{assert.equal(registry.has('instagram'),false);assert.equal(homePages.flat().includes('instagram'),false);});
 test('Tai match renders its own persisted chat and AI replies without NoApp audio',async()=>{
