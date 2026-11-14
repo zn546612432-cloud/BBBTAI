@@ -108,6 +108,14 @@ try{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
   return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住/.test(x.text));
  },key,{timeout:5000});
+ const latestMessageVisible=await mobile.page.evaluate(()=>{
+  const el=document.querySelector('.chess-chat-messages');
+  const newest=el?.querySelector('.chess-chat-line');
+  if(!el||!newest||getComputedStyle(el).flexDirection!=='column-reverse')return false;
+  const container=el.getBoundingClientRect(),bubble=newest.getBoundingClientRect();
+  return bubble.bottom<=container.bottom+2&&bubble.top>=container.top-2;
+ });
+ assert.equal(latestMessageVisible,true,'fresh lesson reply must be visible without an inner chat scroll');
  const chatBeforeSpoiler=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai').chat.length,key);
  await composer.locator('input[name="text"]').fill('陳熙泰');
  await composer.locator('button[type="submit"]').click();
@@ -119,6 +127,7 @@ try{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
   return m.status==='finished'&&m.result==='player-resigned'&&m.chat.some(x=>x.text.includes('下課'));
  },key,{timeout:5000});
+ assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
  await mobile.page.locator('[data-form="chess-chat"] input[name="text"]').fill('今天吃什麼');
  await mobile.page.locator('[data-form="chess-chat"] button[type="submit"]').click();
