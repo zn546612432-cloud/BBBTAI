@@ -18,17 +18,31 @@ export function chessFacts(match){
  const game=loadGame(match),moves=game.history({verbose:true});
  const history=moves.map((m,i)=>({ply:i+1,actor:i%2===0?'熙蒙':'Ouroboros',san:m.san,from:m.from,to:m.to,piece:m.piece,captured:m.captured||null}));
  const lastMove=history.at(-1)||null;
- const legalMoves=game.moves({verbose:true}).map(m=>({san:m.san,from:m.from,to:m.to,piece:m.piece,captured:m.captured||null,flags:m.flags}));
- const threatened=[];
+ const legalMoves=game.moves({verbose:true}).map(m=>({san:m.san,from:m.from,to:m.to,piece:m.piece,captured:m.captured||null,flags:m.flags,promotion:m.promotion||null}));
+ const board=game.board(),threatened=[],hanging=[];
  for(let ri=0;ri<8;ri++)for(let ci=0;ci<8;ci++){
-  const piece=game.board()[ri][ci];
-  if(!piece)continue;
+  const piece=board[ri][ci];
+  if(!piece||typeof game.isAttacked!=='function')continue;
   const square='abcdefgh'[ci]+(8-ri);
-  if(typeof game.isAttacked==='function'&&game.isAttacked(square,piece.color==='w'?'b':'w'))
-   threatened.push({square,piece:piece.type,owner:piece.color==='w'?'熙蒙':'Ouroboros'});
+  if(!game.isAttacked(square,piece.color==='w'?'b':'w'))continue;
+  const fact={square,piece:piece.type,owner:piece.color==='w'?'熙蒙':'Ouroboros'};
+  threatened.push(fact);
+  if(piece.type!=='k'&&!game.isAttacked(square,piece.color))hanging.push(fact);
  }
+ const pieceValue={q:9,r:5,b:3,n:3,p:1};
+ const score=m=>(m.san.endsWith('#')?100:0)+(m.san.endsWith('+')?8:0)+
+  (m.captured?3+(pieceValue[m.captured]||0):0)+(m.promotion?15:0)+
+  (['d4','e4','d5','e5'].includes(m.to)?2:0)+
+  (['n','b'].includes(m.piece)&&/[18]$/.test(m.from)?1:0);
+ const reason=m=>m.san.endsWith('#')?'形成將死':m.san.endsWith('+')?'形成將軍':
+  m.promotion?'可以升變':m.captured?'可以吃子':
+  ['d4','e4','d5','e5'].includes(m.to)?'爭奪中心':
+  ['n','b'].includes(m.piece)&&/[18]$/.test(m.from)?'發展子力':'合法候選';
+ const recommendations=legalMoves.slice().sort((a,b)=>score(b)-score(a)).slice(0,3).map(m=>({san:m.san,reason:reason(m)}));
+ const tactics=legalMoves.filter(m=>m.captured||m.promotion||m.san.endsWith('+')||m.san.endsWith('#'))
+  .slice(0,8).map(m=>({san:m.san,reason:reason(m)}));
  return {fen:game.fen(),pgn:game.pgn(),turn:game.turn(),history,lastMove,legalMoves,
-  threatened,check:game.isCheck(),checkmate:game.isCheckmate(),stalemate:game.isStalemate(),
+  threatened,hanging,recommendations,tactics,check:game.isCheck(),checkmate:game.isCheckmate(),stalemate:game.isStalemate(),
   draw:game.isDraw(),over:game.isGameOver(),result:match?.result||null};
 }
 export function playMove(store,matchId,from,to,promotion='q'){
@@ -175,7 +189,8 @@ async function generateMatchReply(store,matchId){
     const factPacket={
      fen:nowFacts.fen,turn:nowFacts.turn,history:nowFacts.history.slice(-24),
      lastMove:nowFacts.lastMove,legalSAN:nowFacts.legalMoves.map(m=>m.san),
-     threatened:nowFacts.threatened,check:nowFacts.check,checkmate:nowFacts.checkmate,
+     threatened:nowFacts.threatened,hanging:nowFacts.hanging,tactics:nowFacts.tactics,recommendations:nowFacts.recommendations,
+     check:nowFacts.check,checkmate:nowFacts.checkmate,
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
     const messages=[
