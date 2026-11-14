@@ -5,7 +5,7 @@ import {initialState} from '../../src/services/storage.js';
 import {activateStory55,advanceScene55} from '../../src/services/story55/runtime.js';
 import {story55Config} from '../../src/services/story55/state.js';
 import {sendScriptedDraft55} from '../../src/services/story55/scripted-chat.js';
-import {startAcceptedInvitation} from '../../src/services/invitations.js';
+import {receiveInvitation} from '../../src/services/invitations.js';
 
 const base=process.env.CHESS_LOCAL_URL||'http://127.0.0.1:5173/';
 const key='ximeng-phone-story55-v1',out='d23-chess-browser-results';
@@ -20,9 +20,9 @@ function seed({empty=false,failed=false}={}){
    else advanceScene55(s,'d23-chess');
   }
   const invitation=s.invitations.find(x=>x.source==='d23-mirage-story');
-  assert.ok(invitation,'D23 must produce an accepted invitation');
+  assert.ok(invitation,'D23 must produce an invitation');
   const store={get:()=>s,update:fn=>fn(s)};
-  const id=startAcceptedInvitation(store,invitation.id);
+  const id=receiveInvitation(store,invitation.id);
   if(failed){
    const m=s.matches.find(m=>m.id===id);
    m.pgn='1. e4';m.turn='b';m.history=[{from:'e2',to:'e4',san:'e4',by:'player'}];
@@ -36,7 +36,7 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CH
 const errors=[];
 async function open(state,{width,height}){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<=430,hasTouch:width<=430});
- await context.addInitScript(({key,value})=>{localStorage.setItem(key,value);},{key,value:JSON.stringify(state)});
+ await context.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,value);},{key,value:JSON.stringify(state)});
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -71,22 +71,63 @@ try{
    const input=story.page.locator('[data-form="mc-send"] input[name="text"]');
    await input.fill(text);
    await story.page.locator('[data-form="mc-send"] button[type="submit"]').click();
+   if(index===0){
+    const pacing=await story.page.evaluate(key=>{
+     const s=JSON.parse(localStorage.getItem(key));
+     return {index:s.story55.scenes['d23-chess']?.index,remaining:s.story55.scenes['d23-chess']?.nextAt-Date.now()};
+    },key);
+    assert.equal(pacing.index,1,'player Send should commit only the authored player line');
+    assert.ok(pacing.remaining>=2800&&pacing.remaining<=6700,'D23 must use its authored slower reply cadence');
+    await story.page.waitForTimeout(1500);
+    const stillWaiting=await story.page.evaluate(key=>JSON.parse(localStorage.getItem(key)).story55.scenes['d23-chess']?.index,key);
+    assert.equal(stillWaiting,1,'visible-chat timer must not bypass Story55 pacing');
+   }
   }
-  await story.page.waitForFunction(({key,index})=>{
-   const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
-  },{key,index},{timeout:15000});
+  try{
+   await story.page.waitForFunction(({key,index})=>{
+    const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
+   },{key,index},{timeout:15000});
+  }catch(error){
+   const diag=await story.page.evaluate(({key,index})=>{
+    const s=JSON.parse(localStorage.getItem(key));
+    const chat=s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros');
+    return {expectedIndex:index,expectedLine:s.story55.config.scenes['d23-chess']?.[index],day:s.day,clock:s.clock,activeScene:s.story55.activeScene,
+     scene:s.story55.scenes['d23-chess'],completed:s.story55.completed['d23-chess'],nav:s.nav.current,
+     lastMessages:chat?.messages?.slice(-5).map(m=>({from:m.from,text:m.text,id:m.id})),
+     currentDraft:document.querySelector('[data-form="mc-send"] input[name="text"]')?.value,
+     toast:document.getElementById('toast')?.textContent};
+   },{key,index});
+   console.log('D23 STORY PROGRESSION DIAGNOSTICS',JSON.stringify(diag));
+   await story.page.screenshot({path:out+'/mobile-story-stall.png',fullPage:true});
+   throw error;
+  }
  }
- await story.page.locator('[data-action="mc-chess-invite"]').click();
+ const card=story.page.locator('[data-action="mc-chess-invite"]');
+ assert.match(await card.innerText(),/接受邀請/,'the invitation should be unaccepted until tapped');
+ const preAccept=await story.page.evaluate(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return {status:s.invitations.find(i=>i.source==='d23-mirage-story').status,count:s.matches.length};
+ },key);
+ assert.deepEqual(preAccept,{status:'pending',count:0});
+ await card.click();
  await story.page.locator('.board-grid').waitFor();
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
  assert.equal(routed.matches[0].lesson.started,true);
- assert.equal(routed.matches[0].chat.filter(m=>m.from==='tai').length,3);
+ assert.equal(routed.invitations.find(i=>i.source==='d23-mirage-story').status,'accepted');
+ assert.equal(routed.matches[0].chat.filter(m=>m.from==='tai').length,0,'opening is not front-loaded');
+ await story.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length>=1,key,{timeout:8000});
+ const first=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length,key);
+ assert.equal(first,1,'first tutorial bubble is singular');
+ await story.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
+ const completedOpening=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length,key);
+ assert.equal(completedOpening,3,'three tutorial bubbles delivered in order');
  await capture(story.page,'mobile-story-card-to-board.png');
  await story.context.close();
 
  const mobile=await open(seed(),{width:390,height:844});
  await mobile.page.locator('.board-grid [data-action="square"]').first().waitFor();
+ await mobile.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
  assert.equal(await mobile.page.locator('.board-grid [data-action="square"]').count(),64);
  await mobile.page.locator('[data-action="square"][data-square="e2"]').click();
  await mobile.page.locator('[data-action="square"][data-square="e4"]').click();
@@ -104,10 +145,13 @@ try{
  const composer=mobile.page.locator('[data-form="chess-chat"]');
  await composer.locator('input[name="text"]').fill('親親');
  await composer.locator('button[type="submit"]').click();
- await mobile.page.waitForFunction(k=>{
+ try{await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住/.test(x.text));
- },key,{timeout:5000});
+  return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住|想得倒美|先保住|嘴倒是甜|撒嬌/.test(x.text));
+ },key,{timeout:10000});}catch(error){
+  console.log('CHESS REPLY DIAGNOSTICS',await mobile.page.evaluate(k=>{const s=JSON.parse(localStorage.getItem(k)),m=s.matches.find(m=>m.opponent==='tai');return {nav:s.nav.current,chat:m.chat.slice(-6),lesson:m.lesson,errors:document.getElementById('toast')?.textContent};},key));
+  await mobile.page.screenshot({path:out+'/mobile-reply-failure.png',fullPage:true});throw error;
+ }
  const latestMessageVisible=await mobile.page.evaluate(()=>{
   const el=document.querySelector('.chess-chat-messages');
   const newest=el?.querySelector('.chess-chat-line');
@@ -123,20 +167,64 @@ try{
  assert.equal(afterSpoiler.length,chatBeforeSpoiler,'spoiler must be blocked before the real Send');
  await capture(mobile.page,'mobile-tai-lesson-reminder.png');
  await mobile.page.locator('[data-action="resign-match"]').click();
+ const immediately=await mobile.page.evaluate(k=>{
+  const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
+  return {finished:m.status==='finished',queue:m.lesson.outbox.length,last:m.chat.at(-1)?.text};
+ },key);
+ assert.equal(immediately.finished,true);
+ assert.equal(immediately.queue,3,'no ending line is frontloaded');
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
   return m.status==='finished'&&m.result==='player-resigned'&&m.chat.some(x=>x.text.includes('下課'));
- },key,{timeout:5000});
+ },key,{timeout:18000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
- await mobile.page.locator('[data-form="chess-chat"] input[name="text"]').fill('今天吃什麼');
- await mobile.page.locator('[data-form="chess-chat"] button[type="submit"]').click();
- await mobile.page.waitForTimeout(1400);
- const closed=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
- assert.equal(closed.chat.at(-1).from,'player','finished chat remains visible but never answered');
+ assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),0,'finished chat has no input');
  await mobile.page.waitForTimeout(6000);
+ assert.equal(await mobile.page.locator('.board-grid').count(),1,'no automatic exit after recap');
+ const beforeRefresh=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
+ assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed),'render consumes feedback once');
+ await mobile.page.reload();
+ await mobile.page.locator('[data-action="unlock"]').click();
+ for(const digit of '0816')await mobile.page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+ await mobile.page.locator('.board-grid').waitFor();
+ assert.equal(await mobile.page.locator('.chess-feedback').count(),0,'refresh must not replay terminal effect');
+ await mobile.page.locator('[data-action="end-match"]').click();
  await mobile.page.locator('.chess-home').waitFor({timeout:3000});
  await mobile.context.close();
+
+ // Valid opening position; the winning move is clicked in the actual board.
+ // Stockfish may never move for White, and the terminal capture must produce
+ // both the piece reaction and a caption-free finish effect.
+ const mateState=seed(),mateMatch=mateState.matches[0];
+ mateMatch.pgn='1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6';
+ mateMatch.history=[['e2','e4','e4'],['e7','e5','e5'],['d1','h5','Qh5'],['b8','c6','Nc6'],['f1','c4','Bc4'],['g8','f6','Nf6']].map(([from,to,san],i)=>({from,to,san,by:i%2?'stockfish':'player'}));
+ mateMatch.turn='w';
+ const mate=await open(mateState,{width:390,height:844});
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
+ // Observe audio/vibration attempts, without substituting a board or feedback.
+ await mate.page.evaluate(()=>{
+  window.chessFeedbackQA={tones:0,haptics:0,effects:[]};
+  navigator.vibrate=()=>{window.chessFeedbackQA.haptics++;return true;};
+  if(window.OscillatorNode){const start=OscillatorNode.prototype.start;OscillatorNode.prototype.start=function(...args){window.chessFeedbackQA.tones++;return start.apply(this,args);};}
+  new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){if(node.nodeType===1&&node.matches?.('.chess-feedback'))window.chessFeedbackQA.effects.push({kind:node.className,text:node.textContent});}}).observe(document.getElementById('screen-layer'),{childList:true,subtree:true});
+ });
+ await mate.page.locator('[data-square="h5"]').click();
+ await mate.page.locator('[data-square="f7"]').click();
+ await mate.page.waitForFunction(()=>window.chessFeedbackQA.effects.length>=2);
+ const feedback=await mate.page.evaluate(()=>window.chessFeedbackQA);
+ assert.ok(feedback.effects.some(x=>x.kind.includes('capture')));
+ assert.ok(feedback.effects.some(x=>x.kind.includes('win')));
+ assert.ok(feedback.effects.every(x=>x.text===''),'effects have no text');
+ assert.ok(feedback.haptics>=2);assert.ok(feedback.tones>=2,'short sounds use an unlocked audio context');
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.outbox.length===0,key,{timeout:18000});
+ const won=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0],key);
+ assert.equal(won.result,'player-win');assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
+ assert.ok(won.feedbackEvents.every(x=>x.consumed));
+ await capture(mate.page,'mobile-capture-checkmate.png');
+ await mate.page.waitForTimeout(4000);assert.equal(await mate.page.locator('.board-grid').count(),1);
+ await mate.page.locator('[data-action="end-match"]').click();await mate.page.locator('.chess-home').waitFor();
+ await mate.context.close();
 
  const desktop=await open(seed(),{width:1280,height:900});
  await desktop.page.locator('.board-grid [data-action="square"]').first().waitFor();

@@ -1,13 +1,15 @@
-import {askTai,aiStatus} from './ai/gateway.js';
+import {askTai} from './ai/gateway.js';
 import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {taiRecognized} from './story55/state.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,noteD23HangingPiece,
- finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,isChessRelated,
+ finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,needsChessAnalysis,enqueueChessTaiReply,
  prewrittenChessReply,chessReplyUsesLegalMoves
 } from './chess-lesson.js';
 import {Chess} from 'chess.js';
+import {recordChessFeedback} from './chess-feedback.js';
+import {buildChessTutorPrompt} from './chess-dialogue.js';
 
 export function loadGame(match){const game=new Chess();if(match?.pgn)game.loadPgn(match.pgn);return game;}
 
@@ -66,6 +68,7 @@ export function playMove(store,matchId,from,to,promotion='q'){
    match.status='finished';match.result=game.isCheckmate()?'player-win':'draw';
    finishD23ChessLesson(match,s.clock,game);
   }
+  recordChessFeedback(match,move);
   outcome={san:move.san,finished:game.isGameOver()};
  });
  return outcome;
@@ -106,10 +109,12 @@ export function applyStockfishMove(store,matchId,expectedFen,uci){
   match.turn=game.turn();
   delete match.engineError;
   s.events.push({type:'chess_move',matchId,move:move.san,by:'stockfish',day:s.day,clock:s.clock});
+  if(isD23ChessLesson(match))noteD23OpponentMove(match,move,s.clock,game);
   if(game.isGameOver()){
    match.status='finished';match.result=game.isCheckmate()?'opponent-win':'draw';
    finishD23ChessLesson(match,s.clock,game);
-  }else if(isD23ChessLesson(match))noteD23OpponentMove(match,move,s.clock,game);
+  }
+  recordChessFeedback(match,move);
   played=move.san;
  });
  return played;
@@ -128,6 +133,7 @@ export function resignChessMatch(store,matchId){
   match.turn=loadGame(match).turn();
   s.events.push({type:'chess_resigned',matchId,by:'player',day:s.day,clock:s.clock});
   resignD23ChessLesson(match,s.clock);
+  recordChessFeedback(match);
   resigned=true;
  });
  return resigned;
@@ -148,12 +154,20 @@ export function postMatchMessage(store,matchId,text){
  return accepted;
 }
 const pendingMatchReplies=new WeakMap();
+function playerAwaitingChessReply(match){
+ const player=isD23ChessLesson(match)?match.chat?.filter(m=>m.from==='player').at(-1):match.chat?.at(-1);
+ if(player?.from!=='player')return null;
+ if([...(match.chat||[]),...(match.lesson?.outbox||[])].some(m=>m.sourceMessageId===player.id))return null;
+ return player;
+}
 export function replyToMatch(store,matchId){
  const match=store.get().matches.find(m=>m.id===matchId);
- if(!match||match.opponent!=='tai'||match.status!=='active'||match.chat?.at(-1)?.from!=='player')return Promise.resolve(false);
+ if(!match||match.opponent!=='tai'||match.status!=='active')return Promise.resolve(false);
+ const player=playerAwaitingChessReply(match);
+ if(!player)return Promise.resolve(false);
  let pending=pendingMatchReplies.get(store);
  if(!pending){pending=new Map();pendingMatchReplies.set(store,pending);}
- const key=JSON.stringify([matchId,match.chat.at(-1).id]);
+ const key=JSON.stringify([matchId,player.id]);
  if(pending.has(key))return pending.get(key);
  const reply=generateMatchReply(store,matchId).finally(()=>pending.delete(key));
  pending.set(key,reply);
@@ -167,8 +181,10 @@ async function boundedAI(promise,ms){
 }
 async function generateMatchReply(store,matchId){
  let current=store.get(),match=current.matches.find(m=>m.id===matchId);
- if(!match||match.status!=='active'||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return false;
- const lastId=match.chat.at(-1).id,lastText=match.chat.at(-1).text;
+ if(!match||match.status!=='active'||match.opponent!=='tai')return false;
+ const player=playerAwaitingChessReply(match);
+ if(!player)return false;
+ const lastId=player.id,lastText=player.text;
  const initialFacts=chessFacts(match),originalFen=initialFacts.fen;
  let canned=null;
  if(isD23ChessLesson(match)){
@@ -178,26 +194,26 @@ async function generateMatchReply(store,matchId){
   });
   // A second interjection during the same lesson move receives no duplicate
   // scolding; chess-related questions remain answerable.
-  if(canned===null&&!isChessRelated(lastText))return false;
+  if(canned===null&&!needsChessAnalysis(lastText))return false;
  }
- let parts=[];
+ let parts=[],fromModel=false;
  if(canned!==null)parts=canned?[{text:canned}]:[];
  else{
   try{
-   const status=await boundedAI(aiStatus(),3500);
-   if(status?.deepseek){
+   {
     current=store.get();match=current.matches.find(m=>m.id===matchId);
     if(!match||match.status!=='active')return false;
     const nowFacts=chessFacts(match);
     const factPacket={
      fen:nowFacts.fen,turn:nowFacts.turn,history:nowFacts.history.slice(-24),
-     lastMove:nowFacts.lastMove,legalSAN:nowFacts.legalMoves.map(m=>m.san),
+     lastMove:nowFacts.lastMove,legalMoves:nowFacts.legalMoves,legalSAN:nowFacts.legalMoves.map(m=>m.san),
+     pieces:loadGame(match).board().flat().filter(Boolean).map(p=>({square:p.square,piece:p.type,owner:p.color==='w'?'熙蒙':'Ouroboros'})),
      threatened:nowFacts.threatened,hanging:nowFacts.hanging,tactics:nowFacts.tactics,recommendations:nowFacts.recommendations,
      check:nowFacts.check,checkmate:nowFacts.checkmate,
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
     const messages=[
-     {role:'system',content:'你正在與熙蒙真實下國際象棋。黑棋由現有 Stockfish 引擎落子，你只能以 Ouroboros 的身份用繁體中文解釋已發生的棋局；不要自稱AI。是否已相認依照現有世界狀態，未相認時不得透漏本名、血緣或未發生的劇情。以下為引擎驗證的 ChessFacts，絕不可捏造棋子位置、著法或將死，也不要自稱已替對手落子。只推薦 legalSAN 中真實合法的著法，沒有資料就詢問對方或按規則解釋。回答自然、簡短、一兩句。不要語音。\n'+JSON.stringify(factPacket)},
+     {role:'system',content:buildChessTutorPrompt(factPacket)},
      ...(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}))
     ];
     const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
@@ -207,12 +223,14 @@ async function generateMatchReply(store,matchId){
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
     // Anonymous D23 chess must never leak the hidden name or family relation.
     if(isD23ChessLesson(match)&&!taiRecognized(current)&&parts.some(p=>/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i.test(p.text)))parts=[];
+    if(parts.length)fromModel=true;
    }
   }catch{parts=[];}
   if(!parts.length){
    const latest=store.get().matches.find(m=>m.id===matchId);
    if(!latest||latest.status!=='active')return false;
    parts=[{text:isD23ChessLesson(latest)?prewrittenChessReply(latest,lastText,chessFacts(latest)):FALLBACK}];
+   fromModel=false;
   }
  }
  if(!parts.length)return false;
@@ -222,15 +240,22 @@ async function generateMatchReply(store,matchId){
   store.update(s=>{
    const m=s.matches.find(x=>x.id===matchId);
    if(!m||m.opponent!=='tai'||m.status!=='active')return;
-   if(!emitted&&m.chat.at(-1)?.id!==lastId)return;
+   if(!emitted&&m.chat.filter(x=>x.from==='player').at(-1)?.id!==lastId)return;
    const freshFen=chessFacts(m).fen;
-   const text=freshFen!==originalFen&&isD23ChessLesson(m)?'棋盤已經變了。先看眼前這步，別急。':part.text;
-   (m.chat??=[]).push({id:'chess-reply-'+lastId+'-'+i,from:'tai',text,time:s.clock,aiGenerated:canned===null,mode:'text'});
-   didWrite=true;
+   // Never present analysis of a board that has changed while the model ran.
+   if(isD23ChessLesson(m)){
+    if(needsChessAnalysis(lastText)&&freshFen!==originalFen)return;
+    didWrite=enqueueChessTaiReply(m,part.text,s.clock,'reply-'+lastId+'-'+i,{
+     source:fromModel?'ai':'preset',boardPgn:needsChessAnalysis(lastText)?m.pgn:null,sourceMessageId:lastId
+    });
+   }else{
+    (m.chat??=[]).push({id:'chess-reply-'+lastId+'-'+i,from:'tai',text:part.text,time:s.clock,aiGenerated:fromModel,mode:'text'});
+    didWrite=true;
+   }
   });
   if(!didWrite)break;
   emitted=true;
-  if(i<parts.length-1)await new Promise(r=>setTimeout(r,380));
+  if(!isD23ChessLesson(match)&&i<parts.length-1)await new Promise(r=>setTimeout(r,380));
  }
  return emitted;
 }

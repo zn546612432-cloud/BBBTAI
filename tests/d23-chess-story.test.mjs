@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55,advanceScene55} from '../src/services/story55/runtime.js';
+import {activateStory55,advanceScene55,scene55ReplyDelay,tickQueuedStoryScenes55} from '../src/services/story55/runtime.js';
 import {story55Config,taiRecognized} from '../src/services/story55/state.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
-import {startAcceptedInvitation} from '../src/services/invitations.js';
+import {receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
 import fs from 'node:fs';
 
 const D20_APPROVED_DIALOGUE=[
@@ -77,15 +77,17 @@ test('approved 22 D23 chess turns are committed through native Send; card appear
   }else advanceScene55(s,'d23-chess');
  }
  const invitation=s.invitations.find(i=>i.source==='d23-mirage-story');
- assert.ok(invitation);assert.equal(invitation.status,'accepted');
- assert.equal(invitation.senderId,'player');
+ assert.ok(invitation);assert.equal(invitation.status,'pending');
+ assert.equal(invitation.senderId,'tai');
+ assert.equal(s.matches.length,0,'the card must not create a match without a tap');
  const card=c().messages.filter(m=>m.kind==='app_invitation'&&m.attachment?.invitationId===invitation.id);
  assert.equal(card.length,1);
  assert.equal(c().messages.filter(m=>/^s55-d23-chess-/.test(m.id)).length,22);
  assert.equal(taiRecognized(s),false);
  assert.ok((c().messages.length-initial)>=23);
  const store={get:()=>s,update:fn=>fn(s)};
- const matchId=startAcceptedInvitation(store,invitation.id);
+ const matchId=receiveInvitation(store,invitation.id);
+ assert.equal(invitation.status,'accepted','tap commits acceptance');
  assert.equal(s.matches.find(m=>m.id===matchId).opponent,'tai');
  assert.equal(startAcceptedInvitation(store,invitation.id),matchId,'card reopen must resume same match');
  assert.equal(c().messages.filter(m=>m.kind==='app_invitation').length,1);
@@ -97,4 +99,18 @@ test('invalid D23 invitation source cannot unlock chess or Tai identity',()=>{
  assert.throws(()=>startAcceptedInvitation(store,'d23-chess-invite'),/邀請|不存在|接受/);
  assert.equal(taiRecognized(s),false);
  assert.equal(s.matches.length,0);
+});
+
+test('Ouroboros Mirage scene replies use the existing queue with human pacing',()=>{
+ const s=activateStory55(initialState());s.day=23;s.clock='22:16';s.story55.activeScene='d23-chess';
+ assert.equal(scene55ReplyDelay(s,'d23-chess',0),1900,'player authored line still uses ordinary policy');
+ assert.ok(scene55ReplyDelay(s,'d23-chess',1)>=4300);
+ const origin=1000;
+ advanceScene55(s,'d23-chess',{now:origin});
+ const due=s.story55.scenes['d23-chess'].nextAt;
+ assert.ok(due-origin>=4300);
+ assert.equal(tickQueuedStoryScenes55(s,due-1),false,'no early NPC delivery');
+ assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id==='s55-d23-chess-1').length,0);
+ assert.equal(tickQueuedStoryScenes55(s,due),true,'exactly one real NPC bubble appears at its due time');
+ assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id==='s55-d23-chess-1').length,1);
 });
