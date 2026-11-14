@@ -10,3 +10,11 @@ export function prepareMirageGhostShareEntry(){ghostShareEntry=true;}
 export function consumeMirageGhostShareEntry(){
  const prepared=ghostShareEntry;ghostShareEntry=false;return prepared;
 }
+
+// One-use return from an accepted chess invitation to its originating Mirage
+// conversation. Do not persist a reusable session token in the save.
+let chessReturn=false;
+export function prepareMirageChessReturnEntry(){chessReturn=true;}
+export function consumeMirageChessReturnEntry(){
+ const result=chessReturn;chessReturn=false;return result;
+}

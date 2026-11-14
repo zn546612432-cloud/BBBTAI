@@ -5,12 +5,11 @@ import {taiRecognized} from './story55/state.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,noteD23HangingPiece,
  finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,needsChessAnalysis,enqueueChessTaiReply,
-  beginD23ChessPostgame,
  prewrittenChessReply,chessReplyUsesLegalMoves
 } from './chess-lesson.js';
 import {Chess} from 'chess.js';
 import {recordChessFeedback} from './chess-feedback.js';
-import {buildChessTutorPrompt,buildChessPostgamePrompt,chessReaction} from './chess-dialogue.js';
+import {buildChessTutorPrompt} from './chess-dialogue.js';
 
 export function loadGame(match){const game=new Chess();if(match?.pgn)game.loadPgn(match.pgn);return game;}
 
@@ -149,14 +148,6 @@ export function postMatchMessage(store,matchId,text){
   // Exactly the original MIRAGE Send gate: no ghost bubble, no persisted
   // record and no model call for a pre-recognition spoiler.
   if(isD23ChessLesson(match)&&blocksAnonymousMirageInput(s,'s55-ouroboros',value))return;
-  if(isD23ChessLesson(match)&&match.status==='finished'){
-   const pg=match.lesson?.postgame;
-   if(!pg||pg.phase!=='chat'||pg.rounds>=3||pg.requestedClose)return;
-   const id=globalThis.crypto?.randomUUID?.()||String(Date.now());
-   (match.chat??=[]).push({id,from:'player',text:value,time:s.clock});
-   pg.rounds++;pg.phase='awaiting';pg.lastPlayerId=id;
-   accepted=true;return;
-  }
   if(match.status!=='active')return;
   (match.chat??=[]).push({id:globalThis.crypto?.randomUUID?.()||String(Date.now()),from:'player',text:value,time:s.clock});
   accepted=true;
@@ -172,9 +163,7 @@ function playerAwaitingChessReply(match){
 }
 export function replyToMatch(store,matchId){
  const match=store.get().matches.find(m=>m.id===matchId);
- if(!match||match.opponent!=='tai')return Promise.resolve(false);
- if(match.status==='finished')return startD23PostgameReply(store,matchId);
- if(match.status!=='active')return Promise.resolve(false);
+ if(!match||match.opponent!=='tai'||match.status!=='active')return Promise.resolve(false);
  const player=playerAwaitingChessReply(match);
  if(!player)return Promise.resolve(false);
  let pending=pendingMatchReplies.get(store);
@@ -184,80 +173,6 @@ export function replyToMatch(store,matchId){
  const reply=generateMatchReply(store,matchId).finally(()=>pending.delete(key));
  pending.set(key,reply);
  return reply;
-}
-
-const pendingD23Postgame=new WeakMap();
-const postgameFallback=(match,intro)=>{
- if(!intro)return [chessReaction(match,'postgame-'+match.result,{},
-  (match.result==='player-win'?[
-   '贏了就這麼高興？好吧，今天讓你得意一下。',
-   '這回你有本事笑了。下次我再看看。',
-   '別急著開香檳。才一盤而已。'
-  ]:match.result==='player-resigned'?[
-   '認輸不丟人。剛才哪一步沒看懂，下次再問。',
-   '至少這次你知道什麼時候該收手。',
-   '你還有話？嗯，我聽著。'
-  ]:match.result==='opponent-win'?[
-   '輸一盤而已，別急著替自己找藉口。',
-   '你倒是很能說。下次也把這股勁用在棋盤上。',
-   '先記住這局。下一次再看看。'
-  ]:[
-   '誰都沒贏。你倒是還挺有話說。',
-   '平局而已，下回再分勝負。',
-   '嗯，還要說什麼？'
-  ]))].flat().slice(0,1);
- const kind=match.result==='player-win'?'playerWin':
-  match.result==='opponent-win'?'opponentWin':
-  match.result==='player-resigned'?'resigned':'draw';
- return [chessReaction(match,kind)].flat().slice(0,2);
-};
-// Called from the existing chess view and native Send action; it creates no
-// separate message store or independent timer. AI cannot change the match PGN.
-export function startD23PostgameReply(store,matchId){
- let match=store.get().matches.find(m=>m.id===matchId);
- if(!isD23ChessLesson(match)||match.status!=='finished')return Promise.resolve(false);
- if(!match.lesson?.postgame)store.update(s=>{
-  const m=s.matches.find(m=>m.id===matchId);
-  if(m)beginD23ChessPostgame(m,s.clock);
- });
- match=store.get().matches.find(m=>m.id===matchId);
- const pg=match.lesson.postgame;
- if(!['intro','awaiting'].includes(pg.phase))return Promise.resolve(false);
- const intro=pg.phase==='intro',round=pg.rounds,lastId=intro?null:pg.lastPlayerId;
- const key=matchId+':'+(intro?'intro':round+':'+lastId);
- let pending=pendingD23Postgame.get(store);
- if(!pending){pending=new Map();pendingD23Postgame.set(store,pending);}
- if(pending.has(key))return pending.get(key);
- const work=(async()=>{
-  const snapshot=store.get(),before=snapshot.matches.find(m=>m.id===matchId),facts=chessFacts(before);
-  let replies=[],fromModel=false;
-  try{
-   const messages=[
-    {role:'system',content:buildChessPostgamePrompt(facts,before.result,round)},
-    ...(before.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}))
-   ];
-   if(intro)messages.push({role:'user',content:'棋局已經結束。請根據剛才的真實結果先說一兩句，像平常的你。'});
-   const response=await boundedAI(askTai({channel:'chess',day:snapshot.day,messages,
-    profile:snapshot.aiDraft?.profile,memories:snapshot.aiDraft?.memories,
-    recognized:taiRecognized(snapshot),storyVersion:55,outputMode:'text',allowVoice:false,
-    scene:'D23 匿名國際象棋對局已結束。只談已發生的結果與這盤棋，不得劇透。'}),9000);
-   replies=unpackTaiReply(response,'chess').map(x=>String(x.text||'').trim()).filter(Boolean).slice(0,2);
-   if(replies.some(x=>x.length>130||/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i.test(x)))replies=[];
-   if(replies.length)fromModel=true;
-  }catch{}
-  if(!replies.length)replies=postgameFallback(before,intro);
-  let changed=false;
-  store.update(s=>{
-   const m=s.matches.find(x=>x.id===matchId),live=m?.lesson?.postgame;
-   if(!m||m.status!=='finished'||!live||live.phase!==(intro?'intro':'awaiting')||live.rounds!==round||(!intro&&live.lastPlayerId!==lastId))return;
-   for(const [i,text] of replies.entries())changed=enqueueChessTaiReply(m,text,s.clock,'postgame-'+(intro?'intro':'reply-'+round)+'-'+i,{
-    source:fromModel?'ai':'preset',sourceMessageId:lastId
-   })||changed;
-   if(changed)live.phase=intro?'intro-delivering':'responding';
-  });
-  return changed;
- })().finally(()=>pending.delete(key));
- pending.set(key,work);return work;
 }
 
 const FALLBACK='先看清棋盤再動。別只顧著聊天。';

@@ -1,45 +1,10 @@
 // D23 authored chess teaching content. The existing match/PGN remains the only
 // source of board state; this module owns no chess engine or story clock.
 import {chessReaction} from './chess-dialogue.js';
-import {completeNode,nodeStatus} from './story55/state.js';
 import {CHAT_LIFECYCLE_POLICY} from './messaging/lifecycle/engine.js';
 export const D23_CHESS_INVITATION='s55-d23-chess-invite';
-const D23_POSTGAME_FAREWELL=[
- '我還有點事，得下線了。',
- '下次有機會再切磋，nya。'
-];
-// These bubbles share the existing chess chat and Story55 delivery heartbeat.
-export function beginD23ChessPostgame(match,clock){
- if(!isD23ChessLesson(match)||match.status!=='finished')return false;
- beginD23ChessLesson(match,clock);
- if(match.lesson.postgame)return false;
- match.lesson.finishedNotified=true;match.lesson.teaching=false;
- match.lesson.openingDone=true;match.lesson.openingIndex=OPENING.length;
- match.lesson.outbox=(match.lesson.outbox||[]).filter(line=>
-  line.id?.endsWith('capture-white-'+match.history.length)||
-  line.id?.endsWith('capture-black-'+match.history.length));
- match.lesson.outboxNextAt=null;
- match.lesson.postgame={phase:'intro',rounds:0,introQueued:false,requestedClose:false,closed:false};
- return true;
-}
-export function queueD23PostgameFarewell(match,clock){
- const pg=match.lesson?.postgame;
- if(!isD23ChessLesson(match)||!pg||pg.closed||pg.phase==='closing')return false;
- pg.phase='closing';pg.requestedClose=true;
- D23_POSTGAME_FAREWELL.forEach((text,i)=>enqueueChessTaiReply(match,text,clock,'postgame-farewell-'+i));
- return true;
-}
-export function requestD23PostgameFarewell(match,clock){
- if(!isD23ChessLesson(match)||match.status!=='finished')return false;
- beginD23ChessPostgame(match,clock);
- const pg=match.lesson.postgame;
- if(pg.closed)return true;
- pg.requestedClose=true;
- if(pg.phase==='chat')queueD23PostgameFarewell(match,clock);
- return true;
-}
-
 export const isD23ChessLesson=match=>match?.invitationId===D23_CHESS_INVITATION;
+export const d23ChessBoardReadyToExit=match=>!!(isD23ChessLesson(match)&&match.status==='finished'&&match.lesson?.finishedNotified&&!(match.lesson?.outbox?.length));
 const OPENING=[
  '先講規矩。你執白，我執黑，白棋先走，之後輪流各走一步。自己的王不能留在被攻擊的位置。',
  '王受到攻擊叫「將軍」；如果沒有任何合法的辦法化解，就是「將死」。想在棋盤上贏我，就得把我的王將死。',
@@ -159,18 +124,7 @@ export function tickD23ChessLesson(s,now=Date.now()){
   line.time=s.clock;
   if(!(match.chat||[]).some(m=>m.id===line.id))(match.chat??=[]).push(line);
   lesson.outboxNextAt=pending.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
-  if(!pending.length){
-   lesson.teaching=false;
-   const pg=lesson.postgame;
-   if(pg?.phase==='intro-delivering'||pg?.phase==='responding'){
-    if(pg.requestedClose||pg.rounds>=3)queueD23PostgameFarewell(match,s.clock);
-    else pg.phase='chat';
-   }else if(pg?.phase==='closing'&&!pg.closed){
-    pg.phase='closed';pg.closed=true;
-    // One native checkpoint, completed only after the goodbye was actually shown.
-    if(nodeStatus(s,'d23-chess-finish').state==='ready')completeNode(s,'d23-chess-finish');
-   }
-  }
+  if(!pending.length)lesson.teaching=false;
   return true;
  }
  return false;
@@ -199,7 +153,19 @@ export function noteD23OpponentMove(match,move,clock,game){
  if(game.isCheck()&&!game.isCheckmate())appendChessTutorLine(match,chessReaction(match,'checkBlack'),clock,'check-black-'+ply);
 }
 export function finishD23ChessLesson(match,clock,game){
- return beginD23ChessPostgame(match,clock);
+ if(!isD23ChessLesson(match))return false;
+ beginD23ChessLesson(match,clock);
+ if(match.lesson.finishedNotified)return false;
+ match.lesson.finishedNotified=true;
+ match.lesson.teaching=false;
+ delete match.lesson.autoExitWhenDelivered;delete match.lesson.exitAfterAt;
+ // Keep a final capture reaction, then deliver the recap one line at a time.
+ match.lesson.outbox=(match.lesson.outbox||[]).filter(line=>line.id.endsWith('capture-white-'+match.history.length)||line.id.endsWith('capture-black-'+match.history.length));
+ match.lesson.outboxNextAt=null;
+ const kind=game.isCheckmate()?(match.result==='player-win'?'playerWin':'opponentWin'):game.isStalemate()?'stalemate':'draw';
+ const texts=chessReaction(match,kind);
+ texts.forEach((text,i)=>appendChessTutorLine(match,text,clock,'ending-'+i));
+ return true;
 }
 export function noteD23HangingPiece(match,hanging,clock){
  if(!isD23ChessLesson(match)||match.status!=='active')return false;
@@ -219,7 +185,16 @@ export function noteD23HangingPiece(match,hanging,clock){
  return appendChessTutorLine(match,chessReaction(match,'danger',{piece:name}),clock,'exposed-'+match.history.length);
 }
 export function resignD23ChessLesson(match,clock){
- return beginD23ChessPostgame(match,clock);
+ if(!isD23ChessLesson(match))return false;
+ beginD23ChessLesson(match,clock);
+ if(match.lesson.finishedNotified)return false;
+ match.lesson.finishedNotified=true;
+ match.lesson.teaching=false;
+ match.lesson.openingDone=true;match.lesson.openingIndex=OPENING.length;
+ match.lesson.outbox=[];match.lesson.outboxNextAt=null;delete match.lesson.autoExitWhenDelivered;delete match.lesson.exitAfterAt;
+ chessReaction(match,'resigned')
+  .forEach((text,i)=>appendChessTutorLine(match,text,clock,'resigned-'+i));
+ return true;
 }
 export function prewrittenChessReply(match,text,facts){
  if(!isD23ChessLesson(match))return '先看盤面，再落子。';
