@@ -58,6 +58,19 @@ export function beginD23ChessLesson(match,clock){
  // the actual lines after the accepted chess board is open, never beforehand.
  return true;
 }
+// Real-time message delivery must not depend on advancing the game clock or
+// unrelated App updates. The existing phone message heartbeat asks this gate.
+export function chessLessonDue(s,now=Date.now()){
+ const nav=s.nav?.current;
+ if(!s.unlocked||nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/'))return false;
+ const match=s.matches?.find(m=>m.id===nav.route.slice(7));
+ if(!isD23ChessLesson(match))return false;
+ const lesson=match.lesson;
+ if(!lesson?.started)return true;
+ if(match.status==='active'&&!lesson.openingDone&&(lesson.openingIndex||0)<OPENING.length)
+  return !Number.isFinite(lesson.openingNextAt)||now>=lesson.openingNextAt;
+ return !!lesson.outbox?.length&&(!Number.isFinite(lesson.outboxNextAt)||now>=lesson.outboxNextAt);
+}
 /**
  * Existing Story55 heartbeat owns delivery; no second timer or message store.
  * One bubble is committed per due tick, with a stable ID across reloads.

@@ -342,3 +342,19 @@ test('capture and terminal feedback are attached once to actual moves, and resig
  resignChessMatch(store,matchId);assert.equal(match().feedbackEvents.at(-1).kind,'loss');
  const html=render({store},{route:'/match/'+matchId});assert.match(html,/結束對局/);assert.doesNotMatch(html,/data-form="chess-chat"/);
 });
+
+test('saved chess replies are due in the shared message heartbeat even when game time is frozen',async()=>{
+ const {chessLessonDue}=await import('../src/services/chess-lesson.js');
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ store.update(s=>{s.unlocked=true;s.story55.minutesPerSecond=0;});
+ assert.equal(chessLessonDue(store.get(),9000),false);
+ postMatchMessage(store,matchId,'親親');await replyToMatch(store,matchId);
+ assert.equal(chessLessonDue(store.get(),9000),true,'real-time outbox schedules without world-clock activity');
+ store.update(s=>tickD23ChessLesson(s,9000));
+ assert.equal(chessLessonDue(store.get(),10000),false);
+ assert.equal(chessLessonDue(store.get(),10200),true);
+ store.update(s=>tickD23ChessLesson(s,10200));
+ assert.equal(match().chat.at(-1).from,'tai');assert.equal(store.get().clock,'22:20');
+ store.update(s=>s.nav.current.appId='mirage');assert.equal(chessLessonDue(store.get(),20000),false);
+ store.update(s=>{s.nav.current.appId='chess';s.unlocked=false;});assert.equal(chessLessonDue(store.get(),20000),false);
+});
