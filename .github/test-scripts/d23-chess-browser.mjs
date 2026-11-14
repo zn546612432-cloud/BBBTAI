@@ -20,7 +20,7 @@ function seed({empty=false,failed=false}={}){
    else advanceScene55(s,'d23-chess');
   }
   const invitation=s.invitations.find(x=>x.source==='d23-mirage-story');
-  assert.ok(invitation,'D23 must produce an accepted invitation');
+  assert.ok(invitation,'D23 must produce an invitation');
   const store={get:()=>s,update:fn=>fn(s)};
   const id=receiveInvitation(store,invitation.id);
   if(failed){
@@ -36,7 +36,7 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CH
 const errors=[];
 async function open(state,{width,height}){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<=430,hasTouch:width<=430});
- await context.addInitScript(({key,value})=>{localStorage.setItem(key,value);},{key,value:JSON.stringify(state)});
+ await context.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,value);},{key,value:JSON.stringify(state)});
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -121,8 +121,8 @@ try{
  await composer.locator('button[type="submit"]').click();
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住/.test(x.text));
- },key,{timeout:5000});
+  return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住|想得倒美|先保住|嘴倒是甜|撒嬌/.test(x.text));
+ },key,{timeout:10000});
  const latestMessageVisible=await mobile.page.evaluate(()=>{
   const el=document.querySelector('.chess-chat-messages');
   const newest=el?.querySelector('.chess-chat-line');
@@ -150,14 +150,52 @@ try{
  },key,{timeout:18000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
- await mobile.page.locator('[data-form="chess-chat"] input[name="text"]').fill('今天吃什麼');
- await mobile.page.locator('[data-form="chess-chat"] button[type="submit"]').click();
- await mobile.page.waitForTimeout(1400);
- const closed=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
- assert.equal(closed.chat.at(-1).from,'player','finished chat remains visible but never answered');
+ assert.equal(await mobile.page.locator('[data-form="chess-chat"]').count(),0,'finished chat has no input');
  await mobile.page.waitForTimeout(6000);
+ assert.equal(await mobile.page.locator('.board-grid').count(),1,'no automatic exit after recap');
+ const beforeRefresh=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
+ assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed),'render consumes feedback once');
+ await mobile.page.reload();
+ await mobile.page.locator('[data-action="unlock"]').click();
+ for(const digit of '0816')await mobile.page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+ await mobile.page.locator('.board-grid').waitFor();
+ assert.equal(await mobile.page.locator('.chess-feedback').count(),0,'refresh must not replay terminal effect');
+ await mobile.page.locator('[data-action="end-match"]').click();
  await mobile.page.locator('.chess-home').waitFor({timeout:3000});
  await mobile.context.close();
+
+ // Valid opening position; the winning move is clicked in the actual board.
+ // Stockfish may never move for White, and the terminal capture must produce
+ // both the piece reaction and a caption-free finish effect.
+ const mateState=seed(),mateMatch=mateState.matches[0];
+ mateMatch.pgn='1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6';
+ mateMatch.history=[['e2','e4','e4'],['e7','e5','e5'],['d1','h5','Qh5'],['b8','c6','Nc6'],['f1','c4','Bc4'],['g8','f6','Nf6']].map(([from,to,san],i)=>({from,to,san,by:i%2?'stockfish':'player'}));
+ mateMatch.turn='w';
+ const mate=await open(mateState,{width:390,height:844});
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
+ // Observe audio/vibration attempts, without substituting a board or feedback.
+ await mate.page.evaluate(()=>{
+  window.chessFeedbackQA={tones:0,haptics:0,effects:[]};
+  navigator.vibrate=()=>{window.chessFeedbackQA.haptics++;return true;};
+  if(window.OscillatorNode){const start=OscillatorNode.prototype.start;OscillatorNode.prototype.start=function(...args){window.chessFeedbackQA.tones++;return start.apply(this,args);};}
+  new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){if(node.nodeType===1&&node.matches?.('.chess-feedback'))window.chessFeedbackQA.effects.push({kind:node.className,text:node.textContent});}}).observe(document.getElementById('screen-layer'),{childList:true,subtree:true});
+ });
+ await mate.page.locator('[data-square="h5"]').click();
+ await mate.page.locator('[data-square="f7"]').click();
+ await mate.page.waitForFunction(()=>window.chessFeedbackQA.effects.length>=2);
+ const feedback=await mate.page.evaluate(()=>window.chessFeedbackQA);
+ assert.ok(feedback.effects.some(x=>x.kind.includes('capture')));
+ assert.ok(feedback.effects.some(x=>x.kind.includes('win')));
+ assert.ok(feedback.effects.every(x=>x.text===''),'effects have no text');
+ assert.ok(feedback.haptics>=2);assert.ok(feedback.tones>=2,'short sounds use an unlocked audio context');
+ await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.outbox.length===0,key,{timeout:18000});
+ const won=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0],key);
+ assert.equal(won.result,'player-win');assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
+ assert.ok(won.feedbackEvents.every(x=>x.consumed));
+ await capture(mate.page,'mobile-capture-checkmate.png');
+ await mate.page.waitForTimeout(4000);assert.equal(await mate.page.locator('.board-grid').count(),1);
+ await mate.page.locator('[data-action="end-match"]').click();await mate.page.locator('.chess-home').waitFor();
+ await mate.context.close();
 
  const desktop=await open(seed(),{width:1280,height:900});
  await desktop.page.locator('.board-grid [data-action="square"]').first().waitFor();

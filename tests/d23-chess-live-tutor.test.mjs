@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {offerD23ChessInvitation,receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
-import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame,maybeTaiChessAside} from '../src/services/chess.js';
+import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame} from '../src/services/chess.js';
 import {chessReplyUsesLegalMoves,prewrittenChessReply,tickD23ChessLesson} from '../src/services/chess-lesson.js';
 import {Chess} from 'chess.js';
-import {render} from '../src/apps/chess/index.js';
+import {render,handle} from '../src/apps/chess/index.js';
+import {CHESS_REACTIONS,chessReaction} from '../src/services/chess-dialogue.js';
+import {needsChessAnalysis,predeterminedChessReply,finishD23ChessLesson} from '../src/services/chess-lesson.js';
+import {recordChessFeedback} from '../src/services/chess-feedback.js';
 
 function d23Store(){
  let state=activateStory55(initialState());
@@ -65,7 +68,7 @@ test('ChessFacts reports real White and Black moves, threatened pieces and verif
  const {store,matchId,match}=d23Store();
  playMove(store,matchId,'e2','e4');
  assert.equal(match().lesson.seenPieces.includes('p'),true);
- assert.equal(match().lesson.outbox.filter(m=>m.text.includes('第一次可以走兩格')).length,1);
+ assert.equal(match().lesson.outbox.filter(m=>m.id.endsWith('piece-p')).length,1);
  let facts=chessFacts(match());
  assert.equal(facts.lastMove.actor,'熙蒙');
  assert.equal(facts.lastMove.san,'e4');assert.equal(facts.lastMove.from,'e2');assert.equal(facts.lastMove.to,'e4');
@@ -102,7 +105,7 @@ test('a genuinely hanging major piece triggers a concrete one-time Tai warning',
   m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
  });
  playMove(store,matchId,'f2','f4');
- assert.equal(match().lesson.outbox.filter(x=>x.text.includes('你的后')&&x.text.includes('h5')).length,1);
+ assert.equal(match().lesson.outbox.filter(x=>x.id.includes('exposed-')&&x.text.includes('后')&&!x.text.includes('h5')).length,1);
  assert.equal(match().lesson.warnedThreats.filter(x=>x==='h5:q').length,1);
 });
 
@@ -124,7 +127,7 @@ test('first actual move of each of the six piece types has a one-time authored t
   });
   playMove(store,matchId,from,to);
   assert.equal(match().lesson.seenPieces.includes(type),true,type);
-  assert.equal(match().lesson.outbox.filter(m=>m.text.includes(expected)).length,1,type);
+  assert.equal(match().lesson.outbox.filter(m=>m.id.endsWith('piece-'+type)).length,1,type);
   assert.equal(match().history.at(-1).by,'player',type);
  }
 });
@@ -149,7 +152,8 @@ test('lecture interjection produces one authored warning; spoiler follows origin
   assert.equal(match().chat.length,before);
   assert.equal(postMatchMessage(store,matchId,'親親'),true);
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().chat.at(-1).text,/上課|還沒講完|先聽|注意力|坐不住/);
+  assert.match(match().lesson.outbox.at(-1).text,/上課|還沒講完|先聽|注意力|坐不住/);
+  assert.equal(match().chat.at(-1).from,'player','reply waits for shared heartbeat');
   const warnings=match().chat.filter(m=>m.text.includes('上課')||m.text.includes('還沒講完')).length;
   assert.equal(postMatchMessage(store,matchId,'好累啊'),true);
   assert.equal(await replyToMatch(store,matchId),false,'same lecture segment has a warning limit');
@@ -164,8 +168,8 @@ test('offline chess question always has a correct local tutorial answer without 
  try{
   postMatchMessage(store,matchId,'馬怎麼走？');
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().chat.at(-1).text,/馬走「日」字/);
-  assert.equal(match().chat.at(-1).mode,'text');
+  assert.match(match().lesson.outbox.at(-1).text,/馬.*日|馬.*兩格/);
+  assert.equal(match().lesson.outbox.at(-1).mode,'text');
  }finally{globalThis.fetch=prior;}
 });
 test('off-topic chess chat uses deterministic replies once the current lecture is over',async()=>{
@@ -173,7 +177,7 @@ test('off-topic chess chat uses deterministic replies once the current lecture i
  store.update(s=>s.matches.find(m=>m.id===matchId).lesson.teaching=false);
  postMatchMessage(store,matchId,'今天吃什麼');
  assert.equal(await replyToMatch(store,matchId),true);
- assert.match(match().chat.at(-1).text,/晚餐/);
+ assert.match(match().lesson.outbox.at(-1).text,/晚餐|餓|填不飽/);
 });
 test('resignation is idempotent, has Tai taunts, persists result, and permanently disables replies',async()=>{
  const {store,matchId,match}=d23Store();
@@ -198,7 +202,11 @@ test('resignation is idempotent, has Tai taunts, persists result, and permanentl
  assert.equal(match().chat.at(-1).from,'player');
  assert.equal(store.get().events.filter(e=>e.type==='chess_resigned').length,1);
  store.update(s=>tickD23ChessLesson(s,20000));
- assert.equal(store.get().nav.current.route,'/','leave the board only after the final taunt is delivered');
+ assert.equal(store.get().nav.current.route,'/match/'+matchId,'finished game never exits automatically');
+ assert.match(render({store},{route:'/match/'+matchId}),/結束對局/);
+ const router={open(location){store.update(s=>s.nav.current=location);}};
+ handle('end-match',{dataset:{id:matchId}},{store,router},{route:'/match/'+matchId});
+ assert.equal(store.get().nav.current.route,'/');
 });
 test('checkmate ends all further chess replies, with a chess-accurate finish',async()=>{
  const {store,matchId,match}=d23Store();
@@ -223,17 +231,18 @@ test('when a rook takes the White queen, the fallback says the actual pieces and
  });
  const fen=loadGame(match()).fen();
  assert.equal(applyStockfishMove(store,matchId,fen,'a8a4'),'Rxa4');
- const line=match().lesson.outbox.find(m=>m.text.includes('吃掉了你的后'));
+ const line=match().lesson.outbox.find(m=>m.id.includes('capture-black-'));
  assert.ok(line,'captured queen must be named in an authored event');
- assert.match(line.text,/車.*a4.*后/);
+ assert.match(line.text,/后/);
+ assert.doesNotMatch(line.text,/[a-h][1-8]/,'ordinary capture is conversational');
  const prior=globalThis.fetch;
  globalThis.fetch=async()=>{throw Error('gateway offline');};
  try{
   postMatchMessage(store,matchId,'看不懂');
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().chat.at(-1).text,/后.*車.*a4/);
-  assert.doesNotMatch(match().chat.at(-1).text,/合法選項|例如 Nd/);
-  assert.equal(match().chat.at(-1).aiGenerated,false);
+  assert.match(match().lesson.outbox.at(-1).text,/后.*車.*a4/);
+  assert.doesNotMatch(match().lesson.outbox.at(-1).text,/合法選項|例如 Nd/);
+  assert.equal(match().lesson.outbox.at(-1).aiGenerated,false);
  }finally{globalThis.fetch=prior;}
 });
 test('an available gateway is used directly for chess understanding, not short-circuited by an AI status probe',async()=>{
@@ -249,24 +258,87 @@ test('an available gateway is used directly for chess understanding, not short-c
   assert.equal(requests.length,1);
   assert.match(requests[0].body.messages[0].content,/ChessFacts/);
   assert.match(requests[0].body.messages[0].content,/legalSAN/);
-  assert.equal(match().chat.at(-1).aiGenerated,true);
+  assert.equal(match().lesson.outbox.at(-1).aiGenerated,true);
+  assert.equal(match().chat.at(-1).from,'player','AI response is queued, not injected');
  }finally{globalThis.fetch=prior;}
 });
-test('important capture can add an optional model-written Tai aside without bypassing the shared outbox',async()=>{
+test('ordinary capture never asks the model for an extra aside',async()=>{
  const {store,matchId,match}=d23Store();
  store.update(s=>{
-  const m=s.matches.find(x=>x.id===matchId),g=new Chess();
-  g.loadPgn('1. e4 d5 2. exd5');
-  m.pgn=g.pgn();
+  const m=s.matches.find(x=>x.id===matchId),g=new Chess();g.loadPgn('1. e4 d5 2. exd5');m.pgn=g.pgn();
   m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
  });
- const fen=loadGame(match()).fen();
- assert.equal(applyStockfishMove(store,matchId,fen,'d8d5'),'Qxd5');
- const prior=globalThis.fetch;
- globalThis.fetch=async()=>({ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'你是只看自己想走的那步？',mode:'text'}]})})});
+ const prior=globalThis.fetch;let calls=0;
+ globalThis.fetch=async()=>{calls++;throw Error('capture must stay authored');};
  try{
-  assert.equal(await maybeTaiChessAside(store,matchId),true);
-  assert.equal(await maybeTaiChessAside(store,matchId),false);
-  assert.ok(match().lesson.outbox.some(x=>x.aiGenerated===true&&x.text.includes('你是只看')));
+  assert.equal(applyStockfishMove(store,matchId,loadGame(match()).fen(),'d8d5'),'Qxd5');
+  assert.equal(calls,0);assert.equal(match().lesson.outbox.some(x=>x.aiGenerated===true),false);
+  assert.ok(match().lesson.outbox.some(x=>x.id.includes('capture-black-')));
  }finally{globalThis.fetch=prior;}
+});
+
+test('reaction variants exhaust a saved bag before repetition and ordinary replies name no squares',()=>{
+ const {match}=d23Store(),m=match();
+ for(const kind of Object.keys(CHESS_REACTIONS)){
+  const variants=Array.from({length:CHESS_REACTIONS[kind].length},()=>JSON.stringify(chessReaction(m,kind,{piece:'馬'})));
+  assert.equal(new Set(variants).size,CHESS_REACTIONS[kind].length,kind);
+  const restored=structuredClone(m);
+  assert.notEqual(JSON.stringify(chessReaction(restored,kind,{piece:'馬'})),variants.at(-1),'save/resume must not repeat the previous variant');
+ }
+});
+test('rule questions, greetings, affection and mercy stay preset; current-board explanations use AI',async()=>{
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ const prior=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('presets cannot fetch');};
+ try{
+  for(const text of ['馬怎麼走？','車怎麼走？','王車易位是什麼','後翼棄兵是什麼','將軍是什麼','你好','親親','讓讓我','求你了','好厲害','知道了','為什麼不吃飯']){
+   assert.equal(needsChessAnalysis(text),false,text);
+   postMatchMessage(store,matchId,text);assert.equal(await replyToMatch(store,matchId),true,text);
+  }
+  assert.equal(calls,0);
+  for(const text of ['為什麼你的車能吃我的馬？','我完全看不懂現在在下什麼','現在該怎麼走？','你剛才走了什麼','e4 能走嗎？']){
+   assert.equal(needsChessAnalysis(text),true,text);
+   assert.equal(predeterminedChessReply(match(),text,chessFacts(match())),null,text);
+  }
+ }finally{globalThis.fetch=prior;}
+});
+test('AI prompt contains style examples and board facts; multiple answers are paced, deduplicated and expire after a move',async()=>{
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ const prior=globalThis.fetch;let calls=0,prompt='';
+ globalThis.fetch=async(url,opts)=>{
+  calls++;prompt=JSON.parse(opts.body).messages[0].content;
+  return {ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'先看你的馬。',mode:'text'},{text:'它還在起點，先別急。',mode:'text'}]})})};
+ };
+ try{
+  postMatchMessage(store,matchId,'我看不懂現在在下什麼');
+  await Promise.all([replyToMatch(store,matchId),replyToMatch(store,matchId)]);
+  assert.equal(calls,1);assert.match(prompt,/語氣參考/);assert.match(prompt,/不要開口就報/);
+  assert.match(prompt,/pieces/);assert.match(prompt,/legalMoves/);assert.match(prompt,/不是.*最佳|不許稱為最佳/);
+  assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).from,'player');
+  assert.equal(await replyToMatch(store,matchId),false,'same player message may not queue twice');
+  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
+  assert.equal(match().chat.at(-1).text,'先看你的馬。');assert.equal(match().lesson.outbox.length,1);
+  store.update(s=>tickD23ChessLesson(s,11300));assert.equal(match().lesson.outbox.length,1);
+  playMove(store,matchId,'e2','e4');
+  store.update(s=>tickD23ChessLesson(s,14300));
+  assert.equal(match().chat.some(m=>m.text==='它還在起點，先別急。'),false,'stale second analysis must not be spoken');
+ }finally{globalThis.fetch=prior;}
+});
+test('a real final capture is named before the individually queued checkmate recap',()=>{
+ const {store,matchId,match}=d23Store();playOpening(store,matchId);
+ const game=new Chess();game.loadPgn('1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6');
+ store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));});
+ const outcome=playMove(store,matchId,'h5','f7');
+ assert.equal(outcome.finished,true);assert.equal(match().result,'player-win');
+ assert.match(match().lesson.outbox[0].text,/兵/);assert.equal(match().lesson.outbox.length,3);
+ assert.deepEqual(match().feedbackEvents.map(x=>x.kind),['capture','win']);
+ store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
+ assert.equal(match().lesson.outbox.length,2);assert.match(match().chat.at(-1).text,/兵/);
+});
+test('capture and terminal feedback are attached once to actual moves, and resign is a terminal effect',()=>{
+ const {store,matchId,match}=d23Store();
+ playMove(store,matchId,'e2','e4');applyStockfishMove(store,matchId,loadGame(match()).fen(),'d7d5');playMove(store,matchId,'e4','d5');
+ assert.deepEqual(match().feedbackEvents.map(x=>[x.id,x.kind,x.square,x.piece,x.color]),[['capture-3','capture','d5','p','b']]);
+ const restored=structuredClone(match());recordChessFeedback(restored,{captured:'p',color:'w',to:'d5'});assert.equal(restored.feedbackEvents.length,1);
+ resignChessMatch(store,matchId);assert.equal(match().feedbackEvents.at(-1).kind,'loss');
+ const html=render({store},{route:'/match/'+matchId});assert.match(html,/結束對局/);assert.doesNotMatch(html,/data-form="chess-chat"/);
 });

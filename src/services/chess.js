@@ -4,10 +4,12 @@ import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {taiRecognized} from './story55/state.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,noteD23HangingPiece,
- finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,isChessRelated,enqueueChessTaiReply,chessPieceName,
+ finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,needsChessAnalysis,enqueueChessTaiReply,
  prewrittenChessReply,chessReplyUsesLegalMoves
 } from './chess-lesson.js';
 import {Chess} from 'chess.js';
+import {recordChessFeedback} from './chess-feedback.js';
+import {buildChessTutorPrompt} from './chess-dialogue.js';
 
 export function loadGame(match){const game=new Chess();if(match?.pgn)game.loadPgn(match.pgn);return game;}
 
@@ -66,6 +68,7 @@ export function playMove(store,matchId,from,to,promotion='q'){
    match.status='finished';match.result=game.isCheckmate()?'player-win':'draw';
    finishD23ChessLesson(match,s.clock,game);
   }
+  recordChessFeedback(match,move);
   outcome={san:move.san,finished:game.isGameOver()};
  });
  return outcome;
@@ -106,10 +109,12 @@ export function applyStockfishMove(store,matchId,expectedFen,uci){
   match.turn=game.turn();
   delete match.engineError;
   s.events.push({type:'chess_move',matchId,move:move.san,by:'stockfish',day:s.day,clock:s.clock});
+  if(isD23ChessLesson(match))noteD23OpponentMove(match,move,s.clock,game);
   if(game.isGameOver()){
    match.status='finished';match.result=game.isCheckmate()?'opponent-win':'draw';
    finishD23ChessLesson(match,s.clock,game);
-  }else if(isD23ChessLesson(match))noteD23OpponentMove(match,move,s.clock,game);
+  }
+  recordChessFeedback(match,move);
   played=move.san;
  });
  return played;
@@ -128,6 +133,7 @@ export function resignChessMatch(store,matchId){
   match.turn=loadGame(match).turn();
   s.events.push({type:'chess_resigned',matchId,by:'player',day:s.day,clock:s.clock});
   resignD23ChessLesson(match,s.clock);
+  recordChessFeedback(match);
   resigned=true;
  });
  return resigned;
@@ -169,6 +175,7 @@ async function generateMatchReply(store,matchId){
  let current=store.get(),match=current.matches.find(m=>m.id===matchId);
  if(!match||match.status!=='active'||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return false;
  const lastId=match.chat.at(-1).id,lastText=match.chat.at(-1).text;
+ if([...(match.chat||[]),...(match.lesson?.outbox||[])].some(m=>m.sourceMessageId===lastId))return false;
  const initialFacts=chessFacts(match),originalFen=initialFacts.fen;
  let canned=null;
  if(isD23ChessLesson(match)){
@@ -178,7 +185,7 @@ async function generateMatchReply(store,matchId){
   });
   // A second interjection during the same lesson move receives no duplicate
   // scolding; chess-related questions remain answerable.
-  if(canned===null&&!isChessRelated(lastText))return false;
+  if(canned===null&&!needsChessAnalysis(lastText))return false;
  }
  let parts=[],fromModel=false;
  if(canned!==null)parts=canned?[{text:canned}]:[];
@@ -190,19 +197,20 @@ async function generateMatchReply(store,matchId){
     const nowFacts=chessFacts(match);
     const factPacket={
      fen:nowFacts.fen,turn:nowFacts.turn,history:nowFacts.history.slice(-24),
-     lastMove:nowFacts.lastMove,legalSAN:nowFacts.legalMoves.map(m=>m.san),
+     lastMove:nowFacts.lastMove,legalMoves:nowFacts.legalMoves,legalSAN:nowFacts.legalMoves.map(m=>m.san),
+     pieces:loadGame(match).board().flat().filter(Boolean).map(p=>({square:p.square,piece:p.type,owner:p.color==='w'?'熙蒙':'Ouroboros'})),
      threatened:nowFacts.threatened,hanging:nowFacts.hanging,tactics:nowFacts.tactics,recommendations:nowFacts.recommendations,
      check:nowFacts.check,checkmate:nowFacts.checkmate,
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
     const messages=[
-     {role:'system',content:'你就是正在執黑棋和熙蒙對弈的 Dr Ouroboros。Stockfish 負責實際落子，這些已發生的黑棋著法都是你的行動。以你原本人設（自負、毒舌、有耐心教初學者，但非客服）直接自然說話。對方說「看不懂」時，根據最新一步解釋剛才哪枚棋子從哪個格子移到哪裡、是否吃了什麼；不要直接報三個 SAN 或「合法選項不代表都一樣好」這類模板。具體問哪裡就答哪裡，不要無故變成教科書。未相認時嚴禁透露本名、血緣、未發生的劇情；不要稱自己AI。ChessFacts 是唯一正確棋盤資訊，不能捏造棋子、威脅、勝負、下一步。只能推薦 legalSAN 中實際存在的走法，若無資料就回答規則。以繁體中文回覆一到兩句，禁止語音。\n'+JSON.stringify(factPacket)},
+     {role:'system',content:buildChessTutorPrompt(factPacket)},
      ...(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}))
     ];
     const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
      memories:current.aiDraft?.memories,recognized:taiRecognized(current),storyVersion:55,outputMode:'text',allowVoice:false,
      scene:isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。'}),9000);
-    parts=unpackTaiReply(response,'chess').slice(0,isD23ChessLesson(match)?1:3);
+    parts=unpackTaiReply(response,'chess').slice(0,3);
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
     // Anonymous D23 chess must never leak the hidden name or family relation.
     if(isD23ChessLesson(match)&&!taiRecognized(current)&&parts.some(p=>/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i.test(p.text)))parts=[];
@@ -223,56 +231,22 @@ async function generateMatchReply(store,matchId){
   store.update(s=>{
    const m=s.matches.find(x=>x.id===matchId);
    if(!m||m.opponent!=='tai'||m.status!=='active')return;
-   if(!emitted&&m.chat.at(-1)?.id!==lastId)return;
+   if(!emitted&&m.chat.filter(x=>x.from==='player').at(-1)?.id!==lastId)return;
    const freshFen=chessFacts(m).fen;
-   const text=freshFen!==originalFen&&isD23ChessLesson(m)?'棋盤已經變了。先看眼前這步，別急。':part.text;
-   (m.chat??=[]).push({id:'chess-reply-'+lastId+'-'+i,from:'tai',text,time:s.clock,aiGenerated:fromModel,mode:'text'});
-   didWrite=true;
+   // Never present analysis of a board that has changed while the model ran.
+   if(isD23ChessLesson(m)){
+    if(needsChessAnalysis(lastText)&&freshFen!==originalFen)return;
+    didWrite=enqueueChessTaiReply(m,part.text,s.clock,'reply-'+lastId+'-'+i,{
+     source:fromModel?'ai':'preset',boardPgn:needsChessAnalysis(lastText)?m.pgn:null,sourceMessageId:lastId
+    });
+   }else{
+    (m.chat??=[]).push({id:'chess-reply-'+lastId+'-'+i,from:'tai',text:part.text,time:s.clock,aiGenerated:fromModel,mode:'text'});
+    didWrite=true;
+   }
   });
   if(!didWrite)break;
   emitted=true;
-  if(i<parts.length-1)await new Promise(r=>setTimeout(r,380));
+  if(!isD23ChessLesson(match)&&i<parts.length-1)await new Promise(r=>setTimeout(r,380));
  }
  return emitted;
-}
-
-// Important-event asides are genuinely generated by the existing Tai gateway,
-// never an alternative chess opponent or a duplicate dialogue scheduler. If the
-// model is unavailable, a factual, piece-specific preset is already in the
-// match's outbox and the player sees no API errors.
-export async function maybeTaiChessAside(store,matchId){
- const match=store.get().matches.find(m=>m.id===matchId);
- if(!isD23ChessLesson(match)||match.status!=='active')return false;
- const facts=chessFacts(match),last=facts.lastMove;
- if(!last||last.actor!=='Ouroboros'||!last.captured)return false;
- const ply=facts.history.length,key='aside-'+ply,fen=facts.fen;
- let authorized=false;
- store.update(s=>{
-  const m=s.matches.find(x=>x.id===matchId);
-  if(!m||m.status!=='active'||chessFacts(m).fen!==fen)return;
-  const lesson=m.lesson||{},seen=lesson.aiAsidePlies??=[];
-  if(seen.includes(ply)||seen.length>=3)return;
-  seen.push(ply);authorized=true;
- });
- if(!authorized)return false;
- try{
-  const current=store.get();
-  const prompt=[
-   {role:'system',content:'你是正在執黑棋的 Dr Ouroboros，不是棋譜分析服務。你剛才實際以'+chessPieceName(last.piece)+'在 '+last.to+' 吃了熙蒙的'+chessPieceName(last.captured)+'。角色預設已經告訴熙蒙哪枚棋被吃；你現在若有話說，只補一句與真實局面相符的毒舌、反問或戰術觀察，不要再重複「被吃」通報，不報 SAN 列表，不泄露匿名身分、不引用未發生的劇情。只用繁體中文，最多一句，文字。資料：'+JSON.stringify({fen:facts.fen,lastMove:last,legalSAN:facts.legalMoves.map(m=>m.san),hanging:facts.hanging})},
-   {role:'user',content:'就這一步，你現在會怎麼對熙蒙說？'}
-  ];
-  const answer=await boundedAI(askTai({channel:'chess',day:current.day,messages:prompt,recognized:taiRecognized(current),
-   profile:current.aiDraft?.profile,memories:current.aiDraft?.memories,storyVersion:55,
-   outputMode:'text',allowVoice:false,scene:'D23 真實棋局中的一條自然棋評，不是獨立教學程序。'}),8000);
-  const text=unpackTaiReply(answer,'chess')[0]?.text;
-  if(!text||!chessReplyUsesLegalMoves(text,facts))return false;
-  if(!taiRecognized(current)&&/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥/i.test(text))return false;
-  let queued=false;
-  store.update(s=>{
-   const m=s.matches.find(x=>x.id===matchId);
-   if(m?.status!=='active'||chessFacts(m).fen!==fen)return;
-   queued=enqueueChessTaiReply(m,text,s.clock,key,{source:'ai'});
-  });
-  return queued;
- }catch{return false;}
 }
