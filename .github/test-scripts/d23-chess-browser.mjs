@@ -80,6 +80,8 @@ try{
  await story.page.locator('.board-grid').waitFor();
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
+ assert.equal(routed.matches[0].lesson.started,true);
+ assert.equal(routed.matches[0].chat.filter(m=>m.from==='tai').length,3);
  await capture(story.page,'mobile-story-card-to-board.png');
  await story.context.close();
 
@@ -97,6 +99,34 @@ try{
  assert.equal(played.history.at(-1).by,'stockfish');
  assert.equal(played.engineError,undefined);
  await capture(mobile.page,'mobile-stockfish-move.png');
+ // The real mobile composer must trigger a lesson reminder, preserve the
+ // MIRAGE spoiler-send semantics, then close the entire match on resignation.
+ const composer=mobile.page.locator('[data-form="chess-chat"]');
+ await composer.locator('input[name="text"]').fill('親親');
+ await composer.locator('button[type="submit"]').click();
+ await mobile.page.waitForFunction(k=>{
+  const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
+  return m.chat.some(x=>x.from==='tai'&&/上課|還沒講完|先聽|注意力|坐不住/.test(x.text));
+ },key,{timeout:5000});
+ const chatBeforeSpoiler=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai').chat.length,key);
+ await composer.locator('input[name="text"]').fill('陳熙泰');
+ await composer.locator('button[type="submit"]').click();
+ const afterSpoiler=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai').chat,key);
+ assert.equal(afterSpoiler.length,chatBeforeSpoiler,'spoiler must be blocked before the real Send');
+ await capture(mobile.page,'mobile-tai-lesson-reminder.png');
+ await mobile.page.locator('[data-action="resign-match"]').click();
+ await mobile.page.waitForFunction(k=>{
+  const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
+  return m.status==='finished'&&m.result==='player-resigned'&&m.chat.some(x=>x.text.includes('下課'));
+ },key,{timeout:5000});
+ await capture(mobile.page,'mobile-tai-resignation.png');
+ await mobile.page.locator('[data-form="chess-chat"] input[name="text"]').fill('今天吃什麼');
+ await mobile.page.locator('[data-form="chess-chat"] button[type="submit"]').click();
+ await mobile.page.waitForTimeout(1400);
+ const closed=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
+ assert.equal(closed.chat.at(-1).from,'player','finished chat remains visible but never answered');
+ await mobile.page.waitForTimeout(6000);
+ await mobile.page.locator('.chess-home').waitFor({timeout:3000});
  await mobile.context.close();
 
  const desktop=await open(seed(),{width:1280,height:900});
