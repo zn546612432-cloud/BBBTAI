@@ -48,7 +48,7 @@ test('previous D21 clothes and D22 Wang headache conversations remain in place',
  assert.deepEqual(headache.lines[0],{who:'熙旺',text:'今天你怎麼這麼安靜？'});
  assert.deepEqual(headache.lines.at(-1),{who:'熙旺',text:'我等一下上來'});
  const d20=c.wechat.find(x=>x.day===20&&x.id==='monitoring');
- assert.equal(d20.lines.length,32,'D20 banking/monitoring bridge stays unchanged');
+ assert.equal(d20.lines.length,21,'D20 restores the approved 21-line dialogue without touching D21/D22');
  const d23=c.wechat.find(x=>x.day===23&&x.id==='heat');
  assert.equal(d23.lines.length,3,'D23 existing group remains unchanged');
 });
