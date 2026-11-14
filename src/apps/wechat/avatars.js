@@ -10,12 +10,13 @@ export const wechatAvatars=Object.freeze({
  '熙旺':publicWeChatAsset('avatars/originals/xiwang.jpeg'),
  '阿威':publicWeChatAsset('avatars/originals/awei.jpeg'),
  '胡枫':publicWeChatAsset('avatars/originals/hufeng.jpeg'),
+ '胡楓':publicWeChatAsset('avatars/originals/hufeng.jpeg'),
  '小辛':publicWeChatAsset('avatars/originals/xiaoxin.jpeg'),
  '仔仔':publicWeChatAsset('avatars/originals/zaizai.jpeg'),
  '傅隆生':publicWeChatAsset('avatars/originals/fulongsheng.jpeg')
 });
 
-const nameAliases=Object.freeze({'胡':'胡枫','枫':'胡枫','辛':'小辛','威':'阿威','哥':'熙旺'});
+const nameAliases=Object.freeze({'胡':'胡枫','枫':'胡枫','楓':'胡枫','胡楓':'胡枫','辛':'小辛','威':'阿威','哥':'熙旺'});
 export function resolveWeChatAvatar(name,source=''){
  const candidate=String(source||'');
  // Old saves can point to a previous /releases/<hash>/ folder; those

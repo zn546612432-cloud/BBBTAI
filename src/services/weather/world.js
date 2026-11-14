@@ -2,6 +2,7 @@
 // conditions at runtime. Historical Macau data is shipped with the game.
 // Source: Open-Meteo Historical Weather API, ECMWF ERA5 reanalysis (CC BY 4.0).
 import {MACAU_HISTORY_2025} from './data/macau-2025-hourly.js';
+import {macauCycloneSignalAt} from './cyclone-signals.js';
 
 export const WEATHER_HISTORY=MACAU_HISTORY_2025.metadata;
 export const WEATHER_CITY_DEFAULTS=Object.freeze([
@@ -84,6 +85,9 @@ export function getWeather(s,{day=s.day,clock=s.clock,cityId='macau'}={}){
  const value={...baseline,...historical,...authored,...legacy,...manual};
  value.day=Number(day);
  value.clock=validClock(clock)?clock:'08:00';
+ // The same real historical signal timeline drives Weather and native SMS.
+ // Wind warnings are independent of cloud/rain and of editable temperature.
+ value.cycloneSignal=cityId==='macau'?macauCycloneSignalAt(day,value.clock):null;
  value.theme=manual?.theme|| (historical?themeFor(value):baseline.theme);
  value.source=manual&&Object.keys(manual).length?'manual'
   :legacy?'legacy-diary':authored?'authored'

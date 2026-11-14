@@ -270,3 +270,14 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 已确认不改：D20 08:34/09:06；D21衣服/训练和D22群聊/熙旺私聊；D23 22句 Mirage 国际象棋；所有佣金、Ghost、Kira/银行、时钟/通知。
 - CI：Story55 1153/1153 passed，0 failures（run43578805614）；D21/D22 Chrome browser QA run43578805618、D23 Chess run43578805622 通过；AI gateway/feature branches success。D13 wallet/system call mobile acceptance skipped，尚未独立验收。
 - 尚待：核实 main Pages 发布；若需要适配已经发送过 D20 旧文案的持久存档，要另做精确迁移，不能通过直接删除玩家已发送消息实现。
+
+
+## 2026-11-14：D23–D25 天氣／風球短信及胡楓頭像定向修復（PR #150）
+- 進行中：處理兩張截圖的胡楓繁體頭像 fallback，D23 11:41 熱度與 D24 08:20 風球聊天缺少天氣和短信聯動。所有舊聊天原文不動。
+- 證據：原 `hufeng.jpeg` 倉庫資產存在；修復 `胡楓`→`胡枫` 人名映射並保留自訂頭像，真瀏覽器檢查圖片 `naturalWidth>0` 成功。
+- D23 11:41 Weather 使用原有ERA5 32°C、體感39°C；D24 2025-06-11 06:00一號、D25 2025-06-12 06:00三號/18:00一號；為歷史一致性包含D27及D28的三號與取消信號。詳見 DECISIONS 與澳門氣象局颱風蝴蝶報告。
+- 天氣 App 原有逐時氣象和手動修改不變；加入 iOS風低調風球提示。短信 App 沿用同一系統 native 訊息，官方信號變更時葡英中三語字幕，一事件一橫幅，同一故事時鐘及進度 ID 去重。
+- 檔案：`src/apps/wechat/avatars.js`、`src/services/weather/world.js`、`src/services/weather/cyclone-signals.js`、`src/apps/weather/index.js`、`src/apps/weather/styles.css`、`src/services/story55/runtime.js`、`tests/d23-d25-weather-sms-avatar.test.mjs`、新的瀏覽器QA腳本/workflow、STATUS、DECISIONS。
+- 測試：Story55 regression run43581533853 1161/1161，0 fail；D23–D25 Weather/SMS Chromium run43581533918 success，檢查手機 D23 天氣、D24/D25 風球時間切換、SMS 三條與胡楓實際圖片；artifact14108273728 六張圖已下載目檢（無解鎖遮蔽）。D23 Chess browser run43581533863 success；AI gateway branch checks success。
+- PR：#150 https://github.com/zn546612432-cloud/BBBTAI/pull/150 （draft / 未合併 main）。等對齊本輪授權及最終 CI 結果再決定合併；不把 PR 測試成功冒稱 Pages 正式版已更新。
+- 另案：D13電話 mobile acceptance skipped；Tai Ghost QA 仍需最終查驗；短信三語字句為本輪原創參照氣象局歷史，並非原始官方發送內容。

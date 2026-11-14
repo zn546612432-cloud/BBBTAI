@@ -20,3 +20,20 @@
  .weather-hero-icon{width:86px;height:86px}
  .weather-hourly{margin-top:16px}
 }
+
+
+/* Macau's historical tropical cyclone signals; visually separate from hourly
+   cloud/rain forecasts. A quiet iOS-style information row, not an alarm popup. */
+.weather-signal-banner{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:17px;background:linear-gradient(120deg,#17365a,#14253f);border:1px solid #77b3e045;color:#eff8ff;text-align:left;box-shadow:0 8px 20px #0002}
+.weather-signal-banner.level-3{background:linear-gradient(120deg,#533723,#302a32);border-color:#e7a36860}
+.weather-signal-number{height:39px;width:39px;flex:none;display:grid;place-items:center;border:2px solid #8bbbe4;border-radius:11px;color:#eef7ff;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.weather-signal-banner.level-3 .weather-signal-number{border-color:#f0b67d;color:#ffe4c8}
+.weather-signal-caption{display:flex;flex-direction:column;min-width:0;gap:3px}
+.weather-signal-caption strong{font-size:14px;font-weight:650;letter-spacing:.01em}
+.weather-signal-caption small{font-size:11px;color:#c0d4e7;line-height:1.4}
+.weather-signal-banner.level-3 .weather-signal-caption small{color:#edd1b5}
+.weather-city-scroll>.weather-signal-banner{margin:-5px 0 13px}
+.weather-detail>.weather-signal-banner{margin:16px 0 0}
+.weather-detail .weather-hourly{margin-top:20px}
+.weather-heat-hint{margin:10px 0 0!important;display:inline-block;padding:6px 11px;border-radius:12px;background:#ffe2b02b;color:#ffebc8;font-size:13px;font-weight:550}
+@media(max-height:720px){.weather-detail>.weather-signal-banner{margin-top:11px}.weather-detail .weather-hourly{margin-top:13px}}
