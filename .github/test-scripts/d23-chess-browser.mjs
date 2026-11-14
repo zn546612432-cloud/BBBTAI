@@ -142,7 +142,7 @@ try{
  await card.click();
  await story.page.locator('.board-grid').waitFor();
  await assertPiecesLoad(story.page);
- await assertMobileChatVisible(story.page);
+ await assertNoStackedBoardOrChat(story.page);
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
  assert.equal(routed.matches[0].lesson.started,true);
