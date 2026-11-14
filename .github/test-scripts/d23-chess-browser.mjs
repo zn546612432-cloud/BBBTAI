@@ -238,6 +238,15 @@ try{
  assert.equal(entered.farewell,false,'board completion never releases the next day');
  await capture(mobile.page,'mobile-d23-mirage-postgame.png');
  await mobile.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await mobile.page.waitForTimeout(3600);
+ const afterD23Farewell=await mobile.page.evaluate(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),q=s.story55.scenes['d23-chess-finish'];
+  const messages=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros')?.messages||[];
+  return {day:s.day,clock:s.clock,nav:s.nav.current,phase:s.story55.d23Postgame?.phase,
+   activeScene:s.story55.activeScene,queued:q,sceneNode:s.story55.config.nodes.find(n=>n.id==='d23-chess-finish'),
+   completed:s.story55.completed['d23-chess-finish'],messages:messages.filter(m=>/s55-d23-chess-finish/.test(m.id)).map(m=>({id:m.id,text:m.text}))};
+ },key);
+ console.log('D23_FAREWELL_DIAGNOSTICS',JSON.stringify(afterD23Farewell));
  await mobile.page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
   return !!s.story55.completed['d23-chess-finish']&&chat.messages.filter(m=>/^s55-d23-chess-finish-/.test(m.id)).length===2;
