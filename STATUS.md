@@ -261,3 +261,12 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - UI证据：D21/D22 手机与桌面实际运行取证5张，artifact14107110509（run43576886636）。截图脚本过滤了开发者跳日带来的无关通知banner；实际显示的11句原文及时间戳为真。
 - 下一步：确认 GitHub Pages main 自动发布是否真正成功，核对生产站点；另单独验收 D13 电话，解决 D29 重复首局与 Ghost 剩余风险。
 - 尚存风险：未做真实 iPhone 性能验收，D20 新补18句尚非用户旧稿复原，其他未批准日期文案不改。
+
+
+## 2026-11-14：D20 10:45 作者原稿21句修復 · 已併入 main
+- 当前任务：删除 PR #146 非作者原稿的18句、恢复用户提供的 D20 10:45 行动分工，并去除监控/AI 问答重复。
+- 状态：已合并 PR #149，merge commit `d27ec26f25b6dca2cbf62ba0e239393a8b1b178f`；D20 原 `monitoring` 10:45 节点变为 21句：原稿前8句＋完整 AI 答复1句＋此前已确认收尾剩余12句。
+- 变更文件：`src/story/d14-d24/content.json`、`tests/d23-chess-story.test.mjs`、`tests/d21-d22-approved-chats.test.mjs`。同节点逐句消息和玩家点击发送机制不变。
+- 已确认不改：D20 08:34/09:06；D21衣服/训练和D22群聊/熙旺私聊；D23 22句 Mirage 国际象棋；所有佣金、Ghost、Kira/银行、时钟/通知。
+- CI：Story55 1153/1153 passed，0 failures（run43578805614）；D21/D22 Chrome browser QA run43578805618、D23 Chess run43578805622 通过；AI gateway/feature branches success。D13 wallet/system call mobile acceptance skipped，尚未独立验收。
+- 尚待：核实 main Pages 发布；若需要适配已经发送过 D20 旧文案的持久存档，要另做精确迁移，不能通过直接删除玩家已发送消息实现。
