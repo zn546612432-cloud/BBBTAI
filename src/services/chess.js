@@ -1,6 +1,7 @@
 import {askTai,aiStatus} from './ai/gateway.js';
 import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
+import {taiRecognized} from './story55/state.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,
  finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,isChessRelated,
@@ -142,6 +143,11 @@ export function replyToMatch(store,matchId){
  return reply;
 }
 const FALLBACK='先看清棋盤再動。別只顧著聊天。';
+async function boundedAI(promise,ms){
+ let timeout;
+ try{return await Promise.race([promise,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('chess AI timeout')),ms);})]);}
+ finally{clearTimeout(timeout);}
+}
 async function generateMatchReply(store,matchId){
  let current=store.get(),match=current.matches.find(m=>m.id===matchId);
  if(!match||match.status!=='active'||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return false;
@@ -161,7 +167,7 @@ async function generateMatchReply(store,matchId){
  if(canned!==null)parts=canned?[{text:canned}]:[];
  else{
   try{
-   const status=await aiStatus();
+   const status=await boundedAI(aiStatus(),3500);
    if(status?.deepseek){
     current=store.get();match=current.matches.find(m=>m.id===matchId);
     if(!match||match.status!=='active')return false;
@@ -173,12 +179,12 @@ async function generateMatchReply(store,matchId){
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
     const messages=[
-     {role:'system',content:'你正在與熙蒙真實下國際象棋。黑棋由現有 Stockfish 引擎落子，你只能以 Ouroboros 的身份用繁體中文解釋已發生的棋局；不要自稱AI，不要透漏本名、血緣或未發生的劇情。以下為引擎驗證的 ChessFacts，絕不可捏造棋子位置、著法或將死，也不要自稱已替對手落子。只推薦 legalSAN 中真實合法的著法，沒有資料就詢問對方或按規則解釋。回答自然、簡短、一兩句。不要語音。\n'+JSON.stringify(factPacket)},
+     {role:'system',content:'你正在與熙蒙真實下國際象棋。黑棋由現有 Stockfish 引擎落子，你只能以 Ouroboros 的身份用繁體中文解釋已發生的棋局；不要自稱AI。是否已相認依照現有世界狀態，未相認時不得透漏本名、血緣或未發生的劇情。以下為引擎驗證的 ChessFacts，絕不可捏造棋子位置、著法或將死，也不要自稱已替對手落子。只推薦 legalSAN 中真實合法的著法，沒有資料就詢問對方或按規則解釋。回答自然、簡短、一兩句。不要語音。\n'+JSON.stringify(factPacket)},
      ...(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}))
     ];
-    const response=await askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
-     memories:current.aiDraft?.memories,recognized:false,storyVersion:55,outputMode:'text',allowVoice:false,
-     scene:'正在進行的 D23 真實棋局；只回答當前棋局，不得劇透。'});
+    const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
+     memories:current.aiDraft?.memories,recognized:taiRecognized(current),storyVersion:55,outputMode:'text',allowVoice:false,
+     scene:isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。'}),9000);
     parts=unpackTaiReply(response,'chess').slice(0,3);
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
    }
