@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import {mkdirSync} from 'node:fs';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import {initialState} from '../../src/services/storage.js';
 import {activateStory55,advanceScene55} from '../../src/services/story55/runtime.js';
 import {story55Config} from '../../src/services/story55/state.js';
 import {sendScriptedDraft55} from '../../src/services/story55/scripted-chat.js';
 import {receiveInvitation} from '../../src/services/invitations.js';
 
+const engine=process.env.CHESS_BROWSER==='webkit'?webkit:chromium;
 const base=process.env.CHESS_LOCAL_URL||'http://127.0.0.1:5173/';
-const key='ximeng-phone-story55-v1',out='d23-chess-browser-results';
+const key='ximeng-phone-story55-v1',out='d23-chess-browser-results/'+engine.name();
 mkdirSync(out,{recursive:true});
 function seed({empty=false,failed=false}={}){
  const s=activateStory55(initialState());s.day=23;s.clock='22:30';s.unlocked=true;s.story55.minutesPerSecond=0;
@@ -32,7 +33,7 @@ function seed({empty=false,failed=false}={}){
  }else s.nav.current={appId:'chess',route:'/',params:{}};
  return s;
 }
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHESS_CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:process.env.CHESS_CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']}:{})});
 const errors=[];
 async function open(state,{width,height}){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<=430,hasTouch:width<=430});
