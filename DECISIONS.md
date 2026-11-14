@@ -271,3 +271,15 @@
 - 測試先於實作：先將 `tests/d23-chess-story.test.mjs` 增加完整18句/14句逐句比對、同節點、2個地點、六位人物、主角預設發送、沒有未授權夜間節點的斷言；後才原位補入 content.json。GitHub run 43568685011：1148/1148 pass；D23 棋局 Chromium run 43568685013、70雇主 Chromium run 43568685017 success；D13 專項 skipped 不算通過。
 - 風險：18句新補寫非使用者先前逐字原稿，屬使用者這次授權「幫他完成」下的實作版本；仍需後續故事審稿微調時保持原14句鎖定。正式 iPhone 性能仍未驗證。
 - 下一步：核實 Ghost QA 與 PR mergeability，受測並滿足條件後依本輪明確指令合併 PR #146 到 main；不得同時合併不相關 PR。負責人：ChatGPT 實施，使用者授權；截止：本輪。
+
+
+## 2026-11-14：D20 18句補稿＋D23 Stockfish PR #146 獲授權合併 main
+- 日期／背景：使用者在 Work 說明 D20 10:45 只落地14句、分工上半段欠缺後，明確要求「你幫他完成然後合併」。
+- 決定／實施：先在 PR #146 內補寫18句銀行分工銜接稿（找不到以前對話的逐字原文，不虛構為原始稿），接原定稿14句完全不動；D20 同一 monitoring 群聊共32句，使用原 Story55 訊息/預設發送；不新增第二套系統。
+- 措辭與劇情邊界：澳亞銀行的筆記本及澳興大廈金輝資金中心是兩處不同線索，熙蒙 AI 監控方案在 D20 仍未解決；熙旺、胡楓、小辛、阿威、仔仔各有準備話題但不提前確認行動成功。保留 D20 08:34、09:06 原節點，取消舊 22:42 送湯；D21–D22 本次未改、D23 傅隆生會議僅在手機外。
+- 合併：GitHub merge_pull_request(PR #146) 回報 merged=true，merge commit `a96a6ac2e598f32e3f77bb1302fc63fbe4466617`，merged_at=2026-11-14T07:03:47Z，已回讀 main 驗證 D20 前段與14句尾段及 Stockfish 模組存在。
+- 保留：既有 PR #147／70位 Mirage 雇主功能、委託、KIRA/Ghost/銀行結算不改；PR #146 同時包含之前已審的 D23 22句邀棋、Stockfish 與棋局重複請求、終局和邀請冪等修復。
+- 驗證：GitHub Story55 regression run43568685011 1148/1148、0 fail；同批 D23 Chess Stockfish Chromium run43568685013、70雇主瀏覽器 run43568685017、AI gateway/feature branch checks success。D20 測試先於實作補齊文字比對及排除夜間湯段。
+- 未通過/剩餘風險：Tai Ghost QA 當時仍 in_progress，D13 phone acceptance skipped；原始分工逐字稿仍未找到、18句為新補寫，如日後找到舊稿需逐句校對；D29 舊邀棋連續性還需獨立審核；尚未獨立驗證實機 iPhone 或最新 GitHub Pages 部署狀態。
+- 不做：本次不改 D21/D22、D29 舊邀棋、D13 電話或 70 雇主流程，不宣稱它們已完整驗收。
+- 下一步：核實 main 自動 GitHub Pages 發佈結果並記錄成功／失敗；後續獨立處理未通過的 QA。負責人：ChatGPT，授權：使用者；截止：已合併。
