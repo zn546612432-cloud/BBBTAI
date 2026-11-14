@@ -6,7 +6,7 @@ export function syncD14D24Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
  // Add the approved D23 scene to active saves without resetting other story nodes.
- if(s.story55.config&&(!s.story55.config.nodes.some(n=>n.id==='d23-chess')||!s.story55.config.nodes.some(n=>n.id==='d23-chess-finish')||s.story55.config.nodes.find(n=>n.id==='d23-chess')?.gateDay!==23)){
+ if(s.story55.config&&(!s.story55.config.nodes.some(n=>n.id==='d23-chess')||!s.story55.config.nodes.some(n=>n.id==='d23-chess-finish')||s.story55.config.nodes.find(n=>n.id==='d23-chess')?.gateDay!==23||s.story55.config.nodes.find(n=>n.id==='d23-chess-finish')?.kind!=='scene')){
   changed=applyD14D24Definition(s.story55.config)||changed;
  }
  if(s.story55.d14D24Revision!==1){
@@ -50,6 +50,11 @@ export function syncD14D24Content(s){
  const currentD23=s.story55.config?.scenes?.['d23-chess'];
  if(Array.isArray(currentD23))for(const [index,old] of legacyD23)
   if(currentD23[index]?.[1]===old){currentD23[index]=[currentD23[index][0],corrected[index][1]];changed=true;}
+ // V4 revises exactly one previously shipped narrative line, never other authored prose.
+ const v4Line=D14_D24_CONTENT.scenes['d23-chess'][13][1];
+ if(Array.isArray(currentD23)&&/若能打通 f 線，車就有機會直指黑方的 f7。/.test(currentD23[13]?.[1]||'')){
+  currentD23[13][1]=v4Line;changed=true;
+ }
  // Exact-match migration. An in-progress D15 conversation keeps its old
  // script and current index; all prior real Send messages remain untouched.
  // A not-yet-started scene adopts the newly approved sequence.

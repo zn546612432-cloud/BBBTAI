@@ -22,7 +22,12 @@ export function applyD14D24Definition(c,{force=false}={}){
  const d23=c.nodes.find(n=>n.id==='d23-chess');
  if(d23&&d23.gateDay!==23){d23.gateDay=23;changed=true;}
  if(!c.nodes.some(n=>n.id==='d23-chess-finish')){
-  c.nodes.push({id:'d23-chess-finish',day:23,title:'棋局與道別',kind:'checkpoint',requires:['d23-chess'],gateDay:23});
+  c.nodes.push({id:'d23-chess-finish',day:23,title:'棋局與道別',kind:'scene',requires:['d23-chess'],gateDay:23,delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-d23-chess-finish'});
+  changed=true;
+ }
+ const finish=c.nodes.find(n=>n.id==='d23-chess-finish');
+ if(finish&&finish.kind!=='scene'){
+  Object.assign(finish,{kind:'scene',delivery:'queued',channel:'mirage',conversationId:'s55-ouroboros',messagePrefix:'s55-d23-chess-finish'});
   changed=true;
  }
  for(const [id,lines] of Object.entries(content.scenes)){

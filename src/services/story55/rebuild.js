@@ -236,7 +236,7 @@ function simulateNode(s,node){
   else{transferD13Wallet(s,0);enterD13Chat(s);}
   return completed(s,node.id);
  }
- if(node.kind==='checkpoint'&&node.id==='d23-chess-finish'){
+ if(node.id==='d23-chess-finish'){
   // Developer date jump only; don't insert a fake player chat or match.
   completeNode(s,node.id,{test:true});return true;
  }
