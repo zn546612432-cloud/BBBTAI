@@ -6,7 +6,7 @@ import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {advanceScene55,chatNodeLink55} from './services/story55/runtime.js';
+import {advanceScene55,chatNodeLink55,tickStory55} from './services/story55/runtime.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
 import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
@@ -18,7 +18,7 @@ import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
 import {isNoAppV3Review,prepareNoAppV3Review} from './apps/noapp/preview-v3.js';
 import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
-import {phoneRuntimePaused,tickPhoneRuntime} from './system/runtime/controller.js';
+import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
@@ -475,17 +475,40 @@ setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().p
  if(!document.hidden&&callState().state==='connected')maybeAdvanceCall(ctx());
  if(!document.hidden)maybeResumeTaiDeferred(store);
  if(!document.hidden&&!['ringing','dialing','connected'].includes(callState().state))void maybeSendProactive(store);}catch(err){toast(err.message||'消息未能保存');}},500);
-// The page runs in foreground only; a backgrounded tab never skips story events.
 let lastPowerTick=performance.now();
 const worldTickBatch=new WorldTickBatch();
-// iOS may suspend all page timers in the background. Catch up battery only,
-// not NPC scenes or game time, when the player reopens the game.
-function settleResumedShortCharge(){
- if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s));
- lastPowerTick=performance.now();worldTickBatch.reset();
+let backgroundStartedAt=document.hidden?Date.now():null;
+// iOS suspends timers: settle the hidden interval on return, once. A pagehide
+// can follow visibilitychange and BFCache can emit both resume events.
+function rememberBackground(){
+ if(backgroundStartedAt!==null)return;
+ backgroundStartedAt=Date.now();
+ // Preserve already-priced foreground fractions before changing context.
+ const frame=worldTickBatch.flush();
+ if(frame)store.update(s=>tickPhoneRuntime(s,frame,{restarting:lockscreen.stage==='restart'}));
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)settleResumedShortCharge();});
-window.addEventListener('pageshow',e=>{if(e.persisted)settleResumedShortCharge();});
+function settleResumedShortCharge(){
+ const now=Date.now(),started=backgroundStartedAt;
+ let outcome={};
+ if(started!==null)store.update(s=>{outcome=settlePhoneBackground(s,Math.max(0,now-started),{
+  now,restarting:lockscreen.stage==='restart',callActive:['ringing','dialing','connected'].includes(callState().state),
+  reconcile:(state,from)=>{tickStory55(state);deliverMissedScheduled(state,from);}
+ });});
+ else if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s,now));
+ backgroundStartedAt=null;
+ lastPowerTick=performance.now();worldTickBatch.reset();
+ applyPowerOutcome(outcome);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberBackground();else settleResumedShortCharge();});
+window.addEventListener('pagehide',rememberBackground);
+window.addEventListener('pageshow',()=>{if(!document.hidden&&backgroundStartedAt!==null)settleResumedShortCharge();});
+function applyPowerOutcome(outcome){
+ if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
+ if(outcome.event==='emergency')collapseIsland();
+ if(outcome.event==='short-charge-end'||outcome.event==='short-charge-story')collapseIsland();
+ if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
+ if(outcome.event==='wake'){collapseIsland();lockscreen.reset();}
+}
 setInterval(()=>{
  const now=performance.now(),elapsed=Math.max(0,Math.min(2500,now-lastPowerTick));
  lastPowerTick=now;
@@ -506,11 +529,7 @@ setInterval(()=>{
   if((s.day>5||s.day===5&&s.clock>='20:00')&&!s.content.orders.some(o=>o.id===WALLET_CHALLENGE_ID))
    ensureMirageStory(s);
  });
- if(outcome.event==='alarm'){collapseIsland();startAlarmSound();}
- if(outcome.event==='emergency')collapseIsland();
- if(outcome.event==='short-charge-end'||outcome.event==='short-charge-story')collapseIsland();
- if(outcome.event==='death-start'||outcome.event==='death-off'){lockscreen.reset();cancelMessageHold();setShade({progress:0});collapseIsland();}
- if(outcome.event==='wake'){collapseIsland();lockscreen.reset();}
+ applyPowerOutcome(outcome);
 },800);
 $('#root').addEventListener('click',async e=>{
  if(Date.now()<suppressNotificationClickUntil&&e.target.closest?.('.lock-notification,.shade-notification,#toast')){e.preventDefault();return;}

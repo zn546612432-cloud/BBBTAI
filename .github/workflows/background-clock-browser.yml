@@ -1,0 +1,38 @@
+name: Background clock mobile browser QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main.js'
+      - 'src/system/time/**'
+      - 'src/system/runtime/**'
+      - 'tests/phone-background-clock.test.mjs'
+      - 'scripts/verify-background-clock-browser.mjs'
+      - '.github/workflows/background-clock-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  background-clock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/phone-background-clock.test.mjs tests/phone-runtime-policy.test.mjs tests/short-charge.test.mjs tests/tai-remote-visibility.test.mjs tests/d13-short-charge-voice-call-regression.test.mjs
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify background return and foreground App speed at 390px
+        run: node scripts/verify-background-clock-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: background-clock-mobile-qa
+          path: qa/background-clock/
+          if-no-files-found: warn
+          retention-days: 14
