@@ -9,7 +9,8 @@ const DEFAULT_THINK_MS=450;
 export function bestStockfishMove(fen,{
  workerFactory=()=>new Worker(STOCKFISH_WORKER_URL),
  timeoutMs=DEFAULT_TIMEOUT_MS,
- thinkMs=DEFAULT_THINK_MS
+ thinkMs=DEFAULT_THINK_MS,
+ skillLevel=20
 }={}){
  if(typeof fen!=='string')return Promise.reject(Error('棋局資料無效'));
  let game;
@@ -31,7 +32,11 @@ export function bestStockfishMove(fen,{
   worker.onmessage=e=>{
    const text=String(e.data||'').trim();
    for(const line of text.split(/\r?\n/)){
-    if(stage==='boot'&&line==='uciok'){stage='ready';worker.postMessage('isready');continue;}
+    if(stage==='boot'&&line==='uciok'){
+     stage='ready';
+     worker.postMessage('setoption name Skill Level value '+Math.max(0,Math.min(20,Math.trunc(Number(skillLevel)||0))));
+     worker.postMessage('isready');continue;
+    }
     if(stage==='ready'&&line==='readyok'){
      stage='search';worker.postMessage('position fen '+fen);worker.postMessage('go movetime '+Math.max(100,Math.min(1500,Number(thinkMs)||DEFAULT_THINK_MS)));continue;
     }
