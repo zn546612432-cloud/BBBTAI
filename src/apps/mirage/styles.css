@@ -84,3 +84,6 @@
 /* Session boundaries reuse the original terminal palette at all viewport sizes. */
 .mc-session-divider{display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;margin:16px 0;padding:5px 0;color:var(--mc-bright);font:inherit;font-size:10px;letter-spacing:.09em;text-align:center;overflow-wrap:anywhere}
 .mc-session-divider::before,.mc-session-divider::after{content:'';height:1px;min-width:8px;flex:1;background:var(--mc-line)}
+
+/* The D23 post-match control belongs above the composer; it must never sit behind the phone home bar. */
+.mc-d23-outro-action{display:block;flex:0 0 auto;align-self:stretch;min-height:34px;margin:2px 12px 4px;border:1px solid #8eb49a88;background:#173c32b0;color:#cde8ba;font-size:11px;letter-spacing:.65px;font-family:inherit;text-align:center;touch-action:manipulation}
