@@ -184,3 +184,15 @@
 - 已驗證：GitHub Actions 2026-11-14 PR commit c6d8d918 的 Story55 regression 1137/1137 pass、AI gateway success、分支檢查 success；真實 Chromium Mirage 雇主驗收 run 43559101722 success，包含手機新聯繫人、桌面清單、接單前、逾期、無效聯繫人狀態；五張 UI 截圖 artifact 14099387965，下載人工核對，接單前的臨時通知遮罩已消除。
 - 範圍／風險：沒有修改 main、沒有合併 PR #147 或舊棋局 PR #146；D13 wallet workflow skipped（非本任務驗收）；已進行中的舊存檔不硬遷移雇主，既有歷史可能與新表不完全一致；瀏覽器測試並不代表已於實機正式發布。
 - 待辦／決策：由使用者決定 PR #147 是否合併 main；合併前可用測試記錄及截图審核。負責人：ChatGPT 實施與驗證；使用者決策。截止：未指定。
+
+
+## 2026-11-14：PR #147 已獲授權合併至 main
+- 背景：用戶在已審核82單／70位雇主方案及完成 PR #147 驗收後，明確指示「合併」。
+- 決定：僅合併 PR #147《MIRAGE：82單對應70雇主＋接單／結單／逾期私聊》到 main，merge commit `3e2b8688c6dd89e0e46733c336bc5522e12cc71a`，GitHub 回覆 merged=true。
+- 驗證：回查 PR #147 merged=true、merged_at=2026-11-14T05:16:51Z；main 的 src/story/d15-d55/commissions.js 引入 owner 映射、src/story/d15-d55/employers.js 含 NEW CONTACT 系統訊息與20位特色雇主設定；被授權的10個文件包含測試、文檔及 UI 截圖 QA；變更範圍無 Stockfish 模組。
+- 合併前實測證據：Story55 1137 tests passed / 0 fail；MIRAGE Chromium run 43559101722 success、5張桌面／手機／未接單／逾期／異常畫面截圖。合併後尚無正式 Pages 手機實機測試，不冒稱部署完成。
+- 非本次合併：PR #146 國際象棋 Stockfish 仍 open、merged=false，不得因本次授權一起合併。D13 專項 workflow skipped 不算通過。
+- 風險：舊存檔中已接受委託保留原 owner，與新映射可能不完全一致；正式站發佈狀態仍需另查。
+- 不做：不更動未批准的 D20–D23 文案或原 PR #146；不聲稱所有功能皆已在手機實機完成驗收。
+- 下一步：視需要另行查驗 GitHub Pages 主站發佈；現階段不自動合併其他 PR。
+- 負責人：ChatGPT 執行合併與驗證；使用者批准。截止：已於2026-11-14執行。
