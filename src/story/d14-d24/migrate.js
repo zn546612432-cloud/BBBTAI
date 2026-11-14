@@ -50,6 +50,14 @@ export function syncD14D24Content(s){
  const currentD23=s.story55.config?.scenes?.['d23-chess'];
  if(Array.isArray(currentD23))for(const [index,old] of legacyD23)
   if(currentD23[index]?.[1]===old){currentD23[index]=[currentD23[index][0],corrected[index][1]];changed=true;}
+ // V4's full literary/strategic King's Gambit narrative replaces only
+ // the exact shipped shorter lines; author-edited variants remain untouched.
+ if(Array.isArray(currentD23)&&currentD23[10]?.[1]==="白方先走 e4，等黑方走 e5，再把 f 兵推上去。夠冒險的，連自己的王都不怎麼顧。"){
+  currentD23[10][1]=D14_D24_CONTENT.scenes['d23-chess'][10][1];changed=true;
+ }
+ if(Array.isArray(currentD23)&&currentD23[12]?.[1]==="不吃就不吃。你還能逼對方收下不成？"){
+  currentD23[12][1]=D14_D24_CONTENT.scenes['d23-chess'][12][1];changed=true;
+ }
  // V4 revises exactly one previously shipped narrative line, never other authored prose.
  const v4Line=D14_D24_CONTENT.scenes['d23-chess'][13][1];
  if(Array.isArray(currentD23)&&/若能打通 f 線，車就有機會直指黑方的 f7。/.test(currentD23[13]?.[1]||'')){
