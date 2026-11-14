@@ -51,10 +51,17 @@ async function open(state,{width,height}){
  return {page,context};
 }
 async function assertPiecesLoad(page){
- await page.waitForFunction(()=>{
-  const imgs=[...document.querySelectorAll('.board-grid .chess-piece img')];
-  return imgs.length===32&&imgs.every(img=>img.complete&&img.naturalWidth>0);
- },null,{timeout:12000});
+ try{
+  await page.waitForFunction(()=>{
+   const imgs=[...document.querySelectorAll('.board-grid .chess-piece img')];
+   return imgs.length===32&&imgs.every(img=>img.complete&&img.naturalWidth>0&&getComputedStyle(img).opacity==='1');
+  },null,{timeout:12000});
+ }catch(error){
+  const diag=await page.locator('.board-grid .chess-piece img').evaluateAll(imgs=>imgs.slice(0,8).map(img=>({src:img.src,complete:img.complete,width:img.naturalWidth,classes:img.className,opacity:getComputedStyle(img).opacity})));
+  console.log('CHESS IMAGE VISIBILITY DIAGNOSTICS',JSON.stringify(diag));
+  await page.screenshot({path:out+'/image-visibility-failure.png',fullPage:true});
+  throw error;
+ }
  const assets=await page.locator('.board-grid .chess-piece img').evaluateAll(imgs=>imgs.map(img=>({src:img.src,width:img.naturalWidth,visible:getComputedStyle(img).opacity==='1'})));
  assert.equal(assets.length,32);
  assert.ok(assets.every(x=>x.width>0&&x.visible),'every real chess piece must be loaded and visible');
