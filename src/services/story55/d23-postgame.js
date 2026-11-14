@@ -47,16 +47,27 @@ export function acceptD23MirageSend(s,messageId){
  pg.rounds++;pg.lastPlayerId=messageId;pg.phase='awaiting';
  return true;
 }
+// The authored farewell temporarily holds the ONE active Story55 scene slot.
+// Any earlier unfinished scene resumes after the goodbye without losing progress.
+function prepareD23FarewellScene(s,pg){
+ if(pg.phase!=='closing')return false;
+ if(pg.farewellPrepared)return false;
+ pg.previousActiveScene=s.story55.activeScene&&s.story55.activeScene!=='d23-chess-finish'?s.story55.activeScene:null;
+ pg.farewellPrepared=true;s.story55.activeScene='d23-chess-finish';
+ return true;
+}
 export function endD23MirageConversation(s){
  const pg=d23MiragePostgame(s);
  if(!pg||pg.closed||pg.phase!=='chat')return false;
- pg.phase='closing';return true;
+ pg.phase='closing';prepareD23FarewellScene(s,pg);return true;
 }
 // The existing Story55 tick commits one message per heartbeat, with the same
 // 450ms first-bubble and 1900ms subsequent-bubble policy as other native chats.
 export function tickD23MiragePostgame(s,now=Date.now()){
  const pg=d23MiragePostgame(s);
- if(!pg||!validChat(s)||!['intro-delivering','reply-delivering'].includes(pg.phase))return false;
+ if(!pg||!validChat(s))return false;
+ if(pg.phase==='closing')return prepareD23FarewellScene(s,pg);
+ if(!['intro-delivering','reply-delivering'].includes(pg.phase))return false;
  if(!pg.aiOutbox?.length)return false;
  if(!Number.isFinite(pg.nextAt)){pg.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;return true;}
  if(now<pg.nextAt)return false;
@@ -66,7 +77,10 @@ export function tickD23MiragePostgame(s,now=Date.now()){
   sentDate:date55(s.day),storyTag:'story55'});
  if(delivered)delivered.aiGenerated=line.aiGenerated===true;
  pg.nextAt=pg.aiOutbox.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
- if(!pg.aiOutbox.length)pg.phase=pg.rounds>=MAX_TURNS?'closing':'chat';
+ if(!pg.aiOutbox.length){
+  pg.phase=pg.rounds>=MAX_TURNS?'closing':'chat';
+  if(pg.phase==='closing')prepareD23FarewellScene(s,pg);
+ }
  return true;
 }
 export function d23MiragePostgameDue(s,now=Date.now()){

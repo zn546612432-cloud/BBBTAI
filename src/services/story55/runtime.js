@@ -91,7 +91,10 @@ export function finishScene55(s,id){
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
  if(id==='d23-chess')offerD23ChessInvitation(s);
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame){
-  s.story55.d23Postgame.phase='closed';s.story55.d23Postgame.closed=true;
+  const postgame=s.story55.d23Postgame;
+  postgame.phase='closed';postgame.closed=true;
+  const resume=postgame.previousActiveScene;
+  if(resume&&nodeStatus(s,resume).state==='ready')s.story55.activeScene=resume;
  }
  if(id==='loan'){s.story55.loanOfflineDay=s.day;s.story55.loanOfflineClock??=s.clock;}
  tickStory55(s);return true;

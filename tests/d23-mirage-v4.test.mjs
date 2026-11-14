@@ -100,13 +100,19 @@ test('Mirage can request an early goodbye without fabricating a second player me
  f.store.update(s=>commitD23MirageResponse(s,{intro:true,round:0,replies:['怎麼，現在還不服氣？']}));
  deliverOne(f.store,1000);
  const sentBefore=f.store.get().content.conversations.mirage.find(c=>c.id===contact).messages.filter(m=>m.from==='me').length;
- f.store.update(s=>assert.equal(endD23MirageConversation(s),true));
+ f.store.update(s=>{
+  s.story55.activeScene='invitation'; // D06 incomplete in legacy saves.
+  assert.equal(endD23MirageConversation(s),true);
+  assert.equal(s.story55.d23Postgame.previousActiveScene,'invitation');
+  assert.equal(s.story55.activeScene,'d23-chess-finish');
+ });
  assert.equal(d23MiragePostgame(f.store.get()).rounds,0);
  assert.equal(completed(f.store.get(),'d23-chess-finish'),false);
  f.store.update(s=>s.story55.activeScene='d23-chess-finish');
  for(const now of [10000,10500,13000])f.store.update(s=>tickQueuedStoryScenes55(s,now));
  assert.equal(completed(f.store.get(),'d23-chess-finish'),true);
  assert.equal(f.store.get().content.conversations.mirage.find(c=>c.id===contact).messages.filter(m=>m.from==='me').length,sentBefore);
+ assert.equal(f.store.get().story55.activeScene,'invitation','paused earlier scene is restored after farewell');
  const saved=structuredClone(f.store.get());
  assert.equal(tickQueuedStoryScenes55(saved,20000),false);
  assert.equal(saved.content.conversations.mirage.find(c=>c.id===contact).messages.filter(m=>/^s55-d23-chess-finish/.test(m.id)).length,2);
