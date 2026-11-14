@@ -173,3 +173,14 @@
 - 不做：未更改 runtime、未触碰 `main`、未合并或修改 Stockfish PR #146 的业务内容；未运行游戏端测试、UI截图/部署。
 - 待办：用户逐条审核两份文档；获批后先写至少主流程/重复接单/异常状态测试，再最小范围实施。
 - 负责人：用户审批分配及对白；ChatGPT 记录与后续授权实施。截止：未指定。
+
+
+## 2026-11-14：82單／70雇主分配已審核並完成開發分支接線（PR #147）
+- 背景／授權：使用者回覆「已審核」，批准之前整理的 D15–D55 82單與70雇主分配表及普通訊息模板；原有20位特色雇主應有獨立口吻。維持一個系統原則。
+- 依據：`docs/mirage-d15-d55-owner-allocation-proposal.md`、`.csv`；本輪在獨立分支 `planning/mirage-70-employers-20261114` 落地，草稿 PR #147 https://github.com/zn546612432-cloud/BBBTAI/pull/147。
+- 已實施：`src/story/d15-d55/employers.js` 設定50個新普通雇主 owner override、20個特色雇主固定對話、接單系統提示；`commissions.js` 對82單採用審定 owner，不變更 ID、日期、級別、金額、關卡與15份不可接名單；`src/story/d04/contract.js` 沿用既有 accept/submit/tick 三個真實狀態入口，在 OPEN→ACCEPTED 先寫 `── NEW CONTACT ──` 後雇主私聊、READY→COMPLETED 寫驗收回覆、已接單後 EXPIRED 寫失敗回覆。
+- 歷史處理：相同 owner 只建一個會話、各訂單獨立消息 ID，重複點擊或刷新不重發；已進行中的舊訂單 owner 不覆寫，尚未接受的 OPEN 訂單可在匹配原 owner 時更新；KIRA 繼續負責附件、密鑰與付款回執，無第二套訊息／結算程序。
+- 20位特色雇主是20份獨立固定語氣稿，重複合作可有單獨歡迎句；50個普通雇主使用一套三階段模板。後續雇主性格如需變動，應定向修改對應台詞，不重造聯系人。
+- 已驗證：GitHub Actions 2026-11-14 PR commit c6d8d918 的 Story55 regression 1137/1137 pass、AI gateway success、分支檢查 success；真實 Chromium Mirage 雇主驗收 run 43559101722 success，包含手機新聯繫人、桌面清單、接單前、逾期、無效聯繫人狀態；五張 UI 截圖 artifact 14099387965，下載人工核對，接單前的臨時通知遮罩已消除。
+- 範圍／風險：沒有修改 main、沒有合併 PR #147 或舊棋局 PR #146；D13 wallet workflow skipped（非本任務驗收）；已進行中的舊存檔不硬遷移雇主，既有歷史可能與新表不完全一致；瀏覽器測試並不代表已於實機正式發布。
+- 待辦／決策：由使用者決定 PR #147 是否合併 main；合併前可用測試記錄及截图審核。負責人：ChatGPT 實施與驗證；使用者決策。截止：未指定。
