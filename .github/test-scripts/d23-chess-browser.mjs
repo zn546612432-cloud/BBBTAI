@@ -5,7 +5,7 @@ import {initialState} from '../../src/services/storage.js';
 import {activateStory55,advanceScene55} from '../../src/services/story55/runtime.js';
 import {story55Config} from '../../src/services/story55/state.js';
 import {sendScriptedDraft55} from '../../src/services/story55/scripted-chat.js';
-import {startAcceptedInvitation} from '../../src/services/invitations.js';
+import {receiveInvitation} from '../../src/services/invitations.js';
 
 const base=process.env.CHESS_LOCAL_URL||'http://127.0.0.1:5173/';
 const key='ximeng-phone-story55-v1',out='d23-chess-browser-results';
@@ -22,7 +22,7 @@ function seed({empty=false,failed=false}={}){
   const invitation=s.invitations.find(x=>x.source==='d23-mirage-story');
   assert.ok(invitation,'D23 must produce an accepted invitation');
   const store={get:()=>s,update:fn=>fn(s)};
-  const id=startAcceptedInvitation(store,invitation.id);
+  const id=receiveInvitation(store,invitation.id);
   if(failed){
    const m=s.matches.find(m=>m.id===id);
    m.pgn='1. e4';m.turn='b';m.history=[{from:'e2',to:'e4',san:'e4',by:'player'}];
@@ -76,17 +76,32 @@ try{
    const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
   },{key,index},{timeout:15000});
  }
- await story.page.locator('[data-action="mc-chess-invite"]').click();
+ const card=story.page.locator('[data-action="mc-chess-invite"]');
+ assert.match(await card.innerText(),/接受邀請/,'the invitation should be unaccepted until tapped');
+ const preAccept=await story.page.evaluate(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return {status:s.invitations.find(i=>i.source==='d23-mirage-story').status,count:s.matches.length};
+ },key);
+ assert.deepEqual(preAccept,{status:'pending',count:0});
+ await card.click();
  await story.page.locator('.board-grid').waitFor();
  const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
  assert.equal(routed.matches[0].lesson.started,true);
- assert.equal(routed.matches[0].chat.filter(m=>m.from==='tai').length,3);
+ assert.equal(routed.invitations.find(i=>i.source==='d23-mirage-story').status,'accepted');
+ assert.equal(routed.matches[0].chat.filter(m=>m.from==='tai').length,0,'opening is not front-loaded');
+ await story.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length>=1,key,{timeout:8000});
+ const first=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length,key);
+ assert.equal(first,1,'first tutorial bubble is singular');
+ await story.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
+ const completedOpening=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0].chat.filter(m=>m.from==='tai').length,key);
+ assert.equal(completedOpening,3,'three tutorial bubbles delivered in order');
  await capture(story.page,'mobile-story-card-to-board.png');
  await story.context.close();
 
  const mobile=await open(seed(),{width:390,height:844});
  await mobile.page.locator('.board-grid [data-action="square"]').first().waitFor();
+ await mobile.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches[0].lesson.openingDone,key,{timeout:17000});
  assert.equal(await mobile.page.locator('.board-grid [data-action="square"]').count(),64);
  await mobile.page.locator('[data-action="square"][data-square="e2"]').click();
  await mobile.page.locator('[data-action="square"][data-square="e4"]').click();
