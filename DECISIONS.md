@@ -329,3 +329,10 @@
 - D23 11:41 狼崽團3句、D24 08:20 狼崽團4句及所有 Mirage／Ghost／Kira／象棋／時間／短充／原存檔，均不更動。為維持 D25後天氣連續性，D27及D28風球真實變化也採用同一信號時間線；沒有額外新增微信劇情。
 - 驗證：8項新精確測試，最新 Story55回歸 run43581533853 1161/1161 pass 0 fail；真實 Chromium Weather、原頭像及 SMS 行為 run43581533918 success，六張 mobile 截圖 artifact14108273728已下載檢查，初版被解鎖淡出遮蔽的 Weather 截圖已修正採集等待；D23 Chess QA run43581533863 success；AI gateway 和 branch checks success。D13電話專項仍 skipped，Tai Ghost QA 尚待最終回報。
 - 狀態：獨立分支 `fix/d23-d25-weather-sms-avatar-20261114`、草稿 PR #150；本輪未經明確合併許可，不自動合併 main；Pages尚未發佈此 PR。
+
+
+## 2026-11-14：PR #150 天氣短信／胡楓頭像正式批准合併
+- 使用者在完成審核後明確要求「合併」。此前同日的「PR #150 待審／未經合併許可」是歷史中間狀態，現由本記錄取代。
+- PR #150 已合併到 main：https://github.com/zn546612432-cloud/BBBTAI/pull/150；merge SHA `94c0ee18b133f15e7caff77dfa4c6a1cd12904a4`。提交範圍限定原頭像映射、天氣資料、SMS 接線、專項測試和記錄文件。
+- 合併前全綠：Story55 1161/1161、Weather/SMS Chromium、D23 Chess、Tai Ghost mobile takeover、AI gateway、branch checks；D13 mobile acceptance skipped。未改寫 D23／D24 微信台詞，不新增第二套系統。
+- 保留未驗收事項：正式 Pages 部署及 D13 強制電話真實手機端驗收；不把三語短信描述成2025年官方逐字原文。
