@@ -2,7 +2,7 @@ import {isStory55,taiRecognized} from '../../services/story55/state.js';
 import {btn,card,demo,empty,esc,section} from '../../system/ui.js';
 import {taiPresence} from '../../services/presence.js';
 import {createPlayerInvitation,receiveInvitation,startAcceptedInvitation,processDemoReply} from '../../services/invitations.js';
-import {createSoloMatch,loadGame,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch} from '../../services/chess.js';
+import {createSoloMatch,loadGame,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,maybeTaiChessAside} from '../../services/chess.js';
 import {isD23ChessLesson} from '../../services/chess-lesson.js';
 import {bestStockfishMove} from '../../services/chess-stockfish.js';
 export const manifest={id:'chess',name:'国际象棋',icon:13,defaultRoute:'/',supportsDeepLink:true,kicker:'A QUIET GAME'};
@@ -17,7 +17,8 @@ async function playRealOpponentTurn(store,id){
  thinking=id;
  try{
   const uci=await bestStockfishMove(originalFen,{skillLevel:isD23ChessLesson(match)?5:20});
-  applyStockfishMove(store,id,originalFen,uci);
+  const played=applyStockfishMove(store,id,originalFen,uci);
+  if(played)void maybeTaiChessAside(store,id).catch(()=>{});
  }catch(error){
   store.update(s=>{
    const m=s.matches.find(x=>x.id===id);
@@ -33,10 +34,15 @@ export function handle(action,target,ctx,loc){const id=target.dataset.id;if(acti
   const resigned=resignChessMatch(ctx.store,id);
   if(resigned){
    selected=null;pendingPromotion=null;ctx.refresh();
-   setTimeout(()=>{
-    const nav=ctx.store.get().nav?.current;
-    if(nav?.appId==='chess'&&nav.route==='/match/'+id)ctx.router.open({appId:'chess',route:'/'});
-   },7000);
+   const match=ctx.store.get().matches.find(m=>m.id===id);
+   if(!isD23ChessLesson(match)){
+    setTimeout(()=>{
+     const nav=ctx.store.get().nav?.current;
+     if(nav?.appId==='chess'&&nav.route==='/match/'+id)ctx.router.open({appId:'chess',route:'/'});
+    },7000);
+   }
+   // D23 finishes through the existing Story55 tick, after every saved
+   // taunt/recap bubble has appeared and been readable.
   }
   return;
  }
