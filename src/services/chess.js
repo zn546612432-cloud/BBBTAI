@@ -30,7 +30,19 @@ export function applyStockfishMove(store,matchId,expectedFen,uci){
 }
 export function createSoloMatch(store){const id=globalThis.crypto?.randomUUID?.()||`solo-${Date.now()}`;store.update(s=>s.matches.push({id,invitationId:null,opponent:'demo',pgn:'',status:'active',turn:'w',createdDay:s.day,history:[]}));return id;}
 export function postMatchMessage(store,matchId,text){const value=String(text||'').trim();if(!value||value.length>200)throw Error('消息需为 1–200 字');store.update(s=>{const match=s.matches.find(m=>m.id===matchId);if(!match)throw Error('棋局不存在');(match.chat??=[]).push({id:globalThis.crypto?.randomUUID?.()||String(Date.now()),from:'player',text:value,time:s.clock});});}
-export async function replyToMatch(store,matchId){
+const pendingMatchReplies=new WeakMap();
+export function replyToMatch(store,matchId){
+ const match=store.get().matches.find(m=>m.id===matchId);
+ if(!match||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return Promise.resolve(false);
+ let pending=pendingMatchReplies.get(store);
+ if(!pending){pending=new Map();pendingMatchReplies.set(store,pending);}
+ const key=JSON.stringify([matchId,match.chat.at(-1).id]);
+ if(pending.has(key))return pending.get(key);
+ const reply=generateMatchReply(store,matchId).finally(()=>{pending.delete(key);});
+ pending.set(key,reply);
+ return reply;
+}
+async function generateMatchReply(store,matchId){
  const current=store.get(),match=current.matches.find(m=>m.id===matchId);
  if(!match||match.opponent!=='tai'||match.chat?.at(-1)?.from!=='player')return false;
  const status=await aiStatus();if(!status.deepseek)throw Error('请先在 NoApp 配置 DeepSeek Key');

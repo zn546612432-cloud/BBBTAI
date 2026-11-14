@@ -1,5 +1,14 @@
 # BBBTAI 项目状态记录
 
+## 2026-11-14 象棋＋已確認文案整合
+- 當前任務：用戶要求象棋與文案同一輪實施；基準 main 6ec7b42，接續 PR #146 b107ed3。
+- 當前步驟：第3步實施及相關Node驗收通過；第4步瀏覽器驗收轉GitHub CI。
+- 已完成：隔離 worktree 合入 PR #146；衝突只在狀態/決策文檔，保留兩側記錄，功能檔自動整合。
+- 下一步：更新PR #146開發分支並執行新增的D23原生Send→邀請卡→棋盤及引擎錯誤重試瀏覽器驗收。
+- 阻塞：D20 10:45 分工上半段查無原文，本輪只實施14句已確認稿；D21–D22 未定稿保留。
+- 相關文件：象棋 app/service、invitations、D14–D24 content、chess-display/d23-chess-story tests、STATUS、DECISIONS。
+- 最近驗證：九個相關測試檔全部通過（dot reporter，exit 0）；Pages構建成功，92條路徑重寫至/BBBTAI/releases/af3fe9260aad1fd3/；story audit 25 apps/18 checks通過。本機Chromium因socket() Operation not permitted無法啟動，未聲稱本輪瀏覽器成功，交由已有GitHub Chromium工作流驗證。
+
 更新：2026-11-13
 
 ## 当前任务
@@ -129,6 +138,37 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 最近验证：D20 用户本轮尾段人工逐句计数14句，GitHub 更新 DECISIONS.md commit 6650defcfead04ef68533b4cf6988b282452bf57。
 
 
+## 2026-11-14：82单／70雇主分配表制作及静态校验
+- 当前任务：为 D15–D55 82份可接 Mirage 委托制作至少70位雇主的审核分配表。
+- 当前步骤：第4步｜验收静态分配数据、提交审稿材料；未进入运行时实现。
+- 已完成：在独立文案分支 `planning/mirage-70-employers-20261114` 新增 MD 与 CSV 两份审稿表；20现有特色雇主保留32份归属（含12次复单），50份指定新普通雇主，总计70个独立昵称。
+- 下一步：等待用户审核拟调整的50份订单归属和通用私讯措辞；批准后先补订单接单/结单/失败/异常及移动端测试。
+- 阻塞：雇主归属尚未得到逐单确认，严禁改正式委托数据或上线；仍需评估先前存档 owner 映射与同一联系人历史保留。
+- 相关文件：`docs/mirage-d15-d55-owner-allocation-proposal.md`、`.csv`、`src/story/d15-d55/commissions.js`、`DECISIONS.md`、`STATUS.md`。本轮未改 runtime。
+- 最近验证：以 main 委托源完整解析：82单、D15–D55共41天每天2单、20特色owner、50普通owner、70独立雇主、12次重复合作；15份不可接 R 单不动。校验通过；没有游戏测试、UI截图或发布。
+
+
+## 2026-11-14：70位 MIRAGE 雇主已接入獨立 PR 並通過驗收
+- 當前任務：落地已核准 D15–D55 82單 × 70位雇主配置及 Mirage 接單／成功／逾期聯動。
+- 當前步驟：第5步｜驗收通過，交付獨立草稿 PR #147；main 未合併。
+- 已完成：50位新普通雇主＋20位既有特色雇主共70位；82單保持每日2筆，15筆不可接不變；同一雇主歷史復用，接單 system 分隔 `── NEW CONTACT ──`、成功驗收、已接單逾期各有不同預設私聊；保留 Kira/Ghost/銀行原機制。
+- 改動：`src/story/d15-d55/employers.js`（新增）、`src/story/d15-d55/commissions.js`、`src/story/d04/contract.js`；`tests/mirage-70-employers.test.mjs`（6項）、`.github/test-scripts/mirage-70-employers-browser.mjs` 與 `.github/workflows/mirage-70-employers-browser.yml`（UI驗收）。兩份既有雇主分配審稿文檔保留。
+- 最近驗證：GitHub Story55 regression run 43559101711：1137 tests passed / 0 failed；AI gateway/Check feature branches success；MIRAGE 真實 Chromium run 43559101722：pass，5張 screenshot artifact 14099387965 已下載核對（desktop、mobile、未接單、逾期、無效聯繫人）。
+- 交付：PR https://github.com/zn546612432-cloud/BBBTAI/pull/147；截圖 `/mnt/data/mirage-70-ui-final/`，壓縮包 `/mnt/data/mirage-70-employers-final-evidence.zip`。
+- 剩餘風險：main 仍是舊版；沒有正式手機設備性能驗證；已有進度存檔的 owner 刻意不覆寫；D13 專項驗收 skipped（另案）。
+- 下一步：取得用戶是否合併 PR #147 的明確指示；不自動合併。
+- 阻塞：無本次功能/瀏覽器回歸阻塞。截止：未指定。
+
+
+## 2026-11-14：PR #147 Mirage 70位雇主已合併 main
+- 當前任務：82單／70雇主分配與接單、驗收及逾期 Mirage 私聊功能合併。
+- 當前步驟：合併提交已成功；核實 GitHub PR 與 main 生效文件，更新狀態及決策。
+- 已完成：PR #147 從草稿轉 Ready 後以 merge commit `3e2b8688c6dd89e0e46733c336bc5522e12cc71a` 合併至 main。main 現包含50個普通 owner +20個特色 owner、82份現有可接訂單與15份不可接單、按真實委託狀態觸發的 NEW CONTACT／驗收／逾期私訊。
+- 最近驗證：PR #147 merged=true（2026-11-14T05:16:51Z）；回讀 main 的 commissions.js 與 employers.js 確認載入 owner 映射和系統訊息；合併前 Story55 回歸1137/1137、MIRAGE Chromium UI run 43559101722 success。
+- 範圍：PR #147 共10個授權文件；PR #146 國際象棋仍 open、未合併。main 之外不再修改其他分支。
+- 殘餘風險：尚未查明正式 GitHub Pages 部署成功與否；沒有實體手機操作驗收；舊接受單保留既有 owner；D13 專項 workflow skipped。
+- 相關文件：src/story/d15-d55/commissions.js、src/story/d15-d55/employers.js、src/story/d04/contract.js、tests/mirage-70-employers.test.mjs、STATUS.md、DECISIONS.md。
+- 下一步：如有要求，再獨立驗證 GitHub Pages 發佈與手機端載入；不替用戶合併 PR #146。
 ## 2026-11-13：D23 Stockfish 实际棋局实现与验收
 - 当前任务：D21–D22 简短日常方向记录；D23 已确认22句 Mirage 聊天 + 真实国际象棋 AI。
 - 当前步骤：D23 已在独立分支完成定向实现，草稿 PR #146 供审核；main 尚未合并。

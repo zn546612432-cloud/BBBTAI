@@ -31,7 +31,7 @@ function seed({empty=false,failed=false}={}){
  }else s.nav.current={appId:'chess',route:'/',params:{}};
  return s;
 }
-const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHESS_CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
 const errors=[];
 async function open(state,{width,height}){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<=430,hasTouch:width<=430});
@@ -50,6 +50,30 @@ async function open(state,{width,height}){
  return {page,context};
 }
 try{
+ const storyState=seed({empty:true});
+ storyState.clock='22:16';storyState.story55.activeScene='d23-chess';
+ storyState.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
+ const story=await open(storyState,{width:390,height:844});
+ const login=story.page.locator('[data-form="mc-login"] button[type="submit"]');
+ if(await login.count())await login.click();
+ for(let index=0;index<story55Config(storyState).scenes['d23-chess'].length;index++){
+  const [who,text]=story55Config(storyState).scenes['d23-chess'][index];
+  if(who==='me'){
+   const input=story.page.locator('[data-form="mc-send"] input[name="text"]');
+   await input.fill(text);
+   await story.page.locator('[data-form="mc-send"] button[type="submit"]').click();
+  }
+  await story.page.waitForFunction(({key,index})=>{
+   const s=JSON.parse(localStorage.getItem(key));return s.story55.completed['d23-chess']||s.story55.scenes['d23-chess']?.index>index;
+  },{key,index},{timeout:15000});
+ }
+ await story.page.locator('[data-action="mc-chess-invite"]').click();
+ await story.page.locator('.board-grid').waitFor();
+ const routed=await story.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
+ assert.equal(routed.matches.length,1);assert.equal(routed.story55.completed.recognition,undefined);
+ await story.page.screenshot({path:out+'/mobile-story-card-to-board.png',fullPage:true});
+ await story.context.close();
+
  const mobile=await open(seed(),{width:390,height:844});
  await mobile.page.locator('.board-grid [data-action="square"]').first().waitFor();
  assert.equal(await mobile.page.locator('.board-grid [data-action="square"]').count(),64);
@@ -80,6 +104,8 @@ try{
  const failed=await open(seed({failed:true}),{width:390,height:844});
  await failed.page.locator('[data-action="retry-engine"]').waitFor();
  await failed.page.screenshot({path:out+'/mobile-engine-error.png',fullPage:true});
+ await failed.page.locator('[data-action="retry-engine"]').click();
+ await failed.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches.some(m=>m.history.at(-1)?.by==='stockfish'&&!m.engineError),key,{timeout:30000});
  await failed.context.close();
 
  assert.deepEqual(errors,[]);
