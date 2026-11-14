@@ -3,7 +3,7 @@ import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {taiRecognized} from './story55/state.js';
 import {
- isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,
+ isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,noteD23HangingPiece,
  finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,isChessRelated,
  prewrittenChessReply,chessReplyUsesLegalMoves
 } from './chess-lesson.js';
@@ -58,7 +58,10 @@ export function playMove(store,matchId,from,to,promotion='q'){
   match.history.push({from,to,san:move.san,by:'player'});
   match.turn=game.turn();
   s.events.push({type:'chess_move',matchId,move:move.san,by:'player',day:s.day,clock:s.clock});
-  if(isD23ChessLesson(match))noteD23PlayerMove(match,move,s.clock,game);
+  if(isD23ChessLesson(match)){
+   noteD23PlayerMove(match,move,s.clock,game);
+   if(!game.isGameOver())noteD23HangingPiece(match,chessFacts(match).hanging,s.clock);
+  }
   if(game.isGameOver()){
    match.status='finished';match.result=game.isCheckmate()?'player-win':'draw';
    finishD23ChessLesson(match,s.clock,game);
