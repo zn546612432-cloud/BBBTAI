@@ -61,9 +61,10 @@ export function tickD23MiragePostgame(s,now=Date.now()){
  if(!Number.isFinite(pg.nextAt)){pg.nextAt=now+CHAT_LIFECYCLE_POLICY.initialDelayMs;return true;}
  if(now<pg.nextAt)return false;
  const line=pg.aiOutbox.shift();
- appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:D23_MIRAGE_CONTACT,
+ const delivered=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:D23_MIRAGE_CONTACT,
   messageId:line.id,from:D23_MIRAGE_CONTACT,text:line.text,day:s.day,clock:s.clock,
   sentDate:date55(s.day),storyTag:'story55'});
+ if(delivered)delivered.aiGenerated=line.aiGenerated===true;
  pg.nextAt=pg.aiOutbox.length?now+CHAT_LIFECYCLE_POLICY.pauseMs:null;
  if(!pg.aiOutbox.length)pg.phase=pg.rounds>=MAX_TURNS?'closing':'chat';
  return true;

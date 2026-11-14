@@ -16,6 +16,7 @@ import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {offerD23ChessInvitation} from '../invitations.js';
 import {tickD23ChessLesson} from '../chess-lesson.js';
+import {tickD23MiragePostgame} from './d23-postgame.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
@@ -320,6 +321,7 @@ export function tickStory55(s){
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!['s55-event-recognition','s55-event-ending'].includes(e.id));if(completed(s,'wallet')&&!s.content.conversations.mirage.some(x=>x.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',avatar:'D',online:false,messages:[],unread:0});s.calendar={anchorDay:1,anchorDate:c.startDate};s.day=Math.min(55,Math.max(1,s.day));
+ tickD23MiragePostgame(s);
  tickQueuedStoryScenes55(s);
  tickD23ChessLesson(s);
  resolveGhostShare(s);
