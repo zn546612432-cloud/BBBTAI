@@ -103,6 +103,7 @@ export function prewrittenChessReply(match,text,facts){
   }
   return OTHER.find(([re])=>re.test(value))?.[1]||'其他的事待會再說。先好好下棋。';
  }
+ if(/(?:后翼|後翼)(?:棄兵|弃兵)|Queen['’]?s Gambit/i.test(value))return '後翼棄兵通常從白方 d4、接著 c4 開始，目的在爭奪中心。名字裡有棄兵，不代表你該隨便把兵送掉。';
  if(/馬|马|knight/i.test(value))return PIECE_LESSONS.n;
  if(/車|车|rook/i.test(value))return PIECE_LESSONS.r;
  if(/象|bishop/i.test(value))return PIECE_LESSONS.b;
