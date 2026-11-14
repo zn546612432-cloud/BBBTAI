@@ -296,3 +296,14 @@
 - 浏览器：新增 `.github/test-scripts/d21-d22-chat-browser.mjs`和对应专用 GitHub workflow，对 D21/D22 手机/桌面、未到时间与无效窗口取证。最初执行因跳日存档堆积历史通知，等待toast消失超时，系测试脚本问题；修改为屏蔽截图过程的无关toast后真实Chromium run43576886636成功，五张截图 artifact14107110509，业务程式未因失败调整。
 - 分支：`feature/d21-d22-confirmed-chat-20261114`，PR #148；本轮得到用户「補齊然後合併」授权。正式合并前确认最终 CI、PR 文件范围和 mergeable。
 - 剩余风险：本次没有审改 D20新增18句前段（它仍为后补稿），也没有判定 D29复赛与D23首次下棋冲突、D13电话专项验收；测试日跳存档可能保留跨日历史私聊/草稿，但不影响新增消息自身去重和渲染。
+
+
+## 2026-11-14：PR #148 D21–D22 已定稿群聊获准合并 main
+- 用户最新明确指示：「你先補齊聊天記錄然後合併」，本轮按此前已确认 D21 6句／D22 5句原文实现；不把尚未审核的 D20 新补18句冒充旧稿。
+- 已执行：PR #148 https://github.com/zn546612432-cloud/BBBTAI/pull/148，GitHub 回报 merged=true，merge commit `d3403c6b2dbb7b194eae0b474d228d3387fc62cd`。
+- main 回查确认 `src/story/d14-d24/content.json` 有 D21 18:42 `after-training` 6句，D22 15:20 `training-check` 5句，前后顺序自然；D20 monitoring 32句、D21 clothes 6句、D22 headache 7句保持原位，其余 D23 chess 不改。
+- 统一系统：沿用 `D14_D24_TRACKS` + `createConversationTrack`，已有统一时间、消息派发、存档、通知及去重；不另建聊天引擎，11句均为 NPC 群聊、不自动编造熙蒙点击发送。
+- 合并前最终 GitHub Story55 regression run43577155756：1153/1153 passed、0 failed；D21/D22真实 Chromium 浏览器 run43577155726成功，D23 Stockfish browser run43577155791成功；AI gateway、feature branches checks success；D13专用手机验收为 skipped，不能算通过。
+- 五张 D21/D22 浏览器证据来自之前成功的同脚本 run43576886636（artifact14107110509），包括手机 D21、手机 D22、桌面 D21、未触发、未知聊天。测试存档跳到 D21 会产生其他旧剧情通知，浏览器截图脚本只对这些无关弹窗做临时可见性过滤，不修改产品代码。
+- 范围：本轮 PR 仅修改 `content.json`、5个测试、browser QA 脚本及 workflow、`STATUS.md`、`DECISIONS.md`，未改 Mirage/70雇主、Ghost、KIRA/银行、D13电话、D29旧邀棋。
+- 余项：GitHub Pages main 部署状态仍需独立确认；真机 iPhone 未验收；旧 D20 18句仍为新写文案；D13专项与 D29 邀棋逻辑留待后续。
