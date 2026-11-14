@@ -51,6 +51,9 @@ async function open(state,{width,height}){
 }
 try{
  const storyState=seed({empty:true});
+ // D23 is reached after the D06 wallet introduction. Restoring that real
+ // prerequisite lets the runtime create Ouroboros; do not fabricate a contact.
+ storyState.story55.completed.wallet={day:6,clock:'15:00'};
  storyState.clock='22:16';storyState.story55.activeScene='d23-chess';
  storyState.nav.current={appId:'mirage',route:'/chat/s55-ouroboros',params:{}};
  const story=await open(storyState,{width:390,height:844});
