@@ -33,8 +33,22 @@ const OTHER=[
 const CHESS_WORDS=/棋|對局|对局|棋盤|棋盘|走法|走哪|怎麼走|怎么走|下一步|這步|这步|落子|開局|开局|棄兵|弃兵|吃子|升變|升变|過路兵|过路兵|易位|將軍|将军|將死|将死|逼和|和棋|認輸|认输|國王|国王|皇后|后翼|棋子|[兵馬马象車车后王]|[a-h][1-8]|checkmate|stalemate|castle|bishop|knight|queen|rook|pawn/i;
 const FOLLOWUP=/什麼意思|什么意思|為什麼|为什么|不懂|沒懂|没懂|再講|再讲|你剛才|你刚才|你剛剛|你刚刚/;
 export const isChessRelated=text=>CHESS_WORDS.test(String(text||''))||FOLLOWUP.test(String(text||''));
+
 const stableId=(match,key)=>'d23-chess-'+match.id+'-'+key;
+export const CHESS_PIECE_NAMES=Object.freeze({p:'兵',n:'馬',b:'象',r:'車',q:'后',k:'王'});
+export const chessPieceName=piece=>CHESS_PIECE_NAMES[piece]||'棋子';
+// One saved outbox per existing match. The existing Story55 heartbeat is its
+// sole delivery clock, and the persisted chat remains the only visible history.
+export function enqueueChessTaiReply(match,text,clock,key,{source='preset'}={}){
+ if(!isD23ChessLesson(match))return false;
+ beginD23ChessLesson(match,clock);
+ const id=stableId(match,key),lesson=match.lesson;
+ if((match.chat||[]).some(m=>m.id===id)||(lesson.outbox||[]).some(m=>m.id===id))return false;
+ (lesson.outbox??=[]).push({id,from:'tai',text,time:clock,authored:source!=='ai',aiGenerated:source==='ai',mode:'text'});
+ return true;
+}
 export function appendChessTutorLine(match,text,clock,key){
+ if(isD23ChessLesson(match)&&!String(key).startsWith('opening-'))return enqueueChessTaiReply(match,text,clock,key);
  const id=stableId(match,key);
  if((match.chat||[]).some(m=>m.id===id))return false;
  (match.chat??=[]).push({id,from:'tai',text,time:clock,authored:true,mode:'text'});
@@ -43,7 +57,7 @@ export function appendChessTutorLine(match,text,clock,key){
 export function beginD23ChessLesson(match,clock){
  if(!isD23ChessLesson(match)||match.lesson?.started)return false;
  match.lesson={started:true,teaching:true,seenPieces:[],reminderCount:0,reminderAtPly:-1,finishedNotified:false,
-  openingIndex:0,openingNextAt:null,openingDone:false};
+  openingIndex:0,openingNextAt:null,openingDone:false,outbox:[],outboxNextAt:null,exitAfterAt:null};
  // Start only the lesson state here. The established Story55 tick delivers
  // the actual lines after the accepted chess board is open, never beforehand.
  return true;
@@ -57,30 +71,51 @@ export function tickD23ChessLesson(s,now=Date.now()){
  if(nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/'))return false;
  const id=nav.route.slice('/match/'.length);
  const match=s.matches?.find(m=>m.id===id);
- if(!isD23ChessLesson(match)||match.status!=='active')return false;
+ if(!isD23ChessLesson(match))return false;
  if(!match.lesson?.started)beginD23ChessLesson(match,s.clock);
  const lesson=match.lesson;
- // Previously accepted matches already contained every opening line. Never
- // replay those messages when loading an earlier save.
+ // Older saves with an already-displayed introduction never replay it.
  if(!Number.isInteger(lesson.openingIndex)){
   lesson.openingIndex=OPENING.filter((_,i)=>(match.chat||[]).some(m=>m.id===stableId(match,'opening-'+i))).length;
  }
- if(lesson.openingIndex>=OPENING.length){
-  if(lesson.openingDone)return false;
-  lesson.openingDone=true;lesson.openingNextAt=null;lesson.teaching=false;
+ if(match.status==='active'&&!lesson.openingDone&&lesson.openingIndex<OPENING.length){
+  if(!Number.isFinite(lesson.openingNextAt)){
+   lesson.openingNextAt=now+Math.max(1100,CHAT_LIFECYCLE_POLICY.initialDelayMs);
+   return true;
+  }
+  if(now<lesson.openingNextAt)return false;
+  const index=lesson.openingIndex;
+  appendChessTutorLine(match,OPENING[index],s.clock,'opening-'+index);
+  lesson.openingIndex=index+1;
+  lesson.openingNextAt=index+1<OPENING.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
+  if(index+1===OPENING.length){lesson.openingDone=true;lesson.teaching=false;}
   return true;
  }
- if(!Number.isFinite(lesson.openingNextAt)){
-  lesson.openingNextAt=now+Math.max(1100,CHAT_LIFECYCLE_POLICY.initialDelayMs);
+ if(!lesson.openingDone){lesson.openingDone=true;lesson.openingNextAt=null;}
+ const pending=lesson.outbox||[];
+ if(pending.length){
+  if(!Number.isFinite(lesson.outboxNextAt)){
+   lesson.outboxNextAt=now+Math.max(1200,CHAT_LIFECYCLE_POLICY.initialDelayMs);
+   return true;
+  }
+  if(now<lesson.outboxNextAt)return false;
+  const line=pending.shift();
+  line.time=s.clock;
+  if(!(match.chat||[]).some(m=>m.id===line.id))(match.chat??=[]).push(line);
+  lesson.outboxNextAt=pending.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
+  if(!pending.length){
+   lesson.teaching=false;
+   if(match.status==='finished'&&lesson.autoExitWhenDelivered)lesson.exitAfterAt=now+2600;
+  }
   return true;
  }
- if(now<lesson.openingNextAt)return false;
- const line=lesson.openingIndex;
- appendChessTutorLine(match,OPENING[line],s.clock,'opening-'+line);
- lesson.openingIndex=line+1;
- lesson.openingNextAt=line+1<OPENING.length?now+Math.max(3100,CHAT_LIFECYCLE_POLICY.pauseMs):null;
- if(line+1===OPENING.length){lesson.openingDone=true;lesson.teaching=false;}
- return true;
+ // A finished game stays onscreen until the LAST delivered taunt/recap is read.
+ if(match.status==='finished'&&lesson.autoExitWhenDelivered&&Number.isFinite(lesson.exitAfterAt)&&now>=lesson.exitAfterAt){
+  s.nav.current={appId:'chess',route:'/',params:{}};
+  lesson.autoExitWhenDelivered=false;lesson.exitAfterAt=null;
+  return true;
+ }
+ return false;
 }
 export function noteD23PlayerMove(match,move,clock,game){
  if(!isD23ChessLesson(match)||match.status!=='active')return;
@@ -110,6 +145,8 @@ export function finishD23ChessLesson(match,clock,game){
  if(match.lesson.finishedNotified)return false;
  match.lesson.finishedNotified=true;
  match.lesson.teaching=false;
+ match.lesson.autoExitWhenDelivered=true;
+ match.lesson.outbox=[];match.lesson.outboxNextAt=null;
  let texts;
  if(game.isCheckmate())texts=match.result==='player-win'
    ?['將死了。這回算你贏。','至少你學會先看棋盤了，別太得意。']
@@ -132,6 +169,8 @@ export function resignD23ChessLesson(match,clock){
  if(match.lesson.finishedNotified)return false;
  match.lesson.finishedNotified=true;
  match.lesson.teaching=false;
+ match.lesson.openingDone=true;match.lesson.openingIndex=OPENING.length;
+ match.lesson.outbox=[];match.lesson.outboxNextAt=null;match.lesson.autoExitWhenDelivered=true;
  ['這就認輸了？','我還以為你至少能讓我費點力氣。','行了，下課。下次先看好你的王，nya。']
   .forEach((text,i)=>appendChessTutorLine(match,text,clock,'resigned-'+i));
  return true;
