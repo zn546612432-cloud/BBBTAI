@@ -250,6 +250,25 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
  }
  return false;
 }
+// A saved scene index is the sole proof that its player SEND actually happened.
+// Quarantine old D23 scripted bubbles beyond that index instead of displaying
+// sent-looking messages before the user presses Send. Preserve originals in save.
+function quarantineUnsentD23Bubbles(s){
+ const q=s.story55?.scenes?.['d23-chess'],limit=q?.index||0;
+ if(s.story55?.completed?.['d23-chess'])return false;
+ const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
+ if(!chat?.messages?.length)return false;
+ const stale=chat.messages.filter(m=>{
+  const id=/^s55-d23-chess-(\\d+)$/.exec(String(m.id||''));
+  return id&&Number(id[1])>=limit;
+ });
+ if(!stale.length)return false;
+ const backup=(s.story55.d23QuarantinedMessages??=[]),known=new Set(backup.map(m=>m.id));
+ for(const m of stale)if(!known.has(m.id))backup.push(structuredClone(m));
+ const removed=new Set(stale.map(m=>m.id));
+ chat.messages=chat.messages.filter(m=>!removed.has(m.id));
+ return true;
+}
 export function tickStory55(s){
  if(!isStory55(s))return;
  expireGhostShare(s);
@@ -257,6 +276,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ quarantineUnsentD23Bubbles(s);
  syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
