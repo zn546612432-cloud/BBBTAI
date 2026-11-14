@@ -281,3 +281,10 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 測試：Story55 regression run43581533853 1161/1161，0 fail；D23–D25 Weather/SMS Chromium run43581533918 success，檢查手機 D23 天氣、D24/D25 風球時間切換、SMS 三條與胡楓實際圖片；artifact14108273728 六張圖已下載目檢（無解鎖遮蔽）。D23 Chess browser run43581533863 success；AI gateway branch checks success。
 - PR：#150 https://github.com/zn546612432-cloud/BBBTAI/pull/150 （draft / 未合併 main）。等對齊本輪授權及最終 CI 結果再決定合併；不把 PR 測試成功冒稱 Pages 正式版已更新。
 - 另案：D13電話 mobile acceptance skipped；Tai Ghost QA 仍需最終查驗；短信三語字句為本輪原創參照氣象局歷史，並非原始官方發送內容。
+
+
+## 2026-11-14：PR #150 合併結果（取代同日「進行中／草稿」狀態）
+- 使用者明確指示「合併」，PR #150 已標記 Ready for Review 並成功合併 main，merge SHA `94c0ee18b133f15e7caff77dfa4c6a1cd12904a4`。
+- main 回查已包含繁體 `胡楓` 原始頭像映射、D24/D25 風球定時資料及 Weather 畫面標示；D23 遊戲原聊天不改。
+- 合併前最後一個 PR head `dc36e2a32a511aaf2bd5bf6eccfd5444d07b9ba8` 的所有實際運行檢查均 success：Story55 1161/1161、D23-D25 Weather/SMS browser、D23 chess browser、Tai Ghost mobile browser、AI gateway、feature branches。D13 wallet phone mobile acceptance skipped，不算通過。
+- GitHub Pages 正式站點最新發佈成功與否仍需獨立查驗，不能由「合併成功」直接推斷。
