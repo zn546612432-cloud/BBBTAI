@@ -157,3 +157,12 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 阻塞风险：新联系人消息还没有实现，也未完成测试/截图；PR #146 真实 Stockfish 功能保持 Draft；D29 原棋局触发仍需另核；不声称代码已完成。
 - 相关文件：STATUS.md、DECISIONS.md、src/apps/mirage/data.js、src/apps/mirage/contacts-seed.js、src/story/d15-d55/commissions.js、src/story/d04/contract.js、src/story/d14-d24/content.json、src/services/messaging/phone-messages.js。
 - 最近验证：GitHub connector 回读各文件定位状态转移和业主字段，本轮未提交运行时代码或执行新测试。
+
+
+## 2026-11-14：MIRAGE 接單英文系統提示确认
+- 当前任务：D21–D22 和后续委托联系人随接单逐步增长。
+- 当前步骤：用户新增并确认 Mirage 接单成功系统消息 `── NEW CONTACT ──`；仅更新设计记录，尚未接入 runtime。
+- 已确认：每次真实成功接单后，雇主会话先出现一条 system 分隔消息，再开始雇主私信；每 orderId 一次，重复载入不重复发送。旧雇主复用原会话但新订单仍按用户要求显示此系统讯息。
+- 下一步：审核雇主在接单/结单/失败三种状态的候选私聊文案，然后仅在已有 OPEN→ACCEPTED、COMPLETED、EXPIRED 触发点最小实现。
+- 风险：对同一旧联系人显示 NEW CONTACT 属于用户明确要求的固定文字，不代表创建了重复联系人。尚无实现测试或 UI 截图。
+- 最近验证：核对状态文件与决策记录后按原句写入，本轮未改代码或合并 PR #146。
