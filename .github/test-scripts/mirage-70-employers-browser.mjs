@@ -74,6 +74,8 @@ try{
  const empty=await open(scenario('empty'),{width:390,height:844});
  await empty.page.locator('.mc-online-list').waitFor();
  assert.equal(await empty.page.locator('#screen-layer .mc-contact [data-id="mc-employer-rancor"]').count(),0,'employer not yet contacted');
+ // Story inbox notices may arrive after login; keep screenshot free of transient overlays.
+ await empty.page.waitForTimeout(4600);
  await empty.page.screenshot({path:output+'/mobile-before-first-order.png',fullPage:true});
  await empty.context.close();
 
