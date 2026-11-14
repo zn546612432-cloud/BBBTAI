@@ -2,12 +2,13 @@
 
 ## 2026-11-14 象棋＋已確認文案整合
 - 當前任務：用戶要求象棋與文案同一輪實施；基準 main 6ec7b42，接續 PR #146 b107ed3。
-- 當前步驟：第3步實施及相關Node驗收通過；第4步瀏覽器驗收轉GitHub CI。
+- 當前步驟：第4步定向驗收通過；第5步交付PR #146與五張已人工核對截圖。
 - 已完成：隔離 worktree 合入 PR #146；衝突只在狀態/決策文檔，保留兩側記錄，功能檔自動整合。
-- 下一步：更新PR #146開發分支並執行新增的D23原生Send→邀請卡→棋盤及引擎錯誤重試瀏覽器驗收。
+- 下一步：用戶審核PR #146後決定是否合併與發布。
 - 阻塞：D20 10:45 分工上半段查無原文，本輪只實施14句已確認稿；D21–D22 未定稿保留。
 - 相關文件：象棋 app/service、invitations、D14–D24 content、chess-display/d23-chess-story tests、STATUS、DECISIONS。
-- 最近驗證：九個相關測試檔全部通過（dot reporter，exit 0）；Pages構建成功，92條路徑重寫至/BBBTAI/releases/af3fe9260aad1fd3/；story audit 25 apps/18 checks通過。本機Chromium因socket() Operation not permitted無法啟動，未聲稱本輪瀏覽器成功，交由已有GitHub Chromium工作流驗證。
+- 最近驗證：本地57/57相關測試通過；GitHub Story55 regression run43566439994 success（同組測試前一head實測1148/1148）；Pages構建成功（92條路徑重寫），story audit 25 apps/18 checks通過；D23 Chromium run43566440100 success，artifact14102647102，五張桌面/手機/邀棋跳轉/空/錯截圖已下載人工核對，通知遮罩清除、錯誤重試按鈕可見；原生Send→卡片→棋盤、真Stockfish落子、錯誤重試均通過。受測head52198d20，後續只補文檔。
+- 保留與限制：70雇主run43566439988、AI網關run43566439981、分支檢查run43566440057 success；Ghost run43566439985尚在進行，D13 run43566440001 skipped，不列為本輪通過；沒有合併main/正式發布，沒有實體iPhone測量。
 
 更新：2026-11-13
 
