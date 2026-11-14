@@ -237,6 +237,15 @@ try{
  assert.equal(entered.rounds,0);assert.ok(entered.AI>=1);
  assert.equal(entered.farewell,false,'board completion never releases the next day');
  await capture(mobile.page,'mobile-d23-mirage-postgame.png');
+ // A pending earlier Story55 scene must not steal a genuine D23 free-chat Send.
+ const chatComposer=mobile.page.locator('[data-form="mc-send"] input[name="text"]');
+ await chatComposer.fill('你剛才是在欺負新手嗎？');
+ await mobile.page.locator('[data-form="mc-send"] button[type="submit"]').click();
+ await mobile.page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k)),pg=s.story55.d23Postgame;
+  return pg?.rounds===1&&pg.phase==='chat'&&s.content.conversations.mirage
+   .find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-d23-mirage-reply-1-0');
+ },key,{timeout:27000});
  await mobile.page.locator('[data-action="mc-d23-finish-conversation"]').click();
  await mobile.page.waitForTimeout(3600);
  const afterD23Farewell=await mobile.page.evaluate(k=>{
