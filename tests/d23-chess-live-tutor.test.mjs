@@ -340,7 +340,8 @@ test('capture and terminal feedback are attached once to actual moves, and resig
  assert.deepEqual(match().feedbackEvents.map(x=>[x.id,x.kind,x.square,x.piece,x.color]),[['capture-3','capture','d5','p','b']]);
  const restored=structuredClone(match());recordChessFeedback(restored,{captured:'p',color:'w',to:'d5'});assert.equal(restored.feedbackEvents.length,1);
  resignChessMatch(store,matchId);assert.equal(match().feedbackEvents.at(-1).kind,'loss');
- const html=render({store},{route:'/match/'+matchId});assert.match(html,/結束對局/);assert.doesNotMatch(html,/data-form="chess-chat"/);
+ const html=render({store},{route:'/match/'+matchId});assert.doesNotMatch(html,/data-form="chess-chat"/);
+ assert.doesNotMatch(html,/data-action="end-match"/,'wait for all terminal presets before exit');
 });
 
 test('saved chess replies are due in the shared message heartbeat even when game time is frozen',async()=>{

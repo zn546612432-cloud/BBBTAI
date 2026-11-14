@@ -104,6 +104,19 @@ async function bounded(promise,ms){
 }
 // This is the only authorized Mirage AI exception. Global ordinary Mirage AI
 // remains disabled; real sends, history and permissions use its original path.
+// Pure commit path shared by real AI and deterministic regression tests.
+export function commitD23MirageResponse(s,{intro,round,sourceId,replies,ai=false}){
+ const pg=d23MiragePostgame(s);
+ if(!pg||pg.phase!==(intro?'intro':'awaiting')||pg.rounds!==round||
+    (!intro&&pg.lastPlayerId!==sourceId))return false;
+ if(!Array.isArray(replies)||!replies.length||replies.length>2)return false;
+ const c=s.content.conversations.mirage?.find(c=>c.id===D23_MIRAGE_CONTACT);
+ if(!c)return false;
+ pg.aiOutbox=replies.map((text,index)=>({id:'s55-d23-mirage-'+(intro?'intro':'reply-'+round)+'-'+index,
+  text,aiGenerated:ai,sourceMessageId:sourceId}));
+ pg.nextAt=null;pg.phase=intro?'intro-delivering':'reply-delivering';
+ return true;
+}
 export function replyToD23Mirage(store){
  const first=store.get(),pg=d23MiragePostgame(first);
  if(!pg||!validChat(first)||!['intro','awaiting'].includes(pg.phase))return Promise.resolve(false);
@@ -134,14 +147,8 @@ export function replyToD23Mirage(store){
   let changed=false;
   store.update(s=>{
    const live=d23MiragePostgame(s);
-   if(!live||live.matchId!==matchId||live.phase!==(intro?'intro':'awaiting')||
-      live.rounds!==round||!intro&&live.lastPlayerId!==sourceId)return;
-   const channel=s.content.conversations.mirage?.find(c=>c.id===D23_MIRAGE_CONTACT);
-   if(!channel)return;
-   live.aiOutbox=replies.map((text,index)=>({id:'s55-d23-mirage-'+(intro?'intro':'reply-'+round)+'-'+index,
-    text,aiGenerated:ai,sourceMessageId:sourceId}));
-   live.nextAt=null;live.phase=intro?'intro-delivering':'reply-delivering';
-   changed=true;
+   if(live?.matchId!==matchId)return;
+   changed=commitD23MirageResponse(s,{intro,round,sourceId,replies,ai});
   });
   return changed;
  })().finally(()=>waitingAI.delete(store));
