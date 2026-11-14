@@ -58,16 +58,20 @@ try{
    assert.equal(after.story55.completed['d13-wallet-transfer'],undefined);
   }
   if(scenario.short)assert.equal(repeated.shortCharge.elapsedMs,after.shortCharge.elapsedMs);
+  console.log(scenario.name+' background and duplicate resume verified at '+after.clock);
+  await page.screenshot({path:`qa/background-clock/${scenario.name}.png`});
   if(scenario.name==='normal'){
    await page.locator('.unlock-hint').click({force:true});
    await page.locator('.passcode-grid').waitFor();
    for(const digit of '0816')await page.locator(`[data-action="passcode-key"][data-key="${digit}"]`).click({force:true});
+   await page.clock.runFor(300); // Complete the existing 260ms unlock transition.
    await page.locator('.home-screen').waitFor();
    await page.locator('[data-action="open-app"][data-app="wechat"]').click({force:true});
+   const readingStart=await saved();
    await page.clock.runFor(60000);
    const reading=await saved();
    const minute=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
-   assert.equal(minute(reading.clock)-minute(after.clock),5,'foreground WeChat stays slow');
+   assert.equal(minute(reading.clock)-minute(readingStart.clock),5,'foreground WeChat stays slow');
   }
   assert.deepEqual(errors,[]);await page.screenshot({path:`qa/background-clock/${scenario.name}.png`});
   results.push({scenario:scenario.name,before:before.clock,after:after.clock,battery:after.batteryPercent,duplicateResume:'no change',pageErrors:errors});
