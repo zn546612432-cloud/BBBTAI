@@ -1,0 +1,44 @@
+name: D23 chess tutor validation
+
+on:
+  push:
+    branches:
+      - feature/d23-live-chess-tutor-20261114
+  pull_request:
+    paths:
+      - 'src/apps/chess/**'
+      - 'src/services/chess*'
+      - 'src/services/invitations.js'
+      - 'tests/chess*'
+      - 'tests/d23-chess*'
+      - '.github/workflows/d23-chess-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  chess-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Parse changed chess source
+        run: |
+          node --check src/apps/chess/index.js
+          node --check src/services/chess.js
+          node --check src/services/chess-lesson.js
+          node --check src/services/chess-stockfish.js
+          node --check tests/d23-chess-live-tutor.test.mjs
+      - name: Chess and D23 targeted regression
+        run: node --test tests/d23-chess-live-tutor.test.mjs tests/d23-chess-story.test.mjs tests/chess-stockfish-bridge.test.mjs tests/chess-display.test.mjs
+      - name: All existing tests
+        run: npm test
+      - name: Story integration audit
+        run: npm run story:audit
+      - name: Production-size build
+        run: npm run build:pages
