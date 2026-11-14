@@ -24,6 +24,9 @@ async function open(s,viewport={width:390,height:844}){
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('show-passcode'));
+ // The unlocked native phone can still be covered by a fading passcode
+ // transition even after show-passcode is removed from the DOM class.
+ await page.waitForTimeout(1250);
  await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
  return {context,page};
 }
