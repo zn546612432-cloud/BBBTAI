@@ -241,3 +241,13 @@ D17 缺少具体核对结果，禁止无授权续写。没有修改 D17。
 - 相關文件：src/story/d14-d24/content.json、tests/d23-chess-story.test.mjs、src/services/chess-stockfish.js、STATUS.md、DECISIONS.md。
 - 剩餘風險：Ghost 遠端操控 QA 於合併前仍在進行中、D13 phone 專項 skipped；未查明 Pages 最新部署結果、未進行實機 iPhone 測試，D29 需獨立核對與 D23 初局的連貫性。
 - 下一步：確認 GitHub Pages 最新自動發佈，必要時定向修復部署失敗而非修改已定稿對話。
+
+
+## 2026-11-14：补齐 D21／D22 共11句确认群聊并完成专项目标测试
+- 当前任务：按用户明确指示补齐 D21/D22 缺失聊天，验证后合并 main。
+- 当前阶段：独立 PR #148 已创建，11句原文已写入 runtime 原有 content.json（D21 18:42 六句 / D22 15:20 五句），保留 D21 13:07 clothes、D22 21:38 headache、D20 32句与 D23 Chess 主线。尚未合并前不能宣称上线。
+- 一個系统：`D14_D24_TRACKS` 对新增节点沿用 `createConversationTrack` 的自动发送、时间/通知/存档/去重；没有第二套引擎，没有新增 player 自动发言。
+- 文件：`src/story/d14-d24/content.json`、`tests/d21-d22-approved-chats.test.mjs`、`.github/test-scripts/d21-d22-chat-browser.mjs`、`.github/workflows/d21-d22-chat-browser.yml`、STATUS.md、DECISIONS.md。
+- 最近验证：Story55 regression 1153/1153 pass/0 fail（run43576534104）；专用 D21 D22 Chromium browser run43576886636 success，五张手机、桌面、未触发、错误截图 artifact14107110509 已下载并查看；最初 QA toast 队列等待失败修复于测试脚本，未改业务逻辑。
+- 合并门槛：本分支最后一次 CI 全绿、PR 改动文件限定本次聊天/测试/文档、无合并冲突；届时按用户此轮授权合并 main 并回读。
+- 阻塞及剩余风险：D13 手机电话专项仍 skipped（未由本PR处理）；Ghost远程控制与 D29 邀棋另案；Pages 主站发布必须按正式工作流检查，不能把合并自动等同已经部署。
