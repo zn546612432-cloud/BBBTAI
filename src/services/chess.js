@@ -3,7 +3,7 @@ import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,
- finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,
+ finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,isChessRelated,
  prewrittenChessReply,chessReplyUsesLegalMoves
 } from './chess-lesson.js';
 import {Chess} from 'chess.js';
@@ -155,7 +155,7 @@ async function generateMatchReply(store,matchId){
   });
   // A second interjection during the same lesson move receives no duplicate
   // scolding; chess-related questions remain answerable.
-  if(canned===null&&!(await import('./chess-lesson.js')).isChessRelated(lastText))return false;
+  if(canned===null&&!isChessRelated(lastText))return false;
  }
  let parts=[];
  if(canned!==null)parts=canned?[{text:canned}]:[];
