@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {offerD23ChessInvitation,receiveInvitation,startAcceptedInvitation} from '../src/services/invitations.js';
-import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame} from '../src/services/chess.js';
+import {chessFacts,playMove,applyStockfishMove,postMatchMessage,replyToMatch,resignChessMatch,loadGame,maybeTaiChessAside} from '../src/services/chess.js';
 import {chessReplyUsesLegalMoves,prewrittenChessReply,tickD23ChessLesson} from '../src/services/chess-lesson.js';
 import {Chess} from 'chess.js';
 import {render} from '../src/apps/chess/index.js';
@@ -65,7 +65,7 @@ test('ChessFacts reports real White and Black moves, threatened pieces and verif
  const {store,matchId,match}=d23Store();
  playMove(store,matchId,'e2','e4');
  assert.equal(match().lesson.seenPieces.includes('p'),true);
- assert.equal(match().chat.filter(m=>m.text.includes('第一次可以走兩格')).length,1);
+ assert.equal(match().lesson.outbox.filter(m=>m.text.includes('第一次可以走兩格')).length,1);
  let facts=chessFacts(match());
  assert.equal(facts.lastMove.actor,'熙蒙');
  assert.equal(facts.lastMove.san,'e4');assert.equal(facts.lastMove.from,'e2');assert.equal(facts.lastMove.to,'e4');
@@ -93,18 +93,19 @@ test('threatened, hanging, tactical and 3 candidate moves come from a verifiable
  for(const candidate of facts.recommendations)assert.ok(facts.legalMoves.some(m=>m.san===candidate.san));
  for(const tactic of facts.tactics)assert.ok(facts.legalMoves.some(m=>m.san===tactic.san));
 });
-test('an undefended attacked piece produces a one-time implicit Tai warning',()=>{
+test('a genuinely hanging major piece triggers a concrete one-time Tai warning',()=>{
  const {store,matchId,match}=d23Store();
  store.update(s=>{
   const m=s.matches.find(m=>m.id===matchId),g=new Chess();
-  g.loadPgn('1. e4 d5');
+  g.loadPgn('1. e4 e5 2. Qh5 Nf6');
   m.pgn=g.pgn();
   m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
  });
- playMove(store,matchId,'d2','d4');
- assert.equal(match().chat.filter(x=>x.text.includes('被盯上了')).length,1);
- assert.ok(match().lesson.seenPieces.includes('p'));
+ playMove(store,matchId,'f2','f4');
+ assert.equal(match().lesson.outbox.filter(x=>x.text.includes('你的后')&&x.text.includes('h5')).length,1);
+ assert.equal(match().lesson.warnedThreats.filter(x=>x==='h5:q').length,1);
 });
+
 test('first actual move of each of the six piece types has a one-time authored tutorial',()=>{
  const cases=[
   ['p','','e2','e4','兵通常只能向前'],
@@ -123,7 +124,7 @@ test('first actual move of each of the six piece types has a one-time authored t
   });
   playMove(store,matchId,from,to);
   assert.equal(match().lesson.seenPieces.includes(type),true,type);
-  assert.equal(match().chat.filter(m=>m.text.includes(expected)).length,1,type);
+  assert.equal(match().lesson.outbox.filter(m=>m.text.includes(expected)).length,1,type);
   assert.equal(match().history.at(-1).by,'player',type);
  }
 });
@@ -179,13 +180,25 @@ test('resignation is idempotent, has Tai taunts, persists result, and permanentl
  playOpening(store,matchId);
  assert.equal(resignChessMatch(store,matchId),true);
  assert.equal(match().status,'finished');assert.equal(match().result,'player-resigned');
- assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
+ assert.equal(match().chat.filter(m=>m.from==='tai').length,3,'endings do not arrive all at once');
+ assert.equal(match().lesson.outbox.length,3,'three taunts are queued in the existing match');
  assert.equal(resignChessMatch(store,matchId),false);
+ assert.equal(match().lesson.outbox.length,3,'resignation cannot enqueue duplicates');
+ store.update(s=>tickD23ChessLesson(s,10000));
+ store.update(s=>tickD23ChessLesson(s,11200));
+ assert.equal(match().chat.filter(m=>m.from==='tai').length,4,'first taunt only');
+ store.update(s=>tickD23ChessLesson(s,14300));
+ assert.equal(match().chat.filter(m=>m.from==='tai').length,5);
+ store.update(s=>tickD23ChessLesson(s,17400));
  assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
+ assert.equal(match().lesson.outbox.length,0);
+ assert.match(match().chat.at(-1).text,/下課/);
  postMatchMessage(store,matchId,'親親');
  assert.equal(await replyToMatch(store,matchId),false);
  assert.equal(match().chat.at(-1).from,'player');
  assert.equal(store.get().events.filter(e=>e.type==='chess_resigned').length,1);
+ store.update(s=>tickD23ChessLesson(s,20000));
+ assert.equal(store.get().nav.current.route,'/','leave the board only after the final taunt is delivered');
 });
 test('checkmate ends all further chess replies, with a chess-accurate finish',async()=>{
  const {store,matchId,match}=d23Store();
@@ -198,4 +211,62 @@ test('checkmate ends all further chess replies, with a chess-accurate finish',as
  assert.equal(facts.checkmate,true);assert.equal(facts.legalMoves.length,0);
  postMatchMessage(store,matchId,'你在嗎');
  assert.equal(await replyToMatch(store,matchId),false);
+});
+
+test('when a rook takes the White queen, the fallback says the actual pieces and capture square',async()=>{
+ const {store,matchId,match}=d23Store();
+ store.update(s=>{
+  const m=s.matches.find(x=>x.id===matchId),game=new Chess();
+  game.loadPgn('1. Nc3 c5 2. Nd5 e6 3. Nc7+ Qxc7 4. c4 Nf6 5. Nf3 a5 6. Qc2 a4 7. Qxa4');
+  m.pgn=game.pgn();
+  m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
+ });
+ const fen=loadGame(match()).fen();
+ assert.equal(applyStockfishMove(store,matchId,fen,'a8a4'),'Rxa4');
+ const line=match().lesson.outbox.find(m=>m.text.includes('吃掉了你的后'));
+ assert.ok(line,'captured queen must be named in an authored event');
+ assert.match(line.text,/車.*a4.*后/);
+ const prior=globalThis.fetch;
+ globalThis.fetch=async()=>{throw Error('gateway offline');};
+ try{
+  postMatchMessage(store,matchId,'看不懂');
+  assert.equal(await replyToMatch(store,matchId),true);
+  assert.match(match().chat.at(-1).text,/后.*車.*a4/);
+  assert.doesNotMatch(match().chat.at(-1).text,/合法選項|例如 Nd/);
+  assert.equal(match().chat.at(-1).aiGenerated,false);
+ }finally{globalThis.fetch=prior;}
+});
+test('an available gateway is used directly for chess understanding, not short-circuited by an AI status probe',async()=>{
+ const {store,matchId,match}=d23Store();
+ const requests=[],prior=globalThis.fetch;
+ globalThis.fetch=async(url,opts)=>{
+  requests.push({url,body:opts?.body?JSON.parse(opts.body):null});
+  return {ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'我剛剛走的是兵。看清楚 e5，下一步輪到你。',mode:'text'}]})})};
+ };
+ try{
+  postMatchMessage(store,matchId,'看不懂');
+  assert.equal(await replyToMatch(store,matchId),true);
+  assert.equal(requests.length,1);
+  assert.match(requests[0].body.messages[0].content,/ChessFacts/);
+  assert.match(requests[0].body.messages[0].content,/legalSAN/);
+  assert.equal(match().chat.at(-1).aiGenerated,true);
+ }finally{globalThis.fetch=prior;}
+});
+test('important capture can add an optional model-written Tai aside without bypassing the shared outbox',async()=>{
+ const {store,matchId,match}=d23Store();
+ store.update(s=>{
+  const m=s.matches.find(x=>x.id===matchId),g=new Chess();
+  g.loadPgn('1. e4 d5 2. exd5');
+  m.pgn=g.pgn();
+  m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
+ });
+ const fen=loadGame(match()).fen();
+ assert.equal(applyStockfishMove(store,matchId,fen,'d8d5'),'Qxd5');
+ const prior=globalThis.fetch;
+ globalThis.fetch=async()=>({ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'你是只看自己想走的那步？',mode:'text'}]})})});
+ try{
+  assert.equal(await maybeTaiChessAside(store,matchId),true);
+  assert.equal(await maybeTaiChessAside(store,matchId),false);
+  assert.ok(match().lesson.outbox.some(x=>x.aiGenerated===true&&x.text.includes('你是只看')));
+ }finally{globalThis.fetch=prior;}
 });
