@@ -4,7 +4,7 @@ import {deliverAuthoredIncoming} from './authored-incoming.js';
 export {isConversationOpen} from './conversation-open.js';
 import {actorName} from '../../editor/conversations/model.js';
 import {dateParts} from '../calendar.js';
-import {messageDate} from './timestamps.js';
+import {messageDate,messageClock} from './timestamps.js';
 // Do not expose future-authored messages in developer timeline previews.
 const excludedBrotherSenders=new Set(['father','fulongsheng','傅隆生','tai','xitai','陈熙泰','熙泰','ouroboros']);
 export function visibleMessages(c,s){
@@ -13,8 +13,8 @@ export function visibleMessages(c,s){
   if(c?.id==='group'&&excludedBrotherSenders.has(String(m.from||'').toLowerCase()))return false;
   if(m.schedule&&m.schedule.mode!=='immediate'&&!m.delivery)return false;
   if(!s||!today||(!m.sentDate&&!Number.isInteger(m.day)))return true;
-  const date=messageDate(m,s);
-  return date<today||(date===today&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(m.time||''))||m.time<=s.clock));
+  const date=messageDate(m,s),clock=m.schedule?.mode==='chat-delay'&&m.delivery?messageClock(m,s):m.time;
+  return date<today||(date===today&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(clock||''))||clock<=s.clock));
  });
 }
 
@@ -42,7 +42,7 @@ export class MessageDelivery {
    const c=next.content.conversations[item.channel]?.find(c=>c.id===item.conversationId),m=c?.messages.find(m=>m.id===item.id);if(!m||m.delivery)continue;
    // Fast-forward can cross several authored timestamps in one tick. Keep the
    // original delivery time in the chat history even if it was observed later.
-   const at=m.schedule?.mode==='game-time'?{day:m.schedule.day,clock:m.schedule.clock}:{day:next.day,clock:next.clock};
+   const at=m.schedule?.mode==='game-time'?{day:m.schedule.day,clock:m.schedule.clock}:{day:next.day,clock:next.clock,sentDate:dateParts(next).iso};
    m.delivery=at;
    deliverAuthoredIncoming(next,{
     channel:item.channel,conversationId:c.id,
