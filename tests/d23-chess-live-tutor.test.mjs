@@ -257,8 +257,9 @@ test('an available gateway is used directly for chess understanding, not short-c
   postMatchMessage(store,matchId,'看不懂');
   assert.equal(await replyToMatch(store,matchId),true);
   assert.equal(requests.length,1);
-  assert.match(requests[0].body.messages[0].content,/ChessFacts/);
-  assert.match(requests[0].body.messages[0].content,/legalSAN/);
+  assert.ok(requests[0].body.messages.every(m=>m.role!=='system'));
+  assert.match(requests[0].body.scene,/ChessFacts/);
+  assert.match(requests[0].body.scene,/legalSAN/);
   assert.equal(match().lesson.outbox.at(-1).aiGenerated,true);
   assert.equal(match().chat.at(-1).from,'player','AI response is queued, not injected');
  }finally{globalThis.fetch=prior;}
@@ -306,7 +307,7 @@ test('AI prompt contains style examples and board facts; multiple answers are pa
  const {store,matchId,match}=d23Store();playOpening(store,matchId);
  const prior=globalThis.fetch;let calls=0,prompt='';
  globalThis.fetch=async(url,opts)=>{
-  calls++;prompt=JSON.parse(opts.body).messages[0].content;
+  calls++;prompt=JSON.parse(opts.body).scene;
   return {ok:true,text:async()=>JSON.stringify({text:JSON.stringify({messages:[{text:'先看你的馬。',mode:'text'},{text:'它還在起點，先別急。',mode:'text'}]})})};
  };
  try{

@@ -9,6 +9,8 @@ import {resignChessMatch,postMatchMessage} from '../src/services/chess.js';
 import {tickD23ChessLesson} from '../src/services/chess-lesson.js';
 import {sendMessage} from '../src/services/messaging/index.js';
 import {canCharge,canShortCharge} from '../src/system/power/battery.js';
+import {TAI_PROVIDER_ENDPOINT} from '../src/services/ai/supabase-gateway.js';
+import {storySessionControls} from '../src/apps/mirage/features/story-controls/index.js';
 import {
  beginD23MiragePostgame,d23MiragePostgame,acceptD23MirageSend,
  canSendD23Mirage,commitD23MirageResponse,endD23MirageConversation,
@@ -132,4 +134,45 @@ test('authored postgame opening never commits reentrantly during Mirage render',
  assert.equal(d23MiragePostgame(f.store.get()).phase,'intro','render must finish before intro commits');
  assert.equal(await pending,true);
  assert.equal(d23MiragePostgame(f.store.get()).phase,'intro-delivering');
+});
+
+test('D23 uses the production cloud AI for personal follow-ups; failed requests retry the same turn',async t=>{
+ const f=fixture();resignChessMatch(f.store,f.matchId);deliverBoardEnding(f.store,f.matchId);inMirage(f);
+ const prior={fetch:globalThis.fetch,location:globalThis.location,localStorage:globalThis.localStorage};
+ t.after(()=>{for(const [key,value] of Object.entries(prior)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}});
+ globalThis.location={hostname:'zn546612432-cloud.github.io'};
+ const storage=new Map();globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
+ let requests=0,fail=false;
+ globalThis.fetch=async(url,init)=>{
+  if(String(url).endsWith('/auth/v1/signup'))return new Response(JSON.stringify({access_token:'test-token',refresh_token:'test-refresh',expires_in:3600}));
+  if(String(url).includes('/tai-v8-persona'))return new Response('{}',{status:404});
+  assert.equal(String(url),TAI_PROVIDER_ENDPOINT);
+  const {op,payload}=JSON.parse(init.body);assert.equal(op,'chat');requests++;
+  // Same constraints as the protected gateway; no second system role.
+  assert.equal(payload.messages.filter(m=>m.role==='system').length,1);
+  assert.equal(payload.messages[0].role,'system');assert.ok(payload.messages[0].content.length<=50000);
+  assert.match(payload.messages[0].content,/熙蒙主動認輸/);
+  assert.match(payload.messages[0].content,/自由回應任何當前私人話題/);
+  assert.equal(payload.messages.at(-1).role,'user');
+  if(requests>1){assert.equal(payload.messages.at(-1).content,'会不会');assert.ok(payload.messages.some(m=>m.content==='我死了你会伤心吗'));}
+  if(fail)return new Response(JSON.stringify({error:'provider_unreachable'}),{status:502});
+  return new Response(JSON.stringify({text:JSON.stringify({messages:[{text:requests===1?'怎麼突然問這個？':'會。別拿這個開玩笑。'}]})}));
+ };
+ assert.equal(await replyToD23Mirage(f.store),true);assert.equal(requests,0);
+ deliverOne(f.store,1000);
+ const send=text=>{const id=sendMessage(f.store,{channel:'mirage',conversationId:contact,text});f.store.update(s=>assert.equal(acceptD23MirageSend(s,id),true));return id;};
+ const thread=()=>f.store.get().content.conversations.mirage.find(c=>c.id===contact);
+ send('我死了你会伤心吗');assert.equal(await replyToD23Mirage(f.store),true);
+ deliverOne(f.store,5000);assert.equal(thread().messages.at(-1).aiGenerated,true);
+ const sourceId=send('会不会');fail=true;
+ assert.equal(await replyToD23Mirage(f.store),false);
+ assert.equal(d23MiragePostgame(f.store.get()).replyFailed,true);
+ assert.equal(thread().messages.at(-1).id,sourceId,'no fake character bubble');
+ assert.match(storySessionControls(f.store.get(),contact),/mc-d23-retry-reply/);
+ assert.equal(await replyToD23Mirage(f.store),false);assert.equal(requests,2,'no automatic retry storm');
+ fail=false;assert.equal(await replyToD23Mirage(f.store,{retry:true}),true);
+ deliverOne(f.store,9000);assert.equal(thread().messages.at(-1).text,'會。別拿這個開玩笑。');
+ assert.equal(thread().messages.at(-1).aiGenerated,true);
+ assert.equal(d23MiragePostgame(f.store.get()).rounds,2,'retry does not consume another round');
+ assert.equal(thread().messages.filter(m=>m.id===sourceId).length,1);
 });

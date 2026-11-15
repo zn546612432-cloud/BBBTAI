@@ -147,11 +147,16 @@ function cart(s){const d=mirageData(s),rows=d.cart.map(row=>({row,p:d.products.f
 function newMailOverlay(){return newMailNotice?`<div class="mc-overlay" role="dialog" aria-modal="true" aria-label="收到一条邮件"><section class="mc-dialog mc-mail-notice"><header>NEW MESSAGE ${at('mc-close-mail-notice','CLOSE','close')}</header><p>收到一条邮件</p><strong>【mirage】新订单</strong><div class="mc-dialog-buttons">${btn('mc-close-mail-notice','稍后查看','mc-secondary')}${btn('mc-open-kira-mail','打开 KIRA 邮件','mc-primary')}</div></section></div>`:'';}
 
 export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);/* Original MIRAGE terminal, contacts, bounties, and market stay visible in every story version. */let body;if(loc.route.startsWith('/chat/')){
-  if(loc.route==='/chat/s55-ouroboros'&&d23MiragePostgame(s)?.phase==='intro')
+  const postgame=loc.route==='/chat/s55-ouroboros'&&d23MiragePostgame(s);
+  if(postgame&&!postgame.replyFailed&&['intro','awaiting'].includes(postgame.phase))
    void replyToD23Mirage(store).catch(()=>{});
   body=chatPage(s,loc.route.slice(6));
  }else if(loc.route==='/bounties')body=bountyPage(s);else if(loc.route.startsWith('/my-orders/'))body=myOrdersPage(s,loc.route.slice('/my-orders/'.length));else if(loc.route==='/bounties/completed')body=myOrdersPage(s,'completed');else if(loc.route.startsWith('/order/'))body=bountyDetail(s,loc.route.slice(7));else if(loc.route==='/market')body=market(s);else if(loc.route.startsWith('/product/'))body=product(s,loc.route.slice(9));else if(loc.route==='/cart')body=cart(s);else if(loc.route==='/wallet/bind')body=login(s,true);else if(loc.route.startsWith('/wallet'))body=walletPage(s,loc.route);else body=contactsPage(s);return `<div class="mc-screen">${telemetry()}<div class="mc-interface">${body}</div>${newMailOverlay()}</div>`;}
 export function handle(action,t,ctx,loc){
+ if(action==='mc-d23-retry-reply'){
+  void replyToD23Mirage(ctx.store,{retry:true}).catch(()=>{});
+  return;
+ }
  if(action==='mc-d23-finish-conversation'){
   ctx.store.update(s=>{if(endD23MirageConversation(s))tickStory55(s);});
   return;
