@@ -7,6 +7,8 @@
 .app-reminders .reminders-float{position:sticky;bottom:0;left:0;width:max-content;z-index:2;margin:26px 0 0}
 .app-reminders .reminders-float button{background:#f2f2f7e8;padding:13px 15px;border-radius:20px;backdrop-filter:blur(12px)}
 .app-reminders .reminder-item span{min-width:0;overflow-wrap:anywhere}
+/* Keep read-only project markers (span) the same size as interactive check buttons. */
+.app-reminders .reminder-item > .reminder-circle{flex:0 0 22px;min-width:22px;width:22px;height:22px;box-sizing:border-box;display:grid;place-items:center;padding:0}
 
 /* The home widget is not the scroll viewport; the app owns a real touch-scroll container. */
 .app-reminders{min-height:0;overflow:hidden}
