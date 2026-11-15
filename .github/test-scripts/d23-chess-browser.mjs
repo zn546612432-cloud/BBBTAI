@@ -147,7 +147,8 @@ try{
   const portrait=row.querySelector('.mc-avatar').getBoundingClientRect(),text=row.querySelector('.mc-clear-text').getBoundingClientRect();
   return {delta:Math.abs(portrait.top-text.top),height:text.height};
  }));
- assert.ok(avatarGeometry.some(x=>x.height>60),'opening includes a real multiline reply');
+ assert.ok(await story.page.locator('.mc-clear-text').evaluateAll(rows=>rows.some(row=>row.getBoundingClientRect().height>60)),'opening includes a real multiline reply, including grouped continuations');
+ assert.ok(avatarGeometry.length>0,'first messages have actual avatars');
  assert.ok(avatarGeometry.every(x=>x.delta<8),'avatars align to the first text line rather than the bottom');
  await capture(story.page,'mobile-mirage-first-line-avatar.png');
  const card=story.page.locator('[data-action="mc-chess-invite"]');
