@@ -10,7 +10,8 @@ const def=id=>DAILY_CONTRACTS.find(c=>c.id===id&&c.marketDaily);
 const order=(s,id)=>s.content?.orders?.find(x=>x.id===id);
 const runs=s=>s.story55?.tearRuns||{};
 const STEP_MS=3200;
-export const tearUnlocked=s=>isStory55(s)&&s.day>=25&&!s.story55.ended&&completed(s,'base')&&deploymentPercent(s,'base')===100;
+export const tearDeployed=s=>isStory55(s)&&!s.story55.ended&&completed(s,'base')&&deploymentPercent(s,'base')===100;
+export const tearUnlocked=s=>tearDeployed(s)&&s.day>=25;
 export const tearUsesToday=s=>Object.values(runs(s)).filter(r=>r.day===s.day).length;
 export function tearRunAvailability(s,id){
  const c=def(id),o=order(s,id),r=runs(s)[id];
@@ -51,4 +52,8 @@ export function tickTearRun(s,id,now=Date.now()){
 export function renderTearRun(s,id){
  const r=runs(s)[id],c=def(id);if(!r||!c)return '';
  return renderTearOrbit({id,title:order(s,id)?.title||id,status:r.status,index:r.index,count:c.stages.length});
+}
+export function renderTearHome(s){
+ if(!tearDeployed(s))return '';
+ return renderTearOrbit({id:'idle',title:'等待加密檔案',status:'idle',index:0,count:0});
 }

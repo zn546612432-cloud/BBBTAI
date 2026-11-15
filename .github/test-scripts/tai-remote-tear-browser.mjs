@@ -58,7 +58,11 @@ try{
  await bounties.click();
  await auto.page.locator('[data-action="mc-my-orders"]').click();
  await auto.page.locator('[data-action="mc-open-bounty"][data-id="M-024"]').click();
- await auto.page.locator('[data-action="mc-tear-share"]').click();
+ assert.equal(await auto.page.locator('[data-action="mc-tear-share"]').count(),0);
+ await auto.page.locator('[data-action="mc-d04-mail"]').click();
+ await auto.page.locator('[data-action="kira-open-commission-file"]').click();
+ await auto.page.locator('[data-action="files-commission-open-ghost"]').waitFor({state:'visible'});
+ await auto.page.locator('[data-action="files-commission-share-tear"]').click();
  await auto.page.locator('xm-tear-orbit').waitFor({state:'visible'});
  await auto.page.locator('.gh-tear-screen[data-tear-status="complete"]').waitFor({timeout:30000});
  await auto.page.getByText('執行完成 · 待提交',{exact:true}).waitFor({timeout:30000});
