@@ -22,7 +22,7 @@ import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
-import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55} from './state.js';
+import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55} from './state.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
@@ -139,7 +139,7 @@ function creditScene55(s,n){
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
- if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))throw Error('這條消息預定於 '+planned+' 發送');
+ if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
@@ -190,7 +190,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:(['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight?date55(s.day+1):date55(s.day)),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(n.holdAt03&&overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -252,7 +252,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
-  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))continue;
+  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;
