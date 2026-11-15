@@ -12,7 +12,7 @@ import {canCharge,canShortCharge} from '../src/system/power/battery.js';
 import {
  beginD23MiragePostgame,d23MiragePostgame,acceptD23MirageSend,
  canSendD23Mirage,commitD23MirageResponse,endD23MirageConversation,
- tickD23MiragePostgame,d23MiragePostgameDue
+ tickD23MiragePostgame,d23MiragePostgameDue,replyToD23Mirage
 } from '../src/services/story55/d23-postgame.js';
 const contact='s55-ouroboros';
 function fixture(){
@@ -121,4 +121,14 @@ test('early goodbye waits for native farewell Send and restores the previous sce
  const saved=structuredClone(f.store.get());
  assert.equal(tickQueuedStoryScenes55(saved,20000),false);
  assert.equal(saved.content.conversations.mirage.find(c=>c.id===contact).messages.filter(m=>/^s55-d23-chess-finish/.test(m.id)).length,3);
+});
+
+// Rendering MIRAGE invokes this function; a synchronous commit re-enters onEnter
+// and logs the user out by consuming the one-use chess return intent twice.
+test('authored postgame opening never commits reentrantly during Mirage render',async()=>{
+ const f=fixture();resignChessMatch(f.store,f.matchId);deliverBoardEnding(f.store,f.matchId);inMirage(f);
+ const pending=replyToD23Mirage(f.store);
+ assert.equal(d23MiragePostgame(f.store.get()).phase,'intro','render must finish before intro commits');
+ assert.equal(await pending,true);
+ assert.equal(d23MiragePostgame(f.store.get()).phase,'intro-delivering');
 });

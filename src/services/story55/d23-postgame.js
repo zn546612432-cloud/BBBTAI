@@ -147,6 +147,9 @@ export function replyToD23Mirage(store){
  const intro=pg.phase==='intro',round=pg.rounds,sourceId=pg.lastPlayerId,matchId=pg.matchId;
  const current=waitingAI.get(store);if(current)return current;
  const job=(async()=>{
+  // The authored intro must commit after the current render returns. Otherwise
+  // reentrant rendering can enter MIRAGE twice and consume its one-use return.
+  await Promise.resolve();
   const match=first.matches.find(m=>m.id===matchId),facts=chessFacts(match);
   const mirage=first.content.conversations.mirage?.find(c=>c.id===D23_MIRAGE_CONTACT);
   const boardEnd=(match.chat||[]).filter(m=>m.from==='tai').slice(-3).map(m=>m.text);
