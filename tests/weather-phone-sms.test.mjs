@@ -8,13 +8,13 @@ import {MessageDelivery,visibleMessages} from '../src/services/messaging/deliver
 import {setSchedule} from '../src/editor/conversations/model.js';
 import {addTestSMS} from './fixture-chat.mjs';
 function setup(){const data=new Map(),storage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},store=new PhoneStore(storage);store.update(addTestSMS);return {store,storage};}
-test('weather edits are scoped to the selected game day and city',()=>{
+test('European city weather ignores old user overrides and has no edit route',()=>{
  const {store}=setup();
  store.update(s=>{s.content.weather={57:{paris:{name:'巴黎',condition:'小雨',temp:12,high:16,low:8}}};});
- assert.equal(weatherFor(store.get(),57).find(c=>c.id==='paris').temp,12);
- assert.equal(weatherFor(store.get(),56).find(c=>c.id==='paris').temp,14);
- assert.match(weatherRender({store},{route:'/edit',params:{city:'paris',day:57}}),/value="57"/);
- assert.match(weatherRender({store},{route:'/edit',params:{city:'paris',day:57}}),/value="12"/);
+ assert.equal(weatherFor(store.get(),57).find(c=>c.id==='paris').temp,null);
+ const html=weatherRender({store},{route:'/edit',params:{city:'paris',day:57}});
+ assert.doesNotMatch(html,/data-form="weather-edit"|保存第|编辑天气/);
+ assert.match(html,/巴黎/);
 });
 test('seeded SMS can be edited, scheduled, delivered as a notification, and persist',()=>{
  const {store,storage}=setup();

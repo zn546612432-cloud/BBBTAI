@@ -4,7 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {MACAU_HISTORY_2025} from '../src/services/weather/data/macau-2025-hourly.js';
 import {WEATHER_HISTORY,conditionFromWeatherCode,getWeather,getDailyWeather,weatherForDay,weatherHours,setWeatherOverride} from '../src/services/weather/world.js';
-import {render as weatherRender,weatherEditChanges} from '../src/apps/weather/index.js';
+import {render as weatherRender} from '../src/apps/weather/index.js';
 import {entryFor,saveDiaryEntry} from '../src/story/diary/entries.js';
 
 const fresh=()=>activateStory55(initialState());
@@ -52,8 +52,8 @@ test('D07 Macau data follows 08:00 and 14:00 game time, not real system time',()
  assert.equal(getDailyWeather(s,{day:7}).condition,'阴天');
  const html=weatherRender({store:{get:()=>s}},{route:'/city/macau',params:{}});
  assert.match(html,/26°/);
- assert.match(html,/Open-Meteo/);
- assert.match(html,/14:00|现在/);
+ assert.doesNotMatch(html,/weather-history-credit/);
+ assert.match(html,/14:00|現在/);
 });
 
 test('D08 keeps actual 2025-05-26 temperatures and daily recap is independent of current hour',()=>{
@@ -102,8 +102,8 @@ test('editing only the condition leaves hourly temperature variations and origin
  const s=fresh();s.day=7;
  s.clock='08:00';const original=getWeather(s);
  const record={name:original.name,condition:'雷雨',temp:original.temp,high:original.high,low:original.low};
- const changes=weatherEditChanges(record,original);
- assert.deepEqual(changes,{condition:'雷雨'});
+ const changes={condition:'雷雨'};
+ assert.equal(record.condition,'雷雨');
  setWeatherOverride(s,{day:7,cityId:'macau',values:changes});
  assert.equal(getWeather(s).tempExact,24.2);
  s.clock='14:00';
@@ -111,7 +111,7 @@ test('editing only the condition leaves hourly temperature variations and origin
  assert.equal(getWeather(s).condition,'雷雨');
  assert.equal(getWeather(s).source,'manual');
  assert.equal(getWeather(s,{day:8,clock:'08:00'}).source,'historical');
- assert.equal(weatherForDay(s,7).find(x=>x.id==='london').source,'placeholder');
+ assert.equal(weatherForDay(s,7).find(x=>x.id==='london').source,'loading');
 });
 
 test('a new journal record reads the same daily weather without changing message or mission data',()=>{

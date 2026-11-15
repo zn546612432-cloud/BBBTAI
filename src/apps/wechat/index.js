@@ -77,6 +77,12 @@ export function handle(action,target,ctx){
     return;
   }
   if(handleMoment(action,target,ctx))return;
+  if(action==='wx-file-preview'){
+    const {id,message}=currentMessage(ctx,target.dataset.id);
+    if(message.kind!=='file'||!(/\.zip$/i).test(String(message.fileName||message.text||'')))return;
+    ctx.router.open({appId:'files',route:'/incoming/wechat/'+encodeURIComponent(id)+'/'+encodeURIComponent(message.id)});
+    return;
+  }
   if(action==='wx-message-options'){openMessageMenu(target);return;}
   if(action==='wx-message-menu-close'){const menu=target.closest('.wx-conversation')?.querySelector('.wx-message-menu');if(menu)menu.hidden=true;return;}
   if(action==='wx-message-tts'){
