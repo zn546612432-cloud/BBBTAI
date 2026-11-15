@@ -4,6 +4,7 @@ import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
+import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
 import {syncBaseFrameworkRevision,syncBaseLinkPipeRevision,deployment} from './projects.js';
@@ -192,7 +193,8 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
+  const image=n.imageLines?.[index];
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -295,6 +297,7 @@ export function tickStory55(s){
  syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
  applyD25Definition(story55Config(s));
+ applyD26D28Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
  syncTearReminders(s);

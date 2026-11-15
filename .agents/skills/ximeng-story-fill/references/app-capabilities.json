@@ -123,6 +123,13 @@
             14
           ]
         },
+        "story.d26-d28-fixed-chat": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": ["incoming-text", "incoming-image", "player-send"],
+          "proof": "src/story/d26-d28/definition.js",
+          "originDays": [26, 27, 28]
+        },
         "story.d05-d17-v2": {
           "state": "wired-day",
           "owner": "messaging",
@@ -236,6 +243,13 @@
           "originDays": [
             10
           ]
+        },
+        "story.d26-d28-fixed-chat": {
+          "state": "wired-day",
+          "owner": "story55",
+          "kinds": ["incoming-text", "player-send"],
+          "proof": "src/story/d26-d28/definition.js",
+          "originDays": [26, 27, 28]
         },
         "story.d14-d24-dialogue": {
           "state": "wired-day",
