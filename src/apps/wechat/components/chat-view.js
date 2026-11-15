@@ -70,7 +70,7 @@ function messageRow(m,s,c){
     ?esc(wishText[0])+'<button type="button" class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</button>'+esc(wishText[1])
     :esc(m.text);
   const isZip=m.kind==='file'&&/\.zip$/i.test(String(m.fileName||m.text||''));
-  const zipCard=isZip?'<button type="button" class="wx-bubble wx-file-card" data-action="wx-file-preview" data-id="'+esc(m.id)+'" aria-label="查看 ZIP 檔案"><span class="wx-file-copy"><strong>'+esc(m.fileName||m.text)+'</strong><small>ZIP 壓縮檔</small></span><span class="wx-file-glyph">ZIP</span></button>':null;
+  const zipCard=isZip||m.kind==='file'&&m.attachment?.localFileId?'<button type="button" class="wx-bubble wx-file-card" data-action="wx-file-preview" data-id="'+esc(m.id)+'" aria-label="查看檔案"><span class="wx-file-copy"><strong>'+esc(m.fileName||m.text)+'</strong><small>'+(isZip?'ZIP 壓縮檔':'加密檔案')+'</small></span><span class="wx-file-glyph">'+(isZip?'ZIP':'ENC')+'</span></button>':null;
   const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
     m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
   const isText=!media&&(!m.kind||m.kind==='text');

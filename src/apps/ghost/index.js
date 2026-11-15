@@ -10,6 +10,8 @@ import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {renderTearRun,renderTearHome,tickTearRun,tearDeployed,tearRunAvailability} from './deployment/tear-run.js';
+import {handleTearAgent,submitTearAgent} from './deployment/tear-agent/actions.js';
+import {ensureAgent} from './deployment/tear-agent/state.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
@@ -94,10 +96,11 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  const exitDialog=loc.route==='/run'&&o?.id===D01_REPAIR&&o.status==='running'&&exitDialogFor===o.id?`<div class="gh-exit-confirm" role="dialog" aria-modal="true" aria-label="保存修復進度"><div class="gh-exit-card"><h2>退出數據修復？</h2>${button('d01-save','保存並退出','','gh-primary')}${button('d01-discard','放棄並退出','','gh-secondary')}${button('d01-cancel','繼續修復','','gh-secondary')}</div></div>`:'';
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}${shareDialog}</div>`;
 }
-export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
+export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(action.startsWith('gh-tear-')&&handleTearAgent(action,t,ctx))return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
  if(a==='tear-return'){prepareMirageGhostShareEntry();return ctx.router.open({appId:'mirage',route:'/order/'+t.dataset.id,params:{}});}
  if(a==='tear-open'){
   if(!tearDeployed(s))return;
+  ctx.store.update(n=>ensureAgent(n));
   const active=Object.values(s.story55.tearRuns||{}).find(r=>tearRunAvailability(s,r.id).resume);
   return active?nav(ctx,'/tear-run',{orderId:active.id}):nav(ctx,'/tear');
  }
@@ -185,4 +188,4 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  });
 }
 export {authorize,submitGhostOrder as submitOrder,settle};
-export function submit(form,ctx){return submitFlowD03Form(form,ctx);}
+export function submit(form,ctx){return submitTearAgent(form,ctx)||submitFlowD03Form(form,ctx);}

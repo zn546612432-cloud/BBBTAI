@@ -29,9 +29,11 @@ export const dailyContent={
  22:{other:['15:20 微信 → 狼崽團；21:38 微信 → 熙旺、備忘錄。']},
  23:{other:['11:41 微信 → 狼崽團。']},
  24:{other:['微信：狼崽團 08:20；胡楓 14:38；熙旺 23:34。'],eggs:['GHOST → 項目 → Ouroboros’ Tear 部署到 100% 後，點擊「啟動 Ouroboros’ Tear」。']},
- 25:{other:['11:38 微信 → 熙旺。','10:26 後微信 → 狼崽團：點擊 security_survey_0612.zip，可保存至文件。']},
- 26:{other:['21:16 後微信 → 狼崽團：點擊 maintenance_records.zip，可保存至文件。']},
- 27:{other:['14:32 後微信 → 熙旺：點擊對話內照片可查看大圖。','16:42 後微信 → 胡楓：點擊 security_staff.zip，可保存至文件。']},
+ 25:{other:['11:38 微信 → 熙旺。','10:26 微信 → 狼崽團；完成預填回覆，再查看 MIRAGE → Dr Ouroboros。'],eggs:['點擊群聊的 security_survey_0612.zip 並保存 → GHOST → 銜尾蛇之淚 → 附件 → 選取檔案並發送。初始化約 95 分鐘（手機時間），可離開應用程式。']},
+ 26:{other:['10:36、21:16 微信 → 狼崽團；15:48 微信 → 胡楓。'],eggs:['21:16 後保存 maintenance_records.zip → 銜尾蛇之淚附加並發送（約 110 分鐘）。先完成上一份資料的初始化。']},
+ 27:{other:['09:46、20:24 微信 → 狼崽團；14:32 熙旺；16:42 胡楓；22:18 MIRAGE。'],eggs:['14:32 後點擊熙旺對話內照片可查看大圖。','16:42 後保存 security_staff.zip → 銜尾蛇之淚附加並發送（約 110 分鐘）。可與其他研究同時進行。']},
+ 28:{other:['10:19、19:12 微信 → 狼崽團；14:26 微信 → 熙旺。'],eggs:['完成上午群聊後，銜尾蛇之淚 → 發送「設備已經接入測試環境，驗證之前的研究結果。」（約 4 小時）。','完成晚間群聊後，銜尾蛇之淚 → 發送「幫我把阿楓要的爆破控制程序寫了。」（約 150 分鐘）。完成後查看對話中的檔案。']},
+ 29:{other:['09:32、16:48 微信 → 狼崽團；17:06 傅隆生；21:36 MIRAGE → Dr Ouroboros。'],eggs:['完成晚間棋局及 MIRAGE 對話後，可以將今日取得的 IP 輸入銜尾蛇之淚。']},
 };
 
 // Labels describe the action needed, not the outcome of a conversation.
@@ -54,7 +56,7 @@ export const nodeInstructions={
  'd23-chess-finish':'棋局結束後返回 MIRAGE → Dr Ouroboros：聊完賽後對話（最多三輪，可點「先聊到這裡」），等待最後的告別。',
  'd29-chess':'21:36 MIRAGE → Dr Ouroboros：接受邀請，開啟國際象棋；離開棋盤後返回聊天。',
  plan:'棋盤返回後繼續 MIRAGE → Dr Ouroboros，完成預填對話。',
- identity:'GHOST → 部署：輸入先前記錄的 IP，至少兩級設備，完成五個階段。',
+ identity:'GHOST → 部署：輸入先前記錄的 IP（若已在銜尾蛇之淚發送，直接查看已建立的工程），至少兩級設備，完成五個階段。',
  dossier:'文件：打開新取得的檔案，點擊「讀取並關聯線索」。',
  uk:'文件 → 在地圖核對位置，完成地圖上的操作。',
  harvard:'瀏覽器：打開取得的頁面，點擊「收錄這條線索」。',

@@ -35,5 +35,6 @@ test('fixed D29 scenes, player-opened chess, refusal, scripted chess and Mirage 
  assert.equal(cfg.projects.find(p=>p.id==='identity').key,D29_IP);
  assert.ok(s.content.notes.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP));
  assert.match(browserRender({store},{route:'/search',params:{query:D29_IP}}),/里斯本/);
- assert.match(entryFor(s,29).body,/鬼車陷阱/);
+ assert.match(entryFor(s,29).body,/Ghost Car Trap/);
+ assert.doesNotMatch(entryFor(s,29).body,/里斯本/);
 });

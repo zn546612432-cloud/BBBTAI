@@ -1,5 +1,6 @@
 const TAU=Math.PI*2;
 export function makeScene(w,h){
+ if(h<310){const scale=Math.min(.83,Math.max(.44,w/550));return {w,h,cx:w/2,cy:h/2,scale,sx:Math.max(35,Math.min(w*.34,w/2-40*scale-12)),sy:Math.max(18,h*.36),parallax:Math.min(4,w*.01)};}
  const scale=Math.min(1.12,Math.max(.66,w/430));
  const top=78,bottom=Math.max(top+140,h-126),cy=(top+bottom)/2;
  return {w,h,cx:w/2,cy,scale,sx:Math.max(35,Math.min(w*.36,w/2-56*scale-Math.min(6,w*.014)-12)),sy:Math.max(40,Math.min((bottom-top)*.56,h*.3,265)),parallax:Math.min(6,w*.014)};

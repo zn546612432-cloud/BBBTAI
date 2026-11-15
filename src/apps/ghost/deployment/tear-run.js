@@ -2,7 +2,7 @@ import {completed,isStory55} from '../../../services/story55/state.js';
 import {deploymentPercent} from '../../../services/story55/projects.js';
 import {DAILY_CONTRACTS,D04_MAIL,D04_STEP,markD04AttachmentOpened,armD04Ghost,d04CanRun} from '../../../story/d04/contract.js';
 import {begin,finish} from '../state.js';
-import {renderTearOrbit} from './tear-ui/view.js';
+import {renderTearOrbit,renderTearAgent} from './tear-ui/view.js';
 
 // A local, fictional software executor. No real network or system access.
 // The same existing Ghost stages and manual Mirage submission own settlement.
@@ -55,5 +55,5 @@ export function renderTearRun(s,id){
 }
 export function renderTearHome(s){
  if(!tearDeployed(s))return '';
- return renderTearOrbit({id:'idle',title:'等待加密檔案',status:'idle',index:0,count:0});
+ return renderTearAgent(s);
 }

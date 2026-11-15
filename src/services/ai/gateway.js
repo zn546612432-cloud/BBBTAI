@@ -60,6 +60,15 @@ export async function aiStatus(){
  const c=apiConfig();if(c.deepseek||c.minimax)return {mode:'session-direct',deepseek:!!c.deepseek,minimax:!!c.minimax};
  return localJSON('/api/ai/status');
 }
+export async function askTear({day,messages,scene=''}){
+ const {buildTearPrompt}=await import('./tear-prompt.js'),c=apiConfig();
+ const history=messages.slice(-12).map(m=>({role:m.role,content:String(m.content).slice(0,1800)}));
+ const body={...deepseekModelOptions(c.model,c),messages:[{role:'system',content:buildTearPrompt(scene)},...history],max_tokens:Math.min(1000,c.maxTokens)};
+ if(isTaiCloudHost())return taiCloudCall('chat',body);
+ if(!c.deepseek)return localJSON('/api/ai/chat',{channel:'tear',day,messages:history,scene,model:c.model,parameters:normalizeAiParameters(c)});
+ const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
+ return {text:String(result.choices?.[0]?.message?.content||'')};
+}
 export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,model:c.model,parameters:normalizeAiParameters(c)};
