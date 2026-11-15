@@ -1,6 +1,7 @@
 import {esc} from '../../../../system/ui.js';
 import {ntIcon} from '../../components/icons.js';
 import {renderAttachments} from '../attachments/index.js';
+import {GUIDE_NOTE_ID,GUIDE_URL} from '../../../browser/features/cheat-guide/content.js';
 
 export const editorUi={menu:false,format:false,confirmDelete:false};
 export function resetEditorUi(){editorUi.menu=false;editorUi.format=false;editorUi.confirmDelete=false;}
@@ -16,7 +17,7 @@ export function renderEditor(note){
   </header>
   <div class="nt-editor-main" data-key="notes-edit-scroll">
    <input class="nt-title-input" data-notes-title name="title" value="${esc(note.title||'')}" placeholder="" aria-label="备忘录标题" spellcheck="true">
-   <textarea class="nt-body-input" data-notes-text name="text" placeholder="" aria-label="备忘录正文" spellcheck="true">${esc(note.text||'')}</textarea>
+   ${note.id===GUIDE_NOTE_ID&&note.text===GUIDE_URL?`<input type="hidden" data-notes-text name="text" value="${esc(GUIDE_URL)}"><button class="nt-guide-link" type="button" data-action="notes-cheat-guide">${esc(GUIDE_URL)}</button>`:`<textarea class="nt-body-input" data-notes-text name="text" placeholder="" aria-label="备忘录正文" spellcheck="true">${esc(note.text||'')}</textarea>`}
    ${note.id==='d02-new-workstation-note'?'<button type="button" data-action="notes-d02-remind" style="display:block;border:0;background:none;color:#0879ee;text-decoration:underline;font-size:14px;text-align:left;margin:12px 0 20px;padding:0">添加提醒事项：攒一台新工作站 ↗</button>':''}
    ${renderAttachments(note)}
   </div>
