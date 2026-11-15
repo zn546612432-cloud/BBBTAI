@@ -7,7 +7,7 @@ import {startDeploymentStep,completeDeploymentRun,upgradeBaseFramework,deploymen
 import {shareGhostToTai,ghostShareScriptLine,sendGhostShareDraft,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl} from '../src/services/story55/ghost-share.js';
 import {TEAR_DIALOGUES} from '../src/story/d14-d24/tear-dialogue.js';
 import {syncTearReminders} from '../src/apps/ghost/deployment/reminders.js';
-import {startTearRun,tickTearRun,tearRunAvailability,tearUsesToday} from '../src/apps/ghost/deployment/tear-run.js';
+import {startTearRun,tickTearRun,tearRunAvailability,tearUsesToday,renderTearRun} from '../src/apps/ghost/deployment/tear-run.js';
 import {seedD04Contracts,acceptD04Contract,submitD04Contract,DAILY_CONTRACTS} from '../src/story/d04/contract.js';
 import {deploymentView} from '../src/apps/ghost/deployment/index.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
@@ -90,4 +90,30 @@ test('D29 reminder group appears only after plan dialogue and never creates exec
  s.story55.completed.plan={day:29,clock:'22:00'};syncTearReminders(s);syncTearReminders(s);
  const groups=s.content.reminders.filter(r=>r.id==='ghost-car-plan');
  assert.equal(groups.length,1);assert.deepEqual(groups[0].children.map(c=>c.progress),[0,0,0,0]);
+});
+
+
+test('native Tear canvas reflects canonical progress without advancing, charging or settling the order',()=>{
+ const s=fixture();s.day=25;s.clock='08:00';
+ s.story55.completed.base={day:24,clock:'21:00'};
+ s.story55.projects.base.batches=Array.from({length:11},(_,i)=>({complete:true,steps:Array.from({length:5},()=>({day:i+14})),testedDay:i+14,day:i+14}));
+ seedD04Contracts(s);const id=DAILY_CONTRACTS.find(c=>c.marketDaily&&c.day===25).id;
+ assert.ok(acceptD04Contract(s,id));assert.ok(startTearRun(s,id,1000));
+ const before=JSON.stringify(s),balance=s.bankData.balance;
+ const running=renderTearRun(s,id);
+ assert.match(running,/<xm-tear-orbit[^>]*status="running" progress="0"/);
+ assert.doesNotMatch(running,/gh-tear-terminal|setTimeout|iframe|prompt-input|REASONING_LOOP/);
+ assert.equal(JSON.stringify(s),before);
+ for(let i=1;i<=12;i++)tickTearRun(s,id,1000+i*4000);
+ assert.equal(s.story55.tearRuns[id].status,'complete');
+ assert.match(renderTearRun(s,id),/<xm-tear-orbit[^>]*status="complete" progress="1"/);
+ assert.match(renderTearRun(s,id),/執行完成 · 待提交/);
+ assert.match(renderTearRun(s,id),/data-action="gh-tear-return"/);
+ assert.equal(s.content.orders.find(o=>o.id===id).status,'READY');
+ assert.equal(s.bankData.balance,balance);
+ s.content.orders.find(o=>o.id===id).title='<img src=x onerror=alert(1)>';
+ assert.doesNotMatch(renderTearRun(s,id),/<img/);
+ s.story55.tearRuns[id].status='failed';s.story55.tearRuns[id].index=0;
+ assert.match(renderTearRun(s,id),/status="failed" progress="0"/);
+ assert.match(renderTearRun(s,id),/執行中止/);
 });
