@@ -9,10 +9,10 @@ export const MAP_PLACES=Object.freeze([
  {id:'macau',name:'澳门半岛',kind:'real',area:'MACAU',lat:22.19875,lng:113.54387,description:'澳门历史城区',aliases:['澳门']},
  {id:'taipa',name:'氹仔',kind:'real',area:'MACAU',lat:22.1577,lng:113.5583,description:'氹仔城区',aliases:[]},
  {id:'coloane',name:'路环',kind:'real',area:'MACAU',lat:22.1182,lng:113.5602,description:'路环村',aliases:[]},
- {id:'changning',name:'昌宁公寓',kind:'fictional',area:'MACAU',lat:22.1964,lng:113.5393,description:'熙蒙生活过的公寓。地点仅供剧情展示。',aliases:['昌寧公寓'],revealDay:1},
- {id:'orphanage',name:'旧孤儿院',kind:'fictional',area:'MACAU',lat:22.2051,lng:113.5335,description:'熟悉的旧孤儿院。地图位置为剧情示意。',aliases:['舊孤兒院'],revealDay:1,storyLocationId:'orphanage'},
- {id:'base',name:'废弃大屋',kind:'fictional',area:'MACAU',lat:22.2021,lng:113.5374,description:'花王堂一带的共同据点。地图位置为剧情示意。',aliases:['训练屋','Training House'],revealNode:'move',storyLocationId:'base'},
- {id:'bank',name:'金辉资金中心',kind:'fictional',area:'MACAU',lat:22.1895,lng:113.5486,description:'行动相关地点。地图位置为剧情示意。',aliases:['Funds Centre','澳兴大厦'],revealNode:'show',storyLocationId:'bank'}
+ {id:'changning',name:'昌宁公寓',kind:'fictional',area:'MACAU',lat:22.1964,lng:113.5393,description:'',aliases:['昌寧公寓'],revealDay:1},
+ {id:'orphanage',name:'旧孤儿院',kind:'fictional',area:'MACAU',lat:22.2035,lng:113.545,description:'',aliases:['舊孤兒院'],revealDay:1,storyLocationId:'orphanage'},
+ {id:'base',name:'废弃大屋',kind:'fictional',area:'MACAU',lat:22.2021,lng:113.5374,description:'',aliases:['训练屋','Training House'],revealNode:'move',storyLocationId:'base'},
+ {id:'bank',name:'金辉资金中心',kind:'fictional',area:'MACAU',lat:22.1895,lng:113.5486,description:'',aliases:['Funds Centre','澳兴大厦'],revealNode:'show',storyLocationId:'bank'}
 ]);
 export const locationById=id=>MAP_PLACES.find(p=>p.id===id)||null;
 /** Only known places appear. Search cannot leak future plot locations. */

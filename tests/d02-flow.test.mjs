@@ -535,7 +535,7 @@ test('Kira D02 attachments show the exact D01 receipt only after successful subm
   assert.equal(submitD02(s,master),false);
  }
 });
-test('Ghost retains all six tool names and uses tool-oriented help text without altering mechanics',()=>{
+test('Ghost retains all six tool names without help text or decorative numbering and preserves mechanics',()=>{
  const expected=[
   ['部署','导入授权凭证，安装并初始化工具'],
   ['破译','解析加密结构，恢复可读取的数据'],
@@ -547,7 +547,7 @@ test('Ghost retains all six tool names and uses tool-oriented help text without 
  assert.deepEqual(ghostCatalog.map(t=>[t.name,t.detail]),expected);
  const s=phone(),store={get:()=>s,update:fn=>fn(s)};
  const home=ghostRender({store},{route:'/',params:{}});
- for(const [name,description] of expected){assert.match(home,new RegExp(name));assert.ok(home.includes(description));}
+ for(const [name,description] of expected){assert.match(home,new RegExp(name));assert.ok(!home.includes(description));}
  assert.doesNotMatch(home,/不是小游戏|拼图：|翻牌配对|迷宫潜行|完成六次命中/);
  assert.equal(acceptD02(s,D02_A),true);
  s.content.mail.find(m=>m.id===D02_A_MAIL).read=true;
@@ -555,8 +555,8 @@ test('Ghost retains all six tool names and uses tool-oriented help text without 
  const cipher=d02StepId(D02_A,0);
  assert.equal(begin(s,cipher,1000),true);
  const operational=ghostRender({store},{route:'/run',params:{orderId:cipher}});
- assert.match(operational,/根据参考映射调整模块排列/);
- assert.match(operational,/依据右下角编号 01–09 校准参考结构/);
+ assert.doesNotMatch(operational,/根据参考映射调整模块排列|依据右下角编号 01–09 校准参考结构/);
+ assert.match(operational,/gh-reference/);
  assert.doesNotMatch(operational,/普通关卡|玩家|小游戏/);
  const fakeStrike={kind:'strike',goal:6,maxMisses:3,target:1,hits:2,misses:0};
  const strike=renderArcade(fakeStrike,{},10000);
