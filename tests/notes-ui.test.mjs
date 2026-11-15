@@ -11,7 +11,7 @@ test('Notes list recreates grouped white cards, centered title and bottom glass 
  const html=render(ctx,{route:'/',params:{}});
  assert.equal(manifest.id,'notes');
  for(const value of ['备忘录','nt-list-header','nt-note-card','nt-list-bottom','nt-search-pill','nt-compose-button','data-action="notes-folders"'])assert.ok(html.includes(value),value);
- assert.match(html,/4 个备忘录/);
+ assert.match(html,/5 个备忘录/);
  for(const title of ['账号','账','备查','7f_0a'])assert.ok(html.includes(title));
  assert.ok(html.includes('已锁定'));
  assert.doesNotMatch(html,/Tmp!1_Dust88|Relay01!Cold|HK01_taipa/);
@@ -92,12 +92,12 @@ test('updating an older save installs missing historical Notes once without eras
  delete saved.content.notesSeedVersion;
  const values=new Map([[KEY,JSON.stringify(saved)]]),storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};
  const first=new PhoneStore(storage).get().content.notes;
- assert.equal(first.length,5);
+ assert.equal(first.length,6);
  assert.ok(first.some(n=>n.id==='player-note'&&n.text==='保留这段'));
  assert.ok(!first.some(n=>n.id==='note-1'));
  assert.equal(first.filter(n=>n.id==='xm-note-credentials').length,1);
  const second=new PhoneStore(storage).get().content.notes;
- assert.equal(second.length,5);
+ assert.equal(second.length,6);
 });
 test('Notes functions are maintained as independent subfolders',()=>{
  for(const feature of ['list','folders','editor','search','actions','attachments','sketch','lock'])assert.ok(existsSync(new URL(`../src/apps/notes/features/${feature}/index.js`,import.meta.url)),feature);

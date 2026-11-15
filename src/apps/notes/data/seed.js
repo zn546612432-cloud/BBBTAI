@@ -1,6 +1,9 @@
+import {GUIDE_NOTE_ID,GUIDE_URL} from '../../browser/features/cheat-guide/content.js';
+const guideNote={id:GUIDE_NOTE_ID,title:'作弊代碼',text:GUIDE_URL,authored:true,pinned:true,createdDay:1,updatedDay:1,updatedClock:'08:00'};
 // Historical notes left on the phone before the player's first day.
 // These are fictional story credentials, not authentication for the Site.
 export const authoredNotes = [
+ guideNote,
  {
   id:'xm-note-credentials',title:'账号',locked:true,authored:true,
   createdDay:1,updatedDay:1,updatedClock:'22:19',
@@ -64,12 +67,17 @@ export function ensureAuthoredNotes(s){
  const content=s.content;if(!content)return false;
  // A previous D55 build falsely marked an EMPTY Notes library as seeded.
  // Repair those existing saves once; future user deletions remain respected.
- if(content.notesSeedVersion===1&&(!s.story55?.version||content.notesSeedRepairVersion===1))return false;
+ if(content.notesSeedVersion===1&&(!s.story55?.version||content.notesSeedRepairVersion===1)){
+  if(content.cheatGuideSeedVersion===1)return false;
+  content.notes??=[];
+  if(!content.notes.some(n=>n.id===GUIDE_NOTE_ID))content.notes.push(structuredClone(guideNote));
+  content.cheatGuideSeedVersion=1;return true;
+ }
  const notes=Array.isArray(content.notes)?content.notes:[];
  // Only drop the untouched sample, never a note edited by the player.
  const kept=notes.filter(n=>!(n.id==='note-1'&&n.demo&&n.title==='留到下次'&&n.text==='那盤棋，改天接著下。'));
  const known=new Set(kept.map(n=>n.id));
  for(const note of authoredNotes)if(!known.has(note.id))kept.push(structuredClone(note));
- content.notes=kept;content.notesSeedVersion=1;content.notesSeedRepairVersion=1;
+ content.notes=kept;content.notesSeedVersion=1;content.notesSeedRepairVersion=1;content.cheatGuideSeedVersion=1;
  return true;
 }

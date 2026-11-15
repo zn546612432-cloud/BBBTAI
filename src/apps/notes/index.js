@@ -7,6 +7,7 @@ import {renderEditor,resetEditorUi} from './features/editor/index.js';
 import {handleNoteAction,saveNoteField} from './features/actions/index.js';
 import {filterNoteRows} from './features/search/index.js';
 import {renderLockedNote,isNoteUnlocked,prepareLockedNote,showUnlockDialog,hideUnlockDialog,lockNote,tryUnlockNote} from './features/lock/index.js';
+import {openCheatGuide} from '../browser/index.js';
 
 export const manifest={id:'notes',name:'备忘录',icon:3,defaultRoute:'/',kicker:'NOTES'};
 
@@ -26,6 +27,7 @@ export function render({store},loc){
 }
 
 export function handle(action,target,ctx,loc){
+ if(action==='notes-cheat-guide')return openCheatGuide(ctx,{fromNotes:true});
  if(action==='notes-d02-remind'){let created=false;ctx.store.update(s=>{created=createD02Reminder(s);});ctx.toast(created?'已加入提醒事项':'提醒事项已存在');return;}
  if(action==='new-note'){
   resetEditorUi();
