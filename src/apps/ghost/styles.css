@@ -43,6 +43,7 @@
 .gh-shell .gh-top:has(.gh-dev-skip-top){min-height:40px;margin-bottom:20px}
 .gh-shell button.gh-dev-skip-top{border:1px dashed #47776b;background:#112520;color:#b9e5d1;border-radius:9px;padding:10px 12px;min-width:78px;min-height:36px;font:500 11px ui-monospace,SFMono-Regular,monospace;letter-spacing:.4px;touch-action:manipulation}
 .gh-shell button.gh-dev-skip-top:active{background:#295247}
+.gh-friends-skip{display:flex;justify-content:flex-end;margin:-12px 0 12px}
 .gh-shell .gh-dev-skip-note{padding:0;margin:12px 0 0;font-size:9px;color:#748a82;letter-spacing:.4px;text-align:center}
 @media(max-width:350px){.gh-shell button.gh-dev-skip-top{padding:9px 8px;min-width:70px;font-size:10px}}
 
