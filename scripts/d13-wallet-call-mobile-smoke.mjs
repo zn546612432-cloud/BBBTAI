@@ -41,7 +41,7 @@ await page.addInitScript(({seed,key})=>{
 const action=a=>page.locator(`[data-action="${a}"]`);
 const saved=()=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
 async function unlock(){
- const boot=page.locator('#xm-boot'),next=page.getByRole('button',{name:'继续进入锁屏',exact:true});
+ const boot=page.locator('#xm-boot'),next=page.locator('#xm-boot-next');
  await Promise.race([boot.waitFor({state:'hidden',timeout:90000}),next.waitFor({state:'visible',timeout:90000})]);
  if(await next.isVisible())await next.click();
  await boot.waitFor({state:'hidden',timeout:10000});

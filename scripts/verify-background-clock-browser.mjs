@@ -38,6 +38,7 @@ try{
   // Install before app startup so its intervals belong to the controlled clock.
   await page.clock.install();
   await page.goto('http://127.0.0.1:'+server.address().port+'/BBBTAI/',{waitUntil:'domcontentloaded'});
+  await page.locator('#xm-boot-next').click({timeout:45000});
   await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
   await page.locator('.lock-screen').waitFor({timeout:10000});
   await page.clock.pauseAt(new Date(Date.now()+1000));
