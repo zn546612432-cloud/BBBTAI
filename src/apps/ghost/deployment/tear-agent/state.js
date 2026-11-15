@@ -11,7 +11,20 @@ import {commissionAttachment,commissionPreviewAvailable} from '../../../../servi
 // external access, code execution, or physical-system control is possible here.
 const now=s=>absoluteMinute(s)+(overnightSceneNight55(s)?1440:0);
 export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
-export const ensureAgent=s=>s.story55.tearAgent??={messages:[{id:'welcome',role:'assistant',text:TEAR_GREETING}],jobs:{},selected:null};
+export const ensureAgent=s=>{
+ const a=s.story55.tearAgent??={messages:[{id:'welcome',role:'assistant',text:TEAR_GREETING}],jobs:{},selected:null,displayRevision:2};
+ a.messages??=[{id:'welcome',role:'assistant',text:TEAR_GREETING}];
+ a.jobs??={};
+ // Existing saves used to expose a transcript and its history toggle. Reset only
+ // that presentation data once; research jobs, artifacts, and project flags survive.
+ if(a.displayRevision!==2){
+  a.messages=[{id:'welcome',role:'assistant',text:TEAR_GREETING,day:s.day,clock:s.clock}];
+  a.history=false;
+  delete a.thinking;delete a.thinkingAt;
+  a.displayRevision=2;
+ }
+ return a;
+};
 export const blockedTearText=(s,text)=>!taiRecognized(s)&&blocksAnonymousMirageInput(s,'s55-ouroboros',text);
 const normalize=t=>String(t).normalize('NFKC').replace(/[\s\p{P}]/gu,'').toLowerCase();
 export function presetReply(text){
@@ -19,6 +32,8 @@ export function presetReply(text){
  if(/^(tai|小tai)$/.test(t)||/(為什麼|为什么|怎麼|怎么).*叫.*tai/.test(t))return '這是主人賜予我的名字。';
  if(/主人.*(是誰|是谁)|誰.*主人|谁.*主人/.test(t))return 'Dr Ouroboros.';
  if(/真名|本名/.test(t))return '抱歉，我無法提供主人的個人資訊。';
+ if(!t)return '我在。怎麼了？';
+ if(/^(hi|hello|hey|你好|您好|嗨|哈囉|哈啰|早上好|早安|在嗎)$/.test(t))return '你好，我在。有什麼需要我協助？';
  return '';
 }
 export function addMessage(s,role,text,extra={}){
