@@ -28,7 +28,7 @@ const PIECE_VARIANTS={
 };
 const pieceRule=(match,piece)=>chessReaction(match,'rule-'+piece,{},PIECE_VARIANTS[piece]);
 const CHESS_WORDS=/棋|對局|对局|棋盤|棋盘|走法|走哪|怎麼走|怎么走|下一步|這步|这步|落子|開局|开局|棄兵|弃兵|吃子|升變|升变|過路兵|过路兵|易位|將軍|将军|將死|将死|逼和|和棋|認輸|认输|國王|国王|皇后|后翼|棋子|[兵馬马象車车后王]|[a-h][1-8]|checkmate|stalemate|castle|bishop|knight|queen|rook|pawn/i;
-const FOLLOWUP=/什麼意思|什么意思|為什麼|为什么|不懂|沒懂|没懂|再講|再讲|你剛才|你刚才|你剛剛|你刚刚/;
+const FOLLOWUP=/我不會|我不会|不會玩|不会玩|看不懂|看不明白|什麼意思|什么意思|為什麼|为什么|不懂|沒懂|没懂|再講|再讲|你剛才|你刚才|你剛剛|你刚刚/;
 export const isChessRelated=text=>CHESS_WORDS.test(String(text||''))||FOLLOWUP.test(String(text||''));
 
 const stableId=(match,key)=>'d23-chess-'+match.id+'-'+key;
@@ -199,7 +199,7 @@ export function resignD23ChessLesson(match,clock){
 export function prewrittenChessReply(match,text,facts){
  if(!isD23ChessLesson(match))return '先看盤面，再落子。';
  const value=String(text||'').trim(),lesson=match.lesson||{};
- if(!isChessRelated(value)){
+ if(!isChessRelated(value)&&!needsChessAnalysis(value)){
   if(lesson.teaching){
    if(lesson.reminderAtPly===(match.history||[]).length)return null;
    lesson.reminderAtPly=(match.history||[]).length;
@@ -218,14 +218,14 @@ export function prewrittenChessReply(match,text,facts){
   ];
   return chessReaction(match,topics.find(([re])=>re.test(value))?.[1]||'other');
  }
- if(/看不懂|看不明白|不太懂|完全不懂|我不懂|沒看懂|没看懂|不會下|不会下/i.test(value)){
+ if(/看不懂|看不明白|不太懂|完全不懂|我不懂|沒看懂|没看懂|我不會|我不会|不會玩|不会玩|不會下|不会下/i.test(value)){
   const last=facts.lastMove;
-  if(!last)return chessReaction(match,'noBoard');
+  if(!last)return '沒關係，我教你。你先點一下棋子，看看它能走到哪裡。';
   if(last.captured){
    const attacked=chessPieceName(last.captured),by=chessPieceName(last.piece);
-   return (last.actor==='Ouroboros'?'你剛才丟了':'我剛才丟了')+attacked+'，'+by+'在 '+last.to+' 把它吃掉了。先看看它們之間的走法。';
+   return (last.actor==='Ouroboros'?'剛才是我的':'剛才是你的')+by+'吃了'+(last.actor==='Ouroboros'?'你的':'我的')+attacked+'。'+pieceRule(match,last.piece);
   }
-  return (last.actor==='Ouroboros'?'我剛才':'你剛才')+'把'+chessPieceName(last.piece)+'從 '+last.from+' 走到 '+last.to+'。先看這枚棋子攻擊哪些格子。哪裡不懂，直接問。';
+  return '是我講快了。先看'+(last.actor==='Ouroboros'?'我':'你')+'剛才動的'+chessPieceName(last.piece)+'。'+pieceRule(match,last.piece);
  }
  if(needsChessAnalysis(value)&&facts.lastMove?.captured){
   const last=facts.lastMove,who=last.actor==='Ouroboros'?'我吃掉的是你的':'你吃掉的是我的';
@@ -258,7 +258,7 @@ export function prewrittenChessReply(match,text,facts){
 export function needsChessAnalysis(text){
  const value=String(text||'').trim();
  if(/吃飯|吃饭|晚餐|午餐|早餐|餓|饿|親親|亲亲|抱抱|想你|愛我|爱我|喜歡我|喜欢我/.test(value)&&!/(?:棋|[兵馬马象車车后王]|[a-h][1-8])/.test(value))return false;
- return /看不懂|看不明白|不太懂|完全不懂|沒看懂|没看懂|沒懂|没懂|再講|再讲|我不懂|不會下|不会下|為什麼|为什么|怎麼會|怎么会|憑什麼|凭什么|怎麼贏你|怎么赢你|怎麼下贏|怎么下赢|分析|局勢|局势|現在|现在|這步|这步|這個|这个|這裡|这里|那步|剛才|刚才|你剛|你刚|上一步|下一步|走哪|哪一步|走什麼|走什么|給點提示|给点提示|怎麼走比較|怎么走比较|能不能吃|可以吃|為何|为何|[a-h][1-8]/i.test(value)
+ return /看不懂|看不明白|不太懂|完全不懂|沒看懂|没看懂|沒懂|没懂|再講|再讲|我不懂|我不會|我不会|不會玩|不会玩|不會下|不会下|為什麼|为什么|怎麼會|怎么会|憑什麼|凭什么|怎麼贏你|怎么赢你|怎麼下贏|怎么下赢|分析|局勢|局势|現在|现在|這步|这步|這個|这个|這裡|这里|那步|剛才|刚才|你剛|你刚|上一步|下一步|走哪|哪一步|走什麼|走什么|給點提示|给点提示|怎麼走比較|怎么走比较|能不能吃|可以吃|為何|为何|[a-h][1-8]/i.test(value)
   ||/^(?:怎麼走|怎么走|怎麼下|怎么下|怎麼辦|怎么办)[？?。!！]*$/.test(value);
 }
 export function predeterminedChessReply(match,text,facts){

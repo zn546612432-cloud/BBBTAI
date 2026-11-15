@@ -185,18 +185,18 @@ test('resignation is idempotent, has Tai taunts, persists result, and permanentl
  assert.equal(resignChessMatch(store,matchId),true);
  assert.equal(match().status,'finished');assert.equal(match().result,'player-resigned');
  assert.equal(match().chat.filter(m=>m.from==='tai').length,3,'endings do not arrive all at once');
- assert.equal(match().lesson.outbox.length,3,'three taunts are queued in the existing match');
+ assert.equal(match().lesson.outbox.length,2,'two replies are queued in the existing match');
  assert.equal(resignChessMatch(store,matchId),false);
- assert.equal(match().lesson.outbox.length,3,'resignation cannot enqueue duplicates');
+ assert.equal(match().lesson.outbox.length,2,'resignation cannot enqueue duplicates');
  store.update(s=>tickD23ChessLesson(s,10000));
  store.update(s=>tickD23ChessLesson(s,11200));
  assert.equal(match().chat.filter(m=>m.from==='tai').length,4,'first taunt only');
  store.update(s=>tickD23ChessLesson(s,14300));
  assert.equal(match().chat.filter(m=>m.from==='tai').length,5);
  store.update(s=>tickD23ChessLesson(s,17400));
- assert.equal(match().chat.filter(m=>m.from==='tai').length,6);
+ assert.equal(match().chat.filter(m=>m.from==='tai').length,5);
  assert.equal(match().lesson.outbox.length,0);
- assert.match(match().chat.at(-1).text,/下課/);
+ assert.match(match().chat.at(-1).text,/放你走/);
  assert.equal(postMatchMessage(store,matchId,'親親'),false);
  assert.equal(await replyToMatch(store,matchId),false);
  assert.notEqual(match().chat.at(-1).from,'player');
@@ -221,7 +221,7 @@ test('checkmate ends all further chess replies, with a chess-accurate finish',as
  assert.equal(await replyToMatch(store,matchId),false);
 });
 
-test('when a rook takes the White queen, the fallback says the actual pieces and capture square',async()=>{
+test('when a rook takes the White queen, the novice fallback explains the actual pieces without unsolicited coordinates',async()=>{
  const {store,matchId,match}=d23Store();
  store.update(s=>{
   const m=s.matches.find(x=>x.id===matchId),game=new Chess();
@@ -240,7 +240,8 @@ test('when a rook takes the White queen, the fallback says the actual pieces and
  try{
   postMatchMessage(store,matchId,'看不懂');
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().lesson.outbox.at(-1).text,/后.*車.*a4/);
+  assert.match(match().lesson.outbox.at(-1).text,/我的車吃了你的后/);
+  assert.doesNotMatch(match().lesson.outbox.at(-1).text,/[a-h][1-8]/);
   assert.doesNotMatch(match().lesson.outbox.at(-1).text,/合法選項|例如 Nd/);
   assert.equal(match().lesson.outbox.at(-1).aiGenerated,false);
  }finally{globalThis.fetch=prior;}
@@ -283,7 +284,7 @@ test('reaction variants exhaust a saved bag before repetition and ordinary repli
   const variants=Array.from({length:CHESS_REACTIONS[kind].length},()=>JSON.stringify(chessReaction(m,kind,{piece:'馬'})));
   assert.equal(new Set(variants).size,CHESS_REACTIONS[kind].length,kind);
   const restored=structuredClone(m);
-  assert.notEqual(JSON.stringify(chessReaction(restored,kind,{piece:'馬'})),variants.at(-1),'save/resume must not repeat the previous variant');
+  if(CHESS_REACTIONS[kind].length>1)assert.notEqual(JSON.stringify(chessReaction(restored,kind,{piece:'馬'})),variants.at(-1),'save/resume must not repeat the previous variant');
  }
 });
 test('rule questions, greetings, affection and mercy stay preset; current-board explanations use AI',async()=>{

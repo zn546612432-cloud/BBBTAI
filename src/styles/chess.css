@@ -50,3 +50,10 @@
 .chess-feedback-win{box-shadow:inset 0 0 36px 9px #d2b274cc;border:3px solid #d5b77b}
 .chess-feedback-loss{box-shadow:inset 0 0 28px 7px #8d4b4bcc;border:3px solid #9e5f58}
 .chess-feedback-draw{box-shadow:inset 0 0 28px 7px #b5c3bbcc;border:3px solid #bdcec3}
+
+.chess-feedback:not(.chess-feedback-capture){display:flex;flex-direction:column;justify-content:center;gap:12px;background:radial-gradient(ellipse,#182d27da, #182d2760 65%,transparent);border:0;color:#e9d09a;text-shadow:0 2px 12px #0009}
+.chess-feedback-loss{color:#e1b6a9!important;background:radial-gradient(ellipse,#322725df,#32272550 65%,transparent)!important}
+.chess-feedback-draw{color:#dde7df!important}
+.chess-result-emblem{font-family:Georgia,serif;font-size:62px;line-height:1}
+.chess-feedback strong{font:400 28px 'Songti TC',serif;letter-spacing:.28em;padding-left:.28em}
+.chess-result-rule{width:80px;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent)}

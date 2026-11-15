@@ -34,7 +34,7 @@ test('weather app edit immediately changes existing journal without changing aut
  assert.equal(entryFor(s,6).weather,'雷雨');
  assert.equal(entryFor(s,6).body,before);
  const html=diaryView(s,{route:'/',params:{day:'6'}});
- assert.match(html,/天气 雷雨/);
+ assert.match(html,/天氣 雷雨/);
  assert.match(html,/⛈/);
  const edit=weatherRender({store:weatherApp(s)},{route:'/edit',params:{day:6,city:'macau'}});
  assert.match(edit,/value="28"/);

@@ -3,9 +3,10 @@ import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.j
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  23:{title:"王翼棄兵",afterNode:"d23-chess-finish",body:"今天開會，原先的計劃被干爹挑出不少毛病。\n\n準備的時候不覺得，聽他一問，才發現有些地方根本接不上。我們想著怎麼往下做，他卻問，為什麼非要這樣做。\n\n他說，做事跟下棋一樣，要講方法。不能手裡有什麼棋，就只想著下什麼棋。有時候，也要學會棄兵保后。\n\n當時聽懂了。回來再看計劃，還是不知道該從哪裡改。\n\n晚上跟 Ouroboros 下了盤棋。他講王翼棄兵，先捨一枚兵，去搶時間和主動權。\n\n怎麼今天誰都在教我丟東西。\n\n棋盤上倒好，兵就在眼前，丟了能換來什麼，也有人慢慢講給我聽。計劃裡要捨掉哪一部分，卻沒這麼清楚。\n\n躺下了還在想干爹問的那幾句話。\n\n明天再看一遍。"},
   14:{
     title:"最近有點忙",
-    body:"搬回來以後，總覺得以前的東西越來越不夠用了。\n\n工作站那幾台機器還能撐一陣子，就是吵得要命。有時候半夜安靜下來，聽著風扇轉，還挺催眠的。\n\n家裡又熱鬧起來了。\n\n哥最近很忙，乾爹回來以後，好像有操不完的心。\n\n感覺接下來有很長一段時間都閒不下來了。"
+    body:"搬回來以後，總覺得以前的東西越來越不夠用了。\n\n工作站那幾臺機器還能撐一陣子，就是吵得要命。有時候半夜安靜下來，聽著風扇轉，還挺催眠的。\n\n家裡又熱鬧起來了。\n\n哥最近很忙，乾爹回來以後，好像有操不完的心。\n\n感覺接下來有很長一段時間都閒不下來了。"
   },
   15:{
     title:"奇怪的人",
@@ -14,32 +15,32 @@ export const DEFAULT_DIARY_ENTRIES={
   },
   17:{
     title:"下雨了",
-    body:"下午突然下了好大的雨。\n\n小辛又在群裡嚷嚷他的鞋。這人也真是，穿那麼貴的鞋去訓練，淋濕了還怪天氣。\n\n哥說今天不練了，晚上大家一起吃燒烤。\n\n胡楓帶回來的資料有些地方對不上。原本以為已經弄清楚的事情，好像又多了點麻煩。\n\n算了，明天再看。\n\n今天還是先吃飯。",
+    body:"下午突然下了好大的雨。\n\n小辛又在群裡嚷嚷他的鞋。這人也真是，穿那麼貴的鞋去訓練，淋濕了還怪天氣。\n\n哥說今天不練了，晚上大家一起喫燒烤。\n\n胡楓帶回來的資料有些地方對不上。原本以為已經弄清楚的事情，好像又多了點麻煩。\n\n算了，明天再看。\n\n今天還是先喫飯。",
     afterChat:"bank-followup"
   },
   6:{
-    title:'今天有点意思',
-    body:'昨天整理的东西还有一点没弄完，今天抽空处理一下。\n\n最近 MIRAGE 的单子还行，不过小委托做多了也挺烦的。看看今天有没有什么值得接的，最好来个奖金高一点的。\n\n哥昨天还叫我出去走走。再说吧，先把手里的事情忙完。',
+    title:'今天有點意思',
+    body:'昨天整理的東西還有一點沒弄完，今天抽空處理一下。\n\n最近 MIRAGE 的單子還行，不過小委託做多了也挺煩的。看看今天有沒有什麼值得接的，最好來個獎金高一點的。\n\n哥昨天還叫我出去走走。再說吧，先把手裡的事情忙完。',
     // Generic diary stages use completed story nodes; D07-D55 can reuse this
     // format without a new daily tick function or event dispatcher.
-    sections:[{id:'mirage-conversation',afterNode:'invitation',text:'今天运气不错。\n\nFlow 早上发来的那个钱包挑战，奖金居然有 10 BTC。原本还以为会有多麻烦，结果比想象中顺利。\n\n奖金到账了。\n\n发布挑战的那个 Dr Ouroboros 还专门找我聊了几句，问我属于哪个组织。\n\n我说我单干。\n\n他好像挺意外的。说话有点欠揍，不过技术应该不错。\n\n最后还叫我「黑客天才」，说以后有机会合作。\n\n行啊，有钱赚再说。'}]
+    sections:[{id:'mirage-conversation',afterNode:'invitation',text:'今天運氣不錯。\n\nFlow 早上發來的那個錢包挑戰，獎金居然有 10 BTC。原本還以爲會有多麻煩，結果比想象中順利。\n\n獎金到賬了。\n\n發佈挑戰的那個 Dr Ouroboros 還專門找我聊了幾句，問我屬於哪個組織。\n\n我說我單幹。\n\n他好像挺意外的。說話有點欠揍，不過技術應該不錯。\n\n最後還叫我「黑客天才」，說以後有機會合作。\n\n行啊，有錢賺再說。'}]
   },
   5:{
-    title:'先把手边的事弄完',
-    body:'工房里的设备还能用。内存和硬盘的报价再看看，没必要一下全换。\n\n前几天的东西归一下档，备份也该整理了。有些委托还没交，先把手边的事弄完。\n\n天天都是这些，多少有点无聊。'
+    title:'先把手邊的事弄完',
+    body:'工房裡的設備還能用。內存和硬盤的報價再看看，沒必要一下全換。\n\n前幾天的東西歸一下檔，備份也該整理了。有些委託還沒交，先把手邊的事弄完。\n\n天天都是這些，多少有點無聊。'
   },
   1:{
     title:'',
     body:'平靜的一天。\n\n胡楓還在韓國留學，偶爾在群裡發幾句消息，也不知道最近過得怎麼樣。\n\n仔仔不知道在忙什麼，已經很久沒在群裡冒泡了。小辛倒是難得幹起了正事，最近一直在忙他的酒吧。\n\n大家各有各的事情，偶爾聊上幾句，日子就這麼一天天過去了。\n\n說不上不好。\n\n只是有些平淡。\n\n……好像也太平淡了點。'
   },
   2:{
-    title:'电脑该退休了',
-    body:'最近工作站用着不太顺手，前阵子才换过配件。机房里那几台服务器还在跑，存储和内存也想补一点。\n\n有空看看澳东商城。'
+    title:'電腦該退休了',
+    body:'最近工作站用著不太順手，前陣子才換過配件。機房裡那幾臺服務器還在跑，存儲和內存也想補一點。\n\n有空看看澳東商城。'
   }
 };
 export const D02_DIARY_SECTIONS={
- brother:'中午和哥聊了换配件的事。\n\n他说晚上出车完给我转点钱。我倒是希望他给自己留着。老头子一直没动静，手里的钱还是得省着点。',
- purchase:'在澳东买了些配件。剩下的先放着吧，东西到手再安排。'
+ brother:'中午和哥聊了換配件的事。\n\n他說晚上出車完給我轉點錢。我倒是希望他給自己留着。老頭子一直沒動靜，手裡的錢還是得省着點。',
+ purchase:'在澳東買了些配件。剩下的先放著吧，東西到手再安排。'
 };
 const storyMinute=s=>Number(s.day)*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3,5));
 /** Schedule only: staged D02 diary unlocks 20 GAME minutes after actions. */
@@ -60,6 +61,7 @@ export function diaryDate(day,start=DIARY_START){
  const d=new Date(start+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+Number(day)-1);
  return d.toISOString().slice(0,10);
 }
+export const diaryWeatherLabel=value=>value.replace(/[云阴雾阵风]/g,ch=>({'云':'雲','阴':'陰','雾':'霧','阵':'陣','风':'風'}[ch]));
 export function entryFor(s,day){
  const extra=s.content?.storyDiary?.[String(day)];
  const authored=DEFAULT_DIARY_ENTRIES[day];
@@ -84,7 +86,7 @@ export function entryFor(s,day){
   const complete=section.afterNode&&Object.hasOwn(s.story55?.completed||{},section.afterNode);
   if(complete)parts.push(overrides[section.id]??section.text);
  }
- return {...base,weather:getDailyWeather(s,{day,cityId:'macau'})?.condition||'暂无记录',body:parts.filter(Boolean).join('\n\n')};
+ return {...base,weather:getDailyWeather(s,{day,cityId:'macau'})?.condition||'暫無記錄',body:parts.filter(Boolean).join('\n\n')};
 }
 export function allDiaryDays(s){
  const days=new Set([...Object.keys(DEFAULT_DIARY_ENTRIES),...Object.keys(s.content?.storyDiary||{})]);
@@ -92,7 +94,7 @@ export function allDiaryDays(s){
 }
 export function saveDiaryEntry(s,day,data){
  if(!Number.isInteger(day)||day<1||day>55)throw Error('日程只支持D01—D55');
- if(typeof data.body!=='string'||data.body.length>6000||typeof data.title!=='string'||data.title.length>150||typeof data.weather!=='string'||data.weather.length>30)throw Error('日程内容超出长度限制');
+ if(typeof data.body!=='string'||data.body.length>6000||typeof data.title!=='string'||data.title.length>150||typeof data.weather!=='string'||data.weather.length>30)throw Error('日程內容超出長度限制');
  s.content.storyDiary??={};
  const existing=s.content.storyDiary[String(day)]||{};
  const permitted=new Set([...(day===2?['brother','purchase']:[]),...(DEFAULT_DIARY_ENTRIES[day]?.sections||[]).map(section=>section.id)]);
