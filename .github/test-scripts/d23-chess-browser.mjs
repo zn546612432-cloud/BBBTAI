@@ -143,6 +143,9 @@ try{
    throw error;
   }
  }
+ const decrypt=story.page.locator('[data-action="mc-decrypt"]');
+ if(await decrypt.count())await decrypt.click();
+ await story.page.locator('.mc-clear-messages').waitFor({state:'visible'});
  const avatarGeometry=await story.page.locator('.mc-clear-row').evaluateAll(rows=>rows.filter(row=>row.querySelector('.mc-avatar')&&row.querySelector('.mc-clear-text')).map(row=>{
   const portrait=row.querySelector('.mc-avatar').getBoundingClientRect(),text=row.querySelector('.mc-clear-text').getBoundingClientRect();
   return {delta:Math.abs(portrait.top-text.top),height:text.height};
