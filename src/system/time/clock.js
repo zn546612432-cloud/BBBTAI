@@ -1,4 +1,4 @@
-import {isStory55} from '../../services/story55/state.js';
+import {isStory55,overnightSceneGate55,overnightSceneNight55} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
@@ -77,15 +77,21 @@ export function advanceGameMinutes(s,requested){
   if(target===1440+180){d.frozenAt03=true;return {minutes:target-from,event:'d01-hold'};}
   return {minutes:target-from,event:short&&target===1439?'short-charge-end':'none'};
  }
- // Keep mandatory D23 available through 03:00 without advancing the story
- // day. This uses the same shared clock and overnight convention as D01.
- if(isStory55(s)&&s.day===23&&(!s.story55?.completed?.['d23-chess-finish']||s.story55?.d23?.nightAfterMidnight)){
-  const night=s.story55.d23??={},from=clockMinutes(s.clock)+(night.nightAfterMidnight?1440:0);
+ // The same 03:00 hold serves any explicitly required late mainline scene.
+ // Keep D23's saved night flag intact; D24 uses the shared overnight ledger.
+ const d23Held=isStory55(s)&&s.day===23&&(!s.story55?.completed?.['d23-chess-finish']||s.story55?.d23?.nightAfterMidnight);
+ const overnightHeld=isStory55(s)&&(d23Held||overnightSceneGate55(s)||overnightSceneNight55(s));
+ if(overnightHeld){
+  const night=s.day===23?(s.story55.d23??={})
+   :s.story55.overnightHold?.day===s.day?s.story55.overnightHold
+   :(s.story55.overnightHold={day:s.day});
+  const from=clockMinutes(s.clock)+(night.nightAfterMidnight?1440:0);
   const target=Math.min(1440+180,from+Math.max(0,Math.floor(requested)));
-  if(target<=from)return {minutes:0,event:'d23-hold'};
+  const holdEvent=s.day===23?'d23-hold':'story-hold';
+  if(target<=from)return {minutes:0,event:holdEvent};
   s.clock=isoTime(target%1440);night.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
-  if(target===1440+180){s.batteryPercent=1;return {minutes:target-from,event:'d23-hold'};}
+  if(target===1440+180){s.batteryPercent=1;return {minutes:target-from,event:holdEvent};}
   return {minutes:target-from,event:'none'};
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
