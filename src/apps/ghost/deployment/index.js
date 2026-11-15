@@ -3,6 +3,7 @@ import {story55Config,nodeStatus,projectById,completed} from '../../../services/
 import {deployment,deploymentPercent,deploymentReadiness,baseUpgradeCost} from '../../../services/story55/projects.js';
 import {renderFlowD03} from '../features/flow-d03/index.js';
 import {ghostShareSource} from '../../../services/story55/ghost-share.js';
+import {tearDeployed} from './tear-run.js';
 const b=(a,t,attrs='')=>`<button type="button" class="s55-button" data-action="s55-${a}" ${attrs}>${t}</button>`;
 // The D03 scanner and the D14 framework are entries in the SAME GHOST
 // Projects list. Do not introduce a second story-themed project dashboard.
@@ -34,11 +35,11 @@ function baseView(s,p){
   <div class="gh-fw-status">${state}${failed&&!loan?' · '+esc(p.runtimeErrorCode||'E-ENV-014'):''}</div>
  </section>
  <section class="gh-fw-actions" aria-label="项目操作">
-  <div class="gh-fw-line"><span>链接</span><strong>${tested} / 5</strong></div>
+  ${tearDeployed(s)?'<button type="button" class="gh-button gh-fw-button" data-action="gh-tear-open">啟動 Ouroboros’ Tear<span>›</span></button>':`<div class="gh-fw-line"><span>链接</span><strong>${tested} / 5</strong></div>
   ${!finished&&ready.canStart?`<button type="button" class="gh-button gh-fw-button" data-action="s55-run-step" data-project="base">链接测试<span>›</span></button>`:''}
   ${loan&&ready.batch>0&&!finished?`
   <div class="gh-fw-line gh-fw-upgrade"><span>设备更新</span><strong>US$${cost.toLocaleString('en-US')}</strong></div>
-  <button type="button" class="gh-button gh-fw-button" data-action="s55-base-upgrade" data-project="base" ${canUpgrade?'':'disabled aria-disabled="true"'}>升级<span>›</span></button>`:''}
+  <button type="button" class="gh-button gh-fw-button" data-action="s55-base-upgrade" data-project="base" ${canUpgrade?'':'disabled aria-disabled="true"'}>升级<span>›</span></button>`:''}`}
  </section>
  ${modal}
  </div>`;

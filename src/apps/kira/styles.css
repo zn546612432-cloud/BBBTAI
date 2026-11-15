@@ -58,6 +58,10 @@
 .app-files .files-d01-open-app strong{color:#273949;font-size:14px}
 .app-files .files-d01-open-app small{color:#8d9aa5;font-size:11px}
 .app-files .files-d01-chevron{color:#9aa8b4;font-size:24px}
+.app-files button.files-tear-app{margin-top:9px}
+.app-files .files-tear-icon{background:#15151b;color:#e2ddd4}
+.app-files .files-tear-icon svg{width:28px;height:28px}
+.app-files button.files-tear-app:disabled{opacity:.55;cursor:default}
 @media(max-width:375px){.app-files .files-d01-document{padding-top:38px}.app-kira .kira-d01-mail .kira-detail-head{padding-top:23px}}
 
 /* D13 is an ordinary KIRA message. The existing detail toolbar owns navigation. */

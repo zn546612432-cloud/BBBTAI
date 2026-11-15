@@ -8,6 +8,7 @@ import {D01_REPAIR,D01_ATTACHMENT,revealD01Key} from '../../story/d01/runtime.js
 import {D02_S,D02_A,D02_MAIL,D02_A_MAIL,D02_KEYS,D02_KEY_FILES,D02_STAGES,d02StepId,revealD02Key,deployD02} from '../../story/d02/runtime.js';
 import {authorize} from '../ghost/state.js';
 import {commissionAttachment,commissionPreviewAvailable,commissionPendingGhostStep,openCommissionWithGhost} from '../../services/commissions/attachment-flow.js';
+import {tearRunAvailability,startTearRun} from '../ghost/deployment/tear-run.js';
 function d01FileAvailable(s){
  return !!s.story55?.d01?.repairAccepted&&s.content.mail.some(m=>m.id===D01_ATTACHMENT);
 }
@@ -63,6 +64,9 @@ function commissionFilePreview(s,mailId){
   return '<div class="page-pad">無法打開附件 · 郵件或憑證不可用</div>';
  const order=s.content.orders.find(o=>o.id===file.orderId);
  const current=commissionPendingGhostStep(s,mailId);
+ const tear=current?tearRunAvailability(s,file.orderId):{visible:false};
+ const tearButton=tear.visible?'<button type="button" class="files-d01-open-app files-tear-app" data-action="files-commission-share-tear" data-id="'+esc(mailId)+'" '+(tear.allowed?'':'disabled aria-disabled="true"')+'><span class="files-d01-ghost-icon files-tear-icon" aria-hidden="true">'+
+  '<svg viewBox="0 0 32 32" fill="none"><path d="M23 8a11 11 0 1 0 4 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="m18 7 7-2 2 7-6-1z" fill="currentColor"/></svg></span><span><strong>'+(tear.resume?'繼續 Ouroboros’ Tear':'分享至 Ouroboros’ Tear')+'</strong><small>'+esc(tear.reason||'Ouroboros’ Tear')+'</small></span><span aria-hidden="true" class="files-d01-chevron">›</span></button>':'';
  const status=order?.status==='COMPLETED'?'已完成驗收':order?.status==='READY'?'待提交'
    :order?.status==='EXPIRED'?'委託已過期':file.status==='RUNNING'?'處理中':'已加密';
  const open=current?
@@ -70,7 +74,7 @@ function commissionFilePreview(s,mailId){
   '<button type="button" class="files-d01-open-app" data-action="files-commission-open-ghost" data-id="'+esc(mailId)+'">'+
   '<span class="files-d01-ghost-icon" aria-hidden="true">G</span><span><strong>GHOST</strong><small>'+
   (file.status==='RUNNING'?'繼續委託':'加密檔案處理工具')+
-  '</small></span><span aria-hidden="true" class="files-d01-chevron">›</span></button></section>':'';
+  '</small></span><span aria-hidden="true" class="files-d01-chevron">›</span></button>'+tearButton+'</section>':'';
  return '<div class="files-d01-preview">'+
   '<header class="files-d01-nav"><button type="button" data-action="files-commission-back" data-id="'+esc(mailId)+'">‹　KIRA</button><span>檔案預覽</span><span aria-hidden="true">•••</span></header>'+
   '<section class="files-d01-document" aria-label="加密密鑰檔案">'+
@@ -104,6 +108,16 @@ if(a==='files-commission-open-ghost'){
  c.store.update(s=>{step=openCommissionWithGhost(s,id);});
  if(!step)return c.toast?.('委託已完成或已失效');
  return c.router.open({appId:'ghost',route:'/contract',params:{orderId:step}});
+}
+if(a==='files-commission-share-tear'){
+ const id=t.dataset.id;
+ let orderId=null;
+ c.store.update(s=>{
+  const file=commissionAttachment(s,id);
+  if(file&&commissionPendingGhostStep(s,id)&&startTearRun(s,file.orderId))orderId=file.orderId;
+ });
+ if(!orderId)return c.toast?.('目前無法執行');
+ return c.router.open({appId:'ghost',route:'/tear-run',params:{orderId}});
 }
 if(a==='files-d01-back')return c.router.open({appId:'kira',route:'/mail/'+D01_ATTACHMENT,params:{}});
 if(a==='files-d01-open-ghost'){

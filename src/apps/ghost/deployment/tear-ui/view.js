@@ -10,12 +10,12 @@ const fileIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v
 export function renderTearOrbit({id,title,status,index,count}){
  ensureTearOrbit();
  const done=status==='complete',failed=status==='failed',progress=done?1:Math.max(0,Math.min(.99,index/Math.max(1,count)));
- const label=done?'執行完成 · 待提交':failed?'執行中止':'執行中';
+ const idle=status==='idle',label=idle?'待機':done?'執行完成 · 待提交':failed?'執行中止':'執行中';
  const key='ghost-tear-'+id;
  return `<section class="gh-tear-screen" data-view-key="${esc(key)}" data-tear-status="${esc(status)}" aria-label="Ouroboros’ Tear">
  <xm-tear-orbit data-key="${esc(key)}-orbit" status="${esc(status)}" progress="${progress}" aria-hidden="true"></xm-tear-orbit>
- <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-return" data-id="${esc(id)}" aria-label="返回 MIRAGE">${backIcon}</button><span>OUROBOROS</span><i aria-hidden="true"></i></header>
- <span class="gh-tear-sr" role="status">${esc(label)} ${Math.min(count,index)} / ${count}</span>
+ <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="${idle?'gh-tear-back':'gh-tear-return'}" data-id="${esc(id)}" aria-label="${idle?'返回項目':'返回 MIRAGE'}">${backIcon}</button><span>OUROBOROS</span><i aria-hidden="true"></i></header>
+ <span class="gh-tear-sr" role="status">${esc(label)}${idle?'':` ${Math.min(count,index)} / ${count}`}</span>
  ${done||failed?`<section class="gh-tear-result" aria-label="執行結果"><span class="gh-tear-result-mark" aria-hidden="true">${done?'✓':'×'}</span><p>${esc(title)}</p><small>${esc(label)}</small></section>`:''}
  <footer class="gh-tear-dock"><div class="gh-tear-package">${fileIcon}<span title="${esc(title)}">${esc(title)}</span>${done||failed?`<button type="button" class="gh-tear-return" data-action="gh-tear-return" data-id="${esc(id)}" aria-label="返回 MIRAGE">${arrowIcon}</button>`:'<i class="gh-tear-pulse" aria-hidden="true"></i>'}</div></footer>
  </section>`;

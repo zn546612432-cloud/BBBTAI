@@ -8,8 +8,13 @@ import {shareGhostToTai,ghostShareScriptLine,sendGhostShareDraft,ghostShareReady
 import {TEAR_DIALOGUES} from '../src/story/d14-d24/tear-dialogue.js';
 import {syncTearReminders} from '../src/apps/ghost/deployment/reminders.js';
 import {startTearRun,tickTearRun,tearRunAvailability,tearUsesToday,renderTearRun} from '../src/apps/ghost/deployment/tear-run.js';
-import {seedD04Contracts,acceptD04Contract,submitD04Contract,DAILY_CONTRACTS} from '../src/story/d04/contract.js';
+import {seedD04Contracts,acceptD04Contract,submitD04Contract,DAILY_CONTRACTS,D04_MAIL} from '../src/story/d04/contract.js';
 import {deploymentView} from '../src/apps/ghost/deployment/index.js';
+import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
+import {render as renderFiles,handle as handleFiles} from '../src/apps/files/index.js';
+import {handle as handleKira} from '../src/apps/kira/index.js';
+import {handle as handleMirage} from '../src/apps/mirage/index.js';
+import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 
 function fixture(){
@@ -116,4 +121,34 @@ test('native Tear canvas reflects canonical progress without advancing, charging
  s.story55.tearRuns[id].status='failed';s.story55.tearRuns[id].index=0;
  assert.match(renderTearRun(s,id),/status="failed" progress="0"/);
  assert.match(renderTearRun(s,id),/執行中止/);
+});
+
+test('completed base opens idle Tear and KIRA file preview is the only share entry',()=>{
+ const s=fixture();win(s);
+ const routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:loc=>{routes.push(loc);s.nav.current=loc;}},toast:()=>{},refresh:()=>{}};
+ assert.doesNotMatch(deploymentView(s,'base'),/gh-tear-open/);
+ for(let day=15;day<=24;day++){s.day=day;win(s);assert.ok(upgradeBaseFramework(s));}
+ const project={appId:'ghost',route:'/deployment',params:{project:'base'}};
+ const html=deploymentView(s,'base');assert.match(html,/gh-tear-open/);assert.doesNotMatch(html,/0 \/ 5|s55-base-upgrade/);
+ const before=JSON.stringify(s.story55.tearRuns||{}),balance=s.bankData.balance;
+ handleGhost('gh-tear-open',{dataset:{}},ctx,project);
+ assert.equal(routes.at(-1).route,'/tear');
+ const idle=renderGhost(ctx,routes.at(-1));assert.match(idle,/status="idle" progress="0"/);assert.match(idle,/gh-tear-back/);
+ assert.equal(JSON.stringify(s.story55.tearRuns||{}),before);assert.equal(s.bankData.balance,balance);
+ handleGhost('gh-tear-back',{dataset:{}},ctx,routes.at(-1));assert.deepEqual(routes.at(-1),project);
+ s.day=25;s.clock='08:00';seedD04Contracts(s);const id=DAILY_CONTRACTS.find(c=>c.marketDaily&&c.day===25).id,mailId=D04_MAIL(id);
+ assert.ok(acceptD04Contract(s,id));
+ setMirageAuthenticated(true);handleMirage('mc-tear-share',{dataset:{id}},ctx,{route:'/order/'+id,params:{}});setMirageAuthenticated(false);
+ assert.equal(routes.at(-1).route,'/mail/'+mailId);assert.equal(tearUsesToday(s),0);
+ handleKira('kira-open-commission-file',{dataset:{id:mailId}},ctx);
+ const file=routes.at(-1);assert.equal(file.appId,'files');
+ const preview=renderFiles(ctx,file);assert.match(preview,/files-commission-open-ghost/);assert.match(preview,/files-commission-share-tear/);
+ assert.equal(tearUsesToday(s),0);
+ handleFiles('files-commission-share-tear',{dataset:{id:mailId}},ctx);
+ assert.deepEqual(routes.at(-1),{appId:'ghost',route:'/tear-run',params:{orderId:id}});assert.equal(tearUsesToday(s),1);
+ assert.equal(s.bankData.balance,balance);
+ for(let i=1;i<=12;i++)tickTearRun(s,id,Date.now()+i*4000);
+ assert.equal(s.content.orders.find(o=>o.id===id).status,'READY');
+ assert.doesNotMatch(renderFiles(ctx,file),/files-commission-share-tear/);
+ assert.ok(submitD04Contract(s,id));assert.doesNotMatch(renderFiles(ctx,file),/files-commission-share-tear/);
 });
