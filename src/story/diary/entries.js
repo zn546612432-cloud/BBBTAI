@@ -3,6 +3,7 @@ import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.j
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  29:{title:'鬼車',afterNode:'plan',body:'下午開會，干爹否決了我原先的撤離方案。他讓我再想想，假如對手沒有按照我們預想的方式行動，又該怎麼辦。\n\n晚上跟 Ouroboros 下了盤棋，倒是有了些新的想法。\n\n澳門警方的新系統叫「辣妹」，他管自己的 AI 叫 TAI，問他為什麼，又不肯說。\n\n鬼車陷阱。這個構想確實有意思。\n\n這傢伙似乎對我們的一切都瞭如指掌，我卻連他的名字都不知道。\n\n他給了我一個 IP，查到的位置在葡萄牙里斯本。\n\n既然這麼期待我找到他，那就如他所願。'},
   23:{title:"王翼棄兵",afterNode:"d23-chess-finish",body:"今天開會，原先的計劃被干爹挑出不少毛病。\n\n準備的時候不覺得，聽他一問，才發現有些地方根本接不上。我們想著怎麼往下做，他卻問，為什麼非要這樣做。\n\n他說，做事跟下棋一樣，要講方法。不能手裡有什麼棋，就只想著下什麼棋。有時候，也要學會棄兵保后。\n\n當時聽懂了。回來再看計劃，還是不知道該從哪裡改。\n\n晚上跟 Ouroboros 下了盤棋。他講王翼棄兵，先捨一枚兵，去搶時間和主動權。\n\n怎麼今天誰都在教我丟東西。\n\n棋盤上倒好，兵就在眼前，丟了能換來什麼，也有人慢慢講給我聽。計劃裡要捨掉哪一部分，卻沒這麼清楚。\n\n躺下了還在想干爹問的那幾句話。\n\n明天再看一遍。"},
   14:{
     title:"最近有點忙",

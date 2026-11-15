@@ -5,6 +5,7 @@ import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
+import {applyD29Definition,D29_IP} from '../../story/d29/definition.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
 import {syncBaseFrameworkRevision,syncBaseLinkPipeRevision,deployment} from './projects.js';
@@ -16,7 +17,7 @@ import {tickPhoneStoryMessages} from '../messaging/phone-story-scheduler.js';
 import {tickMacauCycloneSMS} from '../weather/cyclone-signals.js';
 import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
-import {offerD23ChessInvitation} from '../invitations.js';
+import {offerD23ChessInvitation,offerStoryChessInvitation} from '../invitations.js';
 import {tickD23ChessLesson} from '../chess-lesson.js';
 import {tickD23MiragePostgame} from './d23-postgame.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
@@ -29,6 +30,7 @@ import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
+import {seedAuthoredNotes} from './authored-notes.js';
 import {tickFlowD03,tickFlowD06} from './flow-d03.js';
 import {stampEnding55,startFinale55,ENDING_FINAL_REPLY,revealEndingVoice55} from './finale.js';
 const actors={awei:'阿威',me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
@@ -93,6 +95,8 @@ export function finishScene55(s,id){
  if(id==='ending')startFinale55(s);
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
  if(id==='d23-chess')offerD23ChessInvitation(s);
+ if(id==='d29-chess')offerStoryChessInvitation(s,29);
+ if(id==='plan')appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-d29-offline',from:'system',kind:'terminal-status',text:'Ouroboros 已下線',day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55',notify:false});
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame){
   const postgame=s.story55.d23Postgame;
   postgame.phase='closed';postgame.closed=true;
@@ -195,6 +199,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
   const image=n.imageLines?.[index];
   appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
+  if(id==='plan'&&line[1]===D29_IP)seedAuthoredNotes(s,[{id:'s55-d29-ip',day:s.day,at:s.clock,title:'Ouroboros',text:D29_IP}]);
  }
 }
 export function payNode55(s,id){
@@ -298,6 +303,8 @@ export function tickStory55(s){
  applyD17Definition(story55Config(s));
  applyD25Definition(story55Config(s));
  applyD26D28Definition(story55Config(s));
+ applyD29Definition(story55Config(s));
+ if(s.day===29&&completed(s,'d29-father')&&s.nav?.current?.appId==='chess'&&(s.clock>='21:36'||overnightSceneNight55(s)))s.story55.d29ChessOpened=true;
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
  syncTearReminders(s);
@@ -374,6 +381,7 @@ export function anonymousPresence55(s,now=Date.now()){
  }
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
  if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
+ if(s.day===29&&completed(s,'plan'))return {online:false,reason:'已下線'};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
  if(s.day>=15&&s.day<=24){
   const clock=typeof s.clock==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s.clock)?s.clock:'';

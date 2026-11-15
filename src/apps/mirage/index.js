@@ -25,7 +25,7 @@ import {rebaseBundledPublicAsset} from '../../services/public-assets.js';
 import {sendMessage} from '../../services/messaging/index.js';
 import {d23MiragePostgame,canSendD23Mirage,acceptD23MirageSend,endD23MirageConversation,replyToD23Mirage} from '../../services/story55/d23-postgame.js';
 import {tickStory55} from '../../services/story55/runtime.js';
-import {receiveInvitation,startAcceptedInvitation} from '../../services/invitations.js';
+import {receiveInvitation,startAcceptedInvitation,refuseD29ChessInvitation} from '../../services/invitations.js';
 import {visibleMessages} from '../../services/messaging/delivery.js';
 import {FLOW_CONTACT,FLOW_INVITE,openFlowTest,flowOnMirageEntry} from '../../services/story55/flow-d03.js';
 import {glyph,face,web,productArt,skull} from './art.js';
@@ -53,7 +53,7 @@ const chessCardMarkup=(m,s)=>{
  const accepted=inv?.status==='accepted';
  const status=accepted?'已接受邀請':'待接受';
  const action=accepted?'繼續棋局':'接受邀請';
- return btn('mc-chess-invite',`<span>CHESS / INVITATION</span><strong>Dr Ouroboros</strong><small>${status}</small><b>${action} ↗</b>`,'mc-ghost-card',`data-message-id="${esc(m.id)}" aria-label="${action}"`);
+ return btn('mc-chess-invite',`<span>CHESS / INVITATION</span><strong>Dr Ouroboros</strong><small>${status}</small><b>${action} ↗</b>`,'mc-ghost-card',`data-message-id="${esc(m.id)}" aria-label="${action}"`)+(inv?.source==='d29-mirage-story'&&!accepted&&!inv.refused?btn('mc-chess-refuse','拒絕','button-quiet',`data-invitation-id="${esc(inv.id)}"`):'');
 };
 const ghostCardMarkup=m=>{const a=m.attachment||{};return `<button type="button" class="mc-ghost-card" data-action="mc-ghost-project" data-message-id="${esc(m.id)}" aria-label="打開 GHOST 專案"><span>GHOST / PROJECT</span><strong>${esc(a.title||'項目')}</strong><small>${a.type==='ghost-project'?esc(String(a.percent??0))+'%':esc(a.status||'')}</small><b>打開 GHOST　↗</b></button>`;};
 const flowMarkup=m=>m.id===FLOW_INVITE?esc(m.text).replace('测试','<button type="button" class="mc-flow-link" data-action="mc-flow-test">测试</button>'):/^s55-d17-invitation-/.test(m.id||'')?esc(m.text).replaceAll('Azathoth','<button type="button" class="mc-flow-link" data-action="mc-azathoth-reference">Azathoth</button>'):esc(m.text);
@@ -160,10 +160,11 @@ export function handle(action,t,ctx,loc){
   const s=ctx.store.get();
   const row=s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros')?.messages.find(m=>m.id===t.dataset.messageId);
   const inv=s.invitations?.find(i=>i.id===row?.attachment?.invitationId);
-  if(row?.kind!=='app_invitation'||inv?.source!=='d23-mirage-story'||!['pending','accepted'].includes(inv.status))return ctx.toast('棋局邀請無效');
+  if(row?.kind!=='app_invitation'||!['d23-mirage-story','d29-mirage-story'].includes(inv?.source)||!['pending','accepted'].includes(inv.status))return ctx.toast('棋局邀請無效');
   const matchId=inv.status==='pending'?receiveInvitation(ctx.store,inv.id):startAcceptedInvitation(ctx.store,inv.id);
   return ctx.router.open({appId:'chess',route:'/match/'+matchId,params:{}});
  }
+ if(action==='mc-chess-refuse'){ctx.store.update(s=>refuseD29ChessInvitation(s,t.dataset.invitationId));return;}
 
  if(action==='mc-azathoth-reference'&&isStory55(ctx.store.get())&&ctx.store.get().day>=17)return ctx.router.open({appId:'browser',route:'/page',params:{page:'d17-azathoth'}});const id=t.dataset.id,s=ctx.store.get();
  if(action==='mc-exit'){ctx.router.back();return;}

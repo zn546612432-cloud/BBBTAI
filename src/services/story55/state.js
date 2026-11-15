@@ -22,6 +22,8 @@ export function nodeStatus(s,id){
  if(n.authorizedProject&&!s.story55?.projects?.[n.authorizedProject]?.authorized)return {state:'locked',reason:'等待本地專案部署'};
  if(id==='loan'&&!s.story55?.projects?.base?.batches?.[0]?.complete)return {state:'locked',reason:'等待D14基础框架首次运行报告'};
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
+ if(id==='d29-chess'&&!s.story55.d29ChessOpened)return {state:'locked',reason:'等待打開國際象棋'};
+ if(id==='plan'&&!s.story55.d29ChessExited)return {state:'locked',reason:'等待棋局結束'};
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame?.phase!=='closing')
   return {state:'locked',reason:'等待 Mirage 賽後交流'};
  const missing=n.requires.filter(x=>!completed(s,x));
