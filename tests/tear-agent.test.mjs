@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,sceneLines} from '../src/services/story55/runtime.js';
-import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {renderAgentContent} from '../src/apps/ghost/deployment/tear-agent/view.js';
+import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
+import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
 import {saveIncomingZip,localFileList,handleLibraryAction} from '../src/apps/files/features/local-library/index.js';
 import {TEAR_STAGES} from '../src/story/d25/tear-agent.js';
 import {dailyContent} from '../src/apps/browser/features/cheat-guide/content.js';
@@ -56,4 +59,40 @@ test('missing research does not claim completion, D29 IP requires the real story
  s.content.notes.push({id:'s55-d29-ip',text:D29_IP});sendAgent(s,D29_IP);
  assert.equal(agent(s).ipRequested,true);assert.equal(agent(s).ipAuthorized,undefined);
  for(let day=25;day<=29;day++)assert.ok(dailyContent[day].eggs.length);
+});
+
+test('TAI only displays the newest message and has no visible history control',()=>{
+ const s=fixture(),a=agent(s);
+ a.messages.push(
+  {id:'old-user',role:'user',text:'OLDER_USER_ONLY_MARKER'},
+  {id:'old-reply',role:'assistant',text:'OLDER_REPLY_ONLY_MARKER'},
+  {id:'current-user',role:'user',text:'CURRENT_USER_MARKER'},
+  {id:'latest-reply',role:'assistant',text:'LATEST_REPLY_ONLY_MARKER'}
+ );
+ const body=renderAgentContent(s).content;
+ assert.match(body,/LATEST_REPLY_ONLY_MARKER/);
+ assert.doesNotMatch(body,/OLDER_USER_ONLY_MARKER|OLDER_REPLY_ONLY_MARKER|CURRENT_USER_MARKER/);
+ const screen=renderTearAgent(s);
+ assert.doesNotMatch(screen,/gh-tear-history|歷史紀錄/);
+});
+test('existing transcript saves migrate to a fresh single-message view without losing research jobs',()=>{
+ const s=fixture(),a=agent(s);
+ a.displayRevision=1;
+ a.messages=[{id:'old',role:'assistant',text:'（以角色身份分簡短回應）舊的錯誤內容'}];
+ a.jobs.survey={start:123,shown:1,done:false};
+ const migrated=ensureAgent(s);
+ assert.equal(migrated.displayRevision,2);
+ assert.equal(migrated.messages.length,1);
+ assert.equal(migrated.messages[0].text,'你好，我是小TAI，今天有什麼可以幫助你？');
+ assert.equal(migrated.jobs.survey.done,false);
+ assert.equal(migrated.jobs.survey.start,123);
+});
+test('TAI greetings and punctuation are answered naturally without unrelated safety refusals',()=>{
+ assert.equal(presetReply('hi'),'你好，我在。有什麼需要我協助？');
+ assert.equal(presetReply('?'),'我在。怎麼了？');
+ assert.equal(presetReply('TAI？'),'這是主人賜予我的名字。');
+ const prompt=buildTearPrompt('AAB_SECURITY: FUZZING');
+ assert.match(prompt,/優先直接回答使用者最新的訊息/);
+ assert.match(prompt,/不要輸出括號式旁白/);
+ assert.doesNotMatch(prompt,/以角色身份分簡短回應|先說明系統界線/);
 });
