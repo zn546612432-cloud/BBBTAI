@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55,tickQueuedStoryScenes55} from '../src/services/story55/runtime.js';
+import {activateStory55,tickQueuedStoryScenes55,sceneLines} from '../src/services/story55/runtime.js';
 import {story55Config,nodeStatus,completed,story55ChargeGate,overnightSceneGate55} from '../src/services/story55/state.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
@@ -23,8 +23,9 @@ test('D26–D28 fixed scenes deliver in order, require real Send, render media a
   assert.equal(story55ChargeGate(s),'plot');assert.equal(overnightSceneGate55(s)?.id,n.id);
   const chat=s.content.conversations[n.channel].find(c=>c.id===n.conversationId);
   const messages=()=>chat.messages.filter(m=>m.id.startsWith(n.messagePrefix+'-'));
+  const lines=sceneLines(s,n.id);
   assert.equal(messages().length,0);
-  for(const [i,[who,copy]] of cfg.scenes[n.id].entries()){
+  for(const [i,[who,copy]] of lines.entries()){
    if(who==='me'){
     tickQueuedStoryScenes55(s,now+=3000);assert.equal(messages().length,i);
     if(n.channel==='wechat'){
@@ -52,7 +53,7 @@ test('D26–D28 fixed scenes deliver in order, require real Send, render media a
    }
   }
   assert.equal(completed(s,n.id),true);
-  tickQueuedStoryScenes55(s,now+=3000);assert.equal(messages().length,cfg.scenes[n.id].length);
+  tickQueuedStoryScenes55(s,now+=3000);assert.equal(messages().length,lines.length);
   if(!nodes.some(x=>x.day===n.day&&!completed(s,x.id)))assert.equal(story55ChargeGate(s),null);
  }
 });
