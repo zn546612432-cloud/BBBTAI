@@ -9,6 +9,25 @@ import {render as weatherApp} from '../src/apps/weather/replica.js';
 import {getWeather} from '../src/services/weather/world.js';
 import {archiveHistoryUrl,europeanLocalTime} from '../src/services/weather/remote-history.js';
 
+test('Files browses exactly two device folders, restores no developer menus, and only displays received keys',()=>{
+ const s=activateStory55(initialState());
+ const render=route=>filesApp({store:{get:()=>s}},{route,params:{}});
+ assert.match(render('/'),/data-route="\/iphone"/);
+ const root=render('/iphone');
+ assert.match(root,/已下載/);assert.match(root,/工作資料/);
+ assert.equal((root.match(/data-route="\/folder\//g)||[]).length,2);
+ for(const route of ['/','/iphone','/story55','/folder/documents'])
+  assert.doesNotMatch(render(route),/劇情檔案|导出|匯出|分析報告|部署报告/);
+ s.story55.d01.repairAccepted=true;
+ s.content.mail.push({id:'d01-mirage001-attachment',read:true});
+ const repair=s.content.orders.find(o=>o.id==='mirage001');
+ if(repair)repair.status='ACCEPTED';else s.content.orders.push({id:'mirage001',status:'ACCEPTED'});
+ assert.match(render('/folder/documents'),/mirage001\.key/);
+ assert.doesNotMatch(render('/folder/downloads'),/mirage001\.key/);
+ s.content.mail.find(m=>m.id==='d01-mirage001-attachment').read=false;
+ assert.doesNotMatch(render('/folder/documents'),/mirage001\.key/);
+});
+
 test('WeChat ZIP preview saves exactly one opaque file into Files, with no extraction or Agent side effects',()=>{
  const s=activateStory55(initialState()),chat=s.content.conversations.wechat.find(c=>c.id==='group');
  s.day=25;s.clock='11:00';

@@ -7,6 +7,21 @@ import {scriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {canCharge,plugIn} from '../src/system/power/battery.js';
 import {dateParts} from '../src/services/calendar.js';
+import {powerFullscreen} from '../src/system/power/controls.js';
+import {syncDeathNight} from '../src/system/power/story.js';
+
+test('an ordinary mandatory scene uses the same 03:00 hold and repairs old 1% saves',()=>{
+ const s=activateStory55(initialState());
+ s.day=11;s.clock='23:59';s.batteryPercent=20;s.content.alarms=[];
+ s.story55.d01={bankClaimed:true,rewardPaid:true};
+ for(const n of story55Config(s).nodes)if(n.gateDay<11)s.story55.completed[n.id]={day:n.day,clock:'12:00'};
+ assert.equal(advanceGameMinutes(s,200).event,'story-hold');
+ assert.equal(s.day,11);assert.equal(s.clock,'03:00');assert.equal(s.batteryPercent,2);
+ assert.equal(canCharge(s),false);
+ s.batteryPercent=1;syncDeathNight(s);
+ assert.equal(s.batteryPercent,2);assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/);
+ assert.equal(advanceGameMinutes(s,600).minutes,0);
+});
 
 test('D24 Flow keeps its mandatory overnight scene open until the final bubble',()=>{
  const s=initialState();activateStory55(s);
@@ -24,7 +39,7 @@ test('D24 Flow keeps its mandatory overnight scene open until the final bubble',
  assert.equal(canCharge(s),false);
  advanceGameMinutes(s,200);
  assert.equal(s.day,24);assert.equal(s.clock,'03:00');
- assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,false);
+ assert.equal(s.batteryPercent,2);assert.equal(s.emergencyCharge,false);
  assert.equal(dateParts(s).iso,'2025-06-12');
  assert.equal(scriptedDraft55(s,'mirage',flow)?.text,lines[0][1]);
  assert.equal(canCharge(s),false);

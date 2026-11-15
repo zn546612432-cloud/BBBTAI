@@ -144,9 +144,9 @@ test('D23 remains unsent until native Send, including after 03:00 and old saved 
  assert.equal(c.messages.filter(m=>/^s55-d23-chess-/.test(m.id)).length,0);
  const result=advanceGameMinutes(s,99999);
  assert.equal(result.event,'d23-hold');assert.equal(s.day,23);assert.equal(s.clock,'03:00');
- assert.equal(s.batteryPercent,1);assert.equal(s.story55.d23.nightAfterMidnight,true);
+ assert.equal(s.batteryPercent,2);assert.equal(s.story55.d23.nightAfterMidnight,true);
  assert.equal(canCharge(s),false);assert.equal(canShortCharge(s),false);
- assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/,'1% must remain playable');
+ assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/,'2% must remain playable');
  assert.equal(scriptedDraft55(s,'mirage','s55-ouroboros')?.text,'你會下國際象棋嗎？');
  sendScriptedDraft55(s,'mirage','s55-ouroboros','你會下國際象棋嗎？');
  assert.equal(c.messages.filter(m=>m.id==='s55-d23-chess-0').length,1);

@@ -1,11 +1,12 @@
 // Single local library for native phone file cards. ZIP archives are stored
 // unopened; neither Files nor chat extracts or executes attachment contents.
 import {esc} from '../../../../system/ui.js';
+import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
+import {completed,projectById} from '../../../../services/story55/state.js';
 
 const FOLDERS=Object.freeze([
- {id:'downloads',name:'下載項目',icon:'↓'},
- {id:'documents',name:'文件',icon:'▤'},
- {id:'reports',name:'分析報告',icon:'▤'}
+ {id:'downloads',name:'已下載'},
+ {id:'documents',name:'工作資料'}
 ]);
 const knownFolder=id=>FOLDERS.some(f=>f.id===id);
 const decode=value=>{try{return decodeURIComponent(value);}catch{return '';}};
@@ -25,7 +26,7 @@ const chatFile=(s,chatId,messageId)=>{
  const message=chat?.messages?.find(m=>m.id===messageId);
  return canArchive(message)?{chat,message}:null;
 };
-export const isLibraryRoute=route=>route==='/'||/^\/(folder|recent|trash|item|rename|move|search|incoming)\b/.test(route);
+export const isLibraryRoute=route=>route==='/'||/^\/(iphone|folder|recent|trash|item|rename|move|search|incoming|work-key)\b/.test(route);
 export const localFileList=s=>library(s).filter(f=>!f.deleted);
 export function saveIncomingZip(s,chatId,messageId){
  const pair=chatFile(s,chatId,messageId);
@@ -66,14 +67,36 @@ const row=f=>'<button type="button" class="fl-row" data-action="files-local-item
 const empty='<p class="fl-empty">尚無檔案</p>';
 const path=(route,prefix)=>decode(route.slice(prefix.length));
 const heading=(title)=>'<h1 class="fl-title">'+esc(title)+'</h1>';
+// Credentials are a read-only view of already received mail and authorized
+// GHOST records, not a duplicate key store or an unlock mechanism.
+function workFiles(s){
+ return (s.content?.mail||[]).filter(m=>m.read).flatMap(m=>{
+  const file=commissionAttachment(s,m.id);
+  if(file&&commissionPreviewAvailable(s,m.id)){
+   const key=Object.values(s.ghost?.orders||{}).find(o=>o.mailId===m.id&&o.key)?.key;
+   return [{id:m.id,name:file.name,route:file.route,key}];
+  }
+  if(m.storyWalletD06){
+   const project=projectById(s,'wallet');
+   if(project)return [{id:m.id,name:'wallet_challenge.key',appId:'kira',route:'/mail/'+m.id,key:project.key}];
+  }
+  if(m.id==='s55-d13-wallet-mail'&&completed(s,'d13-wallet-mail'))
+   return [{id:m.id,name:m.attachmentName||'wallet-binding.key',appId:'mirage',route:'/wallet'}];
+  const project=m.story55&&m.project&&completed(s,m.storyNode)&&projectById(s,m.project);
+  if(project)return [{id:m.id,name:m.attachmentName||project.id+'.key',route:'/story55-key',project:project.id,
+   key:s.story55?.projectKeysRevealed?.[project.id]?project.key:null}];
+  return [];
+ });
+}
+const folderIcon='<svg class="fl-folder-art" viewBox="0 0 32 28" aria-hidden="true"><path fill="#72caff" d="M2 4a4 4 0 0 1 4-4h8l4 4h8a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><path fill="#339cf4" d="M2 10h28v13a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>';
+const folderRow=(route,name)=>'<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="'+esc(route)+'">'+folderIcon+'<span>'+esc(name)+'</span><span class="fl-chevron">›</span></button>';
+const keyRow=f=>'<button type="button" class="fl-row" data-action="files-local-nav" data-route="/work-key/'+encodeURIComponent(f.id)+'"><span class="fl-archive-icon">KEY</span><span class="fl-row-copy"><strong>'+esc(f.name)+'</strong><small>加密憑證</small></span><span class="fl-chevron">›</span></button>';
 const top=s=>'<div class="fl-library">'+heading('瀏覽')+
  '<form class="fl-search" data-form="files-local-search"><span aria-hidden="true">⌕</span><input name="query" aria-label="搜尋檔案" placeholder="搜尋" autocomplete="off"><button type="submit">搜尋</button></form>'+
  '<h2>位置</h2><div class="fl-section">'+
- '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/folder/downloads"><span class="fl-folder-icon">▤</span><span>我的 iPhone</span><span class="fl-chevron">›</span></button>'+
- FOLDERS.map(f=>'<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/folder/'+f.id+'"><span class="fl-folder-icon">'+f.icon+'</span><span>'+f.name+'</span><span class="fl-chevron">›</span></button>').join('')+
+ folderRow('/iphone','我的 iPhone')+
  '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/recent"><span class="fl-folder-icon">◷</span><span>最近使用</span><span class="fl-chevron">›</span></button>'+
  '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/trash"><span class="fl-folder-icon">♻</span><span>最近刪除</span><span class="fl-chevron">›</span></button></div>'+
- (s.story55?.version===1?'<h2>其他位置</h2><div class="fl-section"><button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/story55"><span class="fl-folder-icon">▤</span><span>既有劇情檔案</span><span class="fl-chevron">›</span></button></div>':'')+
  '</div>';
 const archive=(s,route)=>{
  const tail=route.slice('/incoming/wechat/'.length),sep=tail.indexOf('/'),chatId=sep>=0?decode(tail.slice(0,sep)):'',messageId=sep>=0?decode(tail.slice(sep+1)):'';
@@ -100,6 +123,12 @@ const itemView=(s,id)=>{
 export function renderLibrary(s,route,params={}){
  if(route.startsWith('/incoming/wechat/'))return archive(s,route);
  if(route==='/')return top(s);
+ if(route==='/iphone')return '<div class="fl-library">'+nav('我的 iPhone','/')+'<div class="fl-section">'+FOLDERS.map(f=>folderRow('/folder/'+f.id,f.name)).join('')+'</div></div>';
+ if(route.startsWith('/work-key/')){
+  const f=workFiles(s).find(f=>f.id===path(route,'/work-key/'));
+  if(!f)return '<div class="fl-library">'+nav('工作資料','/folder/documents')+empty+'</div>';
+  return '<div class="fl-library">'+nav('檔案','/folder/documents')+'<section class="fl-preview-main"><span class="fl-archive-icon">KEY</span>'+heading(f.name)+'<p>加密憑證</p>'+(f.key?'<p>'+esc(f.key)+'</p>':'')+'</section><div class="fl-actions"><button type="button" data-action="files-local-open-key" data-id="'+esc(f.id)+'">開啟</button>'+(f.key?'<button type="button" data-action="files-local-copy-key" data-id="'+esc(f.id)+'">複製密鑰</button>':'')+'</div></div>';
+ }
  if(route.startsWith('/item/'))return itemView(s,path(route,'/item/'));
  if(route.startsWith('/rename/')){
   const f=fileById(s,path(route,'/rename/'));if(!f)return empty;
@@ -113,12 +142,13 @@ export function renderLibrary(s,route,params={}){
  }
  const trash=route==='/trash',recent=route==='/recent',search=route==='/search';
  const folder=route.startsWith('/folder/')?path(route,'/folder/'):'downloads';
- const title=trash?'最近刪除':recent?'最近使用':search?'搜尋結果':FOLDERS.find(f=>f.id===folder)?.name||'下載項目';
+ const title=trash?'最近刪除':recent?'最近使用':search?'搜尋結果':FOLDERS.find(f=>f.id===folder)?.name||'已下載';
  const query=String(params.query||'').trim().toLocaleLowerCase();
- const items=library(s).filter(f=>trash?f.deleted:!f.deleted&&(recent||search||f.folder===folder))
+ const items=library(s).filter(f=>trash?f.deleted:!f.deleted&&(recent||search||f.folder===folder||folder==='downloads'&&f.folder==='reports'))
   .filter(f=>!search||f.name.toLocaleLowerCase().includes(query)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
- return '<div class="fl-library">'+nav(title,'/')+ (search?'<p class="fl-search-term">'+esc(params.query||'')+'</p>':'')+
- '<div class="fl-section">'+(items.length?items.map(row).join(''):empty)+'</div><p class="fl-count">'+items.length+' 個項目</p></div>';
+ const keys=!trash&&(recent||search||folder==='documents')?workFiles(s).filter(f=>!search||f.name.toLocaleLowerCase().includes(query)):[];
+ return '<div class="fl-library">'+nav(title,route.startsWith('/folder/')?'/iphone':'/')+ (search?'<p class="fl-search-term">'+esc(params.query||'')+'</p>':'')+
+ '<div class="fl-section">'+(items.length||keys.length?items.map(row).join('')+keys.map(keyRow).join(''):empty)+'</div><p class="fl-count">'+(items.length+keys.length)+' 個項目</p></div>';
 }
 export function handleLibraryAction(a,t,c){
  if(!a.startsWith('files-local-'))return false;
@@ -128,7 +158,13 @@ export function handleLibraryAction(a,t,c){
  }else if(a==='files-local-item')c.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});
  else if(a==='files-local-save'){
   let result;c.store.update(s=>result=saveIncomingZip(s,t.dataset.chat,t.dataset.message));
-  c.toast?.(result.created?'已儲存到下載項目':'檔案已儲存');
+  c.toast?.(result.created?'已儲存到已下載':'檔案已儲存');
+ }else if(a==='files-local-open-key'){
+  const f=workFiles(c.store.get()).find(f=>f.id===id);
+  if(f)c.router.open({appId:f.appId||'files',route:f.route,params:{...(f.project?{project:f.project}:{}),fromFiles:true}});
+ }else if(a==='files-local-copy-key'){
+  const f=workFiles(c.store.get()).find(f=>f.id===id);
+  if(f?.key&&globalThis.navigator?.clipboard?.writeText)globalThis.navigator.clipboard.writeText(f.key).then(()=>c.toast?.('已複製')).catch(()=>c.toast?.('無法複製'));
  }else if(a==='files-local-delete'){c.store.update(s=>deleteLocalFile(s,id));c.router.open({appId:'files',route:'/folder/downloads'});}
  else if(a==='files-local-restore'){c.store.update(s=>restoreLocalFile(s,id));c.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});}
  else if(a==='files-local-copy'){let copied;c.store.update(s=>copied=copyLocalFile(s,id));c.router.open({appId:'files',route:'/item/'+encodeURIComponent(copied.id)});}

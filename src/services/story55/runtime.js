@@ -139,7 +139,7 @@ function creditScene55(s,n){
  const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
- if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
+ if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
@@ -190,7 +190,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const shown=plannedSceneLineClock55(s,id,index);
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(n.holdAt03&&overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1],kind:id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
  }
 }
 export function payNode55(s,id){
@@ -199,7 +199,7 @@ export function payNode55(s,id){
  s.bankData.balance-=n.cost;s.bankData.transactions.unshift({id:'s55-payment-'+id,label:n.title,amount:-n.cost,time:s.clock,date:date55(s.day)});completeNode(s,id);tickStory55(s);
 }
 const mailDefs=s=>story55Config(s).mails.map(m=>({...m,body:m.body.replaceAll('{{projectKey}}',story55Config(s).projects.find(p=>p.id===m.project)?.key||'')}));
-export function markMail55(s,id){const m=s.content.mail.find(m=>m.id===id&&m.story55);if(!m)throw Error('邮件不存在');if(nodeStatus(s,m.storyNode).state==='ready')completeNode(s,m.storyNode);if(id==='s55-d13-wallet-mail'&&!s.story55.d13MailFirstOpened){if(s.day===13&&s.clock<'22:30')s.clock='22:30';s.story55.d13MailFirstOpened=true;}m.read=true;tickStory55(s);}
+export function markMail55(s,id){const m=s.content.mail.find(m=>m.id===id&&m.story55);if(!m)throw Error('邮件不存在');if(nodeStatus(s,m.storyNode).state==='ready')completeNode(s,m.storyNode);if(id==='s55-d13-wallet-mail'&&!s.story55.d13MailFirstOpened){if(s.day===13&&!overnightSceneNight55(s)&&s.clock<'22:30')s.clock='22:30';s.story55.d13MailFirstOpened=true;}m.read=true;tickStory55(s);}
 export function readEvidence55(s,kind,id){
  const table={file:'documents',page:'pages',map:'locations'}[kind],item=story55Config(s)[table]?.find(x=>x.id===id);
  if(!item)throw Error('资料不存在');
@@ -252,7 +252,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
-  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))continue;
+  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;

@@ -61,7 +61,7 @@ test('story gates never raise a low saved battery; holding D01 at 03:00 stops di
  const s=start(1);s.batteryPercent=7;
  advanceGameMinutes(s,1);assert.equal(s.batteryPercent,7);
  advanceGameMinutes(s,5000);const before=s.batteryPercent;
- assert.equal(s.clock,'03:00');assert.equal(advanceGameMinutes(s,1000).minutes,0);
+ assert.equal(s.clock,'03:00');assert.equal(before,2);assert.equal(advanceGameMinutes(s,1000).minutes,0);
  assert.equal(s.batteryPercent,before);
 });
 test('alarms and emergency settle only actual elapsed minutes and retain the 1% override',()=>{

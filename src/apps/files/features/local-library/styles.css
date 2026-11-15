@@ -13,6 +13,7 @@
 .app-files .fl-folder-row>span:nth-child(2){flex:1;font-size:16px}
 .app-files .fl-chevron{margin-left:auto;color:#adb0b7;font-size:19px;flex:none}
 .app-files .fl-folder-icon{width:32px;height:32px;display:grid;place-items:center;background:#e9f1fd;color:#287bd0;border-radius:9px;font-size:20px}
+.app-files .fl-folder-art{width:32px;height:28px;flex:none}
 .app-files .fl-archive-icon{display:grid;place-items:center;width:46px;height:54px;border-radius:6px;background:#f5f7fb;border:1px solid #d1dae8;color:#50749f;letter-spacing:1px;font-size:12px;font-weight:760;flex:none;position:relative}
 .app-files .fl-archive-icon:before{content:'▤';display:block;font-size:22px;margin-bottom:-10px}
 .app-files .fl-row-copy{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}

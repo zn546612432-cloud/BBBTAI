@@ -1,4 +1,4 @@
-import {isStory55,overnightSceneGate55,overnightSceneNight55} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,overnightSceneGate55,overnightSceneNight55} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
@@ -74,13 +74,19 @@ export function advanceGameMinutes(s,requested){
   s.clock=isoTime(target%1440);d.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
   if(short&&target===1439)endShortCharge(s);
-  if(target===1440+180){d.frozenAt03=true;return {minutes:target-from,event:'d01-hold'};}
+  if(target===1440+180){d.frozenAt03=true;s.batteryPercent=2;return {minutes:target-from,event:'d01-hold'};}
   return {minutes:target-from,event:short&&target===1439?'short-charge-end':'none'};
  }
  // The same 03:00 hold serves any explicitly required late mainline scene.
  // Keep D23's saved night flag intact; D24 uses the shared overnight ledger.
  const d23Held=isStory55(s)&&s.day===23&&(!s.story55?.completed?.['d23-chess-finish']||s.story55?.d23?.nightAfterMidnight);
- const overnightHeld=isStory55(s)&&(d23Held||overnightSceneGate55(s)||overnightSceneNight55(s));
+ // Every outstanding mandatory charge gate uses the same overnight ledger.
+ // Enter it at midnight, not earlier in the day (ordinary alarms and short
+ // charging retain their normal clock path).
+ const crossingGatedMidnight=isStory55(s)&&!short&&s.day<55&&story55ChargeGate(s)==='plot'
+  &&clockMinutes(s.clock)+Math.max(0,Math.floor(requested))>=1440
+  &&!nextAlarm(s,absoluteMinute(s),s.day*DAY_MINUTES-1);
+ const overnightHeld=isStory55(s)&&(d23Held||overnightSceneGate55(s)||overnightSceneNight55(s)||crossingGatedMidnight);
  if(overnightHeld){
   const night=s.day===23?(s.story55.d23??={})
    :s.story55.overnightHold?.day===s.day?s.story55.overnightHold
@@ -91,14 +97,13 @@ export function advanceGameMinutes(s,requested){
   if(target<=from)return {minutes:0,event:holdEvent};
   s.clock=isoTime(target%1440);night.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
-  if(target===1440+180){s.batteryPercent=1;return {minutes:target-from,event:holdEvent};}
+  if(target===1440+180){s.batteryPercent=2;return {minutes:target-from,event:holdEvent};}
   return {minutes:target-from,event:'none'};
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(short)target=Math.min(target,s.day*DAY_MINUTES-1);
- // Mandatory nodes gate next-day long charging, never the physical clock.
- // A waiting scene must not strand the battery and clock at 23:59. The shared
- // 03:00 emergency below halts the timeline; unfinished scenes remain pending.
+ // Ordinary days continue to the shared 03:00 emergency. Mandatory nodes
+ // use the overnight hold above instead, so they remain available to finish.
  if(isStory55(s))target=Math.min(target,55*1440-1);
  if(target<=from){if(short){endShortCharge(s);return {minutes:0,event:'short-charge-end'};}return {minutes:0};}
  if(s.deathPhase==='draining'){
