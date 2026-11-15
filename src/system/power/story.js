@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate,story55ShortChargeGate} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,story55ShortChargeGate,overnightSceneGate55} from '../../services/story55/state.js';
 import {secondView55,finaleInProgress55,syncSecondClock55} from '../../services/story55/finale.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
@@ -55,6 +55,7 @@ export function chargingBlock(s){
   if((s.emergencyCharge||s.poweredOff)&&s.day<55&&!s.story55?.ended){
     // A 03:00 emergency must never bypass the unfinished D23 chess mainline.
     if(s.day>=23&&!s.story55?.completed?.['d23-chess-finish'])return 'plot';
+    if(overnightSceneGate55(s))return 'plot';
     return null;
    }
   return story55ChargeGate(s);

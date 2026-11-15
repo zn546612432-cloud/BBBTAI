@@ -1,7 +1,7 @@
 // Scripted dialogue always belongs to the real messaging UI.
 // Player lines are offered in the native text composer and sent ONLY after
 // the player presses Send. Other characters deliver their own messages over time.
-import {isStory55,nodeStatus,story55Config,nodeById} from './state.js';
+import {isStory55,nodeStatus,story55Config,nodeById,overnightSceneNight55} from './state.js';
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {ghostShareScriptLine,sendGhostShareDraft} from './ghost-share.js';
@@ -44,7 +44,7 @@ export function currentScript55(s,channel,conversationId){
   if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
   const clock=n.delivery==='queued'&&kind==='me'?plannedSceneLineClock55(s,n.id,index):null;
-  if(clock&&s.clock<clock&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))continue; // Only offer the native player draft once it is due.
+  if(clock&&s.clock<clock&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))continue; // Only offer the native player draft once it is due.
   return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
  if(channel==='mirage'&&conversationId==='s55-ouroboros')return ghostShareScriptLine(s);

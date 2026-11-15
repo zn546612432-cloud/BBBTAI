@@ -39,6 +39,30 @@ export function syncD14D24Content(s){
   }
   s.story55.d14D24Revision=1;changed=true;
  }
+ // D24 v2: update only the exact old seven-line scene before its first Send.
+ // Preserve any in-flight legacy conversation and every previously sent bubble.
+ // The mandatory gate is metadata and applies regardless of copy revisions.
+ if(s.story55.d24FlowRevision!==2){
+  const c=s.story55.config,node=c?.nodes?.find(n=>n.id==='lead');
+  if(node&&node.day===24&&(!node.holdAt03||node.gateDay!==24)){
+   node.holdAt03=true;node.gateDay=24;changed=true;
+  }
+  const previousLead=[
+   ['me','問你個人。Dr Ouroboros，你聽過嗎？'],
+   ['hacker','這不是上次那個錢包懸賞的發單人嗎？聽說他是mirage的創辦人之一，你贏了他的錢包，他應該有跟你聯繫才對呀？'],
+   ['me','是有聯繫過，所以才好奇，想知道他什麼來頭。'],
+   ['hacker','這種人哪有什麼來頭給你查。圈子裡都說他年紀不大，技術很兇 名聲很響，命很值錢，有黑手黨在懸賞他的人頭，價值二十億，'],
+   ['me','就這些？'],
+   ['hacker','聽說他住在英國和葡萄牙，其他的真不知道了'],
+   ['me','明白了。謝了。']
+  ];
+  const q=s.story55.scenes?.lead;
+  if(c?.scenes&&JSON.stringify(c.scenes.lead)===JSON.stringify(previousLead)&&!q?.index&&!s.story55.completed?.lead){
+   c.scenes.lead=structuredClone(D14_D24_CONTENT.scenes.lead);changed=true;
+   if(node)node.messagePrefix='s55-lead-v3';
+  }
+  s.story55.d24FlowRevision=2;changed=true;
+ }
  // Exact-only correction of the shipped D23 King's Gambit dialogue.
  // Never overwrite an edited line or synthesize any player Send action.
  const corrected=D14_D24_CONTENT.scenes['d23-chess'];

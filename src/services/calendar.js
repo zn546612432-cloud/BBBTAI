@@ -1,4 +1,4 @@
-import {isStory55,date55} from './story55/state.js';
+import {isStory55,date55,overnightSceneNight55} from './story55/state.js';
 import {secondView55} from './story55/finale.js';
 const DAY=86400000;
 const weekdays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
@@ -10,7 +10,7 @@ export function todayShanghai(now=new Date()){
 export const calendarAnchor=(day=1,date)=>date?({anchorDay:day,anchorDate:date}):({anchorDay:90,anchorDate:'2025-08-16'});
 export function displayDate(s){const anchor=s.calendar||calendarAnchor(s.day);return new Date(new Date(anchor.anchorDate+'T00:00:00Z').getTime()+(s.day-anchor.anchorDay)*DAY);}
 export function dateParts(s){const d=secondView55(s)?new Date():s.story55?.finalDate?new Date(s.story55.finalDate+'T00:00:00Z'):
-(s.story55?.version===1&&s.day===23&&s.story55?.d23?.nightAfterMidnight?
+(s.story55?.version===1&&((s.day===23&&s.story55?.d23?.nightAfterMidnight)||overnightSceneNight55(s))?
  new Date(displayDate(s).getTime()+DAY):displayDate(s));return secondView55(s)?{iso:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate(),weekday:weekdays[d.getDay()]}:{iso:d.toISOString().slice(0,10),year:d.getUTCFullYear(),month:d.getUTCMonth()+1,date:d.getUTCDate(),weekday:weekdays[d.getUTCDay()]};}
 export function dateLabel(s,{year=true,weekday=false}={}){const d=dateParts(s);return `${year?d.year+'年':''}${d.month}月${d.date}日${weekday?' '+d.weekday:''}`;}
 export function monthCells(s){const {year,month,date}=dateParts(s),start=new Date(Date.UTC(year,month-1,1)).getUTCDay(),count=new Date(Date.UTC(year,month,0)).getUTCDate();return Array.from({length:Math.ceil((start+count)/7)*7},(_,i)=>{const n=i-start+1;return n<1||n>count?null:{date:n,today:n===date};});}

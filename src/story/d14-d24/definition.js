@@ -9,7 +9,7 @@ const nodeUpdates={
  rumours:{at:'23:06'},
  // Keep the existing D29 prerequisite. The optional browser search is no
  // longer a prerequisite for asking an already-unlocked Flow contact.
- lead:{at:'21:06',delivery:'queued',channel:'mirage',conversationId:'mc-flow-d03',requires:['code'],requiresContact:true,messagePrefix:'s55-lead-v2'}
+ lead:{at:'21:06',delivery:'queued',channel:'mirage',conversationId:'mc-flow-d03',requires:['code'],requiresContact:true,gateDay:24,holdAt03:true,messagePrefix:'s55-lead-v3'}
 };
 export function applyD14D24Definition(c,{force=false}={}){
  let changed=false;
