@@ -1,6 +1,7 @@
 import {applyD13Definition} from '../d13/definition.js';
 import {applyD14D24Definition} from '../d14-d24/definition.js';
 import {applyD17Definition} from '../d17/definition.js';
+import {applyD25Definition} from '../d25/definition.js';
 // Story version and editable definitions; no player progress or provider keys.
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
@@ -1244,3 +1245,4 @@ applyD14D24Definition(STORY55_CONFIG,{force:true});
 
 applyD13Definition(STORY55_CONFIG);
 applyD17Definition(STORY55_CONFIG);
+applyD25Definition(STORY55_CONFIG);
