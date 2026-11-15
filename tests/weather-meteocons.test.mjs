@@ -5,7 +5,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {getWeather} from '../src/services/weather/world.js';
 import {render as weatherDetail} from '../src/apps/weather/index.js';
-import {render as weatherList,hideWeatherCity,visibleWeatherCities} from '../src/apps/weather/replica.js';
+import {render as weatherList,visibleWeatherCities} from '../src/apps/weather/replica.js';
 import {METEOCON_SLUGS,meteoconSlug,meteoconMarkup} from '../src/apps/weather/meteocons.js';
 
 const fresh=()=>{const s=activateStory55(initialState());s.day=7;s.clock='08:00';return s;};
@@ -66,30 +66,28 @@ test('all icon HTML loads local assets and swaps to official static icons for re
 test('existing Weather App list, city detail and hourly strip use real SVG icons with no new screens',()=>{
  const s=fresh(),context=ctx(s);
  const list=weatherList(context,{route:'/',params:{}});
- assert.match(list,/weather-swipe-row/);
+ assert.doesNotMatch(list,/weather-swipe-row/);
  assert.match(list,/weather-city-icon/);
  assert.match(list,/\/assets\/meteocons\/fill\//);
- assert.match(list,/weather-delete/);
+ assert.doesNotMatch(list,/weather-delete/);
  const detail=weatherDetail(context,{route:'/city/macau',params:{}});
  assert.match(detail,/weather-hero-icon/);
  assert.match(detail,/weather-hourly-icon/);
- assert.match(detail,/weather-history-credit/);
+ assert.doesNotMatch(detail,/weather-history-credit/);
  assert.match(detail,/\/assets\/meteocons\/fill\//);
  assert.equal((detail.match(/weather-hourly-icon/g)||[]).length,4);
  assert.doesNotMatch(detail,/lottie-web|cdn\.meteocons\.com/);
  assert.equal(getWeather(s).date,'2025-05-25');
 });
 
-test('deleted weather cities remain hidden and restored city data is unchanged',()=>{
- const s=fresh(),store={update:fn=>fn(s)};
- hideWeatherCity(store,'london');
- assert.deepEqual(visibleWeatherCities(s).map(x=>x.id),['macau','paris']);
+test('read-only Weather keeps all three cities even with legacy hidden-city saves',()=>{
+ const s=fresh();s.content.weatherHiddenCities=['london'];
+ assert.deepEqual(visibleWeatherCities(s).map(x=>x.id),['macau','london','paris']);
  const list=weatherList(ctx(s),{route:'/',params:{}});
- assert.equal((list.match(/weather-city-icon/g)||[]).length,2);
- assert.ok(list.includes('恢复城市'));
- assert.equal(s.content.weatherHiddenCities.includes('london'),true);
+ assert.match(list,/倫敦/);
+ assert.doesNotMatch(list,/恢復城市|恢复城市|weather-foot/);
+ assert.equal((list.match(/weather-city-icon/g)||[]).length,1,'only Macau is illustrated until European ERA5 loads');
 });
-
 test('github-pages asset rebasing supports local Meteocons for released and preview builds',()=>{
  const build=readFileSync('scripts/build-pages.mjs','utf8');
  assert.ok(build.includes('src|assets|apps'));

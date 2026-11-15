@@ -35,3 +35,7 @@
 .app-files .fl-actions .fl-danger{color:#d83c48}
 .app-files .fl-editor{display:flex;flex-direction:column;gap:18px}
 .app-files .fl-editor input[name=name]{width:100%;background:white;border:0;border-radius:12px;padding:16px;font-size:16px;color:#24262b}
+
+/* Suppress only the shell navigation for the new Files browser, not legacy attachment viewers. */
+.app-view.app-files:has(.fl-library){padding-top:calc(60px + env(safe-area-inset-top,0px))}
+.app-view.app-files:has(.fl-library)>.app-nav{display:none}

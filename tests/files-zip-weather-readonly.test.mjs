@@ -11,6 +11,7 @@ import {archiveHistoryUrl,europeanLocalTime} from '../src/services/weather/remot
 
 test('WeChat ZIP preview saves exactly one opaque file into Files, with no extraction or Agent side effects',()=>{
  const s=activateStory55(initialState()),chat=s.content.conversations.wechat.find(c=>c.id==='group');
+ s.day=25;s.clock='11:00';
  chat.messages.push({id:'archive-test',from:'阿威',kind:'file',text:'security_survey_0612.zip',fileSize:9017753,day:25,time:'10:26',sentDate:'2025-06-12'});
  assert.match(renderWeChatChat(s,'group'),/wx-file-preview/);
  const route={route:'/incoming/wechat/group/archive-test',params:{}};

@@ -48,29 +48,23 @@ test('native Messages replica keeps conversations and real SMS form',()=>{
  assert.match(html,/data-channel="messages"/);
 });
 
-test('weather card removal survives reload and can be restored without deleting authored weather',()=>{
+test('Weather displays a fixed read-only city list, ignoring historical hidden-city preferences',()=>{
  const {store,storage}=setup();
  assert.equal(registry.get('weather'),weather);
- const before=weather.visibleWeatherCities(store.get());
- assert.equal(before.length,3);
- assert.ok(!before.some(city=>city.id==='zhongshan'));
- const id='paris';
- store.update(s=>{s.content.weather={56:{paris:{name:'巴黎',temp:12,condition:'小雨',high:14,low:8}}};});
- assert.match(weather.render({store},{route:'/',params:{}}),/weather-swipe-row/);
- assert.match(weather.render({store},{route:'/',params:{}}),/weather-delete-button/);
- weather.hideWeatherCity(store,id);
- assert.ok(!weather.visibleWeatherCities(store.get()).some(city=>city.id===id));
- assert.ok(!weather.visibleWeatherCities(new PhoneStore(storage).get()).some(city=>city.id===id));
- assert.equal(store.get().content.weather[56][id].temp,12);
- weather.restoreWeatherCities(store,id);
- assert.equal(weather.visibleWeatherCities(store.get()).length,before.length);
+ store.update(s=>{s.content.weatherHiddenCities=['paris'];});
+ const html=weather.render({store},{route:'/',params:{}});
+ assert.deepEqual(weather.visibleWeatherCities(store.get()).map(x=>x.id),['macau','london','paris']);
+ assert.match(html,/巴黎/);
+ assert.doesNotMatch(html,/weather-swipe-row|weather-delete-button|weather-edit|weather-foot/);
+ assert.deepEqual(weather.visibleWeatherCities(new PhoneStore(storage).get()).map(x=>x.id),['macau','london','paris']);
 });
 
-test('weather horizontal swipe springs back, reveals delete, or removes the city',()=>{
- assert.equal(weather.swipeOutcome(-22),'closed');
- assert.equal(weather.swipeOutcome(-90),'reveal');
- assert.equal(weather.swipeOutcome(-190),'remove');
- assert.equal(weather.swipeOutcome(-190,true),'closed');
+test('Weather exposes no city-delete or manual-edit affordances',()=>{
+ const {store}=setup();
+ const list=weather.render({store},{route:'/',params:{}});
+ const detail=weather.render({store},{route:'/city/london',params:{}});
+ assert.doesNotMatch(list,/weather-delete|weather-edit|•••/);
+ assert.doesNotMatch(detail,/weather-edit|weather-history-credit/);
 });
 
 test('phone book contains only the seven authored contacts and Macau identity',()=>{

@@ -89,7 +89,7 @@ export function getWeather(s,{day=s.day,clock=s.clock,cityId='macau'}={}){
   value.subtitle=localCity?.subtitle||'—';
   if(!historical)value.condition=europeWeatherUnavailable(cityId)?'資料暫不可用':'載入中';
  }else value.subtitle=validClock(clock)?clock:'08:00';
- if(historical&&cityId!=='macau')value.condition=conditionFromWeatherCode(historical.weatherCode,historical.precipitation);
+ if(historical&&cityId!=='macau')value.condition=conditionFromWeatherCode(historical.weatherCode,historical.precipitation).replaceAll('云','雲').replaceAll('阴','陰').replaceAll('阵','陣').replaceAll('雾','霧');
  value.day=Number(day);
  value.clock=validClock(clock)?clock:'08:00';
  // The same real historical signal timeline drives Weather and native SMS.
@@ -130,7 +130,7 @@ export function weatherHours(s,{day=s.day,clock=s.clock,cityId='macau',count=8}=
   const atHour=total%24;
   const atClock=String(atHour).padStart(2,'0')+':00';
   const weather=getWeather(s,{day:atDay,clock:atClock,cityId});
-  if(weather)result.push({...weather,label:i===0?'现在':atClock,hour:atHour});
+  if(weather)result.push({...weather,label:i===0?'現在':(cityId==='macau'?atClock:europeanLocalTime(atDay,atClock,cityId)?.subtitle||atClock),hour:atHour});
  }
  return result;
 }
