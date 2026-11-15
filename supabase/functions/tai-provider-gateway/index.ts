@@ -15,6 +15,7 @@ const admin=URL&&adminKey()?createClient(URL,adminKey(),{
 }):null;
 const DEEPSEEK='https://api.deepseek.com/chat/completions';
 const origins=new Set(['https://zn546612432-cloud.github.io',
+ 'https://endearing-horse-4e9b2b.netlify.app',
  'http://localhost:5173','http://127.0.0.1:5173']);
 const headers=req=>{
  const origin=req.headers.get('origin');
