@@ -321,6 +321,20 @@
           "originDays": [
             14
           ]
+        },
+        "story.tear-link-control": {
+          "state": "wired-day",
+          "owner": "ghost",
+          "kinds": ["system-notice"],
+          "proof": "src/system/remote-control/controller.js",
+          "originDays": [14]
+        },
+        "story.tear-execute": {
+          "state": "wired-day",
+          "owner": "ghost",
+          "kinds": ["commission"],
+          "proof": "src/apps/ghost/deployment/tear-run.js",
+          "originDays": [14]
         }
       }
     },
@@ -721,6 +735,13 @@
           "originDays": [
             6
           ]
+        },
+        "story.tear-progress": {
+          "state": "wired-day",
+          "owner": "reminders",
+          "kinds": ["reminder"],
+          "proof": "src/apps/ghost/deployment/reminders.js",
+          "originDays": [14]
         },
         "reminder.add": {
           "state": "adapter-required",

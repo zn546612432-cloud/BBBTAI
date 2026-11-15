@@ -21,7 +21,7 @@ function baseView(s,p){
    !first?.complete?'已部署':
    !loan?'运行失败':
    ready.canUpgrade?'待升级':'运行中';
- const modal=showFailure?`<div class="gh-flow-overlay" role="presentation"><section class="gh-flow-dialog" role="alertdialog" aria-modal="true" aria-label="基础框架运行结果"><h2>部署成功！运行失败！</h2><p>错误代码：${esc(p.runtimeErrorCode||'E-ENV-014')}</p><div class="gh-flow-dialog-actions"><button type="button" class="gh-button gh-primary" data-action="s55-base-dismiss-report">确定</button></div></section></div>`:'';
+ const modal=showFailure&&s.day===14?`<div class="gh-flow-overlay" role="presentation"><section class="gh-flow-dialog" role="alertdialog" aria-modal="true" aria-label="基础框架运行结果"><h2>部署成功！运行失败！</h2><p>错误代码：${esc(p.runtimeErrorCode||'E-ENV-014')}</p><div class="gh-flow-dialog-actions"><button type="button" class="gh-button gh-primary" data-action="s55-base-dismiss-report">确定</button></div></section></div>`:'';
  return `<div class="gh-shell gh-flow-shell gh-fw-shell" data-view-key="ghost-framework-base">
  <div class="gh-top">
   <button type="button" class="gh-button gh-back" data-action="s55-projects" aria-label="返回项目">‹</button>

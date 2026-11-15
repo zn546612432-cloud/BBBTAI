@@ -48,6 +48,9 @@ export function story55ChargeGate(s){
  if(!isStory55(s))return null;
  if(s.day>=55)return 'death';
  if(d01Gate(s))return 'plot';
+ // Every day's LINK and explicit equipment payment must settle before
+ // advancing; the existing overnight hold handles the 03:00 2% state.
+ if(s.day>=14&&s.day<=24&&!completed(s,'base')&&!s.story55.projects?.base?.batches?.[s.day-14]?.complete)return 'plot';
  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
 }
 
@@ -57,6 +60,12 @@ export function story55ChargeGate(s){
 // stops for an active scene; long charge remains gated by the story tree.
 const D13_WAITING_NODES=new Set(['exhibition','d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion']);
 export function story55ShortChargeGate(s){
+ // Daily LINK checks gate overnight advancement only; short charging keeps
+ // the pre-existing scene gates and does not mark a test or payment done.
+ if(isStory55(s)&&s.day>=14&&s.day<=24){
+  if(d01Gate(s))return 'plot';
+  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
+ }
  if(!isStory55(s)||s.day!==13)return story55ChargeGate(s);
  if(d01Gate(s))return 'plot';
  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)&&!D13_WAITING_NODES.has(n.id))?'plot':null;

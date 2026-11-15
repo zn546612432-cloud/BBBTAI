@@ -1,0 +1,93 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {story55ChargeGate,completed} from '../src/services/story55/state.js';
+import {startDeploymentStep,completeDeploymentRun,upgradeBaseFramework,deploymentPercent} from '../src/services/story55/projects.js';
+import {shareGhostToTai,ghostShareScriptLine,sendGhostShareDraft,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl} from '../src/services/story55/ghost-share.js';
+import {TEAR_DIALOGUES} from '../src/story/d14-d24/tear-dialogue.js';
+import {syncTearReminders} from '../src/apps/ghost/deployment/reminders.js';
+import {startTearRun,tickTearRun,tearRunAvailability,tearUsesToday} from '../src/apps/ghost/deployment/tear-run.js';
+import {seedD04Contracts,acceptD04Contract,submitD04Contract,DAILY_CONTRACTS} from '../src/story/d04/contract.js';
+import {deploymentView} from '../src/apps/ghost/deployment/index.js';
+import {advanceGameMinutes} from '../src/system/time/clock.js';
+
+function fixture(){
+ const s=activateStory55(initialState());
+ s.day=14;s.clock='15:00';
+ for(const n of s.story55.config.nodes)if(n.day<=24&&n.id!=='base')s.story55.completed[n.id]={day:n.day,clock:'12:00'};
+ s.story55.projects.base={authorized:true,batches:[],active:null};
+ s.bankData.balance=2000000;
+ if(!s.content.conversations.mirage.some(c=>c.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
+ return s;
+}
+const messages=s=>s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages;
+function deliver(s){for(const m of messages(s))if(m.schedule&&!m.delivery)m.delivery={day:s.day,clock:s.clock};}
+function drain(s){for(let i=0;i<20;i++){deliver(s);const l=ghostShareScriptLine(s);if(l?.kind!=='me')return;sendGhostShareDraft(s,l.text);}}
+function win(s,n=5){for(let i=0;i<n;i++){const id=startDeploymentStep(s,'base'),o=s.ghost.orders[id];o.status='success';assert.ok(completeDeploymentRun(s,o));}}
+
+test('D14 report once; all ten offline-guaranteed Tear dialogue scripts settle five LINKs without ordinary takeover or auto payment',()=>{
+ const s=fixture();win(s);assert.match(deploymentView(s,'base'),/部署成功！运行失败！/);
+ assert.equal(deploymentPercent(s,'base'),9);
+ s.story55.ghostShareTakeovers=2;
+ for(let day=15;day<=24;day++){
+  s.day=day;s.clock='11:00';
+  assert.equal(story55ChargeGate(s),'plot');
+  assert.doesNotMatch(deploymentView(s,'base'),/部署成功！运行失败！/);
+  if(day===15)win(s,2);
+  syncTearReminders(s);
+  const r=s.content.reminders.find(r=>r.id==='tear-link-'+day);
+  assert.equal(r.progress,day===15?2:0);
+  const before=s.bankData.balance;
+  const result=shareGhostToTai(s,{projectId:'base'},{random:()=>assert.fail('Tear must not roll'),now:day*10000});
+  assert.equal(result.script,'tear-'+day);assert.ok(result.accepted);
+  drain(s);assert.ok(ghostShareReadyForControl(s));assert.ok(beginGhostShareControl(s));
+  assert.equal(s.story55.ghostShareTakeovers,2);
+  win(s,day===15?3:5);
+  s.story55.ghostShare.remote={outcome:'success'};
+  assert.ok(finishGhostShareControl(s));drain(s);
+  const card=result.cardId;
+  const actual=messages(s).filter(m=>m.id.startsWith(card+'-')&&/-((me)|(tai))-\d+$/.test(m.id)).sort((a,b)=>Number(a.id.split('-').at(-1))-Number(b.id.split('-').at(-1))).map(m=>[m.from==='me'?'me':'tai',m.text]);
+  assert.deepEqual(actual,TEAR_DIALOGUES[result.script].filter(([from])=>from!=='control'));
+  syncTearReminders(s);assert.equal(r.done,true);assert.equal(r.progress,5);
+  assert.equal(s.bankData.balance,before);assert.equal(story55ChargeGate(s),'plot');
+  assert.ok(upgradeBaseFramework(s));assert.equal(s.bankData.balance,before-100000);
+  assert.equal(story55ChargeGate(s),null);
+ }
+ assert.equal(deploymentPercent(s,'base'),100);assert.ok(completed(s,'base'));
+ assert.equal(s.bankData.transactions.filter(t=>t.id.startsWith('s55-base-upgrade-')).length,10);
+});
+
+test('incomplete daily LINK stops at 03:00 and 2%; reminders only reflect actual LINKs',()=>{
+ const s=fixture();win(s);s.day=15;s.clock='23:50';s.batteryPercent=30;
+ advanceGameMinutes(s,240);assert.equal(s.clock,'03:00');assert.equal(s.batteryPercent,2);
+ advanceGameMinutes(s,120);assert.equal(s.day,15);assert.equal(s.batteryPercent,2);
+ syncTearReminders(s);assert.equal(s.content.reminders.find(x=>x.id==='tear-link-15').done,false);
+});
+
+test('100% unlocks precisely two simulated commission executions per day, native manual submission and rewards',()=>{
+ const s=fixture();win(s);
+ for(let day=15;day<=24;day++){s.day=day;win(s);upgradeBaseFramework(s);}
+ s.day=25;s.clock='08:00';seedD04Contracts(s);
+ const ids=DAILY_CONTRACTS.filter(c=>c.marketDaily&&c.day===25).map(c=>c.id);
+ assert.equal(ids.length,2);
+ for(const id of ids)assert.ok(acceptD04Contract(s,id));
+ for(const id of ids){
+  const before=s.bankData.balance;assert.ok(tearRunAvailability(s,id).allowed);
+  assert.ok(startTearRun(s,id,1000));
+  for(let i=1;i<=10;i++)tickTearRun(s,id,1000+i*4000);
+  assert.equal(s.content.orders.find(o=>o.id===id).status,'READY');assert.equal(s.bankData.balance,before);
+  assert.ok(submitD04Contract(s,id));assert.ok(s.bankData.balance>before);assert.equal(submitD04Contract(s,id),false);
+ }
+ assert.equal(tearUsesToday(s),2);assert.equal(startTearRun(s,ids[0]),false);
+ s.day=26;seedD04Contracts(s);const next=DAILY_CONTRACTS.find(c=>c.marketDaily&&c.day===26).id;
+ assert.ok(acceptD04Contract(s,next));assert.equal(tearUsesToday(s),0);assert.ok(startTearRun(s,next));
+});
+
+test('D29 reminder group appears only after plan dialogue and never creates executable subtasks',()=>{
+ const s=fixture();s.day=29;delete s.story55.completed.plan;
+ syncTearReminders(s);assert.ok(!s.content.reminders.some(r=>r.id==='ghost-car-plan'));
+ s.story55.completed.plan={day:29,clock:'22:00'};syncTearReminders(s);syncTearReminders(s);
+ const groups=s.content.reminders.filter(r=>r.id==='ghost-car-plan');
+ assert.equal(groups.length,1);assert.deepEqual(groups[0].children.map(c=>c.progress),[0,0,0,0]);
+});

@@ -9,6 +9,7 @@ import {shareGhostToTai,ghostShareSource} from '../../services/story55/ghost-sha
 import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
+import {renderTearRun,tickTearRun} from './deployment/tear-run.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
@@ -35,6 +36,10 @@ const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConf
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
+ if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear-run'){
+  const id=s.nav.current.params?.orderId,r=s.story55?.tearRuns?.[id];
+  if(r?.status==='running'){if(now>=r.nextAt)ctx.store.update(n=>tickTearRun(n,id,now));else ctx.refresh();}return;
+ }
  if(s.nav.current.appId==='ghost'&&o?.board?.arcade?.kind==='cipher-slide'&&o.status==='running'){
   ctx.store.update(n=>restoreCipherSwapBoard(n,o.id));return;
  }
@@ -50,7 +55,7 @@ export function tick(ctx){
  }
  if(Object.values(s.ghost?.orders||{}).some(x=>x.status==='settling'&&now>=x.dueAt&&Number.isFinite(configFor(s,x.type,x.id).reward)))ctx.store.update(n=>settle(n));
 }
-export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return (loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s))+shareDialogMarkup(s,loc);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
+export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(loc.route==='/tear-run')return renderTearRun(s,loc.params?.orderId)||deploymentHome(s);if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return (loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s))+shareDialogMarkup(s,loc);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
  if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>记录 / ${g.history.length.toString().padStart(2,'0')}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
  else if(loc.route==='/deploy-info'){
   body=title('home','GHOST / 01 部署')+'<h1>01 部署</h1><div class="gh-keybox"><small>工具部署</small><p>导入来自 KIRA 或授权联系人提供的接入凭证，验证后安装并初始化工具。</p><p>请选择已获授权的项目凭证。</p></div>';
@@ -90,6 +95,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
  return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}${shareDialog}</div>`;
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
+ if(a==='tear-return'){prepareMirageGhostShareEntry();return ctx.router.open({appId:'mirage',route:'/order/'+t.dataset.id,params:{}});}
  if(a==='share'){
   const source=loc.route==='/deployment'?{projectId:loc.params?.project||t.dataset.project}:
    {orderId:loc.params?.orderId};

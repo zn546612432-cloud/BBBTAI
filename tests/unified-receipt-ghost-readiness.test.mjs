@@ -126,7 +126,7 @@ test('D14 project stays inside native GHOST Projects; runtime error is acknowled
  assert.match(page,/部署成功！运行失败！/);
  assert.match(page,/<span>链接<\/span><strong>5 \/ 5<\/strong>/);
  assert.doesNotMatch(page,/等待D15|現有設備無法|现在设备无法|本轮已完成|s55-card|s55-percent/);
- assert.match(list,/LOCAL FRAMEWORK/);
+ assert.match(list,/Ouroboros’ Tear/);
  const ctx={store:{get:()=>s,update:f=>f(s)}};
  assert.equal(await handleStory55Action('s55-base-dismiss-report',{dataset:{}},ctx),true);
  assert.equal(s.story55.projects.base.baseRunNoticePending,false);
@@ -154,5 +154,5 @@ test('D15 15:36 unlocks Mirage message, not an automatic million-dollar deposit'
  assert.equal(s.notifications.filter(n=>n.id==='s55-loan-receipt').length,1);
  assert.equal(s.story55.liabilities,1000000);
  assert.equal(s.story55.loanOfflineDay,15);
- assert.match(deploymentView(s,'base'),/LOCAL FRAMEWORK/);
+ assert.match(deploymentView(s,'base'),/Ouroboros’ Tear/);
 });

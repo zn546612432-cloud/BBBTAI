@@ -23,6 +23,7 @@ import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55} from './state.js';
+import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
@@ -294,6 +295,7 @@ export function tickStory55(s){
  applyD17Definition(story55Config(s));
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
+ syncTearReminders(s);
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);

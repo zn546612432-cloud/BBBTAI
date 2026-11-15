@@ -7,6 +7,7 @@ import {D01_REPAIR,D01_CONTACT,acceptD01Repair,deliverD01Attachment,queueD01Cont
 import {D02_S,D02_A,D02_STAGES,D02_MAIL,D02_TALIA,acceptD02,submitD02,armD02Ghost,d02StepId,d02State,d02TaliaDraft,onD02TaliaMessage} from '../../story/d02/runtime.js';
 import {D03_ORDER,D03_MAIL,D03_STAGES,acceptD03Contract,submitD03Contract,armD03Ghost,d03StepId} from '../../story/d03/contract.js';
 import {DAILY_CONTRACTS as D04_CONTRACTS,D04_ORDER_IDS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,armD04Ghost} from '../../story/d04/contract.js';
+import {tearRunAvailability,startTearRun} from '../ghost/deployment/tear-run.js';
 import {currentScript55,scriptedDraft55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {isStory55,nodeStatus} from '../../services/story55/state.js';
 import {anonymousPresence55} from '../../services/story55/runtime.js';
@@ -126,7 +127,11 @@ function d03BountyActions(s,o){
 function d04BountyActions(s,o){
  const def=D04_CONTRACTS.find(x=>x.id===o.id);if(!def)return '';
  const done=def.stages.filter((_,i)=>s.ghost?.orders?.[D04_STEP(o.id,i)]?.status==='success').length;
- if(def.marketDaily&&o.status==='ACCEPTED')return '<p class="mc-brief">密鑰附件已寄送 · 等待交付</p>'+btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
+ if(def.marketDaily&&o.status==='ACCEPTED'){
+  const a=tearRunAvailability(s,o.id);
+  return '<p class="mc-brief">密鑰附件已寄送 · 等待交付</p>'+btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"')+
+   (a.visible?btn('mc-tear-share',a.resume?'CONTINUE OUROBOROS’ TEAR':'SHARE TO OUROBOROS’ TEAR','mc-secondary','data-id="'+esc(o.id)+'" '+(a.allowed?'':'disabled'))+(a.reason?'<p class="mc-brief">'+esc(a.reason)+'</p>':''):'');
+ }
  if(def.marketDaily&&o.status==='READY')return '<p class="mc-brief">成果待提交 · 未結算</p>';
  if(o.status==='ACCEPTED')return '<p class="mc-brief">程序 '+done+' / '+def.stages.length+' · '+def.stages.map(x=>({cipher:'破譯',veil:'隱匿',route:'連結',extract:'竊取',strike:'攻擊'})[x]||x).join(' → ')+'</p>'
   +btn('mc-d04-mail','OPEN ORDER EMAIL · KIRA','mc-secondary','data-id="'+esc(o.id)+'"');
@@ -195,6 +200,11 @@ export function handle(action,t,ctx,loc){
  if(action==='mc-d02-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D02_MAIL,params:{}});
  if(action==='mc-d03-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D03_MAIL,params:{}});
  if(action==='mc-d04-mail')return ctx.router.open({appId:'kira',route:'/mail/'+D04_MAIL(id),params:{}});
+ if(action==='mc-tear-share'){
+  let ok=false;ctx.store.update(n=>{ok=startTearRun(n,id);});
+  if(ok)return ctx.router.open({appId:'ghost',route:'/tear-run',params:{orderId:id}});
+  return ctx.toast?.('目前無法執行');
+ }
  // Cached old buttons follow the one approved KIRA file flow.
  if(action==='mc-d04-run')return ctx.router.open({appId:'kira',route:'/mail/'+D04_MAIL(id),params:{}});
  if(action==='mc-d03-run')return ctx.router.open({appId:'kira',route:'/mail/'+D03_MAIL,params:{}});

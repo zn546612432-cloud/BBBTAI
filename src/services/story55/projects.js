@@ -31,6 +31,7 @@ export function syncBaseFrameworkRevision(s){
  if(!isStory55(s))return false;
  const p=projectById(s,'base');
  if(!p)return false;
+ if(p.title==='LOCAL FRAMEWORK')p.title='Ouroboros’ Tear';
  if(s.story55.baseUpgradeRevision===2)return false;
  let changed=false;
  const previous=p.steps.join(',')==='cipher,route,extract,veil,verify';

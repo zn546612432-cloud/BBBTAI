@@ -16,9 +16,9 @@ function seed(clock,takeovers){
  s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.story55.d13={phase:'chat'};
  for(const n of s.story55.config.nodes)if(n.day<=16&&n.id!=='base'&&n.id!=='recognition')
   s.story55.completed[n.id]={day:n.day,clock:'12:00',test:true};
- s.story55.projects.base={authorized:true,batches:[],active:null};
+ s.story55.projects.identity={authorized:true,batches:[],active:null};
  s.story55.ghostShareTakeovers=takeovers;
- s.nav={current:{appId:'ghost',route:'/deployment',params:{project:'base'}},stack:[]};s.unlocked=false;
+ s.nav={current:{appId:'ghost',route:'/deployment',params:{project:'identity'}},stack:[]};s.unlocked=false;
  if(!s.content.conversations.mirage.some(c=>c.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
  return s;
 }

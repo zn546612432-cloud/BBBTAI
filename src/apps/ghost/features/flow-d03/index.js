@@ -29,20 +29,20 @@ export function renderFlowD03(s,loc){
  if(loc.route==='/flow-deploy'){
   body=headline('01 部署')+'<h1>01 部署</h1>';
   if(loc.params?.project==='base'){
-   if(base.authorized)body+='<div class="gh-flow-panel"><b>LOCAL FRAMEWORK</b><p>已部署至项目</p>'+btn('base-project','项目','gh-primary')+'</div>';
+   if(base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>已部署至项目</p>'+btn('base-project','项目','gh-primary')+'</div>';
    else if(!baseReady)body+='<div class="gh-flow-panel"><p>请先在 KIRA 打开基础框架授权附件。</p></div>';
    else body+='<div class="gh-flow-panel"><form data-form="gh-base-key" autocomplete="off"><label for="gh-base-key">密钥</label><input id="gh-base-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
   }else{
    if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';
    else body+='<div class="gh-flow-panel"><form data-form="gh-flow-key" autocomplete="off"><label for="gh-flow-key">密钥</label><input id="gh-flow-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
-   if(baseReady||base.authorized)body+='<div class="gh-flow-panel"><b>LOCAL FRAMEWORK</b><p>'+(base.authorized?'已部署':'来自 KIRA 的授权附件')+'</p>'+btn('base-deploy',base.authorized?'查看部署':'输入密钥','gh-primary')+'</div>';
+   if(baseReady||base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>'+(base.authorized?'已部署':'来自 KIRA 的授权附件')+'</p>'+btn('base-deploy',base.authorized?'查看部署':'输入密钥','gh-primary')+'</div>';
   }
  }else if(loc.route==='/flow-install'){
   body=headline('部署工具','deploy')+'<h1>部署工具</h1><div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>›</span></button></div>';
  }else if(loc.route==='/flow-projects'){
   body=headline('项目')+'<h1>项目</h1><div class="gh-flow-project-list">'+
    (p.deployed?btn(p.submitted?'record':'scan',FLOW_TOOL+'　›','gh-flow-project'):'')+
-   (base.authorized?btn('base-project','LOCAL FRAMEWORK　›','gh-flow-project'):'')+
+   (base.authorized?btn('base-project','Ouroboros’ Tear　›','gh-flow-project'):'')+
    '</div>';
   if(!p.deployed&&!base.authorized)body+='<div class="gh-empty">暂无已部署项目</div>';
  }else if(loc.route==='/flow-record'){

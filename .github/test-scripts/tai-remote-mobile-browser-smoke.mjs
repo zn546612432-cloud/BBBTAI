@@ -24,7 +24,9 @@ for(const node of seed.story55.config.nodes){
   seed.story55.completed[node.id]={day:Math.min(16,node.day),clock:'12:00',test:true};
 }
 seed.story55.projects.base={authorized:true,batches:[],active:null};
-seed.nav.current={appId:'ghost',route:'/deployment',params:{project:'base'}};
+seedD04Contracts(seed);acceptD04Contract(seed,'M-006');markD04AttachmentOpened(seed,'M-006');
+const ordinaryLink=armD04Ghost(seed,'M-006',0);
+seed.nav.current={appId:'ghost',route:'/contract',params:{orderId:ordinaryLink}};
 seed.nav.stack=[];
 seed.unlocked=false;
 seed.drafts={};
@@ -86,7 +88,7 @@ try{
  assert.ok(response?.ok(),'local built phone did not respond: '+response?.status());
  await page.locator('#phone').waitFor({state:'attached',timeout:45000});
  await unlock();
- const share=page.locator('#screen-layer [data-action="gh-share"][data-project="base"]');
+ const share=page.locator('#screen-layer [data-action="gh-share"]');
  await share.waitFor({state:'visible',timeout:20000});
  await screenshot('01-ghost-project-share-button');
  console.log('PASS iPhone unlocked into native GHOST project with real share button');
@@ -157,7 +159,7 @@ try{
     !!s.story55?.ghostShare?.remote?.orderId;
  },key,{timeout:45000});
  const controlOrder=(await state()).story55.ghostShare.remote.orderId;
- assert.ok(controlOrder.startsWith('s55:base:'));
+ assert.equal(controlOrder,ordinaryLink);
  await page.locator('#screen-layer [data-action="gh-pipe"]').first().waitFor({state:'attached',timeout:30000});
  await screenshot('04-ghost-live-link');
  console.log('PASS native app switcher, GHOST step/start buttons, active LINK board');

@@ -1,0 +1,2180 @@
+{
+  "schemaVersion": 2,
+  "day": 14,
+  "date": "2025-06-01",
+  "title": "Ouroboros’ Tear 部署、更新與本地執行",
+  "stage": "approved",
+  "scope": "mixed",
+  "systems": [
+    "story55",
+    "ghost",
+    "reminders",
+    "bank",
+    "messaging"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "tear-reminder-14",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 14,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-15",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你寫的程序，你自己來。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-0"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "拿了我的錢，還要我替你幹活？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-1"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "售後服務。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-15-line-2"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "呵。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-3"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "等著。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-4"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-6",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-5"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-15-line-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "好了。下不為例。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-15-line-6"
+      },
+      "timing": {
+        "day": 15,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-15-line-6"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-16",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "在嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "不在。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-16-line-0"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "那我等你回來。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-16-line-1"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "……",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-16-line-2"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "發過來。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-16-line-3"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-5",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-16-line-4"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-16-line-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你倒是很會使喚人。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-16-line-5"
+      },
+      "timing": {
+        "day": 16,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-16-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-17",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "Dr Ouroboros，今天有空嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "無事獻殷勤。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-17-line-0"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "博士果然聰明。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-17-line-1"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "少來這套。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-17-line-2"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "手拿開。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-17-line-3"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-5",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-17-line-4"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-17-line-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "記得更新設備。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-17-line-5"
+      },
+      "timing": {
+        "day": 17,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-17-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-18",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "又來？",
+      "trigger": {
+        "type": "user-action",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "嗯。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-18-line-0"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你是不是覺得我脾氣很好？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-18-line-1"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "還不錯。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-18-line-2"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你的判斷力令人擔憂。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-18-line-3"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-5",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-18-line-4"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-18-line-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "行了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-18-line-5"
+      },
+      "timing": {
+        "day": 18,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-18-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-19",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "忙嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "在喝咖啡。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-19-line-0"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "那正好。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-19-line-1"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "哪裡好了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-19-line-2"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-4",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "反正你也沒事。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-19-line-3"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "……",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-19-line-4"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-6",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-19-line-5"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-19-line-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "咖啡都涼了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-19-line-6"
+      },
+      "timing": {
+        "day": 19,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-19-line-6"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-20",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "今天又不想自己動手？",
+      "trigger": {
+        "type": "user-action",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "能者多勞。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-20-line-0"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你可以試著誇得再真誠一點。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-20-line-1"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "世界上最厲害的黑客。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-20-line-2"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "這還用你說？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-20-line-3"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-5",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-20-line-4"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-20-line-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "不客氣。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-20-line-5"
+      },
+      "timing": {
+        "day": 20,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-20-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-21",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "幫個忙。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你現在連招呼都懶得打了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-21-line-0"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-21-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "Hello，Doctor.",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-21-line-1"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-21-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "Seriously？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-21-line-2"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-21-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-4",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-21-line-3"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-21-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-21-line-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "去忙你的吧。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-21-line-4"
+      },
+      "timing": {
+        "day": 21,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-21-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-22",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "今天也拜託你了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "你就不怕哪天我不理你？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-22-line-0"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-22-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "你會嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-22-line-1"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-22-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "說不準。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-22-line-2"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-22-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-4",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-22-line-3"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-22-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-22-line-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "明天自己做。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-22-line-4"
+      },
+      "timing": {
+        "day": 22,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-22-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-23",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "我又來了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "看見了。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-23-line-0"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "不是說明天自己做嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-23-line-1"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "所以你為什麼還來？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-23-line-2"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-4",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "看看你說話算不算數。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-23-line-3"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-5",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "嘖。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-23-line-4"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-6",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-23-line-5"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-23-line-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "滿意了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-23-line-6"
+      },
+      "timing": {
+        "day": 23,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-23-line-6"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-reminder-24",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 鏈接測試 0/5",
+      "trigger": {
+        "type": "day-time",
+        "ref": "day-start"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-0",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "最後一次。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:tear-share"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "fact:tear-share"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "終於捨得放過我了？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-0"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-0"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-2",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "程序快完成了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-24-line-1"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-1"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "我知道。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-2"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-2"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "交給我吧。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-3"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-3"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-5",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-link-control",
+      "actor": "tai",
+      "text": "完成當日剩餘 LINK 測試",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-4"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-4"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "剩下的，你自己來。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-5"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-5"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-7",
+      "kind": "player-send",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "me",
+      "thread": "s55-ouroboros",
+      "text": "謝了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "tear-24-line-6"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-6"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-24-line-8",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "story55",
+      "capability": "story.d14-d24-dialogue",
+      "actor": "tai",
+      "thread": "s55-ouroboros",
+      "text": "Good luck, nya.",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "tear-24-line-7"
+      },
+      "timing": {
+        "day": 24,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "tear-24-line-7"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-commission-execute",
+      "kind": "commission",
+      "surface": "ghost",
+      "owner": "ghost",
+      "capability": "story.tear-execute",
+      "actor": "me",
+      "text": "Ouroboros’ Tear — 執行委託，每日兩次；待手動提交",
+      "trigger": {
+        "type": "user-action",
+        "ref": "share-accepted-order"
+      },
+      "timing": {
+        "day": 25,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "node:base"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    },
+    {
+      "id": "tear-ghost-car-reminder",
+      "kind": "reminder",
+      "surface": "reminders",
+      "owner": "reminders",
+      "capability": "story.tear-progress",
+      "actor": "me",
+      "text": "鬼車行動：入侵攝像頭、入侵警察局電話線、安排撤離路線、搭建本地銀行伺服器程序",
+      "trigger": {
+        "type": "node-completed",
+        "ref": "plan"
+      },
+      "timing": {
+        "day": 29,
+        "at": "on-trigger"
+      },
+      "requires": [
+        "node:plan"
+      ],
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "tear-check-trigger",
+      "type": "trigger",
+      "verify": "每天可選擇分享；每日五次 LINK 才完成提醒事項"
+    },
+    {
+      "id": "tear-check-negative",
+      "type": "negative",
+      "verify": "未完成禁止長充；逾期委託不可執行"
+    },
+    {
+      "id": "tear-check-idempotency",
+      "type": "idempotency",
+      "verify": "重複分享、升級或提交不重複扣款入帳"
+    },
+    {
+      "id": "tear-check-save-restore",
+      "type": "save-restore",
+      "verify": "完成的 LINK 和每日額度持久保存"
+    },
+    {
+      "id": "tear-check-cross-app",
+      "type": "cross-app",
+      "verify": "Ghost → Mirage → Ghost → Mirage；完成後手動提交"
+    },
+    {
+      "id": "tear-check-late-entry",
+      "type": "late-entry",
+      "verify": "D25 後解鎖，D29 plan 完成才顯示提醒事項"
+    },
+    {
+      "id": "tear-check-assets",
+      "type": "assets",
+      "verify": "使用現有 Ghost／Mirage UI，無新增外部素材"
+    },
+    {
+      "id": "tear-check-date-clock",
+      "type": "date-clock",
+      "verify": "D15–24 每天獨立；03:00 待辦未完成時維持 2%"
+    },
+    {
+      "id": "tear-check-dialogue",
+      "type": "dialogue",
+      "verify": "十日逐句比較批准稿，玩家原生 Send"
+    },
+    {
+      "id": "tear-check-finance",
+      "type": "finance",
+      "verify": "每次升級必須手動支付，委託只在手動提交時結算"
+    },
+    {
+      "id": "tear-check-mobile",
+      "type": "mobile",
+      "verify": "隔離行動瀏覽器驗收 LINK 接管、終端與提交"
+    }
+  ]
+}

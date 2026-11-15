@@ -1,6 +1,7 @@
 import {wishDefinition} from '../../../../services/wishes/catalog.js';
 import {btn,esc} from '../../../../system/ui.js';
 const rows=items=>items.map(r=>{
+  if(r.storyProject)return '<div class="reminder-item"><span class="reminder-circle '+(r.done?'done':'')+'">'+(r.done?'✓':'')+'</span><span>'+esc(r.title)+(r.date?'<small style="display:block;opacity:.65">'+esc(r.date)+'</small>':'')+(r.children||[]).map(c=>'<small style="display:block;margin:10px 0 0 12px;opacity:.75">○ '+esc(c.title)+' · '+Number(c.progress||0)+'%</small>').join('')+'</span></div>';
   const w=r.wishId&&wishDefinition(r.wishId);
   if(w)return '<div class="reminder-item wish-reminder-row">'+
     '<span class="reminder-circle '+(r.done?'done':'')+'">'+(r.done?'✓':'')+'</span>'+
