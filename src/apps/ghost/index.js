@@ -21,6 +21,7 @@ import {pipeFlow,pipeSolved} from './games/pipe-network.js';
 import {arcadeAction,arcadeTick,arcadeNeedsTick} from './games/arcade.js';
 import {renderArcade} from './games/arcade-ui.js';
 import {ghostDevSkipAvailable,previewSkipD01} from './features/dev-skip/index.js';
+import {canSkipFriendsOrder,skipFriendsOrder} from './features/friends-skip/index.js';
 export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'工具程序'};
 const button=(action,label,attrs='',cls='')=>`<button class="gh-button ${cls}" data-action="gh-${action}" ${attrs}>${label}</button>`;
 const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params});
@@ -71,6 +72,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof
    const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
    body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,(devSkipTop|| (o.deadline!==null?fmt(remaining):''))+shareBtn(s,{orderId:o?.id})))+`<div class="gh-game-head"><small>${o.id===D01_REPAIR?'已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%':'会话 '+String(o.attempts).padStart(2,'0')}</small><h1>${tool.name}</h1><p>${{cipher:'根据参考映射调整模块排列，恢复完整的数据结构',route:'调整路径组件，使源点与目标端建立连接',extract:'校验数据块指纹并提取匹配内容',veil:'分析监测路径，调整访问序列以维持隐匿',strike:'正在进行定向测试，收集目标响应',verify:'根据依赖关系验证模块顺序'}[o.type]}</p></div>`;
+   if(canSkipFriendsOrder(s,o))body+=`<div class="gh-friends-skip">${button('friends-skip','跳過本關','aria-label="跳過本關並完成當前委託"','gh-dev-skip-top')}</div>`;
    const b=o.board;
    if(o.type==='cipher'&&!b.arcade?.upstream)body+=`<p class="gh-cipher-tip">点选两个模块以调整排列。依据右下角编号 01–09 校准参考结构。</p><div class="gh-reference">${circuit()}<small>参考图</small></div><div class="gh-grid" id="gh-puzzle">${b.tiles.map((tile,i)=>button('tile',circuit(tile)+`<small class="gh-tile-id">${String(tile+1).padStart(2,'0')}</small>`,`data-index="${i}" aria-label="方块 ${tile+1}，当前位置 ${i+1}"`,b.selected===i?'selected':'')).join('')}</div>${b.arcade?button('cipher-easy-reset','重新解析','','gh-primary'):''}`;
    if(o.type==='route'){
@@ -118,6 +120,9 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='history')return nav(ctx,'/history');
  if(a==='tool'){if(t.dataset.tool==='verify')return isStory55(ctx.store.get())?nav(ctx,'/flow-deploy'):nav(ctx,'/deploy-info');return nav(ctx,'/tool',{tool:t.dataset.tool});}
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
+ if(a==='friends-skip'&&loc.route==='/run'){
+  ctx.store.update(n=>skipFriendsOrder(n,id));return;
+ }
  if(a==='d01-dev-skip'){
   if(!ghostDevSkipAvailable(globalThis.document,ctx.store.get())||id!==D01_REPAIR)return;
   let skipped=false;
