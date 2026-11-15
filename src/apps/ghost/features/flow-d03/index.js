@@ -27,10 +27,10 @@ export function renderFlowD03(s,loc){
   baseReady=!!mail&&!!projectById(s,'base');
  let body='';
  if(loc.route==='/flow-deploy'){
-  body=headline('01 部署')+'<h1>01 部署</h1>';
+  body=headline('部署')+'<h1>部署</h1>';
   if(loc.params?.project==='base'){
    if(base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>已部署至项目</p>'+btn('base-project','项目','gh-primary')+'</div>';
-   else if(!baseReady)body+='<div class="gh-flow-panel"><p>请先在 KIRA 打开基础框架授权附件。</p></div>';
+   else if(!baseReady)body+='<div class="gh-flow-panel"><p>尚未取得授權</p></div>';
    else body+='<div class="gh-flow-panel"><form data-form="gh-base-key" autocomplete="off"><label for="gh-base-key">密钥</label><input id="gh-base-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
   }else{
    if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';

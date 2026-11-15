@@ -13,8 +13,14 @@ export function seedD01(s){
  s.story55.d01??={};
  const orders=s.content.orders;
  if(!orders.some(o=>o.id===D01_OPENING))orders.push({id:D01_OPENING,title:'漏洞掃描',owner:'MIRAGE',category:'網絡安全',reward:'2,000 USD',status:'COMPLETED',description:'歷史漏洞掃描訂單。'});
- if(!orders.some(o=>o.id===D01_REPAIR))orders.push({id:D01_REPAIR,title:'數據修復',owner:'匿名僱主',category:'數據修復',reward:'0.04 BTC',status:'OPEN',description:'硬碟損壞，需要修復數據。'});
- if(!orders.some(o=>o.id==='d01-hunt-view'))orders.push({id:'d01-hunt-view',title:'追殺令',owner:'匿名',category:'限制閱覽',reward:'未公開',status:'OPEN',d01ViewOnly:true,description:'目標：Arthur Bellwick，虛構澳大利亞州議員。僅供閱覽。'});
+ const repairCopy={title:'C 級｜加密數據恢復',description:'一批受損的加密存儲設備，需恢復其中的原始數據。不問來源，不留備份。完整交付後結算。'};
+ const huntCopy={title:'S 級｜追殺令',description:'Arthur Bellwick，澳洲現任州議員。\n\n僱主身份及交易金額不予公開。僅接受受邀承包人。'};
+ const repair=orders.find(o=>o.id===D01_REPAIR);
+ if(!repair)orders.push({id:D01_REPAIR,...repairCopy,owner:'匿名僱主',category:'數據修復',reward:'0.04 BTC',status:'OPEN'});
+ else if(repair.title==='數據修復'&&repair.description==='硬碟損壞，需要修復數據。')Object.assign(repair,repairCopy);
+ const hunt=orders.find(o=>o.id==='d01-hunt-view');
+ if(!hunt)orders.push({id:'d01-hunt-view',...huntCopy,owner:'匿名',category:'限制閱覽',reward:'未公開',status:'OPEN',d01ViewOnly:true});
+ else if(hunt.title==='追殺令'&&hunt.description==='目標：Arthur Bellwick，虛構澳大利亞州議員。僅供閱覽。')Object.assign(hunt,huntCopy);
  s.content.mirage.digitalBalance??=0;
  const reminders=s.content.reminders??(s.content.reminders=[]);
  for(const [id,title,done] of [['d01-reminder-bank','查收訂單結款',!!s.story55.d01.bankClaimed],['d01-reminder-repair','完成數據修復',!!s.story55.d01.rewardPaid]]){const existing=reminders.find(r=>r.id===id);if(existing)existing.done=done;else reminders.push({id,title,done,storyD01:true});}

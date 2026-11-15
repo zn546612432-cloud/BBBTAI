@@ -83,7 +83,7 @@ test('D06 Flow posts exactly one live message, then Mirage uses the shared singl
   const first=D04_STEP(D06_ORDER_ID,0);
   assert.equal(routes.at(-1).params.orderId,first);
   assert.equal(commissionPendingGhostStep(store.get(),mailId),first);
-  assert.match(renderGhost(ctx,{route:'/contract',params:{orderId:first}}),/請輸入 KIRA 郵件內的授權密鑰/);
+  assert.match(renderGhost(ctx,{route:'/contract',params:{orderId:first}}),/待驗證/);
   assert.equal(begin(store.get(),first),false,'GHOST must not start before manual key validation');
   const priorDocument=globalThis.document;
   const field={value:'wrong'};

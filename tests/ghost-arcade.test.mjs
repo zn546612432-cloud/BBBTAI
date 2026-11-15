@@ -84,7 +84,7 @@ test('all arcade games render touch controls; new attempts use arcade, old saved
  assert.ok(Array.isArray(s.ghost.orders['new-cipher'].board.tiles),'original board retained');
 });
 
-test('cipher preview uses original numbered circuit tiles and can reset an active Lights Out save',async()=>{
+test('cipher preview uses original circuit tiles without decorative numbering and can reset an active Lights Out save',async()=>{
  const {render,handle}=await import('../src/apps/ghost/index.js');
  const {createBoard,puzzleSolved}=await import('../src/apps/ghost/games/logic.js');
  const s={};
@@ -94,8 +94,8 @@ test('cipher preview uses original numbered circuit tiles and can reset an activ
  const loc={appId:'ghost',route:'/run',params:{orderId:o.id}};
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},refresh:()=>{},toast:()=>{}};
  let html=render(ctx,loc);
- assert.match(html,/gh-tile-id/);
- assert.match(html,/gh-cipher-tip/);
+ assert.doesNotMatch(html,/gh-tile-id/);
+ assert.doesNotMatch(html,/gh-cipher-tip/);
  assert.doesNotMatch(html,/gh-arcade-matrix gh-arcade-cipher/);
  // Previous saved arcade sessions can be converted without touching Link or the order.
  o.board.arcade={kind:'cipher',cells:Array(9).fill(1),steps:10};

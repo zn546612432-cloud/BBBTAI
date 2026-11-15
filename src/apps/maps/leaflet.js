@@ -49,7 +49,7 @@ class XimengMap extends HTMLElement {
  }
  connectedCallback(){
   this.alive=true;this.mode=this.getAttribute('mode')||'normal';
-  this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'<div class="xm-map-story-notice">真实地理底图 · 剧情地点为示意</div>')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
+  this.innerHTML='<div class="xm-map-tiles" aria-label="澳门互动地图"></div>'+(this.mode==='normal'?'<div class="xm-map-search"><form class="xm-map-form"><input type="search" aria-label="搜索地图地点" placeholder="搜索地点" enterkeyhint="search"/><button type="submit" aria-label="搜索">⌕</button></form><div class="xm-map-results" hidden></div></div><button type="button" class="xm-map-recenter" aria-label="回到澳门">⌖</button><div class="xm-map-bottom"><b>澳门</b><span>离线地图 · 可拖动、缩放、搜索</span></div>':'')+'<div class="xm-map-error" hidden>地图暂时无法加载，请检查网络后重试。<button type="button">重试</button></div>';
   this.querySelector('.xm-map-error button').addEventListener('click',()=>this.init());
   if(this.mode==='normal'){
    this.querySelector('.xm-map-form').addEventListener('submit',event=>{
@@ -102,12 +102,12 @@ class XimengMap extends HTMLElement {
   result.dataset.ids=ids;
   result.hidden=!query;
   result.replaceChildren();
-  if(query&&!found.length)result.textContent='没有找到已解锁的地点';
+  if(query&&!found.length)result.textContent='没有找到地点';
   for(const p of found){
    const button=document.createElement('button');
    button.type='button';
    button.dataset.placeId=p.id;
-   button.textContent=p.name+(p.kind==='fictional'?' · 剧情地点':'');
+   button.textContent=p.name;
    result.append(button);
   }
  }
@@ -116,7 +116,7 @@ class XimengMap extends HTMLElement {
   if(!p||!this.map)return;
   this.map.flyTo([p.lat,p.lng],Math.max(this.map.getZoom(),15),{duration:.6});
   this.markers?.get(p.id)?.openPopup();
-  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(p.name)+'</b><span>'+(p.kind==='fictional'?'虚构剧情地点 · 位置仅为示意':safeText(p.description))+'</span>';
+  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(p.name)+'</b>'+(p.description?'<span>'+safeText(p.description)+'</span>':'');
  }
  refreshPlaces(){
   if(!this.map||this.mode!=='normal')return;
@@ -125,10 +125,10 @@ class XimengMap extends HTMLElement {
   for(const [id,marker] of this.markers)if(!ids.has(id)){marker.remove();this.markers.delete(id);}
   for(const p of available){
    if(this.markers.has(p.id))continue;
-   const title=safeText(p.name),note=p.kind==='fictional'?'虚构剧情地点 · 非真实地址 · 不提供导航':safeText(p.description);
+   const title=safeText(p.name),note=safeText(p.description);
    const marker=window.L.marker([p.lat,p.lng],{icon:pinIcon(p.kind)}).addTo(this.map)
-    .bindPopup('<strong>'+title+'</strong><div>'+note+'</div>');
-   marker.on('click',()=>{this.querySelector('.xm-map-bottom').innerHTML='<b>'+title+'</b><span>'+note+'</span>';});
+    .bindPopup('<strong>'+title+'</strong>'+(note?'<div>'+note+'</div>':''));
+   marker.on('click',()=>{this.querySelector('.xm-map-bottom').innerHTML='<b>'+title+'</b>'+(note?'<span>'+note+'</span>':'');});
    this.markers.set(p.id,marker);
   }
   const requested=this.getAttribute('data-place');

@@ -46,7 +46,8 @@ test('GHOST D01 shows the solved board for three full real seconds before awardi
  assert.equal(o.previewUntil,5000);
  const victoryHTML=renderGhost({store:{get:()=>s}},{route:'/run',params:{orderId:D01_REPAIR}});
  assert.match(victoryHTML,/gh-network-complete/);
- assert.match(victoryHTML,/3 秒後完成本次修復/);
+ assert.match(victoryHTML,/連線已建立/);
+ assert.doesNotMatch(victoryHTML,/3 秒後完成本次修復/);
  assert.match(victoryHTML,/gh-source-tile/);
  assert.match(victoryHTML,/gh-target-tile/);
  assert.equal((victoryHTML.match(/data-action="gh-pipe"/g)||[]).length,25);

@@ -13,6 +13,16 @@ const fixture=()=>({
  content:{orders:[],mail:[],mirage:{digitalBalance:0,digitalTransactions:[]},conversations:{mirage:[],wechat:[{id:'group',name:'狼崽團',messages:[],unread:0},{id:'wang',name:'熙旺',messages:[],unread:0},{id:'hufeng',name:'胡楓',messages:[],unread:0}]}},
  bankData:{balance:0,transactions:[],account:'•• 1846'},notifications:[],events:[],drafts:{},unlocked:true,nav:{current:{appId:'home',route:'/'},stack:[]}
 });
+test('D01 approved bounty copy preserves the existing order state',()=>{
+ const s=fixture();seedD01(s);
+ const repair=s.content.orders.find(o=>o.id===D01_REPAIR),hunt=s.content.orders.find(o=>o.id==='d01-hunt-view');
+ assert.equal(repair.title,'C 級｜加密數據恢復');assert.equal(repair.reward,'0.04 BTC');
+ assert.equal(hunt.title,'S 級｜追殺令');assert.equal(hunt.d01ViewOnly,true);
+ assert.doesNotMatch(hunt.description,/虛構|僅供閱覽/);
+ repair.title='數據修復';repair.description='硬碟損壞，需要修復數據。';repair.status='ACCEPTED';
+ seedD01(s);assert.equal(repair.title,'C 級｜加密數據恢復');assert.equal(repair.status,'ACCEPTED');
+ assert.equal(s.content.orders.length,3);
+});
 test('D01 bank claim requires email click and is idempotent',()=>{
  const s=fixture();seedD01(s);assert.equal(s.bankData.balance,0);
  assert.equal(deliverD01Opening(s),true);assert.equal(deliverD01Opening(s),false);
