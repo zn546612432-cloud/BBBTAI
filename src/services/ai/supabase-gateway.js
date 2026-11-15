@@ -7,7 +7,7 @@ export const TAI_PUBLIC_KEY="sb_publishable_g5uRIZdBaY36VqtoZXAS_A_3exgtfs9";
 export const TAI_PROVIDER_ENDPOINT=TAI_CLOUD_URL+'/functions/v1/tai-provider-gateway';
 const SESSION_KEY='ximeng-tai-gateway-auth-v1';
 let flight=null;
-export const isTaiCloudHost=(hostname=globalThis.location?.hostname)=>hostname==='zn546612432-cloud.github.io';
+export const isTaiCloudHost=(hostname=globalThis.location?.hostname)=>['zn546612432-cloud.github.io','endearing-horse-4e9b2b.netlify.app'].includes(hostname);
 const stored=()=>{try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch{return null;}};
 const save=session=>{
  const value={access_token:session.access_token,refresh_token:session.refresh_token,
