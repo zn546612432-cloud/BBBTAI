@@ -43,6 +43,7 @@ try{
     const get=PhoneStore.prototype.get;
     PhoneStore.prototype.get=function(){globalThis.__taiLifecycleStore=this;return get.call(this);};
    });
+   await page.locator('#xm-boot-next').click({timeout:45000});
    await page.locator('[data-action="unlock"]').click();
    for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
    await page.locator('#screen-layer [data-action="gh-share"]').click();
@@ -136,6 +137,7 @@ try{
     assert.equal((await state()).ghost.history.filter(h=>h.orderId==='timed-strike').length,1);
    }else{
     if(mode==='reload'||mode==='reopen'){
+     await page.locator('#xm-boot-next').click({timeout:45000});
      await page.locator('[data-action="unlock"]').click();
      for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
      await page.locator('#screen-layer [data-action="gh-arcade-tap"]').first().waitFor({state:'visible'});

@@ -22,7 +22,7 @@ async function open(s){
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'});
  await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,state);},{key,state:JSON.stringify(s)});
  const page=await context.newPage();page.on('pageerror',e=>console.error('PAGE',e));page.on('console',m=>{if(m.type()==='warning')console.log(m.text());});
- await page.goto(url,{waitUntil:'domcontentloaded'});await page.locator('[data-action="unlock"]').click();
+ await page.goto(url,{waitUntil:'domcontentloaded'});await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('is-locked'));
  return {context,page};

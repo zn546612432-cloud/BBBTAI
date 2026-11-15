@@ -29,6 +29,7 @@ try{
   const page=await context.newPage();page.setDefaultTimeout(30000);
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'domcontentloaded'});
+  await page.locator('#xm-boot-next').click({timeout:45000});
   await page.locator('[data-action="unlock"]').click();
   for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
   const action=a=>page.locator('#screen-layer [data-action="'+a+'"]');

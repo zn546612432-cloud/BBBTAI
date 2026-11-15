@@ -51,6 +51,7 @@ page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());if
 const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
 const screenshot=name=>page.screenshot({path:path+'/'+name+'.png',fullPage:true});
 async function unlock(){
+ await page.locator('#xm-boot-next').click({timeout:45000});
  await page.locator('#screen-layer [data-action="unlock"]').waitFor({state:'visible',timeout:45000});
  await page.locator('#screen-layer [data-action="unlock"]').click();
  await page.locator('#screen-layer [data-action="passcode-key"][data-key="0"]').waitFor({state:'visible',timeout:45000});
