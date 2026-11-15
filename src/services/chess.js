@@ -214,13 +214,10 @@ async function generateMatchReply(store,matchId){
      check:nowFacts.check,checkmate:nowFacts.checkmate,
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
-    const messages=[
-     {role:'system',content:buildChessTutorPrompt(factPacket)},
-     ...(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}))
-    ];
+    const messages=(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}));
     const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
      memories:current.aiDraft?.memories,recognized:taiRecognized(current),storyVersion:55,outputMode:'text',allowVoice:false,
-     scene:isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。'}),9000);
+     scene:buildChessTutorPrompt(factPacket)+'\n'+(isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。')}),65000);
     parts=unpackTaiReply(response,'chess').slice(0,3);
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
     // Anonymous D23 chess must never leak the hidden name or family relation.

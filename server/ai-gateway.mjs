@@ -71,7 +71,9 @@ export async function handleAIGateway(req,res,pathname) {
       if(messages.at(-1).role!=='user')throw fail(400,'最后一条必须是玩家消息');
       const {profile,memories}=reviewDraft(payload);
       const outputMode=['text','voice','call'].includes(payload.outputMode)?payload.outputMode:'text';
-      const scene=typeof payload.scene==='string'?payload.scene.slice(0,2000):'';
+      // The chess caller embeds its verified board facts in the single
+      // system prompt's scene, rather than sending a forbidden system role.
+      const scene=typeof payload.scene==='string'?payload.scene.slice(0,channel==='chess'?24000:channel==='mirage'?12000:2000):'';
       const relationshipContext=typeof payload.relationshipContext==='string'?payload.relationshipContext.slice(0,8000):'';
       const behavior=normalizeTaiBehavior(payload.behavior);
       const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;

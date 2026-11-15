@@ -58,7 +58,8 @@ function prepareD23FarewellScene(s,pg){
 }
 export function endD23MirageConversation(s){
  const pg=d23MiragePostgame(s);
- if(!pg||pg.closed||pg.phase!=='chat')return false;
+ if(!pg||pg.closed||!(pg.phase==='chat'||pg.phase==='awaiting'&&pg.replyFailed))return false;
+ delete pg.replyFailed;
  pg.phase='closing';prepareD23FarewellScene(s,pg);return true;
 }
 // The existing Story55 tick commits one message per heartbeat, with the same
@@ -100,26 +101,6 @@ const introByResult={
  'player-resigned':['累了，還是不想跟我下？'],
  draw:['下次可沒這麼容易收場。']
 };
-// Offline responses follow the actual send and previous bubble, never round number.
-export function offlineD23Reply(result,text,previous=''){
- const value=String(text||'').trim();
- if(/不會|不会|不懂|沒教|没教|看不懂/.test(value))return /一直吃|吃我的/.test(value)
-  ?['不吃，留著讓你吃我？','……好，下次慢一點。先講，再走。']
-  :['嗯，剛才顧著贏了。','哪裡沒懂？現在補。'];
- if(/^[？?]+$|什麼意思|什么意思|沒明白|没明白/.test(value)){
-  if(/還在想剛才/.test(previous))return ['我是問，你還在想剛才那盤棋？'];
-  if(/哪裡沒懂/.test(previous))return ['剛才哪一步沒看明白？我講給你聽。'];
-  if(/忙著高興|回來都慢/.test(previous))return ['說你贏了我，正高興呢。逗你的。'];
-  if(/累了/.test(previous))return ['我是問，你是累了，還是不想下了。'];
-  return ['我剛才說得不清楚。','你是問哪一句？'];
- }
- if(/得意/.test(value))return ['這麼明顯？'];
- if(/下次.*贏|下次.*赢/.test(value))return ['記住了。','下次輸了可別裝沒說過。'];
- if(/不想下|不下了/.test(value))return ['那就不下。','換個話題，省得你看我不順眼。'];
- if(/不服/.test(value))return ['那就留著下次贏我。'];
- // An unknown message must not trigger an unrelated taunt or invented assessment.
- return ['嗯？說來聽聽。'];
-}
 const noSpoilers=/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i;
 async function bounded(promise,ms){
  let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{
@@ -136,20 +117,23 @@ export function commitD23MirageResponse(s,{intro,round,sourceId,replies,ai=false
  if(!Array.isArray(replies)||!replies.length||replies.length>2)return false;
  const c=s.content.conversations.mirage?.find(c=>c.id===D23_MIRAGE_CONTACT);
  if(!c)return false;
+ delete pg.replyFailed;
  pg.aiOutbox=replies.map((text,index)=>({id:'s55-d23-mirage-'+(intro?'intro':'reply-'+round)+'-'+index,
   text,aiGenerated:ai,sourceMessageId:sourceId}));
  pg.nextAt=null;pg.phase=intro?'intro-delivering':'reply-delivering';
  return true;
 }
-export function replyToD23Mirage(store){
+export function replyToD23Mirage(store,{retry=false}={}){
  const first=store.get(),pg=d23MiragePostgame(first);
  if(!pg||!validChat(first)||!['intro','awaiting'].includes(pg.phase))return Promise.resolve(false);
+ if(pg.replyFailed&&!retry)return Promise.resolve(false);
  const intro=pg.phase==='intro',round=pg.rounds,sourceId=pg.lastPlayerId,matchId=pg.matchId;
  const current=waitingAI.get(store);if(current)return current;
  const job=(async()=>{
   // The authored intro must commit after the current render returns. Otherwise
   // reentrant rendering can enter MIRAGE twice and consume its one-use return.
   await Promise.resolve();
+  if(retry&&pg.replyFailed)store.update(s=>{const live=d23MiragePostgame(s);if(live?.matchId===matchId&&live.lastPlayerId===sourceId)delete live.replyFailed;});
   const match=first.matches.find(m=>m.id===matchId),facts=chessFacts(match);
   const mirage=first.content.conversations.mirage?.find(c=>c.id===D23_MIRAGE_CONTACT);
   const boardEnd=(match.chat||[]).filter(m=>m.from==='tai').slice(-3).map(m=>m.text);
@@ -158,20 +142,22 @@ export function replyToD23Mirage(store){
   const system=buildChessPostgamePrompt(facts,match.result,round)+
    '\n你現在是在 MIRAGE 私聊，不在棋盤 App。棋盤剛才已說過的終局預設：'+JSON.stringify(boardEnd)+
    '\n不要重複宣布勝負；順著剛才的對話延伸。不得自行道別，稍後由固定預設下線。';
-  const messages=[{role:'system',content:system},...history];
-  if(intro)messages.push({role:'user',content:'熙蒙已經按「結束對局」回到 MIRAGE。由你主動接一句自然的賽後話題，不要重複棋盤的終局台詞。'});
-  let replies=[],ai=false;
-  try{
-   if(intro)throw Error('authored opening');
-   const response=await bounded(askTai({channel:'mirage',day:first.day,messages,
+  let replies=intro?(introByResult[match.result]||introByResult.draw):[],ai=false;
+  if(!intro)try{
+   // askTai already supplies the one system message; scenario instructions
+   // belong in scene, not a second system role rejected by the cloud gateway.
+   const response=await bounded(askTai({channel:'mirage',day:first.day,messages:history,
     profile:first.aiDraft?.profile,memories:first.aiDraft?.memories,
     recognized:taiRecognized(first),storyVersion:55,outputMode:'text',allowVoice:false,
-    scene:'D23 賽後 MIRAGE 匿名聊天，最多三輪。按真實對局結果與棋盤預設延續私人話題，不得劇透。'}),9000);
+    scene:system+'\n可以自由回應任何當前私人話題，包括與棋局無關的問題。不要把一般疑問自動解讀成棋局問題。'}),65000);
    replies=unpackTaiReply(response,'mirage').map(p=>String(p.text||'').trim()).filter(Boolean).slice(0,2);
-   if(replies.some(p=>p.length>180||noSpoilers.test(p)))replies=[];
-   ai=replies.length>0;
-  }catch{}
-  if(!replies.length)replies=intro?(introByResult[match.result]||introByResult.draw):offlineD23Reply(match.result,history.at(-1)?.content,history.slice(0,-1).filter(m=>m.role==='assistant').at(-1)?.content);
+   if(!replies.length||replies.some(p=>noSpoilers.test(p)))throw Error('D23 reply unavailable or premature identity reveal');
+   ai=true;
+  }catch(error){
+   console.warn('D23 Mirage AI reply unavailable:',error?.message);
+   store.update(s=>{const live=d23MiragePostgame(s);if(live?.matchId===matchId&&live.phase==='awaiting'&&live.rounds===round&&live.lastPlayerId===sourceId)live.replyFailed=true;});
+   return false;
+  }
   let changed=false;
   store.update(s=>{
    const live=d23MiragePostgame(s);
