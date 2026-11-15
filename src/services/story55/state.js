@@ -5,6 +5,12 @@ export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
 export const projectById=(s,id)=>story55Config(s).projects.find(n=>n.id===id);
 export const completed=(s,id)=>!!s?.story55?.completed&&Object.hasOwn(s.story55.completed,id);
+// Share the existing overnight mainline checkpoint with the unified clock
+// and charging rules. Only explicitly marked scenes hold the story at 03:00.
+export const overnightSceneGate55=s=>isStory55(s)
+ ?story55Config(s).nodes.find(n=>n.holdAt03===true&&n.gateDay===s.day&&!completed(s,n.id))||null
+ :null;
+export const overnightSceneNight55=s=>isStory55(s)&&s.story55?.overnightHold?.day===s.day&&s.story55.overnightHold.nightAfterMidnight===true;
 export const taiRecognized=s=>isStory55(s)?completed(s,'recognition'):s.day>=56;
 export const final55=s=>isStory55(s)&&!!s.story55.ended;
 export function nodeStatus(s,id){
@@ -12,7 +18,7 @@ export function nodeStatus(s,id){
  if(completed(s,id))return {state:'done',reason:'已完成'};
  if(final55(s))return {state:'locked',reason:'第一视角已结束'};
  if(s.day<n.day)return {state:'locked',reason:`等待D${n.day}`};
- if(n.at&&s.day===n.day&&(s.clock||'00:00')<n.at&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight))return {state:'locked',reason:`等待 ${n.at}`};
+ if(n.at&&s.day===n.day&&(s.clock||'00:00')<n.at&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(n.holdAt03&&overnightSceneNight55(s)))return {state:'locked',reason:`等待 ${n.at}`};
  if(n.authorizedProject&&!s.story55?.projects?.[n.authorizedProject]?.authorized)return {state:'locked',reason:'等待本地專案部署'};
  if(id==='loan'&&!s.story55?.projects?.base?.batches?.[0]?.complete)return {state:'locked',reason:'等待D14基础框架首次运行报告'};
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
