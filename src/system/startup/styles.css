@@ -1,0 +1,22 @@
+#xm-boot{position:fixed;inset:0;z-index:2147483640;display:grid;place-items:center;background:#efeeee;color:#262323;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;transition:opacity .35s ease,visibility .35s ease;isolation:isolate}
+#xm-boot.xm-boot-done{opacity:0;visibility:hidden;pointer-events:none}
+#xm-boot-frame{position:relative;width:min(100vw,56.264dvh);height:min(100dvh,177.734vw);overflow:hidden;isolation:isolate}
+#xm-boot-frame>img,#xm-boot-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+#xm-boot-video{background:#efeeee}
+#xm-boot.intro-finished #xm-boot-video{visibility:hidden}
+#xm-boot-tips{position:absolute;top:12%;left:8%;width:39%;opacity:0;transition:opacity .5s ease .12s;pointer-events:none;text-align:left}
+#xm-boot.intro-finished #xm-boot-tips{opacity:1}
+.xm-boot-kicker{font:500 clamp(8px,2.4vw,10px)/1.4 Georgia,serif;letter-spacing:.15em;white-space:nowrap}
+.xm-boot-rule{width:22px;height:1px;background:#a00d19;margin:12px 0 10px}
+#xm-boot-tip-index{font:400 10px/1.4 Georgia,serif;letter-spacing:.15em;color:#776d6d}
+#xm-boot-tip{font-size:clamp(11px,3.2vw,15px);line-height:1.65;letter-spacing:.025em;min-height:5em;margin:6px 0 0;white-space:normal;overflow-wrap:anywhere}
+#xm-boot-tip.tip-change{animation:xm-boot-tip-in .45s cubic-bezier(.2,.7,.3,1) both}
+@keyframes xm-boot-tip-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+#xm-boot-message{font-size:10px;line-height:1.5;color:#847a7a;margin:8px 0 0;overflow-wrap:anywhere}
+#xm-boot-message:empty{display:none}
+#xm-boot-next,#xm-boot-skip{position:absolute;z-index:2;border:0;background:#efeeeeed;color:#5c5050;font-family:inherit;font-size:12px;letter-spacing:.18em;cursor:pointer;padding:11px 18px;min-height:44px;-webkit-tap-highlight-color:transparent}
+#xm-boot-next{bottom:max(5px,env(safe-area-inset-bottom));left:4%;white-space:nowrap;animation:xm-boot-enter-in .6s ease both}
+#xm-boot-skip{top:max(6px,env(safe-area-inset-top));right:6px;letter-spacing:.08em;font-size:11px}
+#xm-boot-next[hidden],#xm-boot-skip[hidden]{display:none}
+@keyframes xm-boot-enter-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#xm-boot,#xm-boot-tips{transition:none}#xm-boot-tip.tip-change,#xm-boot-next{animation:none}}

@@ -399,11 +399,13 @@ store.subscribe(()=>{
  if(shown&&s.notifications.some(n=>n.id===shown&&n.silent)){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
  if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
  if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);taiRemote.sync();});render();taiRemote.sync();
- // The user sees a boot progress screen BEFORE seeing the iPhone lock screen.
+ // The intro is a presentation layer over the existing lockscreen preload.
  // The game lock cover is mounted behind it so no gameplay or passcode changes.
+ let bootActive=!!$('#xm-boot');
  const closeBoot=()=>{
   const boot=$('#xm-boot');
   if(!boot)return;
+  bootActive=false;
   boot.classList.add('xm-boot-done');
   setTimeout(()=>boot.remove(),450);
  };
@@ -414,15 +416,14 @@ store.subscribe(()=>{
    const percent=Math.round(finished/Math.max(1,total)*100);
    const number=$('#xm-boot-percent');
    const bar=$('#xm-boot-progress span');
-   const message=$('#xm-boot-message');
    if(number)number.textContent=percent+'%';
    if(bar)bar.style.width=percent+'%';
-   if(message&&!ready)message.textContent='正在准备离线地图、图标和照片… '+finished+'/'+total;
   }
  });
  lockAssets.ready.then(({reason,failed})=>{
   const message=$('#xm-boot-message');
   const next=$('#xm-boot-next');
+  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot);return;}
   if(reason==='timeout'){
    if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
    if(next){next.hidden=false;next.onclick=closeBoot;}
@@ -436,10 +437,12 @@ store.subscribe(()=>{
   setTimeout(closeBoot,300);
  }).catch(error=>{
   console.error('启动资源准备出错',error);
+  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot);return;}
   const next=$('#xm-boot-next');if(next){next.hidden=false;next.onclick=closeBoot;}else closeBoot();
  });
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
+ if(e.target.closest?.('#xm-boot'))return;
  const s=store.get();if(!phoneBlocked(s))return;
  const recovery=s.deathPhase==='passcode',off=s.deathPhase==='off',finalOff=s.deathPhase==='s55-off';
  if(recovery&&(e.target.closest?.('#day-transition-layer')||type==='keydown'))return;
@@ -449,6 +452,7 @@ for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','t
 },{capture:true,passive:false});
 // D55 terminal animation runs on real elapsed time, separate from game minutes.
 setInterval(()=>{
+ if(bootActive)return;
  const current=store.get(),phase=current.story55?.finalTransition?.phase;
  if(endingVoiceRevealDue55(current,Date.now())){
   store.update(s=>revealEndingVoice55(s));
@@ -470,7 +474,7 @@ setInterval(()=>{
 mountTelephony(ctx);
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get()))store.update(s=>tickStory55(s));
  if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
@@ -501,7 +505,7 @@ function settleResumedShortCharge(){
  const now=Date.now(),started=backgroundStartedAt;
  let outcome={};
  if(started!==null)store.update(s=>{outcome=settlePhoneBackground(s,Math.max(0,now-started),{
-  now,restarting:lockscreen.stage==='restart',callActive:['ringing','dialing','connected'].includes(callState().state),
+  now,restarting:bootActive||lockscreen.stage==='restart',callActive:['ringing','dialing','connected'].includes(callState().state),
   reconcile:(state,from)=>{tickStory55(state);deliverMissedScheduled(state,from);}
  });});
  else if(isShortCharging(store.get()))store.update(s=>settleOfflineShortCharge(s,now));
@@ -524,7 +528,7 @@ setInterval(()=>{
  lastPowerTick=now;
  const current=store.get();
  const tickOptions={
-  hidden:document.hidden,restarting:lockscreen.stage==='restart',
+  hidden:document.hidden,restarting:bootActive||lockscreen.stage==='restart',
   overlay:shade||tasks.visible||islandExpanded||$('#toast')?.classList.contains('visible')||false,
   callActive:['ringing','dialing','connected'].includes(callState().state),
   fastForward:Date.now()>=shortChargeNoticePausedUntil

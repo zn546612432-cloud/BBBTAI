@@ -28,6 +28,7 @@ try{
    await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
    // The lock must be completely covered until preload has reported completion.
    await page.locator('#xm-boot').waitFor({state:'attached',timeout:10000});
+   await page.locator('#xm-boot-next').click({timeout:45000});
    await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
    await page.locator('.lock-screen').waitFor({timeout:10000});
    await page.locator('.unlock-hint').click();
