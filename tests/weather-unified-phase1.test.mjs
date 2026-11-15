@@ -24,7 +24,7 @@ test('D01-D06 authored journal condition is the SAME read model as the iOS weath
  assert.equal(s.content.weather?.[6]?.macau,undefined,'read never mutates a save');
 });
 
-test('weather app edit immediately changes existing journal without changing authored journal story lines',()=>{
+test('historical saved weather edits still inform the diary but the Weather UI is read-only',()=>{
  const s=fresh();s.day=6;s.clock='15:25';
  const before=entryFor(s,6).body;
  setWeatherOverride(s,{day:6,cityId:'macau',values:{condition:'雷雨',temp:28,high:30,low:24}});
@@ -37,8 +37,8 @@ test('weather app edit immediately changes existing journal without changing aut
  assert.match(html,/天氣 雷雨/);
  assert.match(html,/⛈/);
  const edit=weatherRender({store:weatherApp(s)},{route:'/edit',params:{day:6,city:'macau'}});
- assert.match(edit,/value="28"/);
- assert.match(edit,/雷雨/);
+ assert.doesNotMatch(edit,/data-form="weather-edit"/);
+ assert.doesNotMatch(edit,/編輯天氣|编辑天气/);
 });
 
 test('diary editor weather writes the canonical Weather App day and does not create competing diary weather',()=>{

@@ -3,12 +3,13 @@
 // Source: Open-Meteo Historical Weather API, ECMWF ERA5 reanalysis (CC BY 4.0).
 import {MACAU_HISTORY_2025} from './data/macau-2025-hourly.js';
 import {macauCycloneSignalAt} from './cyclone-signals.js';
+import {europeanWeatherAt,europeanLocalTime,europeWeatherUnavailable} from './remote-history.js';
 
 export const WEATHER_HISTORY=MACAU_HISTORY_2025.metadata;
 export const WEATHER_CITY_DEFAULTS=Object.freeze([
  {id:'macau',name:'澳门特别行政区',subtitle:'00:30',temp:26,high:29,low:25,condition:'晴朗无云',theme:'night'},
- {id:'london',name:'伦敦',subtitle:'16:30',temp:16,high:17,low:9,condition:'多云',theme:'cloud'},
- {id:'paris',name:'巴黎',subtitle:'17:30',temp:14,high:15,low:8,condition:'多云',theme:'cloud'}
+ {id:'london',name:'倫敦',subtitle:'—',temp:null,high:null,low:null,condition:'載入中',theme:'cloud'},
+ {id:'paris',name:'巴黎',subtitle:'—',temp:null,high:null,low:null,condition:'載入中',theme:'cloud'}
 ]);
 
 // These existing authored conditions must survive importing historical data.
@@ -75,14 +76,20 @@ export function getWeather(s,{day=s.day,clock=s.clock,cityId='macau'}={}){
  const baseline=cityFor(cityId);
  if(!baseline||!validDay(day))return null;
  const index=String(Number(day));
- const historical=historyWeather(day,clock,cityId);
+ const historical=historyWeather(day,clock,cityId)||europeanWeatherAt(day,clock,cityId);
+ const localCity=cityId==='macau'?null:europeanLocalTime(day,clock,cityId);
  // Read old player saves without rewriting them. New edits always use content.weather.
  const olderDiary=s.content?.storyDiary?.[index]?.weather;
  const legacy=cityId==='macau'&&typeof olderDiary==='string'&&olderDiary.trim()
   ?{condition:olderDiary.trim()}:null;
  const authored=AUTHORED_WEATHER[index]?.[cityId];
- const manual=s.content?.weather?.[index]?.[cityId];
+ const manual=cityId==='macau'?s.content?.weather?.[index]?.[cityId]:null;
  const value={...baseline,...historical,...authored,...legacy,...manual};
+ if(cityId!=='macau'){
+  value.subtitle=localCity?.subtitle||'—';
+  if(!historical)value.condition=europeWeatherUnavailable(cityId)?'資料暫不可用':'載入中';
+ }else value.subtitle=validClock(clock)?clock:'08:00';
+ if(historical&&cityId!=='macau')value.condition=conditionFromWeatherCode(historical.weatherCode,historical.precipitation);
  value.day=Number(day);
  value.clock=validClock(clock)?clock:'08:00';
  // The same real historical signal timeline drives Weather and native SMS.
@@ -91,7 +98,7 @@ export function getWeather(s,{day=s.day,clock=s.clock,cityId='macau'}={}){
  value.theme=manual?.theme|| (historical?themeFor(value):baseline.theme);
  value.source=manual&&Object.keys(manual).length?'manual'
   :legacy?'legacy-diary':authored?'authored'
-  :historical?'historical':'placeholder';
+  :historical?'historical':'loading';
  return value;
 }
 

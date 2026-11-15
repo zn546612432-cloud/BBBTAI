@@ -49,7 +49,8 @@ test('new weather source does not change Macau game time, old author text, or lo
  assert.equal(first.condition,'晴');
  assert.equal(entryFor(state,1).weather,'晴');
  assert.ok(home(state).includes(first.temp+'°'));
- assert.equal(getWeather(state,{cityId:'london'}).source,'placeholder');
+ assert.equal(getWeather(state,{cityId:'london'}).source,'loading');
+ assert.equal(getWeather(state,{cityId:'london'}).temp,null,'missing remote history never invents a temperature');
  assert.equal(state.clock,'08:00');
  assert.equal(state.day,1);
 });

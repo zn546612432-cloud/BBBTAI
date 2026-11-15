@@ -69,13 +69,15 @@ function messageRow(m,s,c){
   const highlightedWish=wishText&&wishText.length===2
     ?esc(wishText[0])+'<button type="button" class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</button>'+esc(wishText[1])
     :esc(m.text);
+  const isZip=m.kind==='file'&&/\.zip$/i.test(String(m.fileName||m.text||''));
+  const zipCard=isZip?'<button type="button" class="wx-bubble wx-file-card" data-action="wx-file-preview" data-id="'+esc(m.id)+'" aria-label="查看 ZIP 檔案"><span class="wx-file-copy"><strong>'+esc(m.fileName||m.text)+'</strong><small>ZIP 壓縮檔</small></span><span class="wx-file-glyph">ZIP</span></button>':null;
   const body=m.kind==='image'?'<img src="'+esc(pictureSrc(m.text))+'" alt="聊天图片" class="wx-bubble-picture"'+stickerSize+'>':
     m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
     portrait(name,s)+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
-    (media?historicalMediaBubble(media,m,s):wishId
+    (media?historicalMediaBubble(media,m,s):zipCard?zipCard:wishId
       ?'<div class="wx-bubble wx-wish-bubble" title="'+esc(timestampLabel(m,s))+'">'+body+'</div>'
       :'<button type="button" class="wx-bubble '+(m.kind==='image'?'wx-bubble-image':'')+'" data-action="wx-message-options" data-id="'+esc(m.id)+'" data-owner="'+(mine?'1':'0')+'" data-text="'+(isText?'1':'0')+'" aria-label="'+esc(name)+'的消息，点击或长按查看操作" title="'+esc(timestampLabel(m,s))+'">'+body+'</button>')+
     '</div></div>';
