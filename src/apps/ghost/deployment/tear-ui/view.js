@@ -23,5 +23,5 @@ export function renderTearOrbit({id,title,status,index,count}){
 }
 export function renderTearAgent(s){
  ensureTearOrbit();const {working,content}=renderAgentContent(s);
- return `<section class="gh-tear-screen gh-agent-screen" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear"><header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><button type="button" class="gh-tear-icon" data-action="gh-tear-history" aria-label="歷史紀錄">◷</button></header><div class="gh-agent-orbit"><xm-tear-orbit data-key="agent-orbit" status="${working?'running':'idle'}" progress="0" aria-hidden="true"></xm-tear-orbit></div>${content}</section>`;
+ return `<section class="gh-tear-screen gh-agent-screen" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear"><header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><i aria-hidden="true"></i></header><div class="gh-agent-orbit"><xm-tear-orbit data-key="agent-orbit" status="${working?'running':'idle'}" progress="0" aria-hidden="true"></xm-tear-orbit></div>${content}</section>`;
 }
