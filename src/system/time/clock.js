@@ -3,6 +3,7 @@ import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runti
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
 import {endShortCharge,isShortCharging,drainGameBattery} from '../power/battery.js';
+import {friendsLastDay,friendsPreviewEnded,finishFriendsPreview} from '../preview/friends.js';
 // Legacy clock constants stay available for old saved campaigns.
 // 24 in-game hours = 30 real minutes; plugged-in: 1 hour per 3 seconds.
 export const NORMAL_MINUTES_PER_MS=1440/1_800_000;
@@ -57,6 +58,7 @@ function nextAlarm(s,from,end){
  return found;
 }
 export function advanceGameMinutes(s,requested){
+ if(friendsPreviewEnded(s))return {minutes:0,event:'friends-preview-end'};
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
@@ -86,7 +88,7 @@ export function advanceGameMinutes(s,requested){
  const crossingGatedMidnight=isStory55(s)&&!short&&s.day<55&&story55ChargeGate(s)==='plot'
   &&clockMinutes(s.clock)+Math.max(0,Math.floor(requested))>=1440
   &&!nextAlarm(s,absoluteMinute(s),s.day*DAY_MINUTES-1);
- const overnightHeld=isStory55(s)&&(d23Held||overnightSceneGate55(s)||overnightSceneNight55(s)||crossingGatedMidnight);
+ const overnightHeld=isStory55(s)&&(d23Held||overnightSceneGate55(s)||overnightSceneNight55(s)||crossingGatedMidnight||friendsLastDay(s)&&!short&&clockMinutes(s.clock)+Math.max(0,Math.floor(requested))>=1440);
  if(overnightHeld){
   const night=s.day===23?(s.story55.d23??={})
    :s.story55.overnightHold?.day===s.day?s.story55.overnightHold
@@ -94,10 +96,10 @@ export function advanceGameMinutes(s,requested){
   const from=clockMinutes(s.clock)+(night.nightAfterMidnight?1440:0);
   const target=Math.min(1440+180,from+Math.max(0,Math.floor(requested)));
   const holdEvent=s.day===23?'d23-hold':'story-hold';
-  if(target<=from)return {minutes:0,event:holdEvent};
+  if(target<=from){if(friendsLastDay(s)&&from>=1620&&finishFriendsPreview(s))return {minutes:0,event:'friends-preview-end'};return {minutes:0,event:holdEvent};}
   s.clock=isoTime(target%1440);night.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
-  if(target===1440+180){s.batteryPercent=2;return {minutes:target-from,event:holdEvent};}
+  if(target===1440+180){s.batteryPercent=2;if(finishFriendsPreview(s))return {minutes:target-from,event:'friends-preview-end'};return {minutes:target-from,event:holdEvent};}
   return {minutes:target-from,event:'none'};
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));

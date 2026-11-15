@@ -6,7 +6,7 @@ export function handle(a,t,c){
  if(a==='settings-back')c.router.back();
  if(a==='settings-open'){
   const route=t.dataset.route;
-  if(route==='editor')return c.router.open({appId:'editor',route:'/'});
+  if(route==='editor')return;
   if(route==='lock')return c.store.update(s=>{s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};});
   if(route==='export')return c.download();
   c.router.open({appId:'settings',route:'/'+route});

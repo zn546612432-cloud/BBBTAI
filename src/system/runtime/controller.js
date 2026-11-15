@@ -4,6 +4,7 @@ import {deathLocked} from '../power/story.js';
 import {drainBattery,tickShortChargeBattery,settleOfflineShortCharge} from '../power/battery.js';
 import {tickWorld,worldMinuteRate} from '../time/clock.js';
 import {d01Gate} from '../../story/d01/runtime.js';
+import {friendsPreviewEnded} from '../preview/friends.js';
 
 // Reuse authored readiness and gates. A later deadline (e.g. D24 deployment)
 // does not stop earlier days, and waiting for a future mail never stops time.
@@ -17,7 +18,7 @@ export function backgroundStoryBlocked(s){
   &&nodeStatus(s,n.id).state==='ready');
 }
 export function phoneRuntimePaused(s,{hidden=false,background=false,restarting=false,callActive=false}={}){
- return hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||s.dayChargeRemainingMs>0||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
+ return friendsPreviewEnded(s)||hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||s.dayChargeRemainingMs>0||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
   ||['ringing','connected'].includes(s.phoneCall?.state)||s.story55?.d13?.phase==='green'
   ||['off','passcode'].includes(s.deathPhase)||!!s.alarmRinging||!!s.emergencyCharge||!!s.poweredOff
   ||s.nav.current.appId==='editor'&&!deathLocked(s)&&s.powerMode!=='short-charging';

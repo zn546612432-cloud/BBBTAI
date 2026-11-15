@@ -1,0 +1,80 @@
+name: Publish independent D29 friends preview
+on:
+  push:
+    branches: [preview/d29-friends]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/d29-friends
+          path: friends
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve the four existing Pages entry points from main
+        working-directory: production
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" npm run build:pages
+          mv dist ../site
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/preview/" npm run build:pages
+          mv dist ../site/preview
+          PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p ../site/review
+          mv dist ../site/review/tai-vision-20261105
+      - name: Preserve Story55 comparison
+        working-directory: story55
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+          mv dist ../site/review/55-20261101
+      - name: Build friends-only D29 preview
+        working-directory: friends
+        run: |
+          npm ci
+          node --test tests/friends-preview29.test.mjs tests/d29-confirmed.test.mjs
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/review/d29-friends/" npm run build:pages
+          mv dist ../site/review/d29-friends
+          test -s ../site/review/d29-friends/index.html
+          test -s ../site/review/d29-friends/release.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Optimize packaged assets
+        run: |
+          python -m pip install Pillow==11.3.0
+          python production/scripts/optimize-icon-atlases.py site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    environment:
+      name: d29-friends-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d29-friends/
+    steps:
+      - uses: actions/deploy-pages@v4
+        with:
+          timeout: '600000'

@@ -14,11 +14,7 @@ import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecon
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
-import {PhoneStore,isPreview} from './services/storage.js';
-import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
-import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
-import {isNoAppV3Review,prepareNoAppV3Review} from './apps/noapp/preview-v3.js';
-import {primeTestSnapshots} from './services/story55/test-snapshots.js';
+import {PhoneStore} from './services/storage.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
@@ -36,7 +32,7 @@ import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {IncomingBannerQueue,queueableNotices} from './services/messaging/incoming-banner-queue.js';
 import {readNotification} from './services/messaging/read.js';
-import {mountInteractions} from './apps/developer/index.js';
+import {friendsPreviewEnded} from './system/preview/friends.js';
 import {patchHTML} from './system/dom.js';
 import {beginLockscreenPreload} from './system/preload.js';
 import {rebaseBundledPublicAsset} from './services/public-assets.js';
@@ -91,20 +87,10 @@ const boundedBootTask=async(task,label,limit=7000)=>{
 };
 await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
 
-// Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
-await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
 const router=new PhoneRouter(store,registry),lockscreen=new LockScreen();
-const story55Review=isStory55(store.get())&&new URLSearchParams(location.search).get('panel')==='story55';
-const taiV10MobileReview=isTaiV10MobilePreview(location.pathname,location.search,isPreview);
-const noappV2Review=isNoAppV2Review(location.pathname,location.search,isPreview);
-const noappV3Review=isNoAppV3Review(location.pathname,location.search,isPreview);
-if(story55Review)store.update(s=>{s.unlocked=true;s.nav.current={appId:'editor',route:'/story55',params:{}};});
-if(taiV10MobileReview)store.update(s=>prepareTaiV10MobilePreview(s));
-if(noappV2Review)store.update(s=>prepareNoAppV2Review(s));
-if(noappV3Review)store.update(s=>prepareNoAppV3Review(s));
 mountShell();
 let lockAssets=null;
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandPage='home',islandTimer=null,alarmSound=null,pendingNoticeId=null;
@@ -112,7 +98,7 @@ const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
-if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review)store.update(s=>{s.unlocked=false;});
+if(store.get().unlocked)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
 let shortChargeNoticePausedUntil=0;
@@ -468,9 +454,8 @@ setInterval(()=>{
 },300);
 
 mountTelephony(ctx);
-mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+setInterval(()=>{if(document.hidden||lockscreen.stage==='restart'||friendsPreviewEnded(store.get())||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get()))store.update(s=>tickStory55(s));
  if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));

@@ -3,6 +3,7 @@ import {PHONE_RUNTIME_POLICY} from '../runtime/policy.js';
 import {closeD01WeChat} from '../../story/d01/wechat.js';
 import {chargingBlock,shortChargeBlock,deathLocked,syncDeathNight,phoneBlocked} from './story.js';
 import {secondView55} from '../../services/story55/finale.js';
+import {friendsLastDay,finishFriendsPreview} from '../preview/friends.js';
 // Story55 discharge follows the accepted game minutes, never a second real-time timer.
 // From 08:00 at 100%, ordinary use reaches 20% around 23:00.
 export const LOW_BATTERY_PERCENT=20;
@@ -100,6 +101,7 @@ export function settleOfflineShortCharge(s,now=Date.now()){
 }
 export function plugIn(s){
  if(!canCharge(s))return false;
+ if(friendsLastDay(s))return finishFriendsPreview(s);
  // Midnight already advanced the civil date. Charging at 03:00 wakes on
  // that same date; charging before midnight starts the next date.
  if(s.story55?.version===1&&s.day===1){closeD01WeChat(s);s.day=2;s.story55.d01.nightAfterMidnight=false;}

@@ -1,7 +1,9 @@
 import {telephonyFullscreen} from '../../services/telephony/view.js';
 import {esc} from '../ui.js';
+import {friendsPreviewEnded,friendsEndingView} from '../preview/friends.js';
 
 export function powerFullscreen(s,{passcode=''}={}){
+ if(friendsPreviewEnded(s))return friendsEndingView();
  if(s.deathPhase==='s55-accelerating')return '';
  if(s.deathPhase==='s55-one-percent'||s.deathPhase==='s55-zero-percent'){
   const zero=s.deathPhase==='s55-zero-percent',percent=zero?'0%':'1%';
