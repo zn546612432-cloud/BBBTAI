@@ -59,12 +59,13 @@ try{
  await auto.page.locator('[data-action="mc-my-orders"]').click();
  await auto.page.locator('[data-action="mc-open-bounty"][data-id="M-024"]').click();
  await auto.page.locator('[data-action="mc-tear-share"]').click();
- await auto.page.locator('.gh-tear-terminal').waitFor({state:'visible'});
+ await auto.page.locator('xm-tear-orbit').waitFor({state:'visible'});
+ await auto.page.locator('.gh-tear-screen[data-tear-status="complete"]').waitFor({timeout:30000});
  await auto.page.getByText('執行完成 · 待提交',{exact:true}).waitFor({timeout:30000});
- await auto.page.getByText('返回 MIRAGE',{exact:true}).click();
+ await auto.page.locator('.gh-tear-return').click();
  await auto.page.locator('[data-action="mc-d04-submit"]').click();
  const settled=await auto.page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
  assert.equal(settled.content.orders.find(o=>o.id==='M-024').status,'COMPLETED');
- console.log('PASS native phone: D25 terminal animation, return to MIRAGE, manual submission');
+ console.log('PASS native phone: D25 Ouroboros canvas, return to MIRAGE, manual submission');
  await auto.context.close();
 }finally{await browser.close();}

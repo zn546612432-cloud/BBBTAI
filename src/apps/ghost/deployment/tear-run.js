@@ -2,7 +2,7 @@ import {completed,isStory55} from '../../../services/story55/state.js';
 import {deploymentPercent} from '../../../services/story55/projects.js';
 import {DAILY_CONTRACTS,D04_MAIL,D04_STEP,markD04AttachmentOpened,armD04Ghost,d04CanRun} from '../../../story/d04/contract.js';
 import {begin,finish} from '../state.js';
-import {esc} from '../../../system/ui.js';
+import {renderTearOrbit} from './tear-ui/view.js';
 
 // A local, fictional software executor. No real network or system access.
 // The same existing Ghost stages and manual Mirage submission own settlement.
@@ -48,11 +48,7 @@ export function tickTearRun(s,id,now=Date.now()){
  if(order(s,id).status==='READY')r.status='complete';
  return true;
 }
-export function renderTearRun(s,id,now=Date.now()){
+export function renderTearRun(s,id){
  const r=runs(s)[id],c=def(id);if(!r||!c)return '';
- const count=c.stages.length,pct=r.status==='complete'?100:Math.floor(r.index/count*100);
- const lines=['$ tear --local --import','[OK] package verified','[OK] runtime initialised','> session.open()','> pipeline.dispatch()','[OK] output sealed'];
- const script=lines.join('\n');
- const n=r.status==='complete'?script.length:Math.min(script.length-1,Math.floor(Math.max(0,now-r.startedAt)/40));
- return `<div class="gh-shell gh-fw-shell"><div class="gh-top"><button class="gh-button gh-back" data-action="gh-tear-return" data-id="${esc(id)}">‹</button><span>GHOST / LOCAL</span><span>●</span></div><h1>Ouroboros’ Tear</h1><div class="gh-fw-ledger"><div class="gh-fw-line"><span>${esc(order(s,id)?.title||id)}</span><strong>${pct}%</strong></div><div class="gh-meter"><i style="width:${pct}%"></i></div><div class="gh-fw-status">${r.status==='complete'?'執行完成 · 待提交':r.status==='failed'?'執行中止':'執行中'}</div></div><pre class="gh-tear-terminal">${esc(script.slice(0,n))}${r.status==='running'?'▌':''}</pre>${r.status!=='running'?'<button class="gh-button gh-primary" data-action="gh-tear-return" data-id="'+esc(id)+'">返回 MIRAGE</button>':''}</div>`;
+ return renderTearOrbit({id,title:order(s,id)?.title||id,status:r.status,index:r.index,count:c.stages.length});
 }
