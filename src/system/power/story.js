@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate,story55ShortChargeGate,overnightSceneGate55} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,story55ShortChargeGate,overnightSceneGate55,overnightSceneNight55} from '../../services/story55/state.js';
 import {secondView55,finaleInProgress55,syncSecondClock55} from '../../services/story55/finale.js';
 // One durable state machine owns the death-night boundaries, including reloads.
 export const DEATH_DAY=90;
@@ -25,6 +25,10 @@ export function syncDeathNight(s){
   }
   if(secondView55(s)){s.deathPhase='recovered';s.batteryPercent=100;return;}
   if(finaleInProgress55(s))return;
+  // Normalize saved overnight holds before the fullscreen power UI renders.
+  if(s.clock==='03:00'&&s.day<55&&(s.day===1&&s.story55.d01?.nightAfterMidnight||s.day===23&&s.story55.d23?.nightAfterMidnight||overnightSceneNight55(s))){
+   s.batteryPercent=2;s.emergencyCharge=false;s.poweredOff=false;
+  }
   if(s.story55.ended&&s.deathPhase!=='recovered'){
    s.day=55;s.batteryPercent=1;s.unlocked=false;
    if(s.deathPhase!=='passcode')s.deathPhase='off';
@@ -46,7 +50,7 @@ export function syncDeathNight(s){
  }
 }
 
-export const shortChargeBlock=s=>isStory55(s)?story55ShortChargeGate(s):chargingBlock(s);
+export const shortChargeBlock=s=>isStory55(s)?(overnightSceneNight55(s)?'plot':story55ShortChargeGate(s)):chargingBlock(s);
 
 export function chargingBlock(s){
  if(isStory55(s)){
