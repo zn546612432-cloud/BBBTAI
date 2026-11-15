@@ -18,7 +18,7 @@ const scenes=[
 ];
 export function applyD29Definition(c){
  for(const [id,at,title,channel,conversationId,previous,lines] of scenes){
-  const n={id,day:29,at,title,kind:'scene',requires:[previous],gateDay:29,holdAt03:true,delivery:'queued',channel,conversationId,messagePrefix:'s55-'+id,...(channel==='mirage'?{requiresContact:true}:{})};
+  const n={id,day:29,at,title,kind:'scene',requires:id==='plan'?[previous,'base','lead']:[previous],gateDay:29,holdAt03:true,delivery:'queued',channel,conversationId,messagePrefix:'s55-'+id,...(channel==='mirage'?{requiresContact:true}:{})};
   const existing=c.nodes.find(x=>x.id===id);
   if(existing&&id==='plan'){
    if(existing.delivery!=='queued'){Object.assign(existing,n);c.scenes[id]=structuredClone(lines);c.nodes.splice(c.nodes.indexOf(existing),1);c.nodes.push(existing);}
