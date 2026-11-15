@@ -54,7 +54,7 @@ test('D01 is unchanged; D02 seeds two ranked bounties, dated SMS and two WeChat 
  assert.equal(s.content.orders.find(o=>o.id===D02_S).category,'S');
  assert.equal(s.content.orders.find(o=>o.id===D02_A).category,'A');
  assert.equal(s.content.notes.filter(n=>n.id===D02_NOTE).length,0);
- assert.match(entryFor(s,2).body,/机房/);
+ assert.match(entryFor(s,2).body,/機房/);
  const sms=s.content.conversations.messages.find(c=>c.id==='sms-aodong-2025');
  assert.match(sms.messages[0].text,/八折/);
  assert.equal(sms.messages[0].schedule.clock,'09:00');
@@ -251,12 +251,12 @@ test('D02 Xiao Xin sends only one proactive 16:08 WeChat; player reply is not au
 
 test('D02 Schedule stages are independent of Calendar, preserve editor overrides and activate only after buying',()=>{
  const s=phone();
- assert.doesNotMatch(entryFor(s,2).body,/在澳东买了/);
+ assert.doesNotMatch(entryFor(s,2).body,/在澳東買了/);
  s.story55.d02.purchased=[{category:'ssd',id:'ad-ssd'}];
  tickD02Diary(s);
  assert.equal(s.story55.d02.diary.due.purchase,2*1440+8*60+50);
- s.clock='08:49';tickD02Diary(s);assert.doesNotMatch(entryFor(s,2).body,/在澳东买了/);
- s.clock='08:50';tickD02Diary(s);assert.match(entryFor(s,2).body,/在澳东买了/);
+ s.clock='08:49';tickD02Diary(s);assert.doesNotMatch(entryFor(s,2).body,/在澳東買了/);
+ s.clock='08:50';tickD02Diary(s);assert.match(entryFor(s,2).body,/在澳東買了/);
  saveDiaryEntry(s,2,{title:'测试日记',weather:'雨',body:'今天看看机器。',stages:{brother:'哥哥的事',purchase:'已经下单'}});
  assert.equal(entryFor(s,2).title,'测试日记');
  assert.equal(entryFor(s,2).body,'今天看看机器。\n\n已经下单');

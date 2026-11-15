@@ -172,6 +172,8 @@ test('D23 invitation alone is insufficient; only the postgame farewell releases 
  advanceScene55(s,'d23-chess-finish',{now:1000});
  assert.equal(completed(s,'d23-chess-finish'),false);
  advanceScene55(s,'d23-chess-finish',{now:4000});
+ assert.equal(canCharge(s),false,'farewell player preset still awaits native Send');
+ sendScriptedDraft55(s,'mirage','s55-ouroboros','去吧。');
  assert.equal(canCharge(s),true);
  assert.equal(plugIn(s),true);
  assert.equal(s.day,24,'overnight D23 charge enters D24 exactly once');

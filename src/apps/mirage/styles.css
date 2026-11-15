@@ -87,3 +87,10 @@
 
 /* The D23 post-match control belongs above the composer; it must never sit behind the phone home bar. */
 .mc-d23-outro-action{display:block;flex:0 0 auto;align-self:stretch;min-height:34px;margin:2px 12px 4px;border:1px solid #8eb49a88;background:#173c32b0;color:#cde8ba;font-size:11px;letter-spacing:.65px;font-family:inherit;text-align:center;touch-action:manipulation}
+
+/* Keep the portrait beside the first line, even when shared chat CSS loads last. */
+.app-mirage .mc-clear-row.message-row,.app-mirage .mc-cipher-row{align-items:flex-start}
+.app-mirage .mc-clear-row>.mc-avatar{align-self:flex-start;margin-top:21px}
+.app-mirage .mc-voice-avatar>.mc-avatar{margin-top:0}
+
+.mc-clear-row>.mc-avatar-space{width:26px;flex-shrink:0}.mc-cipher-row>.mc-avatar-space{width:32px;flex-shrink:0}.mc-channel.is-decrypted .mc-clear-row>.mc-avatar-space{width:30px}

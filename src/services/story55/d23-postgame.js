@@ -95,20 +95,30 @@ export function d23MiragePostgameDue(s,now=Date.now()){
  return false;
 }
 const introByResult={
- 'player-win':['看來我今天不該教得這麼仔細。'],
- 'opponent-win':['剛才有幾步其實不錯。','就是太急了。'],
- 'player-resigned':['怎麼，現在還不服氣？'],
- draw:['至少這次，你沒讓我贏得太輕鬆。']
+ 'player-win':['贏一盤，回來都慢了。','忙著高興？'],
+ 'opponent-win':['還在想剛才那盤？'],
+ 'player-resigned':['累了，還是不想跟我下？'],
+ draw:['下次可沒這麼容易收場。']
 };
-const replyByResult={
- 'player-win':['贏了一盤還想讓我誇你？嗯，倒是挺貪心。','你這麼得意，我下次可得認真一點。','別急，才一盤而已。'],
- 'opponent-win':['我教你下棋，又不是替你下。','讓你贏一次，然後呢？你想學會下棋，還是只想贏我？','下次別光靠嘴。'],
- 'player-resigned':['還行。尤其是某個新手剛才還說要贏我。','我更想看你哪天真的能贏。','我記住了。希望你的棋藝能跟嘴一樣有長進。'],
- draw:['你的算術倒是挺有創意。','誰都沒贏，你倒是很會替自己算分。','下回再分勝負。']
-};
-function offlineReply(result,intro,round){
- return intro?(introByResult[result]||introByResult.draw):
-  [(replyByResult[result]||replyByResult.draw)[Math.min(MAX_TURNS-1,Math.max(0,round-1))]];
+// Offline responses follow the actual send and previous bubble, never round number.
+export function offlineD23Reply(result,text,previous=''){
+ const value=String(text||'').trim();
+ if(/不會|不会|不懂|沒教|没教|看不懂/.test(value))return /一直吃|吃我的/.test(value)
+  ?['不吃，留著讓你吃我？','……好，下次慢一點。先講，再走。']
+  :['嗯，剛才顧著贏了。','哪裡沒懂？現在補。'];
+ if(/^[？?]+$|什麼意思|什么意思|沒明白|没明白/.test(value)){
+  if(/還在想剛才/.test(previous))return ['我是問，你還在想剛才那盤棋？'];
+  if(/哪裡沒懂/.test(previous))return ['剛才哪一步沒看明白？我講給你聽。'];
+  if(/忙著高興|回來都慢/.test(previous))return ['說你贏了我，正高興呢。逗你的。'];
+  if(/累了/.test(previous))return ['我是問，你是累了，還是不想下了。'];
+  return ['我剛才說得不清楚。','你是問哪一句？'];
+ }
+ if(/得意/.test(value))return ['這麼明顯？'];
+ if(/下次.*贏|下次.*赢/.test(value))return ['記住了。','下次輸了可別裝沒說過。'];
+ if(/不想下|不下了/.test(value))return ['那就不下。','換個話題，省得你看我不順眼。'];
+ if(/不服/.test(value))return ['那就留著下次贏我。'];
+ // An unknown message must not trigger an unrelated taunt or invented assessment.
+ return ['嗯？說來聽聽。'];
 }
 const noSpoilers=/熙泰|xitai|三胞胎|親兄弟|亲兄弟|我是你(?:的)?哥|你是我(?:的)?哥/i;
 async function bounded(promise,ms){
@@ -149,6 +159,7 @@ export function replyToD23Mirage(store){
   if(intro)messages.push({role:'user',content:'熙蒙已經按「結束對局」回到 MIRAGE。由你主動接一句自然的賽後話題，不要重複棋盤的終局台詞。'});
   let replies=[],ai=false;
   try{
+   if(intro)throw Error('authored opening');
    const response=await bounded(askTai({channel:'mirage',day:first.day,messages,
     profile:first.aiDraft?.profile,memories:first.aiDraft?.memories,
     recognized:taiRecognized(first),storyVersion:55,outputMode:'text',allowVoice:false,
@@ -157,7 +168,7 @@ export function replyToD23Mirage(store){
    if(replies.some(p=>p.length>180||noSpoilers.test(p)))replies=[];
    ai=replies.length>0;
   }catch{}
-  if(!replies.length)replies=offlineReply(match.result,intro,round);
+  if(!replies.length)replies=intro?(introByResult[match.result]||introByResult.draw):offlineD23Reply(match.result,history.at(-1)?.content,history.slice(0,-1).filter(m=>m.role==='assistant').at(-1)?.content);
   let changed=false;
   store.update(s=>{
    const live=d23MiragePostgame(s);

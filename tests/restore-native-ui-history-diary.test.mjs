@@ -58,7 +58,7 @@ test('D01 diary is untitled ordinary life; reminder markup remains supported els
  assert.doesNotMatch(entryFor(s,1).body,/傅隆生回澳門|老狼歸巢/);
  const html=diaryView(s,{route:'/',params:{day:'1'}});
  assert.doesNotMatch(html,/老狼归巢|class="diary-entry-title"/);
- assert.match(html,/天气 晴/);
+ assert.match(html,/天氣 晴/);
  assert.doesNotMatch(html,/data-action="diary-add-reminder"/);
  assert.doesNotMatch(html,/GHOST|BOUNTY|任务树/);
  const rich=journalText('提案：[[据点碰面|前往据点碰面]]。');

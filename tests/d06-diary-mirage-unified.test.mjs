@@ -37,12 +37,12 @@ test('D06 journal exists at 08:00 and does not leak the winner or Ouroboros befo
  const s=fixture();
  assert.ok(allDiaryDays(s).includes(6));
  const entry=entryFor(s,6);
- assert.equal(entry.title,'今天有点意思');
- assert.match(entry.body,/昨天整理的东西/);
+ assert.equal(entry.title,'今天有點意思');
+ assert.match(entry.body,/昨天整理的東西/);
  assert.doesNotMatch(entry.body,/10 BTC|Ouroboros|黑客天才/);
  const html=diaryView(s,{route:'/',params:{day:'6'}});
  assert.match(html,/DAY 06/);
- assert.match(html,/今天有点意思/);
+ assert.match(html,/今天有點意思/);
  assert.doesNotMatch(html,/Ouroboros|10 BTC/);
  // Winning the wallet alone is not equivalent to finishing the conversation.
  s.story55.completed.wallet={day:6,clock:'11:00'};
@@ -80,7 +80,7 @@ test('D06 approved first-chat runs as one ordered gated scene; journal unlocks o
  const text=entryFor(s,6).body;
  assert.match(text,/10 BTC/);
  assert.match(text,/Dr Ouroboros/);
- assert.match(text,/行啊，有钱赚再说。/);
+ assert.match(text,/行啊，有錢賺再說。/);
  tickStory55(s);tickQueuedStoryScenes55(s,Date.now()+60000);
  assert.equal(convo(s).messages.length,24,'refresh/retry does not send duplicate messages');
  assert.equal(entryFor(s,6).body,text,'the postscript is not appended twice');
@@ -90,7 +90,7 @@ test('D06 approved first-chat runs as one ordered gated scene; journal unlocks o
 
 test('D06 journal retains editor overrides while a story section is still hidden',()=>{
  const s=fixture();
- saveDiaryEntry(s,6,{weather:'晴',title:'今天有点意思',body:'今天先把资料备份一下。',stages:{'mirage-conversation':'这单赚了十个比特币。'}});
+ saveDiaryEntry(s,6,{weather:'晴',title:'今天有點意思',body:'今天先把资料备份一下。',stages:{'mirage-conversation':'这单赚了十个比特币。'}});
  assert.equal(entryFor(s,6).body,'今天先把资料备份一下。');
  s.story55.completed.wallet={day:6,clock:'12:00'};
  assert.equal(entryFor(s,6).body,'今天先把资料备份一下。');

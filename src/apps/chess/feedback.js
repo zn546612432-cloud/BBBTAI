@@ -34,14 +34,27 @@ function visual(root,event){
   const img=square.querySelector('img');
   if(img){const ghost=img.cloneNode();ghost.src=img.src.replace(/[^/]+\.png$/,event.color+event.piece.toUpperCase()+'.png');effect.append(ghost);}
   square.append(effect);
- }else frame.append(effect);
+  }else{
+  const label=event.result==='player-resigned'?'已認輸':event.kind==='win'?'白方勝':event.kind==='loss'?'黑方勝':'和棋';
+  effect.innerHTML='<span class="chess-result-emblem" aria-hidden="true">'+(event.kind==='draw'?'½':'♚')+'</span><strong>'+label+'</strong><span class="chess-result-rule"></span>';
+  frame.append(effect);
+  const losing=event.kind==='win'?'bK':event.kind==='loss'?'wK':null;
+  const king=losing&&root.querySelector('[data-piece="'+losing+'"]');
+  if(king&&!reduced&&typeof king.animate==='function')king.animate([
+   {transform:'translateX(0)',filter:'brightness(1)'},{transform:'translateX(-4px)',offset:.15},
+   {transform:'translateX(4px)',offset:.3},{transform:'translateX(0) rotate(-12deg)',filter:'brightness(.45)'}
+  ],{duration:850,fill:'forwards'});
+  for(const square of root.querySelectorAll('.square.last-move')){
+   if(typeof square.animate==='function')square.animate([{boxShadow:'inset 0 0 0 3px #e5c887'},{boxShadow:'inset 0 0 0 1px #e5c88744'}],{duration:reduced?160:1100});
+  }
+ }
  root.dataset.feedback=event.kind;
  impact(event.kind==='loss'?'cancel':'success');sound(event.kind);
  const frames=reduced?[{opacity:.7},{opacity:0}]:event.kind==='capture'
   ?[{opacity:1,transform:'scale(1)'},{opacity:.6,transform:'scale(1.15)',offset:.3},{opacity:0,transform:'scale(.65)'}]
   :[{opacity:0},{opacity:1,offset:.2},{opacity:0}];
  if(typeof effect.animate==='function'){
-  const animation=effect.animate(frames,{duration:reduced?160:event.kind==='capture'?430:720,easing:'ease-out'});
+  const animation=effect.animate(frames,{duration:reduced?160:event.kind==='capture'?430:1800,easing:'ease-out'});
   animation.onfinish=()=>{effect.remove();delete root.dataset.feedback;};
  }else{effect.remove();delete root.dataset.feedback;}
 }
