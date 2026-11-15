@@ -2,8 +2,22 @@
 // source of board state; this module owns no chess engine or story clock.
 import {chessReaction} from './chess-dialogue.js';
 import {CHAT_LIFECYCLE_POLICY} from './messaging/lifecycle/engine.js';
+import {D29_CHESS_INVITATION,D29_CHESS_LINES} from '../story/d29/definition.js';
 export const D23_CHESS_INVITATION='s55-d23-chess-invite';
 export const isD23ChessLesson=match=>match?.invitationId===D23_CHESS_INVITATION;
+export const isD29ChessLesson=match=>match?.invitationId===D29_CHESS_INVITATION;
+export const d29ChessDone=match=>isD29ChessLesson(match)&&(match.lesson?.scriptIndex||0)>=D29_CHESS_LINES.length;
+export const d29ChessDraft=match=>isD29ChessLesson(match)&&D29_CHESS_LINES[match.lesson?.scriptIndex||0]?.[0]==='me'?D29_CHESS_LINES[match.lesson?.scriptIndex||0][1]:null;
+function appendD29Line(match,clock,now){
+ const lesson=match.lesson??={scriptIndex:0};
+ const i=lesson.scriptIndex||0,line=D29_CHESS_LINES[i];if(!line)return false;
+ const id=`d29-chess-${match.id}-${i}`;
+ if(!(match.chat||[]).some(m=>m.id===id))(match.chat??=[]).push({id,from:line[0]==='me'?'player':'tai',text:line[1],time:clock,authored:true,mode:'text'});
+ lesson.scriptIndex=i+1;lesson.scriptNextAt=now+CHAT_LIFECYCLE_POLICY.pauseMs;return true;
+}
+export function sendD29ChessDraft(match,clock,now=Date.now()){
+ return !!d29ChessDraft(match)&&appendD29Line(match,clock,now);
+}
 export const d23ChessBoardReadyToExit=match=>!!(isD23ChessLesson(match)&&match.status==='finished'&&match.lesson?.finishedNotified&&!(match.lesson?.outbox?.length));
 const OPENING=[
  '先講規矩。你執白，我執黑，白棋先走，之後輪流各走一步。自己的王不能留在被攻擊的位置。',
@@ -71,6 +85,7 @@ export function chessLessonDue(s,now=Date.now()){
  const nav=s.nav?.current;
  if(!s.unlocked||nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/')||chessComposerBusy())return false;
  const match=s.matches?.find(m=>m.id===nav.route.slice(7));
+ if(isD29ChessLesson(match))return !d29ChessDone(match)&&!d29ChessDraft(match)&&now>=(match.lesson?.scriptNextAt||0);
  if(!isD23ChessLesson(match))return false;
  const lesson=match.lesson;
  if(!lesson?.started)return true;
@@ -87,6 +102,7 @@ export function tickD23ChessLesson(s,now=Date.now()){
  if(nav?.appId!=='chess'||!String(nav.route||'').startsWith('/match/')||chessComposerBusy())return false;
  const id=nav.route.slice('/match/'.length);
  const match=s.matches?.find(m=>m.id===id);
+ if(isD29ChessLesson(match))return !d29ChessDone(match)&&!d29ChessDraft(match)&&now>=(match.lesson?.scriptNextAt||0)&&appendD29Line(match,s.clock,now);
  if(!isD23ChessLesson(match))return false;
  if(!match.lesson?.started)beginD23ChessLesson(match,s.clock);
  const lesson=match.lesson;

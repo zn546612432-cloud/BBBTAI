@@ -328,6 +328,9 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
    for(const node of nodes){
     if(node.day>day||completed(s,node.id))continue;
     if(node.requires.some(id=>!completed(s,id)))continue;
+    // Date-jump reconstruction only: historical chess gates do not demand an actual match.
+    if(node.id==='d29-chess')s.story55.d29ChessOpened=true;
+    if(node.id==='plan')s.story55.d29ChessExited=true;
     if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
     if(nodeStatus(s,node.id).state!=='ready')continue;
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
