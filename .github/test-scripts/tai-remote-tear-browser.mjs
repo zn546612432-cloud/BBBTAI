@@ -24,6 +24,7 @@ async function open(s){
  const page=await context.newPage();page.on('pageerror',e=>console.error('PAGE',e));page.on('console',m=>{if(m.type()==='warning')console.log(m.text());});
  await page.goto(url,{waitUntil:'domcontentloaded'});await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+ await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('is-locked'));
  return {context,page};
 }
 try{
@@ -44,14 +45,17 @@ try{
  console.log('PASS native phone: offline Tear, two remaining live LINK boards, no auto payment, approved closing line');
  await context.close();
  const t=fixture();t.day=25;t.story55.completed.base={day:24,clock:'21:00'};
+ for(const n of t.story55.config.nodes)if(n.day<=25&&n.id!=='base')t.story55.completed[n.id]={day:n.day,clock:'12:00',test:true};
  t.story55.projects.base.batches=Array.from({length:11},(_,i)=>({complete:true,steps:Array.from({length:5},()=>({day:i+14})),testedDay:i+14,day:i+14}));
  seedD04Contracts(t);assert.ok(acceptD04Contract(t,'M-024'));
  t.nav={current:{appId:'mirage',route:'/order/M-024',params:{}},stack:[]};
  const auto=await open(t);
  // MIRAGE is authenticated by its standard login form if needed.
  const login=auto.page.locator('form[data-form="mc-login"]');
- if(await login.count())await login.locator('button[type="submit"]').click();
- await auto.page.locator('[data-action="mc-tab"][data-route="/bounties"]').click();
+ const bounties=auto.page.locator('[data-action="mc-tab"][data-route="/bounties"]');
+ await login.or(bounties).first().waitFor({state:'visible'});
+ if(await login.isVisible())await login.locator('button[type="submit"]').click();
+ await bounties.click();
  await auto.page.locator('[data-action="mc-my-orders"]').click();
  await auto.page.locator('[data-action="mc-open-bounty"][data-id="M-024"]').click();
  await auto.page.locator('[data-action="mc-tear-share"]').click();

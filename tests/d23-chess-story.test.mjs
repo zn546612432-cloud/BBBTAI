@@ -156,6 +156,9 @@ test('D23 remains unsent until native Send, including after 03:00 and old saved 
 });
 test('D23 invitation alone is insufficient; only the postgame farewell releases long charge',()=>{
  const s=activateStory55(initialState());s.day=23;s.clock='22:16';
+ // All daily Tear tests and manual upgrades have already settled on this
+ // isolated chess checkpoint; the only remaining gate is the chess scene.
+ s.story55.projects.base={authorized:true,batches:Array.from({length:10},(_,i)=>({complete:true,steps:Array(5).fill(true),day:i+14,testedDay:i+14})),active:null};
  for(const n of story55Config(s).nodes)
   if(n.gateDay&&n.gateDay<23)s.story55.completed[n.id]={day:n.day,clock:'20:00',test:true};
  s.story55.activeScene='d23-chess';
