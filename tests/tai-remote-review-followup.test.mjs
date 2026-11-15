@@ -25,7 +25,7 @@ const now=(time,fn)=>{const saved=Date.now;Date.now=()=>time;try{return fn();}fi
 function fresh(){
  const s=activateStory55(initialState());s.day=16;s.clock='08:20';s.unlocked=true;
  s.story55.config.nodes=[];s.story55.activeScene=null;
- s.story55.projects.base={authorized:true,batches:[],active:null};
+ s.story55.projects.identity={authorized:true,batches:[],active:null};
  if(!s.content.conversations.mirage.some(c=>c.id==='s55-ouroboros'))s.content.conversations.mirage.push({id:'s55-ouroboros',messages:[],unread:0});
  tickStory55(s);return s;
 }
@@ -148,7 +148,7 @@ test('restarting deliberately creates a new run instead of restoring the abandon
 for(const script of Object.keys(GHOST_SHARE_DIALOGUES)){
  test('editor and JSON import protect only the actually triggered script: '+script,()=>{
   const s=fresh();s.story55.ghostShareTakeovers=script==='first'?0:script==='second'?1:2;
-  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>script==='dailyNo'?.9:0}).script,script);
+  assert.equal(shareGhostToTai(s,{projectId:'identity'},{random:()=>script==='dailyNo'?.9:0}).script,script);
   const before=structuredClone(s.content.conversations),bundleSource=fresh();
   for(const name of Object.keys(GHOST_SHARE_DIALOGUES)){
    const row=readChatSources(s,15).find(x=>x.key==='ghost-share:'+name);
@@ -175,10 +175,10 @@ for(const script of Object.keys(GHOST_SHARE_DIALOGUES)){
 }
 
 test('an offline share card does not lock any script; current #133 historical lines still protect their own script',()=>{
- const s=fresh();s.clock='11:00';shareGhostToTai(s,{projectId:'base'},{random:()=>.99});
+ const s=fresh();s.clock='11:00';shareGhostToTai(s,{projectId:'identity'},{random:()=>.99});
  assert.ok(readChatSources(s,15).filter(x=>x.type==='ghost-share').every(x=>!x.reason));
  delete s.story55.ghostShare;s.clock='08:20';
- shareGhostToTai(s,{projectId:'base'},{random:()=>0,now:10000});
+ shareGhostToTai(s,{projectId:'identity'},{random:()=>0,now:10000});
  delete s.story55.ghostShareScriptsStarted;
  for(const m of s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages)delete m.ghostShareScript;
  s.story55.ghostShare={phase:'idle',script:null};
@@ -201,7 +201,7 @@ test('identical edited opening lines cannot lock an untriggered branch',()=>{
   const row=readChatSources(s,15).find(x=>x.key==='ghost-share:'+script),lines=row.lines.map(x=>x.text);
   lines[0]='同一句開場';saveChatSource(s,row.key,{lines});
  }
- assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0}).script,'first');
+ assert.equal(shareGhostToTai(s,{projectId:'identity'},{random:()=>0}).script,'first');
  assert.ok(readChatSources(s,15).find(x=>x.key==='ghost-share:first').reason);
  const row=readChatSources(s,15).find(x=>x.key==='ghost-share:second');
  assert.equal(row.reason,'');saveChatSource(s,row.key,{lines:row.lines.map(x=>x.text)});
@@ -244,7 +244,7 @@ test('the existing D04 runner can still share a valid later commission; ordinary
   openCommissionWithGhost(s,D04_MAIL(def.id));
   assert.ok(ghostShareSource(s,{orderId:D04_STEP(def.id,0)}));
   for(const type of ['route','cipher']){const id='ordinary-'+type;authorize(s,{orderId:id,type});assert.ok(ghostShareSource(s,{orderId:id}));}
-  assert.ok(ghostShareSource(s,{projectId:'base'}));
+  assert.ok(ghostShareSource(s,{projectId:'identity'}));
  }finally{DAILY_CONTRACTS.pop();}
 });
 

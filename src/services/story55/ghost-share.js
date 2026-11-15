@@ -3,7 +3,8 @@
 // another clock, chat queue, minigame runner, or phone-control transport.
 import {isStory55,projectById,date55} from './state.js';
 import {anonymousPresence55} from './runtime.js';
-import {deployment,deploymentPercent} from './projects.js';
+import {deployment,deploymentPercent,deploymentReadiness} from './projects.js';
+import {TEAR_DIALOGUES,isTearShare} from '../../story/d14-d24/tear-dialogue.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {taiRemoteOrderAllowed} from '../../system/remote-control/policy.js';
 import {settleTaiRemotePause} from '../../system/remote-control/visibility.js';
@@ -38,11 +39,12 @@ export const GHOST_SHARE_DIALOGUES={
  ]
 };
 export function ghostShareDialogue(s,script){
- const base=GHOST_SHARE_DIALOGUES[script]||[],edit=s.story55?.chatSceneEdits?.['ghost-share:'+script]?.lines;
- return edit?.length===base.length?base.map(([who,text],i)=>[who,edit[i].who===who&&typeof edit[i].text==='string'?edit[i].text:text]):base;
+ const base=GHOST_SHARE_DIALOGUES[script]||TEAR_DIALOGUES[script]||[],edit=s.story55?.chatSceneEdits?.['ghost-share:'+script]?.lines;
+ if(edit?.length!==base.filter(([who])=>who!=='control').length)return base;
+ let i=0;return base.map(([who,text])=>{if(who==='control')return [who,text];const line=edit[i++];return [who,line.who===who&&typeof line.text==='string'?line.text:text];});
 }
 export function ghostShareScriptStarted(s,script){
- if(!Object.hasOwn(GHOST_SHARE_DIALOGUES,script))return false;
+ if(!Object.hasOwn(GHOST_SHARE_DIALOGUES,script)&&!Object.hasOwn(TEAR_DIALOGUES,script))return false;
  const flags=s.story55?.ghostShareScriptsStarted,p=s.story55?.ghostShare;
  if(flags&&Object.hasOwn(flags,script))return flags[script]===true;
  if(p?.script===script)return true;
@@ -71,9 +73,14 @@ const noAccess=()=>({ok:false,error:'目前無法分享此項目'});
 // Only a real authorized GHOST project or existing order can be shared.
 export function ghostShareSource(s,{projectId,orderId}={}){
  if(!shareDay(s)||!chat(s))return null;
+ if(orderId&&s.ghost?.orders?.[orderId]?.story55Project==='base'){
+  if(deployment(s,'base').active!==orderId||!taiRemoteOrderAllowed(s,s.ghost.orders[orderId]))return null;
+  projectId='base';
+ }
  if(typeof projectId==='string'){
   const p=projectById(s,projectId),r=deployment(s,projectId);
   if(!p||!r.authorized||p.id==='wallet')return null;
+  if(p.id==='base'&&!deploymentReadiness(s,'base').canStart)return null;
   return {type:'ghost-project',projectId:p.id,title:String(p.title||p.id).slice(0,120),
    percent:Math.max(0,Math.min(100,Math.round(deploymentPercent(s,p.id)))),route:'/deployment'};
  }
@@ -101,7 +108,8 @@ function queueNpc(s,p){
   if(message)message.ghostShareScript=p.script;
   p.pendingIds.push(messageId);pause+=WAIT_MS/1000;
  }
- if(p.index>=lines.length)p.phase=p.script==='dailyNo'?'refused':'ready-control';
+ if(lines[p.index]?.[0]==='control')p.phase='ready-control';
+ else if(p.index>=lines.length)p.phase=isTearShare(p)?'complete':p.script==='dailyNo'?'refused':'ready-control';
 }
 
 export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={}){
@@ -112,6 +120,9 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
   Number.isFinite(prior.lastShareAt)&&now-prior.lastShareAt>=0&&now-prior.lastShareAt<2000)
   return {ok:true,duplicate:true,cardId:prior.lastCardId};
  if(active(prior)||prior?.lastShareDay===s.day&&!pendingDelivered(s,prior))return {ok:false,error:'當前對話尚未結束'};
+ if(item.projectId==='base'&&isTearShare(prior)&&prior.lastShareDay===s.day&&prior.remote?.outcome!=='success'){
+  prior.phase='ready-control';prior.remote=null;return {ok:true,cardId:prior.cardId,accepted:true,script:prior.script};
+ }
  const serial=(Number(s.story55.ghostShareSerial)||0)+1;
  s.story55.ghostShareSerial=serial;
  const cardId=`s55-ghost-share-${s.day}-${serial}`;
@@ -137,6 +148,11 @@ export function resolveGhostShare(s,{random=Math.random}={}){
     chat(s)?.messages?.some(m=>m.id===p.cardId&&m.from==='me'&&m.kind==='ghost-project'))
   p.phase='awaiting-online';
  if(!shareDay(s)||p?.phase!=='awaiting-online'||s.story55.activeScene||!chat(s))return null;
+ if(p.source?.projectId==='base'){
+  p.script='tear-'+s.day;p.phase='dialogue';
+  (s.story55.ghostShareScriptsStarted??={})[p.script]=true;
+  queueNpc(s,p);return {accepted:true,script:p.script,online:true};
+ }
  if(!anonymousPresence55(s).online)return null;
  const takeovers=Number(s.story55.ghostShareTakeovers)||0;
  const daily=s.story55.ghostShareDaily;
@@ -146,7 +162,7 @@ export function resolveGhostShare(s,{random=Math.random}={}){
  // The first two takeovers are guaranteed for valid sources; later shares
  // retain the daily decision and use the existing authored refusal text.
  const script=accepted?(takeovers===0?'first':takeovers===1?'second':'dailyYes'):'dailyNo';
- const started=Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)]));
+ const started={...s.story55.ghostShareScriptsStarted,...Object.fromEntries(Object.keys(GHOST_SHARE_DIALOGUES).map(name=>[name,ghostShareScriptStarted(s,name)]))};
  p.script=script;p.phase='dialogue';
  if(takeovers>=2&&eligible)s.story55.ghostShareDaily={day:s.day,accepted,cardId:p.cardId};
  s.story55.ghostShareScriptsStarted=started;
@@ -219,11 +235,15 @@ export function ghostShareReadyForControl(s){
 export function beginGhostShareControl(s){
  if(!ghostShareReadyForControl(s))return false;
  const p=s.story55.ghostShare;p.phase='controlling';
- s.story55.ghostShareTakeovers=(Number(s.story55.ghostShareTakeovers)||0)+1;
+ if(!isTearShare(p))s.story55.ghostShareTakeovers=(Number(s.story55.ghostShareTakeovers)||0)+1;
  return true;
 }
 export function finishGhostShareControl(s,now=Date.now()){
  if(s.story55?.ghostShare?.phase!=='controlling')return false;
  settleTaiRemotePause(s,now);
- s.story55.ghostShare.phase='complete';return true;
+ const p=s.story55.ghostShare;
+ if(isTearShare(p)&&p.remote?.outcome==='success'&&deployment(s,'base').batches.some(b=>b?.testedDay===s.day&&b.steps?.filter(Boolean).length===5)){
+  p.index++;p.phase='dialogue';queueNpc(s,p);
+ }else p.phase='complete';
+ return true;
 }

@@ -5,6 +5,7 @@
 import {dispatchTaiPhoneMcp} from '../../services/ai/phone-mcp/protocol.js';
 import {ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../services/story55/ghost-share.js';
 import {deploymentReadiness,deployment} from '../../services/story55/projects.js';
+import {isTearShare} from '../../story/d14-d24/tear-dialogue.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {date55} from '../../services/story55/state.js';
 import {interruptTaiRemoteSession} from './session.js';
@@ -141,14 +142,15 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
   pointer.style.left=(box.left+box.width/2-frame.left)+'px';
   pointer.style.top=(box.top+box.height/2-frame.top)+'px';
   pointer.classList.add('is-visible');
-  await delay(action==='gh-arcade-tap'?110:220);
+  const tear=isTearShare(store.get().story55?.ghostShare);
+  await delay(tear?85:action==='gh-arcade-tap'?110:220);
   assertRunning();
   pointer.classList.add('is-tapping');
-  await delay(action==='gh-arcade-tap'?60:120);
+  await delay(tear?45:action==='gh-arcade-tap'?60:120);
   assertRunning();
   tool(action==='gh-pipe'?'remote_rotate_pipe':'remote_tap_cipher_tile',{index});
   pointer.classList.remove('is-tapping');
-  await delay(action==='gh-arcade-tap'?110:360);
+  await delay(tear?90:action==='gh-arcade-tap'?110:360);
  }
  async function signalTakeover(){
   const phone=doc.querySelector('#phone');
@@ -685,9 +687,17 @@ export function createTaiRemoteController({store,router,tasks,toast=()=>{},refre
    if(!begun)return;
    await signalTakeover();
    await typeRemote();
-   const id=await openAndStart();
-   const success=await solve(id);
-   if(!success)throw Error('link_not_completed');
+   const tear=isTearShare(store.get().story55.ghostShare);
+   for(let count=0;count<(tear?5:1);count++){
+    const id=await openAndStart();
+    const success=await solve(id);
+    if(!success)throw Error('link_not_completed');
+    if(!tear||!deploymentReadiness(store.get(),'base').canStart)break;
+    // Release only the finished order binding, retaining the authorized
+    // project and the single remote session for the next native LINK run.
+    store.update(next=>{const remote=next.story55.ghostShare.remote;remote.orderId=null;remote.stage='announcing';});
+   }
+   if(tear&&deploymentReadiness(store.get(),'base').canStart)throw Error('framework_tests_incomplete');
    store.update(next=>{const p=next.story55?.ghostShare;if(p?.remote?.token===sessionToken){p.remote.outcome='success';p.remote.errorCode=null;}});
    tool('remote_release');
   }catch(error){

@@ -6,6 +6,7 @@ import {nextDay,afternoonDay,extraDay,dinnerAfter,rewardSets as d07Rewards} from
 import {saveTrackValues,trackSource} from '../../../../story/d14-d24/editor-overrides.js';
 import {D06_DINNER_PLAYER_LINE} from '../../../../services/wishes/index.js';
 import {GHOST_SHARE_DIALOGUES,ghostShareDialogue,ghostShareScriptStarted,TAI_GHOST_THREAD,TAI_REMOTE_TYPED_LINE} from '../../../../services/story55/ghost-share.js';
+import {TEAR_DIALOGUES} from '../../../../story/d14-d24/tear-dialogue.js';
 
 const TIME=/^([01]\d|2[0-3]):[0-5]\d$/;
 const labelDay=day=>'D'+String(day).padStart(2,'0')+' · '+date55(day);
@@ -141,7 +142,13 @@ export function readChatSources(s,day){
 function ghostShareSources(s,day){
  // One source entry per branch, listed at the earliest possible day. Runtime
  // availability is D15–D24, not a new D15 time trigger or duplicated script.
- if(day!==15)return [];
+ const tear='tear-'+day;
+ const daily=TEAR_DIALOGUES[tear]?[{key:'ghost-share:'+tear,type:'ghost-share',day,channel:'mirage',chat:TAI_GHOST_THREAD,
+  title:'Ouroboros’ Tear · 鏈接測試',at:'',timingLabel:'分享當日部署，必定協助完成剩餘測試',
+  deliveryLabel:'接管前後逐句交流；熙蒙親自點擊發送',
+  lines:ghostShareDialogue(s,tear).filter(([who])=>who!=='control').map(([who,text])=>({who,text,kind:'text',clock:'',clockLocked:true})),
+  reason:ghostShareScriptStarted(s,tear)?'本周目此分享腳本已開始，原稿受保護；請在未播放周目編輯。':''}]:[];
+ if(day!==15)return daily;
  const rows=Object.keys(GHOST_SHARE_DIALOGUES).map(script=>({
   key:'ghost-share:'+script,type:'ghost-share',day,channel:'mirage',chat:TAI_GHOST_THREAD,
   title:'GHOST 分享 · '+({first:'首次接管',second:'第二次接管',dailyYes:'日常接受',dailyNo:'日常拒絕'}[script]),
@@ -154,7 +161,7 @@ function ghostShareSources(s,day){
   title:'GHOST 首次接管 · 受控輸入',at:'',timingLabel:'首次合法接管開始後，由既有控制器輸入並提交',
   deliveryLabel:'經原 MIRAGE 表單送出',lines:[{who:'me',text:TAI_REMOTE_TYPED_LINE,kind:'text'}],
   reason:'固定接管動作，只提供原稿閱讀。'});
- return rows;
+ return [...rows,...daily];
 }
 export function daySourceSummary(s,day){
  const rows=readChatSources(s,day);

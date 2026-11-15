@@ -21,7 +21,7 @@ function fixture(){
  const s=activateStory55(initialState());
  s.day=16;s.clock='08:20';s.unlocked=true;s.poweredOff=false;
  s.story55.config={...s.story55.config,nodes:[]};s.story55.activeScene=null;
- s.story55.projects.base={authorized:true,batches:[],active:null};
+ s.story55.projects.identity={authorized:true,batches:[],active:null};
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  if(!chat)s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
  s.nav={current:{appId:'ghost',route:'/run',params:{orderId:'shared'}},stack:[]};
@@ -133,7 +133,7 @@ test('D24 pending dialogue and ready handoff expire at D25 without spending a ta
  for(const ready of [false,true]){
   const {s}=fixture();delete s.story55.ghostShare;s.story55.ghostShareTakeovers=0;
   s.day=24;
-  assert.equal(shareGhostToTai(s,{projectId:'base'},{random:()=>0}).accepted,true);
+  assert.equal(shareGhostToTai(s,{projectId:'identity'},{random:()=>0}).accepted,true);
   if(ready){
    for(let n=0;n<3;n++){
     for(const m of s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages)if(m.schedule)m.delivery={day:24,clock:s.clock};
@@ -193,9 +193,9 @@ test('share dialogue source edits and portable export use the same runtime text 
  applyChatImport(restored,bundle,{mode:'merge'});
  assert.equal(readChatSources(restored,15).find(x=>x.key===key).lines[0].text,text[0]);
  restored.day=16;restored.clock='08:20';restored.story55.activeScene=null;
- restored.story55.projects.base={authorized:true,batches:[]};
+ restored.story55.projects.identity={authorized:true,batches:[]};
  restored.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
- assert.equal(shareGhostToTai(restored,{projectId:'base'},{random:()=>0}).accepted,true);
+ assert.equal(shareGhostToTai(restored,{projectId:'identity'},{random:()=>0}).accepted,true);
  const chat=restored.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  assert.equal(chat.messages.at(-1).text,text[0]);
  chat.messages.at(-1).delivery={day:16,clock:'08:20'};

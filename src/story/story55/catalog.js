@@ -381,7 +381,7 @@ export const STORY55_CONFIG={
     },
     {
       "id": "base",
-      "title": "LOCAL FRAMEWORK",
+      "title": "Ouroboros’ Tear",
       "node": "base",
       "day": 14,
       "batches": 11,

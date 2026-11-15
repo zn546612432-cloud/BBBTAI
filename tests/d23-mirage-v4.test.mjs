@@ -17,6 +17,7 @@ import {
 const contact='s55-ouroboros';
 function fixture(){
  let s=activateStory55(initialState());s.day=23;s.clock='22:30';s.unlocked=true;
+ s.story55.projects.base={authorized:true,batches:Array.from({length:10},(_,i)=>({complete:true,steps:Array(5).fill(true),day:i+14,testedDay:i+14})),active:null};
  for(const n of story55Config(s).nodes)if(n.gateDay&&n.gateDay<23)
   s.story55.completed[n.id]={day:n.day,clock:'20:00',test:true};
  s.story55.completed['d23-chess']={day:23,clock:'22:20'};

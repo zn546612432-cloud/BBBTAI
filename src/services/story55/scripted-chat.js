@@ -5,6 +5,7 @@ import {isStory55,nodeStatus,story55Config,nodeById,overnightSceneNight55} from 
 import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {ghostShareScriptLine,sendGhostShareDraft} from './ghost-share.js';
+import {isTearShare} from '../../story/d14-d24/tear-dialogue.js';
 import {endingReplyDue55} from './finale.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
@@ -18,6 +19,9 @@ export function threadForScene55(id,s){
 }
 export function currentScript55(s,channel,conversationId){
  if(!isStory55(s)||s.story55.ended)return null;
+ if(channel==='mirage'&&conversationId==='s55-ouroboros'&&isTearShare(s.story55.ghostShare)){
+  const tear=ghostShareScriptLine(s);if(tear)return tear;
+ }
  if(channel==='mirage'&&conversationId===FLOW_CONTACT){const flow=flowDraft(s);if(flow)return flow;}
  if(channel==='mirage'&&conversationId==='s55-ouroboros'&&
      nodeStatus(s,'questions').state==='ready'&&
