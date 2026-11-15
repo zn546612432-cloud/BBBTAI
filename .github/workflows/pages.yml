@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -18,9 +19,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -128,11 +126,36 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
-      # Large, versioned phone builds sometimes remain in Pages syncing_files
-      # after the action's default 10-minute timeout. Permit GitHub to finish
-      # synchronizing without rebuilding/removing existing sites or player data.
+  # Pages' artifact metadata endpoint can lag behind the successful upload.
+  # Separate jobs preserve the existing build output and give metadata time to
+  # propagate before deploy-pages looks it up.
+  deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Wait for Pages artifact to become discoverable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 18); do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?name=github-pages" --jq '.artifacts[] | select(.name == "github-pages" and .expired == false) | .id' | head -n1 || true)"
+            if [ -n "$artifact_id" ]; then
+              echo "Pages artifact ready: $artifact_id"
+              # The Pages deployment API has an additional metadata index.
+              sleep 15
+              exit 0
+            fi
+            echo "Waiting for Pages artifact metadata ($attempt/18)"
+            sleep 8
+          done
+          echo "::error::Pages artifact did not appear after upload"
+          exit 1
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          timeout: '1800000'
+          timeout: '600000'
