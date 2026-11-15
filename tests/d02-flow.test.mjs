@@ -7,8 +7,11 @@ import {render as ghostRender,handle as ghostHandle} from '../src/apps/ghost/ind
 import {render as smsRender,handle as smsHandle} from '../src/apps/messages/replica.js';
 import {registry} from '../src/system/registry.js';
 import {render as browserRender,submit as browserSubmit} from '../src/apps/browser/index.js';
-import {render as mirageRender,handle as mirageHandle} from '../src/apps/mirage/index.js';
+import {render as mirageRender,handle as mirageHandle,withMirageSessionDividers} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
+import {sendMessage} from '../src/services/messaging/index.js';
+import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
+import {messageDate,messageClock} from '../src/services/messaging/timestamps.js';
 import {kiraDetail} from '../src/apps/kira/features/detail/index.js';
 import {tools as ghostCatalog} from '../src/apps/ghost/catalog.js';
 import {renderArcade} from '../src/apps/ghost/games/arcade-ui.js';
@@ -100,6 +103,26 @@ test('S bounty requires KIRA key, three existing Ghost minigames, manual Mirage 
  assert.equal(s.bankData.transactions.filter(t=>t.id==='d02-payment-'+D02_S+'-talia').length,1);
  assert.equal(onD02TaliaMessage(s,D02_TALIA,'哦？这份贡献值得再加一笔赏金吗？'),false);
  assert.equal(contact.messages.filter(m=>m.id==='d02-talia-goodbye').length,1);
+});
+test('Talia replies and Xi Meng sends stay in the same chronological session after D02, including old saves',()=>{
+ const s=phone();s.clock='20:00';assert.equal(acceptD02(s,D02_S),true);
+ assert.equal(revealD02Key(s),true);assert.equal(deployD02(s,D02_S,D02_KEYS[D02_S]),true);win(s,D02_S);assert.equal(submitD02(s,D02_S),true);
+ s.day=3;s.clock='08:00';s.unlocked=true;s.nav.current={appId:'mirage',route:'/chat/'+D02_TALIA};
+ const store={get:()=>s,update:fn=>fn(s)},engine=new MessageDelivery(store),contact=s.content.conversations.mirage.find(c=>c.id===D02_TALIA);
+ setMirageAuthenticated(true);
+ try{
+  const send=text=>{sendMessage(store,{channel:'mirage',conversationId:D02_TALIA,text});assert.equal(onD02TaliaMessage(s,D02_TALIA,text),true);};
+  send('东西已经拿到手。');engine.tick(1000);assert.equal(visibleMessages(contact,s).length,2);
+  s.clock='08:01';engine.tick(6000);
+  send('哦？这份贡献值得再加一笔赏金吗？');engine.tick(7000);s.clock='08:02';engine.tick(13000);
+  const ids=()=>withMirageSessionDividers(visibleMessages(contact,s),s).map(m=>m.kind==='divider'?'divider':m.from==='me'?m.text:m.id);
+  const expected=['divider','d02-talia-connected','divider','东西已经拿到手。','d02-talia-received','d02-talia-peace','哦？这份贡献值得再加一笔赏金吗？','d02-talia-worth','d02-talia-goodbye'];
+  assert.deepEqual(ids(),expected);
+  const reply=contact.messages.find(m=>m.id==='d02-talia-worth');assert.equal(messageDate(reply,s),'2025-05-21');assert.equal(messageClock(reply,s),'08:02');
+  // Previously saved replies have a fixed authored date and no delivery date string.
+  for(const m of contact.messages)if(m.delivery)delete m.delivery.sentDate;
+  assert.deepEqual(ids(),expected);assert.equal(messageDate(reply,s),'2025-05-21');
+ }finally{setMirageAuthenticated(false);}
 });
 test('A bounty requires Kira authorization and plays cipher-route-strike once each',()=>{
  const s=phone(),opening=s.bankData.balance;

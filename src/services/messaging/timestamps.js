@@ -1,8 +1,11 @@
 import {dateParts,validDate} from '../calendar.js';
 const DAY=86400000;
 export const shiftDate=(iso,days)=>new Date(new Date(iso+'T00:00:00Z').getTime()+days*DAY).toISOString().slice(0,10);
-export function messageDate(m,s){if(validDate(m.sentDate))return m.sentDate;if(Number.isInteger(m.day))return dateParts({...s,day:m.day}).iso;const ago=String(m.time||'').includes('前天')?2:String(m.time||'').includes('昨天')?1:0;return shiftDate(dateParts(s).iso,-ago);}
-export function messageClock(m,s){const found=String(m.time||'').match(/(?:^|\s)((?:[01]\d|2[0-3]):[0-5]\d)(?:$|\s)/);return found?.[1]||(!m.time?s.clock:'');}
+// Relative chat replies belong to the moment they arrive, not the day the
+// author queued them. Older saves already carry delivery.day/clock.
+const chatDelivery=m=>m.schedule?.mode==='chat-delay'&&m.delivery?m.delivery:null;
+export function messageDate(m,s){const delivered=chatDelivery(m);if(validDate(delivered?.sentDate))return delivered.sentDate;if(Number.isInteger(delivered?.day))return dateParts({...s,day:delivered.day}).iso;if(validDate(m.sentDate))return m.sentDate;if(Number.isInteger(m.day))return dateParts({...s,day:m.day}).iso;const ago=String(m.time||'').includes('前天')?2:String(m.time||'').includes('昨天')?1:0;return shiftDate(dateParts(s).iso,-ago);}
+export function messageClock(m,s){const time=chatDelivery(m)?.clock||m.time;const found=String(time||'').match(/(?:^|\s)((?:[01]\d|2[0-3]):[0-5]\d)(?:$|\s)/);return found?.[1]||(!time?s.clock:'');}
 export function timestampLabel(m,s){const iso=messageDate(m,s),today=dateParts(s).iso,ago=Math.round((Date.parse(today)-Date.parse(iso))/DAY),clock=messageClock(m,s);let prefix=ago===0?'':ago===1?'昨天':ago===2?'前天':iso.slice(0,4)===today.slice(0,4)?`${Number(iso.slice(5,7))}月${Number(iso.slice(8))}日`:`${iso.slice(0,4)}年${Number(iso.slice(5,7))}月${Number(iso.slice(8))}日`;return [prefix,clock].filter(Boolean).join(' ')||'今天';}
 // Both the inbox and conversation screen use this same chronological ordering.
 // Never mutate persisted authored message arrays: imported history and current
@@ -29,4 +32,6 @@ export function setMessageDate(m,s,{preset,date,time}){
  if(preset){if(!['today','yesterday','before-yesterday','custom'].includes(preset))throw Error('发送日期无效');m.sentDateMode=preset;m.sentDate=preset==='custom'?messageDate(m,s):shiftDate(dateParts(s).iso,preset==='yesterday'?-1:preset==='before-yesterday'?-2:0);}
  if(date!==undefined){if(!validDate(date))throw Error('请输入有效的发送日期');m.sentDate=date;m.sentDateMode='custom';}
  if(time!==undefined){if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))throw Error('请输入有效的发送时间');m.time=time;}
+ // The editor may intentionally revise a delivered message's displayed date.
+ const delivered=chatDelivery(m);if(delivered){if(preset||date!==undefined)delivered.sentDate=m.sentDate;if(time!==undefined)delivered.clock=m.time;}
 }
