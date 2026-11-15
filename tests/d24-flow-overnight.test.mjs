@@ -6,6 +6,7 @@ import {story55Config,nodeStatus,completed} from '../src/services/story55/state.
 import {scriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {canCharge,plugIn} from '../src/system/power/battery.js';
+import {dateParts} from '../src/services/calendar.js';
 
 test('D24 Flow keeps its mandatory overnight scene open until the final bubble',()=>{
  const s=initialState();activateStory55(s);
@@ -24,6 +25,7 @@ test('D24 Flow keeps its mandatory overnight scene open until the final bubble',
  advanceGameMinutes(s,200);
  assert.equal(s.day,24);assert.equal(s.clock,'03:00');
  assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,false);
+ assert.equal(dateParts(s).iso,'2025-06-12');
  assert.equal(scriptedDraft55(s,'mirage',flow)?.text,lines[0][1]);
  assert.equal(canCharge(s),false);
  for(let i=0;i<lines.length;i++)advanceScene55(s,'lead',{now:1000+i*2000});
