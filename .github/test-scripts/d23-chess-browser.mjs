@@ -154,7 +154,7 @@ try{
  assert.ok(avatarGeometry.length>0,'first messages have actual avatars');
  assert.ok(avatarGeometry.every(x=>x.delta<8),'avatars align to the first text line rather than the bottom');
  await capture(story.page,'mobile-mirage-first-line-avatar.png');
- const card=story.page.locator('[data-action="mc-chess-invite"]');
+ const card=story.page.locator('.mc-clear-messages [data-action="mc-chess-invite"]');
  assert.match(await card.innerText(),/接受邀請/,'the invitation should be unaccepted until tapped');
  const preAccept=await story.page.evaluate(k=>{
   const s=JSON.parse(localStorage.getItem(k));

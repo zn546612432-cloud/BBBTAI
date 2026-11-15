@@ -49,7 +49,7 @@ async function open(state,{width,height}){
  await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
  await page.waitForTimeout(1200);
  const banner=page.locator('#toast.visible');
- if(await banner.count())await banner.waitFor({state:'hidden',timeout:8000});
+ if(await banner.count())await banner.waitFor({state:'hidden',timeout:30000});
  return {page,context};
 }
 try{
