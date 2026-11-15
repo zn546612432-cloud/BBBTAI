@@ -79,6 +79,7 @@ export function handle(action,target,ctx){
   if(handleMoment(action,target,ctx))return;
   if(action==='wx-file-preview'){
     const {id,message}=currentMessage(ctx,target.dataset.id);
+    if(message?.kind==='file'&&message.attachment?.localFileId){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(message.attachment.localFileId)});return;}
     if(message.kind!=='file'||!(/\.zip$/i).test(String(message.fileName||message.text||'')))return;
     ctx.router.open({appId:'files',route:'/incoming/wechat/'+encodeURIComponent(id)+'/'+encodeURIComponent(message.id)});
     return;

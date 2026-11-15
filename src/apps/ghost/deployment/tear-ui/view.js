@@ -1,4 +1,5 @@
 import {esc} from '../../../../system/ui.js';
+import {renderAgentContent} from '../tear-agent/view.js';
 let loading;
 function ensureTearOrbit(){
  if(typeof window==='undefined'||typeof customElements==='undefined'||customElements.get('xm-tear-orbit'))return;
@@ -19,4 +20,8 @@ export function renderTearOrbit({id,title,status,index,count}){
  ${done||failed?`<section class="gh-tear-result" aria-label="執行結果"><span class="gh-tear-result-mark" aria-hidden="true">${done?'✓':'×'}</span><p>${esc(title)}</p><small>${esc(label)}</small></section>`:''}
  <footer class="gh-tear-dock"><div class="gh-tear-package">${fileIcon}<span title="${esc(title)}">${esc(title)}</span>${done||failed?`<button type="button" class="gh-tear-return" data-action="gh-tear-return" data-id="${esc(id)}" aria-label="返回 MIRAGE">${arrowIcon}</button>`:'<i class="gh-tear-pulse" aria-hidden="true"></i>'}</div></footer>
  </section>`;
+}
+export function renderTearAgent(s){
+ ensureTearOrbit();const {working,content}=renderAgentContent(s);
+ return `<section class="gh-tear-screen gh-agent-screen" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear"><header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><button type="button" class="gh-tear-icon" data-action="gh-tear-history" aria-label="歷史紀錄">◷</button></header><div class="gh-agent-orbit"><xm-tear-orbit data-key="agent-orbit" status="${working?'running':'idle'}" progress="0" aria-hidden="true"></xm-tear-orbit></div>${content}</section>`;
 }

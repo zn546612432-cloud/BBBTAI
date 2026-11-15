@@ -25,21 +25,21 @@ test('D25 group delivers a native ZIP, waits for every real Send, then opens the
  assert.equal(nodeStatus(s,mirage).state,'locked');
  assert.equal(story55ChargeGate(s),'plot');
  s.clock='10:26';let now=Date.now()+10000;
- tickQueuedStoryScenes55(s,now);tickQueuedStoryScenes55(s,now+=2000);tickQueuedStoryScenes55(s,now+=2000);
- assert.equal(groupMessages().length,2);
- const zip=groupMessages()[1];assert.equal(zip.kind,'file');assert.equal(zip.text,'security_survey_0612.zip');
+ tickQueuedStoryScenes55(s,now);tickQueuedStoryScenes55(s,now+=3000);tickQueuedStoryScenes55(s,now+=3000);tickQueuedStoryScenes55(s,now+=3000);
+ assert.equal(groupMessages().length,3);
+ const zip=groupMessages()[2];assert.equal(zip.kind,'file');assert.equal(zip.text,'security_survey_0612.zip');
  assert.match(renderWeChatChat(s,'group'),/data-action="wx-file-preview"/);
  const {file}=saveIncomingZip(s,'group',zip.id);assert.equal(file.folder,'downloads');
  saveIncomingZip(s,'group',zip.id);assert.equal(localFileList(s).filter(f=>f.id===file.id).length,1);
- assert.equal(nativeWeChatComposer(s,'group').text,'收到');
- tickQueuedStoryScenes55(s,now+=2000);assert.equal(groupMessages().length,2);
+ assert.equal(nativeWeChatComposer(s,'group').text,'收到。');
+ tickQueuedStoryScenes55(s,now+=2000);assert.equal(groupMessages().length,3);
  const store={get:()=>s,update:fn=>fn(s)};
- for(let i=2;i<cfg.scenes[group].length;i++){
+ for(let i=3;i<cfg.scenes[group].length;i++){
   const [who,text]=cfg.scenes[group][i];
   if(who==='me')assert.equal(sendNativeWeChatPreset(store,'group',text).handled,true);
   else tickQueuedStoryScenes55(s,now+=3000);
  }
- assert.equal(completed(s,group),true);assert.equal(groupMessages().length,17);
+ assert.equal(completed(s,group),true);assert.equal(groupMessages().length,30);
  const messages=()=>s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.id.startsWith('s55-d25-ouroboros-'));
  for(const [who,text] of cfg.scenes[mirage]){
   if(who==='me'){

@@ -3,6 +3,7 @@
 import {esc} from '../../../../system/ui.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
 import {completed,projectById} from '../../../../services/story55/state.js';
+import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 
 const FOLDERS=Object.freeze([
  {id:'downloads',name:'已下載'},
@@ -28,6 +29,13 @@ const chatFile=(s,chatId,messageId)=>{
 };
 export const isLibraryRoute=route=>route==='/'||/^\/(iphone|folder|recent|trash|item|rename|move|search|incoming|work-key)\b/.test(route);
 export const localFileList=s=>library(s).filter(f=>!f.deleted);
+// Generated story documents are inert records, stored in the same phone library.
+export function saveGeneratedLocalFile(s,{id,name,description}){
+ const files=s.content.localFiles??=[];
+ if(files.some(f=>f.id===id))return files.find(f=>f.id===id);
+ const f={id,name:safeName(name),kind:'tear-artifact',description:String(description||''),folder:'documents',createdDay:s.day,createdTime:s.clock,origin:{app:'ghost'},deleted:false,createdAt:Date.now()};
+ files.push(f);return f;
+}
 export function saveIncomingZip(s,chatId,messageId){
  const pair=chatFile(s,chatId,messageId);
  if(!pair)throw Error('附件不存在或不是 ZIP');
@@ -63,7 +71,7 @@ export function copyLocalFile(s,id){
 }
 const nav=(label,back='')=>'<header class="fl-nav"><button type="button" data-action="files-local-nav" data-route="'+esc(back)+'" aria-label="返回">‹</button><strong>'+esc(label)+'</strong><span></span></header>';
 const row=f=>'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+icon()+
- '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
+ '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(f.kind==='tear-artifact'?'Ouroboros’ Tear':sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
 const empty='<p class="fl-empty">尚無檔案</p>';
 const path=(route,prefix)=>decode(route.slice(prefix.length));
 const heading=(title)=>'<h1 class="fl-title">'+esc(title)+'</h1>';
@@ -110,6 +118,7 @@ const archive=(s,route)=>{
 };
 const itemView=(s,id)=>{
  const f=fileById(s,id);if(!f)return '<div class="fl-library">'+nav('檔案')+empty+'</div>';
+ if(f.kind==='tear-artifact')return '<div class="fl-library">'+nav('檔案','/folder/documents')+'<section class="fl-preview-main"><span class="fl-archive-icon">LOG</span>'+heading(f.name)+'<p>Ouroboros’ Tear</p><p>'+esc(f.description)+'</p>'+(f.id==='tear-artifact-program'?'<button type="button" class="button-quiet wide" data-action="files-local-share-program" data-id="'+esc(f.id)+'" '+(s.story55?.tearAgent?.programShared?'disabled':'')+'>'+(s.story55?.tearAgent?.programShared?'已分享給胡楓':'分享給胡楓')+'</button>':'')+'</section></div>';
  return '<div class="fl-library">'+nav('檔案','/folder/'+f.folder)+
  '<section class="fl-preview-main">'+icon()+heading(f.name)+'<p>'+esc(sizeFor(f.size))+'</p>'+
  '<p>ZIP 壓縮檔</p></section>'+
@@ -159,6 +168,12 @@ export function handleLibraryAction(a,t,c){
  else if(a==='files-local-save'){
   let result;c.store.update(s=>result=saveIncomingZip(s,t.dataset.chat,t.dataset.message));
   c.toast?.(result.created?'已儲存到已下載':'檔案已儲存');
+ }else if(a==='files-local-share-program'){
+  let sent=false;c.store.update(s=>{const f=fileById(s,id),agent=s.story55?.tearAgent;if(f?.id!=='tear-artifact-program'||f.deleted||!agent?.jobs?.program?.done||agent.programShared)return;
+   const message=appendAuthoredPhoneMessage(s,{conversationId:'hufeng',messageId:'s55-d28-bc-01',from:'me',text:f.name,kind:'file',attachment:{localFileId:f.id}});
+   if(!message)return;agent.programShared=true;sent=true;
+   appendAuthoredPhoneMessage(s,{conversationId:'hufeng',messageId:'s55-d28-bc-ack',from:'胡枫',text:'收到，謝謝蒙哥。',schedule:{mode:'chat-delay',seconds:2}});
+  });if(sent)c.router.open({appId:'wechat',route:'/chat/hufeng'});
  }else if(a==='files-local-open-key'){
   const f=workFiles(c.store.get()).find(f=>f.id===id);
   if(f)c.router.open({appId:f.appId||'files',route:f.route,params:{...(f.project?{project:f.project}:{}),fromFiles:true}});

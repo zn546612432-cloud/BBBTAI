@@ -6,6 +6,7 @@ import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP} from '../../story/d29/definition.js';
+import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
 import {syncBaseFrameworkRevision,syncBaseLinkPipeRevision,deployment} from './projects.js';
@@ -84,7 +85,18 @@ export function scene55ReplyDelay(s,id,index,{initial=false}={}){
  return initial?CHAT_LIFECYCLE_POLICY.initialDelayMs:CHAT_LIFECYCLE_POLICY.pauseMs;
 }
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
-export function sceneLines(s,id){return story55Config(s).scenes[id]||[];}
+export function sceneLines(s,id){
+ const lines=story55Config(s).scenes[id]||[],a=s.story55?.tearAgent;
+ // Optional research must never make the main story claim an unsent file was delivered.
+ const substitutions={
+  'd26-procurement':!a?.jobs?.survey?.done?{'TAI 跑了一晚上，發現好幾個設備型號對不上。':'採購清單有幾個設備型號對不上。'}:{},
+  'd27-uniform':!a?.jobs?.survey?{'最好明天能拿到樣品，TAI 已經跑了兩天了。':'最好明天能拿到樣品，我等著做測試。','還沒找到漏洞？':'還要多久？','找到了一些有意思的東西，但還不能確定。':'現在還不能確定。'}:{},
+  'd27-samples':!a?.jobs?.staff?.done?{'對了，你和阿威的資料都處理好了。':'對了，你和阿威的資料我還在整理。','這麼快？':'還要幫忙嗎？','我什麼都沒幹。':'暫時不用。','？':'哦。','TAI 做的。':'我再核對一下。','牛逼。':'好。'}:{},
+  'd28-meeting':!a?.jobs?.validation?.done?{'漏洞找到了。':'還在驗證。','單看監控畫面沒問題，但其他數據對不上。':'我懷疑單靠監控畫面還不夠。'}:{},
+  'd29-meeting':!a?.programShared?{'我的程序已經拿到了。':'我的程序別忘了啊。'}:{},
+ }[id];
+ return substitutions?lines.map(([from,body])=>[from,substitutions[body]??body]):lines;
+}
 export function finishScene55(s,id){
  const n=nodeById(s,id),r=scene55(s,id);
  if(!n||n.kind!=='scene'||r.index<sceneLines(s,id).length)throw Error('请先完成本场对话');
@@ -308,6 +320,7 @@ export function tickStory55(s){
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
  syncTearReminders(s);
+ tickTearAgent(s);
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);
