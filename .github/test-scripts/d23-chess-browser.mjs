@@ -85,6 +85,17 @@ async function capture(page,name){
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
  await page.screenshot({path:out+'/'+name,fullPage:true});
 }
+async function sendFarewell(page){
+ await page.waitForFunction(k=>{
+  const s=JSON.parse(localStorage.getItem(k));
+  return s.story55.scenes['d23-chess-finish']?.index===2;
+ },key,{timeout:15000});
+ assert.equal(await page.evaluate(k=>!!JSON.parse(localStorage.getItem(k)).story55.completed['d23-chess-finish'],key),false,'NPC goodbye cannot send the player preset');
+ const input=page.locator('[data-form="mc-send"] input[name="text"]');
+ await input.fill('去吧。');
+ assert.equal(await input.isEnabled(),true,'closing phase releases the native story composer');
+ await page.locator('[data-form="mc-send"] button[type="submit"]').click();
+}
 try{
  const storyState=seed({empty:true});
  // D23 is reached after the D06 wallet introduction. Restoring that real
@@ -132,6 +143,13 @@ try{
    throw error;
   }
  }
+ const avatarGeometry=await story.page.locator('.mc-clear-row').evaluateAll(rows=>rows.filter(row=>row.querySelector('.mc-avatar')&&row.querySelector('.mc-clear-text')).map(row=>{
+  const portrait=row.querySelector('.mc-avatar').getBoundingClientRect(),text=row.querySelector('.mc-clear-text').getBoundingClientRect();
+  return {delta:Math.abs(portrait.top-text.top),height:text.height};
+ }));
+ assert.ok(avatarGeometry.some(x=>x.height>60),'opening includes a real multiline reply');
+ assert.ok(avatarGeometry.every(x=>x.delta<8),'avatars align to the first text line rather than the bottom');
+ await capture(story.page,'mobile-mirage-first-line-avatar.png');
  const card=story.page.locator('[data-action="mc-chess-invite"]');
  assert.match(await card.innerText(),/接受邀請/,'the invitation should be unaccepted until tapped');
  const preAccept=await story.page.evaluate(k=>{
@@ -206,11 +224,11 @@ try{
   return {finished:m.status==='finished',queued:m.lesson.outbox.length,postgame:m.lesson.postgame};
  },key);
  assert.equal(immediately.finished,true);
- assert.equal(immediately.queued,3,'original resignation preset must remain on chess board');
+ assert.equal(immediately.queued,2,'approved resignation replies remain on chess board');
  assert.equal(immediately.postgame,undefined,'AI cannot start inside chess');
  await mobile.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai');
-  return m.lesson.outbox.length===0&&m.chat.some(x=>/下課|下次/.test(x.text));
+  return m.lesson.outbox.length===0&&m.chat.some(x=>/好吧，放你走/.test(x.text));
  },key,{timeout:18000});
  assert.match(await mobile.page.locator('.match-card .match-status').last().innerText(),/已認輸/);
  await capture(mobile.page,'mobile-tai-resignation.png');
@@ -256,18 +274,19 @@ try{
    completed:s.story55.completed['d23-chess-finish'],messages:messages.filter(m=>/s55-d23-chess-finish/.test(m.id)).map(m=>({id:m.id,text:m.text}))};
  },key);
  console.log('D23_FAREWELL_DIAGNOSTICS',JSON.stringify(afterD23Farewell));
+ await sendFarewell(mobile.page);
  await mobile.page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k)),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
-  return !!s.story55.completed['d23-chess-finish']&&chat.messages.filter(m=>/^s55-d23-chess-finish-/.test(m.id)).length===2;
+  return !!s.story55.completed['d23-chess-finish']&&chat.messages.filter(m=>/^s55-d23-chess-finish-/.test(m.id)).length===3;
  },key,{timeout:15000});
  const farewell=await mobile.page.locator('.mc-clear-messages').innerText();
- assert.match(farewell,/我還有點事，得下線了/);assert.match(farewell,/下次有機會再切磋/);
+ assert.match(farewell,/我得走了，還有點事/);assert.match(farewell,/下次有空再下/);assert.match(farewell,/去吧/);
  await capture(mobile.page,'mobile-d23-mirage-farewell.png');
  await mobile.context.close();
 
  // Valid opening position; the winning move is clicked in the actual board.
  // Stockfish may never move for White, and the terminal capture must produce
- // both the piece reaction and a caption-free finish effect.
+ // both the piece reaction and the result overlay, without operation hints.
  const mateState=seed(),mateMatch=mateState.matches[0];
  mateMatch.pgn='1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6';
  mateMatch.history=[['e2','e4','e4'],['e7','e5','e5'],['d1','h5','Qh5'],['b8','c6','Nc6'],['f1','c4','Bc4'],['g8','f6','Nf6']].map(([from,to,san],i)=>({from,to,san,by:i%2?'stockfish':'player'}));
@@ -287,7 +306,8 @@ try{
  const feedback=await mate.page.evaluate(()=>window.chessFeedbackQA);
  assert.ok(feedback.effects.some(x=>x.kind.includes('capture')));
  assert.ok(feedback.effects.some(x=>x.kind.includes('win')));
- assert.ok(feedback.effects.every(x=>x.text===''),'effects have no text');
+ assert.ok(feedback.effects.filter(x=>x.kind.includes('capture')).every(x=>x.text===''),'capture effects have no hint text');
+ assert.ok(feedback.effects.some(x=>x.kind.includes('win')&&/白方勝/.test(x.text)),'terminal overlay shows the real result');
  assert.ok(feedback.haptics>=2);assert.ok(feedback.tones>=2,'short sounds use an unlocked audio context');
  await mate.page.waitForFunction(k=>{
   const m=JSON.parse(localStorage.getItem(k)).matches[0];
@@ -305,6 +325,7 @@ try{
  const phase=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).story55.d23Postgame,key);
  assert.equal(phase.rounds,0);assert.equal(phase.closed,false);
  await mate.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await sendFarewell(mate.page);
  await mate.page.waitForFunction(k=>!!JSON.parse(localStorage.getItem(k)).story55.completed['d23-chess-finish'],key,{timeout:15000});
  await mate.context.close();
 
