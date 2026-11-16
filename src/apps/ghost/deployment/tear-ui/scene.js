@@ -3,7 +3,7 @@ import {makeScene,buildLoop,alongLoop,bodyProfile} from './anatomy.js';
 export function createTearScene(canvas,{reduced=false}={}){
  const ctx=canvas.getContext('2d');if(!ctx)return {resize(){},update(){},start(){},stop(){}};
  const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),lerp=(a,b,n)=>a+(b-a)*n;
- let W=1,H=1,DPR=1,scene,loop,appleDots=[],last=0,lastDraw=0,raf=0,active=false;
+ let W=1,H=1,DPR=1,scene,loop,appleDots=[],last=0,lastDraw=0,raf=0,active=false,layout='';
  const mouse={x:0,y:0,tx:0,ty:0};
  const state={mode:'IDLE',speed:.0055,targetSpeed:.0055,t:0,pulsePos:-1,pulseActive:false,jawOpen:0,targetJawOpen:0,appleGlow:.35,targetAppleGlow:.35,progress:0,targetProgress:0};
  const bone=[232,230,225],gold=[222,185,111],mixBone=(p,a=1)=>`rgba(${bone.map((v,i)=>Math.round(lerp(v,gold[i],p))).join(',')},${a})`;
@@ -21,14 +21,13 @@ function buildHalftoneApple(){
  }ctx.restore();
 }
 function drawBackgroundGrid(){
- const cx=scene.cx+mouse.x*4,cy=scene.cy+mouse.y*4,r=Math.min(W,H)*.34;
+ const cx=scene.cx,cy=scene.cy,r=Math.min(W,H)*(layout==='agent'?.44:.34);
  ctx.save();ctx.strokeStyle='#ffffff0b';ctx.lineWidth=.65;
  drawPath(c=>{c.moveTo(cx,86);c.lineTo(cx,H-112);c.moveTo(20,cy);c.lineTo(W-20,cy)},null,'#ffffff09',.65);
- drawPath(c=>c.arc(cx,cy,r*.68,0,TAU),null,'#ffffff0c',.7);
- ctx.setLineDash([2,7]);drawPath(c=>c.arc(cx,cy,r*1.15,state.t*.2,state.t*.2+TAU),null,'#ffffff0c',.7);ctx.setLineDash([]);
+ drawPath(c=>c.arc(cx,cy,r,0,TAU),null,'#ffffff19',.7);
+ ctx.setLineDash([1,8]);drawPath(c=>c.arc(cx,cy,r*.96,state.t*.2,state.t*.2+TAU),null,'#ffffff0c',.7);ctx.setLineDash([]);
  drawPath(c=>c.arc(cx,cy,r*.92,-Math.PI*.85,-Math.PI*.15),null,'#d9202760',.8);
- const a=-Math.PI*.5+Math.sin(state.t*.8)*.65;
- drawPath(c=>c.arc(cx+Math.cos(a)*r*.92,cy+Math.sin(a)*r*.92,2.3,0,TAU),'#d92027');ctx.restore();
+ ctx.restore();
 }
 function drawHalftoneApple(t){
  const cx=scene.cx+mouse.x*5,cy=scene.cy+mouse.y*5,pulse=reduced?1:1+Math.sin(t*2.4)*.025;
@@ -69,6 +68,7 @@ function drawOuroborosSpine(){
  const cx=scene.cx+mouse.x*scene.parallax,cy=scene.cy+mouse.y*scene.parallax;
  const segments=Math.round(clamp(loop.total/11,55,105)),span=.84;
  ctx.save();ctx.translate(cx,cy);
+ if(layout==='agent'&&!reduced){const breath=1+Math.sin(performance.now()/1400)*.018;ctx.scale(breath,breath);}
  ctx.beginPath();for(let i=0;i<=segments;i++){const p=alongLoop(loop,state.t/TAU-i/segments*span);if(!i)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}
  ctx.strokeStyle=state.mode==='THINKING'?'#d9202726':'#e8e6e10b';ctx.lineWidth=7*scene.scale;ctx.lineCap='round';ctx.stroke();
  for(let i=segments;i>=0;i--){
@@ -76,19 +76,20 @@ function drawOuroborosSpine(){
  const d=Math.abs(u-state.pulsePos),pulse=state.pulseActive?Math.max(0,1-d/.12):0;
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(scene.scale,scene.scale);
  if(i===0){drawSkull(pulse);ctx.restore();continue;}
+ const goldness=layout==='agent'?clamp((state.progress-u*.55)/.45):state.progress;
  const r=(2+15.5*profile),alpha=(.9-u*.46)*(1-u*.28);
- const color=pulse>.15?`rgba(217,32,39,${Math.min(1,alpha+pulse*.45)})`:mixBone(state.progress,alpha);
+ const color=pulse>.15?`rgba(217,32,39,${Math.min(1,alpha+pulse*.45)})`:mixBone(goldness,alpha);
  ctx.lineCap='round';ctx.lineJoin='round';
  // Paired ribs grow from a narrow neck into a full thorax, then taper to a tail.
  for(const side of [-1,1]){
   drawPath(c=>{c.moveTo(.4,side*.8);c.bezierCurveTo(-r*.1,side*r*.42,-r*.28,side*r*.8,-r*.66,side*r);c.quadraticCurveTo(-r*.84,side*r*1.04,-r*.94,side*r*.88)},null,color,1+pulse*.55);
-  if(profile>.27)drawPath(c=>{c.moveTo(-r*.16,side*r*.31);c.quadraticCurveTo(-r*.31,side*r*.7,-r*.69,side*r*.9)},null,mixBone(state.progress,alpha*.24),.45);
+  if(profile>.27)drawPath(c=>{c.moveTo(-r*.16,side*r*.31);c.quadraticCurveTo(-r*.31,side*r*.7,-r*.69,side*r*.9)},null,mixBone(goldness,alpha*.24),.45);
  }
  // Saddle-shaped centrum, transverse wings and a dorsal neural spine.
  const b=Math.max(.35,2.5*profile);
- drawPath(c=>{c.moveTo(-b,0);c.lineTo(-b*.5,-b*.8);c.quadraticCurveTo(.7,-b*1.28,b*.9,-b*.62);c.lineTo(b,0);c.lineTo(b*.9,b*.62);c.quadraticCurveTo(.7,b*1.28,-b*.5,b*.8);c.closePath()},mixBone(state.progress,alpha*.38),color,.65);
+ drawPath(c=>{c.moveTo(-b,0);c.lineTo(-b*.5,-b*.8);c.quadraticCurveTo(.7,-b*1.28,b*.9,-b*.62);c.lineTo(b,0);c.lineTo(b*.9,b*.62);c.quadraticCurveTo(.7,b*1.28,-b*.5,b*.8);c.closePath()},mixBone(goldness,alpha*.38),color,.65);
  drawPath(c=>{c.moveTo(-b*.2,0);c.lineTo(-b*1.15,0);c.moveTo(.2,-b*.5);c.lineTo(.2,-b*1.3)},null,color,.55);
- if(u>.91)drawPath(c=>{c.moveTo(-3,0);c.lineTo(3,0)},null,mixBone(state.progress,alpha*.5),.5);
+ if(u>.91)drawPath(c=>{c.moveTo(-3,0);c.lineTo(3,0)},null,mixBone(goldness,alpha*.5),.5);
  ctx.restore();
  }
  ctx.restore();
@@ -98,12 +99,13 @@ function drawOuroborosSpine(){
   if(width<1||height<1)return;
   W=width;H=height;DPR=Math.min(globalThis.devicePixelRatio||1,2);
   canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);
-  scene=makeScene(W,H);loop=buildLoop(scene);buildHalftoneApple();
+  scene=layout==='agent'?{w:W,h:H,cx:W/2,cy:H/2,scale:Math.min(W,H)/360,sx:W*.3,sy:H*.43,parallax:2}:makeScene(W,H);loop=buildLoop(scene);buildHalftoneApple();
  }
- function update({status='running',progress=0}={}){
+ function update({status='running',progress=0,layout:nextLayout=''}={}){
+  if(layout!==nextLayout){layout=nextLayout;resize(W,H);}
   const wasRunning=state.mode==='THINKING',running=status==='running';
   state.mode=running?'THINKING':status==='complete'?'COMPLETE':'IDLE';
-  state.targetSpeed=running?.026:.0055;state.targetJawOpen=running?.15:0;
+  state.targetSpeed=layout==='agent'?(running?.014:.0035):(running?.026:.0055);state.targetJawOpen=running?.15:0;
   state.targetAppleGlow=running?.95:status==='failed'?.6:.35;
   state.targetProgress=status==='complete'?1:clamp(Number(progress)||0,0,1);
   state.pulseActive=running;if(running&&!wasRunning)state.pulsePos=0;

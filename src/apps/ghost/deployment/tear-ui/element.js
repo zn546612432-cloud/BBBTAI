@@ -3,7 +3,7 @@ import {createTearScene} from './scene.js';
 // shell exception, additional business timer or duplicated executor state.
 if(typeof customElements!=='undefined'&&!customElements.get('xm-tear-orbit')){
  class TearOrbit extends HTMLElement{
-  static observedAttributes=['status','progress'];
+  static observedAttributes=['status','progress','layout'];
   constructor(){
    super();const root=this.attachShadow({mode:'open'});
    root.innerHTML='<style>:host{display:block;position:absolute;inset:0;pointer-events:none;background:#060608}canvas{display:block;width:100%;height:100%}</style><canvas aria-hidden="true"></canvas>';
@@ -16,7 +16,7 @@ if(typeof customElements!=='undefined'&&!customElements.get('xm-tear-orbit')){
   }
   attributeChangedCallback(){this.scene?.update(this.model());}
   disconnectedCallback(){this.observer?.disconnect();this.scene.stop();}
-  model(){return {status:this.getAttribute('status')||'running',progress:Number(this.getAttribute('progress'))||0};}
+  model(){return {status:this.getAttribute('status')||'running',progress:Number(this.getAttribute('progress'))||0,layout:this.getAttribute('layout')};}
  }
  customElements.define('xm-tear-orbit',TearOrbit);
 }

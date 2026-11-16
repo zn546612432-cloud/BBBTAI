@@ -12,18 +12,18 @@ import {commissionAttachment,commissionPreviewAvailable} from '../../../../servi
 const now=s=>absoluteMinute(s)+(overnightSceneNight55(s)?1440:0);
 export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
 export const ensureAgent=s=>{
- const a=s.story55.tearAgent??={messages:[{id:'welcome',role:'assistant',text:TEAR_GREETING}],jobs:{},selected:null,displayRevision:3};
+ const a=s.story55.tearAgent??={messages:[{id:'welcome',role:'assistant',text:TEAR_GREETING}],jobs:{},selected:null,displayRevision:4};
  a.messages??=[{id:'welcome',role:'assistant',text:TEAR_GREETING}];
  a.jobs??={};
  // Existing saves used to expose a transcript and its history toggle. Reset only
  // that presentation data once; research jobs, artifacts, and project flags survive.
- if(a.displayRevision!==3){
+ if(a.displayRevision!==4){
   a.messages=[{id:'welcome',role:'assistant',text:TEAR_GREETING,day:s.day,clock:s.clock}];
   a.history=false;
   a.selectedTask=null;
   a.visualTaskIds=[];a.visualTaskBaseline={};a.visualProgress=0;
   delete a.thinking;delete a.thinkingAt;
-  a.displayRevision=3;
+  a.displayRevision=4;
  }
  return a;
 };
@@ -39,7 +39,8 @@ export function presetReply(text){
  return '';
 }
 export function addMessage(s,role,text,extra={}){
- const a=ensureAgent(s);const m={id:'tear-'+a.messages.length,role,text,day:s.day,clock:s.clock,...extra};a.messages.push(m);return m;
+ const a=ensureAgent(s);a.messageSequence=(a.messageSequence||0)+1;
+ const m={id:`tear-${a.chatSession||0}-${a.messageSequence}`,role,text,day:s.day,clock:s.clock,visibleAt:Date.now(),ephemeral:!extra.job&&!extra.artifact&&!extra.file&&!extra.identity,...extra};a.messages.push(m);return m;
 }
 const fileStoryId={survey:'s55-d25-survey-',maintenance:'s55-d26-records-',staff:'s55-d27-staff-'};
 export function storyFileStage(file){return Object.entries(fileStoryId).find(([,prefix])=>file?.origin?.app==='wechat'&&file.origin.messageId?.startsWith(prefix))?.[0]||'';}
@@ -50,25 +51,21 @@ const clamp01=n=>Math.max(0,Math.min(1,Number(n)||0));
 export function tearTaskInfo(s,id){
  const a=agent(s),job=a.jobs?.[id],definition=TEAR_STAGES[id];
  if(!job||!definition)return null;
- const current=now(s),elapsed=Math.max(0,current-Number(job.start||current));
+ const current=now(s),elapsed=Math.max(0,current-Number(job.start??current));
  let progress,running,elapsedMinutes=elapsed;
  if(id==='survey'){
   const validation=a.jobs.validation;
-  const setupProgress=elapsed<=definition.duration
-   ?Math.min(.9,elapsed/definition.duration*.9)
-   :.9+.09*clamp01((elapsed-definition.duration)/240);
-  // The existing survey keeps running after setup; D28 validation is the final
-  // checkpoint that brings this long-running research from at most 99% to 100%.
+  // Setup and final validation are the existing research checkpoints. Once
+  // setup has finished, fuzzing has no measured denominator: hold at that
+  // checkpoint until the existing validation job reports further progress.
+  const setupProgress=.9*clamp01(elapsed/definition.duration);
   if(validation){
    const validationElapsed=Math.max(0,current-validation.start);
    const validationProgress=validation.done?1:clamp01(validationElapsed/TEAR_STAGES.validation.duration);
    progress=Math.max(setupProgress,.9+.1*validationProgress);
    running=!validation.done;
-   if(!running)elapsedMinutes=Math.max(0,Math.min(elapsed,validation.start+TEAR_STAGES.validation.duration-job.start));
-  }else{
-   progress=setupProgress;
-   running=true;
-  }
+   if(!running)elapsedMinutes=Math.max(0,validation.start+TEAR_STAGES.validation.duration-job.start);
+  }else{progress=setupProgress;running=true;}
  }else{
   progress=job.done?1:Math.min(.99,elapsed/definition.duration);
   running=!job.done;
@@ -76,7 +73,7 @@ export function tearTaskInfo(s,id){
  }
  return {
   id,title:definition.title,elapsedMinutes:Math.max(0,Math.floor(elapsedMinutes)),
-  progress:clamp01(progress),percent:Math.round(clamp01(progress)*100),
+  progress:clamp01(progress),percent:running?Math.min(99,Math.floor(clamp01(progress)*100)):100,
   running,complete:!running,
   status:running?(id==='survey'&&job.done?'FUZZING':'PROCESSING'):'COMPLETE'
  };
@@ -86,24 +83,19 @@ function sessionTaskProgress(s,id){
  if(!info)return 0;
  const baseline=clamp01(a.visualTaskBaseline?.[id]??0);
  const remaining=Math.max(.001,1-baseline);
- let value=clamp01((info.progress-baseline)/remaining);
- // The AAB fuzzing process intentionally continues after its 95-minute setup.
- // While validation has not started, let the open session's live research time
- // gradually advance the visual without falsely marking the research complete.
- if(id==='survey'&&!a.jobs.validation&&info.running&&baseline>=.89){
-  const sessionElapsed=Math.max(0,now(s)-Number(a.visualSessionStart??now(s)));
-  value=Math.max(value,Math.min(.9,sessionElapsed/240*.9));
- }
- return value;
+ return clamp01((info.progress-baseline)/remaining);
 }
 export function syncTearVisualProgress(s){
  const a=s.story55?.tearAgent;
  if(!a||!Array.isArray(a.visualTaskIds)||!a.visualTaskIds.length)return false;
+ const infos=a.visualTaskIds.map(id=>tearTaskInfo(s,id));
+ const complete=infos.every(info=>info?.complete);
  const values=a.visualTaskIds.map(id=>sessionTaskProgress(s,id));
- const next=Math.max(Number(a.visualProgress)||0,values.reduce((sum,v)=>sum+v,0)/values.length);
- if(next-(Number(a.visualProgress)||0)<.001)return false;
+ const next=complete?1:Math.min(.98,values.reduce((sum,v)=>sum+v,0)/values.length);
+ if(Math.abs(next-(Number(a.visualProgress)||0))<.000001)return false;
  a.visualProgress=clamp01(next);return true;
 }
+
 export function registerTearVisualTask(s,id){
  if(!TEAR_STAGES[id]||!s.story55?.tearAgent)return false;
  const a=ensureAgent(s);
@@ -117,10 +109,11 @@ export function registerTearVisualTask(s,id){
 }
 export function beginTearChatSession(s){
  const a=ensureAgent(s);
- a.messages=[{id:'welcome-'+Date.now(),role:'assistant',text:TEAR_GREETING,day:s.day,clock:s.clock}];
+ a.chatSession=(a.chatSession||0)+1;a.messageSequence=0;
+ a.messages=[];addMessage(s,'assistant',TEAR_GREETING);
  a.draft='';a.selected=null;a.selectedTask=null;a.picking=false;
  delete a.thinking;delete a.thinkingAt;
- a.history=false;a.displayRevision=3;
+ a.history=false;a.displayRevision=4;
  a.visualSessionStart=now(s);a.visualProgress=0;a.visualTaskIds=[];a.visualTaskBaseline={};
  for(const id of Object.keys(TEAR_STAGES)){
   const info=tearTaskInfo(s,id);
@@ -169,7 +162,7 @@ export function sendAgent(s,text,fileId){
  if(!value&&!file)return {kind:'empty'};
  if(blockedTearText(s,value))return {kind:'blocked'};
  const id=file?storyFileStage(file):Object.keys(TEAR_STAGES).find(k=>!TEAR_STAGES[k].file&&normalize(value)===normalize(TEAR_STAGES[k].prompt));
- addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{})});a.selected=null;
+ addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}
  if(value===D29_IP){if(!s.content?.notes?.some(n=>n.id==='s55-d29-ip'))addMessage(s,'assistant','目前沒有對應的調查資料。');else if(!a.ipRequested){a.ipRequested=true;addMessage(s,'assistant','已收到調查入口。正在建立新的研究工程。我需要一些時間。');tickTearAgent(s);}else addMessage(s,'assistant','調查工程已建立。');return {kind:'preset'};}

@@ -23,7 +23,11 @@ export function renderTearOrbit({id,title,status,index,count}){
  <footer class="gh-tear-dock"><div class="gh-tear-package">${fileIcon}<span title="${esc(title)}">${esc(title)}</span>${done||failed?`<button type="button" class="gh-tear-return" data-action="gh-tear-return" data-id="${esc(id)}" aria-label="返回 MIRAGE">${arrowIcon}</button>`:'<i class="gh-tear-pulse" aria-hidden="true"></i>'}</div></footer>
  </section>`;
 }
-const TASK_POSITIONS={survey:[50,5.5],maintenance:[74.5,32.7],staff:[65,76.4],validation:[35,76.4],program:[25.5,32.7]};
+// A square stage keeps both the canvas and ring in one coordinate space.
+const TASK_POSITIONS=Object.fromEntries(['survey','maintenance','staff','validation','program'].map((id,i)=>{
+ const angle=-Math.PI/2+i*Math.PI*2/5;
+ return [id,[50+44*Math.cos(angle),50+44*Math.sin(angle)]];
+}));
 const TASK_DESCRIPTIONS={
  survey:'分析設備資料、建立研究模型並啟動持續測試。',
  maintenance:'比對新的維保記錄，更新研究模型。',
@@ -48,7 +52,7 @@ function taskMarkers(s){
 function taskDetail(s){
  const id=agent(s).selectedTask,definition=TEAR_STAGES[id],info=id&&tearTaskInfo(s,id);
  if(!definition||!info)return '';
- return `<aside class="gh-agent-task-detail" role="dialog" aria-label="任務詳情">
+ return `<div class="gh-agent-task-backdrop" data-key="tear-task-backdrop" data-action="gh-tear-task-close" aria-hidden="true"></div><aside class="gh-agent-task-detail" role="dialog" aria-modal="true" aria-label="任務詳情" data-key="tear-task-detail">
   <header><div><span>${esc(definition.title)}</span><strong class="${info.running?'is-running':'is-complete'}">${esc(info.status)}</strong></div><button type="button" data-action="gh-tear-task-close" aria-label="關閉任務詳情">×</button></header>
   <p>${esc(TASK_DESCRIPTIONS[id]||definition.title)}</p>
   <div class="gh-agent-task-metrics"><div><span>運行時間</span><strong>${durationLabel(info.elapsedMinutes)}</strong></div><div><span>完成進度</span><strong>${info.percent}%</strong></div></div>
@@ -58,9 +62,10 @@ function taskDetail(s){
 export function renderTearAgent(s){
  ensureTearOrbit();const {working,content}=renderAgentContent(s),a=agent(s);
  const progress=Math.max(0,Math.min(1,Number(a.visualProgress)||0));
- const status=progress>=.999?'complete':working?'running':'idle';
+ const complete=!!a.visualTaskIds?.length&&a.visualTaskIds.every(id=>tearTaskInfo(s,id)?.complete);
+ const status=complete&&progress===1?'complete':working?'running':'idle';
  return `<section class="gh-tear-screen gh-agent-screen" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear">
- <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><i aria-hidden="true"></i></header>
- <div class="gh-agent-orbit"><xm-tear-orbit data-key="agent-orbit" status="${status}" progress="${progress}" aria-hidden="true"></xm-tear-orbit><div class="gh-agent-task-ring" role="group" aria-label="執行中的任務">${taskMarkers(s)}</div></div>
+ <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><button type="button" class="gh-tear-icon gh-agent-history-toggle" data-action="gh-tear-history" aria-label="查看本次聊天紀錄" aria-expanded="${!!a.history}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button></header>
+ <div class="gh-agent-orbit"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" status="${status}" progress="${progress}" aria-hidden="true"></xm-tear-orbit><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></div>
  ${taskDetail(s)}${content}</section>`;
 }
