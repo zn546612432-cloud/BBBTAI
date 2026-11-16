@@ -23,7 +23,7 @@ export function renderTearOrbit({id,title,status,index,count}){
  <footer class="gh-tear-dock"><div class="gh-tear-package">${fileIcon}<span title="${esc(title)}">${esc(title)}</span>${done||failed?`<button type="button" class="gh-tear-return" data-action="gh-tear-return" data-id="${esc(id)}" aria-label="返回 MIRAGE">${arrowIcon}</button>`:'<i class="gh-tear-pulse" aria-hidden="true"></i>'}</div></footer>
  </section>`;
 }
-const TASK_POSITIONS={survey:[50,5.5],maintenance:[75,21],staff:[78,47],validation:[32,77],program:[25,21]};
+const TASK_POSITIONS={survey:[50,5.5],maintenance:[74.5,32.7],staff:[65,76.4],validation:[35,76.4],program:[25.5,32.7]};
 const TASK_DESCRIPTIONS={
  survey:'分析設備資料、建立研究模型並啟動持續測試。',
  maintenance:'比對新的維保記錄，更新研究模型。',
