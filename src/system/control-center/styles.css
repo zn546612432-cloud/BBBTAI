@@ -8,3 +8,4 @@
 @media(prefers-reduced-motion:reduce){#control-center-layer{transition:none}}
 
 .cc-orange{background:#ff9f0a!important}.cc-mini-connections>button{aspect-ratio:1;border-radius:50%;background:#ffffff33}.cc-mini-connections>button svg{width:17px;height:17px}.cc-album{background-image:url('/wallpapers/midnight-glass.png');background-size:cover}
+.cc-dismiss:active{transform:translateX(-50%) scale(.96)}
