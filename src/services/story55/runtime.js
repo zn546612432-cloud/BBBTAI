@@ -5,7 +5,7 @@ import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
-import {applyD29Definition,D29_IP} from '../../story/d29/definition.js';
+import {applyD29Definition,D29_IP,D29_LEGACY_IPS} from '../../story/d29/definition.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
@@ -316,6 +316,11 @@ export function tickStory55(s){
  applyD25Definition(story55Config(s));
  applyD26D28Definition(story55Config(s));
  applyD29Definition(story55Config(s));
+ // Update only the delivered authored IP and its unchanged note in older saves.
+ for(const m of s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros')?.messages||[])
+  if(m.id?.startsWith('s55-plan-')&&D29_LEGACY_IPS.includes(m.text))m.text=D29_IP;
+ const d29Note=s.content.notes?.find(n=>n.id==='s55-d29-ip');
+ if(d29Note&&D29_LEGACY_IPS.includes(d29Note.text))d29Note.text=D29_IP;
  if(s.day===29&&completed(s,'d29-father')&&s.nav?.current?.appId==='chess'&&(s.clock>='21:36'||overnightSceneNight55(s)))s.story55.d29ChessOpened=true;
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
