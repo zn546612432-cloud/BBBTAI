@@ -64,11 +64,13 @@ try{
   await page.locator('[data-action=unlock]').click();for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
   const live=page.locator('#screen-layer'),chat=live.locator('.gh-agent-messages'),orbit=live.locator('xm-tear-orbit');
   await live.locator('.gh-agent-screen').waitFor();await orbit.evaluate(el=>customElements.whenDefined(el.localName));
-  await page.clock.install();await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
   await live.locator('#tear-agent-input').fill(D29_IP);await live.locator('button[type=submit]').click();
   const lines=['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。'];
+  // Use the real browser heartbeat: installing a fake clock after the shell's
+  // interval has already started does not advance that existing native timer.
+  let last=Date.now();
   for(let i=0;i<=lines.length;i++){
-   if(i)await page.clock.runFor(i===1?1900:1200);
+   if(i){await chat.getByText(lines[i-1],{exact:true}).waitFor({timeout:7000});const at=Date.now();assert.ok(at-last>=700,`width ${width}, stage ${i} did not have a reading interval`);last=at;}
    const content=await chat.innerText();
    for(let j=0;j<lines.length;j++)assert.equal(content.includes(lines[j]),j<i,`width ${width}, stage ${i}, line ${j}`);
    assert.equal(await live.locator('[data-action=gh-tear-identity]').count(),i===lines.length?1:0);
