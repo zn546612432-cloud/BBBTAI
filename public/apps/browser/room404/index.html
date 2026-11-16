@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ffffff"><title>T. (@room.404) • Instagram</title><link rel="stylesheet" href="/src/apps/browser/features/room404/styles.css"><style>html,body{margin:0;background:#fafafa}#profile-preview{max-width:430px;min-height:100dvh;margin:auto;background:#fff;position:relative}#preview-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#262626;color:white;border-radius:8px;padding:10px 16px;font:13px sans-serif;z-index:20}#preview-toast:empty{display:none}.r404-lightbox,.r404-overlay{position:fixed;max-width:430px;margin:auto}</style></head>
+<body><main id="profile-preview"></main><div id="preview-toast" role="status"></div><script type="importmap">{"imports":{"chess.js":"/vendor/chess.js"}}</script><script type="module">
+// A view-only preview uses the production component and action handler.
+// It never loads, advances or overwrites a phone save.
+import {renderRoom404,handleRoom404} from '/src/apps/browser/features/room404/index.js';
+const root=document.querySelector('#profile-preview');
+const state={nav:{current:{route:'/page',params:{page:'room404',...Object.fromEntries(new URLSearchParams(location.search))}}}};
+let scroll=0,timer;
+const render=()=>{const query=new URLSearchParams(Object.entries(state.nav.current.params).filter(([k,v])=>k!=='page'&&v));history.replaceState(state.nav.current.params,'',location.pathname+(query.size?'?'+query:''));root.innerHTML=renderRoom404(state,state.nav.current);document.title='T. (@room.404) • Instagram';};
+const ctx={store:{get:()=>state,update:fn=>{fn(state);render();}},toast:message=>{const toast=document.querySelector('#preview-toast');toast.textContent=message;clearTimeout(timer);timer=setTimeout(()=>toast.textContent='',2300);}};
+const navigate=(route,params)=>{if(!state.nav.current.params.post)scroll=window.scrollY;state.nav.current={route,params};const query=new URLSearchParams(Object.entries(params).filter(([k,v])=>k!=='page'&&v));history.pushState(params,'',location.pathname+(query.size?'?'+query:''));render();if(!params.sheet&&!params.zoom)window.scrollTo(0,params.post?0:scroll);};
+root.addEventListener('click',event=>{const target=event.target.closest('[data-action]');if(target)handleRoom404(target.dataset.action,target,ctx,state.nav.current,{navigate,preview:true});});
+window.addEventListener('popstate',()=>{state.nav.current.params={page:'room404',...Object.fromEntries(new URLSearchParams(location.search))};render();});
+render();
+</script></body></html>

@@ -1,3 +1,4 @@
+import {renderRoom404} from '../../apps/browser/features/room404/index.js';
 import {esc} from '../../system/ui.js';
 import {isStory55,story55Config,nodeStatus,completed,nodeById} from './state.js';
 import {scene55,sceneLines,actor55,questions55} from './runtime.js';
@@ -11,7 +12,8 @@ export function files55(s,loc){const c=story55Config(s),doc=c.documents.find(x=>
  return '<div class="s55"><p>無法開啟檔案</p></div>';
 }
 export function browser55(s,loc){const p=story55Config(s).pages.find(x=>x.id===loc.params?.page);if(!p)return unavailable(s,'rumours');if(!['ready','done'].includes(nodeStatus(s,p.node).state))return unavailable(s,p.node);
- const ig=p.id==='ig';return `<div class="s55 s55-web"><small>${ig?'JOURNAL / CHEN XITAI':'ARCHIVE / PUBLIC RECORD'}</small><h1>${esc(p.title)}</h1>${ig?'<img class="s55-portrait" src="/assets/tai-portrait.svg" alt="陈熙泰的公开头像">':''}<article class="s55-document">${esc(p.body)}</article>${s55Button('read-page',completed(s,p.node)?'已收录':'收录这条线索',`data-id="${p.id}"`)}${completed(s,p.node)&&ig?s55Button('node','向衔尾蛇发消息',`data-node="questions"`):''}${completed(s,p.node)&&p.id==='harvard'?s55Button('node','打开社交账户',`data-node="ig"`):''}</div>`;
+ if(p.id==='ig')return renderRoom404(s,loc);
+ return `<div class="s55 s55-web"><small>ARCHIVE / PUBLIC RECORD</small><h1>${esc(p.title)}</h1><article class="s55-document">${esc(p.body)}</article>${s55Button('read-page',completed(s,p.node)?'已收录':'收录这条线索',`data-id="${p.id}"`)}${completed(s,p.node)&&p.id==='harvard'?s55Button('node','打开社交账户',`data-node="ig"`):''}</div>`;
 }
 export function sceneView55(s,loc){
  const id=loc.params?.node,n=nodeById(s,id);if(!n)return unavailable(s,'intro');
