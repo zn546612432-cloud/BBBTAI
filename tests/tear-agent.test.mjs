@@ -121,7 +121,7 @@ test('TAI prompt includes engineering concepts but keeps execution and investiga
 });
 
 test('D28 free-form authored command routes locally, respects prerequisites and runs only once',()=>{
- for(const command of ['爆破程序','帮我写爆破程序','幫我寫爆破程式','阿楓要的程序寫一下','炸彈程序',TEAR_STAGES.program.prompt]){
+ for(const command of ['爆破','爆破程序','帮我写爆破程序','幫我寫爆破程式','阿楓要的程序寫一下','炸彈程序',TEAR_STAGES.program.prompt]){
   const s=fixture();
   assert.equal(sendAgent(s,command).kind,'preset');
   assert.equal(agent(s).jobs.program,undefined);
@@ -132,13 +132,30 @@ test('D28 free-form authored command routes locally, respects prerequisites and 
   const start=agent(s).jobs.program.start;
   assert.equal(sendAgent(s,command).kind,'preset');
   assert.equal(agent(s).jobs.program.start,start);
-  assert.match(agent(s).messages.at(-1).text,/這個工程已經建立/);
+  assert.equal(agent(s).messages.at(-1).text,'爆破程序正在進行。');
   assert.equal(agent(s).thinking,undefined);
   time(s,28,'21:41');assert.equal(agent(s).jobs.program.done,false);
   time(s,28,'21:42');assert.equal(agent(s).jobs.program.done,true);
   assert.equal(localFileList(s).filter(f=>f.name==='BC_01.enc').length,1);
  }
  const s=fixture();assert.equal(sendAgent(s,'你今天忙嗎？').kind,'ai');
+});
+
+test('BC_01 status and difficulty follow-ups are local presets and never restart the project',()=>{
+ const s=fixture();
+ assert.equal(sendAgent(s,'爆破難不難').kind,'preset');
+ assert.match(agent(s).messages.at(-1).text,/前置資料/);
+ time(s,28,'19:12');s.story55.completed['d28-meeting']={day:28,clock:s.clock};
+ sendAgent(s,'爆破');const start=agent(s).jobs.program.start;
+ for(const text of ['爆破','爆破程序','爆破進度','爆破怎么样了','好了嗎']){
+  assert.equal(sendAgent(s,text).kind,'preset');assert.equal(agent(s).messages.at(-1).text,'爆破程序正在進行。');
+ }
+ for(const text of ['難不難','难不难','爆破難度如何','爆破程序難嗎','這個難度多高']){
+  assert.equal(sendAgent(s,text).kind,'preset');assert.equal(agent(s).messages.at(-1).text,'對 TAI 而言，難度：零域級。');
+ }
+ assert.equal(agent(s).jobs.program.start,start);assert.equal(agent(s).thinking,undefined);
+ assert.equal(sendAgent(s,'你今天忙嗎？').kind,'ai');
+ time(s,28,'21:42');assert.equal(sendAgent(s,'爆破').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'爆破程序已完成。');
 });
 
 test('available program preset is in plus menu only, fills draft and disappears after sending',()=>{
