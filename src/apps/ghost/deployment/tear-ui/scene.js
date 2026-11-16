@@ -105,7 +105,7 @@ function drawOuroborosSpine(){
   state.mode=running?'THINKING':status==='complete'?'COMPLETE':'IDLE';
   state.targetSpeed=running?.026:.0055;state.targetJawOpen=running?.15:0;
   state.targetAppleGlow=running?.95:status==='failed'?.6:.35;
-  state.targetProgress=status==='complete'?1:clamp(Number(progress)||0,0,.99);
+  state.targetProgress=status==='complete'?1:clamp(Number(progress)||0,0,1);
   state.pulseActive=running;if(running&&!wasRunning)state.pulsePos=0;
  }
  function animate(now){
