@@ -334,7 +334,10 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
     if(node.id==='questions'&&!s.story55.identityContact)s.story55.identityContact={count:4,replyDay:day+1};
     if(node.id==='invite'&&completed(s,'photo'))s.story55.identityInviteRequested=true;
     if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
-    if(nodeStatus(s,node.id).state!=='ready')continue;
+    // The historical mock invitation has no real match or postgame chat.
+    // Only the developer replay may settle that synthetic prerequisite.
+    const historicalPostgame=node.id==='d23-chess-finish'&&s.story55.scenes?.['d23-chess']?.test===true;
+    if(!historicalPostgame&&nodeStatus(s,node.id).state!=='ready')continue;
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
    }
   }

@@ -6,13 +6,24 @@ import {chessFacts} from '../chess.js';
 import {buildChessPostgamePrompt} from '../chess-dialogue.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
-import {isStory55,completed,date55,taiRecognized} from './state.js';
+import {isStory55,completed,completeNode,date55,taiRecognized} from './state.js';
 
 export const D23_MIRAGE_CONTACT='s55-ouroboros';
 export const D23_MIRAGE_MATCH='s55-d23-chess-invite';
 const MAX_TURNS=3;
 const waitingAI=new WeakMap();
 const validChat=s=>s?.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/'+D23_MIRAGE_CONTACT;
+
+// Repair historical developer jumps created before the replay could settle
+// this gate. Genuine D23 matches and any real postgame remain mandatory.
+export function repairRebuiltD23Postgame(s){
+ const rebuild=s.story55?.developerRebuild;
+ if(!isStory55(s)||s.day<=23||rebuild?.source!=='completed-prior-days-v1'||!(rebuild.simulatedThrough>=23)||
+    !completed(s,'d23-chess')||s.story55.scenes?.['d23-chess']?.test!==true||
+    completed(s,'d23-chess-finish')||s.story55.d23Postgame||
+    s.matches?.some(m=>m.invitationId===D23_MIRAGE_MATCH))return false;
+ return completeNode(s,'d23-chess-finish',{test:true});
+}
 
 export function d23MiragePostgame(s,id=D23_MIRAGE_CONTACT){
  if(!isStory55(s)||id!==D23_MIRAGE_CONTACT||!s.story55?.d23Postgame)return null;
