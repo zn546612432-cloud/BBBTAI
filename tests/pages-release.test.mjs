@@ -43,6 +43,9 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   assert.match(await read(root+'src/main.js'),/import '\.\/child.js'/);
   assert.ok((await read(root+'src/main.js')).includes(`${prefix}assets/icon.svg`));
   const oldCode=await read(root+'src/main.js');
+  const manifest=JSON.parse((await read(root+'src/system/startup/image-manifest.js')).match(/export default (\[.*\]);/)[1]);
+  assert.ok(manifest.includes(`${prefix}assets/icon.svg`));
+  for(const item of evidence)assert.ok(manifest.includes(`/AAATAI/${item}`),`preload must use the same stable media URL: ${item}`);
   for(const item of evidence){
    const resource=item.includes('/media/')||item.includes('/personal-files/')?item.slice(0,item.lastIndexOf('/')+1):item;
    assert.ok(oldCode.includes(`'/AAATAI/${resource}'`),`stable media URL: ${resource}`);

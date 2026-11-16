@@ -11,6 +11,7 @@ test('standalone boot watchdog works even if the main ES module cannot start',()
  const objects={
   'xm-boot':{classList:{contains:()=>false}},
   'xm-boot-percent':{textContent:'0%'},
+  'xm-boot-loading-label':{textContent:'正在載入'},
   'xm-boot-message':{textContent:'正在准备手机资源和离线地图…'},
   'xm-boot-next':{hidden:true,onclick:null,textContent:''}
  };
@@ -29,7 +30,8 @@ test('standalone boot watchdog works even if the main ES module cannot start',()
  pending();
  assert.equal(objects['xm-boot-next'].hidden,false);
  assert.match(objects['xm-boot-message'].textContent,/启动超时/);
- assert.equal(objects['xm-boot-percent'].textContent,'加载中');
+ assert.equal(objects['xm-boot-percent'].textContent,'0%');
+ assert.equal(objects['xm-boot-loading-label'].textContent,'載入中斷');
  objects['xm-boot-next'].onclick();
  assert.match(redirect,/^https:\/\/phone\.example\/BBBTAI\/\?boot-retry=\d+$/);
 });
