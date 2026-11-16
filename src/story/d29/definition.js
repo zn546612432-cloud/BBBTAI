@@ -1,5 +1,7 @@
 // Fixed D29 story; shared Story55 queue and existing chess match own delivery.
-export const D29_IP='192.0.2.29';
+// Authored story token, never a network destination.
+export const D29_IP='195.22.28.198';
+export const D29_LEGACY_IPS=['192.0.2.29','203.0.113.29'];
 export const D29_CHESS_INVITATION='s55-d29-chess-invite';
 export const D29_CHESS_LINES=[
  ['me','每種棋子的走法都有什麼講究？'],['tai','怎麼，想學戰術了？'],['me','你教不教？'],['tai','難得你肯向我請教。'],['tai','那就從最不起眼的兵開始吧。'],['tai','Pawn，兵。'],['tai','它只能向前走，不能後退，卻有可能在抵達棋盤另一端時成為后。'],['me','但大部分兵都活不到最後。'],['tai','沒錯。'],['tai','有時候犧牲一枚兵，比保住它更有價值。'],['me','就像你上次用的王翼棄兵？'],['tai','看來你還記得。'],['tai','Knight，馬。唯一能越過其他棋子的傢伙。'],['tai','它的威脅往往不在直覺可以預判的位置上。'],['tai','Bishop，象。沿著斜線移動，但終其一生只能停留在同一種顏色的格子上。'],['me','所以一對象比單獨一個象更有價值？'],['tai','聰明。'],['tai','Rook，車。沿橫線和直線移動，在開闊的棋盤上尤其強大。'],['tai','Queen，后。兼具車與象的能力，也是棋盤上最強大的棋子。'],['me','那王呢？'],['tai','King。'],['tai','它的行動最受限制，卻決定了整盤棋的存亡。'],['tai','到了殘局，王也可以成為進攻的一部分。'],['me','原來如此。'],['tai','記住，吃掉對方多少枚棋子並不重要。'],['tai','Checkmate，將死。'],['tai','這才是你真正要追求的東西。'],['me','沒想到你還挺會教人的。'],['tai','我的優點還有很多，darling.'],['me','……'],['tai','不過，你干爹應該比我更適合教你這些。'],['me','？'],['tai','傅隆生。'],['tai','澳門，六個養子。'],['tai','很有意思的一家人。'],['me','你調查我們？'],['tai','禮尚往來而已。'],['me','你到底想幹什麼？'],['tai','別緊張，nya。'],['tai','至少目前，我對你的興趣遠大於對其他人的興趣。']
@@ -25,6 +27,7 @@ export function applyD29Definition(c){
   }else if(!existing)c.nodes.push(n);
   c.scenes[id]??=structuredClone(lines);
  }
+ for(const line of c.scenes.plan||[])if(line[0]==='ouroboros'&&D29_LEGACY_IPS.includes(line[1]))line[1]=D29_IP;
  const identity=c.projects.find(p=>p.id==='identity');
- if(identity?.key==='203.0.113.29')identity.key=D29_IP;
+ if(D29_LEGACY_IPS.includes(identity?.key))identity.key=D29_IP;
 }
