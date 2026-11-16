@@ -7,6 +7,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
 import {savePersonalFiles} from '../src/apps/files/features/local-library/index.js';
+import {ensureAgent} from '../src/apps/ghost/deployment/tear-agent/state.js';
 const out='qa/room404';await mkdir(out,{recursive:true});
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.mp4':'video/mp4','.wasm':'application/wasm'};
 const root=path.resolve('dist');
@@ -62,7 +63,7 @@ try{
  assert.deepEqual(errors,[]);await context.close();
  // Open the actual Files app on a D33 archive-save fixture and click through
  // each photo; screenshots and decode prove that the published paths work.
- s.story55.tearAgent??={};s.story55.tearAgent.archiveRun={done:true};savePersonalFiles(s);
+ ensureAgent(s).archiveRun={startedAt:Date.now()-3200,done:true};assert.ok(savePersonalFiles(s));
  s.nav.current={appId:'files',route:'/item/personal-files',params:{}};
  const filesContext=await newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  await filesContext.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
