@@ -14,6 +14,14 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true});const results=[];
 const decode=page=>page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
+const checkProfileTypography=async page=>{
+ const layout=await page.locator('.r404-profile').evaluate(profile=>{
+  const get=selector=>profile.querySelector(selector),rect=selector=>get(selector).getBoundingClientRect();
+  const title=get('h1'),heading=rect('h1'),avatar=rect('.r404-avatar-large'),name=rect('.r404-display-name'),stats=rect('.r404-stats'),controls=rect('.r404-controls'),frame=profile.getBoundingClientRect();
+  return {handle:title.textContent,weight:Number(getComputedStyle(title).fontWeight),size:parseFloat(getComputedStyle(title).fontSize),centered:Math.abs((heading.left+heading.right-frame.left-frame.right)/2)<2,summaryAligned:name.left>=avatar.right&&Math.abs(name.left-stats.left)<2&&stats.top>=name.bottom,controlsBelow:controls.top>=Math.max(avatar.bottom,stats.bottom),labelsFit:[...get('.r404-stats').children].every(el=>el.scrollWidth<=el.clientWidth),nameFits:title.scrollWidth<=title.clientWidth};
+ });
+ assert.equal(layout.handle,'room.404');assert.ok(layout.weight>=700&&layout.size>=20,JSON.stringify(layout));for(const key of ['centered','summaryAligned','controlsBelow','labelsFit','nameFits'])assert.equal(layout[key],true,key+': '+JSON.stringify(layout));
+};
 // This visual check serves repository assets locally and makes no external
 // requests: abort all network destinations except its own local HTTP server.
 const newContext=async options=>{const c=await browser.newContext(options);await c.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());return c;};
@@ -22,8 +30,10 @@ try{
   const context=await newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/BBBTAI/apps/browser/room404/index.html');await page.locator('.r404-grid img').first().waitFor();await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await decode(page);await page.screenshot({path:`${out}/preview-${width}.png`,fullPage:true});
   assert.equal(await page.locator('.r404-grid>button').count(),7);
+  await checkProfileTypography(page);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator('[data-action=browser-ig-post][data-post=afterparty]').click();assert.match(await page.locator('.r404-post-copy').innerText(),/Afterparty. The undisputed champion./);
+  assert.equal(await page.locator('.r404-postnav small').textContent(),'room.404');
   await decode(page);await page.screenshot({path:`${out}/post-${width}.png`,fullPage:true});
   await page.locator('[data-action=browser-ig-zoom]').click();await page.locator('.r404-lightbox img').evaluate(i=>i.decode());assert.equal(await page.locator('.r404-lightbox').count(),1);await decode(page);await page.screenshot({path:`${out}/zoom-${width}.png`});
   await page.locator('[data-action=browser-ig-close]').click();await page.locator('[data-action=browser-ig-comments]').first().click();assert.match(await page.locator('.r404-sheet').innerText(),/尚無留言/);await decode(page);await page.screenshot({path:`${out}/comments-${width}.png`});
@@ -36,6 +46,7 @@ try{
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/BBBTAI/');await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
  await page.locator('[data-action=unlock]').click();for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
  const live=page.locator('#screen-layer');await live.locator('.r404-grid').waitFor();await page.waitForTimeout(450);await decode(page);await page.screenshot({path:`${out}/phone-profile.png`});
+ await checkProfileTypography(page);
  assert.equal(await page.evaluate(()=>!!JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.completed.ig),false);
  await live.locator('[data-action=browser-ig-post][data-post=selfie]').click();await page.waitForTimeout(400);assert.equal(await page.evaluate(()=>!!JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.completed.ig),true);await decode(page);await page.screenshot({path:`${out}/phone-selfie.png`});
  await live.locator('[data-action=browser-ig-zoom]').click();await page.waitForTimeout(400);await decode(page);await page.screenshot({path:`${out}/phone-zoom.png`});await live.locator('[data-action=browser-ig-close]').click();
