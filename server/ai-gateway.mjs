@@ -2,7 +2,7 @@ import {normalizeTtsSettings,ttsProviderSettings} from '../src/services/voice/tt
 import {normalizeAiParameters} from '../src/services/ai/model-config.js';
 // Local-only AI gateway. Never publish this handler as an unauthenticated public API.
 import {normalizeTaiBehavior} from '../src/services/ai/behavior.js';
-import {deepseekModelOptions} from '../src/services/ai/model-config.js';
+import {deepseekModelOptions,TEAR_DEEPSEEK_MODEL} from '../src/services/ai/model-config.js';
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
@@ -79,7 +79,7 @@ export async function handleAIGateway(req,res,pathname) {
       const behavior=normalizeTaiBehavior(payload.behavior);
       const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
-        ...deepseekModelOptions(payload.model??process.env.DEEPSEEK_MODEL,payload.parameters),
+        ...deepseekModelOptions(channel==='tear'?TEAR_DEEPSEEK_MODEL:payload.model??process.env.DEEPSEEK_MODEL,payload.parameters),
         messages:[{role:'system',content:channel==='tear'?buildTearPrompt(scene):buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY})},...messages],
         stream:false,max_tokens:normalizeAiParameters(payload.parameters).maxTokens,response_format:{type:'json_object'}
       });

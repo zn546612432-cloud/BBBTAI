@@ -72,13 +72,19 @@ test('local API gateway honors selected V4 Pro model without changing default Fl
    })});
    assert.equal(r.status,200);
   }
-  assert.equal(seen.length,2);
+  const tear=await nativeFetch(base+'/api/ai/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+   channel:'tear',day:28,model:'deepseek-v4-pro',messages:[{role:'user',content:'目前進度如何？'}]
+  })});
+  assert.equal(tear.status,200);
+  assert.equal(seen.length,3);
   assert.equal(seen[0].model,'deepseek-v4-pro');
   assert.deepEqual(seen[0].thinking,{type:'disabled'});
   assert.equal(seen[0].temperature,1.3);
   assert.equal(seen[1].model,'deepseek-flash');
   assert.deepEqual(seen[1].thinking,{type:'disabled'});
   assert.equal(Object.hasOwn(seen[1],'temperature'),false);
+  assert.equal(seen[2].model,'deepseek-flash');
+  assert.deepEqual(seen[2].thinking,{type:'disabled'});
  }finally{
   if(server.listening)await new Promise(resolve=>server.close(resolve));
   globalThis.fetch=originalFetch;
