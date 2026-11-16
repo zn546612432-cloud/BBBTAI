@@ -5,8 +5,8 @@ import {activateStory55,tickStory55,sceneLines} from '../src/services/story55/ru
 import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {renderAgentContent} from '../src/apps/ghost/deployment/tear-agent/view.js';
 import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
-import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
-import {handleTearAgent,submitTearAgent,inputTearAgent} from '../src/apps/ghost/deployment/tear-agent/actions.js';
+import {buildTearPrompt,cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../src/services/ai/tear-prompt.js';
+import {handleTearAgent,submitTearAgent,inputTearAgent,buildTearAgentScene} from '../src/apps/ghost/deployment/tear-agent/actions.js';
 import {absoluteMinute} from '../src/system/time/clock.js';
 import {saveIncomingZip,localFileList,handleLibraryAction} from '../src/apps/files/features/local-library/index.js';
 import {TEAR_STAGES} from '../src/story/d25/tear-agent.js';
@@ -99,6 +99,25 @@ test('TAI greetings and punctuation are answered naturally without unrelated saf
  assert.doesNotMatch(prompt,/以角色身份分簡短回應|先說明系統界線/);
  assert.match(prompt,/已知劇情指令由預設系統接管/);
  assert.match(prompt,/不自行生成執行結果/);
+});
+test('TAI prompt includes engineering concepts but keeps execution and investigation local',()=>{
+ const p=buildTearPrompt();
+ for(const word of ['CVE','Fuzzing','偵察','資料整理','隔離測試','不得輸出 ♪'])assert.ok(p.includes(word));
+ assert.doesNotMatch(p,/Claranet Portugal|Europe\/Lisbon|192\.0\.2\.29/);
+ assert.equal(cleanTearReply(JSON.stringify({reply:'♪ 非台詞\n正在驗證研究結果。'})),'正在驗證研究結果。');
+ assert.equal(cleanTearReply('♪ 非台詞\n{"reply":"尚未取得資料。"}'),'尚未取得資料。');
+ assert.equal(cleanTearReply('♪ 非台詞'),'');
+ assert.equal(cleanTearReply('CURRENT_REPLY'),'CURRENT_REPLY');
+ assert.doesNotMatch(redactTearNetworkIdentifiers('查詢 '+D29_IP),/192\.0\.2\.29/);
+ assert.match(TEAR_NETWORK_PROFILE,/Claranet Portugal.*Europe\/Lisbon/);
+ const s=fixture();sendAgent(s,'203.0.113.40');assert.equal(agent(s).ipRequested,undefined);
+ assert.match(agent(s).messages.at(-1).text,/沒有對應的調查資料/);
+ assert.doesNotMatch(buildTearAgentScene(s),/Claranet|Lisbon/);
+ time(s,29,'22:00');s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
+ assert.doesNotMatch(buildTearAgentScene(s),/Claranet|Lisbon/);
+ sendAgent(s,D29_IP);
+ assert.match(buildTearAgentScene(s),/Claranet Portugal.*Europe\/Lisbon/);
+ assert.doesNotMatch(buildTearAgentScene(s),/192\.0\.2\.29/);
 });
 
 test('D28 free-form authored command routes locally, respects prerequisites and runs only once',()=>{

@@ -1,7 +1,14 @@
 import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady} from './state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {askTear} from '../../../../services/ai/gateway.js';
+import {cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../../../../services/ai/tear-prompt.js';
 import {startTearRun} from '../tear-run.js';
+
+export function buildTearAgentScene(state){
+ const a=agent(state);
+ return [...Object.keys(a.jobs).flatMap(id=>{const info=tearTaskInfo(state,id);return info?[info.title+': '+info.status+'，'+info.percent+'%，已運行 '+info.elapsedMinutes+' 分鐘']:[];}),
+  a.ipRequested&&state.day>=29&&state.content.notes?.some(n=>n.id==='s55-d29-ip')?'既有調查入口已由本機核對；已取得的網絡線索（故事內資料）：'+TEAR_NETWORK_PROFILE:'調查入口尚未核對；沒有可供轉述的網絡線索。'].join('\n');
+}
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
@@ -34,12 +41,12 @@ export function submitTearAgent(form,ctx){
  let result;ctx.store.update(n=>{result=sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';a.picking=false;if(result.kind==='ai'){a.thinking=result.id;a.thinkingAt=Date.now();}});
  input.value='';
  if(result.kind==='ai'){
-  const state=ctx.store.get(),a=agent(state),messages=a.messages.filter(m=>!m.artifact&&!m.job).slice(-12).map(m=>({role:m.role,content:m.text}));
-  const scene=Object.entries(a.jobs).map(([id,j])=>TEAR_STAGES[id]?.title+': '+(j.done?'完成':'研究中')).join('\n');
+  const state=ctx.store.get(),a=agent(state),messages=a.messages.filter(m=>!m.artifact&&!m.job).slice(-12).map(m=>({role:m.role,content:redactTearNetworkIdentifiers(m.text)}));
+  const scene=buildTearAgentScene(state);
   const session=a.chatSession;
   const finish=raw=>{const latest=ctx.store.get(),loc=latest.nav.current;
    if(loc.appId!=='ghost'||loc.route!=='/tear'||agent(latest).chatSession!==session||agent(latest).thinking!==result.id)return;
-   ctx.store.update(n=>{const current=agent(n);if(current.thinking!==result.id)return;delete current.thinking;delete current.thinkingAt;let reply='';try{reply=JSON.parse(raw).reply||'';}catch{reply=String(raw||'');}reply=String(reply).trim().slice(0,1800);addMessage(n,'assistant',reply&&!blockedTearText(n,reply)?reply:'抱歉，目前無法提供這項資訊。');});};
+   ctx.store.update(n=>{const current=agent(n);if(current.thinking!==result.id)return;delete current.thinking;delete current.thinkingAt;const reply=redactTearNetworkIdentifiers(cleanTearReply(raw));addMessage(n,'assistant',reply&&!blockedTearText(n,reply)?reply:'目前尚未取得相關資料。');});};
   askTear({day:state.day,messages,scene}).then(r=>finish(r.text)).catch(()=>finish('連線暫時中斷，請稍後再試。'));
  }
  return true;

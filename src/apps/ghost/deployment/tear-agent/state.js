@@ -180,6 +180,7 @@ export function sendAgent(s,text,fileId){
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}
  if(value===D29_IP){if(!s.content?.notes?.some(n=>n.id==='s55-d29-ip'))addMessage(s,'assistant','目前沒有對應的調查資料。');else if(!a.ipRequested){a.ipRequested=true;addMessage(s,'assistant','已收到調查入口。正在建立新的研究工程。我需要一些時間。');tickTearAgent(s);}else addMessage(s,'assistant','調查工程已建立。');return {kind:'preset'};}
+ if(/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)){addMessage(s,'assistant','目前沒有對應的調查資料。');return {kind:'preset'};}
  const reply=presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
  return {kind:'ai',id:a.messages.at(-1).id};
 }
