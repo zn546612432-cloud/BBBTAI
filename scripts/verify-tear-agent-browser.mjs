@@ -46,7 +46,7 @@ try{
  await live.locator('.gh-agent-screen').waitFor();
  await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
  await live.locator('xm-tear-orbit').evaluate(el=>customElements.whenDefined(el.localName));
- await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+100));
+ await page.clock.install();await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  assert.match(await live.locator('.gh-agent-messages').innerText(),/你好，我是小TAI/);
  assert.equal(await live.locator('.gh-agent-task-dot').count(),2);
  const canvas=live.locator('xm-tear-orbit');
@@ -60,6 +60,7 @@ try{
  const expandedSize=await canvas.boundingBox();
  assert.ok(expandedSize.width>readingSize.width*1.1,'idle serpent must regain the large reference size');
  assert.equal(await canvas.getAttribute('emphasis'),'1');
+ console.log(JSON.stringify({width,readingWidth:readingSize.width,expandedWidth:expandedSize.width}));
  await page.screenshot({path:`${out}/${width}-expanded.png`});
  await live.locator('#tear-agent-input').fill('你好');
  await page.clock.runFor(900);await page.waitForTimeout(900);
@@ -85,10 +86,10 @@ try{
  // Background passage is verified after a reload with the canonical speed enabled.
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  saved.story55.minutesPerSecond=5;
- await page.evaluate(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},saved);
+ await page.evaluate(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),saved);
  await page.reload({waitUntil:'domcontentloaded'});await page.clock.resume();
  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});await unlock(page);
- await page.clock.pauseAt(new Date(Date.now()+1000));
+ await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  await page.evaluate(()=>{window.__qaHidden=true;Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__qaHidden});document.dispatchEvent(new Event('visibilitychange'));});
  await page.clock.runFor(36000);
