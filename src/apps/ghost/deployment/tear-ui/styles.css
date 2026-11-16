@@ -129,3 +129,32 @@
 }
 #toast[data-notice-id^="tear-complete-"] .notification-copy small{color:#f0eee9}
 #toast[data-notice-id^="tear-complete-"] .notification-copy strong{color:#e1e3e9}
+
+/* Motion lab: one living scene, attached to the actual research state. */
+.gh-agent-screen{background:radial-gradient(ellipse at 50% 39%,#211316 0%,#0e0c10 36%,#060608 73%);color:#eeece5}
+.gh-agent-screen .gh-tear-header>.gh-agent-wordmark{font:500 19px/1.1 Georgia,serif;letter-spacing:.035em;text-align:center;color:#eee8dc}
+.gh-agent-wordmark small{display:block;margin-top:6px;font:9px/1 ui-monospace,monospace;letter-spacing:.32em;color:#a8a096}
+.gh-agent-screen .gh-tear-icon{width:44px}
+.gh-agent-screen .gh-agent-ring-graphic{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;stroke-width:.65}
+.gh-agent-ring-ticks{stroke:#e7d6b9;stroke-dasharray:1 8;opacity:.25}
+.gh-agent-ring-sweep{stroke:#e03640;stroke-width:1.2;stroke-dasharray:95 1011;opacity:.48;transform-origin:50% 50%;animation:tear-orbit-sweep 22s linear infinite}
+.gh-agent-task-dot.is-complete>span{background:#e4be79;box-shadow:0 0 0 3px #e0364038,0 0 14px #e4be79aa}
+.gh-agent-task-dot.is-collected>span{background:#918171;box-shadow:0 0 0 2px #d5b88a26}
+.gh-agent-task-dot:active>span{transform:scale(.76)}
+.gh-agent-task-detail{top:auto;left:0;right:0;bottom:0;transform:none;border-radius:26px 26px 0 0;padding:24px 24px max(24px,env(safe-area-inset-bottom));background:linear-gradient(155deg,#393038bb,#151218eb 60%,#0a090bea);animation:tear-sheet-in .56s cubic-bezier(.22,1,.36,1) both}
+.gh-agent-task-detail::before{content:'';display:block;width:32px;height:3px;margin:-12px auto 16px;border-radius:4px;background:#ffffff45}
+.gh-agent-task-metrics strong{font-size:30px;font-weight:350;letter-spacing:-.06em}
+.gh-agent-task-progress{height:3px;border-radius:2px}
+.gh-agent-task-progress i{background:linear-gradient(90deg,#d92027,#e4be79);border-radius:2px}
+.gh-agent-pickup{display:flex;align-items:center;width:100%;gap:13px;margin-top:20px;padding:14px 12px;border:1px solid #e7cb9634!important;border-radius:12px!important;background:#e7cb9609;color:#e7cb96!important;text-align:left}
+.gh-agent-pickup>svg{width:24px;height:28px;flex:none}
+.gh-agent-pickup>span{flex:1;min-width:0;display:grid;gap:5px}
+.gh-agent-pickup strong{font-size:12px;font-weight:400;overflow-wrap:anywhere;color:#efe9df}
+.gh-agent-pickup small{font:11px/1.5 system-ui,sans-serif;color:#dcb67c}
+.gh-agent-pickup.is-collected>svg:first-child{animation:tear-pickup .55s cubic-bezier(.22,1,.36,1) both}
+.gh-agent-pickup:active{transform:scale(.98)}
+.gh-agent-picker{border-radius:18px 18px 4px 4px;background:#171419ee;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:tear-sheet-in .35s cubic-bezier(.22,1,.36,1) both}
+@keyframes tear-orbit-sweep{to{transform:rotate(360deg)}}
+@keyframes tear-sheet-in{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tear-pickup{0%{transform:translateY(8px) scale(.8);opacity:.4}70%{transform:translateY(-3px) scale(1.12)}100%{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.gh-agent-ring-sweep,.gh-agent-task-detail,.gh-agent-pickup.is-collected>svg:first-child,.gh-agent-picker{animation:none}}

@@ -230,6 +230,25 @@ test('task details close without altering research and zero-minute starts report
 });
 
 
+test('completed orbit marker collects the existing artifact once and links to Files',()=>{
+ const s=fixture();s.day=27;s.clock='10:30';startAgentJob(s,'staff');
+ const routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:route=>routes.push(route)}};
+ const action=(key,id)=>handleTearAgent('gh-tear-'+key,{dataset:{id}},ctx);
+ action('task','staff');action('collect','staff');
+ assert.equal(agent(s).collectedArtifacts,undefined);
+ assert.doesNotMatch(renderTearAgent(s),/gh-tear-collect/);
+ time(s,27,'12:20');
+ const files=structuredClone(localFileList(s));
+ assert.match(renderTearAgent(s),/gh-tear-collect/);
+ action('collect','staff');action('collect','staff');
+ assert.equal(agent(s).collectedArtifacts.staff,true);
+ assert.match(renderTearAgent(s),/已領取 · 查看檔案/);
+ assert.deepEqual(localFileList(s),files);
+ action('artifact','tear-artifact-staff');
+ assert.deepEqual(routes,[{appId:'files',route:'/item/tear-artifact-staff'}]);
+ beginTearChatSession(s);assert.equal(agent(s).collectedArtifacts.staff,true);
+});
+
 test('opening and closing task or history panels preserves the unsent composer draft',()=>{
  const s=fixture(),ctx={store:{get:()=>s,update:fn=>fn(s)}};
  inputTearAgent({id:'tear-agent-input',value:'尚未發送的內容'},ctx);

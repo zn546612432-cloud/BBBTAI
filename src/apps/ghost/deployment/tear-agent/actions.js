@@ -1,14 +1,15 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage} from './state.js';
+import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo} from './state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {askTear} from '../../../../services/ai/gateway.js';
 import {startTearRun} from '../tear-run.js';
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
- if(!['picker','select','clear-file','prompt','artifact','identity','task','task-close','history','history-close'].includes(key))return false;
+ if(!['picker','select','clear-file','prompt','artifact','collect','identity','task','task-close','history','history-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;}
  ctx.store.update(s=>{const a=ensureAgent(s);
+  if(key==='collect'){const id=t.dataset.id;if(tearTaskInfo(s,id)?.complete&&agentFiles(s).some(f=>f.id==='tear-artifact-'+id)){a.collectedArtifacts??={};a.collectedArtifacts[id]=true;}}
   if(key==='task'){a.history=false;a.picking=false;}
   if(key==='task')a.selectedTask=TEAR_STAGES[t.dataset.id]&&a.jobs[t.dataset.id]?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
   if(key==='task-close')a.selectedTask=null;

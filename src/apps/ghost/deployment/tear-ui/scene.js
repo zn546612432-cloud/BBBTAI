@@ -5,7 +5,7 @@ export function createTearScene(canvas,{reduced=false}={}){
  const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),lerp=(a,b,n)=>a+(b-a)*n;
  let W=1,H=1,DPR=1,scene,loop,appleDots=[],last=0,lastDraw=0,raf=0,active=false,layout='';
  const mouse={x:0,y:0,tx:0,ty:0};
- const state={mode:'IDLE',speed:.0055,targetSpeed:.0055,t:0,pulsePos:-1,pulseActive:false,jawOpen:0,targetJawOpen:0,appleGlow:.35,targetAppleGlow:.35,progress:0,targetProgress:0};
+ const state={mode:'IDLE',speed:.0055,targetSpeed:.0055,t:0,pulsePos:-1,pulseActive:false,jawOpen:0,targetJawOpen:0,appleGlow:.35,targetAppleGlow:.35,progress:0,targetProgress:0,attention:0,targetAttention:0};
  const bone=[232,230,225],gold=[222,185,111],mixBone=(p,a=1)=>`rgba(${bone.map((v,i)=>Math.round(lerp(v,gold[i],p))).join(',')},${a})`;
 function drawPath(fn,fill,stroke,width=1){ctx.beginPath();fn(ctx);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}}
 function buildHalftoneApple(){
@@ -75,7 +75,7 @@ function drawOuroborosSpine(){
  const u=i/segments,p=alongLoop(loop,state.t/TAU-u*span),profile=bodyProfile(u);
  const d=Math.abs(u-state.pulsePos),pulse=state.pulseActive?Math.max(0,1-d/.12):0;
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(scene.scale,scene.scale);
- if(i===0){drawSkull(pulse);ctx.restore();continue;}
+ if(i===0){const delta=Math.atan2(Math.sin(Math.PI/2-p.angle),Math.cos(Math.PI/2-p.angle));ctx.rotate(clamp(delta,-.65,.65)*state.attention);drawSkull(Math.max(pulse,state.attention));ctx.restore();continue;}
  const goldness=layout==='agent'?clamp((state.progress-u*.55)/.45):state.progress;
  const r=(2+15.5*profile),alpha=(.9-u*.46)*(1-u*.28);
  const color=pulse>.15?`rgba(217,32,39,${Math.min(1,alpha+pulse*.45)})`:mixBone(goldness,alpha);
@@ -116,13 +116,15 @@ function drawOuroborosSpine(){
   const dt=clamp((now-last)/1000||1/40,.001,.05);last=now;lastDraw=now;
   const smooth=k=>1-Math.exp(-k*dt);
   mouse.x=lerp(mouse.x,mouse.tx,smooth(4));mouse.y=lerp(mouse.y,mouse.ty,smooth(4));
-  state.speed=lerp(state.speed,state.targetSpeed,smooth(3));state.jawOpen=lerp(state.jawOpen,state.targetJawOpen,smooth(9));
+  state.attention=lerp(state.attention,state.targetAttention,smooth(6));
+  state.speed=lerp(state.speed,state.targetSpeed*(1-.72*state.attention),smooth(3));state.jawOpen=lerp(state.jawOpen,state.targetJawOpen+state.attention*.22,smooth(9));
   state.appleGlow=lerp(state.appleGlow,state.targetAppleGlow,smooth(5));state.progress=lerp(state.progress,state.targetProgress,smooth(5));
   if(!reduced)state.t=(state.t+state.speed*dt*60)%TAU;
   if(state.pulseActive){state.pulsePos+=dt*.85;if(state.pulsePos>1.15)state.pulsePos=-.1;}
   ctx.clearRect(0,0,W,H);drawBackgroundGrid();drawHalftoneApple(now/1000);drawOuroborosSpine();
  }
  return {resize,update,
+  attention(on){state.targetAttention=on&&!reduced?1:0;},
   pointer(x,y){mouse.tx=clamp(x,-1,1);mouse.ty=clamp(y,-1,1);},
   start(){if(active)return;active=true;last=performance.now();raf=requestAnimationFrame(animate);},
   stop(){active=false;cancelAnimationFrame(raf);},
