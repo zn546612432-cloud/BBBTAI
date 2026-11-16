@@ -5,10 +5,12 @@ import {startTearRun} from '../tear-run.js';
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
- if(!['picker','select','clear-file','prompt','artifact','identity'].includes(key))return false;
+ if(!['picker','select','clear-file','prompt','artifact','identity','task','task-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;}
  ctx.store.update(s=>{const a=ensureAgent(s);
+  if(key==='task')a.selectedTask=TEAR_STAGES[t.dataset.id]&&a.jobs[t.dataset.id]?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
+  if(key==='task-close')a.selectedTask=null;
   if(key==='picker')a.picking=!a.picking;
   if(key==='select'){const f=agentFiles(s).find(f=>f.id===t.dataset.id);if(f){a.selected=f.id;a.picking=false;a.draft=TEAR_STAGES[storyFileStage(f)]?.prompt||'';}}
   if(key==='clear-file'){a.selected=null;a.draft='';}
