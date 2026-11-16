@@ -5,7 +5,7 @@
 // Outstanding one-shot receipts survive lock, reload, and developer-date
 // reconstruction. Ordinary chat notices retain their original live-only rule.
 export function queueableNotices(notices,seenIds=new Set()){
- return (notices||[]).filter(n=>n?.id&&!n.silent
+ return (notices||[]).filter(n=>n?.id&&!n.silent&&!n.bannerSuppressed
   &&(!seenIds.has(n.id)||(n.bannerPending===true&&n.bannerShown!==true)));
 }
 export class IncomingBannerQueue{
@@ -16,7 +16,7 @@ export class IncomingBannerQueue{
  }
  enqueue(notices){
   for(const n of notices||[]){
-   if(!n?.id||n.silent||this.queuedIds.has(n.id))continue;
+   if(!n?.id||n.silent||n.bannerSuppressed||this.queuedIds.has(n.id))continue;
    this.queuedIds.add(n.id);this.pending.push(n);
   }
   this.next();

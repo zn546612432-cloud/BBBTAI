@@ -1,3 +1,4 @@
+import {nativeGlyphs} from './native-icons.js';
 const paths={
  bell:'<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5z" fill="currentColor"/><path d="M10 21h4"/>',
  quiet:'<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5z"/><path d="m3 3 18 18M10 21h4"/>',
@@ -27,4 +28,4 @@ const paths={
  power:'<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>',
  settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="9" cy="18" r="2" fill="currentColor"/>'
 };
-export const glyph=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.music}</svg>`;
+export const glyph=name=>nativeGlyphs[name]||`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.music}</svg>`;

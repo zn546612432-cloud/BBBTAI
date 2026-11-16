@@ -20,7 +20,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test tests/control-center.test.mjs tests/touch-gestures.test.mjs tests/final-recording-controls.test.mjs tests/stale-recording-path.test.mjs tests/story55-scripted-phone.test.mjs
+      - run: node --test tests/control-center.test.mjs tests/notification-focus.test.mjs tests/wechat-notifications.test.mjs tests/ios-authored-delivery.test.mjs tests/touch-gestures.test.mjs tests/final-recording-controls.test.mjs tests/stale-recording-path.test.mjs tests/story55-scripted-phone.test.mjs
       - run: npm run build
       - run: npm install --no-save --no-package-lock playwright@1.56.1
       - run: npx playwright install --with-deps chromium
