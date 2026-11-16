@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,sceneLines} from '../src/services/story55/runtime.js';
-import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob,IDENTITY_REVEAL_DELAY_MS,IDENTITY_REVEAL_INTERVAL_MS} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {renderAgentContent} from '../src/apps/ghost/deployment/tear-agent/view.js';
 import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
 import {buildTearPrompt,cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../src/services/ai/tear-prompt.js';
@@ -68,7 +68,8 @@ test('D29 identity uses approved local dialogue and D30 opens the persistent dep
  const s=fixture(),routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:route=>routes.push(route)}};
  time(s,29,'22:00');s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
  assert.equal(D29_IP,'195.22.28.198');assert.equal(sendAgent(s,D29_IP).kind,'preset');
- assert.deepEqual(agent(s).messages.slice(-3).map(m=>m.text),['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal\n時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。']);
+ assert.deepEqual(agent(s).messages.slice(-4).map(m=>m.text),['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。']);
+ agent(s).messages.filter(m=>m.identityReveal).forEach(m=>{m.visibleAt=Date.now()-1;});
  assert.doesNotMatch(renderTearAgent(s),/data-id="identity"/);
  handleTearAgent('gh-tear-picker',{dataset:{}},ctx);assert.match(renderAgentContent(s).content,/你認識這個地址？/);
  handleTearAgent('gh-tear-prompt',{dataset:{id:'identity-recognize'}},ctx);assert.equal(agent(s).draft,'你認識這個地址？');
@@ -86,6 +87,26 @@ test('D29 identity uses approved local dialogue and D30 opens the persistent dep
  handleFlowD03('gh-flow-identity-project',ctx);
  assert.deepEqual(routes,Array(3).fill({appId:'ghost',route:'/deployment',params:{project:'identity'}}));
  assert.equal(s.story55.projects.identity.authorized,true);
+});
+
+test('D30 identity starts the serpent before revealing each line and only exposes the archive last',t=>{
+ let wallTime=100000;t.mock.method(Date,'now',()=>wallTime);
+ const s=fixture();time(s,30,'08:01');s.story55.completed.plan={day:29,clock:'22:10'};s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
+ const a=agent(s);a.history=true;
+ assert.equal(sendAgent(s,D29_IP).kind,'preset');
+ const lines=a.messages.filter(m=>m.identityReveal);
+ assert.equal(lines.length,5);assert.equal(a.ipAuthorized,true);
+ assert.equal(lines[0].visibleAt-wallTime,IDENTITY_REVEAL_DELAY_MS);
+ assert.ok(lines.slice(1).every((line,i)=>line.visibleAt-lines[i].visibleAt===IDENTITY_REVEAL_INTERVAL_MS));
+ for(let count=0;count<=lines.length;count++){
+  if(count)wallTime=lines[count-1].visibleAt;
+  const html=renderTearAgent(s);
+  for(let i=0;i<lines.length;i++)assert.equal(html.includes(lines[i].text),i<count,`line ${i} at stage ${count}`);
+  assert.equal(html.includes('data-action="gh-tear-identity"'),count===lines.length);
+  assert.equal(html.includes('data-id="identity"'),count===lines.length);
+  if(count<lines.length)assert.match(html,/status="running"/);
+ }
+ assert.equal(s.clock,'08:01');
 });
 
 test('TAI keeps the full current-session transcript accessible from the history control',()=>{

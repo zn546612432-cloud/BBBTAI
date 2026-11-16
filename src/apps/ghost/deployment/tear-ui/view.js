@@ -1,6 +1,6 @@
 import {esc} from '../../../../system/ui.js';
 import {renderAgentContent} from '../tear-agent/view.js';
-import {agent,agentFiles,tearTaskInfo} from '../tear-agent/state.js';
+import {agent,agentFiles,tearTaskInfo,identityRevealPending} from '../tear-agent/state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {completed} from '../../../../services/story55/state.js';
 let loading;
@@ -49,7 +49,7 @@ function taskMarkers(s){
  const a=agent(s);
  return Object.keys(TASK_POSITIONS).map(id=>{
   const info=tearTaskInfo(s,id),pos=TASK_POSITIONS[id];
-  if(!info||id==='personal-files'&&info.running)return '';
+  if(!info||id==='personal-files'&&info.running||id==='identity'&&identityRevealPending(s))return '';
   const selected=a.selectedTask===id,cls=info.running?'is-running':'is-complete',collected=!!a.collectedArtifacts?.[id];
   return `<button type="button" class="gh-agent-task-dot ${cls}${collected?' is-collected':''}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${id}" aria-label="${esc(info.title)}，${info.status}，${info.percent}%${collected?'，已領取':''}" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
  }).join('');
@@ -71,7 +71,7 @@ export function renderTearAgent(s){
  const expanded=!hasDialogue&&!a.picking&&!a.selected&&!a.draft;
  const progress=Math.max(0,Math.min(1,Number(a.visualProgress)||0));
  const complete=!!a.visualTaskIds?.length&&a.visualTaskIds.every(id=>tearTaskInfo(s,id)?.complete);
- const status=complete&&progress===1?'complete':working?'running':'idle';
+ const status=identityRevealPending(s)?'running':complete&&progress===1?'complete':working?'running':'idle';
  return `<section class="gh-tear-screen gh-agent-screen${expanded?' is-expanded':''}" data-visual-mode="${expanded?'expanded':'conversation'}" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear">
  <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span class="gh-agent-wordmark">Ouroboros’ Tear<small>Α · Ω / TAI</small></span><button type="button" class="gh-tear-icon gh-agent-history-toggle" data-action="gh-tear-history" aria-label="查看本次聊天紀錄" aria-expanded="${!!a.history}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button></header>
  <div class="gh-agent-orbit"><xm-tear-stage class="gh-agent-visual" expanded="${expanded?1:0}"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" status="${status}" progress="${progress}" attention="${a.draft?1:0}" aria-hidden="true"></xm-tear-orbit><svg class="gh-agent-ring-graphic" viewBox="0 0 400 400" aria-hidden="true"><circle cx="200" cy="200" r="176" class="gh-agent-ring-ticks"/><circle cx="200" cy="200" r="176" class="gh-agent-ring-sweep"/></svg><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></xm-tear-stage></div>
