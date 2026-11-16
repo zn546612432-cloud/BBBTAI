@@ -18,20 +18,23 @@ test('fictional Macau anchors are marked as fictional',()=>{
   assert.ok(p.revealNode||p.revealDay);
  }
 });
-test('Lisbon villa is an exact local lookup of the received D29 token only',()=>{
- const state={day:29,story55:{version:1,completed:{}},content:{notes:[]}};
- assert.equal(searchPlaces(D29_IP,visiblePlaces(state)).length,0);
- state.content.notes.push({id:'s55-d29-ip',text:D29_IP});
- const places=visiblePlaces(state);
- const villa=searchPlaces(' '+D29_IP+' ',places)[0];
- assert.equal(villa.id,'lisbon-villa');
- assert.equal(villa.name,'葡萄牙・里斯本・銀潮別墅');
- assert.equal(villa.kind,'fictional');
- assert.equal(villa.area,'LISBON');
- for(const query of ['195.22','195.22.28.199','里斯本','銀潮別墅','203.0.113.29'])
-  assert.deepEqual(searchPlaces(query,places),[]);
- state.day=28;
- assert.equal(searchPlaces(D29_IP,visiblePlaces(state)).length,0);
+test('Lisbon villa is an exact local lookup regardless of day, save version or notes',()=>{
+ const states=[{day:1,story55:{version:1,completed:{}},content:{notes:[]}},
+  {day:28,story55:{version:1,completed:{}},content:{notes:[]}},
+  {day:29,story55:{version:1,completed:{}},content:{notes:[]}},
+  {day:29,story55:{version:1,completed:{}},content:{notes:[{id:'s55-d29-ip',text:D29_IP}]}},
+  {day:35,story55:{version:1,completed:{}},content:{notes:[{id:'s55-d29-ip',text:'203.0.113.29'}]}},
+  {day:1}];
+ for(const state of states){
+  const before=structuredClone(state),places=visiblePlaces(state);
+  const villa=searchPlaces(' '+D29_IP+' ',places)[0];
+  assert.equal(villa.id,'lisbon-villa');
+  assert.equal(villa.name,'葡萄牙・里斯本・銀潮別墅');
+  assert.equal(villa.kind,'fictional');
+  assert.equal(villa.area,'LISBON');
+  for(const query of ['195.22','195.22.28.199','里斯本','銀潮別墅','203.0.113.29'])assert.deepEqual(searchPlaces(query,places),[]);
+  assert.deepEqual(state,before);
+ }
 });
 test('D01 does not leak the future base or operation site',()=>{
  const p=visiblePlaces({day:1,story55:{version:1,completed:{}}});

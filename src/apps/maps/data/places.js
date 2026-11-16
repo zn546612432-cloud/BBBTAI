@@ -15,16 +15,16 @@ export const MAP_PLACES=Object.freeze([
  {id:'base',name:'废弃大屋',kind:'fictional',area:'MACAU',lat:22.2021,lng:113.5374,description:'',aliases:['训练屋','Training House'],revealNode:'move',storyLocationId:'base'},
  {id:'bank',name:'金辉资金中心',kind:'fictional',area:'MACAU',lat:22.1895,lng:113.5486,description:'',aliases:['Funds Centre','澳兴大厦'],revealNode:'show',storyLocationId:'bank'},
  // A fictional coastal marker, not an actual property's coordinates or IP location.
- {id:'lisbon-villa',name:'葡萄牙・里斯本・銀潮別墅',kind:'fictional',area:'LISBON',lat:38.6985,lng:-9.2985,description:'',aliases:[],exactQuery:D29_IP,revealDay:29}
+ {id:'lisbon-villa',name:'葡萄牙・里斯本・銀潮別墅',kind:'fictional',area:'LISBON',lat:38.6985,lng:-9.2985,description:'',aliases:[],exactQuery:D29_IP}
 ]);
 export const locationById=id=>MAP_PLACES.find(p=>p.id===id)||null;
-/** Only known places appear. Search cannot leak future plot locations. */
+/** Ordinary locations respect story gates; exact-query map entries are independent of story progress. */
 export function visiblePlaces(s){
- if(!s?.story55||s.story55.version!==1)return MAP_PLACES.filter(p=>p.kind==='real'||p.revealDay===1);
+ if(!s?.story55||s.story55.version!==1)return MAP_PLACES.filter(p=>p.kind==='real'||p.revealDay===1||p.exactQuery);
  const done=s.story55.completed||{};
  return MAP_PLACES.filter(p=>{
   if(p.kind==='real')return true;
-  if(p.id==='lisbon-villa')return Number(s.day)>=29&&!!s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP);
+  if(p.exactQuery)return true;
   if(p.revealNode)return Object.hasOwn(done,p.revealNode);
   return Number(s.day||1)>=Number(p.revealDay||1);
  });
