@@ -121,10 +121,10 @@ test('D14 project stays inside native GHOST Projects; runtime error is acknowled
  s.story55.projects.base={authorized:true,batches:[],active:null};
  runFiveLinks(s);
  const page=deploymentView(s,'base'),list=deploymentHome(s);
- assert.match(page,/class="gh-shell gh-flow-shell gh-fw-shell"/);
+ assert.match(page,/class="gh-shell gh-flow-shell gh-fw-shell gh-deploy-screen"/);
  assert.match(page,/role="alertdialog"/);
  assert.match(page,/部署成功！运行失败！/);
- assert.match(page,/<span>链接<\/span><strong>5 \/ 5<\/strong>/);
+ assert.match(page,/<small>5 \/ 5 已完成<\/small>/);
  assert.doesNotMatch(page,/等待D15|現有設備無法|现在设备无法|本轮已完成|s55-card|s55-percent/);
  assert.match(list,/Ouroboros’ Tear/);
  const ctx={store:{get:()=>s,update:f=>f(s)}};

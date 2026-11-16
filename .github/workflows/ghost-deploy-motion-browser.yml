@@ -1,0 +1,34 @@
+name: GHOST deployment motion mobile acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/apps/ghost/deployment/motion/**'
+      - 'src/apps/ghost/deployment/index.js'
+      - 'public/apps/ghost/deployment/**'
+      - 'scripts/verify-ghost-deploy-motion-browser.mjs'
+      - '.github/workflows/ghost-deploy-motion-browser.yml'
+permissions:
+  contents: read
+jobs:
+  mobile-motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify-ghost-deploy-motion-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ghost-deploy-motion-mobile
+          path: qa/ghost-deploy-motion/
+          if-no-files-found: ignore
+          retention-days: 14
