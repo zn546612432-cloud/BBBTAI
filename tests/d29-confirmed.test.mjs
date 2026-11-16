@@ -38,3 +38,16 @@ test('fixed D29 scenes, player-opened chess, refusal, scripted chess and Mirage 
  assert.match(entryFor(s,29).body,/Ghost Car Trap/);
  assert.doesNotMatch(entryFor(s,29).body,/里斯本/);
 });
+
+test('older saves update the authored investigation token without altering unrelated chat or edited notes',()=>{
+ const s=activateStory55(initialState()),cfg=story55Config(s);s.day=29;s.clock='22:00';
+ cfg.projects.find(p=>p.id==='identity').key='192.0.2.29';
+ const line=cfg.scenes.plan.find(l=>l[1]===D29_IP);line[1]='192.0.2.29';
+ s.content.notes.push({id:'s55-d29-ip',text:'192.0.2.29'},{id:'unrelated-note',text:'192.0.2.29'});
+ let chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');if(!chat){chat={id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};s.content.conversations.mirage.push(chat);}
+ chat.messages.push({id:'s55-plan-37',text:'192.0.2.29'},{id:'unrelated',text:'192.0.2.29'});
+ tickStory55(s);
+ assert.equal(line[1],D29_IP);assert.equal(cfg.projects.find(p=>p.id==='identity').key,D29_IP);
+ assert.equal(s.content.notes.find(n=>n.id==='s55-d29-ip').text,D29_IP);assert.equal(chat.messages.find(m=>m.id==='s55-plan-37').text,D29_IP);
+ assert.equal(s.content.notes.find(n=>n.id==='unrelated-note').text,'192.0.2.29');assert.equal(chat.messages.find(m=>m.id==='unrelated').text,'192.0.2.29');
+});

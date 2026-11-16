@@ -1,4 +1,4 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady} from './state.js';
+import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts} from './state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {askTear} from '../../../../services/ai/gateway.js';
 import {cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../../../../services/ai/tear-prompt.js';
@@ -14,18 +14,22 @@ export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
  if(!['picker','select','clear-file','prompt','artifact','collect','identity','task','task-close','history','history-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
- if(key==='identity'){ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;}
+ if(key==='identity'){
+  const s=ctx.store.get();if(!tearTaskInfo(s,'identity')?.complete)return true;
+  ctx.store.update(n=>{const a=ensureAgent(n);a.selectedTask=null;a.history=false;a.picking=false;});
+  ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;
+ }
  ctx.store.update(s=>{const a=ensureAgent(s);
   if(key==='collect'){const id=t.dataset.id;if(tearTaskInfo(s,id)?.complete&&agentFiles(s).some(f=>f.id==='tear-artifact-'+id)){a.collectedArtifacts??={};a.collectedArtifacts[id]=true;}}
   if(key==='task'){a.history=false;a.picking=false;}
-  if(key==='task')a.selectedTask=TEAR_STAGES[t.dataset.id]&&a.jobs[t.dataset.id]?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
+  if(key==='task')a.selectedTask=tearTaskInfo(s,t.dataset.id)?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
   if(key==='task-close')a.selectedTask=null;
   if(key==='history'){a.history=!a.history;a.selectedTask=null;a.picking=false;}
   if(key==='history-close')a.history=false;
   if(key==='picker')a.picking=!a.picking;
   if(key==='select'){const f=agentFiles(s).find(f=>f.id===t.dataset.id);if(f){a.selected=f.id;a.picking=false;a.draft=TEAR_STAGES[storyFileStage(f)]?.prompt||'';}}
   if(key==='clear-file'){a.selected=null;a.draft='';}
-  if(key==='prompt'){const id=t.dataset.id;if(stageReady(s,id)&&!TEAR_STAGES[id].file){a.selected=null;a.draft=TEAR_STAGES[id].prompt;a.picking=false;}}
+  if(key==='prompt'){const id=t.dataset.id,identity=identityPrompts(s).find(([key])=>key===id);if(identity||stageReady(s,id)&&!TEAR_STAGES[id].file){a.selected=null;a.draft=identity?.[1]||TEAR_STAGES[id].prompt;a.picking=false;}}
  });return true;
 }
 export function submitTearAgent(form,ctx){
