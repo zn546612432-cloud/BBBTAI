@@ -1,3 +1,4 @@
+import {outputLevel} from '../../../../system/audio/index.js';
 /** Speak visible text through the device's built-in speech engine. No remote API is used. */
 export function speakWeChatText(text,options={}){
   const content=String(text||'').trim();
@@ -8,6 +9,7 @@ export function speakWeChatText(text,options={}){
   engine.cancel?.();
   const voice=new Utterance(content);
   voice.lang=/[\u3400-\u9fff]/.test(content)?'zh-CN':'en-US';
+  voice.volume=outputLevel();
   voice.rate=.95;
   voice.pitch=1;
   engine.speak(voice);

@@ -1,3 +1,5 @@
+import {createControlCenter} from './system/control-center/index.js';
+import {audioDestination} from './system/audio/index.js';
 import {isStory55} from './services/story55/state.js';
 import {wishEventsDue,tickWishes,syncWishReminders} from './services/wishes/index.js';
 import {openWishPurchase} from './apps/reminders/index.js';
@@ -160,6 +162,7 @@ const taiRemote=createTaiRemoteController({
 let imageOptions={maxEdge:1200,quality:.82,cropAspect:0};
 const ctx=()=>({store,router,toast,refresh:render,pickImage(handler,options={}){assetHandler=handler;imageOptions={maxEdge:Math.min(1200,Math.max(250,options.maxEdge||1200)),quality:Math.min(.9,Math.max(.5,options.quality??.82)),cropAspect:Number(options.cropAspect)||0};const input=$('#asset-picker');input.value='';input.click();},download(){const blob=new Blob([JSON.stringify(store.get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ximeng-phone-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
 mountHoldToTalk($('#root'),ctx);
+const controls=createControlCenter({store,root:$('#phone'),router,music:registry.get('music'),settings:registry.get('settings'),context:ctx,closeShade:()=>setShade({progress:0}),lock:()=>{lockscreen.reset();store.update(s=>{s.unlocked=false;});},blocked:()=>phoneBlocked(store.get())||!!powerFullscreen(store.get())});
 function setShade({progress,settle=true}){
  const layer=$('#shade-layer');layer.classList.toggle('is-present',progress>0);layer.classList.toggle('is-dragging',!settle);layer.style.setProperty('--shade-progress',String(progress));layer.setAttribute('aria-hidden',String(progress===0));layer.inert=progress===0;
  $('#screen-layer').inert=progress>0||phoneBlocked(store.get())||!!powerFullscreen(store.get());$('#phone').classList.toggle('notification-open',progress>0);
@@ -217,6 +220,7 @@ function render(){
  $('#phone').classList.toggle('death-draining',s.deathPhase==='draining');
  for(const id of ['screen-layer','status-layer','shade-layer','task-layer','homebar'])$('#'+id).inert=blocked;
  if(blocked){document.activeElement?.closest('#screen-layer')&&document.activeElement.blur();$('#shade-layer').classList.remove('is-present');$('#task-layer').style.visibility='hidden';}else $('#task-layer').style.visibility='';
+ controls.sync();
  if(s.unlocked&&current.appId!=='home')tasks.snapshot(current);
  if(navigation===lastNavigation&&actorsOpen&&$('.editor-actors'))$('.editor-actors').open=true;
  if(changed&&s.unlocked&&!nativeTabSwitch)animateNavigation(previous);
@@ -377,7 +381,7 @@ function startAlarmSound(){
  const AudioContextType=window.AudioContext||window.webkitAudioContext;
  let audio=null;try{if(AudioContextType)audio=new AudioContextType();}catch{}
  const pulse=()=>{if(!store.get().alarmRinging){stopAlarmSound();audio?.close();return;}
-  try{if(audio){audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.value=880;gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.08,audio.currentTime+.04);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.30);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+.32);}}catch{}
+  try{if(audio){audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.value=880;gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.08,audio.currentTime+.04);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.30);osc.connect(gain);gain.connect(audioDestination(audio));osc.start();osc.stop(audio.currentTime+.32);}}catch{}
   navigator.vibrate?.([170,100,170]);
  };pulse();alarmSound=setInterval(pulse,1050);
 }
@@ -589,6 +593,8 @@ $('#root').addEventListener('click',async e=>{
       return;
     }
     if(action==='tai-banner-decline'){callAction('tai-decline',ctx());return;}
+    if(action==='control-center'){controls.show();return;}
+    if(action==='home'&&controls.opened){controls.show(false);return;}
     if(action==='home'&&shade){setShade({progress:0});return;}
     if(!store.get().unlocked){
       if(action==='close-shade'){setShade({progress:0});return;}
@@ -763,7 +769,7 @@ $('#asset-picker').addEventListener('change',async e=>{
 mountViewport($('#phone'));
 setShade({progress:0});
 mountGestures($('#phone'),{
- state:()=>({home:store.get().unlocked&&store.get().nav.current.appId==='home',locked:!store.get().unlocked,shade,page:store.get().homePage||0}),
+ state:()=>({home:store.get().unlocked&&store.get().nav.current.appId==='home',locked:!store.get().unlocked,shade,controls:controls.opened,page:store.get().homePage||0}),
  page:({dx,velocity=0,cancel=false,settle})=>{
   const track=$('#screen-layer .home-track');
   if(!track){pagerBase=null;draggingHome=false;return;}
@@ -790,6 +796,7 @@ mountGestures($('#phone'),{
   }
  },
  shade:setShade,
+ controls:controls.gesture,
  goHome:({dy,settle,complete=false})=>{
   const screen=$('#screen-layer'),status=$('#status-layer');
   if(!settle){

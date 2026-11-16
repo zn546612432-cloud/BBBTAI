@@ -1,3 +1,4 @@
+import {registerAudio} from '../../system/audio/index.js';
 import {musicLibrary} from './features/library/index.js';
 import {musicPlayer} from './features/player/index.js';
 import {uid} from '../../services/id.js';
@@ -14,7 +15,7 @@ export function handle(a,t,c){
  if(a==='music-shuffle'){shuffle=!shuffle;c.refresh();}
  if(a==='music-repeat'){repeat=!repeat;if(audio)audio.loop=repeat;c.refresh();}
  if(a==='music-toggle'){
-  if(!audio){audio=new Audio('/assets/night.wav');audio.loop=repeat;audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{c.store.update(s=>s.musicPlaying=false);});}
+  if(!audio){audio=registerAudio(new Audio('/assets/night.wav'));audio.loop=repeat;audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{c.store.update(s=>s.musicPlaying=false);});}
   if(c.store.get().musicPlaying){audio.pause();c.store.update(s=>s.musicPlaying=false);}
   else audio.play().then(()=>c.store.update(s=>s.musicPlaying=true)).catch(()=>c.toast('音频播放失败'));
  }

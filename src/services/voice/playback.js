@@ -1,3 +1,4 @@
+import {registerAudio} from '../../system/audio/index.js';
 // Unlock on the actual tap, before network/IndexedDB work. Reuse this element
 // when changing tracks; iOS commonly rejects a new element after an async turn.
 export function primeAudio(audio){
@@ -14,5 +15,5 @@ export function primeAudio(audio){
 }
 export function createGestureAudio({prime=true}={}){
  if(typeof Audio==='undefined')return null;
- const audio=new Audio();audio.preload='auto';if(prime)primeAudio(audio);return audio;
+ const audio=registerAudio(new Audio());audio.preload='auto';if(prime)primeAudio(audio);return audio;
 }

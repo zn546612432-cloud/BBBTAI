@@ -1,0 +1,32 @@
+name: Control center mobile checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/system/control-center/**'
+      - 'src/system/audio/**'
+      - 'scripts/verify-control-center-browser.mjs'
+      - '.github/workflows/control-center-browser.yml'
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/control-center.test.mjs tests/touch-gestures.test.mjs tests/final-recording-controls.test.mjs tests/stale-recording-path.test.mjs tests/story55-scripted-phone.test.mjs
+      - run: npm run build
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify-control-center-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: control-center-mobile-evidence
+          path: qa/control-center/
