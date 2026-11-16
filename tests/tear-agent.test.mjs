@@ -146,13 +146,11 @@ test('the serpent gold fill rises with session task progress and reaches full go
  const afterSetup=agent(s).visualProgress;
  assert.ok(afterSetup>=during);
  assert.ok(afterSetup<=.91);
- // Complete the remaining AAB research phase through the existing validation job.
+ // Move the existing research session onto D28, then start its validation phase.
+ time(s,28,'10:00');
  const a=agent(s);
  a.jobs.validation={start:absoluteMinute(s),shown:0,done:false};
  a.visualTaskIds.push('validation');a.visualTaskBaseline.validation=0;
- time(s,28,'10:00');
- // Move the session onto D28's research timeline while preserving task state.
- a.jobs.validation.start=absoluteMinute(s);
  time(s,28,'14:00');
  assert.equal(tearTaskInfo(s,'validation').percent,100);
  assert.equal(tearTaskInfo(s,'survey').percent,100);
