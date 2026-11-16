@@ -6,7 +6,7 @@
 
 - `data/places.js` 是稳定地点 ID 的展示目录，不替代 `src/story/story55/catalog.js` 的剧情源数据。
 - `kind: 'real'` 是真实地区及展示锚点；`kind: 'fictional'` 是虚构地点，`lat/lng` **只用于地图视觉摆放**，不能作为真实导航地址或精确地理事实。
-- `revealDay` 或 `revealNode` 控制地点何时出现在地图和搜索结果。隐藏地点不允许通过搜索或未解锁 deep link 提前透露。
+- `revealDay` 或 `revealNode` 控制普通地点何时出现在地图和搜索结果。里斯本的 `exactQuery` 是独立的精确搜索入口，不受日期或备忘录记录限制。
 - `storyLocationId` 是与既有故事目录对应的 ID，非独立的节点完成信号。**点击地点不自动完成任务**。
 - D30 `/place?id=uk`（实际参数通过路由对象传入）与世界地图切换保留旧逻辑：玩家仍通过“关联文件位置”推进剧情。
 - 玩家存档、已有节点日期、开发者剧情编辑器均不迁移、不清空。
@@ -62,7 +62,7 @@ router.open({appId:'maps',route:'/',params:{id:'orphanage'}});
 
 ### 里斯本沿海底图（D29）
 
-- 收到 Mirage 的 D29 调查地址（同一份备忘录记录）后，地图的搜索框精确匹配故事标识，显示「葡萄牙・里斯本・銀潮別墅」。该标记只是虚构地点的区域展示锚点，与真实 IP、房产、住户无关，不查询任何外部 IP 或地址服务。
+- 地图的搜索框在任何日期精确匹配故事标识 `195.22.28.198`，显示「葡萄牙・里斯本・銀潮別墅」，无需备忘录记录，也不会改变 Mirage 或 Ghost 的剧情门槛。该标记只是虚构地点的区域展示锚点，与真实 IP、房产、住户无关，不查询任何外部 IP 或地址服务。
 - 继续使用现有 Leaflet 组件。里斯本底图由 BBBike Lisbon OSM PBF 开放矢量数据（https://download.bbbike.org/osm/bbbike/Lisbon/，© OpenStreetMap contributors，ODbL 1.0）渲染为本地 WebP。构建脚本 `scripts/render-offline-lisbon-image.py` 使用 GDAL/Pillow，只绘制道路、海岸、绿地和通用地区标签；不储存私人地址或建筑资料，不下载在线瓦片。
 - 仅地图显示功能，不推进 D30 档案或其他剧情节点；返回澳门及原英国线索入口继续沿用现有逻辑。
 

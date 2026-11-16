@@ -21,13 +21,13 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']}:{})});
 await mkdir(out,{recursive:true});
-function seed(){
+function seed(day){
  const s=activateStory55(initialState());
- s.day=29;s.clock='22:00';s.unlocked=true;s.content.alarms=[];
- for(const n of story55Config(s).nodes)if(n.day<=29)s.story55.completed[n.id]={day:n.day,clock:'09:00'};
+ s.day=day;s.clock='08:17';s.unlocked=true;s.content.alarms=[];
+ for(const n of story55Config(s).nodes)if(n.day<day)s.story55.completed[n.id]={day:n.day,clock:'09:00'};
  s.story55.minutesPerSecond=0;s.story55.activeScene=null;
  s.story55.d01={bankClaimed:true,rewardPaid:true};
- s.content.notes.push({id:'s55-d29-ip',day:29,at:'22:00',title:'Ouroboros',text:D29_IP});
+ s.content.notes=s.content.notes.filter(n=>n.id!=='s55-d29-ip');
  s.nav.current={appId:'maps',route:'/',params:{}};
  return s;
 }
@@ -36,7 +36,7 @@ try{
  for(const width of [320,390,430]){
   const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
   await context.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());
-  await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},seed());
+  await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},seed(width===320?1:width===390?28:29));
   page=await context.newPage();
   await page.goto(base+'/BBBTAI/',{waitUntil:'domcontentloaded'});
   await page.locator('#xm-boot-next').click({timeout:45000});
@@ -47,6 +47,7 @@ try{
   // The passcode unlock animates before rendering the persisted app route.
   await host.waitFor({timeout:15000});
   await input.waitFor({timeout:15000});
+  await page.waitForFunction(()=>document.querySelector('xm-leaflet-map')?.area==='MACAU');
   await input.fill('195.22');
   assert.equal(await host.locator('.xm-map-results button').count(),0);
   await input.fill(D29_IP);
