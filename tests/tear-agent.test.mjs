@@ -146,6 +146,9 @@ test('the serpent gold fill rises with session task progress and reaches full go
  const afterSetup=agent(s).visualProgress;
  assert.ok(afterSetup>=during);
  assert.ok(afterSetup<=.91);
+ time(s,25,'16:05');
+ assert.ok(tearTaskInfo(s,'survey').percent>=99);
+ assert.ok(agent(s).visualProgress>.9&&agent(s).visualProgress<1);
  // Move the existing research session onto D28, then start its validation phase.
  time(s,28,'10:00');
  const a=agent(s);
