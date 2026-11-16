@@ -4,7 +4,7 @@ import {existsSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,nodeLink55} from '../src/services/story55/runtime.js';
 import {previewNode55} from '../src/services/story55/controller.js';
-import {completed,nodeStatus} from '../src/services/story55/state.js';
+import {completed,nodeStatus,completeNode} from '../src/services/story55/state.js';
 import {authorizeProject,startDeploymentStep} from '../src/services/story55/projects.js';
 import {begin,finish} from '../src/apps/ghost/state.js';
 import {tick} from '../src/apps/ghost/index.js';
@@ -22,12 +22,13 @@ test('archive deployment returns to Tear, runs once, and is saved only by the go
  const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:loc=>s.nav.current=loc},refresh(){}};
  const click=(action,id)=>handleTearAgent('gh-tear-'+action,{dataset:{id}},ctx);
  assert.equal(savePersonalFiles(s),null);
- for(let i=0;i<5;i++){
+ for(let day=30;day<=32;day++){s.day=day;for(let i=0;i<5;i++){
   const orderId=startDeploymentStep(s,'identity');assert.ok(begin(s,orderId));s.nav.current={appId:'ghost',route:'/run',params:{orderId}};
   finish(s,orderId,true);tick(ctx);
-  assert.equal(s.nav.current.route,i===4?'/tear':'/run');
- }
+  assert.equal(s.nav.current.route,day===32&&i===4?'/tear':'/run');
+ }}
  assert.ok(completed(s,'identity'));assert.doesNotMatch(deploymentView(s,'identity'),/報告已保存/);
+ assert.equal(savePersonalFiles(s),null);s.day=33;
  click('task','identity');assert.match(renderTearAgent(s),/<small>啟動<\/small>/);
  click('identity');assert.ok(agent(s).archiveRun);const started=agent(s).archiveRun.startedAt;
  click('identity');assert.equal(agent(s).archiveRun.startedAt,started);
@@ -46,6 +47,8 @@ test('archive deployment returns to Tear, runs once, and is saved only by the go
  assert.match(renderLibrary(s,'/item/personal-files/account'),/>room404</);
  assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai/photo'),/triplets-baby-photo/);
  assert.equal(unlockPersonalFiles(s,'xitai'),false);
+ assert.equal(unlockPersonalFiles(s,'XITAI'),false);
+ completeNode(s,'questions',{test:true});
  assert.equal(unlockPersonalFiles(s,'XITAI'),true);
  const restored=structuredClone(s);tickStory55(restored);assert.match(renderLibrary(restored,'/item/personal-files/tai'),/IMG_0001.jpg/);
  assert.equal(nodeStatus(s,'photo').state,'ready');

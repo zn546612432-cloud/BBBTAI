@@ -4,7 +4,7 @@ import {completed,isStory55,nodeStatus,overnightSceneNight55,taiRecognized} from
 import {authorizeProject} from '../../../../services/story55/projects.js';
 import {absoluteMinute} from '../../../../system/time/clock.js';
 import {blocksAnonymousMirageInput} from '../../../../services/story55/mirage-input.js';
-import {localFileList,saveGeneratedLocalFile} from '../../../files/features/local-library/index.js';
+import {localFileList,localWorkAttachments,personalFileAttachments,saveGeneratedLocalFile} from '../../../files/features/local-library/index.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
 
 // All fictional research follows the existing phone clock. No real scanning,
@@ -23,7 +23,7 @@ function addIdentityReveal(s,text,extra={},at=Date.now()){
  return addMessage(s,'assistant',text,{...extra,identityReveal:true,visibleAt:Math.max(at+IDENTITY_REVEAL_DELAY_MS,latest+IDENTITY_REVEAL_INTERVAL_MS)});
 }
 export function startPersonalArchiveRun(s,at=Date.now()){
- if(!completed(s,'identity'))return false;
+ if(s.day<33||!completed(s,'identity'))return false;
  const a=ensureAgent(s);
  if(a.archiveRun)return false;
  a.archiveRun={startedAt:at,done:false};a.selectedTask=null;a.picking=false;
@@ -96,7 +96,7 @@ export function addMessage(s,role,text,extra={}){
 const fileStoryId={survey:'s55-d25-survey-',maintenance:'s55-d26-records-',staff:'s55-d27-staff-'};
 export function storyFileStage(file){return Object.entries(fileStoryId).find(([,prefix])=>file?.origin?.app==='wechat'&&file.origin.messageId?.startsWith(prefix))?.[0]||'';}
 export function stageReady(s,id){const d=TEAR_STAGES[id],a=agent(s);return d&&s.day>=d.day&&!a.jobs[id]&&(!d.node||completed(s,d.node))&&(!d.requires||a.jobs[d.requires]?.done);}
-export const agentFiles=s=>[...localFileList(s),...(s.content.mail||[]).flatMap(m=>{const f=commissionAttachment(s,m.id);return f?.kind==='D04'&&commissionPreviewAvailable(s,m.id)&&s.content.orders?.some(o=>o.id===f.orderId&&o.status==='ACCEPTED')?[{id:'kira-'+m.id,name:f.name,kind:'commission',orderId:f.orderId,mailId:m.id}]:[];})];
+export const agentFiles=s=>[...localFileList(s),...localWorkAttachments(s),...personalFileAttachments(s),...(s.content.mail||[]).flatMap(m=>{const f=commissionAttachment(s,m.id);return f?.kind==='D04'&&commissionPreviewAvailable(s,m.id)&&s.content.orders?.some(o=>o.id===f.orderId&&o.status==='ACCEPTED')?[{id:'kira-'+m.id,name:f.name,kind:'commission',orderId:f.orderId,mailId:m.id}]:[];})];
 
 const clamp01=n=>Math.max(0,Math.min(1,Number(n)||0));
 export function tearTaskInfo(s,id){
@@ -135,7 +135,7 @@ export function tearTaskInfo(s,id){
   id,title:definition.title,elapsedMinutes:Math.max(0,Math.floor(elapsedMinutes)),
   progress:clamp01(progress),percent:running?Math.min(99,Math.floor(clamp01(progress)*100)):100,
   running,complete:!running,
-  status:running?(id==='survey'&&job.done?'FUZZING':'PROCESSING'):'COMPLETE'
+  status:running?(id==='survey'&&job.done?'FUZZING':'PROCESSING'):(id==='archive-password'?'FAILED':'COMPLETE')
  };
 }
 function sessionTaskProgress(s,id){
@@ -204,7 +204,7 @@ export function tickTearAgent(s){
   }
   if(elapsed>=d.duration){j.done=true;changed=true;
    if(d.artifact){saveGeneratedLocalFile(s,{id:'tear-artifact-'+id,name:d.artifact,description:d.logs.at(-1)[1]});addMessage(s,'assistant',d.artifact,{artifact:'tear-artifact-'+id,job:id});}
-   if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
+   if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:id==='archive-password'?'破譯失敗。密碼疑似為由五個大寫英文字母組成的人名。':'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
   }
  }
  if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
@@ -231,6 +231,22 @@ export function sendAgent(s,text,fileId){
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
+ if(file?.kind==='personal-evidence'||file?.kind==='personal-folder'){
+  if(file.path==='tai'){
+   if(!completed(s,'questions'))addMessage(s,'assistant','文件暫時無法響應。');
+   else if(!startAgentJob(s,'archive-password'))addMessage(s,'assistant',a.jobs['archive-password']?.done?'破譯失敗。密碼疑似為由五個大寫英文字母組成的人名。':'正在嘗試破解加密文件。');
+  }else if(file.path==='account')addMessage(s,'assistant','看起來像是一個 ID。也許可以在瀏覽器裡找到一些線索。');
+  else if(file.path==='photos/Student_ID.jpg')addMessage(s,'assistant','已識別證件中的學籍資料。');
+  else if(file.path?.startsWith('photos'))addMessage(s,'assistant','這些應該是機主本人的照片。');
+  else if(file.path==='tai/photo')addMessage(s,'assistant','這是一張保存已久的嬰兒合照。');
+  else addMessage(s,'assistant','這個資料夾包含機主的個人檔案。');
+  return {kind:'preset'};
+ }
+ if(completed(s,'dossier')&&(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/room\.?(?:404)\/?(?:[?#].*)?$/i.test(value)||/^room\.?404$/i.test(value))){
+  addIdentityReveal(s,'這些照片中的建築有些眼熟。');
+  addIdentityReveal(s,'比對完成，確認拍攝地點為哈佛大學。');
+  return {kind:'preset'};
+ }
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}
  if(value===D29_IP){
   if(s.day<29||!s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP))addMessage(s,'assistant','目前沒有對應的調查資料。');

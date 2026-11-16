@@ -192,6 +192,7 @@
       "module": "src/apps/mirage/index.js",
       "appId": "mirage",
       "capabilities": {
+        "story.identity-reveal": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send","link"],"proof":"src/services/story55/runtime.js","originDays":[30]},
         "commission.publish": {
           "state": "adapter-required",
           "owner": "commissions",
@@ -317,6 +318,7 @@
       "module": "src/apps/ghost/index.js",
       "appId": "ghost",
       "capabilities": {
+        "story.identity-deploy": {"state":"wired-day","owner":"story55","kinds":["commission"],"proof":"src/services/story55/projects.js","originDays":[30]},
         "mission.start-stages": {
           "state": "adapter-required",
           "owner": "ghost",
@@ -356,6 +358,7 @@
       "module": "src/apps/kira/index.js",
       "appId": "kira",
       "capabilities": {
+        "story.identity-invite": {"state":"wired-day","owner":"story55","kinds":["email","link"],"proof":"src/services/story55/controller.js","originDays":[30]},
         "mail.receive": {
           "state": "adapter-required",
           "owner": "kira",
@@ -535,6 +538,7 @@
       "module": "src/apps/files/index.js",
       "appId": "files",
       "capabilities": {
+        "story.identity-evidence": {"state":"wired-day","owner":"files","kinds":["link"],"proof":"src/apps/files/features/local-library/index.js","originDays":[30]},
         "attachment.add": {
           "state": "adapter-required",
           "owner": "files",
@@ -610,6 +614,7 @@
       "module": "src/apps/browser/index.js",
       "appId": "browser",
       "capabilities": {
+        "story.identity-portrait": {"state":"wired-day","owner":"story55","kinds":["link"],"proof":"src/apps/browser/features/room404/index.js","originDays":[30]},
         "page.open-link": {
           "state": "adapter-required",
           "owner": "browser",

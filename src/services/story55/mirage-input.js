@@ -1,7 +1,7 @@
 // The anonymous MIRAGE Send gate only; never edits saved conversations.
 import {isStory55,taiRecognized} from './state.js';
 export function blocksAnonymousMirageInput(s,id,text){
- if(!isStory55(s)||taiRecognized(s))return false;
+ if(!isStory55(s)||taiRecognized(s)||s.story55?.completed?.photo)return false;
  const contact=s.content?.conversations?.mirage?.find(c=>c.id===id);
  if(id!=='s55-ouroboros'&&!/ouroboros|衔尾蛇|銜尾蛇/i.test(contact?.name||''))return false;
  const value=String(text||'').normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{Cf}]/gu,'');

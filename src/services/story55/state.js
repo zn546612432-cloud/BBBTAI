@@ -5,6 +5,16 @@ export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
 export const projectById=(s,id)=>story55Config(s).projects.find(n=>n.id===id);
 export const completed=(s,id)=>!!s?.story55?.completed&&Object.hasOwn(s.story55.completed,id);
+export const identityMessagesReady=s=>s.day>=33&&completed(s,'ig');
+export function observeIdentityMirageSend(s){
+ if(!isStory55(s)||!identityMessagesReady(s))return;
+ if(completed(s,'photo')&&completed(s,'questions')){
+  s.story55.identityInviteRequested=true;return;
+ }
+ if(completed(s,'questions'))return;
+ const r=s.story55.identityContact??={count:0};
+ if(r.count<4){r.count++;if(r.count===4)r.replyDay=s.day+1;}
+}
 // Share the existing overnight mainline checkpoint with the unified clock
 // and charging rules. Only explicitly marked scenes hold the story at 03:00.
 export const overnightSceneGate55=s=>isStory55(s)
@@ -24,6 +34,8 @@ export function nodeStatus(s,id){
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
  if(id==='d29-chess'&&!s.story55.d29ChessOpened)return {state:'locked',reason:'等待打開國際象棋'};
  if(id==='plan'&&!s.story55.d29ChessExited)return {state:'locked',reason:'等待棋局結束'};
+ if(id==='questions'&&!(s.story55.identityContact?.replyDay<=s.day))return {state:'locked',reason:'等待對方回覆'};
+ if(id==='invite'&&!s.story55.identityInviteRequested)return {state:'locked',reason:'等待聯絡銜尾蛇'};
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame?.phase!=='closing')
   return {state:'locked',reason:'等待 Mirage 賽後交流'};
  const missing=n.requires.filter(x=>!completed(s,x));
@@ -53,7 +65,7 @@ export function story55ChargeGate(s){
  // Every day's LINK and explicit equipment payment must settle before
  // advancing; the existing overnight hold handles the 03:00 2% state.
  if(s.day>=14&&s.day<=24&&!completed(s,'base')&&!s.story55.projects?.base?.batches?.[s.day-14]?.complete)return 'plot';
- return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
+ return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)&&!(n.id==='recognition'&&(s.story55.identityContact?.replyDay>s.day||!completed(s,'identity')&&s.story55.projects?.identity?.batches?.some(b=>b?.complete&&b.day===s.day))))?'plot':null;
 }
 
 // D13 is a waiting day until the 22:10 KIRA mail. The D13 exhibition and

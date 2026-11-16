@@ -117,7 +117,7 @@ test('scheduled authored messages are replayed chronologically and remain editab
 test('node preview reconstructs same-day prerequisites but does not complete target',()=>{
  const s=phone();
  prepareStory55NodeAtDay(s,'recognition');
- assert.equal(s.day,30);
+ assert.equal(s.day,33);
  assert.equal(completed(s,'invite'),true);
  assert.equal(completed(s,'recognition'),false);
  assert.equal(s.story55.noappInstalled,undefined);

@@ -47,7 +47,7 @@ test('original iOS-style reminders and desktop widget never become story task ca
  const {reminderWidget}=await import('../src/system/shell.js');
  assert.match(reminderWidget(s),/提醒事项表/);
  assert.doesNotMatch(reminderWidget(s),/data-action="s55-node"/);
- assert.equal(appUnlocked('noapp',s),true);
+ assert.equal(appUnlocked('noapp',s),false);
 });
 test('D01 diary is untitled ordinary life; reminder markup remains supported elsewhere',()=>{
  const s=fixture();

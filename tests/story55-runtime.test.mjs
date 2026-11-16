@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,PhoneStore} from '../src/services/storage.js';
 import {activateStory55,tickStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,anonymousPresence55} from '../src/services/story55/runtime.js';
-import {story55Config,completed,nodeStatus,date55,taiRecognized,story55ChargeGate} from '../src/services/story55/state.js';
+import {story55Config,completed,nodeStatus,date55,taiRecognized,story55ChargeGate,observeIdentityMirageSend} from '../src/services/story55/state.js';
 import {authorizeProject,startDeploymentStep,deploymentPercent,upgradeHardware,upgradeBaseFramework} from '../src/services/story55/projects.js';
 import {previewNode55} from '../src/services/story55/controller.js';
 import {validateStory55Config,importStory55Config,exportStory55Config} from '../src/services/story55/config.js';
@@ -85,13 +85,15 @@ test('failed game cannot increase progress; current batch remains resumable',()=
  const s=fixture();previewNode55(s,'base');authorizeProject(s,'base','OUROBOROS-14');s.story55.hardware=2;
  const id=startDeploymentStep(s,'base');begin(s,id);finish(s,id,false);assert.equal(deploymentPercent(s,'base'),0);assert.equal(startDeploymentStep(s,'base'),id);solveRun(s,id);assert.equal(deploymentPercent(s,'base'),0);
 });
-test('file → map → browser → five messages → encrypted photo → invitation unlocks NoApp without D56',()=>{
+test('file → map → browser → four messages → next day conversation → encrypted photo → invitation',()=>{
  const s=fixture();previewNode55(s,'dossier');assert.equal(taiRecognized(s),false);
  readEvidence55(s,'file','dossier');assert.equal(nodeStatus(s,'uk').state,'ready');readEvidence55(s,'map','uk');readEvidence55(s,'page','harvard');readEvidence55(s,'page','ig');
- for(let i=0;i<4;i++){sendQuestion55(s);assert.equal(completed(s,'questions'),false);}sendQuestion55(s);assert.equal(completed(s,'questions'),true);
+ for(let i=0;i<4;i++)observeIdentityMirageSend(s);
+ assert.equal(nodeStatus(s,'questions').state,'locked');s.day++;playScene(s,'questions');
  authorizeProject(s,'photo','ARCHIVE-03');s.story55.hardware=2;runBatch(s,'photo');readEvidence55(s,'file','triplets');tickStory55(s);
+ assert.ok(!s.content.mail.some(m=>m.id==='invite-mail'));observeIdentityMirageSend(s);tickStory55(s);
  assert.ok(s.content.mail.some(m=>m.id==='invite-mail'));markMail55(s,'invite-mail');playScene(s,'recognition');
- assert.equal(s.day,30);assert.equal(taiRecognized(s),true);assert.ok(installed(s).some(m=>m.id==='noapp'));
+ assert.equal(s.day,34);assert.equal(taiRecognized(s),true);assert.ok(installed(s).some(m=>m.id==='noapp'));
  const p=registry.get('maps').render({store:{get:()=>s}},{route:'/place',params:{id:'uk'}});assert.match(p,/查看关联网页/);
 });
 test('config import rejects cycles, impossible deadlines and wrong completion totals atomically',()=>{
@@ -134,10 +136,10 @@ test('developer location stays open while home widget keeps native reminders',as
  const s=fixture();s.nav={current:{appId:'developer',route:'/story55',params:{}},stack:[]};previewNode55(s,'code');
  assert.equal(s.nav.current.appId,'developer');assert.match(home(s),/还有 41 天/);assert.match(reminderWidget(s),/提醒事项表/);assert.doesNotMatch(reminderWidget(s),/基础框架邮件|data-action="s55-node"/);
 });
-test('five questions become real MIRAGE history and NoApp installation precedes recognition',()=>{
+test('identity conversation becomes real MIRAGE history and NoApp installation precedes recognition',()=>{
  const s=fixture();previewNode55(s,'questions');
- for(let i=0;i<5;i++)sendQuestion55(s);
- const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-question-')).length,5);assert.equal(chat.messages.filter(m=>m.id==='s55-questions-answer').length,1);assert.throws(()=>sendQuestion55(s));
+ playScene(s,'questions');
+ const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,21);assert.throws(()=>sendQuestion55(s));
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.text.includes('欢迎回家')));
 });

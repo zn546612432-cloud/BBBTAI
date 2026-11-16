@@ -33,7 +33,7 @@ export const PERSONAL_FILES_ID='personal-files';
 const personalPath='/item/'+PERSONAL_FILES_ID;
 const personalImages=['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg'];
 export function savePersonalFiles(s){
- if(!completed(s,'identity')||!s.story55?.tearAgent?.archiveRun?.done)return null;
+ if(s.day<33||!completed(s,'identity')||!s.story55?.tearAgent?.archiveRun?.done)return null;
  const files=s.content.localFiles??=[];
  let f=files.find(x=>x.id===PERSONAL_FILES_ID);
  if(!f){f={id:PERSONAL_FILES_ID,name:'Personal Files',kind:'personal-folder',folder:'downloads',createdDay:s.day,createdTime:s.clock,origin:{app:'ghost'},deleted:false,createdAt:Date.now(),unlocked:false};files.push(f);}
@@ -44,6 +44,7 @@ export function savePersonalFiles(s){
 export function unlockPersonalFiles(s,password){
  const f=fileById(s,PERSONAL_FILES_ID);
  if(!f||f.deleted||password!=='XITAI')return false;
+ if(!completed(s,'questions'))return false;
  f.unlocked=true;
  if(nodeStatus(s,'photo-decrypt').state==='ready')completeNode(s,'photo-decrypt');
  return true;
@@ -115,10 +116,15 @@ function workFiles(s){
   return [];
  });
 }
+export const localWorkAttachments=s=>workFiles(s).map(f=>({id:'work-file-'+f.id,name:f.name,kind:'work-key'}));
 const folderIcon='<svg class="fl-folder-art" viewBox="0 0 32 28" aria-hidden="true"><path fill="#72caff" d="M2 4a4 4 0 0 1 4-4h8l4 4h8a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><path fill="#339cf4" d="M2 10h28v13a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>';
 const folderRow=(route,name)=>'<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="'+esc(route)+'">'+folderIcon+'<span>'+esc(name)+'</span><span class="fl-chevron">›</span></button>';
 const personalRow=(path,name,detail,thumb='')=>'<button type="button" class="fl-row" data-action="files-local-personal-open" data-route="'+esc(path)+'">'+(thumb?'<img class="fl-personal-thumb" src="'+esc(thumb)+'" alt="">':'<span class="fl-archive-icon">TXT</span>')+'<span class="fl-row-copy"><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></span><span class="fl-chevron">›</span></button>';
 const personalImage=name=>'/assets/story55/personal-files/'+name;
+export function personalFileAttachments(s){
+ const f=fileById(s,PERSONAL_FILES_ID);if(!f||f.deleted)return [];
+ return [['account','account.txt'],['tai','TAI'],['photos','Photos'],...personalImages.map(name=>['photos/'+name,name]),...(f.unlocked?[['tai/photo','IMG_0001.jpg']]:[])].map(([path,name])=>({id:'personal-files/'+path,name,kind:'personal-evidence',path}));
+}
 function personalView(s,route){
  const f=fileById(s,PERSONAL_FILES_ID),tail=route.slice(personalPath.length);
  const shell=(name,back,body)=>'<div class="fl-library">'+nav(name,back)+body+'</div>';
@@ -237,7 +243,7 @@ export function submitLibraryForm(form,ctx){
  if(form.dataset.form==='files-local-personal-unlock'){
   const password=String(new FormData(form).get('password')||'');let unlocked=false;
   ctx.store.update(s=>{unlocked=unlockPersonalFiles(s,password);});
-  if(!unlocked)ctx.toast?.('密碼錯誤');
+  if(!unlocked)ctx.toast?.(password==='XITAI'&&!completed(ctx.store.get(),'questions')?'文件暫時無法響應':'密碼錯誤');
   return true;
  }
  if(form.dataset.form==='files-local-search'){

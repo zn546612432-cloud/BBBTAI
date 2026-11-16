@@ -26,6 +26,10 @@ function seed(count){
  const baseProject=s.story55.config.projects.find(p=>p.id==='base');
  s.story55.projects.base={authorized:true,batches:Array.from({length:baseProject.batches},()=>({complete:true,steps:Array(5).fill(true)})),active:null};
  s.story55.projects.identity={authorized:true,batches:[],active:null};
+ if(count===4){
+  for(const day of [30,31]){s.day=day;for(let i=0;i<5;i++){const run=s.ghost.orders[startDeploymentStep(s,'identity')];run.status='success';assert.equal(completeDeploymentRun(s,run),true);}}
+  s.day=33;
+ }
  for(let i=0;i<count;i++){const run=s.ghost.orders[startDeploymentStep(s,'identity')];run.status='success';assert.equal(completeDeploymentRun(s,run),true);}
  s.nav.current={appId:'ghost',route:'/deployment',params:{project:'identity'}};return s;
 }

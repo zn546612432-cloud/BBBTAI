@@ -5,7 +5,7 @@ import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
-import {applyD29Definition,D29_IP,D29_LEGACY_IPS} from '../../story/d29/definition.js';
+import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE} from '../../story/d29/definition.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
@@ -108,7 +108,6 @@ export function finishScene55(s,id){
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
  if(id==='d23-chess')offerD23ChessInvitation(s);
  if(id==='d29-chess')offerStoryChessInvitation(s,29);
- if(id==='plan')appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-d29-offline',from:'system',kind:'terminal-status',text:'Ouroboros 已下線',day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55',notify:false});
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame){
   const postgame=s.story55.d23Postgame;
   postgame.phase='closed';postgame.closed=true;
@@ -228,19 +227,10 @@ export function readEvidence55(s,kind,id){
  if(nodeStatus(s,n.id).state!=='ready'&&!completed(s,n.id))throw Error(nodeStatus(s,n.id).reason);
  if(!completed(s,n.id))completeNode(s,n.id);tickStory55(s);return item;
 }
-export const questions55=['你为什么和我长得一模一样？','那是我的照片吗？','还是你用AI做的？','这样玩弄我有什么好处？','你到底是谁？'];
+export const questions55=IDENTITY_DIALOGUE.filter(([actor])=>actor==='me').map(([,text])=>text);
 export function sendQuestion55(s){
- if(nodeStatus(s,'questions').state!=='ready')throw Error(nodeStatus(s,'questions').reason);
- const i=s.story55.questions,chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
- if(!chat)throw Error('MIRAGE联络记录尚未建立');
- appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-question-'+i,from:'me',text:questions55[i],day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
- s.story55.questions=Math.min(5,i+1);
- if(s.story55.questions===5){
-  const reply='你已经找到了我留下的线索，最后一个文件夹里还有一份孤儿院档案；破译它，你就会知道为什么我们的面孔如此相似。';
-  appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:'s55-questions-answer',from:chat.id,text:reply,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
-  completeNode(s,'questions');
- }
- tickStory55(s);
+ if(sceneLines(s,'questions')[scene55(s,'questions').index]?.[0]!=='me')throw Error('等待對方回覆');
+ return advanceScene55(s,'questions');
 }
 // Scripted conversations navigate to the existing messaging apps, not Calendar.
 export function chatNodeLink55(s,id){
@@ -322,6 +312,12 @@ export function tickStory55(s){
  applyD25Definition(story55Config(s));
  applyD26D28Definition(story55Config(s));
  applyD29Definition(story55Config(s));
+ // Old archives that were prematurely unlocked must obey the new interaction gate.
+ const personal=s.content.localFiles?.find(f=>f.id==='personal-files');
+ if(personal&&!completed(s,'questions'))personal.unlocked=false;
+ for(const chat of s.content.conversations.mirage||[]){
+  chat.messages=chat.messages.filter(m=>!(m.from==='system'&&(/(?:已|目前)?(?:下[線线]|[離离][線线])\s*[。.]?$/.test(String(m.text||''))||m.id==='s55-d29-offline')));
+ }
  // Update only the delivered authored IP and its unchanged note in older saves.
  for(const m of s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros')?.messages||[])
   if(m.id?.startsWith('s55-plan-')&&D29_LEGACY_IPS.includes(m.text))m.text=D29_IP;
@@ -403,9 +399,10 @@ export function anonymousPresence55(s,now=Date.now()){
  if(s.day===23&&s.story55?.d23Postgame){
   return completed(s,'d23-chess-finish')?{online:false,reason:'已下線'}:{online:true,reason:'在線'};
  }
+ if(!final55(s)&&s.day>=33&&completed(s,'ig')&&!completed(s,'questions'))return {online:nodeStatus(s,'questions').state==='ready',reason:''};
  if(final55(s)||s.story55.activeScene)return {online:false,reason:'当前无法联系'};
  if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
- if(s.day===29&&completed(s,'plan'))return {online:false,reason:'已下線'};
+ if(s.day===29&&completed(s,'plan'))return {online:false,reason:''};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
  if(s.day>=15&&s.day<=24){
   const clock=typeof s.clock==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s.clock)?s.clock:'';

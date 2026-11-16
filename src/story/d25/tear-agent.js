@@ -1,6 +1,7 @@
 // Scripted fictional work logs; no network, external scanning or executable artifacts.
 export const TEAR_GREETING='你好，我是小TAI，今天有什麼可以幫助你？';
 export const TEAR_STAGES={
+ 'archive-password':{day:33,node:'questions',file:'TAI',title:'TAI / DECRYPT',duration:50,logs:[[0,'正在嘗試破解加密文件。'],[50,'破譯失敗。密碼疑似為由五個大寫英文字母組成的人名。']]},
  survey:{day:25,file:'security_survey_0612.zip',prompt:'分析澳亞銀行的設備資料，建立研究模型，開始漏洞研究。',title:'AAB_SECURITY',duration:95,artifact:'AAB_SECURITY.project',logs:[[0,'已建立研究工程：AAB_SECURITY。'],[4,'正在索引阿威提供的設備資料。'],[12,'正在補充設備的產品資訊及版本記錄。'],[25,'已建立初步系統拓撲模型。'],[37,'正在分析可用的軟件樣本。'],[49,'發現多處設備資料不一致。已標記待核實項目。'],[63,'正在建立隔離測試環境。'],[86,'Fuzzing 工程已初始化。'],[95,'已啟動持續測試。我會在後台繼續研究。\n目前的設備清單可能並不完整。我已開始研究現有資料，但需要更準確的維保記錄。\n你可以離開此介面，工程將繼續運行。']]},
  maintenance:{day:26,requires:'survey',file:'maintenance_records.zip',prompt:'新的維保記錄拿到了，更新研究工程。',title:'AAB_SECURITY',duration:110,logs:[[0,'正在比對新舊設備資料。'],[18,'確認設備存在不同版本。'],[36,'已保存上一輪測試結果。'],[52,'正在修正研究模型。'],[74,'測試環境更新完成。'],[95,'已恢復 Fuzzing 工程。'],[110,'持續測試中。預計需要更多時間完成驗證。']]},
  staff:{day:27,file:'security_staff.zip',prompt:'處理阿威和胡楓的身份資料，完成兩人的安保人員登記。',title:'STAFF_RECORDS',duration:110,artifact:'staff_sync.log',logs:[[0,'已建立獨立工程：STAFF_RECORDS。'],[8,'正在解析並核對人員資料。'],[19,'已確認兩名待處理人員：阿威、胡楓。'],[34,'正在處理相關登記記錄。'],[48,'發現部分資料存在衝突。正在重新核驗。'],[72,'人員資料更新完成。'],[86,'人臉識別記錄同步完成。'],[103,'正在進行最終一致性驗證。'],[110,'執行完成。兩名人員的登記狀態均正常。\n你要求處理的兩名人員資料已全部完成。執行回執已保存至本機。']]},
