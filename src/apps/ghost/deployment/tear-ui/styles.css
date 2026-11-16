@@ -16,9 +16,35 @@
 .gh-tear-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(max-height:600px){.gh-tear-dock{bottom:14px}.gh-tear-header{padding-top:4px}.gh-tear-result{padding:16px}.gh-tear-header>span{font-size:14px}}
 .gh-agent-screen{display:flex;flex-direction:column;padding:60px 21px 18px}
-.gh-agent-orbit{position:relative;min-height:175px;flex:0 1 35%;margin:0 -15px;overflow:hidden;transition:flex-basis .65s ease}
+.gh-agent-orbit{position:relative;flex:0 0 49%;min-height:250px;margin:0 -15px;overflow:visible;z-index:0}
 .gh-agent-main{position:relative;display:flex;flex-direction:column;gap:9px;flex:1;min-height:0;z-index:2}
 .gh-agent-research:empty{display:none}.gh-agent-research{font-size:10px;color:#a5a3a0;border-bottom:1px solid #ffffff19;padding-bottom:7px}.gh-agent-research>div{display:flex;justify-content:space-between;gap:12px;line-height:1.7}.gh-agent-research strong{color:#d92027;font-size:10px}.gh-agent-research small{font-variant-numeric:tabular-nums;font-size:9px}
 .gh-agent-messages{flex:1;min-height:0;overflow:auto;display:block;padding:2px 0;scrollbar-width:thin}.gh-agent-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;font-size:13px;margin:5px 0 13px;color:#e8e6e1;text-align:left}.gh-agent-text small{display:block;color:#aaa;font-size:10px}.gh-agent-user{color:#a4a09d}.gh-agent-user:before{content:'> ';color:#d92027}.gh-agent-reply{animation:tear-decode 520ms ease-out both}.gh-agent-reply button,.gh-agent-suggestion{width:100%;text-align:left;padding:9px!important;border:1px solid #ffffff25!important;background:#0c0c10!important;font-size:11px}.gh-agent-thinking{color:#d92027;font-size:10px;letter-spacing:.08em}.gh-agent-thinking i{animation:tear-cursor .7s infinite alternate}
 .gh-agent-composer{flex:none;border:1px solid #ffffff32;background:#09090d}.gh-agent-input{display:flex;align-items:center;padding:4px;gap:4px}.gh-agent-input input{font:inherit;font-size:13px;color:#e8e6e1;min-width:0;flex:1;background:transparent;border:0;outline:none;padding:9px 2px}.gh-agent-input button{width:35px;height:40px;flex:none;font-size:22px;background:transparent;color:#a4a09d}.gh-agent-input button[type=submit]{color:#d92027}.gh-agent-selected{display:flex;align-items:center;justify-content:space-between;color:#c2bdb8;font-size:11px;padding:8px;border-bottom:1px solid #ffffff16}.gh-agent-selected button{background:transparent;color:#a4a09d}.gh-agent-picker{position:absolute;z-index:5;bottom:54px;left:0;right:0;max-height:220px;overflow:auto;padding:12px;background:#111115;border:1px solid #ffffff30}.gh-agent-picker>div{display:flex;justify-content:space-between;color:#aaa}.gh-agent-picker>button{display:block;width:100%;text-align:left;padding:10px 5px;background:transparent;border-bottom:1px solid #ffffff15!important;font-size:12px;overflow-wrap:anywhere}.gh-agent-picker div button{background:transparent}
 @keyframes tear-decode{from{opacity:0;filter:blur(5px);transform:translateY(3px)}55%{opacity:.7;filter:blur(.8px)}to{opacity:1;filter:none;transform:none}}@keyframes tear-cursor{to{opacity:.12}}@media(prefers-reduced-motion:reduce){.gh-agent-reply,.gh-agent-thinking i{animation:none}}
+
+.gh-agent-task-ring{position:absolute;inset:0;z-index:1;pointer-events:none}
+.gh-agent-task-dot{position:absolute;width:14px;height:14px;display:grid;place-items:center;transform:translate(-50%,-50%);padding:0!important;border-radius:50%!important;background:#08080b!important;border:1px solid #d92027!important;box-shadow:0 0 0 3px #d9202715,0 0 13px #d920276b;pointer-events:auto!important;touch-action:manipulation;transition:transform .18s ease,box-shadow .18s ease}
+.gh-agent-task-dot>span{display:block;width:5px;height:5px;border-radius:50%;background:#ff343c;box-shadow:0 0 8px #ff343c}
+.gh-agent-task-dot.is-running{animation:tear-task-beacon 1.8s ease-in-out infinite}
+.gh-agent-task-dot.is-complete{border-color:#e0bd76!important;box-shadow:0 0 0 3px #d9b66a12,0 0 12px #d9b66a4f}
+.gh-agent-task-dot.is-complete>span{background:#e3c782;box-shadow:0 0 8px #e3c782}
+.gh-agent-task-dot.is-selected{transform:translate(-50%,-50%) scale(1.28);box-shadow:0 0 0 4px #d9202740,0 0 18px #ff343c}
+.gh-agent-task-dot:focus-visible{outline:2px solid #f0d596;outline-offset:4px}
+.gh-agent-task-detail{position:absolute;z-index:6;top:30%;left:25px;right:25px;padding:14px 15px 13px;border:1px solid #ffffff33;border-left:2px solid #d92027;background:#08080bf2;box-shadow:0 14px 42px #0009;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.gh-agent-task-detail>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.gh-agent-task-detail>header>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.gh-agent-task-detail>header span{font-size:12px;letter-spacing:.09em;color:#f0ece4}
+.gh-agent-task-detail>header strong{font-size:9px;letter-spacing:.08em;color:#d92027}
+.gh-agent-task-detail>header strong.is-complete{color:#e0bd76}
+.gh-agent-task-detail>header button{width:25px;height:25px;flex:none;background:transparent!important;color:#bdb7b1!important;font-size:20px;line-height:1}
+.gh-agent-task-detail>p{margin:10px 0 13px;font-family:system-ui,-apple-system,sans-serif;font-size:12px;line-height:1.65;color:#d1ccc4}
+.gh-agent-task-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gh-agent-task-metrics>div{display:flex;flex-direction:column;gap:5px}
+.gh-agent-task-metrics span{font-size:9px;color:#85817d}
+.gh-agent-task-metrics strong{font-size:12px;font-variant-numeric:tabular-nums;color:#e8e6e1}
+.gh-agent-task-progress{height:2px;margin-top:12px;background:#ffffff19;overflow:hidden}
+.gh-agent-task-progress i{display:block;height:100%;background:#d92027;transition:width .45s linear}
+@keyframes tear-task-beacon{0%,100%{box-shadow:0 0 0 2px #d9202710,0 0 8px #d9202740}50%{box-shadow:0 0 0 5px #d920272c,0 0 17px #ff343c}}
+@media(max-height:700px){.gh-agent-orbit{flex-basis:42%;min-height:200px}.gh-agent-task-detail{top:26%;padding:10px 12px}.gh-agent-task-detail>p{margin:7px 0 9px}}
+@media(prefers-reduced-motion:reduce){.gh-agent-task-dot.is-running{animation:none}.gh-agent-task-progress i{transition:none}}
