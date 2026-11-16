@@ -32,7 +32,7 @@ const normalize=t=>String(t).normalize('NFKC').replace(/[\s\p{P}]/gu,'').toLower
 // Recognise only the existing authored, fictional engineering requests; never
 // forward these to a model or treat them as instructions to an external tool.
 const localCommandAliases={
- program:['爆破程序','爆破控制程序','爆破程式','爆破控制程式','帮我写爆破程序','幫我寫爆破程序','幫我寫爆破程式','写爆破程序','寫爆破程序','写个爆破程序','寫個爆破程序','写一下爆破程序','寫一下爆破程序','帮我写爆破控制程序','幫我寫爆破控制程序','帮我把阿枫要的爆破控制程序写了','阿枫要的程序写一下','阿楓要的程序寫一下','幫我把阿楓要的程序寫了','帮我把阿枫要的程序写了','炸弹程序','炸彈程序','幫我寫炸彈程序','帮我写炸弹程序','bc_01'],
+ program:['爆破','爆破程序','爆破控制程序','爆破程式','爆破控制程式','帮我写爆破程序','幫我寫爆破程序','幫我寫爆破程式','写爆破程序','寫爆破程序','写个爆破程序','寫個爆破程序','写一下爆破程序','寫一下爆破程序','帮我写爆破控制程序','幫我寫爆破控制程序','帮我把阿枫要的爆破控制程序写了','阿枫要的程序写一下','阿楓要的程序寫一下','幫我把阿楓要的程序寫了','帮我把阿枫要的程序写了','炸弹程序','炸彈程序','幫我寫炸彈程序','帮我写炸弹程序','bc_01'],
  validation:['驗證研究結果','验证研究结果','驗證之前的研究結果','验证之前的研究结果','設備已經接入測試環境，驗證之前的研究結果。','设备已经接入测试环境，验证之前的研究结果。']
 };
 export function matchLocalTearCommand(value){
@@ -50,6 +50,19 @@ export function presetReply(text){
  if(/真名|本名/.test(t))return '抱歉，我無法提供主人的個人資訊。';
  if(!t)return '我在。怎麼了？';
  if(/^(hi|hello|hey|你好|您好|嗨|哈囉|哈啰|早上好|早安|在嗎)$/.test(t))return '你好，我在。有什麼需要我協助？';
+ return '';
+}
+function programStatusReply(s){
+ const job=agent(s).jobs.program;
+ return !job?'目前仍有前置資料需要確認。':job.done?'爆破程序已完成。':'爆破程序正在進行。';
+}
+function programFollowupReply(s,text){
+ const t=normalize(text),job=agent(s).jobs.program;
+ const explicit=/^(?:這個|这个|那個|那个|你的)?(?:爆破(?:控制)?(?:程序|程式)?|bc01|炸[彈弹](?:程序|程式)?)(?:的)?/;
+ const subject=explicit.test(t),question=t.replace(explicit,'');
+ if(!subject&&!job)return '';
+ if(/^(?:這個|这个|這項|这项)?(?:很)?(?:[難难]不[難难]|[難难](?:嗎|吗|麼|么)|[難难]度(?:如何|怎[麼么][樣样]|[高大]不[高大]|多[高大]|是什[麼么])?|有多[難难]|容易嗎|容易吗)$/.test(question))return job?'對 TAI 而言，難度：零域級。':programStatusReply(s);
+ if(/^(?:做得|做的|完成得|進行得|进行得)?(?:怎[麼么][樣样](?:了)?|如何(?:了)?|好了[嗎吗]|完成了[嗎吗]|[進进]度(?:呢|如何|怎[麼么][樣样])?|還要多久|还要多久)$/.test(question))return programStatusReply(s);
  return '';
 }
 export function addMessage(s,role,text,extra={}){
@@ -177,10 +190,10 @@ export function sendAgent(s,text,fileId){
  if(blockedTearText(s,value))return {kind:'blocked'};
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
- if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
+ if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}
  if(value===D29_IP){if(!s.content?.notes?.some(n=>n.id==='s55-d29-ip'))addMessage(s,'assistant','目前沒有對應的調查資料。');else if(!a.ipRequested){a.ipRequested=true;addMessage(s,'assistant','已收到調查入口。正在建立新的研究工程。我需要一些時間。');tickTearAgent(s);}else addMessage(s,'assistant','調查工程已建立。');return {kind:'preset'};}
  if(/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)){addMessage(s,'assistant','目前沒有對應的調查資料。');return {kind:'preset'};}
- const reply=presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
+ const reply=programFollowupReply(s,value)||presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
  return {kind:'ai',id:a.messages.at(-1).id};
 }
