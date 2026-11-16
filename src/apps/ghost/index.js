@@ -11,7 +11,7 @@ import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {renderTearRun,renderTearHome,tickTearRun,tearDeployed,tearRunAvailability} from './deployment/tear-run.js';
 import {handleTearAgent,submitTearAgent} from './deployment/tear-agent/actions.js';
-import {ensureAgent} from './deployment/tear-agent/state.js';
+import {beginTearChatSession,ensureAgent} from './deployment/tear-agent/state.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
@@ -29,7 +29,7 @@ const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params
 const fmt=ms=>`${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor(Math.max(0,ms)/1000%60).toString().padStart(2,'0')}`;
 const title=(back,label,right='')=>`<div class="gh-top">${button(back,'‹','aria-label="返回"','gh-back')}<span>${label}</span><span>${right||'●'}</span></div>`;
 const shareBtn=(s,source)=>ghostShareSource(s,source)?button('share','↗','aria-label="分享至 MIRAGE" title="分享至 MIRAGE"','gh-share-button'):'';
-let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=null,shareConfirmFor=null;
+let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=null,shareConfirmFor=null,tearChatSessionOpen=false;
 const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConfirmFor.route===loc.route&&
   ((shareConfirmFor.source.projectId&&shareConfirmFor.source.projectId===loc.params?.project)||
    (shareConfirmFor.source.orderId&&shareConfirmFor.source.orderId===loc.params?.orderId))&&
@@ -57,12 +57,8 @@ export function tick(ctx){
  }
  if(Object.values(s.ghost?.orders||{}).some(x=>x.status==='settling'&&now>=x.dueAt&&Number.isFinite(configFor(s,x.type,x.id).reward)))ctx.store.update(n=>settle(n));
 }
-export function render(ctx,loc){lastContext=ctx;bindControls();if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}const s=ctx.store.get();if(loc.route==='/tear'){
- if(s.story55?.tearAgent&&s.story55.tearAgent.displayRevision!==2){
-  ctx.store.update(n=>ensureAgent(n));
-  const current=ctx.store.get();
-  return renderTearHome(current)||deploymentHome(current);
- }
+export function render(ctx,loc){lastContext=ctx;bindControls();if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}let s=ctx.store.get();if(loc.route==='/tear'){
+ if(!tearChatSessionOpen){tearChatSessionOpen=true;ctx.store.update(n=>beginTearChatSession(n));s=ctx.store.get();}
  return renderTearHome(s)||deploymentHome(s);
 }if(loc.route==='/tear-run')return renderTearRun(s,loc.params?.orderId)||deploymentHome(s);if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return (loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s))+shareDialogMarkup(s,loc);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
  if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>${g.history.length}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;
@@ -109,7 +105,9 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
   if(!tearDeployed(s))return;
   ctx.store.update(n=>ensureAgent(n));
   const active=Object.values(s.story55.tearRuns||{}).find(r=>tearRunAvailability(s,r.id).resume);
-  return active?nav(ctx,'/tear-run',{orderId:active.id}):nav(ctx,'/tear');
+  if(active)return nav(ctx,'/tear-run',{orderId:active.id});
+  ctx.store.update(n=>beginTearChatSession(n));tearChatSessionOpen=true;
+  return nav(ctx,'/tear');
  }
  if(a==='tear-back')return nav(ctx,'/deployment',{project:'base'});
  if(a==='share'){
