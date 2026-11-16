@@ -20,7 +20,9 @@ const checkProfileTypography=async page=>{
   const title=get('h1'),heading=rect('h1'),avatar=rect('.r404-avatar-large'),name=rect('.r404-display-name'),stats=rect('.r404-stats'),controls=rect('.r404-controls'),frame=profile.getBoundingClientRect();
   return {handle:title.textContent,weight:Number(getComputedStyle(title).fontWeight),size:parseFloat(getComputedStyle(title).fontSize),centered:Math.abs((heading.left+heading.right-frame.left-frame.right)/2)<2,summaryAligned:name.left>=avatar.right&&Math.abs(name.left-stats.left)<2&&stats.top>=name.bottom,controlsBelow:controls.top>=Math.max(avatar.bottom,stats.bottom),labelsFit:[...get('.r404-stats').children].every(el=>el.scrollWidth<=el.clientWidth),nameFits:title.scrollWidth<=title.clientWidth};
  });
- assert.equal(layout.handle,'room.404');assert.ok(layout.weight>=700&&layout.size>=20,JSON.stringify(layout));for(const key of ['centered','summaryAligned','controlsBelow','labelsFit','nameFits'])assert.equal(layout[key],true,key+': '+JSON.stringify(layout));
+ assert.equal(layout.handle,'room.404');assert.equal(layout.size,18);assert.ok(layout.weight>=700,JSON.stringify(layout));for(const key of ['centered','summaryAligned','controlsBelow','labelsFit','nameFits'])assert.equal(layout[key],true,key+': '+JSON.stringify(layout));
+ assert.equal(await page.locator('.r404').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(14, 17, 22)');
+ assert.equal(await page.locator('.r404-wordmark').evaluate(el=>el.complete&&el.naturalWidth>0),true,'existing Instagram logo is retained');
 };
 // This visual check serves repository assets locally and makes no external
 // requests: abort all network destinations except its own local HTTP server.
