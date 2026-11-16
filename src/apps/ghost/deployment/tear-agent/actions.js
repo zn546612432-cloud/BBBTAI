@@ -23,7 +23,7 @@ export function handleTearAgent(action,t,ctx){
 export function submitTearAgent(form,ctx){
  if(form.dataset.form!=='tear-agent-send')return false;
  const input=form.querySelector('[name=text]'),text=input.value.trim(),s=ctx.store.get();
- if(blockedTearText(s,text)){ctx.toast?.('訊息無法發送');return true;}
+ if(blockedTearText(s,text)){input.value='';ctx.store.update(n=>{ensureAgent(n).draft='';});return true;}
  if(agent(s).thinking)return true;
  const selected=agentFiles(s).find(f=>f.id===agent(s).selected);
  if(selected?.kind==='commission'){
