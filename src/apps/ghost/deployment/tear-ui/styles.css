@@ -27,8 +27,8 @@
 .gh-agent-task-dot{position:absolute;width:14px;height:14px;display:grid;place-items:center;transform:translate(-50%,-50%);padding:0!important;border-radius:50%!important;background:#08080b!important;border:1px solid #d92027!important;box-shadow:0 0 0 3px #d9202715,0 0 13px #d920276b;pointer-events:auto!important;touch-action:manipulation;transition:transform .18s ease,box-shadow .18s ease}
 .gh-agent-task-dot>span{display:block;width:5px;height:5px;border-radius:50%;background:#ff343c;box-shadow:0 0 8px #ff343c}
 .gh-agent-task-dot.is-running{animation:tear-task-beacon 1.8s ease-in-out infinite}
-.gh-agent-task-dot.is-complete{border-color:#e0bd76!important;box-shadow:0 0 0 3px #d9b66a12,0 0 12px #d9b66a4f}
-.gh-agent-task-dot.is-complete>span{background:#e3c782;box-shadow:0 0 8px #e3c782}
+.gh-agent-task-dot.is-complete{border-color:#d92027!important;box-shadow:0 0 0 3px #d9202710,0 0 8px #d9202740}
+.gh-agent-task-dot.is-complete>span{background:#ff343c;box-shadow:0 0 8px #d92027}
 .gh-agent-task-dot.is-selected{transform:translate(-50%,-50%) scale(1.28);box-shadow:0 0 0 4px #d9202740,0 0 18px #ff343c}
 .gh-agent-task-dot:focus-visible{outline:2px solid #f0d596;outline-offset:4px}
 .gh-agent-task-detail{position:absolute;z-index:6;top:30%;left:25px;right:25px;padding:14px 15px 13px;border:1px solid #ffffff33;border-left:2px solid #d92027;background:#08080bf2;box-shadow:0 14px 42px #0009;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
