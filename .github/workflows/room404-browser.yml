@@ -1,0 +1,43 @@
+name: Room404 mobile webpage review
+on:
+  push:
+    branches: [feature/room404-instagram-20261116]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/apps/browser/features/room404/**'
+      - 'public/apps/browser/room404/**'
+      - 'scripts/verify-room404-browser.mjs'
+      - '.github/workflows/room404-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: room404-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/audit-story-skill.mjs
+      - name: Existing repository tests
+        # The only external request in this suite is the existing D06 image
+        # audit: HEAD of 12 immutable public JPEG URLs, with no request body,
+        # credentials, user save or repository content in the request.
+        run: npm test
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify-room404-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: room404-mobile-evidence
+          path: qa/room404/
