@@ -7,7 +7,7 @@
 - Doha26/Instagram-clone: https://github.com/Doha26/Instagram-clone . Inspected `src/screenshots/Demo2.png` for mobile avatar, counts, profile controls and grid proportions. Its 2019 navigation is not copied into the 2025 web page.
 - leocosta1/instagram-clone (MIT): https://github.com/leocosta1/instagram-clone . Responsive web structure reference only.
 
-No upstream application code, screenshot, font or brand artwork is bundled. The page and outline icons are implemented locally inside the existing browser App. The Instagram label identifies the in-story service.
+The Instagram wordmark SVG is reused from `leocosta1/instagram-clone/assets/logo.svg` under its MIT license, retained at `vendor/LICENSE`. No upstream application code, screenshot or font is bundled. The page and outline icons are implemented locally inside the existing browser App. The Instagram label identifies the in-story service.
 
 ## User-owned content
 
