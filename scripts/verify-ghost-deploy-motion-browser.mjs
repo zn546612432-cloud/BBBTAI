@@ -18,7 +18,7 @@ const server=createServer(async(req,res)=>{try{
  }catch{res.writeHead(404).end('not found');}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true}),results=[];
+const browser=await chromium.launch({headless:true,...(process.env.GHOST_QA_CHROMIUM?{executablePath:process.env.GHOST_QA_CHROMIUM}:{})}),results=[];
 await mkdir(out,{recursive:true});
 function seed(count){
  const s=activateStory55(initialState());s.day=30;s.clock='12:00';s.unlocked=true;s.content.alarms=[];s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.story55.hardware=2;
@@ -64,6 +64,13 @@ try{
    assert.equal(await live.locator('.gh-workspace-flow').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
    assert.equal(await live.locator('.gh-workspace-hero').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
    await page.screenshot({path:`${out}/390-projects.png`});
+   await field.locator('video.idle').evaluate(v=>v.pause());
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused;});
+   await field.locator('video.idle').evaluate(v=>{v.currentTime=v.duration-.1;});
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime<1.2;});
+   await live.locator('[data-action=gh-flow-identity-project]').click();
+   await live.locator('.gh-deploy-progress').getByText('5 / 5 已完成').waitFor();
+   await live.locator('[data-action=s55-projects]').click();
    await live.locator('[data-action=gh-flow-home]').click();
    await live.locator('.gh-workspace-home').waitFor();
    await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime>.1;});
