@@ -33,7 +33,7 @@ function seed(){
 try{
  for(const width of [390,375]){
  const s=seed(),context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
- await context.addInitScript(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),s);
+ await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});
  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
@@ -45,11 +45,23 @@ try{
  assert.match(await live.locator('.gh-agent-messages').innerText(),/你好，我是小TAI/);
  assert.equal(await live.locator('.gh-agent-task-dot').count(),2);
  const canvas=live.locator('xm-tear-orbit');
+ const readingSize=await canvas.boundingBox();
  assert.equal(await canvas.getAttribute('progress'),'0');
  await page.clock.runFor(1200);await page.screenshot({path:`${out}/${width}-silver.png`});
  await live.locator('#tear-agent-input').fill('TAI？');await live.locator('button[type=submit]').click();
  assert.match(await live.locator('.gh-agent-messages').innerText(),/主人賜予/);
- await page.clock.runFor(6100);
+ await page.clock.runFor(7100);
+ assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'expanded');
+ const expandedSize=await canvas.boundingBox();
+ assert.ok(expandedSize.width>readingSize.width*1.1,'idle serpent must regain the large reference size');
+ assert.equal(await canvas.getAttribute('emphasis'),'1');
+ await page.screenshot({path:`${out}/${width}-expanded.png`});
+ await live.locator('#tear-agent-input').fill('你好');
+ await page.clock.runFor(900);
+ assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'conversation');
+ assert.ok((await canvas.boundingBox()).width<expandedSize.width*.95);
+ await live.locator('button[type=submit]').click();
+ await page.clock.runFor(7100);
  assert.doesNotMatch(await live.locator('.gh-agent-messages').innerText(),/主人賜予|你好，我是小TAI/);
  await live.locator('[data-action=gh-tear-history]').click();
  assert.match(await live.locator('.gh-agent-history').innerText(),/主人賜予/);
@@ -60,7 +72,7 @@ try{
  await page.screenshot({path:`${out}/${width}-detail.png`});
  await live.locator('[data-action=gh-tear-task-close]').last().click();
  // Geometry: every 44px task target lies on the exact drawn 44% outer radius.
- const geometry=await live.locator('.gh-agent-orbit').evaluate(stage=>{
+ const geometry=await live.locator('.gh-agent-visual').evaluate(stage=>{
   const r=stage.getBoundingClientRect();return [...stage.querySelectorAll('.gh-agent-task-dot')].map(dot=>{
    const p=dot.getBoundingClientRect();return Math.hypot(p.x+p.width/2-r.x-r.width/2,p.y+p.height/2-r.y-r.height/2)/r.width;
   });
@@ -68,7 +80,7 @@ try{
  // Background passage is verified after a reload with the canonical speed enabled.
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  saved.story55.minutesPerSecond=5;
- await page.evaluate(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),saved);
+ await page.evaluate(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},saved);
  await page.reload({waitUntil:'domcontentloaded'});await page.clock.resume();
  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
  await page.clock.pauseAt(new Date(Date.now()+1000));
@@ -92,7 +104,7 @@ try{
  await page.setViewportSize({width,height:500});await page.clock.runFor(500);
  const input=await live.locator('.gh-agent-composer').boundingBox();assert.ok(input.y+input.height<=500);
  await page.screenshot({path:`${out}/${width}-short-viewport.png`});
- assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
+ assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',idleExpansion:'pass',newMessageCompaction:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
  await context.close();
  }
  await writeFile(`${out}/results.json`,JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify(results,null,2));

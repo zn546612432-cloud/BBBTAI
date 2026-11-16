@@ -261,3 +261,25 @@ test('a delayed AI reply cannot leak into a reopened session or clear its new pe
   assert.equal(agent(s).thinking,undefined);assert.equal(agent(s).messages.at(-1).text,'CURRENT_REPLY');
  }finally{globalThis.fetch=originalFetch;}
 });
+
+
+test('expired conversation expands the serpent even with active tasks, without changing task state',()=>{
+ const s=fixture();beginTearChatSession(s);assert.equal(startAgentJob(s,'survey'),true);
+ // Opening the existing chat clears only its transcript, never its running job.
+ beginTearChatSession(s);const before=JSON.stringify(agent(s).jobs);
+ assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
+ agent(s).messages.forEach(m=>{m.visibleAt=Date.now()-6000;});
+ const expanded=renderTearAgent(s);
+ assert.match(expanded,/data-visual-mode="expanded"/);
+ assert.match(expanded,/emphasis="1" status="running"/);
+ assert.equal(JSON.stringify(agent(s).jobs),before);
+ agent(s).history=true;
+ assert.match(renderTearAgent(s),/data-visual-mode="expanded"/);
+ addMessage(s,'user','新訊息');
+ assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
+ agent(s).messages.forEach(m=>{m.visibleAt=Date.now()-6000;});
+ agent(s).draft='正在輸入';
+ assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
+ agent(s).draft='';agent(s).thinking='pending';
+ assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
+});

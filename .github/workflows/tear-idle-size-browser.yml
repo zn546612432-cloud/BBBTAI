@@ -1,0 +1,30 @@
+name: TAI idle serpent mobile acceptance
+on:
+  push:
+    branches: [fix/tear-idle-serpent-scale-20261116]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:pages
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify 375px and 390px expansion, conversation and task state
+        run: node scripts/verify-tear-agent-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tear-idle-size-mobile
+          path: qa/tear-agent/
+          if-no-files-found: ignore
+          retention-days: 14
