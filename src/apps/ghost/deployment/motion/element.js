@@ -11,6 +11,8 @@ if(typeof customElements!=='undefined'&&!customElements.get('xm-ghost-deploy-mot
    root.innerHTML=`<style>:host{display:block;pointer-events:none;position:relative}video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:screen;transition:opacity .24s ease}video.pulse{opacity:0}video.idle.is-pulsing{opacity:0}video.pulse.is-pulsing{opacity:1}@media(prefers-reduced-motion:reduce){video{transition:none}}</style><video class="idle" muted playsinline loop preload="auto" poster="${poster}"><source src="${idleWebm}" type="video/webm"><source src="${idleSrc}" type="video/mp4"></video><video class="pulse" muted playsinline preload="auto"><source src="${pulseWebm}" type="video/webm"><source src="${pulseSrc}" type="video/mp4"></video>`;
    this.idle=root.querySelector('.idle');this.pulse=root.querySelector('.pulse');
    for(const video of [this.idle,this.pulse]){video.muted=true;video.defaultMuted=true;video.playsInline=true;}
+   this.idle.loop=true;
+   this.idle.addEventListener('ended',()=>{if(this.isConnected&&!this.reduced&&!this.pulse.classList.contains('is-pulsing')){this.idle.currentTime=0;this.idle.play().catch(()=>{});}});
    this.pulse.addEventListener('ended',()=>this.finishPulse());
    this.pulse.addEventListener('error',()=>this.finishPulse());
   }

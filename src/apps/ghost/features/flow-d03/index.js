@@ -2,6 +2,7 @@
 import {esc} from '../../../../system/ui.js';
 import {projectById} from '../../../../services/story55/state.js';
 import {deployment,authorizeProject} from '../../../../services/story55/projects.js';
+import {workspaceHero} from '../workspace/view.js';
 import {
  FLOW_TOOL,FLOW_KEY,flowState,acceptFlowKey,installFlowTool,submitFlowScan
 } from '../../../../services/story55/flow-d03.js';
@@ -27,28 +28,28 @@ export function renderFlowD03(s,loc){
   baseReady=!!mail&&!!projectById(s,'base');
  let body='';
  if(loc.route==='/flow-deploy'){
-  body=headline('部署')+'<h1>部署</h1>';
+  body=headline('部署')+workspaceHero('ghost-install','部署','LOCAL DEPLOYMENT');
   if(loc.params?.project==='base'){
-   if(base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>已部署至项目</p>'+btn('base-project','项目','gh-primary')+'</div>';
+   if(base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>已部署至项目</p>'+btn('base-project','查看部署','gh-primary')+'</div>';
    else if(!baseReady)body+='<div class="gh-flow-panel"><p>尚未取得授權</p></div>';
    else body+='<div class="gh-flow-panel"><form data-form="gh-base-key" autocomplete="off"><label for="gh-base-key">密钥</label><input id="gh-base-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
   }else{
-   if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','项目','gh-primary')+'</div>';
+   if(p.deployed)body+='<div class="gh-flow-panel"><b>'+FLOW_TOOL+'</b><p>已部署至项目</p>'+btn('projects','查看部署','gh-primary')+'</div>';
    else body+='<div class="gh-flow-panel"><form data-form="gh-flow-key" autocomplete="off"><label for="gh-flow-key">密钥</label><input id="gh-flow-key" name="key" aria-label="部署密钥" required maxlength="80" spellcheck="false" autocomplete="off" placeholder="请输入密钥"><small class="gh-flow-error" role="status" aria-live="polite"></small><button type="submit" class="gh-button gh-primary">开始</button></form></div>';
    if(baseReady||base.authorized)body+='<div class="gh-flow-panel"><b>Ouroboros’ Tear</b><p>'+(base.authorized?'已部署':'来自 KIRA 的授权附件')+'</p>'+btn('base-deploy',base.authorized?'查看部署':'输入密钥','gh-primary')+'</div>';
   }
  }else if(loc.route==='/flow-install'){
-  body=headline('部署工具','deploy')+'<h1>部署工具</h1><div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>›</span></button></div>';
+  body=headline('部署工具','deploy')+workspaceHero('ghost-install-tool','部署工具','LOCAL INSTALLER')+'<div class="gh-flow-project-list"><button type="button" data-action="gh-flow-install" class="gh-flow-project"><strong>'+FLOW_TOOL+'</strong><span>›</span></button></div>';
  }else if(loc.route==='/flow-projects'){
-  body=headline('项目')+'<h1>项目</h1><div class="gh-flow-project-list">'+
+  body=headline('項目')+workspaceHero('ghost-projects','項目','LOCAL PROJECTS')+'<div class="gh-flow-project-list">'+
    (p.deployed?btn(p.submitted?'record':'scan',FLOW_TOOL+'　›','gh-flow-project'):'')+
    (base.authorized?btn('base-project','Ouroboros’ Tear　›','gh-flow-project'):'')+
    '</div>';
   if(!p.deployed&&!base.authorized)body+='<div class="gh-empty">暂无已部署项目</div>';
  }else if(loc.route==='/flow-record'){
-  body=headline('扫描记录','projects')+'<h1>'+FLOW_TOOL+'</h1><div class="gh-flow-panel"><strong>45 个安全漏洞</strong><p>已提交</p></div>';
+  body=headline('扫描记录','projects')+workspaceHero('ghost-scan-record',FLOW_TOOL,'SCAN RECORD','已提交')+'<div class="gh-flow-panel"><strong>45 个安全漏洞</strong><p>已提交</p></div>';
  }else return '';
- return '<div class="gh-shell gh-flow-shell">'+body+modal()+'</div>';
+ return '<div class="gh-shell gh-flow-shell gh-workspace gh-workspace-flow" data-view-key="ghost-'+esc(loc.route)+'">'+body+modal()+'</div>';
 }
 export function handleFlowD03(action,ctx){
  if(!action.startsWith('gh-flow-'))return false;

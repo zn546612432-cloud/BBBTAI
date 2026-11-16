@@ -18,7 +18,8 @@ import {esc} from '../../system/ui.js';
 import {tools,stages,moduleLabel} from './catalog.js';
 import {ensureGhost,configFor,begin,finish,submit as submitGhostOrder,settle,authorize,restoreCipherSwapBoard,nextGhostRound,exitD01Puzzle,startD01PipePreview,startD02PipePreview,startD03PipePreview,startD04PipePreview,startBaseFrameworkPipePreview} from './state.js';
 import {swap,puzzleSolved,rotate,connected,fingerprints,newCode,createBoard} from './games/logic.js';
-import {circuit,pipe,emblem,toolIcon} from './visuals.js';
+import {circuit,pipe,emblem} from './visuals.js';
+import {renderGhostHome} from './features/workspace/view.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
 import {arcadeAction,arcadeTick,arcadeNeedsTick} from './games/arcade.js';
 import {renderArcade} from './games/arcade-ui.js';
@@ -101,10 +102,10 @@ if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='und
    if(b.arcade&&(o.type!=='cipher'||b.arcade.upstream))body+=renderArcade(b.arcade,o,remaining);
     body+=`<div class="gh-game-footer"><span>● 加密 会话</span><span>操作 ${o.moves}</span></div>`;
   }
- }else body=(isStory55(s)?'<nav class="gh-project-nav" aria-label="GHOST 项目工具">'+button('flow-projects','项目')+'</nav>':'')+`<div class="gh-brand"><span class="gh-wordmark">GHOST<span>®</span></span><span class="gh-live">● 本地 / 在线</span></div><div class="gh-hero">${emblem()}<small>工具程序</small></div><div class="gh-list-label"><span>程序</span></div><div class="gh-tools">${tools.map((t,i)=>button('tool',`<span class="gh-tool-glyph">${toolIcon(t.id)}</span><section><b>${t.name}</b></section><span class="gh-arrow">↗</span>`,`data-tool="${t.id}"`)).join('')}</div><div class="gh-bottom">${button('history','历史记录 <span>↗</span>')}</div>`;
+ }else body=renderGhostHome(isStory55(s));
  const shareDialog=shareDialogMarkup(s,loc);
  const exitDialog=loc.route==='/run'&&o?.id===D01_REPAIR&&o.status==='running'&&exitDialogFor===o.id?`<div class="gh-exit-confirm" role="dialog" aria-modal="true" aria-label="保存修復進度"><div class="gh-exit-card"><h2>退出數據修復？</h2>${button('d01-save','保存並退出','','gh-primary')}${button('d01-discard','放棄並退出','','gh-secondary')}${button('d01-cancel','繼續修復','','gh-secondary')}</div></div>`:'';
- return `<div class="gh-shell" data-view-key="ghost-${loc.route}">${body}${exitDialog}${shareDialog}</div>`;
+ return `<div class="gh-shell gh-workspace ${loc.route==='/'?'gh-workspace-home':''}" data-view-key="ghost-${loc.route}">${body}${exitDialog}${shareDialog}</div>`;
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(action.startsWith('gh-tear-')&&handleTearAgent(action,t,ctx))return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
  if(a==='tear-return'){prepareMirageGhostShareEntry();return ctx.router.open({appId:'mirage',route:'/order/'+t.dataset.id,params:{}});}
