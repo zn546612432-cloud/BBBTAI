@@ -35,6 +35,7 @@ import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js'
 import {maybeResumeTaiDeferred} from './services/ai/live-chat.js';
 import {MessageDelivery,isConversationOpen} from './services/messaging/delivery.js';
 import {IncomingBannerQueue,queueableNotices} from './services/messaging/incoming-banner-queue.js';
+import {wechatNoticeMuted} from './services/messaging/wechat-notifications.js';
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
@@ -138,7 +139,7 @@ const liveBanners=new IncomingBannerQueue({
  eligible:n=>{
   const state=store.get(),channel=n.link?.appId,route=n.link?.route||'';
   const chat=route.startsWith('/chat/')?route.slice(6):null;
-  return state.unlocked&&!phoneBlocked(state)&&n.type!=='tai-incoming-call'
+  return state.unlocked&&!phoneBlocked(state)&&n.type!=='tai-incoming-call'&&!wechatNoticeMuted(state,n)
    &&!(chat&&isConversationOpen(state,channel,chat));
  }
 });
@@ -393,10 +394,10 @@ store.subscribe(()=>{
  const s=store.get();
  // A compulsory active scene or a newly imposed charge gate unplugs the cable.
  if(shortChargeStoryInterrupted(s)){store.update(next=>endShortCharge(next));return;}
- const added=queueableNotices(s.notifications,seenNotices);
+ const added=queueableNotices(s.notifications.filter(n=>!wechatNoticeMuted(s,n)),seenNotices);
  seenNotices=new Set(s.notifications.map(n=>n.id));
  const shown=$('#toast')?.dataset.noticeId;
- if(shown&&s.notifications.some(n=>n.id===shown&&n.silent)){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
+ if(shown&&s.notifications.some(n=>n.id===shown&&(n.silent||wechatNoticeMuted(s,n)))){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
  if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
  if(!quietEditorUpdate&&!noticeSwipeAnimating)render();if(s.unlocked&&!phoneBlocked(s)&&added.length)liveBanners.enqueue(added);taiRemote.sync();});render();taiRemote.sync();
  // The intro is a presentation layer over the existing lockscreen preload.

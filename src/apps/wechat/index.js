@@ -9,6 +9,7 @@ import {esc} from '../../system/ui.js';
 import {canAddWish,addWish,getWish,wishExpired} from '../../services/wishes/index.js';
 import {wishDefinition} from '../../services/wishes/catalog.js';
 import {renderMoments,handleMoment,submitMoment} from './features/moments/index.js';
+import {renderWeChatPreferences,handleWeChatPreferences} from './features/notifications/index.js';
 
 export const manifest={id:'wechat',name:'微信',icon:0,defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
 let pendingWish=null;
@@ -17,6 +18,7 @@ export const render=({store},location)=>{
   const body=location.route.startsWith('/chat/')
     ?renderWeChatChat(state,location.route.slice(6))
     :location.route.startsWith('/moments')?renderMoments(state,location.route)
+    :location.route.startsWith('/chat-info/')||location.route.startsWith('/settings')?renderWeChatPreferences(state,location.route)
     :renderWeChatHome(state,location.route);
   const w=pendingWish&&wishDefinition(pendingWish);
   return body+(w?'<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="加入提醒事项"><div class="wx-wish-panel"><strong>加入提醒事项？</strong><p>'+esc(w.title)+'</p><div class="wx-wish-actions"><button type="button" data-action="wx-wish-cancel">取消</button><button type="button" data-action="wx-wish-confirm">添加</button></div></div></div>':'');
@@ -63,6 +65,7 @@ export function dismissEmojiForKeyboard(input){
 }
 
 export function handle(action,target,ctx){
+  if(handleWeChatPreferences(action,target,ctx))return;
   if(action==='wx-wish-open'){
     const id=target.dataset.wishId;
     if(getWish(ctx.store.get(),id)){ctx.toast?.('已经加入提醒事项');return;}
@@ -115,9 +118,6 @@ export function handle(action,target,ctx){
   if(action==='wx-emoji-insert'||action==='wx-emoji-delete'){
     const input=target.closest('.wx-conversation')?.querySelector('.wx-composer input[name="text"]');
     editEmojiInput(input,action==='wx-emoji-insert'?target.dataset.emoji:null);
-    return;
-  }
-  if(action==='wx-chat-more'){
     return;
   }
   if(action==='wx-tab'){

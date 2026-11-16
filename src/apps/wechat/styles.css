@@ -47,6 +47,12 @@
 .wx-avatar-contact{width:42px;height:42px;min-width:42px;border-radius:5px;background:linear-gradient(150deg,#7caaab,#395975);font-size:17px}
 .wx-chat-avatar-wrap{position:relative;flex-shrink:0;display:block}
 .wx-chat-unread{position:absolute;top:-7px;right:-8px;min-width:17px;height:17px;line-height:17px;padding:0 4px;background:#f34d55;color:#fff;border-radius:12px;text-align:center;font-size:11px;box-shadow:0 0 0 1px #fff}
+.wx-chat-unread.wx-muted-dot{min-width:10px;width:10px;height:10px;padding:0;top:-4px;right:-4px}
+.wx-chat-preview-line{display:flex;align-items:center;gap:8px;min-width:0}.wx-chat-preview-line .wx-chat-preview{flex:1;min-width:0}.wx-mute-icon{color:#a5a5a5;flex-shrink:0}
+.wx-pref-header>button{position:absolute;left:8px;top:0;width:44px;height:46px;font-size:32px;color:#191919}
+.wx-pref-name{padding:23px 18px;background:white;margin-bottom:8px;font-size:17px;font-weight:500}
+.wx-pref-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:#fff;color:#191919;min-height:56px;padding:0 18px;font-size:16px;text-align:left;margin-top:1px}
+.wx-pref-switch{width:49px;height:29px;border-radius:20px;background:#ddd;position:relative;transition:background .18s}.wx-pref-switch:after{content:'';position:absolute;width:25px;height:25px;top:2px;left:2px;border-radius:50%;background:white;box-shadow:0 1px 3px #0002;transition:transform .18s}.wx-pref-toggle[aria-checked='true'] .wx-pref-switch{background:#07c160}.wx-pref-toggle[aria-checked='true'] .wx-pref-switch:after{transform:translateX(20px)}
 .wx-tabs{height:82px;min-height:82px;padding:8px 1px 20px;background:#f8f8f8;border-top:1px solid #dadada;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;z-index:2}
 .wx-tab{height:54px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:flex-start;padding-top:2px;color:#242424;font-size:11px;font-weight:400;padding:0;position:relative}
 .wx-tab-icon{position:relative;height:29px;min-width:29px;display:grid;place-items:center}

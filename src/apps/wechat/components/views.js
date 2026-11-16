@@ -5,6 +5,7 @@ import {actors,isGroup} from '../../../editor/conversations/model.js';
 import {wxIcon} from './icons.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
 import {groupAvatar} from './group-avatar.js';
+import {wechatChatMuted} from '../../../services/messaging/wechat-notifications.js';
 
 const tabs=[
   {id:'chats',label:'微信',icon:'chats',route:'/'},
@@ -77,9 +78,9 @@ function chats(s){
     const time=last?timestampLabel(last,s):'';
     const unread=Math.max(0,Number(c.unread)||0);
     return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(c.name+' '+preview)+'">'+
-      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,resolveWeChatAvatar(c.name,s.characterAvatars?.[c.name]||c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread">'+(unread>99?'99+':unread)+'</span>':'')+'</span>'+ 
+      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,resolveWeChatAvatar(c.name,s.characterAvatars?.[c.name]||c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread'+(wechatChatMuted(s,c.id)?' wx-muted-dot':'')+'" aria-label="'+unread+'條未讀消息">'+(wechatChatMuted(s,c.id)?'':unread>99?'99+':unread)+'</span>':'')+'</span>'+
       '<span class="wx-chat-main"><span class="wx-chat-top"><strong>'+esc(c.name)+'</strong><time>'+esc(time)+'</time></span>'+
-      '<span class="wx-chat-preview">'+esc(preview)+'</span></span></button>';
+      '<span class="wx-chat-preview-line"><span class="wx-chat-preview">'+esc(preview)+'</span>'+(wechatChatMuted(s,c.id)?'<svg class="wx-mute-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="消息免打擾"><path d="M10 19h4m-2-17a6 6 0 0 1 6 6v3m-13 4 2-3V8a5 5 0 0 1 1-3m-4-3 16 18M4 16h13"/></svg>':'')+'</span></span></button>';
   }).join('');
   return frame('chats',title+'<div class="wx-search-region">'+searchBox()+'</div><div class="wx-scroll wx-chat-list">'+(rows||'<p class="wx-empty">暂无聊天，新的对话会显示在这里。</p>')+'</div>',s);
 }

@@ -240,6 +240,14 @@ test('opening and closing task or history panels preserves the unsent composer d
  beginTearChatSession(s);assert.equal(agent(s).draft,'');
 });
 
+test('TAI spoiler submission silently clears draft without a banner or outgoing bubble',()=>{
+ const s=fixture(),a=ensureAgent(s),before=JSON.stringify(a.messages),input={value:'熙泰'};
+ a.draft=input.value;
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},toast:()=>assert.fail('blocked wording must not notify')};
+ assert.equal(submitTearAgent({dataset:{form:'tear-agent-send'},querySelector:()=>input},ctx),true);
+ assert.equal(input.value,'');assert.equal(a.draft,'');assert.equal(JSON.stringify(a.messages),before);
+});
+
 test('a delayed AI reply cannot leak into a reopened session or clear its new pending reply',async()=>{
  const s=fixture();s.nav.current={appId:'ghost',route:'/tear',params:{}};beginTearChatSession(s);
  const ctx={store:{get:()=>s,update:fn=>fn(s)}};
