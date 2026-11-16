@@ -61,7 +61,7 @@ export function tearTaskInfo(s,id){
    running=!validation.done;
    if(!running)elapsedMinutes=Math.max(0,Math.min(elapsed,validation.start+TEAR_STAGES.validation.duration-job.start));
   }else{
-   progress=job.done?.9:Math.min(.9,elapsed/definition.duration*.9);
+   progress=job.done ? .9 : Math.min(.9,elapsed/definition.duration*.9);
    // The setup phase is followed by the existing long-running fuzzing research.
    running=true;
   }
