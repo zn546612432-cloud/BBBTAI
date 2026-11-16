@@ -44,7 +44,7 @@ try{
  await page.locator('.status-control-trigger').tap();
  await page.getByRole('button',{name:'播放',exact:true}).tap();await page.waitForSelector('.cc-media.is-playing');assert.equal(await page.locator('.cc-album').count(),1);await page.screenshot({path:`${output}/playing.png`});await page.getByRole('button',{name:'暫停',exact:true}).tap();await page.waitForSelector('.cc-not-playing');assert.equal(await page.locator('.cc-album').count(),0);
  await page.locator('[data-cc="toggle-focus"]').tap();await page.locator('.cc-mute').tap();
- for(const width of [320,390,430]){await page.setViewportSize({width,height:width===320?640:width===390?844:932});await page.waitForTimeout(200);for(const node of await page.locator('.cc-connections button').all()){const b=await node.boundingBox(),card=await page.locator('.cc-connections').boundingBox();assert.ok(b.x>=card.x&&b.y>=card.y&&b.x+b.width<=card.x+card.width+1&&b.y+b.height<=card.y+card.height+1);}await page.screenshot({path:`${output}/native-idle-${width}.png`});}
+ for(const width of [320,390,430]){await page.setViewportSize({width,height:width===320?640:width===390?844:932});await page.waitForTimeout(200);assert.ok((await page.locator('.cc-focus').boundingBox()).height>=54);for(const node of await page.locator('.cc-connections button').all()){const b=await node.boundingBox(),card=await page.locator('.cc-connections').boundingBox();assert.ok(b.x>=card.x&&b.y>=card.y&&b.x+b.width<=card.x+card.width+1&&b.y+b.height<=card.y+card.height+1);}await page.screenshot({path:`${output}/native-idle-${width}.png`});}
  await page.setViewportSize({width:390,height:844});
 
  await swipe(190,700,190,530);assert.equal(await page.locator('#phone').evaluate(el=>el.classList.contains('control-center-open')),false);
