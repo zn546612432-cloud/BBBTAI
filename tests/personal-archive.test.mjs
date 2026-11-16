@@ -40,6 +40,9 @@ test('archive deployment returns to Tear, runs once, and is saved only by the go
  click('archive-save');assert.equal(localFileList(s).filter(f=>f.id==='personal-files').length,1);
  assert.match(renderLibrary(s,'/folder/downloads'),/Personal Files/);
  assert.match(renderLibrary(s,'/item/personal-files'),/TAI.*account.txt.*Photos/s);
+ assert.match(renderLibrary(s,'/item/personal-files'),/<span>TAI<\/span>/);
+ assert.doesNotMatch(renderLibrary(s,'/item/personal-files'),/🔒/u);
+ assert.match(renderLibrary(s,'/item/personal-files/tai'),/type="password"/);
  assert.match(renderLibrary(s,'/item/personal-files/account'),/>room404</);
  assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai/photo'),/triplets-baby-photo/);
  assert.equal(unlockPersonalFiles(s,'xitai'),false);

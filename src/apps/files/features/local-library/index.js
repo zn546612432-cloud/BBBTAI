@@ -123,7 +123,7 @@ function personalView(s,route){
  const f=fileById(s,PERSONAL_FILES_ID),tail=route.slice(personalPath.length);
  const shell=(name,back,body)=>'<div class="fl-library">'+nav(name,back)+body+'</div>';
  if(!f||f.deleted)return shell('檔案','/folder/downloads',empty);
- if(!tail)return shell('Personal Files','/folder/downloads','<div class="fl-section">'+folderRow(personalPath+'/tai',f.unlocked?'TAI':'TAI 🔒')+personalRow(personalPath+'/account','account.txt','文字文件')+folderRow(personalPath+'/photos','Photos')+'</div><p class="fl-count">3 個項目</p>');
+ if(!tail)return shell('Personal Files','/folder/downloads','<div class="fl-section">'+folderRow(personalPath+'/tai','TAI')+personalRow(personalPath+'/account','account.txt','文字文件')+folderRow(personalPath+'/photos','Photos')+'</div><p class="fl-count">3 個項目</p>');
  if(tail==='/account')return shell('account.txt',personalPath,'<div class="fl-personal-text">room404</div>');
  if(tail==='/tai'||tail.startsWith('/tai/')){
   if(!f.unlocked)return shell('TAI',personalPath,'<section class="fl-preview-main">'+folderIcon+heading('TAI')+'<p>此檔案夾已加密</p></section><form class="fl-editor" data-form="files-local-personal-unlock"><input name="password" type="password" placeholder="輸入密碼" aria-label="密碼" autocomplete="off" required><button type="submit" class="fl-primary">解鎖</button></form>');
