@@ -1,6 +1,6 @@
 /* Video-derived particle field: all labels and controls remain live DOM. */
 .app-ghost .gh-shell.gh-deploy-screen{
- --gh-bg:#0b0d10;--gh-ink:#f1f0e9;--gh-dim:#818388;--gh-line:#24262a;
+ --gh-bg:#000;--gh-ink:#f1f0e9;--gh-dim:#818388;--gh-line:#24262a;
  display:flex;flex-direction:column;min-height:100%;padding:13px 22px 20px;
  color:var(--gh-ink);background:var(--gh-bg);font-family:-apple-system,BlinkMacSystemFont,'PingFang TC',system-ui,sans-serif;
 }
