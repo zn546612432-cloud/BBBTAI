@@ -27,10 +27,10 @@
 .gh-agent-user{color:#a4a09d}
 .gh-agent-user:before{content:'> ';color:#d92027}
 .gh-agent-reply{animation:tear-decode 520ms ease-out both}
-.gh-agent-suggestion{width:100%;text-align:left}
+.gh-agent-suggestion{order:2;width:100%;text-align:left}
 .gh-agent-thinking{color:#d92027;font-size:10px;letter-spacing:.08em}
 .gh-agent-thinking i{animation:tear-cursor .7s infinite alternate}
-.gh-agent-composer{flex:none}
+.gh-agent-composer{order:3;flex:none}
 .gh-agent-input{display:flex;align-items:center}
 .gh-agent-input input{font:inherit;color:#e8e6e1;min-width:0;flex:1;background:transparent;border:0;outline:none}
 .gh-agent-input button{flex:none;background:transparent;color:#a4a09d}
@@ -65,14 +65,14 @@
 @keyframes tear-task-beacon{0%,100%{box-shadow:0 0 0 2px #d9202710,0 0 8px #d9202740}50%{box-shadow:0 0 0 5px #d920272c,0 0 17px #ff343c}}
 /* TAI uses a single square visual stage at every phone size. */
 .gh-agent-screen{display:flex;flex-direction:column;padding:64px 22px max(14px,env(safe-area-inset-bottom));gap:8px}
-.gh-agent-orbit{position:relative;z-index:0;overflow:visible;container-type:size;flex:0 0 min(38svh,340px);width:calc(100% + 32px);min-height:0;margin:-2px -16px 0;transition:flex-grow .75s cubic-bezier(.22,.7,.25,1),flex-basis .75s cubic-bezier(.22,.7,.25,1)}
-.gh-agent-visual{position:absolute;left:50%;top:50%;width:min(100cqw,100cqh);aspect-ratio:1;transform:translate(-50%,-50%);animation:tear-arrive 1.1s ease-out both}
+.gh-agent-orbit{position:relative;z-index:0;overflow:visible;container-type:size;flex:0 0 min(38svh,340px);width:calc(100% + 32px);min-height:0;margin:-2px -16px 0}
+.gh-agent-visual{animation:tear-arrive .35s ease-out both}
 .gh-agent-screen.is-expanded .gh-agent-orbit{flex:1 1 0px}
 .gh-agent-screen.is-expanded .gh-agent-main{flex:0 0 auto;margin-top:auto}
 .gh-agent-screen.is-expanded .gh-agent-messages{flex:0;height:0;padding:0}
 .gh-agent-screen .gh-tear-header>span{font-size:14px;letter-spacing:.3em}
-.gh-agent-main{gap:10px;transition:flex-grow .75s cubic-bezier(.22,.7,.25,1)}
-.gh-agent-research{border:0;padding:0 0 6px;opacity:.72;font-size:9px}
+.gh-agent-main{gap:10px}
+.gh-agent-research{order:1;border:0;padding:0 0 6px;opacity:.72;font-size:9px}
 .gh-agent-research small{font-size:8px;letter-spacing:.06em}
 .gh-agent-messages{padding:2px 0 8px;mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 6px),transparent);-webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 6px),transparent)}
 .gh-agent-text{font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:350;line-height:1.85;margin:4px 0 16px;border:0;background:transparent}
@@ -85,7 +85,7 @@
 .gh-agent-input input::placeholder{color:#777571;font-size:13px;letter-spacing:.08em}
 .gh-agent-input button{width:40px;height:44px;font-size:24px}
 .gh-agent-input button[type=submit]{color:#cdb27e}
-.gh-agent-task-dot{width:44px;height:44px;background:transparent!important;border:0!important;box-shadow:none!important}
+.gh-agent-task-dot{width:var(--tear-task-hit-size,44px);height:var(--tear-task-hit-size,44px);background:transparent!important;border:0!important;box-shadow:none!important}
 .gh-agent-task-dot>span{width:7px;height:7px;background:#f5303c;box-shadow:0 0 0 4px #d9202710,0 0 14px #d9202780;transition:transform .2s}
 .gh-agent-task-dot.is-running{animation:none}
 .gh-agent-task-dot.is-running>span{animation:tear-task-beacon 2.3s ease-in-out infinite}
@@ -97,7 +97,7 @@
 .gh-agent-history>header button{width:44px;height:44px;font-size:24px;background:transparent}
 .gh-agent-history-messages{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .gh-agent-history .gh-agent-text{animation:none}
-@keyframes tear-arrive{from{opacity:0;filter:blur(5px)}to{opacity:1;filter:none}}
+@keyframes tear-arrive{from{opacity:0}to{opacity:1}}
 @keyframes tear-vanish{0%{opacity:0;transform:translateY(8px);filter:blur(3px)}8%,90.9%{opacity:1;transform:translateY(0);filter:none}100%{opacity:0;transform:translateY(-18px);filter:blur(3px)}}
 @keyframes tear-detail-in{from{opacity:0;transform:translateY(calc(-50% + 8px))}to{opacity:1;transform:translateY(-50%)}}
 @media(max-height:700px){.gh-agent-screen{padding-top:56px;gap:4px}.gh-agent-orbit{flex-basis:min(35svh,270px)}.gh-agent-research{font-size:8px}.gh-agent-research small{font-size:7px}.gh-agent-text{margin-bottom:10px}.gh-agent-history{inset:56px 0 0}}
@@ -107,3 +107,25 @@
 .gh-agent-task-backdrop{position:absolute;inset:0;z-index:11;background:#0008;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 
 @media(prefers-reduced-motion:reduce){.gh-agent-reply,.gh-agent-thinking i{animation:none}.gh-agent-task-progress i{transition:none}}
+
+/* Translucent completion and file surfaces retain the moving scene behind them. */
+.gh-tear-result,.gh-agent-task-detail{
+ border:1px solid #ffffff38;border-radius:24px;
+ background:linear-gradient(135deg,#ffffff22,#ffffff07 55%,#c7a66b10),#10131a78;
+ box-shadow:0 22px 60px #0006,inset 0 1px 0 #ffffff2b,inset 0 -1px 0 #ffffff0a;
+ backdrop-filter:blur(24px) saturate(165%);-webkit-backdrop-filter:blur(24px) saturate(165%);
+}
+.gh-agent-task-backdrop{background:#03050830;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.gh-agent-reply button.gh-agent-file-receipt{
+ display:block;width:100%;text-align:left;padding:14px 16px!important;border:1px solid #ffffff2c!important;border-radius:16px;
+ background:linear-gradient(135deg,#ffffff1f,#ffffff05),#171a224d!important;color:#f0e7d5;
+ box-shadow:0 8px 24px #0003,inset 0 1px 0 #ffffff24;
+ backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+}
+#toast[data-notice-id^="tear-complete-"]{
+ border-color:#ffffff45;background:linear-gradient(135deg,#ffffff29,#ffffff0a),#11172280;color:#f2f3f6;
+ box-shadow:0 16px 40px #0005,inset 0 1px 0 #ffffff30;
+ backdrop-filter:blur(28px) saturate(170%);-webkit-backdrop-filter:blur(28px) saturate(170%);
+}
+#toast[data-notice-id^="tear-complete-"] .notification-copy small{color:#f0eee9}
+#toast[data-notice-id^="tear-complete-"] .notification-copy strong{color:#e1e3e9}

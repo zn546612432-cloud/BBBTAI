@@ -46,5 +46,10 @@ export function submitTearAgent(form,ctx){
 
 export function inputTearAgent(target,ctx){
  if(target.id!=='tear-agent-input')return false;
- ctx.store.update(s=>{ensureAgent(s).draft=target.value;});return true;
+ const hadDraft=!!agent(ctx.store.get()).draft;
+ ctx.store.update(s=>{ensureAgent(s).draft=target.value;});
+ // Begin/reverse the visual transition on the first/last character, without
+ // waiting for the existing 250ms Ghost heartbeat or refreshing every key.
+ if(hadDraft!==!!target.value)ctx.refresh?.();
+ return true;
 }

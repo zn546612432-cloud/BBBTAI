@@ -271,7 +271,8 @@ test('expired conversation expands the serpent even with active tasks, without c
  agent(s).messages.forEach(m=>{m.visibleAt=Date.now()-6000;});
  const expanded=renderTearAgent(s);
  assert.match(expanded,/data-visual-mode="expanded"/);
- assert.match(expanded,/emphasis="1" status="running"/);
+ assert.match(expanded,/<xm-tear-stage class="gh-agent-visual" expanded="1"/);
+ assert.match(expanded,/status="running"/);
  assert.equal(JSON.stringify(agent(s).jobs),before);
  agent(s).history=true;
  assert.match(renderTearAgent(s),/data-visual-mode="expanded"/);
@@ -282,4 +283,14 @@ test('expired conversation expands the serpent even with active tasks, without c
  assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
  agent(s).draft='';agent(s).thinking='pending';
  assert.match(renderTearAgent(s),/data-visual-mode="conversation"/);
+});
+
+
+test('completed file receipts use a dedicated glass surface while regular chat remains borderless',()=>{
+ const s=fixture();beginTearChatSession(s);
+ addMessage(s,'assistant','結果已保存',{artifact:'tear-artifact-staff',job:'staff'});
+ const html=renderAgentContent(s).content;
+ assert.match(html,/class="gh-agent-file-receipt" data-id="tear-artifact-staff"/);
+ assert.match(html,/data-action="gh-tear-artifact"/);
+ assert.match(renderTearAgent(s),/<xm-tear-stage/);
 });
