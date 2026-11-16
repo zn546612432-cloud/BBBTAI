@@ -16,6 +16,7 @@ async function collectImages(folder='public',prefix=''){
 await collectImages();
 const priority=url=>/\/room404\/|\/personal-files\/|triplets-baby-photo/.test(url)?0:/\/wechat\/media\/|\/browser\/|\/maps\//.test(url)?1:/\/stickers\//.test(url)?3:2;
 imageUrls.sort((a,b)=>priority(a)-priority(b));
+await mkdir('dist/src/system/startup',{recursive:true});
 await writeFile('dist/src/system/startup/image-manifest.js',`export default ${JSON.stringify(imageUrls)};\n`);
 console.log(`Startup: ${imageUrls.length} bundled images`);
 // Archive is loaded as one file rather than dozens of sequential requests.
