@@ -23,7 +23,7 @@ const modal=()=>{
  return '<div class="gh-flow-overlay"><section class="gh-flow-dialog" role="alertdialog" aria-modal="true"><h2>'+d.title+'</h2><div class="gh-flow-dialog-actions">'+d.buttons+'</div></section></div>';
 };
 export function renderFlowD03(s,loc){
- const p=flowState(s),base=deployment(s,'base'),
+ const p=flowState(s),base=deployment(s,'base'),archive=!!s.story55?.projects?.identity?.authorized,
   mail=s.content.mail?.find(m=>m.story55&&m.project==='base'&&m.read),
   baseReady=!!mail&&!!projectById(s,'base');
  let body='';
@@ -44,8 +44,9 @@ export function renderFlowD03(s,loc){
   body=headline('項目')+workspaceHero('ghost-projects','項目','LOCAL PROJECTS')+'<div class="gh-flow-project-list">'+
    (p.deployed?btn(p.submitted?'record':'scan',FLOW_TOOL+'　›','gh-flow-project'):'')+
    (base.authorized?btn('base-project','Ouroboros’ Tear　›','gh-flow-project'):'')+
+   (archive?btn('identity-project','REMOTE ARCHIVE　›','gh-flow-project'):'')+
    '</div>';
-  if(!p.deployed&&!base.authorized)body+='<div class="gh-empty">暂无已部署项目</div>';
+  if(!p.deployed&&!base.authorized&&!archive)body+='<div class="gh-empty">暂无已部署项目</div>';
  }else if(loc.route==='/flow-record'){
   body=headline('扫描记录','projects')+workspaceHero('ghost-scan-record',FLOW_TOOL,'SCAN RECORD','已提交')+'<div class="gh-flow-panel"><strong>45 个安全漏洞</strong><p>已提交</p></div>';
  }else return '';
@@ -60,6 +61,7 @@ export function handleFlowD03(action,ctx){
   case 'gh-flow-record':dialog=null;route(ctx,'/flow-record');break;
   case 'gh-flow-base-deploy':dialog=null;ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{project:'base'}});break;
   case 'gh-flow-base-project':dialog=null;ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'base'}});break;
+  case 'gh-flow-identity-project':if(ctx.store.get().story55?.projects?.identity?.authorized){dialog=null;ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});}break;
   case 'gh-flow-install':{
    let installed=false;
    ctx.store.update(s=>{installed=installFlowTool(s);});
