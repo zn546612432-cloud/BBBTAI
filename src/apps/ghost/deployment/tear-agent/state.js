@@ -103,7 +103,7 @@ export function syncTearVisualProgress(s){
 export function registerTearVisualTask(s,id){
  if(!TEAR_STAGES[id]||!s.story55?.tearAgent)return false;
  const a=ensureAgent(s);
- a.visualTaskIds??=[];a.visualTaskBaseline??={};
+ a.visualTaskIds??=[];a.visualTaskBaseline??={};a.visualProgress??=0;
  if(a.visualTaskIds.includes(id))return false;
  const info=tearTaskInfo(s,id);
  if(!info)return false;
