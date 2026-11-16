@@ -3,6 +3,7 @@ import {settingsDetail} from './features/details/index.js';
 export const manifest={id:'settings',name:'设置',icon:6,defaultRoute:'/',kicker:'SYSTEM'};
 export function render({store},loc){const s=store.get();return loc.route==='/'?settingsHome(s):settingsDetail(s,loc.route.slice(1));}
 export function handle(a,t,c){
+ if(a==='settings-change-wallpaper')return c.pickImage(src=>{c.store.update(s=>{s.wallpaper=src;});c.toast('已更換壁紙');});
  if(a==='settings-back')c.router.back();
  if(a==='settings-open'){
   const route=t.dataset.route;

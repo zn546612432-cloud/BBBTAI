@@ -1,5 +1,7 @@
 import {settingRow as row,settingToggle as toggle,infoRow as info} from '../rows/index.js';
 import {registry} from '../../../../system/registry.js';
+import {esc} from '../../../../system/ui.js';
+import {rebaseBundledPublicAsset} from '../../../../services/public-assets.js';
 const title={account:'熙蒙',airplane:'飞行模式',wifi:'无线局域网',bluetooth:'蓝牙',cellular:'蜂窝网络',hotspot:'个人热点',battery:'电池',vpn:'VPN',general:'通用',about:'关于本机',update:'软件更新',storage:'iPhone 储存空间',date:'日期与时间',language:'语言与地区',accessibility:'辅助功能',wallpaper:'墙纸',notifications:'通知',sound:'声音与触感',focus:'专注模式',security:'面容 ID 与密码'};
 export function settingsDetail(s,key){const head=`<button class="settings-back" data-action="settings-back">‹ 设置</button><h1>${title[key]||'设置'}</h1>`;
  let body='';
@@ -19,7 +21,7 @@ export function settingsDetail(s,key){const head=`<button class="settings-back" 
  case 'date':body=`<section>${info('日期',s.calendar?.anchorDate||'2025-05-19')}${info('时间',s.clock)}${info('时区','澳门')}</section>`;break;
  case 'language':body=`<section>${info('iPhone 语言','简体中文')}${info('地区','澳门')}</section>`;break;
  case 'accessibility':body=`<section>${toggle('减少动态效果','reduceMotion',s.reduceMotion)}${toggle('粗体文本','boldText',s.boldText)}</section>`;break;
- case 'wallpaper':body=`<section><div class="settings-wallpaper" style="background-image:url('${s.wallpaper}')"></div>${info('当前墙纸','熙蒙的壁纸')}</section>`;break;
+ case 'wallpaper':body=`<section><div class="settings-wallpaper" style="background-image:url('${esc(rebaseBundledPublicAsset(s.wallpaper))}')"></div>${info('目前壁紙','熙蒙的壁紙')}<button class="settings-row" data-action="settings-change-wallpaper" style="color:#007aff;justify-content:center">更換壁紙</button></section>`;break;
  case 'notifications':body=`<section>${toggle('允许通知','allowNotifications',s.allowNotifications!==false)}</section>`;break;
  case 'sound':body=`<section>${toggle('静音模式','silent',s.silent)}${toggle('触感反馈','haptics',s.haptics!==false)}</section>`;break;
  case 'focus':body=`<section>${toggle('勿扰模式','focus',s.focus)}</section>`;break;

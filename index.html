@@ -9,7 +9,7 @@
    <div id="xm-boot-tip-index"></div><p id="xm-boot-tip" aria-live="polite"></p>
    <div id="xm-boot-message" role="status"></div>
   </section>
-  <div hidden><span id="xm-boot-percent">0%</span><div id="xm-boot-progress"><span></span></div></div>
+  <div id="xm-boot-loading" role="status"><span id="xm-boot-loading-label">正在載入</span> <span id="xm-boot-percent">0%</span><div id="xm-boot-progress"><span></span></div></div>
   <button type="button" id="xm-boot-next" hidden>點擊進入</button>
  </div>
 </div><div id="root"></div><script src="/src/system/startup/intro.js"></script><script>
@@ -22,7 +22,7 @@
   if(!boot||boot.classList.contains('xm-boot-done'))return;
   window.__xmBootIntroError?.();
   var percent=byId('xm-boot-percent'),msg=byId('xm-boot-message'),btn=byId('xm-boot-next');
-  if(percent&&percent.textContent==='0%')percent.textContent='加载中';
+  var label=byId('xm-boot-loading-label');if(label)label.textContent='載入中斷';
   if(msg)msg.textContent=reason;
   if(btn){btn.hidden=false;btn.textContent='重新加载手机';btn.onclick=function(){
    var url=new URL(location.href);url.searchParams.set('boot-retry',String(Date.now()));location.replace(url.href);
