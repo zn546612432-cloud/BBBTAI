@@ -1,8 +1,8 @@
 /* One GHOST visual language, shared with the deployment field. Game boards
    keep their own semantic colours and existing interaction surfaces. */
-.app-ghost:has(.gh-workspace) .app-content,.app-ghost:has(.gh-deploy-screen) .app-content{background:#0b0d10}
+.app-ghost:has(.gh-workspace) .app-content,.app-ghost:has(.gh-deploy-screen) .app-content{background:#000}
 .app-ghost .gh-shell.gh-workspace{
- --gh-bg:#0b0d10;--gh-ink:#f1f0e9;--gh-dim:#96989c;--gh-line:#292b2f;
+ --gh-bg:#000;--gh-ink:#f1f0e9;--gh-dim:#96989c;--gh-line:#292b2f;
  background:var(--gh-bg);color:var(--gh-ink);padding:16px 22px 26px;
  font-family:-apple-system,BlinkMacSystemFont,'PingFang TC',system-ui,sans-serif;
 }
@@ -12,10 +12,10 @@
 .gh-workspace-wordmark sup{font-size:10px;letter-spacing:0;vertical-align:top;margin-left:3px}
 .gh-workspace-live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#a5a7a5;white-space:nowrap}
 .gh-workspace-live i{width:6px;height:6px;border-radius:50%;background:#b4db55;box-shadow:0 0 8px #b4db5555}
-.gh-workspace-hero{position:relative;isolation:isolate;min-height:184px;height:clamp(184px,29svh,258px);overflow:hidden;margin:6px 0 14px}
+.gh-workspace-hero{position:relative;isolation:isolate;background:var(--gh-bg);min-height:184px;height:clamp(184px,29svh,258px);overflow:hidden;margin:6px 0 14px}
 .gh-workspace-hero .gh-workspace-field{position:absolute;inset:-9px -34px -12px 1px;z-index:-1;mix-blend-mode:screen;background:center/contain no-repeat url('/apps/ghost/deployment/field-poster.webp');pointer-events:none}
 .gh-workspace-hero .gh-workspace-field:defined{background-image:none}
-.gh-workspace-hero-copy{position:absolute;left:0;bottom:14px;max-width:100%;text-shadow:0 1px 11px #0b0d10}
+.gh-workspace-hero-copy{position:absolute;left:0;bottom:14px;max-width:100%;text-shadow:0 1px 11px #000}
 .app-ghost .gh-workspace .gh-workspace-hero h1{margin:0;color:#f1f0e9;line-height:1.12;font-size:36px;letter-spacing:-.055em;font-weight:650}
 .gh-workspace-hero-copy p{margin:8px 0 0;font:10px/1.3 ui-monospace,monospace;letter-spacing:.12em;color:#a4a5a4}
 .gh-workspace-hero-copy .gh-workspace-live{margin-top:9px}

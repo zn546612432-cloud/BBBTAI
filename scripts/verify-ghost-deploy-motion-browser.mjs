@@ -41,6 +41,8 @@ try{
   assert.match(await live.locator('.gh-deploy-progress').innerText(),new RegExp(count+' / 5 已完成'));
   assert.equal(await live.locator('.gh-deploy-steps li.done').count(),count);
   assert.equal(await live.locator('.gh-deploy-screen').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
+  assert.equal(await live.locator('.gh-deploy-screen').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
+  assert.equal(await live.locator('.gh-deploy-hero').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
   await page.waitForTimeout(350);await page.screenshot({path:`${out}/${width}-idle.png`});
   const t=await field.locator('video.idle').evaluate(v=>v.currentTime);await page.waitForTimeout(250);assert.notEqual(await field.locator('video.idle').evaluate(v=>v.currentTime),t);
   await live.locator('[data-action=s55-run-step]').click();await live.locator('[data-action=gh-start]').click();
@@ -59,6 +61,8 @@ try{
    await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime<1.2;});
    await live.locator('[data-action=s55-projects]').click();
    await live.locator('.gh-workspace-flow').waitFor();
+   assert.equal(await live.locator('.gh-workspace-flow').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
+   assert.equal(await live.locator('.gh-workspace-hero').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
    await page.screenshot({path:`${out}/390-projects.png`});
    await live.locator('[data-action=gh-flow-home]').click();
    await live.locator('.gh-workspace-home').waitFor();
