@@ -10,7 +10,7 @@
 .gh-deploy-nav button:first-child{margin-left:-10px}
 .gh-deploy-nav .gh-share-button{border:0!important;color:#f3f3ee!important;padding:0!important}
 .gh-deploy-nav button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.gh-deploy-hero{position:relative;isolation:isolate;height:clamp(246px,44svh,372px);flex:none;margin:8px 0 8px;overflow:visible}
+.gh-deploy-hero{position:relative;isolation:isolate;background:var(--gh-bg);height:clamp(246px,44svh,372px);flex:none;margin:8px 0 8px;overflow:visible}
 .gh-deploy-screen .gh-deploy-field{position:absolute;inset:0 -7px;z-index:-1;display:block;mix-blend-mode:screen;background:center/contain no-repeat url('/apps/ghost/deployment/field-poster.webp')}
 .gh-deploy-screen .gh-deploy-field:defined{background-image:none}
 .gh-deploy-title{position:absolute;top:8px;left:0;z-index:1}
