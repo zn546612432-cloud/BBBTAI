@@ -2,6 +2,8 @@
 
 ## Visual references
 
+- User-supplied Instagram iOS profile screenshot: centered bold account handle, display name above three left-aligned statistics alongside the avatar. Profile visitor controls and the 2025 web color palette remain unchanged.
+
 - Instagram / Adam Mosseri profile grid explanation, January 19, 2025: https://www.threads.com/@mosseri/post/DFBmsT0SKO6 . Three-column portrait grid fits the story's 2025 setting; no later grid-reordering features were added.
 - Williano/Instagram-UI (MIT): https://github.com/Williano/Instagram-UI . Inspected its public feed screenshot for post header, image, outline action icons, likes and caption hierarchy.
 - Doha26/Instagram-clone: https://github.com/Doha26/Instagram-clone . Inspected `src/screenshots/Demo2.png` for mobile avatar, counts, profile controls and grid proportions. Its 2019 navigation is not copied into the 2025 web page.
