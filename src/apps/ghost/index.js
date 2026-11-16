@@ -174,7 +174,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
   ctx.store.update(n=>{n.ghost.orders[id].keyVerified=true;});
  }
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
- if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
+ if(a==='close'){if(o?.story55Project==='identity'&&o.status==='success'&&completed(s,'identity'))return nav(ctx,'/tear');if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
  if(a==='cipher-easy-reset'){
   if(o?.type!=='cipher'||o.status!=='running'||!o.board?.arcade)return;

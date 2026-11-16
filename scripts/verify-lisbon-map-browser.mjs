@@ -44,7 +44,8 @@ try{
   await page.locator('[data-action=unlock]').click();
   for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
   const host=page.locator('xm-leaflet-map[mode=normal]'),input=host.locator('input');
-  if(!(await host.count()))await page.locator('[data-action=open-app][data-app=maps]').click();
+  // The passcode unlock animates before rendering the persisted app route.
+  await host.waitFor({timeout:15000});
   await input.waitFor({timeout:15000});
   await input.fill('195.22');
   assert.equal(await host.locator('.xm-map-results button').count(),0);
