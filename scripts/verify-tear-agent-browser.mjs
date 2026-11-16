@@ -19,7 +19,12 @@ const server=createServer(async(req,res)=>{try{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const engine=process.env.TEAR_BROWSER==='webkit'?webkit:chromium;
 const browser=await engine.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
-await mkdir(out,{recursive:true});const results=[];
+await mkdir(out,{recursive:true});const results=[];let currentPage;
+async function unlock(page){
+ await page.locator('[data-action=unlock]').click();
+ for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
+ await page.locator('.gh-agent-screen').waitFor();
+}
 function seed(){
  const s=activateStory55(initialState());s.day=28;s.clock='10:00';s.unlocked=true;s.content.alarms=[];
  for(const n of story55Config(s).nodes)if(n.day<=28)s.story55.completed[n.id]={day:n.day,clock:'09:00'};
@@ -33,23 +38,36 @@ function seed(){
 try{
  for(const width of [390,375]){
  const s=seed(),context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
- await context.addInitScript(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),s);
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
+ const page=await context.newPage(),errors=[];currentPage=page;page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});
- await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
+ await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});await unlock(page);
  const live=page.locator('#screen-layer');
  await live.locator('.gh-agent-screen').waitFor();
  await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
  await live.locator('xm-tear-orbit').evaluate(el=>customElements.whenDefined(el.localName));
- await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+100));
+ await page.clock.install();await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  assert.match(await live.locator('.gh-agent-messages').innerText(),/你好，我是小TAI/);
  assert.equal(await live.locator('.gh-agent-task-dot').count(),2);
  const canvas=live.locator('xm-tear-orbit');
+ const readingSize=await canvas.boundingBox();
  assert.equal(await canvas.getAttribute('progress'),'0');
  await page.clock.runFor(1200);await page.screenshot({path:`${out}/${width}-silver.png`});
  await live.locator('#tear-agent-input').fill('TAI？');await live.locator('button[type=submit]').click();
  assert.match(await live.locator('.gh-agent-messages').innerText(),/主人賜予/);
- await page.clock.runFor(6100);
+ await page.clock.runFor(7100);await page.waitForTimeout(900);
+ assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'expanded');
+ const expandedSize=await canvas.boundingBox();
+ assert.ok(expandedSize.width>readingSize.width*1.1,'idle serpent must regain the large reference size');
+ assert.equal(await canvas.getAttribute('emphasis'),'1');
+ console.log(JSON.stringify({width,readingWidth:readingSize.width,expandedWidth:expandedSize.width}));
+ await page.screenshot({path:`${out}/${width}-expanded.png`});
+ await live.locator('#tear-agent-input').fill('你好');
+ await page.clock.runFor(900);await page.waitForTimeout(900);
+ assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'conversation');
+ assert.ok((await canvas.boundingBox()).width<expandedSize.width*.95);
+ await live.locator('button[type=submit]').click();
+ await page.clock.runFor(7100);await page.waitForTimeout(900);
  assert.doesNotMatch(await live.locator('.gh-agent-messages').innerText(),/主人賜予|你好，我是小TAI/);
  await live.locator('[data-action=gh-tear-history]').click();
  assert.match(await live.locator('.gh-agent-history').innerText(),/主人賜予/);
@@ -60,7 +78,7 @@ try{
  await page.screenshot({path:`${out}/${width}-detail.png`});
  await live.locator('[data-action=gh-tear-task-close]').last().click();
  // Geometry: every 44px task target lies on the exact drawn 44% outer radius.
- const geometry=await live.locator('.gh-agent-orbit').evaluate(stage=>{
+ const geometry=await live.locator('.gh-agent-visual').evaluate(stage=>{
   const r=stage.getBoundingClientRect();return [...stage.querySelectorAll('.gh-agent-task-dot')].map(dot=>{
    const p=dot.getBoundingClientRect();return Math.hypot(p.x+p.width/2-r.x-r.width/2,p.y+p.height/2-r.y-r.height/2)/r.width;
   });
@@ -68,16 +86,19 @@ try{
  // Background passage is verified after a reload with the canonical speed enabled.
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  saved.story55.minutesPerSecond=5;
+ // Apply the saved speed at document startup, before the live store can persist.
+ await context.addInitScript(()=>{const key='ximeng-phone-story55-v1',state=JSON.parse(localStorage.getItem(key));if(state){state.story55.minutesPerSecond=5;localStorage.setItem(key,JSON.stringify(state));}});
  await page.evaluate(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),saved);
  await page.reload({waitUntil:'domcontentloaded'});await page.clock.resume();
- await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
- await page.clock.pauseAt(new Date(Date.now()+1000));
+ await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});await unlock(page);
+ await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  await page.evaluate(()=>{window.__qaHidden=true;Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__qaHidden});document.dispatchEvent(new Event('visibilitychange'));});
  await page.clock.runFor(36000);
  await page.evaluate(()=>{window.__qaHidden=false;document.dispatchEvent(new Event('visibilitychange'));});
  await page.clock.runFor(500);
  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
+ console.log(JSON.stringify({beforeClock:before.clock,afterClock:after.clock,speed:before.story55.minutesPerSecond,activeScene:before.story55.activeScene,phoneCall:before.phoneCall?.state,staff:after.story55.tearAgent.jobs.staff,program:after.story55.tearAgent.jobs.program}));
  assert.equal(after.story55.tearAgent.jobs.staff.done,true);assert.equal(after.story55.tearAgent.jobs.program.done,true);
  assert.equal(after.story55.tearAgent.visualProgress,1);
  assert.equal(after.story55.tearAgent.jobs.staff.start,before.story55.tearAgent.jobs.staff.start);
@@ -89,11 +110,14 @@ try{
  const reopened=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  assert.deepEqual(reopened.story55.tearAgent.jobs,after.story55.tearAgent.jobs);
  assert.equal(JSON.stringify(reopened.content.localFiles),files);
- await page.setViewportSize({width,height:500});await page.clock.runFor(500);
+ await page.setViewportSize({width,height:500});await page.clock.runFor(500);await page.waitForTimeout(900);
  const input=await live.locator('.gh-agent-composer').boundingBox();assert.ok(input.y+input.height<=500);
  await page.screenshot({path:`${out}/${width}-short-viewport.png`});
- assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
+ assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',idleExpansion:'pass',newMessageCompaction:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
  await context.close();
  }
  await writeFile(`${out}/results.json`,JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify(results,null,2));
+}catch(error){
+ if(currentPage&&!currentPage.isClosed()){await currentPage.screenshot({path:`${out}/failure.png`});await writeFile(`${out}/failure.html`,await currentPage.content());}
+ throw error;
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

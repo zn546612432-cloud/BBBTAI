@@ -65,9 +65,13 @@
 @keyframes tear-task-beacon{0%,100%{box-shadow:0 0 0 2px #d9202710,0 0 8px #d9202740}50%{box-shadow:0 0 0 5px #d920272c,0 0 17px #ff343c}}
 /* TAI uses a single square visual stage at every phone size. */
 .gh-agent-screen{display:flex;flex-direction:column;padding:64px 22px max(14px,env(safe-area-inset-bottom));gap:8px}
-.gh-agent-orbit{position:relative;z-index:0;overflow:visible;flex:0 0 auto;width:min(100%,38svh,340px);height:auto;min-height:0;aspect-ratio:1;margin:-2px auto 0;animation:tear-arrive 1.1s ease-out both}
+.gh-agent-orbit{position:relative;z-index:0;overflow:visible;container-type:size;flex:0 0 min(38svh,340px);width:calc(100% + 32px);min-height:0;margin:-2px -16px 0;transition:flex-grow .75s cubic-bezier(.22,.7,.25,1),flex-basis .75s cubic-bezier(.22,.7,.25,1)}
+.gh-agent-visual{position:absolute;left:50%;top:50%;width:min(100cqw,100cqh);aspect-ratio:1;transform:translate(-50%,-50%);animation:tear-arrive 1.1s ease-out both}
+.gh-agent-screen.is-expanded .gh-agent-orbit{flex:1 1 0px}
+.gh-agent-screen.is-expanded .gh-agent-main{flex:0 0 auto;margin-top:auto}
+.gh-agent-screen.is-expanded .gh-agent-messages{flex:0;height:0;padding:0}
 .gh-agent-screen .gh-tear-header>span{font-size:14px;letter-spacing:.3em}
-.gh-agent-main{gap:10px}
+.gh-agent-main{gap:10px;transition:flex-grow .75s cubic-bezier(.22,.7,.25,1)}
 .gh-agent-research{border:0;padding:0 0 6px;opacity:.72;font-size:9px}
 .gh-agent-research small{font-size:8px;letter-spacing:.06em}
 .gh-agent-messages{padding:2px 0 8px;mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 6px),transparent);-webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 6px),transparent)}
@@ -93,11 +97,11 @@
 .gh-agent-history>header button{width:44px;height:44px;font-size:24px;background:transparent}
 .gh-agent-history-messages{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .gh-agent-history .gh-agent-text{animation:none}
-@keyframes tear-arrive{from{opacity:0;transform:scale(.94);filter:blur(5px)}to{opacity:1;transform:scale(1);filter:none}}
+@keyframes tear-arrive{from{opacity:0;filter:blur(5px)}to{opacity:1;filter:none}}
 @keyframes tear-vanish{0%{opacity:0;transform:translateY(8px);filter:blur(3px)}8%,90.9%{opacity:1;transform:translateY(0);filter:none}100%{opacity:0;transform:translateY(-18px);filter:blur(3px)}}
 @keyframes tear-detail-in{from{opacity:0;transform:translateY(calc(-50% + 8px))}to{opacity:1;transform:translateY(-50%)}}
-@media(max-height:700px){.gh-agent-screen{padding-top:56px;gap:4px}.gh-agent-orbit{width:min(100%,35svh,270px);min-height:0}.gh-agent-research{font-size:8px}.gh-agent-research small{font-size:7px}.gh-agent-text{margin-bottom:10px}.gh-agent-history{inset:56px 0 0}}
-@media(prefers-reduced-motion:reduce){.gh-agent-orbit,.gh-agent-task-detail,.gh-agent-history,.gh-agent-task-dot.is-running>span{animation:none}.gh-agent-text.is-ephemeral{animation-name:tear-vanish-quiet}.gh-agent-composer{transition:none}}
+@media(max-height:700px){.gh-agent-screen{padding-top:56px;gap:4px}.gh-agent-orbit{flex-basis:min(35svh,270px)}.gh-agent-research{font-size:8px}.gh-agent-research small{font-size:7px}.gh-agent-text{margin-bottom:10px}.gh-agent-history{inset:56px 0 0}}
+@media(prefers-reduced-motion:reduce){.gh-agent-visual,.gh-agent-task-detail,.gh-agent-history,.gh-agent-task-dot.is-running>span{animation:none}.gh-agent-text.is-ephemeral{animation-name:tear-vanish-quiet}.gh-agent-composer,.gh-agent-orbit,.gh-agent-main{transition:none}}
 @keyframes tear-vanish-quiet{0%,90.9%{opacity:1}100%{opacity:0}}
 
 .gh-agent-task-backdrop{position:absolute;inset:0;z-index:11;background:#0008;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
