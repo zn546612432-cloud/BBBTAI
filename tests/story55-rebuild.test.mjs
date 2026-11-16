@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
-import {completed,story55Config,date55} from '../src/services/story55/state.js';
+import {completed,completeNode,story55Config,date55} from '../src/services/story55/state.js';
+import {canCharge,canShortCharge,beginShortCharge,endShortCharge,plugIn} from '../src/system/power/battery.js';
 import {storySourceVersion} from '../src/services/story55/test-snapshots.js';
 import {restartState} from '../src/system/restart/index.js';
 import {D01_REPAIR,D01_ATTACHMENT,D01_DONE} from '../src/story/d01/runtime.js';
@@ -19,6 +20,48 @@ function phone(){
  return s;
 }
 const ids=s=>new Set((s.content.conversations.wechat.find(c=>c.id==='group')?.messages||[]).map(m=>m.id));
+test('developer D30 completes synthetic historical D23 farewell and permits both charge modes',()=>{
+ const s=phone();
+ rebuildStory55AtDay(s,30,'08:00');
+ assert.deepEqual(s.story55.completed['d23-chess-finish'],{day:23,clock:'22:16',test:true});
+ assert.equal(s.matches.some(m=>m.invitationId==='s55-d23-chess-invite'),false);
+ assert.equal(completed(s,'identity'),false);
+ assert.equal(canShortCharge(s),true);
+ assert.equal(canCharge(s),true);
+ assert.equal(beginShortCharge(s),true);
+ assert.equal(endShortCharge(s),true);
+ assert.equal(plugIn(s),true);
+ assert.equal(s.day,31);
+});
+test('legacy developer D30 saves repair the missing gate once without adding dialogue',()=>{
+ const s=phone();
+ rebuildStory55AtDay(s,30,'08:00');
+ delete s.story55.completed['d23-chess-finish'];
+ s.events=s.events.filter(e=>!(e.type==='story55_node_completed'&&e.id==='d23-chess-finish'));
+ assert.equal(canCharge(s),false);
+ assert.equal(canShortCharge(s),false);
+ const restored=structuredClone(s),chat=JSON.stringify(s.content.conversations.mirage),battery=s.batteryPercent;
+ tickStory55(restored);tickStory55(restored);
+ assert.equal(restored.story55.completed['d23-chess-finish'].test,true);
+ assert.equal(restored.events.filter(e=>e.type==='story55_node_completed'&&e.id==='d23-chess-finish').length,1);
+ assert.equal(JSON.stringify(restored.content.conversations.mirage),chat);
+ assert.equal(restored.batteryPercent,battery);
+ assert.equal(canShortCharge(restored),true);
+ assert.equal(canCharge(restored),true);
+});
+test('an actual D23 session still requires Mirage postgame even on an invalid later date',()=>{
+ const s=phone();
+ rebuildStory55AtDay(s,23,'22:30');
+ completeNode(s,'d23-chess',{test:true});
+ tickStory55(s);
+ assert.equal(completed(s,'d23-chess-finish'),false);
+ assert.equal(canCharge(s),false);
+ assert.equal(canShortCharge(s),false);
+ s.day=30;tickStory55(s);
+ assert.equal(completed(s,'d23-chess-finish'),false);
+ assert.equal(canCharge(s),false);
+ assert.equal(canShortCharge(s),false);
+});
 test('developer D01 is playable; jumping to D02 auto-settles every D01 app without duplicates',()=>{
  const s=phone();
  rebuildStory55AtDay(s,1);

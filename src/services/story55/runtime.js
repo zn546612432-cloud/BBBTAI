@@ -20,7 +20,7 @@ import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {offerD23ChessInvitation,offerStoryChessInvitation} from '../invitations.js';
 import {tickD23ChessLesson} from '../chess-lesson.js';
-import {tickD23MiragePostgame} from './d23-postgame.js';
+import {tickD23MiragePostgame,repairRebuiltD23Postgame} from './d23-postgame.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
@@ -306,6 +306,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ repairRebuiltD23Postgame(s);
  quarantineUnsentD23Bubbles(s);
  syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
