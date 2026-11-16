@@ -54,15 +54,19 @@ export function tearTaskInfo(s,id){
  let progress,running,elapsedMinutes=elapsed;
  if(id==='survey'){
   const validation=a.jobs.validation;
+  const setupProgress=elapsed<=definition.duration
+   ?Math.min(.9,elapsed/definition.duration*.9)
+   :.9+.09*clamp01((elapsed-definition.duration)/240);
+  // The existing survey keeps running after setup; D28 validation is the final
+  // checkpoint that brings this long-running research from at most 99% to 100%.
   if(validation){
    const validationElapsed=Math.max(0,current-validation.start);
    const validationProgress=validation.done?1:clamp01(validationElapsed/TEAR_STAGES.validation.duration);
-   progress=.9+.1*validationProgress;
+   progress=Math.max(setupProgress,.9+.1*validationProgress);
    running=!validation.done;
    if(!running)elapsedMinutes=Math.max(0,Math.min(elapsed,validation.start+TEAR_STAGES.validation.duration-job.start));
   }else{
-   progress=job.done ? .9 : Math.min(.9,elapsed/definition.duration*.9);
-   // The setup phase is followed by the existing long-running fuzzing research.
+   progress=setupProgress;
    running=true;
   }
  }else{
