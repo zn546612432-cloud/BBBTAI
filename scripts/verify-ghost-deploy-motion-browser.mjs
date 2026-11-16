@@ -53,6 +53,21 @@ try{
    await page.waitForTimeout(1500);await page.screenshot({path:`${out}/390-success-pulse.png`});
    await page.waitForFunction(()=>!document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.pulse')?.classList.contains('is-pulsing'),{},{timeout:10000});
    await page.screenshot({path:`${out}/390-finished.png`});
+   const idle=field.locator('video.idle');
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused;});
+   await idle.evaluate(v=>{v.currentTime=v.duration-.12;});
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime<1.2;});
+   await live.locator('[data-action=s55-projects]').click();
+   await live.locator('.gh-workspace-flow').waitFor();
+   await page.screenshot({path:`${out}/390-projects.png`});
+   await live.locator('[data-action=gh-flow-home]').click();
+   await live.locator('.gh-workspace-home').waitFor();
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime>.1;});
+   await page.screenshot({path:`${out}/390-home.png`});
+   await live.locator('[data-action=gh-tool][data-tool=verify]').click();
+   await live.locator('.gh-workspace-flow').waitFor();
+   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime>.1;});
+   await page.screenshot({path:`${out}/390-deploy-menu.png`});
   }
   assert.deepEqual(errors,[]);results.push({width,idle:'playing',rows:count,run:'clicked',pulse:count===4?'passed':'not applicable'});await context.close();
  }

@@ -14,10 +14,13 @@ export function deviceButton(action,attrs='',caption='設備'){
 export function deploymentHeader(s,share){
  return `<nav class="gh-deploy-nav"><button type="button" data-action="s55-projects" aria-label="返回項目">${back}</button><span>Ghost</span>${share||'<span aria-hidden="true"></span>'}</nav>`;
 }
-export function deploymentHero({id,title,status,percent,count,total,token,detail='',tone='ready'}){
+export function motionField(id,token=0,cls='gh-deploy-field'){
  ensureMotion();
+ return `<xm-ghost-deploy-motion class="${cls}" data-key="deploy-field-${esc(id)}" project="${esc(id)}" token="${token}" aria-hidden="true"></xm-ghost-deploy-motion>`;
+}
+export function deploymentHero({id,title,status,percent,count,total,token,detail='',tone='ready'}){
  return `<section class="gh-deploy-hero" data-key="deploy-hero-${esc(id)}">
- <xm-ghost-deploy-motion class="gh-deploy-field" data-key="deploy-field-${esc(id)}" project="${esc(id)}" token="${token}" aria-hidden="true"></xm-ghost-deploy-motion>
+ ${motionField(id,token)}
  <div class="gh-deploy-title"><h1>部署</h1><p class="gh-deploy-status" data-tone="${tone}"><i></i>${esc(status)}</p><small>${esc(title)}</small></div>
  <div class="gh-deploy-progress" role="status" aria-label="部署進度"><strong>${Math.floor(percent)}<span>%</span></strong>${total?`<small>${count} / ${total} 已完成</small>`:''}${detail?`<small>${esc(detail)}</small>`:''}</div>
  </section>`;

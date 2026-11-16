@@ -5,6 +5,9 @@ on:
     paths:
       - 'src/apps/ghost/deployment/motion/**'
       - 'src/apps/ghost/deployment/index.js'
+      - 'src/apps/ghost/features/workspace/**'
+      - 'src/apps/ghost/features/flow-d03/**'
+      - 'src/apps/ghost/index.js'
       - 'public/apps/ghost/deployment/**'
       - 'scripts/verify-ghost-deploy-motion-browser.mjs'
       - '.github/workflows/ghost-deploy-motion-browser.yml'
