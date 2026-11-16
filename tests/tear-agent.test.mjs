@@ -69,11 +69,12 @@ test('D29 identity uses approved local dialogue and D30 opens the persistent dep
  time(s,29,'22:00');s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
  assert.equal(D29_IP,'195.22.28.198');assert.equal(sendAgent(s,D29_IP).kind,'preset');
  assert.deepEqual(agent(s).messages.slice(-3).map(m=>m.text),['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal\n時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。']);
- assert.match(renderTearAgent(s),/data-id="identity"/);
+ assert.doesNotMatch(renderTearAgent(s),/data-id="identity"/);
  handleTearAgent('gh-tear-picker',{dataset:{}},ctx);assert.match(renderAgentContent(s).content,/你認識這個地址？/);
  handleTearAgent('gh-tear-prompt',{dataset:{id:'identity-recognize'}},ctx);assert.equal(agent(s).draft,'你認識這個地址？');
  assert.equal(sendAgent(s,agent(s).draft).kind,'preset');assert.equal(agent(s).messages.at(-1).text,'這台設備與我存在既有的連線記錄。');
- assert.equal(sendAgent(s,'你能读里面的资料吗？').kind,'ai'); // unmatched wording is not an authored command
+ assert.equal(sendAgent(s,'你能读里面的资料吗？').kind,'preset');
+ assert.match(renderTearAgent(s),/data-id="identity"/);
  assert.equal(sendAgent(s,'你能讀取裡面的資料嗎？').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'部分可以。我需要一些時間確認可讀取的範圍。');
  assert.equal(tearTaskInfo(s,'identity').running,true);handleTearAgent('gh-tear-identity',{dataset:{}},ctx);assert.equal(routes.length,0);
  s.story55.completed.plan={day:29,clock:'22:10'};time(s,30,'08:00');assert.equal(agent(s).ipAuthorized,true);
