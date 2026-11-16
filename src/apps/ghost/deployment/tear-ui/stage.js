@@ -6,11 +6,14 @@ if(typeof customElements!=='undefined'&&!customElements.get('xm-tear-stage')){
   constructor(){
    super();this.attachShadow({mode:'open'}).innerHTML='<style>:host{display:block;position:absolute;left:50%;top:50%;width:100cqw;aspect-ratio:1;transform:translate(-50%,-50%)}[part=visual]{position:absolute;inset:0;transform-origin:center;will-change:transform;backface-visibility:hidden}</style><div part="visual"><slot></slot></div>';
    this.visual=this.shadowRoot.querySelector('[part=visual]');
+   this.follow=e=>{if(this.reduced)return;const r=this.visual.getBoundingClientRect();if(r.width&&r.height)this.querySelector('xm-tear-orbit')?.scene?.pointer?.((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1);};
+   this.resetPointer=()=>this.querySelector('xm-tear-orbit')?.scene?.pointer?.(0,0);
   }
   connectedCallback(){
    this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
    this.observer=new ResizeObserver(()=>this.schedule());
    this.observer.observe(this.parentElement);this.observer.observe(this);this.schedule();
+   this.addEventListener('pointermove',this.follow,{passive:true});this.addEventListener('pointerleave',this.resetPointer);
   }
   attributeChangedCallback(){this.schedule();}
   schedule(){if(!this.isConnected||this.frame)return;this.frame=requestAnimationFrame(()=>{this.frame=0;this.position();});}
@@ -35,7 +38,7 @@ if(typeof customElements!=='undefined'&&!customElements.get('xm-tear-stage')){
    this.animation=animation;
    animation.onfinish=()=>{if(this.animation!==animation)return;this.animation=null;this.visual.style.setProperty('--tear-task-hit-size',`${44/target.scale}px`);};
   }
-  disconnectedCallback(){this.observer?.disconnect();cancelAnimationFrame(this.frame);this.frame=0;this.animation?.cancel();this.animation=null;this.target=null;}
+  disconnectedCallback(){this.removeEventListener('pointermove',this.follow);this.removeEventListener('pointerleave',this.resetPointer);this.observer?.disconnect();cancelAnimationFrame(this.frame);this.frame=0;this.animation?.cancel();this.animation=null;this.target=null;}
  }
  customElements.define('xm-tear-stage',TearStage);
 }

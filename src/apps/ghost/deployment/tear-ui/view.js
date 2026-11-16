@@ -1,6 +1,6 @@
 import {esc} from '../../../../system/ui.js';
 import {renderAgentContent} from '../tear-agent/view.js';
-import {agent,tearTaskInfo} from '../tear-agent/state.js';
+import {agent,agentFiles,tearTaskInfo} from '../tear-agent/state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 let loading;
 function ensureTearOrbit(){
@@ -45,18 +45,20 @@ function taskMarkers(s){
  return Object.keys(TASK_POSITIONS).filter(id=>a.jobs?.[id]&&TEAR_STAGES[id]).map(id=>{
   const info=tearTaskInfo(s,id),pos=TASK_POSITIONS[id];
   if(!info)return '';
-  const selected=a.selectedTask===id,cls=info.running?'is-running':'is-complete';
-  return `<button type="button" class="gh-agent-task-dot ${cls}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${id}" aria-label="${TEAR_STAGES[id].title}，${info.status}，${info.percent}%" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
+  const selected=a.selectedTask===id,cls=info.running?'is-running':'is-complete',collected=!!a.collectedArtifacts?.[id];
+  return `<button type="button" class="gh-agent-task-dot ${cls}${collected?' is-collected':''}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${id}" aria-label="${TEAR_STAGES[id].title}，${info.status}，${info.percent}%${collected?'，已領取':''}" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
  }).join('');
 }
 function taskDetail(s){
  const id=agent(s).selectedTask,definition=TEAR_STAGES[id],info=id&&tearTaskInfo(s,id);
  if(!definition||!info)return '';
+ const artifact=info.complete&&definition.artifact?agentFiles(s).find(f=>f.id==='tear-artifact-'+id):null,collected=!!agent(s).collectedArtifacts?.[id];
  return `<div class="gh-agent-task-backdrop" data-key="tear-task-backdrop" data-action="gh-tear-task-close" aria-hidden="true"></div><aside class="gh-agent-task-detail" role="dialog" aria-modal="true" aria-label="任務詳情" data-key="tear-task-detail">
   <header><div><span>${esc(definition.title)}</span><strong class="${info.running?'is-running':'is-complete'}">${esc(info.status)}</strong></div><button type="button" data-action="gh-tear-task-close" aria-label="關閉任務詳情">×</button></header>
   <p>${esc(TASK_DESCRIPTIONS[id]||definition.title)}</p>
   <div class="gh-agent-task-metrics"><div><span>運行時間</span><strong>${durationLabel(info.elapsedMinutes)}</strong></div><div><span>完成進度</span><strong>${info.percent}%</strong></div></div>
   <div class="gh-agent-task-progress" role="progressbar" aria-label="任務完成進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${info.percent}"><i style="width:${info.percent}%"></i></div>
+  ${artifact?`<button type="button" class="gh-agent-pickup${collected?' is-collected':''}" data-action="gh-tear-${collected?'artifact':'collect'}" data-id="${esc(collected?artifact.id:id)}">${fileIcon}<span><strong>${esc(artifact.name)}</strong><small>${collected?'已領取 · 查看檔案':'領取檔案'}</small></span>${collected?arrowIcon:'↓'}</button>`:''}
  </aside>`;
 }
 export function renderTearAgent(s){
@@ -66,7 +68,7 @@ export function renderTearAgent(s){
  const complete=!!a.visualTaskIds?.length&&a.visualTaskIds.every(id=>tearTaskInfo(s,id)?.complete);
  const status=complete&&progress===1?'complete':working?'running':'idle';
  return `<section class="gh-tear-screen gh-agent-screen${expanded?' is-expanded':''}" data-visual-mode="${expanded?'expanded':'conversation'}" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear">
- <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><button type="button" class="gh-tear-icon gh-agent-history-toggle" data-action="gh-tear-history" aria-label="查看本次聊天紀錄" aria-expanded="${!!a.history}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button></header>
- <div class="gh-agent-orbit"><xm-tear-stage class="gh-agent-visual" expanded="${expanded?1:0}"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" status="${status}" progress="${progress}" aria-hidden="true"></xm-tear-orbit><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></xm-tear-stage></div>
+ <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span class="gh-agent-wordmark">Ouroboros’ Tear<small>Α · Ω / TAI</small></span><button type="button" class="gh-tear-icon gh-agent-history-toggle" data-action="gh-tear-history" aria-label="查看本次聊天紀錄" aria-expanded="${!!a.history}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button></header>
+ <div class="gh-agent-orbit"><xm-tear-stage class="gh-agent-visual" expanded="${expanded?1:0}"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" status="${status}" progress="${progress}" attention="${a.draft?1:0}" aria-hidden="true"></xm-tear-orbit><svg class="gh-agent-ring-graphic" viewBox="0 0 400 400" aria-hidden="true"><circle cx="200" cy="200" r="176" class="gh-agent-ring-ticks"/><circle cx="200" cy="200" r="176" class="gh-agent-ring-sweep"/></svg><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></xm-tear-stage></div>
  ${taskDetail(s)}${content}</section>`;
 }
