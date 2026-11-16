@@ -11,5 +11,5 @@ export function handle(a,t,c){
   if(route==='export')return c.download();
   c.router.open({appId:'settings',route:'/'+route});
  }
- if(a==='settings-toggle')c.store.update(s=>{const key=t.dataset.key;s[key]=!(s[key]??(['wifi','bluetooth','allowNotifications','haptics'].includes(key)));});
+ if(a==='settings-toggle')c.store.update(s=>{const key=t.dataset.key;s[key]=!(s[key]??(['wifi','bluetooth','allowNotifications','haptics','airdrop','rotationLock'].includes(key)));});
 }

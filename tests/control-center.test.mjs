@@ -20,3 +20,19 @@ test('uses existing settings silent flag and retains persisted brightness and vo
  assert.deepEqual(controlsSettings({silent:true,deviceControls:{volume:.4,brightness:.6}}),{muted:true,volume:.4,brightness:.6});
  const html=controlCenter({silent:true,batteryPercent:47});assert.match(html,/取消靜音/);assert.match(html,/47%/);assert.match(html,/data-cc-slider="volume"/);
 });
+
+test('idle media has no imaginary title or cover; playing media is rendered from the existing music flag',()=>{
+ const idle=controlCenter({musicPlaying:false});assert.match(idle,/未在播放/);assert.doesNotMatch(idle,/cc-album|夜航|正在播放/);
+ const active=controlCenter({musicPlaying:true});assert.match(active,/cc-album/);assert.match(active,/夜航/);assert.doesNotMatch(active,/未在播放/);
+});
+test('connectivity controls all expose real on and off states; rotation does not lock the screen',()=>{
+ const keys=['airplane','airdrop','wifi','cellular','bluetooth','hotspot','vpn','rotationLock','lowPower','focus'];
+ const enabled=controlCenter(Object.fromEntries(keys.map(key=>[key,true])));
+ const disabled=controlCenter(Object.fromEntries(keys.map(key=>[key,false])));
+ for(const key of keys){
+  assert.match(enabled,new RegExp('data-cc="toggle-'+key+'"[^>]*aria-pressed="true"'));
+  assert.match(disabled,new RegExp('data-cc="toggle-'+key+'"[^>]*aria-pressed="false"'));
+ }
+ assert.match(controlCenter({focus:true,silent:false}),/data-cc="mute"[^>]*aria-pressed="false"/);
+ assert.match(controlCenter({focus:false,silent:true}),/data-cc="toggle-focus"[^>]*aria-pressed="false"/);
+});

@@ -4,6 +4,7 @@ import {musicPlayer} from './features/player/index.js';
 import {uid} from '../../services/id.js';
 export const manifest={id:'music',name:'音乐',icon:14,defaultRoute:'/',supportsDeepLink:true,kicker:'MUSIC'};
 let audio=null,progress=0,view='library',tab='listen',query='',repeat=true,shuffle=false;
+export const isPlaying=()=>!!audio&&!audio.paused;
 const format=n=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
 export const render=({store})=>`<div class="ios-music">${view==='player'?musicPlayer(store.get().musicPlaying,progress,repeat,shuffle):musicLibrary({playing:store.get().musicPlaying,tab,query})}</div>`;
 const sync=()=>{if(!audio)return;progress=audio.duration?audio.currentTime/audio.duration*100:0;const seek=document.querySelector('#screen-layer .music-seek-input');if(seek&&document.activeElement!==seek)seek.value=String(progress);const current=document.querySelector('[data-music-current]'),duration=document.querySelector('[data-music-duration]');if(current)current.textContent=format(audio.currentTime);if(duration)duration.textContent=format(audio.duration||0);};
