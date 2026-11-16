@@ -80,7 +80,8 @@ try{
   await filesPage.locator('.fl-personal-photo').evaluate(i=>i.decode());
   assert.equal(await stableMedia(filesPage.locator('.fl-personal-photo')),true,filename);
   if(filename==='IMG_4982.jpg')await filesPage.screenshot({path:`${out}/files-photo.png`});
-  await filesPage.locator('.fl-nav [data-action=files-local-nav]').click();
+  await filesPage.locator('.fl-nav [data-route="/item/personal-files/photos"]').click();
+  await filesPage.locator('.fl-personal-photo').waitFor({state:'detached'});
  }
  await filesContext.close();results.push({files:'pass',thumbnails:5,fullPhotos:5,stableUrls:true});
  await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
