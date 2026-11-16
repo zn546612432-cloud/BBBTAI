@@ -86,6 +86,8 @@ try{
  // Background passage is verified after a reload with the canonical speed enabled.
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  saved.story55.minutesPerSecond=5;
+ // Apply the saved speed at document startup, before the live store can persist.
+ await context.addInitScript(()=>{const key='ximeng-phone-story55-v1',state=JSON.parse(localStorage.getItem(key));if(state){state.story55.minutesPerSecond=5;localStorage.setItem(key,JSON.stringify(state));}});
  await page.evaluate(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),saved);
  await page.reload({waitUntil:'domcontentloaded'});await page.clock.resume();
  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});await unlock(page);
@@ -96,6 +98,7 @@ try{
  await page.evaluate(()=>{window.__qaHidden=false;document.dispatchEvent(new Event('visibilitychange'));});
  await page.clock.runFor(500);
  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
+ console.log(JSON.stringify({beforeClock:before.clock,afterClock:after.clock,speed:before.story55.minutesPerSecond,activeScene:before.story55.activeScene,phoneCall:before.phoneCall?.state,staff:after.story55.tearAgent.jobs.staff,program:after.story55.tearAgent.jobs.program}));
  assert.equal(after.story55.tearAgent.jobs.staff.done,true);assert.equal(after.story55.tearAgent.jobs.program.done,true);
  assert.equal(after.story55.tearAgent.visualProgress,1);
  assert.equal(after.story55.tearAgent.jobs.staff.start,before.story55.tearAgent.jobs.staff.start);
