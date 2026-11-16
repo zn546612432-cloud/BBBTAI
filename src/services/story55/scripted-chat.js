@@ -2,7 +2,7 @@
 // Player lines are offered in the native text composer and sent ONLY after
 // the player presses Send. Other characters deliver their own messages over time.
 import {isStory55,nodeStatus,story55Config,nodeById,overnightSceneNight55} from './state.js';
-import {scene55,sceneLines,advanceScene55,questions55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
+import {scene55,sceneLines,advanceScene55,sendQuestion55,plannedSceneLineClock55} from './runtime.js';
 import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {ghostShareScriptLine,sendGhostShareDraft} from './ghost-share.js';
 import {isTearShare} from '../../story/d14-d24/tear-dialogue.js';
@@ -23,13 +23,6 @@ export function currentScript55(s,channel,conversationId){
   const tear=ghostShareScriptLine(s);if(tear)return tear;
  }
  if(channel==='mirage'&&conversationId===FLOW_CONTACT){const flow=flowDraft(s);if(flow)return flow;}
- if(channel==='mirage'&&conversationId==='s55-ouroboros'&&
-     nodeStatus(s,'questions').state==='ready'&&
-     s.story55.questions<questions55.length&&
-     (!s.story55.activeScene||s.story55.activeScene==='questions'||s.story55.previewNode==='questions')){
-  const index=s.story55.questions;
-  return {id:'questions',index,kind:'me',text:questions55[index],channel,conversationId};
- }
   const all=story55Config(s).nodes.filter(n=>n.kind==='scene');
  const current=s.story55.activeScene;
  const preview=s.story55.previewNode;

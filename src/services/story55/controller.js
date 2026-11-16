@@ -24,8 +24,8 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-restore-snapshot'){const saved=await getTestSnapshotDurable(c.store.storage,t.dataset.snapshot),changed=saved.entry.sourceVersion!==storySourceVersion(c.store.get());if(changed&&!globalThis.confirm?.('这份快照使用不同的剧情版本。按旧版恢复会切换当前测试环境，系统将先备份当前状态。确定恢复吗？'))return true;await restoreTestSnapshotDurable(c.store,t.dataset.snapshot,{allowDifferentVersion:changed});c.toast?.('快照已恢复；恢复前状态已自动备份');return true;}
  if(a==='s55-delete-snapshot'){if(!globalThis.confirm?.('确定只删除这一份测试快照吗？剧情原始数据不会删除。'))return true;await deleteTestSnapshotDurable(c.store.storage,t.dataset.snapshot);c.toast?.('测试快照已删除');return true;}
  if(a==='s55-install-noapp'){
-  if(!isStory55(c.store.get())||!completed(c.store.get(),'invite'))throw Error('请先在KIRA收到并阅读NoApp邀请');
-  c.store.update(s=>{s.story55.noappInstalled=true;});open(c,'noapp','/chat/tai');return true;
+  if(!isStory55(c.store.get())||!c.store.get().content.mail.some(m=>m.id==='invite-mail'))throw Error('請先在 KIRA 收到 NoApp 邀請');
+  c.store.update(s=>{markMail55(s,'invite-mail');s.story55.noappInstalled=true;const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陳熙泰';});open(c,'noapp','/chat/tai');return true;
  }
  if(a==='s55-select-node'){c.store.update(s=>s.editor.story55Node=id);return true;}
  if(a==='s55-select-project'){c.store.update(s=>s.editor.story55Project=project);return true;}

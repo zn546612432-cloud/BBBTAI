@@ -19,6 +19,7 @@ export function deployment(s,id){return s.story55?.projects?.[id]||{authorized:f
 export function deploymentPercent(s,id){
  const p=projectById(s,id),r=deployment(s,id);
  if(!p)return 0;
+ if(id==='identity'&&completed(s,'identity'))return 100;
  if(r.batches.length===p.batches&&r.batches.every(b=>b.complete))return 100;
  return Math.min(99.999,Number(r.batches.reduce((sum,b,i)=>sum+(b.complete?p.gains[i]:0),0).toFixed(3)));
 }
@@ -100,6 +101,7 @@ export function deploymentReadiness(s,id){
  }
  if((s.story55.hardware||1)<p.minimumHardware)
   return {canStart:false,reason:`设备等级不足（目前 ${s.story55.hardware||1}，需要 ${p.minimumHardware}）`,batch};
+ if(id==='identity'&&r.batches.some(b=>b?.complete&&b.day===s.day))return {canStart:false,reason:'本日部署已完成',batch};
  if(batch>=projectCapacity(s,p))return {canStart:false,reason:'本日可執行的程序已完成',batch};
  return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
 }

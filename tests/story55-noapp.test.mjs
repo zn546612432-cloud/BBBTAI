@@ -11,10 +11,10 @@ import {installed,appUnlocked,registry} from '../src/system/registry.js';
 const make=()=>{const s=initialState();activateStory55(s);return s;};
 const show=(s,route='/chat/tai')=>registry.get('noapp').render({store:{get:()=>s}},{route,params:{}});
 
-test('NoApp icon opens at D01 with invitation gate; it is not a dead app',()=>{
+test('NoApp is hidden at D01 until invitation installation',()=>{
  const s=make();
- assert.equal(appUnlocked('noapp',s),true);
- assert.ok(installed(s).some(app=>app.id==='noapp'));
+ assert.equal(appUnlocked('noapp',s),false);
+ assert.ok(!installed(s).some(app=>app.id==='noapp'));
  assert.match(show(s,'/'),/尚未收到私人频道的内测邀请/);
  assert.doesNotMatch(show(s,'/'),/class="composer"/);
 });

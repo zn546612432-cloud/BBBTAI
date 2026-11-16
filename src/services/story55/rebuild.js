@@ -331,6 +331,8 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
     // Date-jump reconstruction only: historical chess gates do not demand an actual match.
     if(node.id==='d29-chess')s.story55.d29ChessOpened=true;
     if(node.id==='plan')s.story55.d29ChessExited=true;
+    if(node.id==='questions'&&!s.story55.identityContact)s.story55.identityContact={count:4,replyDay:day+1};
+    if(node.id==='invite'&&completed(s,'photo'))s.story55.identityInviteRequested=true;
     if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
     if(nodeStatus(s,node.id).state!=='ready')continue;
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
@@ -385,6 +387,8 @@ export function prepareStory55NodeAtDay(s,id){
   if(!node)throw Error('找不到剧情前置节点：'+depId);
   if(node.day>current.day)throw Error('前置节点晚于目标日期：'+depId);
   for(const parent of node.requires)visit(parent,[...stack,depId]);
+  if(node.id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
+  if(node.id==='invite')s.story55.identityInviteRequested=true;
   if(completed(s,depId))return;
   if(nodeStatus(s,depId).state!=='ready')throw Error('无法预览：'+nodeStatus(s,depId).reason);
   const progressed=simulateNode(s,node);
@@ -394,6 +398,8 @@ export function prepareStory55NodeAtDay(s,id){
   tickStory55(s);
  };
  for(const depId of current.requires)visit(depId,[id]);
+ if(id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
+ if(id==='invite')s.story55.identityInviteRequested=true;
  s.story55.previewNode=id;
  s.editor.story55Node=id;
  return {node:id,day:current.day};

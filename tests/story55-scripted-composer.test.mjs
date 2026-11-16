@@ -89,16 +89,17 @@ test('D55 final voice is an in-chat sound bubble, not a Next-button card',()=>{
  assert.doesNotMatch(html,/noapp-final-pending|s55-scene-next|noapp-story55-step/);
 });
 
-test('D30 investigation questions stay in MIRAGE composer, requiring five explicit taps',()=>{
+test('investigation questions stay in MIRAGE composer, one explicit tap per player line',()=>{
  const s=state();previewNode55(s,'questions');
  assert.deepEqual(nodeLink55(s,'questions'),{appId:'mirage',route:'/chat/s55-ouroboros',params:{node:'questions'}});
- for(let i=0;i<5;i++){
+ for(let i=0;i<sceneLines(s,'questions').length;i++){
   const question=scriptedDraft55(s,'mirage','s55-ouroboros');
-  assert.equal(question.id,'questions');
-  assert.equal(question.index,i);
-  sendScriptedDraft55(s,'mirage','s55-ouroboros',question.text);
+  if(sceneLines(s,'questions')[i][0]==='me'){
+   assert.equal(question.id,'questions');assert.equal(question.index,i);
+   sendScriptedDraft55(s,'mirage','s55-ouroboros',question.text);
+  }else{assert.equal(question,null);advanceScene55(s,'questions');}
  }
  assert.equal(completed(s,'questions'),true);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
- assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-question-')).length,5);
+ assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,21);
 });

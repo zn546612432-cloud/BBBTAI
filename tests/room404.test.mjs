@@ -25,7 +25,7 @@ test('only viewing the portrait post records the existing evidence, once',()=>{
  const completion=JSON.stringify(s.story55.completed.ig),questions=s.story55.questions;
  handleRoom404('browser-ig-post',{dataset:{post:'selfie'}},c,s.nav.current,{navigate});
  assert.equal(JSON.stringify(s.story55.completed.ig),completion);assert.equal(s.story55.questions,questions);
- assert.equal(nodeStatus(s,'questions').state,'ready');
+ assert.equal(nodeStatus(s,'questions').state,'locked');
 });
 test('approved copy, assets and account identity appear without leaking names',()=>{
  const s=fixture(),html=renderRoom404(s,s.nav.current);
