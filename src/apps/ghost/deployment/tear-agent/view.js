@@ -1,14 +1,14 @@
 import {esc} from '../../../../system/ui.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
-import {agent,agentFiles,researchInfo,stageReady,storyFileStage,tearTaskInfo,identityPrompts} from './state.js';
+import {agent,agentFiles,researchInfo,stageReady,storyFileStage,tearTaskInfo,identityPrompts,identityRevealPending} from './state.js';
 const b=(action,label,attrs='')=>`<button type="button" data-action="gh-tear-${action}" ${attrs}>${label}</button>`;
 export function renderAgentContent(s){
- const a=agent(s),files=agentFiles(s),selected=files.find(f=>f.id===a.selected),r=researchInfo(s),messages=a.messages;
- const archive=tearTaskInfo(s,'identity'),pending=Object.entries(a.jobs).filter(([,j])=>!j.done),working=!!a.thinking||pending.length>0||!!r&&!r.complete||!!archive?.running||!!tearTaskInfo(s,'personal-files')?.running;
+ const realNow=Date.now(),revealing=identityRevealPending(s,realNow);
+ const a=agent(s),files=agentFiles(s),selected=files.find(f=>f.id===a.selected),r=researchInfo(s),messages=a.messages.filter(m=>!m.identityReveal||m.visibleAt<=realNow);
+ const archive=revealing?null:tearTaskInfo(s,'identity'),pending=Object.entries(a.jobs).filter(([,j])=>!j.done),working=revealing||!!a.thinking||pending.length>0||!!r&&!r.complete||!!archive?.running||!!tearTaskInfo(s,'personal-files')?.running;
  const suggested=[...['validation','program'].filter(id=>stageReady(s,id)).map(id=>[id,TEAR_STAGES[id].prompt]),...identityPrompts(s)];
  // Only casual conversation dissolves. The complete transcript remains
  // available in this session's history; task logs stay readable on the main view.
- const realNow=Date.now();
  const visible=messages.filter(m=>!m.ephemeral||realNow-Number(m.visibleAt||0)<5500);
  const message=m=>`<article class="gh-agent-text ${m.role==='user'?'gh-agent-user':'gh-agent-reply'}${m.ephemeral?' is-ephemeral':''}" data-key="${esc(m.id)}">${m.file?`<small>▤ ${esc(m.file)}</small>`:''}${m.artifact?b('artifact','▤ '+esc(m.text),`class="gh-agent-file-receipt" data-id="${esc(m.artifact)}"`):'<span>'+esc(m.text)+'</span>'}${m.identity?b('identity','REMOTE ARCHIVE ↗','class="gh-agent-file-receipt" aria-label="查看 REMOTE ARCHIVE 部署"'):''}</article>`;
  const history=a.history?`<section class="gh-agent-history" role="dialog" aria-modal="true" aria-label="本次聊天紀錄" data-key="tear-history"><header><span>本次聊天紀錄</span>${b('history-close','×','aria-label="關閉聊天紀錄"')}</header><div class="gh-agent-history-messages">${messages.map(m=>message({...m,ephemeral:false})).join('')}</div></section>`:'';

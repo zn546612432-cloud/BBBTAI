@@ -1,4 +1,4 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun} from './state.js';
+import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending} from './state.js';
 import {completed} from '../../../../services/story55/state.js';
 import {savePersonalFiles,PERSONAL_FILES_ID} from '../../../files/features/local-library/index.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
@@ -17,7 +17,7 @@ export function handleTearAgent(action,t,ctx){
  if(!['picker','select','clear-file','prompt','artifact','collect','identity','archive-save','task','task-close','history','history-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){
-  const s=ctx.store.get();if(!tearTaskInfo(s,'identity')?.complete)return true;
+  const s=ctx.store.get();if(identityRevealPending(s)||!tearTaskInfo(s,'identity')?.complete)return true;
   if(completed(s,'identity')){
    ctx.store.update(n=>startPersonalArchiveRun(n));return true;
   }
@@ -46,7 +46,7 @@ export function submitTearAgent(form,ctx){
  if(form.dataset.form!=='tear-agent-send')return false;
  const input=form.querySelector('[name=text]'),text=input.value.trim(),s=ctx.store.get();
  if(blockedTearText(s,text)){input.value='';ctx.store.update(n=>{ensureAgent(n).draft='';});return true;}
- if(agent(s).thinking)return true;
+ if(agent(s).thinking||identityRevealPending(s))return true;
  const selected=agentFiles(s).find(f=>f.id===agent(s).selected);
  if(selected?.kind==='commission'){
   let started=false;ctx.store.update(n=>{started=startTearRun(n,selected.orderId);if(started){const a=ensureAgent(n);a.selected=null;a.draft='';}});

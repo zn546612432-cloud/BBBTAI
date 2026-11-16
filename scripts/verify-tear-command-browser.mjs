@@ -7,6 +7,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {story55Config,projectById} from '../src/services/story55/state.js';
 import {beginTearChatSession} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {D29_IP} from '../src/story/d29/definition.js';
 const root=path.resolve('dist'),out='qa/tear-command';
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpeg':'image/jpeg','.jpg':'image/jpeg','.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wasm':'application/wasm'};
 const server=createServer(async(req,res)=>{try{
@@ -17,10 +18,11 @@ const server=createServer(async(req,res)=>{try{
  }catch{res.writeHead(404).end('not found');}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true});await mkdir(out,{recursive:true});
-function seed(){
- const s=activateStory55(initialState());s.day=28;s.clock='19:12';s.unlocked=true;s.content.alarms=[];
- for(const n of story55Config(s).nodes)if(n.day<=28)s.story55.completed[n.id]={day:n.day,clock:'09:00'};
+const browser=await chromium.launch({headless:true,...(process.env.GHOST_QA_CHROMIUM?{executablePath:process.env.GHOST_QA_CHROMIUM}:{})});await mkdir(out,{recursive:true});
+function seed(day=28){
+ const s=activateStory55(initialState());s.day=day;s.clock=day===30?'08:01':'19:12';s.unlocked=true;s.content.alarms=[];
+ for(const n of story55Config(s).nodes)if(n.day<=day&&n.id!=='identity')s.story55.completed[n.id]={day:n.day,clock:'09:00'};
+ if(day===30)s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
  s.story55.projects.base={authorized:true,batches:Array.from({length:projectById(s,'base').batches},()=>({complete:true})),active:null};
  s.story55.baseUpgradeRevision=2;s.story55.minutesPerSecond=0;s.story55.activeScene=null;
  s.story55.d01={bankClaimed:true,rewardPaid:true};
@@ -51,6 +53,31 @@ try{
   await page.screenshot({path:`${out}/${width}-running.png`});
   assert.deepEqual(errors,[]);console.log(JSON.stringify({width,entry:width===375?'preset':'free text',local:true,hiddenAfterSend:true}));
   await context.close();
+ }
+ for(const width of [320,390,430]){
+  const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
+  await context.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());
+  await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},seed(30));
+  page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/BBBTAI/',{waitUntil:'domcontentloaded'});
+  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
+  await page.locator('[data-action=unlock]').click();for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
+  const live=page.locator('#screen-layer'),chat=live.locator('.gh-agent-messages'),orbit=live.locator('xm-tear-orbit');
+  await live.locator('.gh-agent-screen').waitFor();await orbit.evaluate(el=>customElements.whenDefined(el.localName));
+  await live.locator('#tear-agent-input').fill(D29_IP);await live.locator('button[type=submit]').click();
+  const lines=['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。'];
+  // Use the real browser heartbeat: installing a fake clock after the shell's
+  // interval has already started does not advance that existing native timer.
+  let last=Date.now();
+  for(let i=0;i<=lines.length;i++){
+   if(i){await chat.getByText(lines[i-1],{exact:true}).waitFor({timeout:7000});const at=Date.now();assert.ok(at-last>=700,`width ${width}, stage ${i} did not have a reading interval`);last=at;}
+   const content=await chat.innerText();
+   for(let j=0;j<lines.length;j++)assert.equal(content.includes(lines[j]),j<i,`width ${width}, stage ${i}, line ${j}`);
+   assert.equal(await live.locator('[data-action=gh-tear-identity]').count(),i===lines.length?1:0);
+   if(i<lines.length)assert.equal(await orbit.getAttribute('status'),'running');
+   if(i===0||i===2||i===lines.length)await page.screenshot({path:`${out}/${width}-identity-stage-${i}.png`});
+  }
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({width,identitySequence:true}));await context.close();
  }
 }catch(error){if(page&&!page.isClosed())await page.screenshot({path:`${out}/failure.png`});throw error;}
 finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -14,6 +14,14 @@ export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
 // Quick archive execution is a fixed story animation, like the existing Tear
 // commission executor. It uses no external service and works during clock holds.
 export const ARCHIVE_RUN_MS=3200;
+// Presentation only: use the existing Tear heartbeat, even when story time is held.
+export const IDENTITY_REVEAL_DELAY_MS=1600;
+export const IDENTITY_REVEAL_INTERVAL_MS=1200;
+export const identityRevealPending=(s,at=Date.now())=>agent(s).messages.some(m=>m.identityReveal&&m.visibleAt>at);
+function addIdentityReveal(s,text,extra={},at=Date.now()){
+ const latest=agent(s).messages.reduce((max,m)=>m.identityReveal?Math.max(max,m.visibleAt):max,0);
+ return addMessage(s,'assistant',text,{...extra,identityReveal:true,visibleAt:Math.max(at+IDENTITY_REVEAL_DELAY_MS,latest+IDENTITY_REVEAL_INTERVAL_MS)});
+}
 export function startPersonalArchiveRun(s,at=Date.now()){
  if(!completed(s,'identity'))return false;
  const a=ensureAgent(s);
@@ -24,7 +32,7 @@ export function startPersonalArchiveRun(s,at=Date.now()){
  return true;
 }
 export const identityPrompts=s=>{
- const a=agent(s);if(!a.ipRequested||a.ipAuthorized)return [];
+ const a=agent(s);if(!a.ipRequested||a.ipAuthorized||identityRevealPending(s))return [];
  return !a.ipRecognized?[['identity-recognize','你認識這個地址？']]:!a.ipAccessAsked?[['identity-read','你能讀取裡面的資料嗎？']]:[];
 };
 export const ensureAgent=s=>{
@@ -201,7 +209,9 @@ export function tickTearAgent(s){
  }
  if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
   if(!completed(s,'identity')&&!s.story55.projects.identity?.authorized)authorizeProject(s,'identity',D29_IP);
-  a.ipAuthorized=true;a.ipIndexedAt=now(s);changed=true;addMessage(s,'assistant','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
+  a.ipAuthorized=true;a.ipIndexedAt=now(s);changed=true;
+  const text='已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。';
+  if(identityRevealPending(s))addIdentityReveal(s,text,{identity:true});else addMessage(s,'assistant',text,{identity:true});
  }
  if(syncTearVisualProgress(s))changed=true;
  return changed;
@@ -217,6 +227,7 @@ export function sendAgent(s,text,fileId){
  const a=ensureAgent(s),value=String(text||'').trim(),file=agentFiles(s).find(f=>f.id===fileId);
  if(!value&&!file)return {kind:'empty'};
  if(blockedTearText(s,value))return {kind:'blocked'};
+ if(identityRevealPending(s))return {kind:'busy'};
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
@@ -225,12 +236,11 @@ export function sendAgent(s,text,fileId){
   if(s.day<29||!s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP))addMessage(s,'assistant','目前沒有對應的調查資料。');
   else if(!a.ipRequested){
    a.ipRequested=true;a.ipRequestedAt=now(s);
-   addMessage(s,'assistant','已收到。正在核對網絡資訊……',{job:'identity'});
-   addMessage(s,'assistant','網絡供應商：Claranet Portugal\n時區：Europe/Lisbon',{job:'identity'});
-   addMessage(s,'assistant','有意思。這個地址存在於我的內部記錄中。',{job:'identity'});
+   const at=Date.now();
+   for(const line of ['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。'])addIdentityReveal(s,line,{job:'identity'},at);
    tickTearAgent(s);
-  }else if(a.ipAuthorized)addMessage(s,'assistant','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
-  else addMessage(s,'assistant','調查工程已建立。');
+  }else if(a.ipAuthorized)addIdentityReveal(s,'已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
+  else addIdentityReveal(s,'調查工程已建立。',{job:'identity'});
   return {kind:'preset'};
  }
  if(/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)){addMessage(s,'assistant','目前沒有對應的調查資料。');return {kind:'preset'};}
