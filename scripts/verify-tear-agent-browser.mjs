@@ -51,6 +51,8 @@ try{
  assert.equal(await live.locator('.gh-agent-task-dot').count(),2);
  const canvas=live.locator('xm-tear-orbit');
  const readingSize=await canvas.boundingBox();
+ const surface=canvas.locator('canvas');
+ const backing=await surface.evaluate(c=>({width:c.width,height:c.height}));
  assert.equal(await canvas.getAttribute('progress'),'0');
  await page.clock.runFor(1200);await page.screenshot({path:`${out}/${width}-silver.png`});
  await live.locator('#tear-agent-input').fill('TAI？');await live.locator('button[type=submit]').click();
@@ -59,13 +61,30 @@ try{
  assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'expanded');
  const expandedSize=await canvas.boundingBox();
  assert.ok(expandedSize.width>readingSize.width*1.1,'idle serpent must regain the large reference size');
- assert.equal(await canvas.getAttribute('emphasis'),'1');
+ assert.equal(await live.locator('xm-tear-stage').getAttribute('expanded'),'1');
+ assert.deepEqual(await surface.evaluate(c=>({width:c.width,height:c.height})),backing,'zoom must not resize or clear the canvas');
  console.log(JSON.stringify({width,readingWidth:readingSize.width,expandedWidth:expandedSize.width}));
  await page.screenshot({path:`${out}/${width}-expanded.png`});
+ // Sample the actual compositor zoom, including a mid-flight reversal.
  await live.locator('#tear-agent-input').fill('你好');
- await page.clock.runFor(900);await page.waitForTimeout(900);
+ await page.clock.runFor(34);
+ const frames=[];
+ for(let i=0;i<11;i++){
+  await page.waitForTimeout(70);frames.push(await canvas.boundingBox());
+  assert.deepEqual(await surface.evaluate(c=>({width:c.width,height:c.height})),backing);
+ }
  assert.equal(await live.locator('.gh-agent-screen').getAttribute('data-visual-mode'),'conversation');
- assert.ok((await canvas.boundingBox()).width<expandedSize.width*.95);
+ assert.ok(frames.filter(f=>f.width>readingSize.width+2&&f.width<expandedSize.width-2).length>=2,'zoom needs continuous intermediate frames');
+ assert.ok(Math.abs(frames[0].width-expandedSize.width)<(expandedSize.width-readingSize.width)*.9,'first frame must not snap to the target');
+ assert.ok(frames.at(-1).width<expandedSize.width*.95);
+ await live.locator('#tear-agent-input').fill('');await page.clock.runFor(34);await page.waitForTimeout(170);
+ const midway=await canvas.boundingBox();
+ await live.locator('#tear-agent-input').fill('你好');await page.clock.runFor(34);
+ const reversed=await canvas.boundingBox();
+ assert.ok(Math.abs(midway.width-reversed.width)<20,'interrupted zoom must resume from its visible size');
+ assert.ok(Math.hypot(midway.x-reversed.x,midway.y-reversed.y)<25,'interrupted zoom must preserve its visible position');
+ await page.waitForTimeout(850);
+ console.log(JSON.stringify({width,stableBacking:backing,motionFrames:frames.map(f=>Math.round(f.width))}));
  await live.locator('button[type=submit]').click();
  await page.clock.runFor(7100);await page.waitForTimeout(900);
  assert.doesNotMatch(await live.locator('.gh-agent-messages').innerText(),/主人賜予|你好，我是小TAI/);
@@ -75,11 +94,13 @@ try{
  await live.locator('[data-action=gh-tear-history-close]').click();
  await live.locator('[data-action=gh-tear-task][data-id=staff]').click();
  assert.match(await live.locator('.gh-agent-task-detail').innerText(),/STAFF_RECORDS|運行時間|完成進度/);
+ const glass=await live.locator('.gh-agent-task-detail').evaluate(el=>({blur:getComputedStyle(el).backdropFilter,radius:getComputedStyle(el).borderRadius}));
+ assert.match(glass.blur,/blur/);assert.equal(glass.radius,'24px');
  await page.screenshot({path:`${out}/${width}-detail.png`});
  await live.locator('[data-action=gh-tear-task-close]').last().click();
  // Geometry: every 44px task target lies on the exact drawn 44% outer radius.
  const geometry=await live.locator('.gh-agent-visual').evaluate(stage=>{
-  const r=stage.getBoundingClientRect();return [...stage.querySelectorAll('.gh-agent-task-dot')].map(dot=>{
+  const r=stage.shadowRoot.querySelector('[part=visual]').getBoundingClientRect();return [...stage.querySelectorAll('.gh-agent-task-dot')].map(dot=>{
    const p=dot.getBoundingClientRect();return Math.hypot(p.x+p.width/2-r.x-r.width/2,p.y+p.height/2-r.y-r.height/2)/r.width;
   });
  });geometry.forEach(r=>assert.ok(Math.abs(r-.44)<.002));
@@ -104,16 +125,21 @@ try{
  assert.equal(after.story55.tearAgent.jobs.staff.start,before.story55.tearAgent.jobs.staff.start);
  assert.equal(await live.locator('.gh-agent-task-dot.is-complete').count(),2);
  await page.clock.runFor(2500);await page.screenshot({path:`${out}/${width}-gold.png`});
+ const receipts=live.locator('.gh-agent-file-receipt');assert.equal(await receipts.count(),2);
+ assert.match(await receipts.first().evaluate(el=>getComputedStyle(el).backdropFilter),/blur/);
+ await live.locator('[data-action=gh-tear-task][data-id=staff]').click();
+ await page.screenshot({path:`${out}/${width}-completed-glass.png`});
+ await live.locator('[data-action=gh-tear-task-close]').last().click();
  const files=JSON.stringify(after.content.localFiles);
  await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
  assert.equal(await live.locator('xm-tear-orbit').getAttribute('progress'),'0');
  const reopened=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  assert.deepEqual(reopened.story55.tearAgent.jobs,after.story55.tearAgent.jobs);
  assert.equal(JSON.stringify(reopened.content.localFiles),files);
- await page.setViewportSize({width,height:500});await page.clock.runFor(500);await page.waitForTimeout(900);
+ await page.setViewportSize({width,height:500});await page.clock.runFor(500);await page.waitForTimeout(900);await page.clock.runFor(50);
  const input=await live.locator('.gh-agent-composer').boundingBox();assert.ok(input.y+input.height<=500);
  await page.screenshot({path:`${out}/${width}-short-viewport.png`});
- assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',idleExpansion:'pass',newMessageCompaction:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
+ assert.deepEqual(errors,[]);results.push({width,chatExpiry:'pass',idleExpansion:'pass',continuousZoom:'pass',interruptedZoom:'pass',fixedCanvasBacking:'pass',glassCompletion:'pass',newMessageCompaction:'pass',history:'pass',taskRing:'pass',details:'pass',parallelBackgroundCompletion:'pass',reentry:'pass',shortViewport:'pass',pageErrors:errors});
  await context.close();
  }
  await writeFile(`${out}/results.json`,JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify(results,null,2));

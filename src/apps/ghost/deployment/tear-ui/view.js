@@ -67,6 +67,6 @@ export function renderTearAgent(s){
  const status=complete&&progress===1?'complete':working?'running':'idle';
  return `<section class="gh-tear-screen gh-agent-screen${expanded?' is-expanded':''}" data-visual-mode="${expanded?'expanded':'conversation'}" data-view-key="ghost-tear-agent" aria-label="Ouroboros’ Tear">
  <header class="gh-tear-header"><button type="button" class="gh-tear-icon" data-action="gh-tear-back" aria-label="返回項目">${backIcon}</button><span>OUROBOROS</span><button type="button" class="gh-tear-icon gh-agent-history-toggle" data-action="gh-tear-history" aria-label="查看本次聊天紀錄" aria-expanded="${!!a.history}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button></header>
- <div class="gh-agent-orbit"><div class="gh-agent-visual"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" emphasis="${expanded?1:0}" status="${status}" progress="${progress}" aria-hidden="true"></xm-tear-orbit><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></div></div>
+ <div class="gh-agent-orbit"><xm-tear-stage class="gh-agent-visual" expanded="${expanded?1:0}"><xm-tear-orbit data-key="agent-orbit-${a.chatSession||0}" layout="agent" status="${status}" progress="${progress}" aria-hidden="true"></xm-tear-orbit><div class="gh-agent-task-ring" role="group" aria-label="研究工程">${taskMarkers(s)}</div></xm-tear-stage></div>
  ${taskDetail(s)}${content}</section>`;
 }

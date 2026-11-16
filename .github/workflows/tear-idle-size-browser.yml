@@ -1,7 +1,7 @@
 name: TAI idle serpent mobile acceptance
 on:
   push:
-    branches: [fix/tear-idle-serpent-scale-20261116]
+    branches: [fix/tear-idle-serpent-scale-20261116, fix/tear-smooth-glass-20261116]
   workflow_dispatch:
 permissions:
   contents: read
