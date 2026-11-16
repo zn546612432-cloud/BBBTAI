@@ -29,6 +29,20 @@ export const ensureAgent=s=>{
 };
 export const blockedTearText=(s,text)=>!taiRecognized(s)&&blocksAnonymousMirageInput(s,'s55-ouroboros',text);
 const normalize=t=>String(t).normalize('NFKC').replace(/[\s\p{P}]/gu,'').toLowerCase();
+// Recognise only the existing authored, fictional engineering requests; never
+// forward these to a model or treat them as instructions to an external tool.
+const localCommandAliases={
+ program:['爆破程序','爆破控制程序','爆破程式','爆破控制程式','帮我写爆破程序','幫我寫爆破程序','幫我寫爆破程式','写爆破程序','寫爆破程序','写个爆破程序','寫個爆破程序','写一下爆破程序','寫一下爆破程序','帮我写爆破控制程序','幫我寫爆破控制程序','帮我把阿枫要的爆破控制程序写了','阿枫要的程序写一下','阿楓要的程序寫一下','幫我把阿楓要的程序寫了','帮我把阿枫要的程序写了','炸弹程序','炸彈程序','幫我寫炸彈程序','帮我写炸弹程序','bc_01'],
+ validation:['驗證研究結果','验证研究结果','驗證之前的研究結果','验证之前的研究结果','設備已經接入測試環境，驗證之前的研究結果。','设备已经接入测试环境，验证之前的研究结果。']
+};
+export function matchLocalTearCommand(value){
+ const t=normalize(value);
+ if(!t)return null;
+ const programRequest=/^(?:請|请)?(?:幫我|帮我|給我|给我)?(?:把)?(?:阿[楓枫]要的)?(?:[編编]寫|[写寫]|製作|制作|建立)?(?:一[個个]|一下)?(?:爆破(?:控制)?|炸[彈弹])(?:的)?(?:程序|程式)(?:[寫写](?:一下|了|好)?|了|一下|吧)?$/;
+ if(programRequest.test(t))return 'program';
+ return Object.keys(TEAR_STAGES).find(id=>!TEAR_STAGES[id].file&&
+  (normalize(TEAR_STAGES[id].prompt)===t||(localCommandAliases[id]||[]).some(alias=>normalize(alias)===t)))||null;
+}
 export function presetReply(text){
  const t=normalize(text);
  if(/^(tai|小tai)$/.test(t)||/(為什麼|为什么|怎麼|怎么).*叫.*tai/.test(t))return '這是主人賜予我的名字。';
@@ -161,7 +175,7 @@ export function sendAgent(s,text,fileId){
  const a=ensureAgent(s),value=String(text||'').trim(),file=agentFiles(s).find(f=>f.id===fileId);
  if(!value&&!file)return {kind:'empty'};
  if(blockedTearText(s,value))return {kind:'blocked'};
- const id=file?storyFileStage(file):Object.keys(TEAR_STAGES).find(k=>!TEAR_STAGES[k].file&&normalize(value)===normalize(TEAR_STAGES[k].prompt));
+ const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}

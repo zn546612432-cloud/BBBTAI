@@ -1,4 +1,4 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo} from './state.js';
+import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady} from './state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {askTear} from '../../../../services/ai/gateway.js';
 import {startTearRun} from '../tear-run.js';
@@ -18,7 +18,7 @@ export function handleTearAgent(action,t,ctx){
   if(key==='picker')a.picking=!a.picking;
   if(key==='select'){const f=agentFiles(s).find(f=>f.id===t.dataset.id);if(f){a.selected=f.id;a.picking=false;a.draft=TEAR_STAGES[storyFileStage(f)]?.prompt||'';}}
   if(key==='clear-file'){a.selected=null;a.draft='';}
-  if(key==='prompt')a.draft=TEAR_STAGES[t.dataset.id]?.prompt||'';
+  if(key==='prompt'){const id=t.dataset.id;if(stageReady(s,id)&&!TEAR_STAGES[id].file){a.selected=null;a.draft=TEAR_STAGES[id].prompt;a.picking=false;}}
  });return true;
 }
 export function submitTearAgent(form,ctx){
@@ -31,7 +31,7 @@ export function submitTearAgent(form,ctx){
   let started=false;ctx.store.update(n=>{started=startTearRun(n,selected.orderId);if(started){const a=ensureAgent(n);a.selected=null;a.draft='';}});
   if(started)ctx.router.open({appId:'ghost',route:'/tear-run',params:{orderId:selected.orderId}});else ctx.toast?.('目前無法執行此委託');return true;
  }
- let result;ctx.store.update(n=>{result=sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';if(result.kind==='ai'){a.thinking=result.id;a.thinkingAt=Date.now();}});
+ let result;ctx.store.update(n=>{result=sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';a.picking=false;if(result.kind==='ai'){a.thinking=result.id;a.thinkingAt=Date.now();}});
  input.value='';
  if(result.kind==='ai'){
   const state=ctx.store.get(),a=agent(state),messages=a.messages.filter(m=>!m.artifact&&!m.job).slice(-12).map(m=>({role:m.role,content:m.text}));

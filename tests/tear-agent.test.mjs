@@ -97,6 +97,50 @@ test('TAI greetings and punctuation are answered naturally without unrelated saf
  assert.match(prompt,/優先直接回答使用者最新的訊息/);
  assert.match(prompt,/不要輸出括號式旁白/);
  assert.doesNotMatch(prompt,/以角色身份分簡短回應|先說明系統界線/);
+ assert.match(prompt,/已知劇情指令由預設系統接管/);
+ assert.match(prompt,/不自行生成執行結果/);
+});
+
+test('D28 free-form authored command routes locally, respects prerequisites and runs only once',()=>{
+ for(const command of ['爆破程序','帮我写爆破程序','幫我寫爆破程式','阿楓要的程序寫一下','炸彈程序',TEAR_STAGES.program.prompt]){
+  const s=fixture();
+  assert.equal(sendAgent(s,command).kind,'preset');
+  assert.equal(agent(s).jobs.program,undefined);
+  assert.match(agent(s).messages.at(-1).text,/前置資料/);
+  time(s,28,'19:12');s.story55.completed['d28-meeting']={day:28,clock:s.clock};
+  assert.equal(sendAgent(s,command).kind,'preset');
+  assert.match(agent(s).messages.at(-1).text,/好的，已建立工程：BC_01。正在調取澳亞銀行防盜門系統/);
+  const start=agent(s).jobs.program.start;
+  assert.equal(sendAgent(s,command).kind,'preset');
+  assert.equal(agent(s).jobs.program.start,start);
+  assert.match(agent(s).messages.at(-1).text,/這個工程已經建立/);
+  assert.equal(agent(s).thinking,undefined);
+  time(s,28,'21:41');assert.equal(agent(s).jobs.program.done,false);
+  time(s,28,'21:42');assert.equal(agent(s).jobs.program.done,true);
+  assert.equal(localFileList(s).filter(f=>f.name==='BC_01.enc').length,1);
+ }
+ const s=fixture();assert.equal(sendAgent(s,'你今天忙嗎？').kind,'ai');
+});
+
+test('available program preset is in plus menu only, fills draft and disappears after sending',()=>{
+ const s=fixture();time(s,28,'19:12');s.story55.completed['d28-meeting']={day:28,clock:s.clock};
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open(){}}};
+ const button=/data-action="gh-tear-prompt" data-id="program"/;
+ assert.doesNotMatch(renderAgentContent(s).content,button);
+ handleTearAgent('gh-tear-picker',{dataset:{}},ctx);
+ assert.match(renderAgentContent(s).content,button);
+ handleTearAgent('gh-tear-prompt',{dataset:{id:'program'}},ctx);
+ assert.equal(agent(s).draft,TEAR_STAGES.program.prompt);
+ assert.equal(agent(s).picking,false);
+ assert.equal(agent(s).jobs.program,undefined);
+ const input={value:agent(s).draft};
+ assert.equal(submitTearAgent({dataset:{form:'tear-agent-send'},querySelector:()=>input},ctx),true);
+ assert.equal(agent(s).draft,'');assert.equal(input.value,'');
+ assert.ok(agent(s).jobs.program);assert.equal(agent(s).thinking,undefined);
+ handleTearAgent('gh-tear-picker',{dataset:{}},ctx);
+ assert.doesNotMatch(renderAgentContent(s).content,button);
+ beginTearChatSession(s);handleTearAgent('gh-tear-picker',{dataset:{}},ctx);
+ assert.doesNotMatch(renderAgentContent(s).content,button);
 });
 
 test('opening TAI clears only the visible conversation session and resets serpent progress',()=>{
