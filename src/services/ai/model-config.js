@@ -2,6 +2,9 @@
 // Thinking must be disabled explicitly: the DeepSeek API defaults to thinking enabled.
 // temperature is meaningful for v4-pro only when thinking is disabled.
 export const DEFAULT_DEEPSEEK_MODEL='deepseek-flash';
+// The separate Ouroboros’ Tear agent is fixed to V4.1 Flash non-thinking.
+// It must not inherit Xi Tai's user-selected model.
+export const TEAR_DEEPSEEK_MODEL='deepseek-flash';
 export const DEEPSEEK_MODELS=Object.freeze([
  {id:'deepseek-flash',label:'DeepSeek Flash · 非思考（原版）'},
  {id:'deepseek-v4-pro',label:'DeepSeek V4 Pro · 非思考'}

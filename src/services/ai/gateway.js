@@ -3,7 +3,7 @@ import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
-import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters} from './model-config.js';
+import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
@@ -63,9 +63,9 @@ export async function aiStatus(){
 export async function askTear({day,messages,scene=''}){
  const {buildTearPrompt}=await import('./tear-prompt.js'),c=apiConfig();
  const history=messages.slice(-12).map(m=>({role:m.role,content:String(m.content).slice(0,1800)}));
- const body={...deepseekModelOptions(c.model,c),messages:[{role:'system',content:buildTearPrompt(scene)},...history],max_tokens:Math.min(1000,c.maxTokens)};
+ const body={...deepseekModelOptions(TEAR_DEEPSEEK_MODEL,c),messages:[{role:'system',content:buildTearPrompt(scene)},...history],max_tokens:Math.min(1000,c.maxTokens)};
  if(isTaiCloudHost())return taiCloudCall('chat',body);
- if(!c.deepseek)return localJSON('/api/ai/chat',{channel:'tear',day,messages:history,scene,model:c.model,parameters:normalizeAiParameters(c)});
+ if(!c.deepseek)return localJSON('/api/ai/chat',{channel:'tear',day,messages:history,scene,model:TEAR_DEEPSEEK_MODEL,parameters:normalizeAiParameters(c)});
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
