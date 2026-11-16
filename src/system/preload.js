@@ -1,11 +1,12 @@
-// Prewarm only assets needed immediately after unlocking. Never reset or mutate the saved game.
+// Prewarm critical assets and bundled artwork. Never reset or mutate the saved game.
 // Lightweight offline Macau raster and Leaflet run before the lock cover becomes visible.
 import {publicAssetPath,rebaseBundledPublicAsset} from '../services/public-assets.js';
 import {wechatAvatars} from '../apps/wechat/avatars.js';
 
 const DEADLINE_MS=20000;
+const CONCURRENCY=8;
 
-function preloadImage(url) {
+function preloadImage(url,decode=false) {
  return new Promise(resolve=>{
   if (!url || typeof Image==='undefined') {resolve(false);return;}
   const img=new Image();
@@ -14,7 +15,7 @@ function preloadImage(url) {
   img.decoding='async';
   img.onload=()=>{
    // Let the browser decode images before the first home/WeChat paint.
-   if(typeof img.decode==='function')img.decode().then(()=>done(true),()=>done(true));
+   if(decode&&typeof img.decode==='function')img.decode().then(()=>done(true),()=>done(true));
    else done(true);
   };
   img.onerror=()=>done(false);
@@ -36,18 +37,28 @@ export function initialLockscreenImageUrls(wallpaper=''){
 }
 
 /** Start only once per boot; complete without throwing if an optional image is missing. */
-export function beginLockscreenPreload({wallpaper='',onProgress=()=>{}}={}){
- const urls=initialLockscreenImageUrls(wallpaper);
- const total=urls.length+1;let finished=0,failed=0,ready=false;
+export function beginLockscreenPreload({wallpaper='',onProgress=()=>{},loadManifest=()=>import('./startup/image-manifest.js').then(m=>m.default),loadImage=preloadImage,loadMap=()=>import('../apps/maps/leaflet.js').then(module=>module.prewarmOfflineMap()),deadlineMs=DEADLINE_MS}={}){
+ const critical=initialLockscreenImageUrls(wallpaper);
+ let total=critical.length+2,finished=0,failed=0,ready=false;
  const report=()=>onProgress({finished,total,failed,ready});
- const jobs=urls.map(url=>preloadImage(url));
- jobs.push(import('../apps/maps/leaflet.js').then(module=>module.prewarmOfflineMap()));
- const all=Promise.allSettled(jobs.map(p=>Promise.resolve(p).then(
-  result=>{finished++;if(result===false)failed++;report();return result;},
-  error=>{finished++;failed++;report();console.warn('资源预加载未完成',error);return false;}
- )));
+ const all=(async()=>{
+  let manifest=[];
+  try{manifest=await loadManifest();}catch(error){failed++;console.warn('素材清單未能載入',error);}
+  const urls=dedupe([...critical,...manifest]);
+  total=urls.length+2;finished++;report();
+  const jobs=[()=>loadMap(),...urls.map(url=>()=>loadImage(url,critical.includes(url)))];
+  let cursor=0;
+  async function worker(){
+   while(cursor<jobs.length){
+    const job=jobs[cursor++];
+    try{if(await job()===false)failed++;}catch(error){failed++;console.warn('資源預載未完成',error);}
+    finished++;report();
+   }
+  }
+  await Promise.all(Array.from({length:Math.min(CONCURRENCY,jobs.length)},worker));
+ })();
  let deadline;
- const guard=new Promise(resolve=>{deadline=setTimeout(()=>resolve('timeout'),DEADLINE_MS);});
+ const guard=new Promise(resolve=>{deadline=setTimeout(()=>resolve('timeout'),deadlineMs);});
  const settled=Promise.race([all.then(()=>'complete'),guard]).then(reason=>{
   clearTimeout(deadline);ready=true;report();return {reason,finished,total,failed};
  });

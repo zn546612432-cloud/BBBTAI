@@ -18,9 +18,10 @@ test('first visit plays before revealing final artwork; readiness and playback b
  const s=start();let closed=0;
  s.window.__xmBootIntroReady(()=>closed++);
  assert.equal(s.next.hidden,true);assert.equal(s.skip.hidden,true);
- s.events.ended();assert.equal(s.video.paused,true);assert.ok(s.classes.has('intro-finished'));assert.equal(s.next.hidden,false);assert.equal(s.index.textContent,'01 / 08');assert.equal(s.changes.size,1);
- const tick=[...s.timers.values()][0];tick();assert.equal(s.index.textContent,'02 / 08');assert.match(s.tip.textContent,/Ouroboros/);
- for(let i=0;i<7;i++)tick();assert.equal(s.index.textContent,'01 / 08');s.next.onclick();s.next.onclick();assert.equal(closed,1);assert.equal(s.timers.size,0);
+ s.events.ended();assert.equal(s.video.paused,true);assert.ok(s.classes.has('intro-finished'));assert.equal(s.next.hidden,false);assert.equal(s.index.textContent,'01 / 25');assert.match(s.tip.textContent,/0816/);assert.equal(s.changes.size,1);
+ const tick=[...s.timers.values()][0];tick();assert.equal(s.index.textContent,'02 / 25');
+ for(let i=0;i<3;i++)tick();assert.equal(s.index.textContent,'05 / 25');assert.match(s.tip.textContent,/0000/);
+ for(let i=0;i<21;i++)tick();assert.equal(s.index.textContent,'01 / 25');s.next.onclick();s.next.onclick();assert.equal(closed,1);assert.equal(s.timers.size,0);
 });
 test('returning users can skip; slow preload cannot be bypassed',()=>{
  const s=start({seen:true});assert.equal(s.skip.hidden,false);s.skip.onclick();assert.equal(s.next.hidden,true);assert.ok(s.classes.has('intro-finished'));s.window.__xmBootIntroReady(()=>{});assert.equal(s.next.hidden,false);

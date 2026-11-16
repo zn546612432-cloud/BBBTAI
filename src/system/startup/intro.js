@@ -9,14 +9,31 @@
  const tip=document.getElementById('xm-boot-tip');
  const index=document.getElementById('xm-boot-tip-index');
  const tips=[
+  '開機密碼是 0816。',
   '點擊右上角的電池，即可為手機充電。',
-  '不想自己破解？試著將委託分享給 Ouroboros。',
+  '在主畫面短充，時間會過得很快。',
+  '覺得群聊太吵？打開勿擾模式！',
+  '0000 能讓你回到故事起點。',
+  '備忘錄能提醒你今天要做什麼。',
+  '設定裡可以更換壁紙。',
+  '從螢幕右上角向下滑，可以打開控制中心。',
+  '想安靜一會兒？控制中心可以一鍵靜音。',
   '別忘了回弟弟們的消息，他們會等你。',
-  '有些郵件的附件，或許藏著意想不到的東西。',
   '收到家人的心願時，記得去提醒事項看看。',
-  'Mirage 上的某些名字，值得去瀏覽器搜索一下。',
   '試著給熙旺發一句「哥哥」。',
-  '凌晨 05:30 的鬧鐘，可能不只是一個鬧鐘。'
+  '有些郵件的附件，或許藏著意想不到的東西。',
+  '收到 ZIP 檔案後，記得儲存到「檔案」。',
+  'Mirage 上的某些名字，值得在瀏覽器搜尋一下。',
+  '不想自己破解？試著將委託分享給 Ouroboros。',
+  '有些委託的授權密鑰，會透過郵件寄來。',
+  '完成當天的必要事項後，才可以長充。',
+  '短充每天最多補充 10% 電量。',
+  '有些消息只有在特定時間才會收到。',
+  '凌晨 05:30 的鬧鐘，可能不只是一個鬧鐘。',
+  '查看行事曆，記住接下來的安排。',
+  '別忽略朋友圈，偶爾也會有新的動態。',
+  '在照片裡，也可以把喜歡的圖片設為壁紙。',
+  '備忘錄裡的「作弊代碼」，每天都有新的提示。'
  ];
  const seenKey='xm-startup-intro-seen-v1';
  let seen=false,finished=false,ready=false,closed=false,failed=false,tipTimer,deadline,position=0;
@@ -36,8 +53,8 @@
  };
  window.__xmBootIntroFinish=()=>finish(false);
  window.__xmBootIntroError=()=>{failed=true;finish(false);};
- window.__xmBootIntroReady=(close)=>{
-  ready=true;failed=false;message.textContent='';
+ window.__xmBootIntroReady=(close,status='')=>{
+  ready=true;failed=false;message.textContent=status;
   next.onclick=()=>{if(closed)return;closed=true;clearInterval(tipTimer);clearTimeout(deadline);video.pause();close();};
   revealEntry();
  };

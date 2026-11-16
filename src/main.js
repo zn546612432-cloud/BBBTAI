@@ -418,18 +418,21 @@ store.subscribe(()=>{
  globalThis.__xmBootStarted?.();
   lockAssets=beginLockscreenPreload({
   wallpaper:store.get().wallpaper,
-  onProgress:({finished,total,ready})=>{
-   const percent=Math.round(finished/Math.max(1,total)*100);
+  onProgress:({finished,total,failed})=>{
+   const percent=Math.floor(finished/Math.max(1,total)*100);
    const number=$('#xm-boot-percent');
    const bar=$('#xm-boot-progress span');
+   const label=$('#xm-boot-loading-label');
    if(number)number.textContent=percent+'%';
    if(bar)bar.style.width=percent+'%';
+   if(label)label.textContent=finished===total?(failed?'已處理':'載入完成'):'正在載入';
+   if(finished===total&&$('#xm-boot-message'))$('#xm-boot-message').textContent=failed?'部分素材將於使用時重試。':'';
   }
  });
  lockAssets.ready.then(({reason,failed})=>{
   const message=$('#xm-boot-message');
   const next=$('#xm-boot-next');
-  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot);return;}
+  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot,reason==='timeout'?'其餘素材將繼續載入。':failed?'部分素材將於使用時重試。':'');return;}
   if(reason==='timeout'){
    if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
    if(next){next.hidden=false;next.onclick=closeBoot;}
