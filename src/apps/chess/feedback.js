@@ -1,3 +1,4 @@
+import {audioDestination} from '../../system/audio/index.js';
 import {impact} from '../../system/feedback/index.js';
 
 let audio=null;
@@ -19,7 +20,7 @@ function sound(kind){
    const start=audio.currentTime+index*.065,osc=audio.createOscillator(),gain=audio.createGain();
    osc.type='sine';osc.frequency.value=frequency;
    gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.045,start+.008);gain.gain.exponentialRampToValueAtTime(.001,start+.085);
-   osc.connect(gain);gain.connect(audio.destination);osc.start(start);osc.stop(start+.095);
+   osc.connect(gain);gain.connect(audioDestination(audio));osc.start(start);osc.stop(start+.095);
   });
  }catch{}
 }

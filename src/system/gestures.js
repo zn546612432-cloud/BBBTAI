@@ -3,10 +3,12 @@ import {releaseVelocity} from './pager.js';
 const DEAD_ZONE=9;
 // Leaflet owns map gestures, including one-finger panning and two-finger pinch.
 // The iPhone shell must not intercept a map touch as notification/home swipe.
-const BLOCKED='input,textarea,select,[data-drag-message],.composer,.passcode-panel,#task-layer,xm-leaflet-map,.battery-island-actions,.battery-charge-choice,.status-battery';
+const BLOCKED='input,textarea,select,[data-drag-message],.composer,.passcode-panel,#task-layer,xm-leaflet-map,.battery-island-actions,.battery-charge-choice,#control-center-layer input,#control-center-layer [data-cc]:not(.cc-backdrop)';
 export const isNativeScrollTarget = target => !!target?.closest?.('[data-native-scroll]');
-export function classifyGesture({dx,dy,home,locked,shade,top,bottom}){
+export function classifyGesture({dx,dy,home,locked,shade,controls=false,right=false,top,bottom}){
  if(Math.max(Math.abs(dx),Math.abs(dy))<DEAD_ZONE)return null;
+ if(controls&&Math.abs(dy)>Math.abs(dx))return 'controls';
+ if(top&&right&&dy>0&&Math.abs(dy)>Math.abs(dx))return 'controls';
  if(shade&&Math.abs(dy)>Math.abs(dx))return 'shade';
  if(locked&&top&&dy>0&&Math.abs(dy)>Math.abs(dx))return 'shade';
  if(locked)return dy<0&&Math.abs(dy)>Math.abs(dx)?'unlock':null;
@@ -18,7 +20,7 @@ export function classifyGesture({dx,dy,home,locked,shade,top,bottom}){
 
 // Safari and embedded iPhone browsers can cancel PointerEvents when scrolling begins.
 // Prefer TouchEvents for fingers, retaining PointerEvents for a mouse or pen.
-export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switcher=()=>{}}){
+export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switcher=()=>{},controls=()=>{}}){
  let drag=null,suppressClickUntil=0;
  const start=(x,y,id,source,target,time)=>{
   // A render can remove the original press target before its release bubbles
@@ -26,7 +28,7 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   if(drag)finish(drag.x,drag.y,drag.id,drag.source,time,true);
   if(target?.closest?.(BLOCKED)||isNativeScrollTarget(target))return;
   const s=state(),rect=root.getBoundingClientRect();
-  drag={x,y,id,source,mode:null,...s,top:y-rect.top<115,bottom:rect.bottom-y<65,samples:[{x,t:time}]};
+  drag={x,y,id,source,mode:null,...s,top:y-rect.top<80,right:x-rect.left>rect.width*.65,bottom:rect.bottom-y<65,samples:[{x,t:time}]};
  };
  const move=(x,y,id,source,time,prevent)=>{
   if(!drag||drag.source!==source||drag.id!==id)return;
@@ -37,6 +39,7 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   if(root.dataset)root.dataset.gestureActive='1';
   prevent();suppressClickUntil=Date.now()+500;
   if(drag.mode==='pages')page({dx,index:drag.page,settle:false});
+  if(drag.mode==='controls')controls({progress:Math.max(0,Math.min(1,(drag.controls?1:0)+dy/root.clientHeight)),settle:false});
   if(drag.mode==='shade')shade({progress:Math.max(0,Math.min(1,(drag.shade?1:0)+dy/root.clientHeight)),settle:false});
   if(drag.mode==='home')goHome({dy,settle:false});
   if(drag.mode==='unlock'){
@@ -50,6 +53,7 @@ export function mountGestures(root,{state,page,shade,unlock,goHome=()=>{},switch
   if(root.dataset)delete root.dataset.gestureActive;
   const dx=x-g.x,dy=y-g.y;
   if(g.mode==='pages')page({dx,velocity:cancel?0:releaseVelocity(g.samples,time),index:g.page,cancel,settle:true});
+  if(g.mode==='controls')controls({progress:cancel?Number(g.controls):g.controls?Number(dy>-60):Number(dy>60),settle:true});
   if(g.mode==='shade')shade({progress:cancel?Number(g.shade):g.shade?Number(dy>-70):Number(dy>70),settle:true});
   if(g.mode==='home')goHome({dy,settle:true,complete:!cancel&&dy<-95,cancel});
   if(g.mode==='switcher'&&!cancel&&dy<-65)switcher();
