@@ -60,6 +60,12 @@ router.open({appId:'maps',route:'/',params:{id:'orphanage'}});
 
 ## 已实现的澳门离线数据构建和测试
 
+### 里斯本沿海底图（D29）
+
+- 收到 Mirage 的 D29 调查地址（同一份备忘录记录）后，地图的搜索框精确匹配故事标识，显示「葡萄牙・里斯本・銀潮別墅」。该标记只是虚构地点的区域展示锚点，与真实 IP、房产、住户无关，不查询任何外部 IP 或地址服务。
+- 继续使用现有 Leaflet 组件。里斯本底图由 BBBike Lisbon OSM PBF 开放矢量数据（https://download.bbbike.org/osm/bbbike/Lisbon/，© OpenStreetMap contributors，ODbL 1.0）渲染为本地 WebP。构建脚本 `scripts/render-offline-lisbon-image.py` 使用 GDAL/Pillow，只绘制道路、海岸、绿地和通用地区标签；不储存私人地址或建筑资料，不下载在线瓦片。
+- 仅地图显示功能，不推进 D30 档案或其他剧情节点；返回澳门及原英国线索入口继续沿用现有逻辑。
+
 - 直接读取 Geofabrik Macau 的合法矢量数据 ZIP（不是地图图片），由 `scripts/build-offline-macau.py` 处理 OSM 道路、建筑、水域、绿地、铁路等图层，输出 `data/offline-macau-detail.js`。
 - `data/offline-macau.js` 保留不依赖在线数据的基础澳门行政区轮廓、轻轨和东望洋赛道。
 - `.github/workflows/offline-macau.yml` 仅对 `feat/leaflet-apple-maps-preview-1103` 生效，将约 4 MB 的离线地图模块写回该分支；不会部署或更改 main。

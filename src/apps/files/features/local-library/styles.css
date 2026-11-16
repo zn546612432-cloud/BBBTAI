@@ -36,6 +36,10 @@
 .app-files .fl-actions .fl-danger{color:#d83c48}
 .app-files .fl-editor{display:flex;flex-direction:column;gap:18px}
 .app-files .fl-editor input[name=name]{width:100%;background:white;border:0;border-radius:12px;padding:16px;font-size:16px;color:#24262b}
+.app-files .fl-editor input[name=password]{width:100%;box-sizing:border-box;background:white;border:0;border-radius:12px;padding:16px;font-size:16px;color:#24262b}
+.app-files .fl-personal-thumb{width:46px;height:54px;object-fit:cover;border-radius:6px;flex:none}
+.app-files .fl-personal-photo{display:block;max-width:100%;max-height:72vh;object-fit:contain;margin:12px auto}
+.app-files .fl-personal-text{padding:24px 16px;background:white;border-radius:12px;font:16px/1.6 ui-monospace,monospace;user-select:text;-webkit-user-select:text}
 
 /* Suppress only the shell navigation for the new Files browser, not legacy attachment viewers. */
 .app-view.app-files:has(.fl-library){padding-top:calc(60px + env(safe-area-inset-top,0px))}

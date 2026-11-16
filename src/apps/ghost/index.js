@@ -3,7 +3,7 @@ import {isTaiRemoteOrderPaused} from '../../system/remote-control/visibility.js'
 import {d02OrderOfStep,d02NextStep} from '../../story/d02/runtime.js';
 import {d03OrderOfStep,d03NextStep} from '../../story/d03/contract.js';
 import {d04OrderOfStep,d04NextStep} from '../../story/d04/contract.js';
-import {isStory55} from '../../services/story55/state.js';
+import {isStory55,completed} from '../../services/story55/state.js';
 import {prepareMirageGhostShareEntry} from '../mirage/session.js';
 import {shareGhostToTai,ghostShareSource} from '../../services/story55/ghost-share.js';
 import {currentScript55} from '../../services/story55/scripted-chat.js';
@@ -11,7 +11,7 @@ import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {renderTearRun,renderTearHome,tickTearRun,tearDeployed,tearRunAvailability} from './deployment/tear-run.js';
 import {handleTearAgent,submitTearAgent,inputTearAgent} from './deployment/tear-agent/actions.js';
-import {beginTearChatSession,ensureAgent} from './deployment/tear-agent/state.js';
+import {beginTearChatSession,ensureAgent,tickTearAgent} from './deployment/tear-agent/state.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
@@ -39,8 +39,14 @@ const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConf
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
+ if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/run'&&o?.story55Project==='identity'&&o.status==='success'&&completed(s,'identity')){
+  ctx.router.open({appId:'ghost',route:'/tear',params:{}});return;
+ }
  // Presentation expiry only; task time remains owned by the phone clock.
- if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear')ctx.refresh();
+ if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear'){
+  if(s.story55?.tearAgent?.archiveRun&&!s.story55.tearAgent.archiveRun.done)ctx.store.update(n=>tickTearAgent(n));
+  else ctx.refresh();
+ }
  if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear-run'){
   const id=s.nav.current.params?.orderId,r=s.story55?.tearRuns?.[id];
   if(r?.status==='running'){if(now>=r.nextAt)ctx.store.update(n=>tickTearRun(n,id,now));else ctx.refresh();}return;
@@ -168,7 +174,7 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
   ctx.store.update(n=>{n.ghost.orders[id].keyVerified=true;});
  }
  if(id===D01_REPAIR)ctx.store.update(n=>deployD01(n));if(['running','preview-win','success','settling','paid'].includes(o.status))return nav(ctx,'/run',{orderId:id});let started=false;ctx.store.update(n=>{started=begin(n,id);});if(!started)return;return nav(ctx,'/run',{orderId:id});}
- if(a==='close'){if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
+ if(a==='close'){if(o?.story55Project==='identity'&&o.status==='success'&&completed(s,'identity'))return nav(ctx,'/tear');if(o?.story55Project)return nav(ctx,'/deployment',{project:o.story55Project});if(o?.story55Commission)return ctx.router.open({appId:'mirage',route:'/',params:{}});if(id===WALLET_CHALLENGE_ID)return ctx.router.open({appId:'mirage',route:'/chat/mc-ourob-d05',params:{}});if(d02OrderOfStep(id))return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId,params:{}});if(o?.mailId)return ctx.router.open({appId:'kira',route:'/mail/'+o.mailId});return nav(ctx);}
  if(a==='exit'){if(id===D01_REPAIR&&o?.status==='running'){exitDialogFor=id;ctx.refresh();return;}return nav(ctx,'/contract',{orderId:id});}
  if(a==='cipher-easy-reset'){
   if(o?.type!=='cipher'||o.status!=='running'||!o.board?.arcade)return;

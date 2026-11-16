@@ -30,4 +30,11 @@ export function applyD29Definition(c){
  for(const line of c.scenes.plan||[])if(line[0]==='ouroboros'&&D29_LEGACY_IPS.includes(line[1]))line[1]=D29_IP;
  const identity=c.projects.find(p=>p.id==='identity');
  if(D29_LEGACY_IPS.includes(identity?.key))identity.key=D29_IP;
+ // Personal Files is now the source of the social handle and locked photo.
+ // Preserve the later invitation gate until both the questions and photo
+ // have been completed, regardless of which one the player discovers first.
+ const prerequisites={harvard:['dossier'],ig:['dossier'],'photo-decrypt':['dossier'],invite:['photo','questions']};
+ for(const [id,requires] of Object.entries(prerequisites)){
+  const n=c.nodes.find(x=>x.id===id);if(n)n.requires=requires.slice();
+ }
 }

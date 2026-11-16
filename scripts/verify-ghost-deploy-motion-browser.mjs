@@ -23,6 +23,8 @@ await mkdir(out,{recursive:true});
 function seed(count){
  const s=activateStory55(initialState());s.day=30;s.clock='12:00';s.unlocked=true;s.content.alarms=[];s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.story55.hardware=2;
  for(const n of s.story55.config.nodes)if(n.day<=30&&n.id!=='identity')s.story55.completed[n.id]={day:n.day,clock:'09:00'};
+ const baseProject=s.story55.config.projects.find(p=>p.id==='base');
+ s.story55.projects.base={authorized:true,batches:Array.from({length:baseProject.batches},()=>({complete:true,steps:Array(5).fill(true)})),active:null};
  s.story55.projects.identity={authorized:true,batches:[],active:null};
  for(let i=0;i<count;i++){const run=s.ghost.orders[startDeploymentStep(s,'identity')];run.status='success';assert.equal(completeDeploymentRun(s,run),true);}
  s.nav.current={appId:'ghost',route:'/deployment',params:{project:'identity'}};return s;
@@ -49,16 +51,13 @@ try{
   if(count===4){
    const goal=(await live.locator('.gh-target strong').innerText()).split(' · ');
    for(const name of goal)await live.locator('[data-action=gh-verify-token]').filter({hasText:name}).click();
-   await live.locator('.gh-report').waitFor();await live.locator('.gh-report [data-action=gh-close]').click();
-   await live.locator('.gh-deploy-progress').getByText('5 / 5 已完成').waitFor();
-   await page.waitForFunction(()=>document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.pulse')?.classList.contains('is-pulsing'));
-   await page.waitForTimeout(1500);await page.screenshot({path:`${out}/390-success-pulse.png`});
-   await page.waitForFunction(()=>!document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.pulse')?.classList.contains('is-pulsing'),{},{timeout:10000});
-   await page.screenshot({path:`${out}/390-finished.png`});
-   const idle=field.locator('video.idle');
-   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused;});
-   await idle.evaluate(v=>{v.currentTime=v.duration-.12;});
-   await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime<1.2;});
+   await live.locator('[data-action=gh-tear-task][data-id=identity]').click();
+   await live.locator('[data-action=gh-tear-identity]').getByText('啟動',{exact:true}).click();
+   await live.locator('[data-action=gh-tear-task][data-id=personal-files].is-complete').click({timeout:15000});
+   await live.locator('[data-action=gh-tear-archive-save]').getByText('存入本機',{exact:true}).waitFor();
+   await page.screenshot({path:`${out}/390-personal-archive.png`});
+   await live.locator('[data-action=gh-tear-task-close]').last().click();
+   await live.locator('[data-action=gh-tear-back]').click();
    await live.locator('[data-action=s55-projects]').click();
    await live.locator('.gh-workspace-flow').waitFor();
    assert.equal(await live.locator('.gh-workspace-flow').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
@@ -70,6 +69,8 @@ try{
    await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime<1.2;});
    await live.locator('[data-action=gh-flow-identity-project]').click();
    await live.locator('.gh-deploy-progress').getByText('5 / 5 已完成').waitFor();
+   assert.equal(await live.getByText('報告已保存到檔案',{exact:false}).count(),0);
+   await page.screenshot({path:`${out}/390-finished.png`});
    await live.locator('[data-action=s55-projects]').click();
    await live.locator('[data-action=gh-flow-home]').click();
    await live.locator('.gh-workspace-home').waitFor();
@@ -80,7 +81,7 @@ try{
    await page.waitForFunction(()=>{const v=document.querySelector('xm-ghost-deploy-motion')?.shadowRoot?.querySelector('video.idle');return v?.loop&&!v.paused&&v.currentTime>.1;});
    await page.screenshot({path:`${out}/390-deploy-menu.png`});
   }
-  assert.deepEqual(errors,[]);results.push({width,idle:'playing',rows:count,run:'clicked',pulse:count===4?'passed':'not applicable'});await context.close();
+  assert.deepEqual(errors,[]);results.push({width,idle:'playing',rows:count,run:'clicked',archive:count===4?'passed':'not applicable'});await context.close();
  }
  await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
 }catch(error){if(page&&!page.isClosed())await page.screenshot({path:`${out}/failure.png`});throw error;}

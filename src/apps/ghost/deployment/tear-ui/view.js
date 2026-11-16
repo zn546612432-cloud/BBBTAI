@@ -2,6 +2,7 @@ import {esc} from '../../../../system/ui.js';
 import {renderAgentContent} from '../tear-agent/view.js';
 import {agent,agentFiles,tearTaskInfo} from '../tear-agent/state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
+import {completed} from '../../../../services/story55/state.js';
 let loading;
 function ensureTearOrbit(){
  if(typeof window==='undefined'||typeof customElements==='undefined'||customElements.get('xm-tear-orbit'))return;
@@ -29,13 +30,15 @@ const TASK_POSITIONS=Object.fromEntries(['survey','maintenance','staff','validat
  return [id,[50+44*Math.cos(angle),50+44*Math.sin(angle)]];
 }));
 TASK_POSITIONS.identity=[50,94];
+TASK_POSITIONS['personal-files']=[80,17];
 const TASK_DESCRIPTIONS={
  survey:'分析設備資料、建立研究模型並啟動持續測試。',
  maintenance:'比對新的維保記錄，更新研究模型。',
  staff:'核對胡楓與阿威的安保人員資料。',
  validation:'使用接入的設備驗證此前的研究結果。',
  program:'整理 BC_01 專案需求，執行模擬測試並封裝結果。',
- identity:'核對既有連線記錄，整理可讀取的資料索引。'
+ identity:'核對既有連線記錄，整理可讀取的資料索引。',
+ 'personal-files':''
 };
 const pad=n=>String(n).padStart(2,'0');
 function durationLabel(minutes){
@@ -46,7 +49,7 @@ function taskMarkers(s){
  const a=agent(s);
  return Object.keys(TASK_POSITIONS).map(id=>{
   const info=tearTaskInfo(s,id),pos=TASK_POSITIONS[id];
-  if(!info)return '';
+  if(!info||id==='personal-files'&&info.running)return '';
   const selected=a.selectedTask===id,cls=info.running?'is-running':'is-complete',collected=!!a.collectedArtifacts?.[id];
   return `<button type="button" class="gh-agent-task-dot ${cls}${collected?' is-collected':''}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${id}" aria-label="${esc(info.title)}，${info.status}，${info.percent}%${collected?'，已領取':''}" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
  }).join('');
@@ -57,10 +60,10 @@ function taskDetail(s){
  const artifact=info.complete&&definition?.artifact?agentFiles(s).find(f=>f.id==='tear-artifact-'+id):null,collected=!!agent(s).collectedArtifacts?.[id];
  return `<div class="gh-agent-task-backdrop" data-key="tear-task-backdrop" data-action="gh-tear-task-close" aria-hidden="true"></div><aside class="gh-agent-task-detail" role="dialog" aria-modal="true" aria-label="任務詳情" data-key="tear-task-detail">
   <header><div><span>${esc(info.title)}</span><strong class="${info.running?'is-running':'is-complete'}">${esc(info.status)}</strong></div><button type="button" data-action="gh-tear-task-close" aria-label="關閉任務詳情">×</button></header>
-  <p>${esc(TASK_DESCRIPTIONS[id]||info.title)}</p>
+  ${TASK_DESCRIPTIONS[id]?'<p>'+esc(TASK_DESCRIPTIONS[id])+'</p>':''}
   <div class="gh-agent-task-metrics"><div><span>運行時間</span><strong>${durationLabel(info.elapsedMinutes)}</strong></div><div><span>完成進度</span><strong>${info.percent}%</strong></div></div>
   <div class="gh-agent-task-progress" role="progressbar" aria-label="任務完成進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${info.percent}"><i style="width:${info.percent}%"></i></div>
-  ${id==='identity'&&info.complete?`<button type="button" class="gh-agent-pickup" data-action="gh-tear-identity">${fileIcon}<span><strong>REMOTE ARCHIVE</strong><small>查看部署</small></span>${arrowIcon}</button>`:artifact?`<button type="button" class="gh-agent-pickup${collected?' is-collected':''}" data-action="gh-tear-${collected?'artifact':'collect'}" data-id="${esc(collected?artifact.id:id)}">${fileIcon}<span><strong>${esc(artifact.name)}</strong><small>${collected?'已領取 · 查看檔案':'領取檔案'}</small></span>${collected?arrowIcon:'↓'}</button>`:''}
+  ${id==='identity'&&info.complete?`<button type="button" class="gh-agent-pickup" data-action="gh-tear-identity" ${agent(s).archiveRun?'disabled':''}>${fileIcon}<span><strong>REMOTE ARCHIVE</strong><small>${completed(s,'identity')?(agent(s).archiveRun?'已啟動':'啟動'):'查看部署'}</small></span>${arrowIcon}</button>`:id==='personal-files'&&info.complete?`<button type="button" class="gh-agent-pickup" data-action="gh-tear-archive-save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v11H3z"/></svg><span><strong>Personal Files</strong><small>${agentFiles(s).some(f=>f.id==='personal-files')?'已存入本機 · 開啟':'存入本機'}</small></span>↓</button>`:artifact?`<button type="button" class="gh-agent-pickup${collected?' is-collected':''}" data-action="gh-tear-${collected?'artifact':'collect'}" data-id="${esc(collected?artifact.id:id)}">${fileIcon}<span><strong>${esc(artifact.name)}</strong><small>${collected?'已領取 · 查看檔案':'領取檔案'}</small></span>${collected?arrowIcon:'↓'}</button>`:''}
  </aside>`;
 }
 export function renderTearAgent(s){
