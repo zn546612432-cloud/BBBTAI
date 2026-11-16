@@ -12,6 +12,7 @@ import {saveIncomingZip,localFileList,handleLibraryAction} from '../src/apps/fil
 import {TEAR_STAGES} from '../src/story/d25/tear-agent.js';
 import {dailyContent} from '../src/apps/browser/features/cheat-guide/content.js';
 import {D29_IP} from '../src/story/d29/definition.js';
+import {renderFlowD03,handleFlowD03} from '../src/apps/ghost/features/flow-d03/index.js';
 
 function fixture(){
  const s=activateStory55(initialState());
@@ -63,6 +64,29 @@ test('missing research does not claim completion, D29 IP requires the real story
  for(let day=25;day<=29;day++)assert.ok(dailyContent[day].eggs.length);
 });
 
+test('D29 identity uses approved local dialogue and D30 opens the persistent deployment through every entry',()=>{
+ const s=fixture(),routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:route=>routes.push(route)}};
+ time(s,29,'22:00');s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
+ assert.equal(D29_IP,'195.22.28.198');assert.equal(sendAgent(s,D29_IP).kind,'preset');
+ assert.deepEqual(agent(s).messages.slice(-3).map(m=>m.text),['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal\n時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。']);
+ assert.match(renderTearAgent(s),/data-id="identity"/);
+ handleTearAgent('gh-tear-picker',{dataset:{}},ctx);assert.match(renderAgentContent(s).content,/你認識這個地址？/);
+ handleTearAgent('gh-tear-prompt',{dataset:{id:'identity-recognize'}},ctx);assert.equal(agent(s).draft,'你認識這個地址？');
+ assert.equal(sendAgent(s,agent(s).draft).kind,'preset');assert.equal(agent(s).messages.at(-1).text,'這台設備與我存在既有的連線記錄。');
+ assert.equal(sendAgent(s,'你能读里面的资料吗？').kind,'ai'); // unmatched wording is not an authored command
+ assert.equal(sendAgent(s,'你能讀取裡面的資料嗎？').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'部分可以。我需要一些時間確認可讀取的範圍。');
+ assert.equal(tearTaskInfo(s,'identity').running,true);handleTearAgent('gh-tear-identity',{dataset:{}},ctx);assert.equal(routes.length,0);
+ s.story55.completed.plan={day:29,clock:'22:10'};time(s,30,'08:00');assert.equal(agent(s).ipAuthorized,true);
+ assert.equal(agent(s).messages.at(-1).text,'已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。');
+ assert.equal(tearTaskInfo(s,'identity').percent,100);assert.match(renderAgentContent(s).content,/data-action="gh-tear-identity"/);
+ handleTearAgent('gh-tear-identity',{dataset:{}},ctx);
+ beginTearChatSession(s);handleTearAgent('gh-tear-task',{dataset:{id:'identity'}},ctx);assert.match(renderTearAgent(s),/查看部署/);
+ handleTearAgent('gh-tear-identity',{dataset:{}},ctx);assert.match(renderFlowD03(s,{route:'/flow-projects',params:{}}),/gh-flow-identity-project/);
+ handleFlowD03('gh-flow-identity-project',ctx);
+ assert.deepEqual(routes,Array(3).fill({appId:'ghost',route:'/deployment',params:{project:'identity'}}));
+ assert.equal(s.story55.projects.identity.authorized,true);
+});
+
 test('TAI keeps the full current-session transcript accessible from the history control',()=>{
  const s=fixture(),a=agent(s);
  a.messages.push(
@@ -108,7 +132,7 @@ test('TAI prompt includes engineering concepts but keeps execution and investiga
  assert.equal(cleanTearReply('♪ 非台詞\n{"reply":"尚未取得資料。"}'),'尚未取得資料。');
  assert.equal(cleanTearReply('♪ 非台詞'),'');
  assert.equal(cleanTearReply('CURRENT_REPLY'),'CURRENT_REPLY');
- assert.doesNotMatch(redactTearNetworkIdentifiers('查詢 '+D29_IP),/192\.0\.2\.29/);
+ assert.ok(!redactTearNetworkIdentifiers('查詢 '+D29_IP).includes(D29_IP));
  assert.match(TEAR_NETWORK_PROFILE,/Claranet Portugal.*Europe\/Lisbon/);
  const s=fixture();sendAgent(s,'203.0.113.40');assert.equal(agent(s).ipRequested,undefined);
  assert.match(agent(s).messages.at(-1).text,/沒有對應的調查資料/);
@@ -117,7 +141,7 @@ test('TAI prompt includes engineering concepts but keeps execution and investiga
  assert.doesNotMatch(buildTearAgentScene(s),/Claranet|Lisbon/);
  sendAgent(s,D29_IP);
  assert.match(buildTearAgentScene(s),/Claranet Portugal.*Europe\/Lisbon/);
- assert.doesNotMatch(buildTearAgentScene(s),/192\.0\.2\.29/);
+ assert.ok(!buildTearAgentScene(s).includes(D29_IP));
 });
 
 test('D28 free-form authored command routes locally, respects prerequisites and runs only once',()=>{
