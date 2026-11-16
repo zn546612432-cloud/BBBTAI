@@ -10,7 +10,7 @@ import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03/index.js';
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {renderTearRun,renderTearHome,tickTearRun,tearDeployed,tearRunAvailability} from './deployment/tear-run.js';
-import {handleTearAgent,submitTearAgent} from './deployment/tear-agent/actions.js';
+import {handleTearAgent,submitTearAgent,inputTearAgent} from './deployment/tear-agent/actions.js';
 import {beginTearChatSession,ensureAgent} from './deployment/tear-agent/state.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
@@ -29,7 +29,7 @@ const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params
 const fmt=ms=>`${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor(Math.max(0,ms)/1000%60).toString().padStart(2,'0')}`;
 const title=(back,label,right='')=>`<div class="gh-top">${button(back,'‹','aria-label="返回"','gh-back')}<span>${label}</span><span>${right||'●'}</span></div>`;
 const shareBtn=(s,source)=>ghostShareSource(s,source)?button('share','↗','aria-label="分享至 MIRAGE" title="分享至 MIRAGE"','gh-share-button'):'';
-let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=null,shareConfirmFor=null,tearChatSessionOpen=false;
+let clock=null,lastContext=null,pointer=null,suppressClick=false,exitDialogFor=null,shareConfirmFor=null,tearChatSessionOpen=false,tearSessionStore=null;
 const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConfirmFor.route===loc.route&&
   ((shareConfirmFor.source.projectId&&shareConfirmFor.source.projectId===loc.params?.project)||
    (shareConfirmFor.source.orderId&&shareConfirmFor.source.orderId===loc.params?.orderId))&&
@@ -38,6 +38,8 @@ const shareDialogMarkup=(s,loc)=>shareConfirmFor&&loc.appId==='ghost'&&shareConf
 function bindControls(){if(typeof document==='undefined'||document.documentElement.dataset.ghostBound)return;document.documentElement.dataset.ghostBound='1';document.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-action=gh-tile]');if(t)pointer={index:t.dataset.index,x:e.clientX,y:e.clientY};});document.addEventListener('pointerup',e=>{if(!pointer)return;const from=pointer;pointer=null;const to=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-action=gh-tile]');if(!to||to.dataset.index===from.index||Math.hypot(e.clientX-from.x,e.clientY-from.y)<12)return;const ctx=lastContext,id=ctx?.store.get().nav.current.params?.orderId;ctx?.store.update(s=>{const o=s.ghost?.orders[id];if(!o||o.status!=='running')return;if(o.deadline!==null&&Date.now()>=o.deadline){finish(s,id,false);return;}o.board.tiles=swap(o.board.tiles,Number(from.index),Number(to.dataset.index));o.board.selected=null;o.moves++;if(puzzleSolved(o.board.tiles))finish(s,id,true);});suppressClick=true;setTimeout(()=>suppressClick=false,100);});document.addEventListener('keydown',e=>{const ctx=lastContext,loc=ctx?.store.get().nav.current,o=ctx?.store.get().ghost?.orders[loc?.params?.orderId];if(loc?.appId!=='ghost'||loc.route!=='/run'||o?.type!=='veil'||o.status!=='running'||!/^([0-9]|Backspace|Enter)$/.test(e.key))return;e.preventDefault();handle('gh-key',{dataset:{key:e.key==='Backspace'?'⌫':e.key==='Enter'?'↵':e.key}},ctx,loc);});}
 export function tick(ctx){
  const s=ctx.store.get(),o=s.ghost?.orders[s.nav.current.params?.orderId],now=Date.now();
+ // Presentation expiry only; task time remains owned by the phone clock.
+ if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear')ctx.refresh();
  if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear-run'){
   const id=s.nav.current.params?.orderId,r=s.story55?.tearRuns?.[id];
   if(r?.status==='running'){if(now>=r.nextAt)ctx.store.update(n=>tickTearRun(n,id,now));else ctx.refresh();}return;
@@ -57,7 +59,12 @@ export function tick(ctx){
  }
  if(Object.values(s.ghost?.orders||{}).some(x=>x.status==='settling'&&now>=x.dueAt&&Number.isFinite(configFor(s,x.type,x.id).reward)))ctx.store.update(n=>settle(n));
 }
-export function render(ctx,loc){lastContext=ctx;bindControls();if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}let s=ctx.store.get();if(loc.route==='/tear'){
+export function render(ctx,loc){lastContext=ctx;bindControls();
+ if(tearSessionStore!==ctx.store&&ctx.store.subscribe){
+  tearSessionStore=ctx.store;
+  ctx.store.subscribe(s=>{if(s.nav.current.appId!=='ghost'||s.nav.current.route!=='/tear')tearChatSessionOpen=false;});
+ }
+if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}let s=ctx.store.get();if(loc.route==='/tear'){
  if(!tearChatSessionOpen){tearChatSessionOpen=true;ctx.store.update(n=>beginTearChatSession(n));s=ctx.store.get();}
  return renderTearHome(s)||deploymentHome(s);
 }if(loc.route==='/tear-run')return renderTearRun(s,loc.params?.orderId)||deploymentHome(s);if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return (loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s))+shareDialogMarkup(s,loc);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
@@ -194,3 +201,5 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
 }
 export {authorize,submitGhostOrder as submitOrder,settle};
 export function submit(form,ctx){return submitTearAgent(form,ctx)||submitFlowD03Form(form,ctx);}
+
+export function input(target,ctx){return inputTearAgent(target,ctx);}

@@ -5,12 +5,15 @@ import {startTearRun} from '../tear-run.js';
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
- if(!['picker','select','clear-file','prompt','artifact','identity','task','task-close'].includes(key))return false;
+ if(!['picker','select','clear-file','prompt','artifact','identity','task','task-close','history','history-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;}
  ctx.store.update(s=>{const a=ensureAgent(s);
+  if(key==='task'){a.history=false;a.picking=false;}
   if(key==='task')a.selectedTask=TEAR_STAGES[t.dataset.id]&&a.jobs[t.dataset.id]?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
   if(key==='task-close')a.selectedTask=null;
+  if(key==='history'){a.history=!a.history;a.selectedTask=null;a.picking=false;}
+  if(key==='history-close')a.history=false;
   if(key==='picker')a.picking=!a.picking;
   if(key==='select'){const f=agentFiles(s).find(f=>f.id===t.dataset.id);if(f){a.selected=f.id;a.picking=false;a.draft=TEAR_STAGES[storyFileStage(f)]?.prompt||'';}}
   if(key==='clear-file'){a.selected=null;a.draft='';}
@@ -32,8 +35,16 @@ export function submitTearAgent(form,ctx){
  if(result.kind==='ai'){
   const state=ctx.store.get(),a=agent(state),messages=a.messages.filter(m=>!m.artifact&&!m.job).slice(-12).map(m=>({role:m.role,content:m.text}));
   const scene=Object.entries(a.jobs).map(([id,j])=>TEAR_STAGES[id]?.title+': '+(j.done?'完成':'研究中')).join('\n');
-  const finish=raw=>ctx.store.update(n=>{const current=agent(n);if(current.thinking!==result.id)return;delete current.thinking;delete current.thinkingAt;let reply='';try{reply=JSON.parse(raw).reply||'';}catch{reply=String(raw||'');}reply=String(reply).trim().slice(0,1800);addMessage(n,'assistant',reply&&!blockedTearText(n,reply)?reply:'抱歉，目前無法提供這項資訊。');});
+  const session=a.chatSession;
+  const finish=raw=>{const latest=ctx.store.get(),loc=latest.nav.current;
+   if(loc.appId!=='ghost'||loc.route!=='/tear'||agent(latest).chatSession!==session||agent(latest).thinking!==result.id)return;
+   ctx.store.update(n=>{const current=agent(n);if(current.thinking!==result.id)return;delete current.thinking;delete current.thinkingAt;let reply='';try{reply=JSON.parse(raw).reply||'';}catch{reply=String(raw||'');}reply=String(reply).trim().slice(0,1800);addMessage(n,'assistant',reply&&!blockedTearText(n,reply)?reply:'抱歉，目前無法提供這項資訊。');});};
   askTear({day:state.day,messages,scene}).then(r=>finish(r.text)).catch(()=>finish('連線暫時中斷，請稍後再試。'));
  }
  return true;
+}
+
+export function inputTearAgent(target,ctx){
+ if(target.id!=='tear-agent-input')return false;
+ ctx.store.update(s=>{ensureAgent(s).draft=target.value;});return true;
 }
