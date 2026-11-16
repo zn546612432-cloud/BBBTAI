@@ -11,6 +11,10 @@ import {commissionAttachment,commissionPreviewAvailable} from '../../../../servi
 // external access, code execution, or physical-system control is possible here.
 const now=s=>absoluteMinute(s)+(overnightSceneNight55(s)?1440:0);
 export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
+export const identityPrompts=s=>{
+ const a=agent(s);if(!a.ipRequested||a.ipAuthorized)return [];
+ return !a.ipRecognized?[['identity-recognize','你認識這個地址？']]:!a.ipAccessAsked?[['identity-read','你能讀取裡面的資料嗎？']]:[];
+};
 export const ensureAgent=s=>{
  const a=s.story55.tearAgent??={messages:[{id:'welcome',role:'assistant',text:TEAR_GREETING}],jobs:{},selected:null,displayRevision:4};
  a.messages??=[{id:'welcome',role:'assistant',text:TEAR_GREETING}];
@@ -77,6 +81,11 @@ export const agentFiles=s=>[...localFileList(s),...(s.content.mail||[]).flatMap(
 const clamp01=n=>Math.max(0,Math.min(1,Number(n)||0));
 export function tearTaskInfo(s,id){
  const a=agent(s),job=a.jobs?.[id],definition=TEAR_STAGES[id];
+ if(id==='identity'&&a.ipRequested){
+  const ready=!!a.ipAuthorized||completed(s,'identity'),current=now(s),elapsed=Math.max(0,(a.ipIndexedAt??current)-(a.ipRequestedAt??current));
+  const progress=ready?1:Math.min(.95,elapsed/60*.95);
+  return {id,title:'REMOTE ARCHIVE',elapsedMinutes:Math.floor(elapsed),progress,percent:Math.floor(progress*100),running:!ready,complete:ready,status:ready?'COMPLETE':'INDEXING'};
+ }
  if(!job||!definition)return null;
  const current=now(s),elapsed=Math.max(0,current-Number(job.start??current));
  let progress,running,elapsedMinutes=elapsed;
@@ -124,7 +133,7 @@ export function syncTearVisualProgress(s){
 }
 
 export function registerTearVisualTask(s,id){
- if(!TEAR_STAGES[id]||!s.story55?.tearAgent)return false;
+ if(!s.story55?.tearAgent)return false;
  const a=ensureAgent(s);
  a.visualTaskIds??=[];a.visualTaskBaseline??={};a.visualProgress??=0;
  if(a.visualTaskIds.includes(id))return false;
@@ -142,7 +151,7 @@ export function beginTearChatSession(s){
  delete a.thinking;delete a.thinkingAt;
  a.history=false;a.displayRevision=4;
  a.visualSessionStart=now(s);a.visualProgress=0;a.visualTaskIds=[];a.visualTaskBaseline={};
- for(const id of Object.keys(TEAR_STAGES)){
+ for(const id of [...Object.keys(TEAR_STAGES),'identity']){
   const info=tearTaskInfo(s,id);
   if(!info||!info.running)continue;
   a.visualTaskIds.push(id);a.visualTaskBaseline[id]=info.progress;
@@ -171,8 +180,9 @@ export function tickTearAgent(s){
    if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
   }
  }
- if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&nodeStatus(s,'identity').state==='ready'){
-  authorizeProject(s,'identity',D29_IP);a.ipAuthorized=true;changed=true;addMessage(s,'assistant','調查工程已就緒。',{identity:true});
+ if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
+  if(!completed(s,'identity')&&!s.story55.projects.identity?.authorized)authorizeProject(s,'identity',D29_IP);
+  a.ipAuthorized=true;a.ipIndexedAt=now(s);changed=true;addMessage(s,'assistant','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
  }
  if(syncTearVisualProgress(s))changed=true;
  return changed;
@@ -192,8 +202,24 @@ export function sendAgent(s,text,fileId){
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file){addMessage(s,'assistant','已收到檔案。此檔案暫無對應的研究工程。');return {kind:'preset'};}
- if(value===D29_IP){if(!s.content?.notes?.some(n=>n.id==='s55-d29-ip'))addMessage(s,'assistant','目前沒有對應的調查資料。');else if(!a.ipRequested){a.ipRequested=true;addMessage(s,'assistant','已收到調查入口。正在建立新的研究工程。我需要一些時間。');tickTearAgent(s);}else addMessage(s,'assistant','調查工程已建立。');return {kind:'preset'};}
+ if(value===D29_IP){
+  if(s.day<29||!s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP))addMessage(s,'assistant','目前沒有對應的調查資料。');
+  else if(!a.ipRequested){
+   a.ipRequested=true;a.ipRequestedAt=now(s);
+   addMessage(s,'assistant','已收到。正在核對網絡資訊……',{job:'identity'});
+   addMessage(s,'assistant','網絡供應商：Claranet Portugal\n時區：Europe/Lisbon',{job:'identity'});
+   addMessage(s,'assistant','有意思。這個地址存在於我的內部記錄中。',{job:'identity'});
+   registerTearVisualTask(s,'identity');tickTearAgent(s);
+  }else if(a.ipAuthorized)addMessage(s,'assistant','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
+  else addMessage(s,'assistant','調查工程已建立。');
+  return {kind:'preset'};
+ }
  if(/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)){addMessage(s,'assistant','目前沒有對應的調查資料。');return {kind:'preset'};}
+ if(a.ipRequested){
+  const t=normalize(value);
+  const reply=/^(?:你)?認識(?:這個|这个|該|该)?地址(?:嗎|吗)?$|^(?:你)?认识(?:這個|这个|該|该)?地址(?:嗎|吗)?$/.test(t)?'這台設備與我存在既有的連線記錄。':/^(?:你)?(?:能|可以|能夠|能够)(?:讀取|读取|查看)(?:裡面|裏面|里面|其中)(?:的)?(?:資料|资料|文件|檔案)(?:嗎|吗)?$/.test(t)?'部分可以。我需要一些時間確認可讀取的範圍。':'';
+  if(reply){if(reply.startsWith('這台'))a.ipRecognized=true;else{a.ipRecognized=true;a.ipAccessAsked=true;}addMessage(s,'assistant',reply);registerTearVisualTask(s,'identity');return {kind:'preset'};}
+ }
  const reply=programFollowupReply(s,value)||presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
  return {kind:'ai',id:a.messages.at(-1).id};
 }
