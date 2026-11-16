@@ -4,7 +4,7 @@ import {agent,agentFiles,researchInfo,stageReady,storyFileStage,tearTaskInfo,ide
 const b=(action,label,attrs='')=>`<button type="button" data-action="gh-tear-${action}" ${attrs}>${label}</button>`;
 export function renderAgentContent(s){
  const a=agent(s),files=agentFiles(s),selected=files.find(f=>f.id===a.selected),r=researchInfo(s),messages=a.messages;
- const archive=tearTaskInfo(s,'identity'),pending=Object.entries(a.jobs).filter(([,j])=>!j.done),working=!!a.thinking||pending.length>0||!!r&&!r.complete||!!archive?.running;
+ const archive=tearTaskInfo(s,'identity'),pending=Object.entries(a.jobs).filter(([,j])=>!j.done),working=!!a.thinking||pending.length>0||!!r&&!r.complete||!!archive?.running||!!tearTaskInfo(s,'personal-files')?.running;
  const suggested=[...['validation','program'].filter(id=>stageReady(s,id)).map(id=>[id,TEAR_STAGES[id].prompt]),...identityPrompts(s)];
  // Only casual conversation dissolves. The complete transcript remains
  // available in this session's history; task logs stay readable on the main view.

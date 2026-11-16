@@ -3,7 +3,7 @@ import {MAP_PLACES,searchPlaces,locationById} from './data/places.js';
 // Native phone navigation and save data remain owned by the existing system.
 const MACAU=[22.19875,113.54387],OVERVIEW=[22.175,113.552];
 let loader;
-let lastView={center:OVERVIEW,zoom:13};
+let lastView={center:OVERVIEW,zoom:13,area:'MACAU'};
 function loadLeaflet(){
  if(window.L)return Promise.resolve(window.L);
  if(loader)return loader;
@@ -23,10 +23,12 @@ function loadLeaflet(){
 // GeoJSON shapes. The raster is rendered from openly licensed OSM geometry
 // during the build and never accesses online tiles or CDN resources.
 const MACAU_IMAGE_BOUNDS=[[22.095,113.505],[22.235,113.612]];
-function drawOfflineBase(L,map,{world=false}={}){
+const LISBON_IMAGE_BOUNDS=[[38.65,-9.34],[38.80,-9.10]];
+function drawOfflineBase(L,map,{world=false,area='MACAU'}={}){
  if(world)return null;
- const image=L.imageOverlay(publicAssetPath('apps/maps/macau-offline.webp'),MACAU_IMAGE_BOUNDS,{
-  alt:'澳门离线街道地图 · OpenStreetMap',
+ const lisbon=area==='LISBON';
+ const image=L.imageOverlay(publicAssetPath(lisbon?'apps/maps/lisbon-offline.webp':'apps/maps/macau-offline.webp'),lisbon?LISBON_IMAGE_BOUNDS:MACAU_IMAGE_BOUNDS,{
+  alt:(lisbon?'里斯本':'澳门')+'离线街道地图 · OpenStreetMap',
   interactive:false,
   opacity:1
  }).addTo(map);
@@ -73,7 +75,14 @@ class XimengMap extends HTMLElement {
     if(results)results.hidden=true;
     this.querySelector('input')?.blur();
    });
-   this.querySelector('.xm-map-recenter').addEventListener('click',()=>this.map?.flyTo(OVERVIEW,13,{duration:.6}));
+   this.querySelector('.xm-map-recenter').addEventListener('click',()=>{
+    if(!this.map)return;
+    this.map.closePopup();
+    const changed=this.setArea('MACAU');
+    if(changed)this.map.setView(OVERVIEW,13,{animate:false});
+    else this.map.flyTo(OVERVIEW,13,{duration:.6});
+    this.showPlace(null);
+   });
    // Do not stop touchmove propagation here: Leaflet tracks active touch
    // gestures on document so both panning and pinch zoom require bubbling.
   }
@@ -82,7 +91,7 @@ class XimengMap extends HTMLElement {
  disconnectedCallback(){
   this.alive=false;this.observer?.disconnect();
   if(this.map){
-   if(this.mode==='normal'){const p=this.map.getCenter();lastView={center:[p.lat,p.lng],zoom:this.map.getZoom()};}
+   if(this.mode==='normal'){const p=this.map.getCenter();lastView={center:[p.lat,p.lng],zoom:this.map.getZoom(),area:this.area};}
    this.map.remove();this.map=null;
   }
  }
@@ -114,20 +123,43 @@ class XimengMap extends HTMLElement {
  selectPlace(id){
   const p=this.getPlaces().find(place=>place.id===id);
   if(!p||!this.map)return;
-  this.map.flyTo([p.lat,p.lng],Math.max(this.map.getZoom(),15),{duration:.6});
+  this.map.closePopup();
+  const changed=this.setArea(p.area);
+  const zoom=p.area==='LISBON'?14.5:Math.max(this.map.getZoom(),15);
+  if(changed)this.map.setView([p.lat,p.lng],zoom,{animate:false});
+  else this.map.flyTo([p.lat,p.lng],zoom,{duration:.6});
   this.markers?.get(p.id)?.openPopup();
-  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(p.name)+'</b>'+(p.description?'<span>'+safeText(p.description)+'</span>':'');
+  this.showPlace(p);
+ }
+ showPlace(p){
+  const name=p?.name||(this.area==='LISBON'?'里斯本':'澳门');
+  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(name)+'</b>'+(p?.description?'<span>'+safeText(p.description)+'</span>':'');
+ }
+ setArea(area){
+  area=area==='LISBON'?'LISBON':'MACAU';
+  if(this.area===area)return false;
+  this.area=area;
+  this.baseImage?.remove();
+  this.baseImage=drawOfflineBase(window.L,this.map,{area});
+  this.map.setMaxBounds(null);
+  this.map.setMinZoom(area==='LISBON'?12:10);
+  this.querySelector('.xm-map-tiles').setAttribute('aria-label',area==='LISBON'?'里斯本互動地圖':'澳門互動地圖');
+  return true;
  }
  refreshPlaces(){
   if(!this.map||this.mode!=='normal')return;
   if(!this.markers)this.markers=new Map();
   const available=this.getPlaces(),ids=new Set(available.map(p=>p.id));
+  if(this.area==='LISBON'&&!ids.has('lisbon-villa')){
+   this.map.closePopup();this.setArea('MACAU');
+   this.map.setView(OVERVIEW,13,{animate:false});this.showPlace(null);
+  }
   for(const [id,marker] of this.markers)if(!ids.has(id)){marker.remove();this.markers.delete(id);}
   for(const p of available){
    if(this.markers.has(p.id))continue;
    const title=safeText(p.name),note=safeText(p.description);
    const marker=window.L.marker([p.lat,p.lng],{icon:pinIcon(p.kind)}).addTo(this.map)
-    .bindPopup('<strong>'+title+'</strong>'+(note?'<div>'+note+'</div>':''));
+    .bindPopup('<strong>'+title+'</strong>'+(note?'<div>'+note+'</div>':''),{autoPan:p.area!=='LISBON'});
    marker.on('click',()=>{this.querySelector('.xm-map-bottom').innerHTML='<b>'+title+'</b>'+(note?'<span>'+note+'</span>':'');});
    this.markers.set(p.id,marker);
   }
@@ -141,9 +173,15 @@ class XimengMap extends HTMLElement {
    const L=await loadLeaflet();if(!this.alive||!this.isConnected||this.map)return;
    this.map=L.map(this.querySelector('.xm-map-tiles'),{zoomControl:this.mode==='normal',attributionControl:true,scrollWheelZoom:this.mode==='normal',dragging:this.mode==='normal',touchZoom:this.mode==='normal',doubleClickZoom:this.mode==='normal',tap:false,preferCanvas:true,zoomSnap:.5,minZoom:this.mode==='story'&&this.getAttribute('area')==='WORLD'?2:10,maxZoom:18});
    const world=this.mode==='story'&&this.getAttribute('area')==='WORLD';
-   this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:lastView.center),world?2:(this.mode==='story'?11:lastView.zoom));
-   this.baseImage=drawOfflineBase(L,this.map,{world});
-   if(this.mode==='normal')this.refreshPlaces();
+   const restored=this.mode==='normal'&&lastView.area==='LISBON'&&!this.getPlaces().some(p=>p.area==='LISBON')?{area:'MACAU',center:OVERVIEW,zoom:13}:lastView;
+   this.area=this.mode==='normal'?restored.area:'MACAU';
+   this.map.setView(world?[28,10]:(this.mode==='story'?MACAU:restored.center),world?2:(this.mode==='story'?11:restored.zoom));
+   this.baseImage=drawOfflineBase(L,this.map,{world,area:this.area});
+   if(this.mode==='normal'){
+    if(this.area==='LISBON')this.map.setMinZoom(12);
+    this.refreshPlaces();
+    if(this.area==='LISBON')this.showPlace(this.getPlaces().find(p=>p.area==='LISBON'));
+   }
    else{
     // Story55 screen buttons use original x/y positions and existing story actions.
     this.map.dragging.disable();this.map.touchZoom.disable();this.map.doubleClickZoom.disable();this.map.boxZoom.disable();this.map.keyboard.disable();

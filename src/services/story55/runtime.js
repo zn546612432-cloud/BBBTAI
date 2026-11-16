@@ -251,6 +251,12 @@ export function chatNodeLink55(s,id){
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
 export function nodeLink55(s,id){
+ if(id==='dossier'||id==='photo-decrypt'||id==='photo'){
+  const personal=s.content?.localFiles?.find(f=>f.id==='personal-files'&&!f.deleted);
+  if(personal)return {appId:'files',route:'/item/personal-files'+(id==='dossier'?'':'/tai'),params:{}};
+  if(id==='dossier'&&completed(s,'identity'))return {appId:'ghost',route:'/tear',params:{}};
+ }
+ if(id==='harvard'&&s.content?.localFiles?.some(f=>f.id==='personal-files'&&!f.deleted))return {appId:'files',route:'/item/personal-files/photos',params:{}};
  if(id==='d23-chess-finish'){
   const match=s.matches?.find(m=>m.invitationId==='s55-d23-chess-invite'&&!m.closedAt);
   return match?{appId:'chess',route:'/match/'+match.id,params:{}}:

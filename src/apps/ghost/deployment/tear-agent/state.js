@@ -11,6 +11,18 @@ import {commissionAttachment,commissionPreviewAvailable} from '../../../../servi
 // external access, code execution, or physical-system control is possible here.
 const now=s=>absoluteMinute(s)+(overnightSceneNight55(s)?1440:0);
 export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
+// Quick archive execution is a fixed story animation, like the existing Tear
+// commission executor. It uses no external service and works during clock holds.
+export const ARCHIVE_RUN_MS=3200;
+export function startPersonalArchiveRun(s,at=Date.now()){
+ if(!completed(s,'identity'))return false;
+ const a=ensureAgent(s);
+ if(a.archiveRun)return false;
+ a.archiveRun={startedAt:at,done:false};a.selectedTask=null;a.picking=false;
+ a.visualTaskIds=[];a.visualTaskBaseline={};a.visualProgress=0;
+ registerTearVisualTask(s,'personal-files');
+ return true;
+}
 export const identityPrompts=s=>{
  const a=agent(s);if(!a.ipRequested||a.ipAuthorized)return [];
  return !a.ipRecognized?[['identity-recognize','你認識這個地址？']]:!a.ipAccessAsked?[['identity-read','你能讀取裡面的資料嗎？']]:[];
@@ -81,7 +93,11 @@ export const agentFiles=s=>[...localFileList(s),...(s.content.mail||[]).flatMap(
 const clamp01=n=>Math.max(0,Math.min(1,Number(n)||0));
 export function tearTaskInfo(s,id){
  const a=agent(s),job=a.jobs?.[id],definition=TEAR_STAGES[id];
- if(id==='identity'&&a.ipRequested&&(a.ipAccessAsked||a.ipAuthorized||completed(s,'identity'))){
+ if(id==='personal-files'&&a.archiveRun){
+  const run=a.archiveRun,elapsed=Math.max(0,Date.now()-run.startedAt),progress=run.done?1:Math.min(.99,elapsed/ARCHIVE_RUN_MS);
+  return {id,title:'Personal Files',elapsedMinutes:0,progress,percent:Math.floor(progress*100),running:!run.done,complete:!!run.done,status:run.done?'COMPLETE':'PROCESSING'};
+ }
+ if(id==='identity'&&(completed(s,'identity')||a.ipRequested&&(a.ipAccessAsked||a.ipAuthorized))){
   const ready=!!a.ipAuthorized||completed(s,'identity'),current=now(s),elapsed=Math.max(0,(a.ipIndexedAt??current)-(a.ipRequestedAt??current));
   const progress=ready?1:Math.min(.95,elapsed/60*.95);
   return {id,title:'REMOTE ARCHIVE',elapsedMinutes:Math.floor(elapsed),progress,percent:Math.floor(progress*100),running:!ready,complete:ready,status:ready?'COMPLETE':'INDEXING'};
@@ -151,7 +167,7 @@ export function beginTearChatSession(s){
  delete a.thinking;delete a.thinkingAt;
  a.history=false;a.displayRevision=4;
  a.visualSessionStart=now(s);a.visualProgress=0;a.visualTaskIds=[];a.visualTaskBaseline={};
- for(const id of [...Object.keys(TEAR_STAGES),'identity']){
+ for(const id of [...Object.keys(TEAR_STAGES),'identity','personal-files']){
   const info=tearTaskInfo(s,id);
   if(!info||!info.running)continue;
   a.visualTaskIds.push(id);a.visualTaskBaseline[id]=info.progress;
@@ -168,6 +184,9 @@ export function startAgentJob(s,id){
 export function tickTearAgent(s){
  if(!isStory55(s)||!s.story55.tearAgent)return false;
  const a=agent(s);let changed=false;
+ if(a.archiveRun&&!a.archiveRun.done&&Date.now()>=a.archiveRun.startedAt+ARCHIVE_RUN_MS){
+  a.archiveRun.done=true;changed=true;
+ }
  if(a.thinking&&(!a.thinkingAt||Date.now()-a.thinkingAt>90000)){delete a.thinking;delete a.thinkingAt;changed=true;}
  for(const [id,j] of Object.entries(a.jobs)){
   const d=TEAR_STAGES[id];if(!d||j.done)continue;

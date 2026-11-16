@@ -2,7 +2,7 @@
 // unopened; neither Files nor chat extracts or executes attachment contents.
 import {esc} from '../../../../system/ui.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
-import {completed,projectById} from '../../../../services/story55/state.js';
+import {completed,projectById,completeNode,nodeStatus} from '../../../../services/story55/state.js';
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 
 const FOLDERS=Object.freeze([
@@ -29,6 +29,25 @@ const chatFile=(s,chatId,messageId)=>{
 };
 export const isLibraryRoute=route=>route==='/'||/^\/(iphone|folder|recent|trash|item|rename|move|search|incoming|work-key)\b/.test(route);
 export const localFileList=s=>library(s).filter(f=>!f.deleted);
+export const PERSONAL_FILES_ID='personal-files';
+const personalPath='/item/'+PERSONAL_FILES_ID;
+const personalImages=['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg'];
+export function savePersonalFiles(s){
+ if(!completed(s,'identity')||!s.story55?.tearAgent?.archiveRun?.done)return null;
+ const files=s.content.localFiles??=[];
+ let f=files.find(x=>x.id===PERSONAL_FILES_ID);
+ if(!f){f={id:PERSONAL_FILES_ID,name:'Personal Files',kind:'personal-folder',folder:'downloads',createdDay:s.day,createdTime:s.clock,origin:{app:'ghost'},deleted:false,createdAt:Date.now(),unlocked:false};files.push(f);}
+ f.deleted=false;
+ if(nodeStatus(s,'dossier').state==='ready')completeNode(s,'dossier');
+ return f;
+}
+export function unlockPersonalFiles(s,password){
+ const f=fileById(s,PERSONAL_FILES_ID);
+ if(!f||f.deleted||password!=='XITAI')return false;
+ f.unlocked=true;
+ if(nodeStatus(s,'photo-decrypt').state==='ready')completeNode(s,'photo-decrypt');
+ return true;
+}
 // Generated story documents are inert records, stored in the same phone library.
 export function saveGeneratedLocalFile(s,{id,name,description}){
  const files=s.content.localFiles??=[];
@@ -70,7 +89,7 @@ export function copyLocalFile(s,id){
  files.push(copy);return copy;
 }
 const nav=(label,back='')=>'<header class="fl-nav"><button type="button" data-action="files-local-nav" data-route="'+esc(back)+'" aria-label="返回">‹</button><strong>'+esc(label)+'</strong><span></span></header>';
-const row=f=>'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+icon()+
+const row=f=>f.kind==='personal-folder'?folderRow(personalPath,f.name):'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+icon()+
  '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(f.kind==='tear-artifact'?'Ouroboros’ Tear':sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
 const empty='<p class="fl-empty">尚無檔案</p>';
 const path=(route,prefix)=>decode(route.slice(prefix.length));
@@ -98,6 +117,26 @@ function workFiles(s){
 }
 const folderIcon='<svg class="fl-folder-art" viewBox="0 0 32 28" aria-hidden="true"><path fill="#72caff" d="M2 4a4 4 0 0 1 4-4h8l4 4h8a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><path fill="#339cf4" d="M2 10h28v13a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>';
 const folderRow=(route,name)=>'<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="'+esc(route)+'">'+folderIcon+'<span>'+esc(name)+'</span><span class="fl-chevron">›</span></button>';
+const personalRow=(path,name,detail,thumb='')=>'<button type="button" class="fl-row" data-action="files-local-personal-open" data-route="'+esc(path)+'">'+(thumb?'<img class="fl-personal-thumb" src="'+esc(thumb)+'" alt="">':'<span class="fl-archive-icon">TXT</span>')+'<span class="fl-row-copy"><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></span><span class="fl-chevron">›</span></button>';
+const personalImage=name=>'/assets/story55/personal-files/'+name;
+function personalView(s,route){
+ const f=fileById(s,PERSONAL_FILES_ID),tail=route.slice(personalPath.length);
+ const shell=(name,back,body)=>'<div class="fl-library">'+nav(name,back)+body+'</div>';
+ if(!f||f.deleted)return shell('檔案','/folder/downloads',empty);
+ if(!tail)return shell('Personal Files','/folder/downloads','<div class="fl-section">'+folderRow(personalPath+'/tai',f.unlocked?'TAI':'TAI 🔒')+personalRow(personalPath+'/account','account.txt','文字文件')+folderRow(personalPath+'/photos','Photos')+'</div><p class="fl-count">3 個項目</p>');
+ if(tail==='/account')return shell('account.txt',personalPath,'<div class="fl-personal-text">room404</div>');
+ if(tail==='/tai'||tail.startsWith('/tai/')){
+  if(!f.unlocked)return shell('TAI',personalPath,'<section class="fl-preview-main">'+folderIcon+heading('TAI')+'<p>此檔案夾已加密</p></section><form class="fl-editor" data-form="files-local-personal-unlock"><input name="password" type="password" placeholder="輸入密碼" aria-label="密碼" autocomplete="off" required><button type="submit" class="fl-primary">解鎖</button></form>');
+  if(tail==='/tai')return shell('TAI',personalPath,'<div class="fl-section">'+personalRow(personalPath+'/tai/photo','IMG_0001.jpg','JPEG 影像','/assets/story55/triplets-baby-photo.jpg')+'</div>');
+  if(tail==='/tai/photo')return shell('IMG_0001.jpg',personalPath+'/tai','<img class="fl-personal-photo" src="/assets/story55/triplets-baby-photo.jpg" alt="三名嬰兒合照">');
+ }
+ if(tail==='/photos')return shell('Photos',personalPath,'<div class="fl-section">'+personalImages.map(name=>personalRow(personalPath+'/photos/'+name,name,'JPEG 影像',personalImage(name))).join('')+'</div><p class="fl-count">'+personalImages.length+' 個項目</p>');
+ if(tail.startsWith('/photos/')){
+  const name=tail.slice('/photos/'.length);
+  if(personalImages.includes(name))return shell(name,personalPath+'/photos','<img class="fl-personal-photo" src="'+esc(personalImage(name))+'" alt="'+esc(name)+'">');
+ }
+ return shell('檔案',personalPath,empty);
+}
 const keyRow=f=>'<button type="button" class="fl-row" data-action="files-local-nav" data-route="/work-key/'+encodeURIComponent(f.id)+'"><span class="fl-archive-icon">KEY</span><span class="fl-row-copy"><strong>'+esc(f.name)+'</strong><small>加密憑證</small></span><span class="fl-chevron">›</span></button>';
 const top=s=>'<div class="fl-library">'+heading('瀏覽')+
  '<form class="fl-search" data-form="files-local-search"><span aria-hidden="true">⌕</span><input name="query" aria-label="搜尋檔案" placeholder="搜尋" autocomplete="off"><button type="submit">搜尋</button></form>'+
@@ -138,6 +177,7 @@ export function renderLibrary(s,route,params={}){
   if(!f)return '<div class="fl-library">'+nav('工作資料','/folder/documents')+empty+'</div>';
   return '<div class="fl-library">'+nav('檔案','/folder/documents')+'<section class="fl-preview-main"><span class="fl-archive-icon">KEY</span>'+heading(f.name)+'<p>加密憑證</p>'+(f.key?'<p>'+esc(f.key)+'</p>':'')+'</section><div class="fl-actions"><button type="button" data-action="files-local-open-key" data-id="'+esc(f.id)+'">開啟</button>'+(f.key?'<button type="button" data-action="files-local-copy-key" data-id="'+esc(f.id)+'">複製密鑰</button>':'')+'</div></div>';
  }
+ if(route===personalPath||route.startsWith(personalPath+'/'))return personalView(s,route);
  if(route.startsWith('/item/'))return itemView(s,path(route,'/item/'));
  if(route.startsWith('/rename/')){
   const f=fileById(s,path(route,'/rename/'));if(!f)return empty;
@@ -164,6 +204,13 @@ export function handleLibraryAction(a,t,c){
  const id=t.dataset.id;
  if(a==='files-local-nav'){
   if(t.dataset.route==='/back')c.router.back();else c.router.open({appId:'files',route:t.dataset.route||'/'});
+ }else if(a==='files-local-personal-open'){
+  const route=t.dataset.route,f=fileById(c.store.get(),PERSONAL_FILES_ID);
+  if(f&&!f.deleted&&route?.startsWith(personalPath+'/')){
+   if(route===personalPath+'/tai/photo'&&f.unlocked)c.store.update(s=>{if(nodeStatus(s,'photo').state==='ready')completeNode(s,'photo');});
+   if(route===personalPath+'/photos/Student_ID.jpg')c.store.update(s=>{if(nodeStatus(s,'harvard').state==='ready')completeNode(s,'harvard');});
+   c.router.open({appId:'files',route});
+  }
  }else if(a==='files-local-item')c.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});
  else if(a==='files-local-save'){
   let result;c.store.update(s=>result=saveIncomingZip(s,t.dataset.chat,t.dataset.message));
@@ -187,6 +234,12 @@ export function handleLibraryAction(a,t,c){
  return true;
 }
 export function submitLibraryForm(form,ctx){
+ if(form.dataset.form==='files-local-personal-unlock'){
+  const password=String(new FormData(form).get('password')||'');let unlocked=false;
+  ctx.store.update(s=>{unlocked=unlockPersonalFiles(s,password);});
+  if(!unlocked)ctx.toast?.('密碼錯誤');
+  return true;
+ }
  if(form.dataset.form==='files-local-search'){
   const query=String(new FormData(form).get('query')||'').trim();
   ctx.router.open({appId:'files',route:'/search',params:{query}});return true;

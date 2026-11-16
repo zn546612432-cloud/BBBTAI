@@ -1,4 +1,6 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts} from './state.js';
+import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun} from './state.js';
+import {completed} from '../../../../services/story55/state.js';
+import {savePersonalFiles,PERSONAL_FILES_ID} from '../../../files/features/local-library/index.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {askTear} from '../../../../services/ai/gateway.js';
 import {cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../../../../services/ai/tear-prompt.js';
@@ -12,12 +14,20 @@ export function buildTearAgentScene(state){
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
- if(!['picker','select','clear-file','prompt','artifact','collect','identity','task','task-close','history','history-close'].includes(key))return false;
+ if(!['picker','select','clear-file','prompt','artifact','collect','identity','archive-save','task','task-close','history','history-close'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){
   const s=ctx.store.get();if(!tearTaskInfo(s,'identity')?.complete)return true;
+  if(completed(s,'identity')){
+   ctx.store.update(n=>startPersonalArchiveRun(n));return true;
+  }
   ctx.store.update(n=>{const a=ensureAgent(n);a.selectedTask=null;a.history=false;a.picking=false;});
   ctx.router.open({appId:'ghost',route:'/deployment',params:{project:'identity'}});return true;
+ }
+ if(key==='archive-save'){
+  let saved=false;ctx.store.update(s=>{saved=!!savePersonalFiles(s);if(saved)ensureAgent(s).selectedTask=null;});
+  if(saved)ctx.router.open({appId:'files',route:'/item/'+PERSONAL_FILES_ID});
+  return true;
  }
  ctx.store.update(s=>{const a=ensureAgent(s);
   if(key==='collect'){const id=t.dataset.id;if(tearTaskInfo(s,id)?.complete&&agentFiles(s).some(f=>f.id==='tear-artifact-'+id)){a.collectedArtifacts??={};a.collectedArtifacts[id]=true;}}

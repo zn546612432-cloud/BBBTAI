@@ -51,6 +51,6 @@ export function deploymentView(s,id){
  ${!r.authorized&&status.state==='ready'?`<form data-form="s55-authorize" class="gh-deploy-authorize"><input type="hidden" name="project" value="${esc(p.id)}"><label>授權密鑰<input name="key" required maxlength="80" autocomplete="off" placeholder="從 KIRA / 檔案取得密鑰"></label><button class="gh-deploy-primary" type="submit">部署</button></form>`:''}
  ${r.authorized&&status.state==='ready'?`<div class="gh-deploy-meta">本地程序 ${Math.min(index+1,p.batches)} / ${p.batches} · 設備等級 ${s.story55.hardware||1} / 所需等級 ${p.minimumHardware}<p class="s55-runtime-status" role="status">${esc(readiness.reason)}</p></div>
  <div class="gh-deploy-bottom">${primary('s55-run-step','繼續執行',`data-project="${esc(p.id)}" ${readiness.canStart?'':'disabled aria-disabled="true"'}`)}${deviceButton('s55-upgrade')}</div>`:''}
- ${status.state==='done'?'<p class="gh-deploy-meta">已驗證 · 報告已保存到檔案</p>':''}
+ ${status.state==='done'&&id!=='identity'?'<p class="gh-deploy-meta">已驗證 · 報告已保存到檔案</p>':''}
  </div>`;
 }
