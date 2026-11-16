@@ -6,14 +6,16 @@ import {chromium} from 'playwright';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
+import {savePersonalFiles} from '../src/apps/files/features/local-library/index.js';
 const out='qa/room404';await mkdir(out,{recursive:true});
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.mp4':'video/mp4','.wasm':'application/wasm'};
 const root=path.resolve('dist');
 const server=createServer(async(req,res)=>{try{let route=new URL(req.url,'http://localhost').pathname.replace(/^\/BBBTAI(?=\/)/,'');if(route.endsWith('/'))route+='index.html';const file=path.resolve(root,'.'+route);if(!file.startsWith(root+path.sep))throw Error('path');res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream'}).end(await readFile(file));}catch{res.writeHead(404).end('not found');}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true});const results=[];
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined});const results=[];
 const decode=page=>page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
+const stableMedia=locator=>locator.evaluateAll(images=>images.every(i=>i.complete&&i.naturalWidth>0&&!new URL(i.src).pathname.includes('/releases/')));
 const checkProfileTypography=async page=>{
  const layout=await page.locator('.r404-profile').evaluate(profile=>{
   const get=selector=>profile.querySelector(selector),rect=selector=>get(selector).getBoundingClientRect();
@@ -33,6 +35,7 @@ try{
   await page.goto(base+'/BBBTAI/apps/browser/room404/index.html');await page.locator('.r404-grid img').first().waitFor();await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await decode(page);await page.screenshot({path:`${out}/preview-${width}.png`,fullPage:true});
   assert.equal(await page.locator('.r404-grid>button').count(),7);
   await checkProfileTypography(page);
+  assert.equal(await stableMedia(page.locator('.r404 img')),true,'IG image URLs must survive release rotation');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator('[data-action=browser-ig-post][data-post=afterparty]').click();assert.match(await page.locator('.r404-post-copy').innerText(),/Afterparty. The undisputed champion./);
   assert.equal(await page.locator('.r404-postnav small').textContent(),'room.404');
@@ -56,5 +59,28 @@ try{
  await live.locator('.saf-content').evaluate(el=>el.scrollTop=280);const before=await live.locator('.saf-content').evaluate(el=>el.scrollTop);await page.waitForTimeout(1600);const after=await live.locator('.saf-content').evaluate(el=>el.scrollTop);assert.equal(after,before,'clock refresh retains nested scroll');
  await live.locator('[data-action=browser-ig-post][data-post=autumn]').click();await page.waitForTimeout(350);await live.locator('.r404-postnav [data-action=browser-ig-profile]').click();await page.waitForTimeout(350);const returned=await live.locator('.saf-content').evaluate(el=>el.scrollTop);assert.equal(returned,before,'returning to grid retains scroll');
  await decode(page);await page.screenshot({path:`${out}/phone-return.png`});results.push({phone:'pass',legacyEntry:'pass',photoEvidence:'pass',refreshScroll:{before,after,returned},errors});
- assert.deepEqual(errors,[]);await context.close();await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
+ assert.deepEqual(errors,[]);await context.close();
+ // Open the actual Files app on a D33 archive-save fixture and click through
+ // each photo; screenshots and decode prove that the published paths work.
+ s.story55.tearAgent??={};s.story55.tearAgent.archiveRun={done:true};savePersonalFiles(s);
+ s.nav.current={appId:'files',route:'/item/personal-files',params:{}};
+ const filesContext=await newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ await filesContext.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
+ const filesPage=await filesContext.newPage();await filesPage.goto(base+'/BBBTAI/');
+ await filesPage.locator('#xm-boot-next').click({timeout:45000});await filesPage.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
+ await filesPage.locator('[data-action=unlock]').click();for(const digit of '0816')await filesPage.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
+ await filesPage.locator('[data-route="/item/personal-files/photos"]').click();await filesPage.locator('.fl-personal-thumb').first().waitFor();
+ await filesPage.locator('.fl-personal-thumb').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
+ assert.equal(await filesPage.locator('.fl-personal-thumb').count(),5);
+ assert.equal(await stableMedia(filesPage.locator('.fl-personal-thumb')),true);
+ await filesPage.screenshot({path:`${out}/files-photos.png`});
+ for(const filename of ['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg']){
+  await filesPage.locator(`[data-route="/item/personal-files/photos/${filename}"]`).click();
+  await filesPage.locator('.fl-personal-photo').evaluate(i=>i.decode());
+  assert.equal(await stableMedia(filesPage.locator('.fl-personal-photo')),true,filename);
+  if(filename==='IMG_4982.jpg')await filesPage.screenshot({path:`${out}/files-photo.png`});
+  await filesPage.locator('.fl-nav [data-action=files-local-nav]').click();
+ }
+ await filesContext.close();results.push({files:'pass',thumbnails:5,fullPhotos:5,stableUrls:true});
+ await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

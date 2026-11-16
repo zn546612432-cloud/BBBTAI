@@ -13,11 +13,13 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   await put('package.json','{"type":"module"}');
   const source='<!doctype html><html><head><link rel="stylesheet" href="/src/styles/base.css"><script type="importmap">{"imports":{"chess.js":"/vendor/chess.js"}}</script></head><body><script type="module" src="/src/main.js"></script></body></html>';
   await put('index.html',source);
-  await put('src/main.js',"import './child.js'; const image='/assets/icon.svg';");
+  await put('src/main.js',"import './child.js'; const image='/assets/icon.svg'; const ig='/apps/browser/room404/media/'; const logo='/apps/browser/room404/wordmark.svg'; const photos='/assets/story55/personal-files/'; const photo='/assets/story55/triplets-baby-photo.jpg';");
   await put('src/child.js','export const value=1;');
   await put('src/styles/base.css',"@import './child.css'; body{background:url('/assets/icon.svg')}");
   await put('src/styles/child.css','body{color:black}');
   await put('public/assets/icon.svg','<svg/>');
+  const evidence=['apps/browser/room404/media/avatar.webp','apps/browser/room404/wordmark.svg','assets/story55/personal-files/IMG_4982.jpg','assets/story55/triplets-baby-photo.jpg'];
+  for(const item of evidence)await put('public/'+item,'fixture: '+item);
   await put('node_modules/chess.js/dist/esm/chess.js','export class Chess{}');
   // Copy the real bundled engine, not simulated worker assets.
   for(const name of ['stockfish-19-lite-single.js','stockfish-19-lite-single.wasm']){
@@ -40,6 +42,12 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   assert.equal(await read(root+'index.html'),html);
   assert.match(await read(root+'src/main.js'),/import '\.\/child.js'/);
   assert.ok((await read(root+'src/main.js')).includes(`${prefix}assets/icon.svg`));
+  const oldCode=await read(root+'src/main.js');
+  for(const item of evidence){
+   const resource=item.includes('/media/')||item.includes('/personal-files/')?item.slice(0,item.lastIndexOf('/')+1):item;
+   assert.ok(oldCode.includes(`'/AAATAI/${resource}'`),`stable media URL: ${resource}`);
+   assert.equal(await read('dist/'+item),'fixture: '+item);
+  }
   assert.equal(await read(root+'src/child.js'),'export const value=1;');
   assert.match(await read(root+'src/styles/base.css'),/@import '\.\/child.css'/);
   assert.equal(await read(root+'src/styles/child.css'),'body{color:black}');
@@ -49,6 +57,8 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   await put('src/child.js','export const value=2;');
   build();
   assert.notEqual(JSON.parse(await read('dist/release.json')).version,release.version);
+  // A live phone from the prior release still requests valid public media.
+  for(const item of evidence)assert.equal(await read('dist/'+item),'fixture: '+item);
  }finally{await rm(folder,{recursive:true,force:true});}
 });
 

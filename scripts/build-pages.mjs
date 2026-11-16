@@ -10,12 +10,22 @@ const projectPath=process.env.GITHUB_PAGES_BASE||`/${repo}/`;
 if(!/^\/[A-Za-z0-9._/-]*\/$/.test(projectPath)||projectPath.includes('..'))throw Error('Invalid GitHub Pages base path');
 const base=projectPath==='/'?'/':projectPath;
 const resourcePattern=/(["'`(=])\/(src|assets|apps|icons|vendor|wallpapers)(?=\/)/g;
+// Evidence photos are requested on demand, possibly days after the phone
+// loaded its JS. Pages removes old release directories on each deployment;
+// use the stable, per-site public copies for these approved static assets.
+// Keep modules, CSS and all other existing cache contracts unchanged.
+const stableMediaPaths=[
+ '/apps/browser/room404/media/',
+ '/apps/browser/room404/wordmark.svg',
+ '/assets/story55/personal-files/',
+ '/assets/story55/triplets-baby-photo.jpg'
+];
 
 execFileSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});
 
 // Version the whole module graph, including relative imports and CSS imports.
 // A query on index.html alone would still reuse cached modules at fixed URLs.
-const hash=createHash('sha256').update(base);
+const hash=createHash('sha256').update(base).update(await readFile(new URL(import.meta.url)));
 async function hashTree(folder){
  for(const entry of (await readdir(folder,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){
   const file=path.join(folder,entry.name);
@@ -34,7 +44,11 @@ async function rewriteTree(folder){
   if(entry.isDirectory()){await rewriteTree(file);continue;}
   if(!/\.(html|css|js)$/.test(entry.name))continue;
   const original=await readFile(file,'utf8');
-  const rewritten=original.replace(resourcePattern,(_all,prefix,section)=>{replacements++;return `${prefix}${releaseBase}${section}`;});
+  const rewritten=original.replace(resourcePattern,(_all,prefix,section,offset)=>{
+   replacements++;
+   const stable=stableMediaPaths.some(item=>original.startsWith(item,offset+prefix.length));
+   return `${prefix}${stable?base:releaseBase}${section}`;
+  });
   if(rewritten!==original)await writeFile(file,rewritten);
  }
 }
