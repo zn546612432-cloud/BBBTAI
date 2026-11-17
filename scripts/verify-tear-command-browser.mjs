@@ -51,6 +51,12 @@ try{
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
   assert.ok(saved.story55.tearAgent.jobs.program);assert.equal(saved.story55.tearAgent.thinking,undefined);
   await page.screenshot({path:`${out}/${width}-running.png`});
+  const requests=[];page.on('request',r=>{if(/\/api\/ai\/|supabase\.co\/functions\//.test(r.url()))requests.push(r.url());});
+  for(const [command,reply] of [['爆破難不難','對 TAI 而言，難度：零域級。'],['今天忙嗎？','無效指令。'],['說點別的','無法識別此指令。']]){
+   await input.fill(command);await live.locator('button[type=submit]').click();
+   await live.locator('.gh-agent-messages').getByText(reply,{exact:true}).waitFor();
+  }
+  assert.deepEqual(requests,[]);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({width,entry:width===375?'preset':'free text',local:true,hiddenAfterSend:true}));
   await context.close();
  }

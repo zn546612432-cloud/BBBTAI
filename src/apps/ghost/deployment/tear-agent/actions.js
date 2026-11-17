@@ -1,9 +1,8 @@
-import {agent,addMessage,blockedTearText,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending} from './state.js';
+import {agent,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending,blockedTearText} from './state.js';
 import {completed} from '../../../../services/story55/state.js';
 import {savePersonalFiles,PERSONAL_FILES_ID} from '../../../files/features/local-library/index.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
-import {askTear} from '../../../../services/ai/gateway.js';
-import {cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../../../../services/ai/tear-prompt.js';
+import {TEAR_NETWORK_PROFILE} from '../../../../services/ai/tear-prompt.js';
 import {startTearRun} from '../tear-run.js';
 
 export function buildTearAgentScene(state){
@@ -45,24 +44,14 @@ export function handleTearAgent(action,t,ctx){
 export function submitTearAgent(form,ctx){
  if(form.dataset.form!=='tear-agent-send')return false;
  const input=form.querySelector('[name=text]'),text=input.value.trim(),s=ctx.store.get();
- if(blockedTearText(s,text)){input.value='';ctx.store.update(n=>{ensureAgent(n).draft='';});return true;}
- if(agent(s).thinking||identityRevealPending(s))return true;
+ if(identityRevealPending(s))return true;
  const selected=agentFiles(s).find(f=>f.id===agent(s).selected);
- if(selected?.kind==='commission'){
+ if(selected?.kind==='commission'&&!blockedTearText(s,text)){
   let started=false;ctx.store.update(n=>{started=startTearRun(n,selected.orderId);if(started){const a=ensureAgent(n);a.selected=null;a.draft='';}});
   if(started)ctx.router.open({appId:'ghost',route:'/tear-run',params:{orderId:selected.orderId}});else ctx.toast?.('目前無法執行此委託');return true;
  }
- let result;ctx.store.update(n=>{result=sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';a.picking=false;if(result.kind==='ai'){a.thinking=result.id;a.thinkingAt=Date.now();}});
+ ctx.store.update(n=>{sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';a.picking=false;delete a.thinking;delete a.thinkingAt;});
  input.value='';
- if(result.kind==='ai'){
-  const state=ctx.store.get(),a=agent(state),messages=a.messages.filter(m=>!m.artifact&&!m.job).slice(-12).map(m=>({role:m.role,content:redactTearNetworkIdentifiers(m.text)}));
-  const scene=buildTearAgentScene(state);
-  const session=a.chatSession;
-  const finish=raw=>{const latest=ctx.store.get(),loc=latest.nav.current;
-   if(loc.appId!=='ghost'||loc.route!=='/tear'||agent(latest).chatSession!==session||agent(latest).thinking!==result.id)return;
-   ctx.store.update(n=>{const current=agent(n);if(current.thinking!==result.id)return;delete current.thinking;delete current.thinkingAt;const reply=redactTearNetworkIdentifiers(cleanTearReply(raw));addMessage(n,'assistant',reply&&!blockedTearText(n,reply)?reply:'目前尚未取得相關資料。');});};
-  askTear({day:state.day,messages,scene}).then(r=>finish(r.text)).catch(()=>finish('連線暫時中斷，請稍後再試。'));
- }
  return true;
 }
 

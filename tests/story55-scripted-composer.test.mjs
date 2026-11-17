@@ -101,5 +101,6 @@ test('investigation questions stay in MIRAGE composer, one explicit tap per play
  }
  assert.equal(completed(s,'questions'),true);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
- assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,21);
+ assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,22);
+ assert.equal(chat.messages.at(-1).text,'或者問問銜尾蛇之淚。');
 });

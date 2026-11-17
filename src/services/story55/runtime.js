@@ -5,7 +5,7 @@ import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
-import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING} from '../../story/d29/definition.js';
+import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
@@ -373,6 +373,19 @@ export function tickStory55(s){
  // The existing story tick silently rehydrates saved real chats as game time
  // reaches their original timestamps. No extra event queue or notifications.
  restoreDeveloperChatArchive(s);
+ // Repair the newly authored final bubble in completed saves, without
+ // replaying the scene or altering the original message timestamps.
+ if(completed(s,'questions')){
+  const chat=s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros');
+  const lastIndex=IDENTITY_DIALOGUE.length-1;
+  const old=chat?.messages.find(m=>m.id==='s55-identity-reveal-'+(lastIndex-1)&&m.text==='自己想。');
+  if(old&&old.actual&&!old.developerSimulated){
+   const hint=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:chat.id,messageId:'s55-identity-reveal-'+lastIndex,from:chat.id,text:IDENTITY_TEAR_HINT,day:old.day,clock:old.time,sentDate:old.sentDate,storyTag:'story55',notify:false,silent:true});
+   if(hint){chat.messages.pop();chat.messages.splice(chat.messages.indexOf(old)+1,0,hint);}
+   const scene=s.story55.scenes?.questions;
+   if(scene?.index===lastIndex)scene.index=lastIndex+1;
+  }
+ }
  recordRoom404Visit(s);
  recoverIdentityContact55(s);
  if(identityRevealDue55(s)&&completed(s,s.story55.activeScene))s.story55.activeScene=null;
