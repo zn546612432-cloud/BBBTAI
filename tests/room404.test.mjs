@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState} from '../src/services/storage.js';
-import {activateStory55} from '../src/services/story55/runtime.js';
+import {initialState,PhoneStore} from '../src/services/storage.js';
+import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
 import {prepareStory55NodeAtDay} from '../src/services/story55/rebuild.js';
 import {nodeStatus,completed} from '../src/services/story55/state.js';
 import {render,handle} from '../src/apps/browser/index.js';
@@ -16,16 +16,29 @@ test('room404 preserves the existing investigation gate for legacy and saved rou
  handleRoom404('browser-ig-post',{dataset:{post:'selfie'}},c,{route:'/story55',params:{page:'ig'}},{navigate:()=>assert.fail('locked navigation')});
  assert.equal(completed(locked,'ig'),false);
 });
-test('only viewing the portrait post records the existing evidence, once',()=>{
+test('opening the profile records the existing evidence once, without viewing posts',()=>{
  const s=fixture(),c=ctx(s),navigate=(route,params)=>s.nav.current={appId:'browser',route,params};
  assert.equal(nodeStatus(s,'ig').state,'ready');
  renderRoom404(s,s.nav.current);assert.equal(completed(s,'ig'),false);
- handleRoom404('browser-ig-post',{dataset:{post:'faro'}},c,s.nav.current,{navigate});assert.equal(completed(s,'ig'),false);
- handleRoom404('browser-ig-post',{dataset:{post:'selfie'}},c,s.nav.current,{navigate});assert.equal(completed(s,'ig'),true);
+ tickStory55(s);assert.equal(completed(s,'ig'),true);
  const completion=JSON.stringify(s.story55.completed.ig),questions=s.story55.questions;
  handleRoom404('browser-ig-post',{dataset:{post:'selfie'}},c,s.nav.current,{navigate});
  assert.equal(JSON.stringify(s.story55.completed.ig),completion);assert.equal(s.story55.questions,questions);
  assert.equal(nodeStatus(s,'questions').state,'locked');
+});
+test('search result opens the profile and D34 schedules the reply through the persisted phone store',()=>{
+ const s=fixture();s.day=34;s.clock='08:00';
+ s.nav.current={appId:'browser',route:'/search',params:{query:'room404'}};
+ const memory=new Map();
+ const store=new PhoneStore({getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)});
+ store.replace(s);
+ const c={store,router:{open:loc=>store.update(n=>n.nav.current=loc)}};
+ assert.match(render(c,store.get().nav.current),/data-page="room404"/);
+ assert.equal(completed(store.get(),'ig'),false);
+ handle('browser-open',{dataset:{page:'room404'}},c,store.get().nav.current);
+ assert.equal(completed(store.get(),'ig'),true);
+ assert.equal(nodeStatus(store.get(),'questions').state,'ready');
+ assert.ok(Number.isFinite(store.get().story55.scenes.questions.nextAt));
 });
 test('approved copy, assets and account identity appear without leaking names',()=>{
  const s=fixture(),html=renderRoom404(s,s.nav.current);

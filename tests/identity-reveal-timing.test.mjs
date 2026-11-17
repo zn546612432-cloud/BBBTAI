@@ -9,9 +9,9 @@ import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scrip
 import {agent,agentFiles,ensureAgent,sendAgent,tickTearAgent,tearTaskInfo} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {savePersonalFiles,unlockPersonalFiles,handleLibraryAction,renderLibrary,submitLibraryForm} from '../src/apps/files/features/local-library/index.js';
 import {appUnlocked} from '../src/system/registry.js';
-import {IDENTITY_DIALOGUE} from '../src/story/d29/definition.js';
+import {IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING} from '../src/story/d29/definition.js';
 
-test('D35 fourth real message schedules D36, keeps archive sealed and delivers the approved dialogue one bubble at a time',async t=>{
+test('D33 fourth real message schedules D34, keeps archive sealed and delivers the approved dialogue one bubble at a time',async t=>{
  const s=activateStory55(initialState());previewNode55(s,'ig');
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  const store={get:()=>s,update:fn=>fn(s)},ctx={store,router:{open:loc=>s.nav.current=loc}};
@@ -21,8 +21,8 @@ test('D35 fourth real message schedules D36, keeps archive sealed and delivers t
  s.story55.completed.ig={day:33,clock:s.clock};
  send('在嗎？');send('你到底是誰？');send('那些照片是怎麼回事？');
  assert.equal(s.story55.identityContact.count,3);assert.equal(nodeStatus(s,'questions').state,'locked');
- s.day=35;send('回我');assert.equal(s.story55.identityContact.replyDay,36);
- send('？');assert.equal(s.story55.identityContact.replyDay,36);
+ send('回我');assert.equal(s.story55.identityContact.replyDay,34);
+ send('？');assert.equal(s.story55.identityContact.replyDay,34);
  tickStory55(s);assert.ok(!chat.messages.some(m=>m.id.startsWith('s55-identity-reveal-')));
  assert.equal(unlockPersonalFiles(s,'XITAI'),false);
  t.mock.method(globalThis,'FormData',function(){return {get:()=> 'XITAI'};});
@@ -30,7 +30,7 @@ test('D35 fourth real message schedules D36, keeps archive sealed and delivers t
  chat.messages.push({id:'s55-d29-offline',from:'system',text:'Ouroboros 已下線'},{id:'legacy-farewell',from:chat.id,text:'我還有事，下線了'});
  tickStory55(s);assert.ok(!chat.messages.some(m=>m.id==='s55-d29-offline'));assert.ok(chat.messages.some(m=>m.id==='legacy-farewell'));
  assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai/photo'),/triplets-baby-photo/);
- s.day=36;tickStory55(s);
+ s.day=34;tickStory55(s);
  assert.equal(sceneLines(s,'questions').length,IDENTITY_DIALOGUE.length);
  for(const [index,[who,text]] of IDENTITY_DIALOGUE.entries()){
   assert.equal(scene55(s,'questions').index,index);
@@ -61,4 +61,29 @@ test('D35 fourth real message schedules D36, keeps archive sealed and delivers t
  send('你是我弟弟？');tickStory55(s);assert.equal(s.content.mail.filter(m=>m.id==='invite-mail').length,1);
  assert.equal(appUnlocked('noapp',s),false);await handleStory55Action('s55-install-noapp',{dataset:{}},ctx);
  assert.equal(appUnlocked('noapp',s),true);assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').name,'陳熙泰');
+});
+test('D34 fallback only after a profile visit; late entry and old navigation recover without a fourth message',()=>{
+ for(const late of [false,true]){
+  const s=activateStory55(initialState());previewNode55(s,'ig');
+  s.day=34;s.clock='07:59';tickStory55(s);
+  assert.equal(nodeStatus(s,'questions').state,'locked');
+  if(!late){s.nav.current={appId:'browser',route:'/page',params:{page:'room404'}};tickStory55(s);}
+  assert.equal(nodeStatus(s,'questions').state,'locked');
+  s.day=late?35:34;s.clock='08:00';tickStory55(s);
+  if(late){
+   assert.equal(nodeStatus(s,'questions').state,'locked');
+   delete s.story55.room404VisitRevision;
+   s.browserData={navigation:[{route:'/page',params:{page:'room404'}}]};
+   tickStory55(s);
+  }
+  assert.equal(nodeStatus(s,'questions').state,'ready');
+  assert.deepEqual(sceneLines(s,'questions'),[['ouroboros',IDENTITY_FALLBACK_OPENING],...IDENTITY_DIALOGUE.slice(1)]);
+  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+  tickQueuedStoryScenes55(s,Date.now()+10000);
+  assert.equal(chat.messages.filter(m=>m.id==='s55-identity-reveal-0').length,1);
+  assert.equal(chat.messages.find(m=>m.id==='s55-identity-reveal-0').text,IDENTITY_FALLBACK_OPENING);
+  tickQueuedStoryScenes55(s,Date.now()+20000);
+  assert.equal(scene55(s,'questions').index,1);
+  assert.equal(s.story55.identityContact.count,0);
+ }
 });

@@ -3,6 +3,7 @@
 export const D29_IP='195.22.28.198';
 export const D29_LEGACY_IPS=['192.0.2.29','203.0.113.29'];
 export const D29_CHESS_INVITATION='s55-d29-chess-invite';
+export const IDENTITY_FALLBACK_OPENING='看來你已經找到我留給你的小餅乾了。';
 export const IDENTITY_DIALOGUE=[
  ['ouroboros','怎麼了？哦……你找到我留給你的小餅乾了。'],
  ['me','那些文件是你故意留給我的？'],
