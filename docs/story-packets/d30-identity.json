@@ -10,19 +10,19 @@
   "events": [
     {"id":"identity-deployment","kind":"commission","surface":"ghost","capability":"story.identity-deploy","owner":"story55","actor":"me","trigger":{"type":"user-action","ref":"identity-daily-link"},"requires":["node:plan"],"timing":{"day":30,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"identity-files","kind":"link","surface":"files","capability":"story.identity-evidence","owner":"files","actor":"me","trigger":{"type":"user-action","ref":"tear-save-archive"},"requires":["identity-deployment","node:identity"],"timing":{"day":33,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
-    {"id":"identity-portrait","kind":"link","surface":"browser","capability":"story.identity-portrait","owner":"story55","actor":"me","trigger":{"type":"user-action","ref":"open-room404-portrait"},"requires":["identity-files"],"timing":{"day":33,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
-    {"id":"identity-questions","kind":"link","surface":"mirage","capability":"story.identity-reveal","owner":"story55","actor":"ouroboros","trigger":{"type":"day-time","ref":"day-after-fourth-message"},"requires":["identity-portrait","fact:four-mirage-messages"],"timing":{"day":34,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"identity-portrait","kind":"link","surface":"browser","capability":"story.identity-portrait","owner":"story55","actor":"me","trigger":{"type":"user-action","ref":"open-room404-profile"},"requires":["identity-files"],"timing":{"day":33,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"identity-questions","kind":"link","surface":"mirage","capability":"story.identity-reveal","owner":"story55","actor":"ouroboros","trigger":{"type":"day-time","ref":"day-after-fourth-or-d34-0800-after-profile"},"requires":["identity-portrait"],"timing":{"day":34,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"identity-photo","kind":"link","surface":"files","capability":"story.identity-evidence","owner":"files","actor":"me","trigger":{"type":"user-action","ref":"open-triplet-photo"},"requires":["identity-questions","node:questions","node:photo-decrypt"],"timing":{"day":34,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"identity-invite","kind":"email","surface":"kira","capability":"story.identity-invite","owner":"story55","actor":"ouroboros","trigger":{"type":"node-completed","ref":"identity-invite-requested"},"requires":["identity-photo","fact:post-photo-mirage-send"],"timing":{"day":34,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"identity-install","kind":"link","surface":"kira","capability":"story.identity-invite","owner":"story55","actor":"me","trigger":{"type":"user-action","ref":"install-noapp"},"requires":["identity-invite"],"timing":{"day":34,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
   ],
   "acceptance": [
-    {"id":"identity-trigger","type":"trigger","verify":"三個不同遊戲日分批完成，D33 前不可領取；查看公開肖像且實際發送四條訊息後，次日開始逐條固定對話。"},
+    {"id":"identity-trigger","type":"trigger","verify":"三個不同遊戲日分批完成，D33 前不可領取；打開個人檔案即視為已查看，不需點擊貼文。D33 實際發送四條訊息後，次日逐條進行原對話；未發滿四條則 D34 08:00 保底。"},
     {"id":"identity-negative","type":"negative","verify":"提前輸入正確密碼仍顯示文件暫時無法響應，對話完成後才可解鎖。"},
     {"id":"identity-idempotency","type":"idempotency","verify":"同日不重複部署、不重發邀請、不重複安排回覆。"},
     {"id":"identity-save","type":"save-restore","verify":"舊存檔保留已完成部署及正式聊天，清除舊離線提示，未完成身份對話的資料夾恢復鎖定。"},
     {"id":"identity-cross","type":"cross-app","verify":"Ghost → Files → Browser → Mirage → Files → Mirage → Kira → NoApp，只有點擊安裝才新增 App。"},
-    {"id":"identity-late","type":"late-entry","verify":"D35 發出第四條則 D36 開始對話。"},
+    {"id":"identity-late","type":"late-entry","verify":"D34 08:00 後才打開個人檔案，立即安排同一對話；未查看個人檔案不觸發。保底首句固定為「看來你已經找到我留給你的小餅乾了。」"},
     {"id":"identity-assets","type":"assets","verify":"沿用現有 Personal Files、Room404 與三胞胎照片素材。"},
     {"id":"identity-clock","type":"date-clock","verify":"TAI 模擬破譯使用既有遊戲時鐘，50 分鐘後失敗。"},
     {"id":"identity-dialogue","type":"dialogue","verify":"src/story/d29/definition.js 的 IDENTITY_DIALOGUE 全文；每句熙蒙需真實點擊發送。"}

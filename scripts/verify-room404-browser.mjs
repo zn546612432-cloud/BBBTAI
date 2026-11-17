@@ -47,19 +47,24 @@ try{
   await page.locator('[data-action=browser-ig-tagged]').click();await page.reload();assert.match(await page.locator('.r404-empty').innerText(),/尚無標註/);await page.locator('[data-action=browser-ig-grid]').click();
   assert.deepEqual(errors,[]);results.push({width,preview:'pass',images:'8 decoded',post:'pass',zoom:'pass',comments:'pass',taggedReload:'pass',overflow:false});await context.close();
  }
- const s=activateStory55(initialState());prepareStory55NodeAtDay(s,'ig');s.unlocked=true;s.clock='10:00';s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.content.alarms=[];s.nav.current={appId:'browser',route:'/story55',params:{page:'ig'}};
+ const s=activateStory55(initialState());prepareStory55NodeAtDay(s,'ig');s.unlocked=true;s.day=34;s.clock='08:00';s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.content.alarms=[];s.nav.current={appId:'browser',route:'/search',params:{query:'room404'}};
  const context=await newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/BBBTAI/');await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});
  await page.locator('[data-action=unlock]').click();for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
- const live=page.locator('#screen-layer');await live.locator('.r404-grid').waitFor();await page.waitForTimeout(450);await decode(page);await page.screenshot({path:`${out}/phone-profile.png`});
+ const live=page.locator('#screen-layer');
+ const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
+ assert.equal(!!(await state()).story55.completed.ig,false);
+ await live.locator('[data-action=browser-open][data-page=room404]').first().click();
+ await live.locator('.r404-grid').waitFor();await page.waitForTimeout(450);await decode(page);await page.screenshot({path:`${out}/phone-profile.png`});
  await checkProfileTypography(page);
- assert.equal(await page.evaluate(()=>!!JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.completed.ig),false);
+ assert.equal(await page.evaluate(()=>!!JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.completed.ig),true);
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-identity-reveal-0'&&m.text==='看來你已經找到我留給你的小餅乾了。'),{},{timeout:10000});
  await live.locator('[data-action=browser-ig-post][data-post=selfie]').click();await page.waitForTimeout(400);assert.equal(await page.evaluate(()=>!!JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).story55.completed.ig),true);await decode(page);await page.screenshot({path:`${out}/phone-selfie.png`});
  await live.locator('[data-action=browser-ig-zoom]').click();await page.waitForTimeout(400);await decode(page);await page.screenshot({path:`${out}/phone-zoom.png`});await live.locator('[data-action=browser-ig-close]').click();
  await live.locator('.r404-postnav [data-action=browser-ig-profile]').click();await page.waitForTimeout(350);
  await live.locator('.saf-content').evaluate(el=>el.scrollTop=280);const before=await live.locator('.saf-content').evaluate(el=>el.scrollTop);await page.waitForTimeout(1600);const after=await live.locator('.saf-content').evaluate(el=>el.scrollTop);assert.equal(after,before,'clock refresh retains nested scroll');
  await live.locator('[data-action=browser-ig-post][data-post=autumn]').click();await page.waitForTimeout(350);await live.locator('.r404-postnav [data-action=browser-ig-profile]').click();await page.waitForTimeout(350);const returned=await live.locator('.saf-content').evaluate(el=>el.scrollTop);assert.equal(returned,before,'returning to grid retains scroll');
- await decode(page);await page.screenshot({path:`${out}/phone-return.png`});results.push({phone:'pass',legacyEntry:'pass',photoEvidence:'pass',refreshScroll:{before,after,returned},errors});
+ await decode(page);await page.screenshot({path:`${out}/phone-return.png`});results.push({phone:'pass',searchEntry:'pass',profileEvidence:'pass',d34Fallback:'pass',refreshScroll:{before,after,returned},errors});
  assert.deepEqual(errors,[]);await context.close();
  // Open the actual Files app on a D33 archive-save fixture and click through
  // each photo; screenshots and decode prove that the published paths work.

@@ -6,6 +6,15 @@ export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
 export const projectById=(s,id)=>story55Config(s).projects.find(n=>n.id===id);
 export const completed=(s,id)=>!!s?.story55?.completed&&Object.hasOwn(s.story55.completed,id);
 export const identityMessagesReady=s=>s.day>=33&&completed(s,'ig');
+export function identityReplyMode55(s){
+ if(!identityMessagesReady(s))return null;
+ const saved=s.story55.scenes?.questions?.openingMode;
+ if(saved)return saved;
+ const replyDay=s.story55.identityContact?.replyDay;
+ if(Number.isInteger(replyDay)&&replyDay<=34&&replyDay<=s.day)return 'normal';
+ if(s.day>34||(s.day===34&&s.clock>='08:00'))return 'fallback';
+ return null;
+}
 export function observeIdentityMirageSend(s){
  if(!isStory55(s)||!identityMessagesReady(s))return;
  if(completed(s,'photo')&&completed(s,'questions')){
@@ -34,7 +43,7 @@ export function nodeStatus(s,id){
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
  if(id==='d29-chess'&&!s.story55.d29ChessOpened)return {state:'locked',reason:'等待打開國際象棋'};
  if(id==='plan'&&!s.story55.d29ChessExited)return {state:'locked',reason:'等待棋局結束'};
- if(id==='questions'&&!(s.story55.identityContact?.replyDay<=s.day))return {state:'locked',reason:'等待對方回覆'};
+ if(id==='questions'&&!identityReplyMode55(s))return {state:'locked',reason:'等待對方回覆'};
  if(id==='invite'&&!s.story55.identityInviteRequested)return {state:'locked',reason:'等待聯絡銜尾蛇'};
  if(id==='d23-chess-finish'&&s.story55?.d23Postgame?.phase!=='closing')
   return {state:'locked',reason:'等待 Mirage 賽後交流'};

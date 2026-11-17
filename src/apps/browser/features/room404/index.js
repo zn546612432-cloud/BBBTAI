@@ -1,6 +1,5 @@
 import {esc} from '../../../../system/ui.js';
-import {nodeStatus,completed} from '../../../../services/story55/state.js';
-import {readEvidence55} from '../../../../services/story55/runtime.js';
+import {nodeStatus,completed,completeNode,isStory55} from '../../../../services/story55/state.js';
 import {ROOM404_URL,ROOM404_AVATAR,ROOM404_POSTS} from './content.js';
 export {room404Page,isRoom404Url,ROOM404_URL} from './content.js';
 
@@ -20,6 +19,21 @@ const btn=(a,label,attrs='')=>`<button type="button" data-action="browser-ig-${a
 const avatar=(className='')=>`<img class="r404-avatar ${className}" src="${ROOM404_AVATAR}" alt="room.404 的黑白頭像">`;
 const dateLabel=p=>p.date.replace(/^(\d+)-(\d+)-(\d+)$/,(_,y,m,d)=>`${y}年${Number(m)}月${Number(d)}日`);
 export const canOpenRoom404=s=>['ready','done'].includes(nodeStatus(s,'ig').state);
+const isProfileRoute=loc=>(loc?.route==='/page'&&loc.params?.page==='room404')||(loc?.route==='/story55'&&loc.params?.page==='ig');
+export function recordRoom404Visit(s){
+ if(!isStory55(s))return;
+ const legacy=!s.story55.room404VisitRevision;
+ s.story55.room404VisitRevision=1;
+ if(completed(s,'ig')||nodeStatus(s,'ig').state!=='ready')return;
+ const current=s.nav?.current;
+ if((current?.appId==='browser'&&isProfileRoute(current))||
+    (legacy&&s.browserData?.navigation?.some(isProfileRoute))){
+  completeNode(s,'ig');
+  // A newly opened profile starts its real-message count at the visit,
+  // never at messages sent earlier in the same game minute.
+  if(!legacy)(s.story55.identityContact??={count:0}).reconciled=true;
+ }
+}
 const scrollKey=loc=>loc?.appId==='browser'&&['ig','room404'].includes(loc.params?.page)?'room404:'+JSON.stringify({route:loc.route,post:loc.params.post||'',tab:loc.params.tab||''}):null;
 export function rememberRoom404Scroll(c){
  const key=scrollKey(c.store.get().nav?.current),pane=globalThis.document?.querySelector('#screen-layer .saf-content');
@@ -56,7 +70,6 @@ export function handleRoom404(a,t,c,loc,{navigate,preview=false}={}){
  const key=a.slice(11),params=loc.params||{},next=extra=>navigate(loc.route,{...params,...extra});
  if(key==='post'){
   const post=ROOM404_POSTS.find(p=>p.id===t.dataset.post);if(!post)return true;
-  if(!preview&&post.id==='selfie'&&!completed(c.store.get(),'ig'))c.store.update(s=>readEvidence55(s,'page','ig'));
   next({post:post.id,sheet:undefined,zoom:undefined});
  }else if(key==='profile')navigate(loc.route,homeParams(loc));
  else if(key==='grid'||key==='tagged')navigate(loc.route,homeParams(loc,{tab:key==='tagged'?'tagged':undefined}));

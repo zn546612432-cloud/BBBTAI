@@ -9,7 +9,7 @@ import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55} from './services/story55/runtime.js';
+import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55,identityRevealDue55} from './services/story55/runtime.js';
 import {chessLessonDue,tickD23ChessLesson} from './services/chess-lesson.js';
 import {d23MiragePostgameDue} from './services/story55/d23-postgame.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
@@ -485,7 +485,7 @@ mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
- if(d23MiragePostgameDue(store.get()))store.update(s=>tickStory55(s));
+ if(d23MiragePostgameDue(store.get())||identityRevealDue55(store.get()))store.update(s=>tickStory55(s));
  if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));

@@ -5,7 +5,8 @@ import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
 import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
-import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE} from '../../story/d29/definition.js';
+import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING} from '../../story/d29/definition.js';
+import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
 import {postBankTransaction} from '../bank.js';
@@ -26,7 +27,7 @@ import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
-import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55} from './state.js';
+import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55,identityReplyMode55} from './state.js';
 import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
@@ -87,6 +88,7 @@ export function scene55ReplyDelay(s,id,index,{initial=false}={}){
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){
  const lines=story55Config(s).scenes[id]||[],a=s.story55?.tearAgent;
+ if(id==='questions'&&identityReplyMode55(s)==='fallback'&&lines[0]?.[1]===IDENTITY_DIALOGUE[0][1])return [[lines[0][0],IDENTITY_FALLBACK_OPENING],...lines.slice(1)];
  // Optional research must never make the main story claim an unsent file was delivered.
  const substitutions={
   'd26-procurement':!a?.jobs?.survey?.done?{'TAI 跑了一晚上，發現好幾個設備型號對不上。':'採購清單有幾個設備型號對不上。'}:{},
@@ -154,7 +156,9 @@ function creditScene55(s,n){
  export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  s.story55.activeScene=id;
- const lines=sceneLines(s,id);const r=s.story55.scenes[id]??={index:0,accepted:false};
+ const r=s.story55.scenes[id]??={index:0,accepted:false};
+ if(id==='questions'&&!r.openingMode)r.openingMode=r.index?'normal':identityReplyMode55(s);
+ const lines=sceneLines(s,id);
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
  if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
@@ -280,6 +284,27 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
  }
  return false;
 }
+// Reuse the phone heartbeat and the existing queued scene, including when
+// Mirage isn't on screen or the world clock is temporarily paused.
+export function identityRevealDue55(s,now=Date.now()){
+ if(!isStory55(s)||nodeStatus(s,'questions').state!=='ready')return false;
+ const active=s.story55.activeScene;
+ if(active&&active!=='questions'&&!completed(s,active))return false;
+ const q=scene55(s,'questions'),next=sceneLines(s,'questions')[q.index];
+ const planned=plannedSceneLineClock55(s,'questions',q.index);
+ return !!next&&!['me','disconnect','call'].includes(next[0])&&(!planned||s.clock>=planned)&&(!Number.isFinite(q.nextAt)||now>=q.nextAt);
+}
+function recoverIdentityContact55(s){
+ if(!completed(s,'ig')||completed(s,'questions'))return;
+ const r=s.story55.identityContact??={count:0};
+ if(r.reconciled)return;
+ r.reconciled=true;
+ const seen=s.story55.completed.ig;
+ const chat=s.content.conversations.mirage?.find(c=>c.id==='s55-ouroboros');
+ const messages=(chat?.messages||[]).filter(m=>m.from==='me'&&m.actual===true&&!m.id?.startsWith('s55-')&&!m.developerSimulated&&!m.storyImported&&!m.authored&&!m.story55&&m.day<=s.day&&(m.day>seen.day||(m.day===seen.day&&m.time>=seen.clock))).sort((a,b)=>a.day-b.day||a.time.localeCompare(b.time));
+ r.count=Math.max(r.count||0,Math.min(4,messages.length));
+ if(messages.length>=4)r.replyDay=Math.min(r.replyDay??Infinity,messages[3].day+1);
+}
 // A saved scene index is the sole proof that its player SEND actually happened.
 // Quarantine old D23 scripted bubbles beyond that index instead of displaying
 // sent-looking messages before the user presses Send. Preserve originals in save.
@@ -348,6 +373,9 @@ export function tickStory55(s){
  // The existing story tick silently rehydrates saved real chats as game time
  // reaches their original timestamps. No extra event queue or notifications.
  restoreDeveloperChatArchive(s);
+ recordRoom404Visit(s);
+ recoverIdentityContact55(s);
+ if(identityRevealDue55(s)&&completed(s,s.story55.activeScene))s.story55.activeScene=null;
  tickD03Contract(s);
  tickD04Contracts(s);
  tickD03MomentReply(s);
