@@ -25,14 +25,12 @@ test('only github.io hosts identify public static Pages without a voice endpoint
  assert.equal(minimaxUnavailableOnGithubPages('my-server.example.com'),false);
  assert.equal(minimaxUnavailableOnGithubPages('fakegithub.io.evil.com'),false);
 });
-test('NoApp failed voice displays real explanation as visible text rather than a title tooltip',()=>{
+test('NoApp legacy failed voice is shown as an in-character message, never provider diagnostics',()=>{
  const s=initialState(),c=s.content.conversations.noapp.find(x=>x.id==='tai');
  c.messages=[{id:'failed',from:'tai',text:'我说两句',kind:'text',voiceFailed:true,voiceError:'当前 iPhone 浏览器无法直连 MiniMax',day:s.day,time:s.clock,actual:true}];
  const html=chatView(s,'noapp','tai');
- assert.match(html,/<strong>语音生成失败<\/strong>/);
- assert.match(html,/<p class="noapp-voice-error">当前 iPhone 浏览器无法直连 MiniMax<\/p>/);
- assert.match(html,/data-action="tai-convert-voice" data-id="failed"/);
- assert.doesNotMatch(html,/title="当前 iPhone 浏览器无法直连 MiniMax"/);
+ assert.match(html,/語音發不出去|發不了語音|網不太好|打字說/);
+ assert.doesNotMatch(html,/MiniMax|语音生成失败|重新合成|tai-convert-voice/);
 });
 test('Unconfigured third-party GitHub Pages host still fails before a non-existent local TTS endpoint',async()=>{
  const oldSession=globalThis.sessionStorage,oldLocation=globalThis.location,oldFetch=globalThis.fetch;

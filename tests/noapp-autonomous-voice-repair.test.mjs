@@ -86,6 +86,27 @@ test('provider failure retains HTTP and MiniMax error code and removes credentia
   });
  },{provider:()=>new Response(JSON.stringify({base_resp:{status_code:1004,status_msg:'invalid token sk-private123456789 eyJhbGciOiJIUzI1NiJ9.payload.signature'}}),{status:401})});
 });
+test('failed voice publishes only native preset text, with no pending bubble or provider details',async()=>{
+ await environment(async({state,chat,store})=>{
+  incoming(state,chat,'给我发语音');await replyToTaiMessage(store,'input',fast);
+  const sent=chat.messages.filter(m=>m.replySourceId==='input');
+  assert.equal(sent.length,1);assert.equal(sent[0].kind,'text');
+  assert.match(sent[0].text,/語音發不出去|發不了語音|網不太好|打字說/);
+  assert.equal(sent[0].voiceFailed,undefined);assert.equal(sent[0].voiceError,undefined);assert.ok(!sent[0].voiceRequested);
+  assert.ok(!state.notifications.some(n=>/MiniMax|额度|合成/.test(n.body||'')));
+ },{provider:()=>Response.json({base_resp:{status_code:1008,status_msg:'insufficient balance'}})});
+});
+test('voice synthesis is invisible until audio is available',async()=>{
+ let release,started;
+ const begun=new Promise(resolve=>{started=resolve;});
+ const gated=new Promise(resolve=>{release=resolve;});
+ await environment(async({state,chat,store})=>{
+  incoming(state,chat,'给我发语音');const task=replyToTaiMessage(store,'input',fast);await begun;
+  assert.equal(chat.messages.length,1);assert.ok(!state.notifications.some(n=>n.id.startsWith('tai-reply-')));
+  release(Response.json({base_resp:{status_code:0},data:{audio:'4944330102'}}));await task;
+  assert.equal(chat.messages.length,2);assert.equal(chat.messages.at(-1).kind,'voice');
+ },{provider:()=>{started();return gated;}});
+});
 test('aborted Safari write retains playable audio and retry makes one request',async()=>{
  await environment(async({requests,state,chat,store})=>{
   abortWrite=true;

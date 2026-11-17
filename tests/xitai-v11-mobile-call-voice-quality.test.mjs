@@ -40,7 +40,7 @@ test('explicit send a voice note is honored when text was chosen without refusal
  assert.equal(honorTaiVoiceRequest(selected,{text:'给我发语音',available:false}).action,'send_text');
  assert.equal(honorTaiVoiceRequest({...selected,strategy:'set_boundary'},{text:'给我发语音',available:true}).action,'send_text');
 });
-test('NoApp keeps Ximeng text-only while Tai voice shows TTS pending and retry',()=>{
+test('NoApp keeps Ximeng text-only and never exposes TTS pending or retry',()=>{
  const s=initialState();s.day=56;s.clock='22:05';
  const c=s.content.conversations.noapp.find(x=>x.id==='tai');
  c.messages.push({id:'own-voice-test',day:56,time:'22:00',from:'me',actual:true,kind:'voice',audioId:'mic-test',duration:4,voiceCaption:'听得见吗',text:'语音消息'});
@@ -49,6 +49,6 @@ test('NoApp keeps Ximeng text-only while Tai voice shows TTS pending and retry',
  const html=chatView(s,'noapp','tai');
  assert.doesNotMatch(html,/data-action="tai-record"/);
  assert.doesNotMatch(html,/data-voice-id="mic-test"/);
- assert.match(html,/语音合成中/);
- assert.match(html,/data-action="tai-convert-voice" data-id="failed-voice-test"/);
+ assert.doesNotMatch(html,/语音合成中|马上录给你|provider unavailable|tai-convert-voice/);
+ assert.match(html,/語音發不出去|發不了語音|網不太好|打字說/);
 });

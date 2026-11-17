@@ -118,6 +118,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   // not solely in human-readable docs; only post-recognition NoApp/Chess.
   authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode}),
   approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):'',
+  effectiveMode==='call'?'【角色行为协议】告别或主动结束通话时，输出正常可朗读的 messages，并在同一 JSON 对象的顶层附上 "actions":[{"type":"end_call","timing":"after_reply"}]；继续通话时 actions=[]。若熙蒙说拜拜、再見、不聊了或要去睡觉，应自然告别。禁止将任何行为指令、API、模型、额度或系统状态写入台词。':'',
   taiMomentumPrompt(messages,{mode:effectiveMode}),
   taiTurnShapePrompt(turnPlan)
  ].filter(Boolean).join('\n\n');

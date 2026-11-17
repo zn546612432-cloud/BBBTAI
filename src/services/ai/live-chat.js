@@ -6,9 +6,8 @@ import {dateParts} from '../calendar.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
-import {aiStatus,askTai,chooseTaiAction,voicePreview,apiConfig} from './gateway.js';
-import {saveClip} from '../voice/audio-store.js';
-import {explainMinimaxFailure} from '../voice/minimax-diagnostics.js';
+import {aiStatus,askTai,chooseTaiAction,apiConfig} from './gateway.js';
+import {prepareTaiVoice,waitForTaiVoiceQueue,voiceFailureLine} from './voice-delivery.js';
 import {unpackTaiReply} from './format.js';
 import {callBridgeNote,isRecentTaiCall} from './humanize.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
@@ -53,34 +52,7 @@ export function maybeResumeTaiDeferred(store,{now=Date.now,wait}={}){
  return task;
 }
 
-let ttsQueue=Promise.resolve();
-export function synthesizeVoiceNotes(store,jobs){
- const work=async()=>{
-  for(const job of jobs){
-   try{
-    const clip=await voicePreview({text:job.text,tone:job.tone});
-    const audioId='tai-'+job.id;
-    await saveClip(audioId,clip);
-    const current=store.get();
-    if(current.day!==job.day||deathLocked(current))continue;
-    store.update(s=>{
-     const m=conversation(s)?.messages.find(x=>x.id===job.id);
-     if(m){m.kind='voice';m.audioId=audioId;m.voiceCaption=job.text;
-       delete m.voiceRequested;}
-    });
-   }catch(error){
-    console.warn('MiniMax voice failed; text remains:',error?.message);
-    store.update(s=>{const m=conversation(s)?.messages.find(m=>m.id===job.id);if(m){delete m.voiceRequested;m.voiceFailed=true;
-      const raw=String(error?.message||'语音生成失败');
-      m.voiceError=(/^(当前 iPhone|没有可用的 MiniMax|MiniMax (?:鉴权|无法|账户|请求|服务|合成))/.test(raw)?raw:explainMinimaxFailure(error,{region:apiConfig().region})).slice(0,440);}});
-   }
-  }
- };
- // A rejection must not poison subsequent voice synthesis.
- const queued=ttsQueue.then(work,work);
- ttsQueue=queued.catch(()=>{});
- return queued;
-}
+export function synthesizeVoiceNotes(){return waitForTaiVoiceQueue();}
 
 export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{},retryDeferred=false,onTyping=()=>{}}={}){
  const initial=store.get(),c=conversation(initial);
@@ -115,7 +87,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&voiceRequested;
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
-   (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':'系统已结束电话。')+
+   (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':lastEndedCall.endedBy==='connection_error'?'连接异常导致电话断开，不是任何一方主动挂断。':'系统已结束电话。')+
    '熙蒙现在是在 NoApp 私聊框打字，而不是在电话里继续说话，更不是挂断后还能传输电话语音。你只通过文字回复，不要把通话中未听到的内容当作真实发言。':
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
@@ -222,9 +194,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
       tone:item.tone==='neutral'&&actualDecision.tone!=='neutral'?actualDecision.tone:item.tone,
       ...(actualDecision.action==='send_voice'?{speechText:item.speechText||item.text}:{})}):
     item.action==='phone'?{...item,mode:'text'}:requestedCall?{...item,mode:'text'}:voiceTurn?{...item,mode:'voice',speechText:item.speechText||item.text}:!allowVoice?{...item,mode:'text'}:item);
+  const unavailableVoice=voiceRequested&&!status.minimax&&!entries.some(item=>item.action==='phone')&&actualDecision?.strategy!=='set_boundary';
   let emitted=0;
   let phoneCommand=null;
-  const voiceJobs=[];
   for(const item of entries){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))break;
    const delay=replyDelayMs(item.text,behavior,{first:emitted===0,random})+(emitted===0&&actualDecision?actualDecision.delay_seconds*1000:0);
@@ -237,26 +209,21 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     break;
    }
    const id=uid();
-   // A text bubble appears as soon as it is received. Slow MiniMax synthesis
-   // cannot stall subsequent sentences or make the conversation look frozen.
+   let msg={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',aiGenerated:true,actual:true,replySourceId:sourceMessageId,voiceRequested:false,...(item.translation?{translation:item.translation}:{})};
+   if(item.mode==='voice')msg=await prepareTaiVoice(msg,{speechText:item.speechText||item.text,tone:item.tone});
+   if(unavailableVoice)msg={...msg,text:voiceFailureLine(id),translation:undefined};
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||emitted===0&&replyAfter(conversation(store.get()),sourceMessageId))break;
    store.update(s=>{
     const target=conversation(s);if(!target)return;
-    const msg={id,from:'tai',text:item.text,kind:'text',
-      aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
-      aiGenerated:true,actual:true,receivedAt:now(),replySourceId:sourceMessageId,voiceRequested:item.mode==='voice',...(item.translation?{translation:item.translation}:{})};
-    target.messages.push(msg);
+    target.messages.push({...msg,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=Math.max(0,Number(target.unread)||0)+1;
      s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:target.name,
-       body:item.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
+       body:msg.kind==='voice'?'語音訊息':msg.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
     }
    });
    emitted++;
-   if(item.mode==='voice'){
-    // Queue TTS in its own chain so three voice messages do not create three
-    // simultaneous MiniMax calls. Failed audio leaves the written bubble.
-    voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
-   }
+   if(unavailableVoice)break;
   }
   // Make an actual incoming call only after a current, explicit player request
   // AND Tai's last emitted message commits to calling immediately.
@@ -272,11 +239,6 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason,openingText:phoneCommand?.text||''});
    if(called)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock,protocol:phoneCommand?'phone':'legacy'}));
   }
-  if(voiceJobs.length){
-   void synthesizeVoiceNotes(store,voiceJobs).catch(error=>{
-    console.warn('MiniMax voice conversion delayed, chat text preserved:',error?.message);
-   });
-  }
   // Developer-only audit: the actual length may be lower than the sampled
   // target when the actor refuses, the model repeats itself or the player
   // intervenes. Never pretend the requested distribution is exact delivery.
@@ -285,6 +247,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    s.events.push({type:'tai_v12_turn_plan',channel:'text',sourceId:sourceMessageId,day:s.day,clock:s.clock,
     target:turnPlan.target,guided:turnPlan.guide,semicolonBurst:!!turnPlan.semicolonBurst,emitted,receivedAt:now()});
   });
-  return {status:called?'called':'replied',count:emitted,text:entries.filter(x=>x.action!=='phone').map(x=>x.text).join('\n')};
+  return {status:called?'called':'replied',count:emitted,text:delivered.map(x=>x.text).join('\n')};
+ }catch(error){
+  console.warn('NoApp reply unavailable:',error?.message);
+  if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+  const id=uid(),text='晚點再說吧。';
+  store.update(s=>{
+   const target=conversation(s);if(!target)return;
+   target.messages.push({id,from:'tai',text,kind:'text',actual:true,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
+   if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:target.name,body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+  });
+  return {status:'replied',count:1,text};
  }finally{pendingRequests.delete(store);}
 }

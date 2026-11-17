@@ -14,6 +14,7 @@ export function taiShouldHangUpCall(text){
  if(/^(?:请|麻烦|能不能)?(?:帮我|替我)(?:把(?:电话|这通电话))?挂(?:断|了|掉|吧|一下)?(?:88|拜拜|晚安)?$/i.test(s))return true;
  // The player says the call is over, not that a third party once hung up.
  if(/^(?:那|那就|好|好的|行|行了|好了|先|就|现在|咱们|我们)?(?:挂(?:电话|断|机)?(?:了|吧|掉|啦)?(?:吧|了)?|结束(?:通话|电话)(?:吧|了)?)(?:88|拜拜|晚安|再见|bye)?$/i.test(s))return true;
- if(/^(?:88|拜拜|再见|bye|晚安)(?:了|啦)?$/i.test(s))return true;
+ if(/^(?:88|拜拜|再[见見]|bye|晚安)(?:了|啦)?$/i.test(s))return true;
+ if(/^(?:好(?:了)?|那(?:就)?|行(?:了)?|嗯)?(?:不聊了|先不聊了|下次聊|晚[点點]聊|我(?:要|先|去)睡了|你先忙(?:吧|去吧)?)(?:88|拜拜|再[见見]|bye|晚安)?$/i.test(s))return true;
  return false;
 }

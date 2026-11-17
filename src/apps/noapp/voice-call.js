@@ -20,6 +20,9 @@ import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js'
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
 import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent} from './call-engine-v2.js';
 import {taiShouldHangUpCall} from './call-hangup-intent.js';
+import {callFailureLine} from '../../services/ai/voice-delivery.js';
+import {isConversationOpen} from '../../services/messaging/delivery.js';
+import {validateCallReplyAction} from '../../services/ai/action-protocol-v10.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -29,11 +32,11 @@ export function callState(){return {state:call.state,direction:call.direction,se
 function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReason=''}){
  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
  if(!chat)return;
- const label=status==='missed'?'未接语音来电':status==='declined'?'已拒绝语音来电':
+ const label=endReason==='connection_error'?'通話失敗':status==='missed'?'未接语音来电':status==='declined'?'已拒绝语音来电':
    status==='cancelled'?'已取消语音呼叫':'语音通话 · '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
  const entry={id:'tai-call-history-'+uid(),from:direction==='incoming'?'tai':'me',text:label,
    kind:'call',callStatus:status,duration:seconds,day:s.day,time:s.clock,actual:true,
-   ...(status==='ended'?{endedBy:endedBy==='tai'?'tai':'player',endReason:String(endReason||'').slice(0,40)}:{})};
+   ...(status==='ended'?{endedBy:['tai','player','system','connection_error'].includes(endedBy)?endedBy:'system',endReason:String(endReason||'').slice(0,40)}:{})};
  if(status==='ended'&&turns.length)entry.transcript=turns.slice(-14).map(t=>(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(0,900);
  chat.messages.push(entry);
  if(status==='missed'&&!(s.unlocked&&s.nav.current.appId==='noapp'&&s.nav.current.route==='/chat/tai'))
@@ -77,7 +80,7 @@ function duration(){
 }
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
- const subtitle=ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
@@ -87,7 +90,7 @@ export function callView(s){
    phoneButton('tai-mic',call.listening?'结束说话':'按下说话',glyph.mic,'is-secondary'+(call.listening?' is-listening':''))+
    phoneButton('tai-hangup','结束',glyph.hang,'is-hang')+
    phoneButton('tai-expand','文字输入',glyph.plus,'is-secondary'):
-   phoneButton('tai-hangup','取消',glyph.hang,'is-hang');
+   dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'';
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="文字转写"><header>通话文字 <button type="button" data-action="tai-expand" aria-label="关闭文字转写">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="发文字继续通话…"><button type="submit">发送</button></form></div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
   (call.caption?'<p class="theirs">'+esc(call.caption)+'</p>':'')+
@@ -163,12 +166,13 @@ async function playCallAudio(ctx,blob,sessionId,revision){
    resolve(outcome);
   };
   const ended=()=>finish('completed');
-  const failed=()=>{
+  const blocked=()=>{
    if(settled||call.sessionId!==sessionId||call.revision!==revision)return;
    call.audioReady=true;
    ctx.toast?.('本段语音未能播放，请点「继续收听」重试。');
    ctx.refresh?.();
   };
+  const failed=()=>finish('failed');
   finishSegment=finish;
   audio.addEventListener('ended',ended,{once:true});
   audio.addEventListener('error',failed);
@@ -176,7 +180,7 @@ async function playCallAudio(ctx,blob,sessionId,revision){
    if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision){
     audio.pause();finish('interrupted');
    }
-  }).catch(failed);
+  }).catch(blocked);
  });
 }
 function interruptCallTurn(ctx,source='player'){
@@ -255,6 +259,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     memories:ctx.store.get().aiDraft?.memories
    });
   if(!current())return;
+  if(!presetText&&!event&&validateCallReplyAction(data,{callConnected:current(),approvedDecision:decision}))endAfter=true;
   const raw=event==='unheard'?[unheardReply(sessionId+':'+generationId)]:
    dedupeTaiTurnEntries(unpackTaiReply(data,'call'));
   const {segments,blocked}=selectCallSegments(raw,{
@@ -276,13 +281,21 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!current())break;
    call.caption=r.text;call.lastSpeech=r.text;ctx.refresh?.();
    const outcome=await playCallAudio(ctx,blob,sessionId,revision);
+   if(outcome==='failed')throw Error('Call audio playback failed');
    if(!current()||outcome!=='completed')break;
    call.turns.push({role:'assistant',content:r.text,tone:r.tone||decision?.tone||'neutral',
     vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now()});
    call.caption='';call.audioReady=false;ctx.refresh?.();
    await new Promise(resolve=>setTimeout(resolve,behavior.callPause*1000));
   }
- }catch(error){if(current())ctx.toast?.('通话 AI：'+(error?.message||'未知错误'));}
+ }catch(error){
+  if(current()){
+   console.warn('NoApp call connection failed:',error?.message);
+   call.connectionIssue=true;ctx.refresh?.();
+   await new Promise(resolve=>setTimeout(resolve,700));
+   if(current())callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error',fallback:callFailureLine({endedAfter:endAfter,turns:call.turns})});
+  }
+ }
  finally{
   if(current()){
    call.busy=false;call.lastTaiEndAt=Date.now();
@@ -320,7 +333,7 @@ export function submitCall(form,ctx){
  }
  return true;
 }
-export function callAction(action,ctx,{endedBy='player',endReason='manual'}={}){
+export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback=''}={}){
  switch(action){
  case 'tai-accept':
   if(call.state!=='ringing')return false;
@@ -331,7 +344,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual'}={}){
  case 'tai-decline':case 'tai-hangup':
   if(!['ringing','dialing','connected'].includes(call.state))return true;
   const previous=call;
-  callSerial++;call={state:'ended',sessionId:callSerial,direction:previous.direction,endedBy:previous.state==='connected'?(endedBy==='tai'?'tai':'player'):null,muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
+  callSerial++;call={state:'ended',sessionId:callSerial,direction:previous.direction,endedBy:previous.state==='connected'&&['tai','player','system','connection_error'].includes(endedBy)?endedBy:null,muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
   if(activeRecognition){activeRecognition.abort?.();activeRecognition=null;}
   if(recording?.call){recording.recorder._cancelled=true;recording.recorder.stop();recording=null;}
   finishSegment?.('interrupted');
@@ -350,10 +363,21 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual'}={}){
    }
    recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,endedBy:call.endedBy,endReason,
     seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
+   if(endedBy==='connection_error'&&fallback){
+    const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
+    if(chat){const id='tai-call-fallback-'+uid();chat.messages.push({id,from:'tai',kind:'text',text:fallback,day:s.day,time:s.clock,sentDate:dateParts(s).iso,actual:true,receivedAt:Date.now()});
+     if(!isConversationOpen(s,'noapp','tai')&&s.nav.current.route!=='/call'){
+      chat.unread=(chat.unread||0)+1;s.notifications.unshift({id,conversationId:'tai',title:chat.name,body:fallback,link:{appId:'noapp',route:'/chat/tai',params:{}}});
+     }
+    }
+   }
   });
   // Declining the top banner must not eject the player from another App.
-  if(ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call')
-   ctx.router.open({appId:'noapp',route:'/chat/tai'});
+  if(ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call'){
+   const endedSession=call.sessionId;
+   const back=()=>{if(call.sessionId===endedSession&&ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call')ctx.router?.open({appId:'noapp',route:'/chat/tai'});};
+   if(endedBy==='connection_error'){ctx.refresh?.();setTimeout(back,1100);}else back();
+  }
   return true;
  case 'tai-play-audio':if(playback){playback.muted=!call.speaker;playback.play().then(()=>{call.audioReady=false;ctx.refresh();}).catch(()=>ctx.toast('浏览器尚未允许播放，请再次点击继续收听。'));}return true;
  case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
@@ -531,7 +555,7 @@ export async function playVoiceMessage(id,ctx){
      const record=state.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(x=>x.id===m.id);
      if(record){record.voiceCaption=clean;record.text=clean;}
     });
-   }catch(error){ctx.toast('旧语音重制失败：'+error.message);continue;}
+   }catch(error){console.warn('NoApp old voice repair failed:',error?.message);ctx.toast('暫時無法播放語音');continue;}
   }
   if(!blob&&m.voiceRequested){
    for(let wait=0;wait<35&&!blob&&token===voicePlaylistToken;wait++){
@@ -548,11 +572,12 @@ export async function playVoiceMessage(id,ctx){
     blob=await voicePreview({text:m.voiceCaption||m.text,tone:m.aiTone||'neutral',...m.voiceSettings});
     await saveClip(m.audioId||m.id,blob);
    }catch(error){
-    if(m===selected)ctx.toast('熙泰语音未生成：'+(error?.message||'请先配置 MiniMax'));
+    console.warn('NoApp voice playback unavailable:',error?.message);
+    if(m===selected)ctx.toast('暫時無法播放語音');
     continue;
    }
   }
-  if(!blob&&!asset){if(m===selected)ctx.toast('没有这条语音的音频文件，请在开发者入口生成');continue;}
+  if(!blob&&!asset){if(m===selected)ctx.toast('暫時無法播放語音');continue;}
   if(token!==voicePlaylistToken)break;
   const url=blob?URL.createObjectURL(blob):asset;
   player.src=url;
@@ -589,7 +614,7 @@ async function convertVoice(ctx,id){
  const clean=readableTaiVoiceText(m.text);
  ctx.store.update(s=>{
   const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);
-  if(record){record.voiceRequested=true;delete record.voiceFailed;delete record.voiceError;}
+  if(record){delete record.voiceRequested;delete record.voiceFailed;delete record.voiceError;}
  });
  try{
   const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral',...m.voiceSettings});

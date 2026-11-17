@@ -40,14 +40,14 @@ test('existing Blob recordings remain readable without deleting or migrating old
   assert.equal(records.get('legacy'),old);
  });
 });
-test('a total disk write failure still yields playable audio and an honest temporary-storage notice',async()=>{
+test('a total disk write failure still yields playable audio without exposing storage diagnostics in the chat',async()=>{
  await withIDB(async()=>{
   failWrites=true;const audio=new Blob(['playable'],{type:'audio/mpeg'});
   assert.equal(await saveClip('temporary-note',audio),'temporary-note');
   assert.equal(clipIsTemporary('temporary-note'),true);assert.equal(await (await loadClip('temporary-note')).text(),'playable');
   const state=initialState(),chat=state.content.conversations.noapp.find(c=>c.id==='tai');
   chat.messages=[{id:'m',from:'tai',text:'听着呢',kind:'voice',audioId:'temporary-note',actual:true,day:state.day,time:state.clock}];
-  const html=chatView(state,'noapp','tai');assert.match(html,/播放熙泰语音/);assert.match(html,/本次未能保存/);assert.doesNotMatch(html,/语音生成失败/);
+  const html=chatView(state,'noapp','tai');assert.match(html,/播放熙泰语音/);assert.doesNotMatch(html,/本次未能保存|语音生成失败/);
   failWrites=false;await saveClip('temporary-note',audio);assert.equal(clipIsTemporary('temporary-note'),false);
   assert.doesNotMatch(chatView(state,'noapp','tai'),/本次未能保存/);
  });

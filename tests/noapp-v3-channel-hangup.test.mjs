@@ -10,7 +10,7 @@ import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 import {startIncoming,callAction,submitCall,callView,callState} from '../src/apps/noapp/voice-call.js';
 
 test('explicit commands delegate an actual phone hangup to Tai without confusing discussions or negations',()=>{
- const yes=['你挂电话吧','你先挂','你挂吧','你来挂','熙泰挂电话吧','帮我挂了','挂了88','挂了，拜拜','挂电话吧','晚安','88','拜拜','那就挂了吧','结束通话吧'];
+ const yes=['你挂电话吧','你先挂','你挂吧','你来挂','熙泰挂电话吧','帮我挂了','挂了88','挂了，拜拜','挂电话吧','晚安','88','拜拜','那就挂了吧','结束通话吧','不聊了，拜拜','再見','我要睡了','你先忙吧'];
  const no=['你别挂电话','不要挂','我不想挂电话','等一下再挂','刚才是谁挂的电话','你是不是刚才挂了','我们刚才挂断了','挂电话和打字有什么不可以','我挂断电话还能打字','谁让你挂电话了','刚挂了怎么又找我','我讨厌你','如果你挂了怎么办'];
  for(const text of yes)assert.equal(taiShouldHangUpCall(text),true,'positive '+text);
  for(const text of no)assert.equal(taiShouldHangUpCall(text),false,'negative '+text);
@@ -48,7 +48,7 @@ test('DeepSeek prompt receives mutually exclusive phone, voice note, and message
  assert.match(behaviorSettings(normalizeTaiBehavior(),{},[]),/name="behavior_callDetail"/);
 });
 
-async function withMockCall(replyEntries,run){
+async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
  const old=Object.fromEntries(['Audio','fetch','sessionStorage','FormData'].map(k=>[k,globalThis[k]]));
  const players=[],requests=[];
  let playerInput='';
@@ -75,11 +75,11 @@ async function withMockCall(replyEntries,run){
   globalThis.fetch=async(url,init)=>{
    const body=JSON.parse(init.body);
    requests.push({url:String(url),body});
-   if(String(url).includes('t2a_v2'))return Response.json({base_resp:{status_code:0},data:{audio:'494433'}});
+   if(String(url).includes('t2a_v2'))return Response.json(failVoice&&requests.filter(r=>r.url.includes('t2a_v2')).length>1?{base_resp:{status_code:1008,status_msg:'今日 AI 使用额度已达到上限'}}:{base_resp:{status_code:0},data:{audio:'494433'}});
    const isDecision=body.messages[0].content.includes('【行为决策层】');
    return Response.json({choices:[{message:{content:isDecision?
     JSON.stringify({schema_version:10,action:'speak',tone:'dry',strategy:'answer_directly'}):
-    JSON.stringify({messages:replyEntries.map(text=>({text,mode:'voice',tone:'dry'}))})}}]});
+    JSON.stringify({messages:replyEntries.map(text=>({text,mode:'voice',tone:'dry'})),actions})}}]});
   };
   assert.equal(startIncoming(ctx,'熙泰找你',{openingText:'喂。'}),true);
   assert.equal(callAction('tai-accept',ctx),true);
@@ -117,6 +117,33 @@ test('player requests Tai to hang up: spoken farewell executes actual hangup aft
  });
 });
 
+test('model JSON action ends the active call only after its farewell is played',async()=>{
+ await withMockCall(['我還有事，晚點聊。'],async({state,players,waitFor,send})=>{
+  send('还在吗？');await waitFor(()=>callView(state).includes('我還有事'),'farewell');
+  assert.equal(callState().state,'connected');assert.doesNotMatch(callView(state),/end_call|after_reply/);
+  players[0].finish();await waitFor(()=>callState().state==='ended','structured hangup');
+  assert.equal(callState().endedBy,'tai');assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').length,1);
+ },{actions:[{type:'end_call',timing:'after_reply'}]});
+});
+test('quota error shows connection failure, records neither party as hangup initiator, sends one local fallback',async()=>{
+ await withMockCall(['聽得見。'],async({state,ctx,waitFor,send})=>{
+  send('你听见了吗？');await waitFor(()=>callView(state).includes('連線不穩定'),'connection warning');
+  await waitFor(()=>callState().state==='ended','connection failure');
+  assert.match(callView(state),/通話失敗/);assert.equal(callState().endedBy,'connection_error');
+  const chat=state.content.conversations.noapp.find(c=>c.id==='tai');const rec=chat.messages.filter(m=>m.kind==='call').at(-1);
+  assert.equal(rec.endedBy,'connection_error');assert.match(callBridgeNote(rec,state),/双方均未主动挂断/);assert.doesNotMatch(rec.transcript,/聽得見/);
+  assert.equal(chat.messages.at(-1).text,'怎麼突然沒聲了？');callAction('tai-hangup',ctx);
+  assert.equal(chat.messages.filter(m=>m.kind==='call').length,1);assert.ok(!state.notifications.some(n=>/AI 使用额度|MiniMax/.test(n.body||'')));
+ },{failVoice:true});
+});
+test('manual hangup wins while a later character hangup action is waiting on speech',async()=>{
+ await withMockCall(['晚安。'],async({state,ctx,players,waitFor,send})=>{
+  send('不聊了');await waitFor(()=>callView(state).includes('晚安'),'goodbye segment');callAction('tai-hangup',ctx);
+  players[0].finish();await new Promise(resolve=>setTimeout(resolve,350));
+  const records=state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call');
+  assert.equal(records.length,1);assert.equal(records[0].endedBy,'player');
+ });
+});
 test('substantive call can speak four distinct paragraphs in one generation without overlapping playback',async()=>{
  const lines=[
   '你说的那件事我听明白了。先别急着怪自己，我想知道你实际遇到了什么。',
