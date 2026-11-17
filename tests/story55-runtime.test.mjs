@@ -139,7 +139,7 @@ test('developer location stays open while home widget keeps native reminders',as
 test('identity conversation becomes real MIRAGE history and NoApp installation precedes recognition',()=>{
  const s=fixture();previewNode55(s,'questions');
  playScene(s,'questions');
- const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,21);assert.throws(()=>sendQuestion55(s));
+ const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,22);assert.equal(chat.messages.at(-1).text,'或者問問銜尾蛇之淚。');assert.throws(()=>sendQuestion55(s));
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.text.includes('欢迎回家')));
 });
