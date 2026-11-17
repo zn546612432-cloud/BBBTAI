@@ -48,6 +48,15 @@ export function validateTaiAction(input,{mode='text',channel='noapp',recognized=
  };
  return {ok:true,reason,decision};
 }
+// Only an explicit structured action on the current live call may execute.
+export function validateCallReplyAction(input,{callConnected=false,approvedDecision=null}={}){
+ const data=unwrap(input);
+ if(!callConnected||!data||!Array.isArray(data.actions)||data.actions.length!==1)return false;
+ const action=data.actions[0];
+ if(!action||action.type!=='end_call'||action.timing!=='after_reply'||Object.keys(action).some(k=>!['type','timing'].includes(k)))return false;
+ if(approvedDecision?.action==='listen')return false;
+ return !!(typeof data.reply==='string'&&data.reply.trim()||Array.isArray(data.messages)&&data.messages.some(m=>typeof m?.text==='string'&&m.text.trim()));
+}
 export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recognized=false,sourceMessageId='',scene='',relationshipContext='',hasIncoming=true,allowDefer=true,allowVoice=true}={}){
  const actions=mode==='call'?TAI_CALL_ACTIONS:TAI_TEXT_ACTIONS;
  return [
@@ -56,7 +65,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   '角色可能拒绝、已读而不回、暂缓、主动联系、打电话或挂断；每轮只有一个主动作，不为了展示能力轮流执行动作。既不永远秒回，也不能为了戏剧效果随机消失。',
   '特别注意：能拒绝、能已读不回，不意味着默认冷淡。熙蒙认真发问、分享喜怒、连续追问你自己的经历或展示技术成果时，若没有具体的忙碌、冲突或边界理由，优先继续实际交流；别用 read_no_reply、end_session 或 defer_reply 逃避对方的正常谈话。你喜欢捉弄哥哥、好奇他，也会在兴致好时主动聊个痛快；不是专门吊人胃口的冷脸客服。',
   '固定剧情、关机、相认锁、在线状态和已知事实由程序控制。不能提前说出真实身份、未来剧情或偷窥未授权资料。所有执行由程序验证。',
-  mode==='call'?'现在是一通真正接通的 NoApp 语音电话，不是文字聊天。speak=继续通过语音说话；hang_up=你陈熙泰本人真正按下挂断键（程序会在你的自然告别语音播完后执行）；listen=愿意暂时听着不说。你可以按自身心情、困意、忙碌、沉默或话题自然选择 hang_up，并非只有玩家才能挂。玩家明确叫你「你挂电话吧」「你先挂」「挂了88」时应选择 hang_up，不要只说「那我挂了」而不断线。绝不能误以为挂断后还能听见玩家在电话里发声。':
+  mode==='call'?'现在是一通真正接通的 NoApp 语音电话，不是文字聊天。speak=继续通过语音说话；hang_up=你陈熙泰本人真正按下挂断键（程序会在你的自然告别语音播完后执行）；listen=愿意暂时听着不说。你可以按自身心情、困意、忙碌、沉默或话题自然选择 hang_up，并非只有玩家才能挂。熙蒙明确说拜拜、再见、不聊了、我要睡了、你先忙吧或叫你挂电话时，应自然告别并选择 hang_up；讨论过去的挂断、否定或要求别挂时不能误触发。绝不能误以为挂断后还能听见玩家在电话里发声。':
    '文字交流：send_text=发文字，send_voice=在已解锁NoApp中发语音条，start_call=真正发起来电（不是语音条），read_no_reply=确实阅读但保持沉默，defer_reply=暂不读取并延迟处理，end_session=结束本轮话题（不假装离线）。',
   '本轮允许动作：'+actions.join(', ')+'。输出的action必须来自此列。',
   mode!=='call'&&channel==='noapp'&&recognized?(allowVoice?'本轮语音可用：你可以自行选择 send_voice，不必等待熙蒙要求，也不受第60天限制。想让他听见语气、较长解释或觉得说话更自然时，可以直接发一条语音；主动联系也可以用语音。根据当前对话和本人意愿选择，不按固定概率轮换，不必每次发语音。':'本轮语音不可用或自主语音已关闭，请选择文字；不要声称自己已经发出了语音。'):'',
@@ -72,6 +81,6 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
 export function taiActionExpressionPrompt(decision,{mode='text'}={}){
  if(!decision)return '';
  return '【v10已批准行为；不可自行更换动作】action='+decision.action+'；strategy='+decision.strategy+'；intensity='+decision.intensity+'；tone='+decision.tone+'；vocal_cue='+decision.vocal_cue+'；内容方向='+decision.intent+'。'+
- (mode==='call'?'当前通话只能说台词，结束和挂断由程序执行。':'只生成该动作所需的实际台词。不要输出 (phone)、(voice)、(read) 或 JSON 动作标签；真实动作已由程序管理。')+
+ (mode==='call'?'当前通话只能说台词，结束和挂断由程序执行。若已决定挂断，在顶层 JSON 增加 "actions":[{"type":"end_call","timing":"after_reply"}]，自然告别后程序才会挂断。继续通话时 actions 为空数组。指令绝不能混入台词。':'只生成该动作所需的实际台词。不要输出 (phone)、(voice)、(read) 或 JSON 动作标签；真实动作已由程序管理。')+
  '每条messages可单独标注 tone；情绪标签不写入文字，不让 MiniMax 朗读。';
 }

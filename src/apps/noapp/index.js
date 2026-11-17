@@ -48,8 +48,8 @@ function queueTaiReply(ctx,messageId){
     return;
    }
    showFeedback(ctx,['read_no_reply','end_session'].includes(result.status)?'已读':
-     result.status==='offline'||result.status==='unavailable'?result.message:'');
-  }catch(error){if(version===replyVersion){showFeedback(ctx,error.message||'AI 回复失败');ctx.toast(error.message||'AI 回复失败');}}
+     result.status==='offline'?'暫時不在線':result.status==='unavailable'?'已送達':'');
+  }catch(error){console.warn('NoApp text reply failed:',error?.message);if(version===replyVersion)showFeedback(ctx,'已送達');}
  };
  pendingTai=setTimeout(run,3000);
 }

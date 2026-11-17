@@ -66,7 +66,7 @@ export function callBridgeNote(entry,current={}){
  if(entry.callStatus!=='ended'&&!transcript)return '';
  const recent=isRecentTaiCall(entry,current);
  const when=recent?'刚刚结束的一通真实语音电话':`D${entry.day??'?'} ${entry.time||'时间未记录'} 发生的一通真实语音电话`;
- const endedBy=entry.endedBy==='tai'?'陈熙泰主动按下挂断键':entry.endedBy==='player'?'熙蒙主动按下挂断键':'电话已经结束，挂断方未记录';
+ const endedBy=entry.endedBy==='tai'?'陈熙泰主动按下挂断键':entry.endedBy==='player'?'熙蒙主动按下挂断键':entry.endedBy==='connection_error'?'连接异常导致电话断开，双方均未主动挂断':entry.endedBy==='system'?'系统结束了电话':'电话已经结束，挂断方未记录';
  const ending=entry.endReason==='player_request'?'熙蒙明确要求熙泰结束电话，熙泰已经照做。':
   entry.endReason==='idle'?'因长时间沉默，熙泰告别后结束电话。':'';
  return '[系统可信通话回执：'+when+'。'+endedBy+'。'+ending+

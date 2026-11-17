@@ -3,7 +3,8 @@ import {xitaiRelationshipContext} from './relationship-context.js';
 import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
 import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {isTaiReplyPending,synthesizeVoiceNotes} from './live-chat.js';
+import {isTaiReplyPending} from './live-chat.js';
+import {prepareTaiVoice} from './voice-delivery.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
@@ -136,7 +137,6 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   items=dedupeTaiTurnEntries(items,turnPlan.target);
   if(approvedDecision?.action==='send_voice'||!approvedDecision&&allowVoice&&items.every(m=>m.mode==='voice'))items=combineTaiVoiceThoughts(items);
   let expected=history(initial).at(-1)?.id,emitted=0;
-  const voiceJobs=[];
   for(const item of items){
    if(emitted)await wait(replyDelayMs(item.text,c,{random}));
    const current=store.get();
@@ -144,22 +144,22 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    if(!emitted&&!force&&!(followup?isTaiFollowupDue(current,{now:now()}):isProactiveMessageDue(current,{now:now()})))break;
    const id=uid();
    const voiceMode=approvedDecision?approvedDecision.action==='send_voice':allowVoice&&item.mode==='voice';
+   let message={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',aiGenerated:true,actual:true,proactive:true,followup,followupSourceId:followup?source.id:undefined,voiceRequested:false};
+   if(voiceMode)message=await prepareTaiVoice(message,{speechText:item.speechText||item.text,tone:item.tone});
+   const after=store.get();
+   if(!eligible(after)||after.day!==initial.day||isTaiReplyPending(store)||history(after).at(-1)?.id!==expected)break;
    store.update(s=>{
     const target=chat(s);if(!target)return;
-    target.messages.push({id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',time:s.clock,day:s.day,sentDate:dateParts(s).iso,
-     aiGenerated:true,actual:true,receivedAt:now(),proactive:true,followup,followupSourceId:followup?source.id:undefined,
-     voiceRequested:voiceMode});
+    target.messages.push({...message,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=(target.unread||0)+1;
-     s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:item.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
+     s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:message.kind==='voice'?'語音訊息':message.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
     }
     if(!emitted)s.events.push({type:followup?'tai_proactive_followup':'tai_proactive_sent',sourceId:source?.id,
      day:s.day,clock:s.clock,receivedAt:now(),testOnly:!!force});
    });
-   if(voiceMode)voiceJobs.push({id,text:item.speechText||item.text,tone:item.tone,day:initial.day});
    expected=id;emitted++;
   }
-  if(voiceJobs.length)void synthesizeVoiceNotes(store,voiceJobs).catch(error=>console.warn('Tai proactive voice failed:',error?.message));
   if(emitted>0)store.update(s=>{
    s.events??=[];
    s.events.push({type:'tai_v12_turn_plan',channel:'text',day:s.day,clock:s.clock,
