@@ -57,7 +57,7 @@ function resumeVoicesAfterCapture(){
 }
 
 const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
-const AVATAR_SOURCE='/assets/tai-portrait.svg';
+const AVATAR_SOURCE=TAI_PORTRAIT;
 const glyph={
  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>',
  hang:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z"/></svg>',

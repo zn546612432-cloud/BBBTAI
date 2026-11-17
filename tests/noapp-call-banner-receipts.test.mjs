@@ -18,7 +18,7 @@ test('incoming call shows supplied user-photo banner with separate answer and de
  const html=incomingCallBanner(store.get());
  assert.match(html,/tai-banner-accept/);
  assert.match(html,/tai-banner-decline/);
- assert.match(html,/data:image\/webp;base64/);
+ assert.match(html,/\/assets\/tai-portrait\.webp/);
  assert.equal(callState().state,'ringing');
  assert.equal(callAction('tai-decline',ctx),true);
  assert.equal(incomingCallBanner(store.get()),'');
