@@ -25,6 +25,7 @@
     {"id":"identity-late","type":"late-entry","verify":"D34 08:00 後才打開個人檔案，立即安排同一對話；未查看個人檔案不觸發。保底首句固定為「看來你已經找到我留給你的小餅乾了。」"},
     {"id":"identity-assets","type":"assets","verify":"沿用現有 Personal Files、Room404 與三胞胎照片素材。"},
     {"id":"identity-clock","type":"date-clock","verify":"TAI 模擬破譯使用既有遊戲時鐘，50 分鐘後失敗。"},
-    {"id":"identity-dialogue","type":"dialogue","verify":"src/story/d29/definition.js 的 IDENTITY_DIALOGUE 全文；每句熙蒙需真實點擊發送。"}
+    {"id":"identity-dialogue","type":"dialogue","verify":"src/story/d29/definition.js 的 IDENTITY_DIALOGUE 全文；每句熙蒙需真實點擊發送。最後兩條獨立氣泡：自己想。／或者問問銜尾蛇之淚。"},
+    {"id":"identity-tear-presets","type":"negative","verify":"TAI 僅使用本機預設、關鍵詞及工程狀態，未識別指令不呼叫 AI。"}
   ]
 }

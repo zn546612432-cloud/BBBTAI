@@ -70,23 +70,61 @@ export function matchLocalTearCommand(value){
 export function presetReply(text){
  const t=normalize(text);
  if(/^(tai|小tai)$/.test(t)||/(為什麼|为什么|怎麼|怎么).*叫.*tai/.test(t))return '這是主人賜予我的名字。';
+ if(/真名|本名|主人.*(?:名字|姓名)/.test(t))return '該資料未開放存取。';
  if(/主人.*(是誰|是谁)|誰.*主人|谁.*主人/.test(t))return 'Dr Ouroboros.';
- if(/真名|本名/.test(t))return '抱歉，我無法提供主人的個人資訊。';
- if(!t)return '我在。怎麼了？';
- if(/^(hi|hello|hey|你好|您好|嗨|哈囉|哈啰|早上好|早安|在嗎)$/.test(t))return '你好，我在。有什麼需要我協助？';
+ if(/^(hi|hello|hey|你好|您好|嗨|哈囉|哈啰|早上好|早安|在嗎|在吗|你在嗎|你在吗)$/.test(t))return '我在。';
+ if(/^你是[誰谁]$/.test(t))return '我是 Ouroboros’ Tear，代號 TAI。';
+ if(/^你(?:會|会|能|可以)(?:做|幹|干)(?:什麼|什么)$/.test(t))return '請提供具體指令或檔案。';
+ if(/^你(?:有多|很)?[厲厉]害(?:[嗎吗])?$/.test(t))return '尚未測得算力上限。';
+ if(/^你有感情[嗎吗]$/.test(t))return '未載入相關模組。';
+ if(/^你[認认][識识]我[嗎吗]$/.test(t))return '當前使用者：NYARLATHOTEP。';
+ if(/^(?:[謝谢][謝谢](?:你)?|thanks|thankyou)$/.test(t))return '不客氣。';
+ if(/^(?:[幹干]得漂亮|[厲厉]害|牛[逼b]|[棒]極了|[棒]极了)$/.test(t))return '很高興能幫到你。';
+ if(/^(?:[請请])?(?:[幫帮]我|[給给]我)?(?:[調调]查|追[蹤踪]|入侵|查一下)(?:[銜衔]尾蛇(?:博士)?|drouroboros|ouroboros)(?:的[電电][腦脑])?$/.test(t))return '請提供目標 IP 地址。';
+ if(/^(?:[請请])?(?:[幫帮]我)?(?:分析|查看|[識识][別别])(?:這[張张]|这[張张])?(?:照片|[圖图]片|影像)$/.test(t))return '請上傳需要分析的影像。';
+ if(/^(?:[請请])?(?:[幫帮]我)?(?:解密|破解)(?:文件|[檔档]案|資料[夾夹])?$/.test(t))return '請上傳需要解密的檔案。';
  return '';
+}
+export const INVALID_TEAR_REPLIES=['無效指令。','無法識別此指令。','指令解析失敗。','未找到對應指令。','請提供有效指令。'];
+function invalidCommand(s){
+ const a=ensureAgent(s),index=(a.invalidCommandCount||0)%INVALID_TEAR_REPLIES.length;
+ a.invalidCommandCount=index+1;
+ addMessage(s,'assistant',INVALID_TEAR_REPLIES[index]);
+ return {kind:'preset'};
 }
 function programStatusReply(s){
  const job=agent(s).jobs.program;
- return !job?'目前仍有前置資料需要確認。':job.done?'爆破程序已完成。':'爆破程序正在進行。';
+ return !job?(s.day<28?'目前缺少必要資料。':'目前仍有前置資料需要確認。'):job.done?'爆破程序已完成。':'爆破程序正在進行。';
 }
 function programFollowupReply(s,text){
  const t=normalize(text),job=agent(s).jobs.program;
+ if(/^(?:[請请])?(?:[幫帮]我)?(?:引爆|[遠远]程引爆)$/.test(t))return s.day<28?'目前缺少必要資料。':'未建立執行連線。';
+ if(/^(?:[請请])?(?:[幫帮]我)?重新(?:製作|制作|[編编][寫写]|[寫写])(?:爆破(?:控制)?|炸[彈弹])(?:程序|程式)$/.test(t))return job?'BC_01 工程已存在。':programStatusReply(s);
+ if(/^(?:爆破(?:控制)?(?:程序|程式)|bc01|炸[彈弹](?:程序|程式))(?:在哪[裡里]?|在哪[兒儿]|保存在哪[裡里]?|[檔档]案在哪[裡里]?)$/.test(t))return job?.done?'程序已封裝並保存至本機：BC_01.enc。':programStatusReply(s);
+ if(/^(?:爆破(?:程序|程式)?|bc01)?(?:模[擬拟])?[測测][試试](?:成功了?[嗎吗]|[過过]了[嗎吗]|通[過过]了?[嗎吗])$/.test(t))return job?.done?'最終模擬測試通過。':programStatusReply(s);
  const explicit=/^(?:這個|这个|那個|那个|你的)?(?:爆破(?:控制)?(?:程序|程式)?|bc01|炸[彈弹](?:程序|程式)?)(?:的)?/;
  const subject=explicit.test(t),question=t.replace(explicit,'');
  if(!subject&&!job)return '';
  if(/^(?:這個|这个|這項|这项)?(?:很)?(?:[難难]不[難难]|[難难](?:嗎|吗|麼|么)|[難难]度(?:如何|怎[麼么][樣样]|[高大]不[高大]|多[高大]|是什[麼么])?|有多[難难]|容易嗎|容易吗)$/.test(question))return job?'對 TAI 而言，難度：零域級。':programStatusReply(s);
  if(/^(?:做得|做的|完成得|進行得|进行得)?(?:怎[麼么][樣样](?:了)?|如何(?:了)?|好了[嗎吗]|完成了[嗎吗]|[進进]度(?:呢|如何|怎[麼么][樣样])?|還要多久|还要多久)$/.test(question))return programStatusReply(s);
+ return '';
+}
+function contextualReply(s,text){
+ const t=normalize(text),a=agent(s),archive=a.jobs['archive-password'];
+ const password=/^(?:(?:tai|[這这][個个]|最後(?:一[個个])?|最后(?:一[個个])?)?(?:文件[夾夹]?|[檔档]案|[資资]料[夾夹])?(?:的)?)?(?:密[碼码](?:是什[麼么]|是多少|多少|呢|是什[麼么]呢)?|[解破][密譯译](?:的)?密[碼码])$/.test(t);
+ const clue=/^(?:[還还]有(?:其他)?(?:的)?[線线]索[嗎吗]|其他[線线]索|[線线]索呢|怎[麼么]找(?:到)?密[碼码])$/.test(t);
+ if(password||clue){
+  if(!completed(s,'questions'))return '文件暫時無法響應。';
+  if(!archive)return '請上傳需要解密的檔案。';
+  if(!archive.done)return '解密工程正在運行。';
+  return clue?'建議重新檢查已取得的個人檔案。':'密碼疑似為由五個大寫英文字母組成的人名。';
+ }
+ if(/^(?:[進进]度(?:呢|如何|怎[麼么][樣样])?|[還还]要多久|[進进]行得怎[麼么][樣样]了?)$/.test(t)){
+  const infos=[...Object.keys(a.jobs),'identity','personal-files'].map(id=>tearTaskInfo(s,id)).filter(Boolean);
+  const active=infos.filter(i=>i.running),selected=active.length?active:infos;
+  if(!selected.length)return '目前沒有正在運行的工程。';
+  return selected.map(i=>i.title+'：'+(i.running?'正在運行':i.status==='FAILED'?'破譯失敗':'已完成')+'，'+i.percent+'%，已運行 '+i.elapsedMinutes+' 分鐘。').join('\n');
+ }
  return '';
 }
 export function addMessage(s,role,text,extra={}){
@@ -195,7 +233,7 @@ export function tickTearAgent(s){
  if(a.archiveRun&&!a.archiveRun.done&&Date.now()>=a.archiveRun.startedAt+ARCHIVE_RUN_MS){
   a.archiveRun.done=true;changed=true;
  }
- if(a.thinking&&(!a.thinkingAt||Date.now()-a.thinkingAt>90000)){delete a.thinking;delete a.thinkingAt;changed=true;}
+ if(a.thinking||a.thinkingAt){delete a.thinking;delete a.thinkingAt;changed=true;}
  for(const [id,j] of Object.entries(a.jobs)){
   const d=TEAR_STAGES[id];if(!d||j.done)continue;
   const elapsed=Math.max(0,now(s)-j.start);
@@ -226,8 +264,8 @@ export function researchInfo(s){const a=agent(s),j=a.jobs.survey;if(!j)return nu
 export function sendAgent(s,text,fileId){
  const a=ensureAgent(s),value=String(text||'').trim(),file=agentFiles(s).find(f=>f.id===fileId);
  if(!value&&!file)return {kind:'empty'};
- if(blockedTearText(s,value))return {kind:'blocked'};
  if(identityRevealPending(s))return {kind:'busy'};
+ if(blockedTearText(s,value))return invalidCommand(s);
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
@@ -269,6 +307,6 @@ export function sendAgent(s,text,fileId){
    addMessage(s,'assistant',reply);return {kind:'preset'};
   }
  }
- const reply=programFollowupReply(s,value)||presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
- return {kind:'ai',id:a.messages.at(-1).id};
+ const reply=contextualReply(s,value)||programFollowupReply(s,value)||presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
+ return invalidCommand(s);
 }

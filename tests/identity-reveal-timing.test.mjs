@@ -87,3 +87,18 @@ test('D34 fallback only after a profile visit; late entry and old navigation rec
   assert.equal(s.story55.identityContact.count,0);
  }
 });
+
+test('completed identity saves receive only the missing final hint in its original position',()=>{
+ const s=activateStory55(initialState());previewNode55(s,'ig');
+ s.day=34;s.clock='21:00';
+ const last=IDENTITY_DIALOGUE.length-1,chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ s.story55.completed.questions={day:34,clock:'08:00'};
+ s.story55.scenes.questions={index:last,accepted:true};
+ s.story55.config.scenes.questions=structuredClone(IDENTITY_DIALOGUE.slice(0,-1));
+ chat.messages.push({id:'s55-identity-reveal-'+(last-1),from:chat.id,text:'自己想。',actual:true,day:34,time:'08:00'},{id:'later',from:'me',text:'？',day:34,time:'21:00'});
+ tickStory55(s);tickStory55(s);
+ const hint=chat.messages.filter(m=>m.id==='s55-identity-reveal-'+last);
+ assert.equal(hint.length,1);assert.equal(hint[0].text,'或者問問銜尾蛇之淚。');
+ assert.equal(hint[0].time,'08:00');assert.equal(chat.messages[chat.messages.indexOf(hint[0])+1].id,'later');
+ assert.equal(scene55(s,'questions').index,last+1);assert.equal(completed(s,'questions'),true);
+});

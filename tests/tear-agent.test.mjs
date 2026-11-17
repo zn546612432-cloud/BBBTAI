@@ -29,7 +29,7 @@ test('TAI name, spoiler gate, and fixed files through cross-day research with ze
  const s=fixture(),balance=s.bankData.balance;
  assert.equal(agent(s).messages[0].text,'你好，我是小TAI，今天有什麼可以幫助你？');
  assert.equal(sendAgent(s,'TAI？').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'這是主人賜予我的名字。');
- assert.equal(sendAgent(s,'熙泰').kind,'blocked');
+ assert.equal(sendAgent(s,'熙泰').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'無效指令。');
  const survey=addZip(s,'group','s55-d25-survey',TEAR_STAGES.survey.file);
  assert.equal(sendAgent(s,'',survey).kind,'preset');
  time(s,25,'12:04');assert.equal(agent(s).jobs.survey.done,false);
@@ -136,8 +136,8 @@ test('existing transcript saves migrate to a fresh single-message view without l
  assert.equal(migrated.jobs.survey.start,123);
 });
 test('TAI greetings and punctuation are answered naturally without unrelated safety refusals',()=>{
- assert.equal(presetReply('hi'),'你好，我在。有什麼需要我協助？');
- assert.equal(presetReply('?'),'我在。怎麼了？');
+ assert.equal(presetReply('hi'),'我在。');
+ assert.equal(presetReply('?'),'');
  assert.equal(presetReply('TAI？'),'這是主人賜予我的名字。');
  const prompt=buildTearPrompt('AAB_SECURITY: FUZZING');
  assert.match(prompt,/優先直接回答使用者最新的訊息/);
@@ -171,7 +171,7 @@ test('D28 free-form authored command routes locally, respects prerequisites and 
   const s=fixture();
   assert.equal(sendAgent(s,command).kind,'preset');
   assert.equal(agent(s).jobs.program,undefined);
-  assert.match(agent(s).messages.at(-1).text,/前置資料/);
+  assert.equal(agent(s).messages.at(-1).text,'目前缺少必要資料。');
   time(s,28,'19:12');s.story55.completed['d28-meeting']={day:28,clock:s.clock};
   assert.equal(sendAgent(s,command).kind,'preset');
   assert.match(agent(s).messages.at(-1).text,/好的，已建立工程：BC_01。正在調取澳亞銀行防盜門系統/);
@@ -184,13 +184,13 @@ test('D28 free-form authored command routes locally, respects prerequisites and 
   time(s,28,'21:42');assert.equal(agent(s).jobs.program.done,true);
   assert.equal(localFileList(s).filter(f=>f.name==='BC_01.enc').length,1);
  }
- const s=fixture();assert.equal(sendAgent(s,'你今天忙嗎？').kind,'ai');
+ const s=fixture();assert.equal(sendAgent(s,'你今天忙嗎？').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'無效指令。');
 });
 
 test('BC_01 status and difficulty follow-ups are local presets and never restart the project',()=>{
  const s=fixture();
  assert.equal(sendAgent(s,'爆破難不難').kind,'preset');
- assert.match(agent(s).messages.at(-1).text,/前置資料/);
+ assert.equal(agent(s).messages.at(-1).text,'目前缺少必要資料。');
  time(s,28,'19:12');s.story55.completed['d28-meeting']={day:28,clock:s.clock};
  sendAgent(s,'爆破');const start=agent(s).jobs.program.start;
  for(const text of ['爆破','爆破程序','爆破進度','爆破怎么样了','好了嗎']){
@@ -200,7 +200,7 @@ test('BC_01 status and difficulty follow-ups are local presets and never restart
   assert.equal(sendAgent(s,text).kind,'preset');assert.equal(agent(s).messages.at(-1).text,'對 TAI 而言，難度：零域級。');
  }
  assert.equal(agent(s).jobs.program.start,start);assert.equal(agent(s).thinking,undefined);
- assert.equal(sendAgent(s,'你今天忙嗎？').kind,'ai');
+ assert.equal(sendAgent(s,'你今天忙嗎？').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'無效指令。');
  time(s,28,'21:42');assert.equal(sendAgent(s,'爆破').kind,'preset');assert.equal(agent(s).messages.at(-1).text,'爆破程序已完成。');
 });
 
@@ -385,34 +385,44 @@ test('opening and closing task or history panels preserves the unsent composer d
  beginTearChatSession(s);assert.equal(agent(s).draft,'');
 });
 
-test('TAI spoiler submission silently clears draft without a banner or outgoing bubble',()=>{
- const s=fixture(),a=ensureAgent(s),before=JSON.stringify(a.messages),input={value:'熙泰'};
+test('TAI spoiler submission returns an invalid command without an outgoing bubble',()=>{
+ const s=fixture(),a=ensureAgent(s),before=a.messages.length,input={value:'熙泰'};
  a.draft=input.value;
  const ctx={store:{get:()=>s,update:fn=>fn(s)},toast:()=>assert.fail('blocked wording must not notify')};
  assert.equal(submitTearAgent({dataset:{form:'tear-agent-send'},querySelector:()=>input},ctx),true);
- assert.equal(input.value,'');assert.equal(a.draft,'');assert.equal(JSON.stringify(a.messages),before);
+ assert.equal(input.value,'');assert.equal(a.draft,'');assert.equal(a.messages.length,before+1);assert.equal(a.messages.at(-1).text,'無效指令。');
 });
 
-test('a delayed AI reply cannot leak into a reopened session or clear its new pending reply',async()=>{
+test('unknown TAI inputs rotate local responses and never request the AI service',t=>{
  const s=fixture();s.nav.current={appId:'ghost',route:'/tear',params:{}};beginTearChatSession(s);
  const ctx={store:{get:()=>s,update:fn=>fn(s)}};
- const originalFetch=globalThis.fetch,pending=[];
- let requested;const nextRequest=()=>new Promise(resolve=>{requested=resolve;});
- globalThis.fetch=()=>new Promise(resolve=>{pending.push(resolve);requested();});
- const form={dataset:{form:'tear-agent-send'},querySelector:()=>({value:'你可以解釋一下研究方法嗎？'})};
- try{
-  let ready=nextRequest();submitTearAgent(form,ctx);await ready;
-  const oldSession=agent(s).chatSession;
-  beginTearChatSession(s);assert.notEqual(agent(s).chatSession,oldSession);
-  ready=nextRequest();submitTearAgent(form,ctx);await ready;
-  const thinking=agent(s).thinking;
-  pending[0]({ok:true,text:async()=>JSON.stringify({text:'OLD_DELAYED_REPLY'})});
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(agent(s).thinking,thinking);assert.doesNotMatch(JSON.stringify(agent(s).messages),/OLD_DELAYED_REPLY/);
-  pending[1]({ok:true,text:async()=>JSON.stringify({text:'CURRENT_REPLY'})});
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(agent(s).thinking,undefined);assert.equal(agent(s).messages.at(-1).text,'CURRENT_REPLY');
- }finally{globalThis.fetch=originalFetch;}
+ const fetch=t.mock.method(globalThis,'fetch',()=>assert.fail('TAI must not issue network requests'));
+ const replies=['無效指令。','無法識別此指令。','指令解析失敗。','未找到對應指令。','請提供有效指令。','無效指令。'];
+ for(const reply of replies){
+  const input={value:'你可以解釋一下研究方法嗎？'};
+  submitTearAgent({dataset:{form:'tear-agent-send'},querySelector:()=>input},ctx);
+  assert.equal(agent(s).messages.at(-1).text,reply);assert.equal(input.value,'');
+ }
+ assert.equal(fetch.mock.callCount(),0);assert.equal(agent(s).thinking,undefined);
+ agent(s).thinking='old';agent(s).thinkingAt=1;tickTearAgent(s);
+ assert.equal(agent(s).thinking,undefined);
+ beginTearChatSession(s);assert.equal(agent(s).messages.length,1);
+});
+
+test('TAI approved presets and gated password hints',()=>{
+ const s=fixture();
+ const check=(input,reply)=>{assert.equal(sendAgent(s,input).kind,'preset');assert.equal(agent(s).messages.at(-1).text,reply,input);};
+ for(const [input,reply] of [
+  ['你好','我在。'],['在吗','我在。'],['为什么叫TAI','這是主人賜予我的名字。'],['主人是谁','Dr Ouroboros.'],['你是谁','我是 Ouroboros’ Tear，代號 TAI。'],
+  ['你能做什么','請提供具體指令或檔案。'],['你有多厉害','尚未測得算力上限。'],['你有感情吗','未載入相關模組。'],['你认识我吗','當前使用者：NYARLATHOTEP。'],
+  ['主人叫什么名字','該資料未開放存取。'],['谢谢','不客氣。'],['干得漂亮','很高興能幫到你。'],['调查衔尾蛇','請提供目標 IP 地址。'],
+  ['分析照片','請上傳需要分析的影像。'],['破解文件','請上傳需要解密的檔案。'],['進度','目前沒有正在運行的工程。'],['最后一个文件夹的密码是什么','文件暫時無法響應。']
+ ])check(input,reply);
+ s.story55.completed.questions={day:34,clock:'08:00'};time(s,34,'08:00');
+ check('密碼','請上傳需要解密的檔案。');
+ agent(s).jobs['archive-password']={start:absoluteMinute(s),shown:0,done:false};
+ check('TAI文件夾密碼','解密工程正在運行。');
+ time(s,34,'08:50');check('密碼呢','密碼疑似為由五個大寫英文字母組成的人名。');check('還有其他線索嗎','建議重新檢查已取得的個人檔案。');
 });
 
 
