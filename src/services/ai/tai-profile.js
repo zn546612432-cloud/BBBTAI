@@ -150,7 +150,8 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   approvedPersona,
   XITAI_BIOGRAPHY_PRIORITY,
   taiPrivateDisclosurePrompt(messages,{recognized:day>=30&&channel!=='mirage'&&(recognized===true||recognized===undefined&&(channel==='noapp'||channel==='chess'&&day>55))}),
-  XITAI_EXPRESSION_STYLE
+  XITAI_EXPRESSION_STYLE,
+  effectiveMode==='call'?'【最新作者電話執行規則】上面的一般文字格式「不強制補第二條」不適用於有實質內容、已收到通話 expression plan 的一輪。依當前計劃分段輸出 messages；可先用一句話直接回答，再主動說下一段有不同意圖的話，並不等待熙蒙再次輸入。若真的只需一句、保持私人界線、需要安靜或告別，才短答。熟悉後遇到真實好笑的上下文可以偶爾接梗，這不是恢復固定毒舌風格。不要每次只給反問；如果已無新內容，或忙，應有自己的主見並可真正結束電話。':''
  ].filter(Boolean).join('\n\n');
  return resolveWorldbookOutlets(result,sections?.outlets);
 }

@@ -29,7 +29,7 @@ test('V2 honors explicit quiet companionship and applies natural silence cooldow
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},50000,DEFAULT_TAI_BEHAVIOR),'nudge');
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0,nudgeCount:1},140000,DEFAULT_TAI_BEHAVIOR),'closing');
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0,busy:true},140000,DEFAULT_TAI_BEHAVIOR),'');
- assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},50000,{...DEFAULT_TAI_BEHAVIOR,callIdleMode:'quiet'}),'');
+ assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},16000,{...DEFAULT_TAI_BEHAVIOR,callIdleMode:'quiet'}),'');
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},50000,{...DEFAULT_TAI_BEHAVIOR,callIdleMode:'active'}),'nudge');
 });
 test('more speech is requested explicitly and grouped along natural sentence boundaries',()=>{

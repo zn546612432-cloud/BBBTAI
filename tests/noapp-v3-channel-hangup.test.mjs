@@ -181,6 +181,30 @@ test('explicit request for more speech has a JSON segment plan and repairs a sho
  });
 });
 
+test('ordinary live conversation continues after a one-line draft without a new player message',async()=>{
+ const first='那是博士課程。',second='你找我到底什麼事？我等一下還有事。';
+ await withMockCall(body=>body.messages[0].content.includes('【多段语音补足】')?[second]:[first],async({state,players,requests,waitFor,send})=>{
+  send('你不是在哈佛讀書嗎？');
+  await waitFor(()=>callView(state).includes(first),first);players[0].finish();
+  await waitFor(()=>callView(state).includes(second),second);players[0].finish();
+  await waitFor(()=>callState().turnCount===4);
+  assert.equal(requests.filter(x=>x.url.includes('chat/completions')).length,2);
+  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,2);
+ });
+});
+
+test('game quota nearing its end makes Tai say goodbye and actually hang up',async()=>{
+ await withMockCall(['我知道了。','好了，先聊到這裡吧。晚安。'],async({state,players,waitFor,send})=>{
+  state.aiDraft.taiVoiceUsage={60:{call:27,message:0}};
+  send('你覺得怎麼樣？');
+  await waitFor(()=>callView(state).includes('我知道了。'),'reply');players[0].finish();
+  await waitFor(()=>callView(state).includes('好了，先聊到這裡吧。'),'farewell');players[0].finish();
+  await waitFor(()=>callState().state==='ended','quota farewell was actually played');
+  assert.equal(state.aiDraft.taiVoiceUsage[60].call,29);
+  assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').at(-1).endReason,'quota');
+ });
+});
+
 test('microphone listening and recognition are inline beneath the contact, with no app toast',async()=>{
  await withMockCall(['聽到了。'],async({state,ctx,players,toasts,waitFor})=>{
   const priorWindow=globalThis.window,priorNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator');

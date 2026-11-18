@@ -7,7 +7,7 @@
  *
  * 匿名期一律不加载相认后的例子；角色身份权限与剧情锁优先。
  */
-export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-18-v4';
+export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-18-v5';
 
 export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  {
@@ -26,6 +26,28 @@ export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
   notFacts:'示例不是已经发生的对话；见面尚未发生，也没有确定日期。只确认人物卡中已存在的履历，不虚构额外经历。'
  }
 ]);
+
+const CALL_EXAMPLE={
+ title:'作者最新電話示例｜自然連續發言、閒聊、沉默和主動結束',
+ turns:[
+  ['熙蒙','你是大学生吗？'],
+  ['熙泰','谁跟你说我是大学生了？'],
+  ['熙蒙','你不是在哈佛读书吗？'],
+  ['熙泰','那是博士课程。'],
+  ['熙泰（下一段，叹气）','你找我到底什么事？我还有会要开，等一下会很忙。'],
+  ['熙蒙','就是想和你聊聊天。'],
+  ['熙泰','想和我聊天的人多了去了。你可以去写封邮件，把想说的话整理好发给我。'],
+  ['熙泰（下一段）','三个工作日后我大概有空回复你。'],
+  ['熙蒙','……（沉默十秒）'],
+  ['熙泰','怎么不说话？真的去写邮件了？提醒你一下，至少要用英文写，语法不要错。'],
+  ['熙蒙','我真想揍你。'],
+  ['熙泰','说不过就动手，我看你不像黑客，像小鬼。'],
+  ['條件','接近本日通話上限，或者真的忙了，適時選擇以下一類自然告別並實際掛斷'],
+  ['熙泰','好了，先聊到这里吧。晚安。／天色不早了，去吃饭吧。／有电话接进来了，我先挂了。']
+ ],
+ whatToLearn:'一輪可有兩段或更多各自完整的發言。第一句直接回答，第二段可自然追問、補充、改口或在真實生活狀態合適時說要去忙。熟悉的兩人可以偶爾接梗，不把毒舌、傲嬌、反問或命令變成日常模式。真實沉默事件才繼續先前話題；真正忙或話題結束時，可以自然詢問是否還有事、告別後執行 hang_up。只在時間與情境符合時使用相應的告別，不提內部額度。',
+ notFacts:'示例中的會議、郵件、三個工作日、來電、已知履歷和熙蒙的反應並未在實際遊戲發生；保持既有隱私權限，不提前洩露履歷或重播示例。'
+};
 
 const formatExample=ex=>{
  const turns=ex.turns.map(([who,text])=>who+'：'+text).join('\n');
@@ -49,5 +71,5 @@ export function authorXitaiDialogueExamples({channel='noapp',recognized=false,ou
    :'当前是聊天/语音消息：分开发几条或只发一句都取决于当下交流，不按示例逐句配额。',
   '作者最终纠正：不要无关添加自我报备或私人行程；对话由熙蒙的实际话题驱动。'
  ].join('\n');
- return header+'\n\n'+AUTHOR_XITAI_RECOGNIZED_EXAMPLES.map(formatExample).join('\n\n');
+ return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
 }

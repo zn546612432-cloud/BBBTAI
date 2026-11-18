@@ -130,6 +130,7 @@
 .app-noapp .noapp-mini-toolbar button{border:0;border-radius:50%;display:grid;place-items:center;width:38px;height:38px;background:#ffffff11;color:#e7f3fc;touch-action:manipulation}
 .app-noapp .noapp-mini-toolbar button:active{background:#ffffff27}
 .app-noapp .noapp-mini-toolbar svg{width:20px;height:20px}
+.tai-call-return{border:0;border-radius:24px;background:#ffffff20;color:#fff;padding:12px 28px;font:inherit}
 .app-noapp .noapp-shell>.chat-screen{flex:1;min-height:0;height:auto;overflow:hidden}
 .app-noapp .noapp-shell>.page-pad{flex:1;min-height:0;overflow:auto}
 .app-noapp .noapp-shell .chat-messages{scroll-behavior:smooth}

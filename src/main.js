@@ -27,7 +27,7 @@ import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './syste
 import {mountCallEvents} from './apps/noapp/index.js';
 import {unlockTaiVoice} from './services/ai/voice-budget.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
-import {PhoneRouter} from './services/router.js';
+import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
@@ -61,6 +61,9 @@ import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/e
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
 const store=new PhoneStore();
+// Telephone sessions are not persisted. Remove abandoned call routes on boot.
+if(isNoAppCallRoute(store.get().nav.current)||store.get().nav.stack?.some(isNoAppCallRoute))
+ store.update(dismissNoAppCallRoute);
 // Abandoned browser sessions never replay a takeover, duplicate a GHOST
 // receipt or leave the dynamic island red after the next boot.
 recoverTaiRemoteSession(store);

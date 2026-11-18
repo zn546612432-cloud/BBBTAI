@@ -38,7 +38,8 @@ test('incoming NoApp call creates native-style banner notification and a real ac
  // Opening the actual call screen is done by the notification/router handler.
  store.update(s=>{s.nav.current={appId:'noapp',route:'/call',params:{}};});
  assert.equal(callAction('tai-hangup',ctx),true);
- assert.equal(opened.route,'/chat/tai');
+ assert.equal(state.nav.current.route,'/chat/tai');
+ assert.equal(opened,null,'ending a transient call must not push another route');
 });
 
 test('BYOK MiniMax builds numeric channel, sample rate and bitrate; keys are kept in session storage only',async()=>{
