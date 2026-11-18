@@ -4,7 +4,9 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {deepseekModelOptions,normalizeDeepSeekModel,DEEPSEEK_MODELS} from '../src/services/ai/model-config.js';
 import {apiConfig,saveApiConfig,askTai,BYOK_SESSION,AI_PREFERENCES} from '../src/services/ai/gateway.js';
-import {buildTaiPrompt,XITAI_SUBJECT_RULE} from '../src/services/ai/tai-profile.js';
+import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
+import {XITAI_EXPRESSION_STYLE,XITAI_DECISION_STYLE,hasBannedTaiConstruction} from '../src/services/ai/expression-style.js';
+import {taiActionDecisionPrompt} from '../src/services/ai/action-protocol-v10.js';
 import {handleAIGateway} from '../server/ai-gateway.mjs';
 
 test('only two allowlisted models; V4 Pro defaults to non-thinking at temperature and top_p 0.6',()=>{
@@ -35,12 +37,38 @@ test('legacy saved settings migrate without changing credentials or voice; later
  }finally{globalThis.sessionStorage=oldSession;globalThis.localStorage=oldLocal;}
 });
 
-test('subject rule is final even after approved cloud examples, in text, voice and call',()=>{
+test('natural expression preferences are final even after approved cloud examples, in text, voice and call',()=>{
  for(const outputMode of ['text','voice','call']){
   const prompt=buildTaiPrompt({channel:'noapp',day:40,recognized:true,outputMode,approvedPersona:'approved cloud dialogue examples'});
-  assert.ok(prompt.endsWith(XITAI_SUBJECT_RULE));
-  assert.ok(prompt.indexOf('approved cloud dialogue examples')<prompt.indexOf(XITAI_SUBJECT_RULE));
+  assert.ok(prompt.endsWith(XITAI_EXPRESSION_STYLE));
+  assert.ok(prompt.indexOf('approved cloud dialogue examples')<prompt.indexOf(XITAI_EXPRESSION_STYLE));
+  assert.match(prompt,/主語在語境清楚時可以省略/);
+  assert.match(prompt,/陳述句為主/);
+  for(const pattern of ['不是……而是……','別……才……','把……那叫……','不……不……'])assert.ok(prompt.includes(pattern));
+  assert.doesNotMatch(prompt,/每個有完整語意的陳述句.*必須有明確的主語/);
  }
+ const decision=taiActionDecisionPrompt({channel:'noapp',day:40,recognized:true});
+ assert.ok(decision.includes(XITAI_DECISION_STYLE));
+ assert.match(decision,/tease、ask_back、brief_pushback、challenge 是低頻選項/);
+});
+
+test('banned constructions trigger only a bounded corrective generation',async()=>{
+ for(const line of ['不是你的錯，而是我的錯。','別急，這才開始。','把這個放下，那叫尊重。','我不習慣主動說，不是故意只問你。'])assert.ok(hasBannedTaiConstruction([line]));
+ assert.ok(hasBannedTaiConstruction(['不是我想的','而是你決定的']));
+ assert.ok(hasBannedTaiConstruction(['不是故意瞞你。','只是我本來就不習慣主動說這些。']));
+ assert.equal(hasBannedTaiConstruction(['我不想出門。','那家店不遠。','還有點事。']),false);
+ assert.equal(hasBannedTaiConstruction(['不過早就不上課了。']),false);
+ const oldSession=globalThis.sessionStorage,oldFetch=globalThis.fetch,db=new Map(),requests=[];
+ globalThis.sessionStorage={getItem:k=>db.get(k)??null,setItem:(k,v)=>db.set(k,v),removeItem:k=>db.delete(k)};
+ globalThis.fetch=async(url,init)=>{requests.push(JSON.parse(init.body));return Response.json({choices:[{message:{content:JSON.stringify({messages:[{text:requests.length===1?'我不習慣主動講，不是故意的。':'我習慣把私事留給自己。',mode:'text'}]})}}]});};
+ try{
+  saveApiConfig({deepseek:'test-only',model:'deepseek-v4-pro'});
+  const reply=await askTai({channel:'noapp',day:40,recognized:true,messages:[{role:'user',content:'你怎麼總是問我？'}]});
+  assert.match(reply.text,/我習慣把私事留給自己/);
+  assert.equal(requests.length,2);
+  assert.match(requests[1].messages[0].content,/上一稿語法修正/);
+  assert.equal(requests[1].temperature,.6);assert.equal(requests[1].top_p,.6);
+ }finally{globalThis.sessionStorage=oldSession;globalThis.fetch=oldFetch;}
 });
 
 test('browser session saves model choice; direct API and retry both use V4 Pro settings',async()=>{

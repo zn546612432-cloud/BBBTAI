@@ -9,6 +9,7 @@ import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.
 import {taiHumanPrompt} from './humanize.js';
 import {taiMomentumPrompt} from './conversation-momentum-v11.js';
 import {taiTurnShapePrompt} from './conversation-shape-v12.js';
+import {XITAI_EXPRESSION_STYLE} from './expression-style.js';
 import {taiWorldbookPrompt,splitWorldbook,worldbookText,worldbookDepthText,resolveWorldbookOutlets,previewTaiWorldbook} from './worldbook/index.js';
 import {taiMoodPrompt} from './worldbook/mood.js';
 import {taiLongMemoryPrompt,selectTaiLongMemories,migrateTaiMemories} from './memory.js';
@@ -84,7 +85,6 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export const XITAI_SUBJECT_RULE='【句式硬規則】文字、語音及通話中，每個有完整語意的陳述句、疑問句、反問句與祈使句都必須有明確的主語（我、你、他，或具體的人或事物）。逗號、分號及換行後若另起一個獨立句，也要寫出主語；同一主語連續做幾件事則不必機械重複。不要只寫謂語或省略主語的半截句。說「你怎麼了？」而不是「怎麼了？」；說「我剛到家。」而不是「剛到家。」；說「你想我了？」而不是「想我了？」；說「你別指望我會答應。」而不是「別指望我會答應。」。純語氣詞如「嗯？」可獨立使用。主語不等於反覆喊名字，不必為此增加氣泡或改成書面語。這條規則優先於示例中的省略句。';
 export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona=''}={}){
  const seen=visibleTaiMemories((Array.isArray(memories)?memories:[]).filter(m=>!m?.kind),day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
@@ -138,7 +138,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   taiMomentumPrompt(messages,{mode:effectiveMode}),
   taiTurnShapePrompt(turnPlan),
   approvedPersona,
-  XITAI_SUBJECT_RULE
+  XITAI_EXPRESSION_STYLE
  ].filter(Boolean).join('\n\n');
  return resolveWorldbookOutlets(result,sections?.outlets);
 }

@@ -2,7 +2,8 @@ import {normalizeTtsSettings,ttsProviderSettings,ttsCueText} from '../voice/tts-
 import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway.js';
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
-import {readableTaiVoiceText} from './format.js';
+import {readableTaiVoiceText,unpackTaiReply} from './format.js';
+import {hasBannedTaiConstruction,XITAI_STYLE_REPAIR} from './expression-style.js';
 import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
@@ -75,7 +76,21 @@ export async function askTear({day,messages,scene=''}){
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){
+export async function askTai(request){
+ const first=await askTaiOnce(request);
+ let entries;
+ try{entries=unpackTaiReply(first,request.outputMode==='call'?'call':request.channel);}catch{return first;}
+ if(!hasBannedTaiConstruction(entries.map(e=>e.text)))return first;
+ // Only the offending generation gets one corrective attempt. Preserve the
+ // original approved action and fall back to the reply if the provider fails.
+ try{
+  const corrected=await askTaiOnce({...request,scene:XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
+  const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
+  if(!hasBannedTaiConstruction(lines.map(e=>e.text)))return corrected;
+ }catch{}
+ return first;
+}
+async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const {assembleTaiMessages,compactWorldbookSnapshot,previewTaiWorldbook}=await import('./worldbook/index.js');
  if(!worldbookSnapshot&&worldbook)worldbookSnapshot=previewTaiWorldbook(worldbook,{channel,day,recognized,messages,outputMode,scenario:scene,worldbookEvents});

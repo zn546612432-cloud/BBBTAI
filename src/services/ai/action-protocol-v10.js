@@ -3,6 +3,7 @@
 import {taiWorldbookPrompt} from './worldbook/index.js';
 import {normalizeTaiMood,XITAI_MOODS} from './worldbook/mood.js';
 import {normalizeTaiMemoryUpdate} from './memory.js';
+import {XITAI_DECISION_STYLE} from './expression-style.js';
 export const TAI_TEXT_ACTIONS=Object.freeze(['send_text','send_voice','start_call','read_no_reply','defer_reply','end_session']);
 export const TAI_CALL_ACTIONS=Object.freeze(['speak','hang_up','listen']);
 export const TAI_RING_ACTIONS=Object.freeze(['accept_call','decline_call','ignore_call']);
@@ -87,6 +88,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   relationshipContext?'真实且已授权的关系上下文：'+String(relationshipContext).slice(0,3600):'',
   scene?'当前系统事件（不是熙蒙台词）：'+String(scene).slice(0,1200):'',
   taiWorldbookPrompt({day,channel,recognized,outputMode:mode,messages,worldbookEvents,worldbookSnapshot,worldbook,phase:'decision'}),
+  XITAI_DECISION_STYLE,
   'JSON结构严格为 {"schema_version":10,"source_message_id":'+JSON.stringify(String(sourceMessageId))+',"action":"'+actions[0]+'","strategy":"answer_directly","intensity":"low","tone":"neutral","vocal_cue":"none","intent":"简短内容方向","delay_seconds":0}。只改字段值，可附上述情緒字段，禁止额外解释。'
  ].filter(Boolean).join('\n\n');
 }
