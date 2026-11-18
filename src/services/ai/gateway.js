@@ -69,9 +69,9 @@ export async function askTear({day,messages,scene=''}){
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false}){
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[]}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,model:c.model,parameters:normalizeAiParameters(c)};
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,model:c.model,parameters:normalizeAiParameters(c)};
  if(isTaiCloudHost()){
   const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
   const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
