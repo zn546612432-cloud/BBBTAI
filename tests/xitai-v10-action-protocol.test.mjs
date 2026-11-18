@@ -41,6 +41,7 @@ test('deferral has safe limits, structured tone/cue have allowlists',()=>{
  assert.equal(a.decision.vocal_cue,'none');
  assert.equal(a.decision.strategy,'answer_directly');
  assert.equal(choose('defer_reply').decision.delay_seconds,90);
+ assert.equal(choose('send_text').decision.strategy,'answer_directly','retired tease strategy falls back safely');
 });
 
 test('decision prompt has JSON-only actions while expression prompt has no (phone) commands',()=>{

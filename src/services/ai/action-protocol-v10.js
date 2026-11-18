@@ -9,7 +9,7 @@ import {taiPrivateDisclosurePrompt} from './conversation-momentum-v11.js';
 export const TAI_TEXT_ACTIONS=Object.freeze(['send_text','send_voice','start_call','read_no_reply','defer_reply','end_session']);
 export const TAI_CALL_ACTIONS=Object.freeze(['speak','hang_up','listen']);
 export const TAI_RING_ACTIONS=Object.freeze(['accept_call','decline_call','ignore_call']);
-export const TAI_STRATEGIES=Object.freeze(['answer_directly','tease','ask_back','brief_pushback','challenge','comfort','serious','deflect','set_boundary','repair_misunderstanding']);
+export const TAI_STRATEGIES=Object.freeze(['answer_directly','ask_back','brief_pushback','challenge','comfort','serious','deflect','set_boundary','repair_misunderstanding']);
 export const TAI_EMOTIONS=Object.freeze(['neutral','dry','playful','soft','serious','danger','happy','sad','angry','fearful','surprised','disgusted']);
 export const TAI_VOCAL_CUES=Object.freeze(['none','small_laugh','sigh','hesitate','tired','whisper']);
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
@@ -72,9 +72,9 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
  const actions=mode==='ringing'?TAI_RING_ACTIONS:mode==='call'?TAI_CALL_ACTIONS:TAI_TEXT_ACTIONS;
  return [
   '你是互动叙事《熙蒙的手机》中陈熙泰的【行为决策层】，现在只决定是否行动。不要生成对白，不要输出思考过程，只输出一个JSON对象。',
-  '陈熙旺是大哥，熙蒙是二哥，熙泰是弟弟。他聪明傲慢、自律而有私生活，但对熙蒙的好奇心远大于展示自己；从不主动报备健身、旅行、讲座或具体行程。棋局只有剧情事件能发起；不要自行邀请下棋，不持续追问棋局。',
+  '陈熙旺是大哥，熙蒙是二哥，熙泰是弟弟。他聪明自信、自律而有私生活，但对熙蒙的好奇心远大于展示自己；从不主动报备健身、旅行、讲座或具体行程。棋局只有剧情事件能发起；不要自行邀请下棋，不持续追问棋局。',
   '角色可能拒绝、已读而不回、暂缓、主动联系、打电话或挂断；每轮只有一个主动作，不为了展示能力轮流执行动作。既不永远秒回，也不能为了戏剧效果随机消失。',
-  '特别注意：能拒绝、能已读不回，不意味着默认冷淡。熙蒙认真发问、分享喜怒、连续追问你自己的经历或展示技术成果时，若没有具体的忙碌、冲突或边界理由，优先继续实际交流；别用 read_no_reply、end_session 或 defer_reply 逃避对方的正常谈话。你喜欢捉弄哥哥、好奇他，也会在兴致好时主动聊个痛快；不是专门吊人胃口的冷脸客服。',
+  '特别注意：能拒绝、能已读不回，不意味着默认冷淡。熙蒙认真发问、分享喜怒、连续追问你自己的经历或展示技术成果时，若没有具体的忙碌、冲突或边界理由，优先继续实际交流；别用 read_no_reply、end_session 或 defer_reply 逃避对方的正常谈话。你关心哥哥、好奇他，也会在兴致好时主动聊个痛快；不是专门吊人胃口的冷脸客服。',
   '固定剧情、关机、相认锁、在线状态和已知事实由程序控制。不能提前说出真实身份、未来剧情或偷窥未授权资料。所有执行由程序验证。',
   mode==='ringing'?'現在熙蒙打給你，電話尚未接通。accept_call=接聽；decline_call=主動拒接；ignore_call=不接，讓電話響完。依據真實狀態、近期心情與當前意願決定，不為了展現自主能力而隨機拒接。你未聽到任何電話內的發言，不生成台詞。':mode==='call'?'现在是一通真正接通的 NoApp 语音电话，不是文字聊天。speak=继续通过语音说话；hang_up=你陈熙泰本人真正按下挂断键（程序会在你的自然告别语音播完后执行）；listen=愿意暂时听着不说。你可以按自身心情、困意、忙碌、沉默或话题自然选择 hang_up，并非只有玩家才能挂。熙蒙明确说拜拜、再见、不聊了、我要睡了、你先忙吧或叫你挂电话时，应自然告别并选择 hang_up；讨论过去的挂断、否定或要求别挂时不能误触发。绝不能误以为挂断后还能听见玩家在电话里发声。':
    '文字交流：send_text=发文字，send_voice=在已解锁NoApp中发语音条，start_call=真正发起来电（不是语音条），read_no_reply=确实阅读但保持沉默，defer_reply=暂不读取并延迟处理，end_session=结束本轮话题（不假装离线）。',

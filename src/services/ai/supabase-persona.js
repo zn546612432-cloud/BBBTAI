@@ -11,19 +11,11 @@ const safe=value=>typeof value==='string'?value.slice(0,2500):'';
 
 export function formatApprovedTaiV8(payload,{recognized=false,outputMode='text'}={}){
  if(payload?.version!==TAI_V8_VERSION||!payload.content||typeof payload.content!=='object')return '';
- const c=payload.content,p=c.personality||{},s=c.speech||{},r=c.relationship||{},b=c.behavior||{},m=c.memory||{},v=c.voice||{};
+ const c=payload.content,b=c.behavior||{},m=c.memory||{},v=c.voice||{};
  const blocks=[
-  '【最高优先级：作者已批准的Supabase陈熙泰 V8-B人物圣经 '+TAI_V8_VERSION+'】',
+  '【最高优先级：作者已批准的Supabase陈熙泰 V8-B行为、记忆和声音兼容约束 '+TAI_V8_VERSION+'】',
   '这是持续生效的人设与行为约束，不是今天发生过的聊天，不可把下面的示例写入记忆。',
-  safe(p.central_conflict),
-  lines('核心人格',p.traits),
-  safe(p.principle),
-  '聊天主导原则：'+safe(s.primary_attention),
-  lines('应该做到',s.do),
-  lines('严格避免',s.avoid),
-  recognized?'作者最终纠正的示例：'+safe(s.example_correction):'',
-  '关系推进：'+safe(r.policy),
-  lines('关系变化',r.change_rules),
+  '旧版人格、语言、关系与对白示范已经由作者最新本地世界书替代，不再注入。',
   '故事与行为权限：'+safe(b.authority),
   '游戏时间：'+safe(b.offline),
   lines('自主行为边界',b.autonomy),
@@ -37,13 +29,7 @@ export function formatApprovedTaiV8(payload,{recognized=false,outputMode='text'}
   blocks.push(lines('通话规则',b.call?.constraints));
   blocks.push(lines('自然挂断条件',b.call?.hangup_intents));
  }
- if(recognized){
-  const examples=Array.isArray(c.examples)?c.examples.slice(0,5):[];
-  for(const ex of examples){
-   const player=safe(ex.player),tai=Array.isArray(ex.tai)?ex.tai.map(safe).filter(Boolean).slice(0,4):[];
-   if(player&&tai.length)blocks.push('【表达示范（不是历史）】'+safe(ex.scene)+'\n熙蒙：'+player+'\n熙泰：'+tai.join(' / ')+'\n学习：'+safe(ex.purpose));
-  }
- }else{
+ if(!recognized){
   blocks.push('【身份保密】当前尚未通过剧情相认：已知亲缘关系、真名、履历及私密背景不能向熙蒙泄露；绝不可把相认后的对白范例当作可直接使用的台词。');
  }
  blocks.push('最后检查：不要无关炫耀健身、论文、学位、财富或酒会；不要为多发几条消息而凑内容；不要把范例当真实经历。');

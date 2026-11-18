@@ -7,11 +7,11 @@ import {askTai,saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js
 
 test('detailed Xitai worldbook contains independent personality, education and identity boundaries',()=>{
  assert.match(XITAI_LONG_WORLDBOOK,/专属系统底层设定 v5/);
- for(const t of ['哈佛','MIRAGE','自负','国际象棋','莎士比亚','匿名期','当前阶段','金融','语音'])
+ for(const t of ['哈佛','MIRAGE','自信','国际象棋','莎士比亚','匿名期','当前阶段','金融','语音'])
   assert.ok(XITAI_LONG_WORLDBOOK.includes(t),t);
  const prompt=buildTaiPrompt({day:56,channel:'noapp'});
  assert.ok(prompt.includes('完整人物世界书'));
- assert.ok(prompt.includes('自负'));
+ assert.ok(prompt.includes('自信'));
 });
 test('MiniMax speech preparation translates aliases and keeps voice instructions out of displayed text',()=>{
  const r=prepareXitaiSpeech('我今天……真的有点困。(sigh) 还有这个（皱眉）很长很长很长的句子。',{tone:'soft'});

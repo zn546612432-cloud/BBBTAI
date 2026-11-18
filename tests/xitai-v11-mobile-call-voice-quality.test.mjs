@@ -76,7 +76,7 @@ test('an opt-in personal disclosure does not become a compulsory life report',()
  const prompt=buildTaiPrompt({day:37,channel:'noapp',recognized:true,messages:deepTalk,outputMode:'call'});
  assert.match(prompt,/連續多次追問，才可以有限鬆口/);
  assert.match(prompt,/不主动报备/);
- assert.match(taiMomentumPrompt([{role:'user',content:'帮我代购一双鞋'}]),/Mirage 账户扣代购费/);
+ assert.match(taiMomentumPrompt([{role:'user',content:'帮我代购一双鞋'}]),/按自己的意愿同意或拒绝/);
  assert.equal(taiConversationMomentum([{role:'user',content:'hi'}]).shouldElaborate,false);
 });
 test('explicit send a voice note is honored when text was chosen without refusal',()=>{

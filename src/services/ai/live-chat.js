@@ -97,7 +97,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,worldbookEvents,
-   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词调戏同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
@@ -180,7 +180,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    // prompt paragraph. Regenerate only one context-grounded question;
    // do not replace any substantive response or invent Ximeng's activities.
    const followup=await askTai({...request,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},
-    scene:request.scene+' 【本轮引导确实触发但上稿尚未问出具体问题】已经拟好的回答：'+draftEntries.map(m=>m.text).join(' / ').slice(0,600)+'。请只给出一条新的、完整且自然的追问，用问号结尾，紧贴熙蒙实际说过的内容，带一点聪明的好奇或调侃；不要问“在干什么”“还有呢”，也不要提国际象棋、自己的行程或不存在的事实。'});
+    scene:request.scene+' 【本轮引导确实触发但上稿尚未问出具体问题】已经拟好的回答：'+draftEntries.map(m=>m.text).join(' / ').slice(0,600)+'。请只给出一条新的、完整且自然的追问，用问号结尾，紧贴熙蒙实际说过的内容，体现真实的好奇；不要问“在干什么”“还有呢”，也不要提国际象棋、自己的行程或不存在的事实。'});
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
    const candidate=unpackTaiReply(followup,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)draftEntries=taiIntegrateGuidingQuestion(draftEntries,candidate,turnPlan.target);

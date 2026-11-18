@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultWorldbook,importWorldbook,exportWorldbook,normalizeEntry,normalizeSettings} from '../src/services/ai/worldbook/format.js';
+import {defaultWorldbook,importWorldbook,exportWorldbook,normalizeEntry,normalizeSettings,readWorldbook,ensureWorldbook} from '../src/services/ai/worldbook/format.js';
 import {evaluateWorldbook} from '../src/services/ai/worldbook/engine.js';
 import {captureTaiWorldbook,assembleTaiMessages,splitWorldbook,resolveWorldbookOutlets} from '../src/services/ai/worldbook/index.js';
 import {rememberTaiMood} from '../src/services/ai/worldbook/mood.js';
@@ -13,6 +13,17 @@ import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 const e=(id,fields)=>normalizeEntry({content:id,...fields},id);
 const input=(content,index=1)=>({recognized:true,messages:[{role:'user',content}],messageIndex:index,turnId:'turn-'+index});
 const ids=s=>s.entries.map(e=>e.id).sort();
+test('older saved tone entries and cached snapshots migrate without resetting custom lore or activation state',()=>{
+ const w=defaultWorldbook(),entry=w.books[0].entries.find(e=>e.id==='xi-quiet');
+ entry.content='調戲有對象和前因，點到即止。自訂補充。';
+ w.runtime.noapp={cursor:7,effects:{sticky:1},snapshot:{entries:[{...entry}]}};
+ const state={aiDraft:{worldbook:w}},fresh=readWorldbook(state);
+ assert.match(fresh.books[0].entries.find(e=>e.id==='xi-quiet').content,/關心與不同意見都可直接表達。自訂補充。/);
+ assert.doesNotMatch(fresh.runtime.noapp.snapshot.entries[0].content,/調戲/);
+ assert.equal(fresh.runtime.noapp.cursor,7);
+ assert.deepEqual(fresh.runtime.noapp.effects,{sticky:1});
+ assert.equal(ensureWorldbook(state).books[0].entries.find(e=>e.id==='xi-quiet').content,fresh.books[0].entries.find(e=>e.id==='xi-quiet').content);
+});
 test('native and embedded imports preserve positions, metadata and explicit BBBTAI visibility',()=>{
  const native={entries:{7:{uid:7,key:['電話'],content:'lore',position:4,depth:2,role:1,extensions:{custom:'keep',bbbtai:{recognized:null,channels:[]}}}}};
  const b=importWorldbook(native,{id:'one'}),r=importWorldbook(exportWorldbook(b),{id:'two'}).entries[0];
