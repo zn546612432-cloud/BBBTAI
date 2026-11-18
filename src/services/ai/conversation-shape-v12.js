@@ -1,5 +1,6 @@
 // Author-directed turn rhythm. Distribution is sampled by the PROGRAM,
 // not a vague probability sentence sent to a language model.
+import {taiConversationMomentum} from './conversation-momentum-v11.js';
 //
 // Author supplied 3:45, 2:30, 1:30, 4-5:30. These sum to 135, so use
 // them as RELATIVE WEIGHTS (33.33%, 22.22%, 22.22%, 22.22%).
@@ -40,6 +41,9 @@ export function sampleTaiTurnPlan({
  random=Math.random,maxMessages=5,messages=[],mode='text',allowed=true
 }={}){
  if(!allowed)return {target:0,guide:false,mode,eligible:false};
+ // Author's private-disclosure boundary outranks random message counts and
+ // follow-up questions. A single sentence can be the whole genuine turn.
+ if(taiConversationMomentum(messages).topic==='personal')return {target:1,guide:false,mode,eligible:false,semicolonBurst:false,privacyBoundary:true,requested:1};
  const roll=clampRandom(random())*total;
  let cursor=0,chosen=TAI_TURN_WEIGHTS.at(-1);
  for(const item of TAI_TURN_WEIGHTS){cursor+=item.weight;if(roll<cursor){chosen=item;break;}}
@@ -58,6 +62,7 @@ export function sampleTaiTurnPlan({
 }
 export function taiTurnShapePrompt(plan,{continued=false}={}){
  if(!plan||plan.target<1)return '';
+ if(plan.privacyBoundary)return '【私事對話節奏】這一輪可以只說一句自然、完整的話；依照私事披露階段，不追加反問或連發來湊數。';
  const what=plan.mode==='call'?'段自然可朗读的连续话意（不是独立问答）':plan.mode==='voice'?'个自然说话意群（可合成为同一条语音）':'条独立聊天气泡';
  const parts=[
   '【v12｜本轮已抽签的表达节奏，优先于旧世界书“不设最低条数/不强制连发”的一般说明】',

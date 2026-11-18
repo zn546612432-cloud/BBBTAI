@@ -4,6 +4,7 @@ import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-per
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText,unpackTaiReply} from './format.js';
 import {hasBannedTaiConstruction,XITAI_STYLE_REPAIR} from './expression-style.js';
+import {applyTaiPrivacyDecision,hasPrematureTaiDisclosure} from './conversation-momentum-v11.js';
 import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
@@ -77,17 +78,27 @@ export async function askTear({day,messages,scene=''}){
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
 export async function askTai(request){
+ request={...request,approvedDecision:applyTaiPrivacyDecision(request.approvedDecision,request)};
  const first=await askTaiOnce(request);
  let entries;
  try{entries=unpackTaiReply(first,request.outputMode==='call'?'call':request.channel);}catch{return first;}
- if(!hasBannedTaiConstruction(entries.map(e=>e.text)))return first;
+ const texts=entries.map(e=>e.text),privateLeak=hasPrematureTaiDisclosure(texts,request);
+ if(!hasBannedTaiConstruction(texts)&&!privateLeak)return first;
  // Only the offending generation gets one corrective attempt. Preserve the
  // original approved action and fall back to the reply if the provider fails.
  try{
-  const corrected=await askTaiOnce({...request,scene:XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
+  const privacyRepair=privateLeak?'【私事披露修正】上一稿提前說出未共享的個人履歷。這時不該交代出生、國籍、領養、教育或家庭細節。重新回應熙蒙的好奇，保留到見面，不提供新履歷。\n':'';
+  const corrected=await askTaiOnce({...request,scene:privacyRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
   const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
-  if(!hasBannedTaiConstruction(lines.map(e=>e.text)))return corrected;
+  const revised=lines.map(e=>e.text);
+  if(!hasBannedTaiConstruction(revised)&&!hasPrematureTaiDisclosure(revised,request))return corrected;
  }catch{}
+ // A mistaken early revelation cannot be unsent. In the exceptional case
+ // both drafts leak, use the author's own privacy-boundary line, not a fact.
+ if(privateLeak&&(!request.approvedDecision||['send_text','send_voice','speak'].includes(request.approvedDecision.action))){
+  const mode=request.outputMode==='call'||request.outputMode==='voice'||request.approvedDecision?.action==='send_voice'?'voice':'text';
+  return {...first,text:JSON.stringify({messages:[{text:'等到我們見面的時候，說不定我會跟你說。',mode,tone:'neutral'}]})};
+ }
  return first;
 }
 async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){
@@ -222,7 +233,7 @@ export async function chooseTaiAction(args={}){
   allowDefer:args.allowDefer!==false,hasIncoming:args.hasIncoming!==false,
   playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true,callRinging:args.callRinging===true,postCall:args.hasIncoming===false&&args.worldbookEvents?.includes('call_ended_player')});
  if(!result.ok){console.warn('Xitai rejected invalid behavior decision:',result.reason);return null;}
- return result.decision;
+ return applyTaiPrivacyDecision(result.decision,args);
 }
 
 export async function voicePreview({text,voiceId,model,tone='neutral',directed=false,...overrides}){

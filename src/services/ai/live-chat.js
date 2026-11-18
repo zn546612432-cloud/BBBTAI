@@ -160,7 +160,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
   if(!unheard&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
-    const retry=await askTai({...request,scene:request.scene+' 你上一稿又只用很短的反问或推脱把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。他已经反复追问你的私事。你可以嘴硬、打趣，但请在这一轮提供至少一点具体、可继续聊的内容，或认真说清不愿讲的原因，不要机械复读。'});
+    const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }

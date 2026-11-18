@@ -8,7 +8,7 @@ import {taiActionExpressionPrompt} from './action-protocol-v10.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {XITAI_BIOGRAPHY_SUMMARY,XITAI_BIOGRAPHY_PRIORITY} from './character-biography.js';
 import {taiHumanPrompt} from './humanize.js';
-import {taiMomentumPrompt} from './conversation-momentum-v11.js';
+import {taiMomentumPrompt,taiPrivateDisclosurePrompt} from './conversation-momentum-v11.js';
 import {taiTurnShapePrompt} from './conversation-shape-v12.js';
 import {XITAI_EXPRESSION_STYLE} from './expression-style.js';
 import {taiWorldbookPrompt,splitWorldbook,worldbookText,worldbookDepthText,resolveWorldbookOutlets,previewTaiWorldbook} from './worldbook/index.js';
@@ -145,6 +145,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   taiTurnShapePrompt(turnPlan),
   approvedPersona,
   XITAI_BIOGRAPHY_PRIORITY,
+  taiPrivateDisclosurePrompt(messages,{recognized:day>=30&&channel!=='mirage'&&(recognized===true||recognized===undefined&&(channel==='noapp'||channel==='chess'&&day>55))}),
   XITAI_EXPRESSION_STYLE
  ].filter(Boolean).join('\n\n');
  return resolveWorldbookOutlets(result,sections?.outlets);
