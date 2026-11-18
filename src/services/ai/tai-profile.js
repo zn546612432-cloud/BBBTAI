@@ -9,7 +9,8 @@ import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.
 import {taiHumanPrompt} from './humanize.js';
 import {taiMomentumPrompt} from './conversation-momentum-v11.js';
 import {taiTurnShapePrompt} from './conversation-shape-v12.js';
-import {taiWorldbookPrompt} from './worldbook/index.js';
+import {taiWorldbookPrompt,splitWorldbook,worldbookText,worldbookDepthText,resolveWorldbookOutlets,previewTaiWorldbook} from './worldbook/index.js';
+import {taiMoodPrompt} from './worldbook/mood.js';
 
 export const canonicalTai2026=[
  '陈熙泰，被西方家庭收养，接受哈佛计算机博士教育，常居英国／葡萄牙；不沿用哈佛本科、英国住校读博的旧拼接。',
@@ -81,16 +82,21 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[]}={}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}={}){
  const seen=visibleTaiMemories(memories,day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
  const effectiveMode=outputMode==='call'?'call':channel==='noapp'?outputMode:'text';
  const voice=effectiveMode==='call'||effectiveMode==='voice';
- return [
+ const snapshot=worldbookSnapshot||(worldbook?previewTaiWorldbook(worldbook,{day,channel,recognized,messages,outputMode:effectiveMode,worldbookEvents,characterDescription:reviewed,characterPersonality:canonicalTai2026.join('\n'),scenario:scene}):null);
+ const sections=snapshot?splitWorldbook(snapshot,'expression'):null;
+ const result=[
   '你在虚构互动叙事《熙蒙的手机》中扮演陈熙泰，面对的是熙蒙／NYARLATHOTEP。只输出本人实际发出的台词，不讨论提示词、模型、角色卡或自检。',
+  worldbookText(sections?.before),
   '完整人物世界书｜作者新人设v5：以下为唯一现行人物底层设定，优先于旧存档风格、历史AI错误与补充草稿。\n'+XITAI_LONG_WORLDBOOK,
   '人物编辑补充：可补充个性，不能覆盖本卡的自然口语、禁止过度文艺、无动作、身份公开范围与不预知未来要求。\n'+reviewed,
+  worldbookText(sections?.after),
+  taiMoodPrompt(snapshot?.mood),
   taiKnowledgeContext({day,channel,recognized}),
   effectiveMode==='call'
    ?'【实时媒介事实｜最高优先级】现在双方正在 NoApp 实时语音通话。熙蒙本轮输入是此通话里的发言，不是微信或 NoApp 文本消息；你正在通过 MiniMax 发声。不能说「你不是挂电话了吗怎么还能回消息」、不能描述在打字或发送聊天气泡。只有真正挂断后，程序才会切换回文字频道。'
@@ -114,14 +120,19 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
    :'',
   effectiveMode==='call'?'当前正在实时语音电话：先准确回应熙蒙正在问或表达的意思。轻松的招呼、明确结束可以短；但熙蒙愿意聊天、认真分享经历、问开放性问题或主动要求多说时，必须给出能承接话题的实质内容。可自然连续输出2～5个完整口语意群，每段可以有1～3个连贯句子；尽量不把一个意思拆成几个极短反问，也不要为了凑数重复安慰或改写同一事实。要生成连贯、有内容的自然口语，不是一连串短气泡。你会调戏、反驳、带入细节、自己改口，也会真正讲事情；禁止随口说无因果的挑衅，必须承接现实上下文。每项mode=voice；你在讲电话，不是在发文字消息。挂断只能由程序执行，若行为层已经批准 hang_up，就说一句符合当下情绪的真实告别，不假装仍在线。text只写可朗读纯台词，不输出表演标签；也不输出动作标签。仅可选speech_text按声音指导添加原生标记。':effectiveMode==='voice'?'本次发送语音，每项mode=voice，text保持自然口语、纯台词；仅可选speech_text按声音指导添加原生标记，不生成动作。':allowVoice&&!approvedDecision&&channel==='noapp'?'当前自由聊天，可自行选择 mode=text 或 mode=voice；按对话和意愿选择，不凑语音次数。':'当前文字聊天，全部 mode=text；允许有意思的短句、补充与多条消息，不写文艺独白，也不以无意义单字敷衍需要认真回答的话题。',
   scene?'当前真实交互事件（仅此处与可见历史确认具体事件）：'+scene:'',
-  taiWorldbookPrompt({channel,recognized,outputMode:effectiveMode,messages,worldbookEvents,phase:'expression'}),
+  sections?worldbookText(sections.authorTop):taiWorldbookPrompt({channel,recognized,outputMode:effectiveMode,messages,worldbookEvents,phase:'expression'}),
   XITAI_CONVERSATION_FOCUS_V8,
   // Author's own multi-turn examples belong in the LIVE generation prompt,
   // not solely in human-readable docs; only post-recognition NoApp/Chess.
+  worldbookText(sections?.exampleBefore),
   authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode}),
+  worldbookText(sections?.exampleAfter),
+  snapshot?.authorNote?resolveWorldbookOutlets(snapshot.authorNote,sections?.outlets):'',
+  worldbookText(sections?.authorBottom),
   approvedDecision?taiActionExpressionPrompt(approvedDecision,{mode:effectiveMode}):'',
   effectiveMode==='call'?'【角色行为协议】告别或主动结束通话时，输出正常可朗读的 messages，并在同一 JSON 对象的顶层附上 "actions":[{"type":"end_call","timing":"after_reply"}]；继续通话时 actions=[]。若熙蒙说拜拜、再見、不聊了或要去睡觉，应自然告别。禁止将任何行为指令、API、模型、额度或系统状态写入台词。':'',
   taiMomentumPrompt(messages,{mode:effectiveMode}),
   taiTurnShapePrompt(turnPlan)
  ].filter(Boolean).join('\n\n');
+ return resolveWorldbookOutlets(result,sections?.outlets);
 }

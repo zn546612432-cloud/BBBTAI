@@ -69,16 +69,18 @@ export async function askTear({day,messages,scene=''}){
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
-export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[]}){
+export async function askTai({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,model:c.model,parameters:normalizeAiParameters(c)};
+ const {assembleTaiMessages,compactWorldbookSnapshot,previewTaiWorldbook}=await import('./worldbook/index.js');
+ if(!worldbookSnapshot&&worldbook)worldbookSnapshot=previewTaiWorldbook(worldbook,{channel,day,recognized,messages,outputMode,scenario:scene,worldbookEvents});
+ const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,worldbookSnapshot:compactWorldbookSnapshot(worldbookSnapshot),worldbook,model:c.model,parameters:normalizeAiParameters(c)};
  if(isTaiCloudHost()){
   const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
   const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
   const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
   const params=deepseekModelOptions(c.model,c);
   const answer=await taiCloudCall('chat',{...params,model:c.model,
-   messages:[{role:'system',content:system},...messages],max_tokens:Math.min(2800,c.maxTokens)});
+   messages:assembleTaiMessages(system,messages,worldbookSnapshot),max_tokens:Math.min(2800,c.maxTokens)});
   return {text:answer.text,channel,day};
  }
  if(!c.deepseek)return localJSON('/api/ai/chat',req);
@@ -87,7 +89,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
  const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
  const base={...deepseekModelOptions(c.model,c),
-  messages:[{role:'system',content:system},...messages],max_tokens:c.maxTokens,stream:false};
+  messages:assembleTaiMessages(system,messages,worldbookSnapshot),max_tokens:c.maxTokens,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
  // Retry once without JSON response_format; never save empty chat bubbles.
  let result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,
@@ -172,7 +174,8 @@ export async function chooseTaiAction(args={}){
  if(!c.deepseek&&!isTaiCloudHost())return null;
  const {taiActionDecisionPrompt,validateTaiAction}=await import('./action-protocol-v10.js');
  const {taiKnowledgeContext}=await import('./tai-profile.js');
- const mode=args.outputMode==='call'?'call':'text';
+ const {assembleTaiMessages}=await import('./worldbook/index.js');
+ const mode=args.outputMode==='ringing'?'ringing':args.outputMode==='call'?'call':'text';
  const context={...args,mode,channel:args.channel||'noapp'};
  const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
  const approvedV8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:args.recognized===true,outputMode:mode});
@@ -183,7 +186,7 @@ export async function chooseTaiAction(args={}){
  let raw;
  try{
   const body={...deepseekModelOptions(c.model,c),
-   messages:[{role:'system',content:system},...(Array.isArray(args.messages)?args.messages.slice(-16):[])],
+   messages:assembleTaiMessages(system,Array.isArray(args.messages)?args.messages.slice(-16):[],args.worldbookSnapshot,'decision'),
    response_format:{type:'json_object'},max_tokens:450,stream:false};
   const response=isTaiCloudHost()?{choices:[{message:{content:(await taiCloudCall('decision',body)).text}}]}:
    await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,body);
@@ -196,7 +199,7 @@ export async function chooseTaiAction(args={}){
   recognized:args.recognized===true,sourceMessageId:args.sourceMessageId||'',
   allowCall:args.allowCall!==false,allowVoice:args.allowVoice!==false&&(!!c.minimax||isTaiCloudHost()),
   allowDefer:args.allowDefer!==false,hasIncoming:args.hasIncoming!==false,
-  playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true});
+  playerDeclinedCall:args.playerDeclinedCall===true,callConnected:args.callConnected===true,callRinging:args.callRinging===true,postCall:args.hasIncoming===false&&args.worldbookEvents?.includes('call_ended_player')});
  if(!result.ok){console.warn('Xitai rejected invalid behavior decision:',result.reason);return null;}
  return result.decision;
 }

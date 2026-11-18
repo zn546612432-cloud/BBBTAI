@@ -8,6 +8,8 @@ import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {askTai,chooseTaiAction,voicePreview,speechToText,apiConfig} from '../../services/ai/gateway.js';
+import {captureTaiWorldbook} from '../../services/ai/worldbook/index.js';
+import {rememberTaiMood} from '../../services/ai/worldbook/mood.js';
 import {explainMinimaxFailure} from '../../services/voice/minimax-diagnostics.js';
 import {saveClip,loadClip} from '../../services/voice/audio-store.js';
 import {uid} from '../../services/id.js';
@@ -32,15 +34,16 @@ export function callState(){return {state:call.state,direction:call.direction,se
 function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReason=''}){
  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
  if(!chat)return;
- const label=endReason==='connection_error'?'通話失敗':status==='missed'?'未接语音来电':status==='declined'?'已拒绝语音来电':
+ const label=endReason==='connection_error'?'通話失敗':status==='missed'?(direction==='outgoing'?'對方未接聽':'未接语音来电'):status==='declined'?(direction==='outgoing'?'對方已拒接':'已拒绝语音来电'):
    status==='cancelled'?'已取消语音呼叫':'语音通话 · '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
  const entry={id:'tai-call-history-'+uid(),from:direction==='incoming'?'tai':'me',text:label,
    kind:'call',callStatus:status,duration:seconds,day:s.day,time:s.clock,actual:true,
-   ...(status==='ended'?{endedBy:['tai','player','system','connection_error'].includes(endedBy)?endedBy:'system',endReason:String(endReason||'').slice(0,40)}:{})};
+   ...(status==='ended'||direction==='outgoing'&&['declined','missed'].includes(status)?{endedBy:['tai','player','system','connection_error'].includes(endedBy)?endedBy:'system',endReason:String(endReason||'').slice(0,40)}:{})};
  if(status==='ended'&&turns.length)entry.transcript=turns.slice(-14).map(t=>(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(0,900);
  chat.messages.push(entry);
  if(status==='missed'&&!(s.unlocked&&s.nav.current.appId==='noapp'&&s.nav.current.route==='/chat/tai'))
   chat.unread=Math.max(0,Number(chat.unread)||0)+1;
+ return entry;
 }
 export function incomingCallBanner(s){
  if(call.state!=='ringing'||!s.unlocked||!taiRecognized(s))return '';
@@ -136,7 +139,21 @@ export function startOutgoing(ctx){
  const sessionId=++callSerial;
  call={state:'dialing',sessionId,revision:0,quietUntil:0,direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0};
  ctx.router.open({appId:'noapp',route:'/call'});
- setTimeout(()=>{if(call.sessionId!==sessionId||call.state!=='dialing')return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);},1100);
+ const pending=()=>call.sessionId===sessionId&&call.state==='dialing';
+ const connect=()=>{if(!pending())return;call.state='connected';call.started=Date.now();markTaiEngaged();ctx.refresh();startGreeting(ctx);};
+ const timer=setTimeout(async()=>{
+  if(!pending())return;
+  const state=ctx.store.get(),history=(state.content.conversations.noapp?.find(c=>c.id==='tai')?.messages||[]).filter(m=>m.actual!==false&&!m.demo&&(m.day||1)<=state.day&&m.kind!=='call'&&m.text).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1600)}));
+  const scene='【電話系統事件】熙蒙正在撥打你的電話。尚未接通，沒有任何已聽見的通話內容。';
+  const messages=[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}],sourceMessageId='ring:'+sessionId+':'+uid();
+  const worldbookSnapshot=captureTaiWorldbook(ctx.store,{channel:'noapp',day:state.day,recognized:taiRecognized(state),messages,outputMode:'ringing',worldbookEvents:['call_ringing'],scenario:scene,turnId:sourceMessageId});
+  let timeout,decision;try{decision=await Promise.race([chooseTaiAction({channel:'noapp',day:state.day,recognized:taiRecognized(state),messages,outputMode:'ringing',scene,worldbookEvents:['call_ringing'],worldbookSnapshot,relationshipContext:xitaiRelationshipContext(state,{mode:'text'}),sourceMessageId,callRinging:true,hasIncoming:false,allowVoice:false,allowDefer:false}),new Promise(resolve=>{timeout=setTimeout(()=>resolve(null),8000);})]);}catch{}finally{clearTimeout(timeout);}
+  if(!pending())return;
+  if(decision)rememberTaiMood(ctx.store,decision,sourceMessageId);
+  if(decision?.action==='decline_call'){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'declined',outcomeOverride:'declined'});return;}
+  if(decision?.action==='ignore_call'){const missed=setTimeout(()=>{if(pending())callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'ignored',outcomeOverride:'missed'});},18000);missed.unref?.();return;}
+  connect();
+ },1100);timer.unref?.();
  return true;
 }
 // A blocked play keeps this segment pending. Only its completion allows the
@@ -241,19 +258,21 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    taiMomentumPrompt(history,{mode:'call'});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
+  const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId:'call:'+call.started+':'+sessionId+':'+generationId});
   const decision=forceHangUp?{schema_version:10,action:'hang_up',strategy:'answer_directly',intensity:'low',tone:'neutral',vocal_cue:'none',intent:'熙蒙明确让你现在结束通话：亲口告别，然后由程序真正挂断。'}:
    presetText||event==='unheard'?null:await chooseTaiAction({
    channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',
-   scene,relationshipContext,sourceMessageId:'call:'+sessionId+':'+revision+':'+call.turns.length+':'+(event||'dialogue'),
+   scene,relationshipContext,worldbookSnapshot,sourceMessageId:'call:'+sessionId+':'+revision+':'+call.turns.length+':'+(event||'dialogue'),
    hasIncoming:!opening&&!event&&!!text,callConnected:true,allowDefer:false
   });
   if(!current())return;
+  if(decision)rememberTaiMood(ctx.store,decision,'call:'+sessionId+':'+generationId);
   if(decision?.action==='listen'){endAfter=false;call.lastTaiEndAt=Date.now();return;}
   if(decision)endAfter=decision.action==='hang_up';
   const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
    event==='unheard'?null:await askTai({
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
-    recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,
+    recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
@@ -333,7 +352,7 @@ export function submitCall(form,ctx){
  }
  return true;
 }
-export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback=''}={}){
+export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback='',outcomeOverride=''}={}){
  switch(action){
  case 'tai-accept':
   if(call.state!=='ringing')return false;
@@ -349,11 +368,12 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
   if(recording?.call){recording.recorder._cancelled=true;recording.recorder.stop();recording=null;}
   finishSegment?.('interrupted');
   if(playback){playback.pause();if(playback.src.startsWith('blob:'))URL.revokeObjectURL(playback.src);playback=null;}
+  let endedRecord;
   ctx.store.update(s=>{
    if(previous.notificationId)s.notifications=s.notifications.filter(n=>n.id!==previous.notificationId);
-   const outcome=previous.state==='ringing'?'declined':previous.state==='dialing'?'cancelled':'ended';
+   const outcome=previous.state==='dialing'&&endedBy==='tai'&&['declined','missed'].includes(outcomeOverride)?outcomeOverride:previous.state==='ringing'?'declined':previous.state==='dialing'?'cancelled':'ended';
    s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock,
-    endedBy:previous.state==='connected'?call.endedBy:null,endReason:previous.state==='connected'?endReason:'',
+    endedBy:previous.state==='connected'?call.endedBy:outcomeOverride&&endedBy==='tai'?'tai':null,endReason:previous.state==='connected'||outcomeOverride?endReason:'',
     durationSeconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
    if(previous.turns.length){
     s.aiDraft??={};s.aiDraft.memories??=[];
@@ -361,7 +381,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
     s.aiDraft.memories.push({day:s.day,visibility:'noapp',source:'NoApp已发生通话',text:transcript});
     s.aiDraft.memories=s.aiDraft.memories.slice(-30);
    }
-   recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,endedBy:call.endedBy,endReason,
+   endedRecord=recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,endedBy:outcome==='declined'||outcome==='missed'?endedBy:call.endedBy,endReason,
     seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
    if(endedBy==='connection_error'&&fallback){
     const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -372,6 +392,11 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
     }
    }
   });
+  if(endedRecord?.callStatus==='ended'&&endedBy==='player'&&endReason==='manual'&&endedRecord.transcript){
+   // Existing proactive queue owns actual delivery; no second messaging system.
+   const timer=setTimeout(()=>import('../../services/ai/proactive.js').then(({maybeSendProactive})=>maybeSendProactive(ctx.store,{force:'postcall',postCall:endedRecord})).catch(()=>{}),350);
+   timer.unref?.();
+  }
   // Declining the top banner must not eject the player from another App.
   if(ctx.store.get().nav.current.appId==='noapp'&&ctx.store.get().nav.current.route==='/call'){
    const endedSession=call.sessionId;

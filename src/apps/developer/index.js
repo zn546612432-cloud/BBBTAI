@@ -8,6 +8,7 @@ import {editableMoments} from '../wechat/features/moments/model.js';
 import {missionEditor,missionAction,missionSubmit} from './features/mission/index.js';
 import {preview,updateTimelinePreview} from './features/preview/index.js';
 import {aiVoicePanel,handleAIVoice,submitAIVoice} from './features/ai-voice/index.js';
+import {worldbookPanel,handleWorldbook,submitWorldbook} from './features/worldbook/index.js';
 import {phoneEditor} from './features/phone/index.js';
 import {sms} from './features/sms/index.js';
 import {assets} from './features/assets/index.js';
@@ -28,10 +29,10 @@ import {conversations as allConversations,selectedConversation,actors,actorName,
 import {presetEditor,handlePresetAction,changePresetField,isPresetTextField,presetTestSubmit,stagePresetFile} from './features/presets/index.js';
 import {momentsEditor,handleMoments,changeMoments,inputMoments,isMomentsTextEdit,handleMomentsImport} from './features/moments/index.js';
 export const manifest={id:'editor',name:'内容编辑器',glyph:'✎',tone:'#65798c',hidden:true,defaultRoute:'/',kicker:'DEVELOPER / LOCAL DRAFT'};
-const tabs=[[['story55','55天剧情树'],['diary','日程日记'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片'],['voice-authoring','预设配音']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音'],['tai-phone','熙泰手机访问']]];
+const tabs=[[['story55','55天剧情树'],['diary','日程日记'],['conversations','聊天'],['presets','剧情预设'],['moments','微信朋友圈']],[['sms','短信编辑'],['phone','电话编辑'],['assets','图片'],['voice-authoring','预设配音']],[['ghost','GHOST / 订单'],['mission','任务链'],['preview','时间与测试'],['ai','AI / 语音'],['worldbook','熙泰世界書'],['tai-phone','熙泰手机访问']]];
 const attr=v=>esc(v);
 function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=>`<div class="editor-nav-group"><small>${['01 / 剧情与对话','02 / 手机资料','03 / 系统测试'][i]}</small><div class="editor-tabs">${group.map(([id,name])=>btn('editor-tab',name,route===id?'active':'',`data-tab="${id}"`)).join('')}</div></div>`).join('')}</div>`;}
-export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
+export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='worldbook'?worldbookPanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
  if(a==='s55-speed-default'){
@@ -41,6 +42,7 @@ export function handle(a,t,ctx){
  }
  if(voiceAction(a,t,ctx))return;
  if(taiPhoneAction(a,t,ctx))return;
+ if(handleWorldbook(a,t,ctx))return;
  if(diaryEditorAction(a,t,ctx))return;
  if(a==='character-upload-avatar'||a==='character-upload-cover'){
   const name=t.dataset.name,type=a==='character-upload-avatar'?'avatar':'cover';
@@ -134,6 +136,7 @@ export function submit(f,ctx){
  if(missionSubmit(f,ctx))return;const {store,toast}=ctx,data=new FormData(f),form=f.dataset.form;
  if(form==='preset-test'){presetTestSubmit(f,ctx);return;}
  if(form?.startsWith('ai-')){submitAIVoice(f,ctx);return;}
+ if(form?.startsWith('worldbook-')){submitWorldbook(f,ctx);return;}
  if(form?.startsWith('phone-')){
   const value=key=>String(data.get(key)||'').trim();
   const name=value('name'),number=value('number'),place=value('place'),day=value('day'),id=value('id');

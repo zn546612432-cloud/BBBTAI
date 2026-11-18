@@ -1,6 +1,8 @@
 import {isStory55,taiRecognized,final55} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
+import {captureTaiWorldbook} from './worldbook/index.js';
+import {rememberTaiMood} from './worldbook/mood.js';
 import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {isTaiReplyPending} from './live-chat.js';
@@ -69,35 +71,42 @@ export function isProactiveCallDue(s){
  if(s.events.some(e=>e.type==='tai_proactive_call'&&e.day===s.day))return false;
  return chat(s)?.messages?.some(m=>m.from==='me'&&!m.demo);
 }
-export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now}={}){
+export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now}={}){
  if(inFlight.has(store)||isTaiReplyPending(store)||!force&&now()-(errors.get(store)||0)<60000)return false;
  const initial=store.get(),c=taiBehavior(initial),source=sourceForFollowup(initial);
+ const afterCall=force==='postcall'&&postCall?.kind==='call'&&postCall.callStatus==='ended'&&postCall.endedBy==='player'&&postCall.endReason==='manual';
+ if(force==='postcall'&&(!afterCall||chat(initial)?.messages.at(-1)?.id!==postCall.id||initial.events.some(e=>e.type==='tai_postcall_handled'&&e.sourceId===postCall.id)))return false;
  const followup=force==='followup'||!force&&isTaiFollowupDue(initial,{now:now()});
  if(!eligible(initial)||!chat(initial)||force==='followup'&&!source||!force&&!followup&&!isProactiveMessageDue(initial,{now:now()}))return false;
  if(typeof document!=='undefined'&&!force&&(document.hidden||document.activeElement?.matches?.('.composer input,.composer textarea')))return false;
  inFlight.add(store);
  try{
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
-  const allowVoice=!!status.minimax&&c.autonomousVoice;
+  const allowVoice=!afterCall&&!!status.minimax&&c.autonomousVoice;
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
-  let scene=followup
+  let scene=afterCall?'【真實通話回執】熙蒙親自按下掛斷鍵。實際聽見的通話如下：\n'+String(postCall.transcript||'（沒有已播放對白）').slice(0,900)+'\n判斷是否正常告別或突然中斷，若正常則不發；若確有話沒說完、對方突然終止或自己說重了，可以發一至三條實際文字，語氣符合此刻的心情。不能把按鍵者直接等同於過錯者。不發語音、不另撥電話。':followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
    :'熙泰考虑是否主动联系熙蒙。只关注熙蒙真实提过、尚有意义的具体经历、技术进展、困难、家人或约定；也可以决定不联系。不要主动汇报自己的行程、健身、酒店、研究或社交。不主动重提或邀请国际象棋，棋局只能由固定剧情触发。不能虚构对方经历或擅自执行剧情。';
   // On an already-due proactive turn, he may very occasionally inspect a
   // topic from actual past dialogue. No background polling or 24/7 watcher.
   const userSource=history(initial).filter(m=>m.from==='me').at(-1);
-  const phoneEvidence=userSource?await researchTaiPhone(store,{
+  const phoneEvidence=!afterCall&&userSource?await researchTaiPhone(store,{
    text:String(userSource.text||''),sourceMessageId:'proactive-'+String(userSource.id||''),
    random,now
   }):null;
   if(phoneEvidence&&eligible(store.get())&&store.get().day===initial.day)scene+='\\n'+phoneEvidence;
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
-  const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,worldbookEvents:['proactive'],
-   relationshipContext,sourceMessageId:'',hasIncoming:false,allowDefer:false,allowVoice,
-   allowCall:!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
+  const worldbookEvents=afterCall?['call_ended_player']:['proactive'];
+  const turnId=afterCall?'postcall:'+postCall.id:`proactive:${initial.day}:${initial.clock}:${history(initial).at(-1)?.id||''}`;
+  const worldbookSnapshot=captureTaiWorldbook(store,{channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scenario:scene,worldbookEvents,trigger:'quiet',turnId,messageIndex:history(initial).length});
+  const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,worldbookEvents,worldbookSnapshot,
+   relationshipContext,sourceMessageId:afterCall?postCall.id:'',hasIncoming:false,allowDefer:false,allowVoice,
+   allowCall:!afterCall&&!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
+  if(afterCall){if(!decision||chat(store.get())?.messages.at(-1)?.id!==postCall.id||isTaiReplyPending(store)||['ringing','dialing','connected'].includes(callState().state))return false;store.update(s=>{s.events.push({type:'tai_postcall_handled',sourceId:postCall.id,day:s.day,clock:s.clock,responsibility:decision.call_responsibility,reason:decision.call_reason});});}
+  if(decision&&eligible(store.get())&&history(store.get()).at(-1)?.id===history(initial).at(-1)?.id)rememberTaiMood(store,decision,turnId);
   if(decision?.action==='end_session'){
-   store.update(s=>s.events.push({type:'tai_proactive_skipped',day:s.day,clock:s.clock,receivedAt:now()}));
+   if(!afterCall)store.update(s=>s.events.push({type:'tai_proactive_skipped',day:s.day,clock:s.clock,receivedAt:now()}));
    return false;
   }
   if(decision?.action==='start_call'){
@@ -110,26 +119,26 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
   // An unsolicited follow-up stays compact to avoid hounding the player.
   // A substantive new outreach may use the full author-selected rhythm.
   const visibleHistory=messages.filter(m=>!String(m.content||'').startsWith('[游戏系统事件'));
-  const turnPlan=sampleTaiTurnPlan({random,maxMessages:followup?2:c.maxMessages,messages:visibleHistory,
+  const turnPlan=sampleTaiTurnPlan({random,maxMessages:afterCall?3:followup?2:c.maxMessages,messages:visibleHistory,
    mode:approvedDecision?.action==='send_voice'?'voice':'text'});
   const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
-   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,allowVoice,approvedDecision,turnPlan,worldbookEvents:['proactive'],
+   outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,allowVoice,approvedDecision,turnPlan,worldbookEvents,worldbookSnapshot,
    relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
   let items=dedupeTaiTurnEntries(unpackTaiReply(r,'noapp'),turnPlan.target);
-  if(taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
+  if(!afterCall&&taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
    action:approvedDecision?.action==='send_voice'?'send_voice':'send_text'})){
    const remaining=turnPlan.target-items.length;
    const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
-    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,worldbookEvents:['proactive'],
+    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
   }
-  if(taiGuidanceNeedsRepair({plan:turnPlan,entries:items,messages:visibleHistory})){
+  if(!afterCall&&taiGuidanceNeedsRepair({plan:turnPlan,entries:items,messages:visibleHistory})){
    const r3=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',
     scene:scene+' 【本轮引导已触发】现有台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。只补一条对熙蒙已有事实具体好奇的自然问句，用问号结尾；不要空问“还在吗”“在干嘛”，不要突然谈棋局或自我报备。',
-    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,worldbookEvents:['proactive'],
+    behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
    const candidate=unpackTaiReply(r3,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)items=taiIntegrateGuidingQuestion(items,candidate,turnPlan.target);
@@ -147,7 +156,7 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
    let message={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',aiGenerated:true,actual:true,proactive:true,followup,followupSourceId:followup?source.id:undefined,voiceRequested:false};
    if(voiceMode)message=await prepareTaiVoice(message,{speechText:item.speechText||item.text,tone:item.tone});
    const after=store.get();
-   if(!eligible(after)||after.day!==initial.day||isTaiReplyPending(store)||history(after).at(-1)?.id!==expected)break;
+   if(!eligible(after)||after.day!==initial.day||isTaiReplyPending(store)||history(after).at(-1)?.id!==expected||afterCall&&['ringing','dialing','connected'].includes(callState().state))break;
    store.update(s=>{
     const target=chat(s);if(!target)return;
     target.messages.push({...message,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
@@ -155,8 +164,8 @@ export async function maybeSendProactive(store,{force='',wait=ms=>new Promise(re
      target.unread=(target.unread||0)+1;
      s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:message.kind==='voice'?'語音訊息':message.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
     }
-    if(!emitted)s.events.push({type:followup?'tai_proactive_followup':'tai_proactive_sent',sourceId:source?.id,
-     day:s.day,clock:s.clock,receivedAt:now(),testOnly:!!force});
+    if(!emitted)s.events.push({type:afterCall?'tai_postcall_sent':followup?'tai_proactive_followup':'tai_proactive_sent',sourceId:afterCall?postCall.id:source?.id,
+     day:s.day,clock:s.clock,receivedAt:now(),testOnly:!!force&&!afterCall});
    });
    expected=id;emitted++;
   }
