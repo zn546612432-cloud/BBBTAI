@@ -287,6 +287,24 @@
 .app-noapp .tai-native-call:after{display:none}
 .app-noapp .tai-native-call .tai-call-topbar{height:42px;min-height:42px;justify-content:center;margin:0}
 .app-noapp .tai-native-call .tai-call-channel{font-size:12px;letter-spacing:.1px;color:#ffffff80;font-weight:500}
+.app-noapp .tai-native-call .tai-call-topbar{position:relative}
+.app-noapp .tai-native-call .tai-call-minimize{position:absolute;left:0;top:50%;transform:translateY(-50%);color:#efeff3;touch-action:manipulation}
+.app-noapp .tai-native-call .tai-call-minimize svg{width:22px;height:22px}
+
+/* QQ-style compact call window, positioned against the simulated phone, not the browser viewport. */
+#tai-call-banner-layer{bottom:0}
+#tai-call-banner-layer .tai-mini-call{position:absolute;right:8px;top:48%;transform:translateY(-50%);width:74px;overflow:hidden;border:1px solid #e0e8ed;border-radius:15px;background:#f9fbfd;color:#1698df;box-shadow:0 5px 20px #06152138;pointer-events:auto;user-select:none;-webkit-user-select:none}
+#tai-call-banner-layer .tai-mini-call-main{display:flex;width:100%;height:70px;flex-direction:column;justify-content:center;align-items:center;gap:5px;border-radius:0;background:transparent;color:inherit;padding:7px 0 5px;line-height:1.1}
+#tai-call-banner-layer .tai-mini-call-main svg{width:29px;height:29px}
+#tai-call-banner-layer .tai-mini-call-main span{font-size:11px;font-weight:550;white-space:nowrap}
+#tai-call-banner-layer .tai-mini-call-main:disabled{opacity:.72}
+#tai-call-banner-layer .tai-mini-call.is-recording{color:#23b96b;border-color:#a7debc}
+#tai-call-banner-layer .tai-mini-call.is-recording .tai-mini-call-main{background:#e9f9ef}
+#tai-call-banner-layer .tai-mini-call-actions{display:grid;grid-template-columns:1fr 1fr;background:#edf2f5;border-top:1px solid #e1e8ed}
+#tai-call-banner-layer .tai-mini-call-actions button{width:100%;min-height:32px;height:32px;border-radius:0;padding:6px;background:none;color:#168bd0}
+#tai-call-banner-layer .tai-mini-call-actions button+button{border-left:1px solid #e1e8ed;color:#e45259}
+#tai-call-banner-layer .tai-mini-call-actions svg{width:17px;height:17px}
+#phone.keyboard-open #tai-call-banner-layer .tai-mini-call{top:24%}
 .app-noapp .tai-native-call .tai-call-identity{flex:1;min-height:0;justify-content:center;padding:10px 0 22px}
 .app-noapp .tai-native-call .tai-call-avatar{width:clamp(88px,27vw,116px);height:clamp(88px,27vw,116px);box-shadow:0 8px 30px #0003}
 .app-noapp .tai-native-call .tai-call-identity h1{font-size:clamp(27px,8vw,34px);font-weight:600;letter-spacing:-.7px;line-height:1.2;margin:16px 0 7px}

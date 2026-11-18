@@ -7,7 +7,7 @@ import {DEFAULT_TAI_BEHAVIOR,normalizeTaiBehavior} from '../src/services/ai/beha
 import {behaviorSettings} from '../src/apps/noapp/settings/behavior.js';
 import {initialState} from '../src/services/storage.js';
 import {BYOK_SESSION} from '../src/services/ai/gateway.js';
-import {startIncoming,callAction,submitCall,callView,callState} from '../src/apps/noapp/voice-call.js';
+import {startIncoming,startOutgoing,callAction,submitCall,callView,callState,minimizedCallView} from '../src/apps/noapp/voice-call.js';
 
 test('explicit commands delegate an actual phone hangup to Tai without confusing discussions or negations',()=>{
  const yes=['你挂电话吧','你先挂','你挂吧','你来挂','熙泰挂电话吧','帮我挂了','挂了88','挂了，拜拜','挂电话吧','晚安','88','拜拜','那就挂了吧','结束通话吧','不聊了，拜拜','再見','我要睡了','你先忙吧','那你挂我电话吧，再见。','挂我电话吧拜拜','那你掛我的電話吧，再見'];
@@ -226,6 +226,53 @@ test('microphone listening and recognition are inline beneath the contact, with 
   }finally{
    if(priorWindow===undefined)delete globalThis.window;else globalThis.window=priorWindow;
    if(priorNavigator)Object.defineProperty(globalThis,'navigator',priorNavigator);else delete globalThis.navigator;
+  }
+ });
+});
+
+test('minimizing a live NoApp call preserves its session and allows talking from another App',async()=>{
+ await withMockCall(['聽到了。'],async({state,ctx,players,toasts,waitFor})=>{
+  const chat={appId:'noapp',route:'/chat/tai',params:{}};
+  const callRoute={appId:'noapp',route:'/call',params:{}};
+  state.nav.current=callRoute;state.nav.stack=[chat];
+  ctx.router.open=loc=>{state.nav.stack.push(state.nav.current);state.nav.current=loc;};
+  const session=callState().sessionId;
+  assert.match(callView(state),/tai-minimize-call/);
+  assert.equal(minimizedCallView(state),'');
+  callAction('tai-minimize-call',ctx);
+  assert.deepEqual(state.nav.current,chat);
+  assert.match(minimizedCallView(state),/通話中/);
+  assert.equal(startOutgoing(ctx),true,'the chat phone button resumes rather than dialing twice');
+  assert.deepEqual(state.nav.current,callRoute);
+  assert.equal(callState().sessionId,session);
+  callAction('tai-minimize-call',ctx);
+  state.nav.current={appId:'wechat',route:'/',params:{}};
+  const oldWindow=globalThis.window,oldNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator');
+  let recognition;
+  class Speech{constructor(){recognition=this;}start(){}stop(){}abort(){}}
+  try{
+   globalThis.window={SpeechRecognition:Speech};
+   Object.defineProperty(globalThis,'navigator',{value:{},configurable:true});
+   callAction('tai-mic',ctx);
+   assert.match(minimizedCallView(state),/is-recording/);
+   assert.match(minimizedCallView(state),/錄音中/);
+   callAction('tai-mic',ctx);
+   assert.doesNotMatch(minimizedCallView(state),/is-recording/);
+   assert.match(minimizedCallView(state),/傳送中/);
+   recognition.onresult({results:[[{transcript:'你聽得到嗎？'}]]});recognition.onend();
+   await waitFor(()=>callView(state).includes('聽到了。'));
+   players[0].finish();
+   await waitFor(()=>callState().turnCount===3);
+   assert.match(minimizedCallView(state),/通話中/);
+   assert.equal(state.nav.current.appId,'wechat');
+   callAction('tai-hangup',ctx);
+   assert.equal(minimizedCallView(state),'');
+   assert.equal(state.nav.current.appId,'wechat');
+   assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').length,1);
+   assert.equal(toasts.length,0);
+  }finally{
+   if(oldWindow===undefined)delete globalThis.window;else globalThis.window=oldWindow;
+   if(oldNavigator)Object.defineProperty(globalThis,'navigator',oldNavigator);else delete globalThis.navigator;
   }
  });
 });

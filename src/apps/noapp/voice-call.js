@@ -75,6 +75,7 @@ const glyph={
  quiet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM3 3l18 18"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
  layout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="1.5"/><rect x="10" y="10" width="11" height="11" rx="1.5"/></svg>',
+ phone:'<svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path fill="currentColor" d="M5.1 3.2c-1.5.8-2.9 3.1-2.5 5.6.9 6.8 10.5 16.4 17.3 17.1 2.5.3 4.9-1.2 5.6-2.7.4-.8.1-1.7-.6-2.2l-5.1-3.6c-.7-.5-1.6-.4-2.2.2l-2 2.1c-3.2-1.6-5.9-4.3-7.4-7.5l2.2-2c.6-.6.7-1.5.2-2.2L7 3.8c-.5-.7-1.2-1-1.9-.6Z"/><path d="M16 3a10 10 0 0 1 9 9M16 7a6 6 0 0 1 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  keyboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 15h8"/></svg>',
  micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 8V5a3 3 0 0 1 6 0v8M5 10v2a7 7 0 0 0 12 5M12 19v3M8 22h8M3 3l18 18"/></svg>',
  answer:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z" transform="rotate(180 12 12)"/></svg>'
@@ -86,6 +87,17 @@ function duration(){
  if(!call.started)return '等待连接';
  const sec=Math.floor((Date.now()-call.started)/1000);
  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+}
+// This is a second view of the live session, never a second call or recorder.
+export function minimizedCallView(s){
+ if(!s.unlocked||isNoAppCallRoute(s.nav.current)||!['dialing','connected'].includes(call.state))return '';
+ const dialing=call.state==='dialing',listening=!!call.listening;
+ const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':call.muted?'已靜音':'通話中';
+ const action=dialing?'tai-resume-call':call.audioReady?'tai-play-audio':'tai-mic';
+ const disabled=!dialing&&(call.requestingMic||call.transcribing);
+ return '<aside class="tai-mini-call'+(listening?' is-recording':'')+'" aria-label="NoApp 通話">'+
+  '<button type="button" class="tai-mini-call-main" data-action="'+action+'" aria-label="'+(dialing?'返回通話':listening?'結束錄音並傳送':call.audioReady?'繼續收聽':'開始說話')+'"'+(disabled?' disabled':'')+'>'+glyph.phone+'<span>'+label+'</span></button>'+
+  '<div class="tai-mini-call-actions"><button type="button" data-action="tai-resume-call" aria-label="展開通話">'+glyph.layout+'</button><button type="button" data-action="tai-hangup" aria-label="掛斷">'+glyph.hang+'</button></div></aside>';
 }
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
@@ -106,7 +118,7 @@ export function callView(s){
  return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
   +'<div class="tai-call-ambient" aria-hidden="true"><img src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt=""></div>'
   +'<nav class="tai-call-topbar">'+
-   '<span class="tai-call-channel">NoApp 語音</span></nav>'+
+   '<span class="tai-call-channel">NoApp 語音</span>'+((active||dial)?'<button type="button" class="tai-call-minimize" data-action="tai-minimize-call" aria-label="縮小通話">'+glyph.layout+'</button>':'')+'</nav>'+
    '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>'+esc(taiDisplayName(s))+'</h1><p role="status" aria-live="polite">'+esc(subtitle)+'</p>'+(active?'<small class="tai-call-duration">'+duration()+'</small>':'')+'</div>'+
    liveCaptions+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
@@ -138,7 +150,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
 }
 export function startOutgoing(ctx){
  if(!taiRecognized(ctx.store.get()))return false;
- if(['ringing','dialing','connected'].includes(call.state)){ctx.toast('当前已有通话');return false;}
+ if(['ringing','dialing','connected'].includes(call.state))return callAction('tai-resume-call',ctx);
  playback=createGestureAudio();
  const sessionId=++callSerial;
  call={state:'dialing',sessionId,revision:0,quietUntil:0,direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0};
@@ -398,6 +410,12 @@ export function submitCall(form,ctx){
 }
 export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback='',outcomeOverride=''}={}){
  switch(action){
+ case 'tai-minimize-call':
+  if(['dialing','connected'].includes(call.state))ctx.store.update(dismissNoAppCallRoute);
+  return true;
+ case 'tai-resume-call':
+  if(['ringing','dialing','connected'].includes(call.state)&&!isNoAppCallRoute(ctx.store.get().nav.current))ctx.router.open({appId:'noapp',route:'/call',params:{}});
+  return true;
  case 'tai-accept':
   if(call.state!=='ringing')return false;
   if(!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0){callAction('tai-decline',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
@@ -453,7 +471,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
  case 'tai-mic':{
   // iOS lowers or interrupts remote audio when a new mic audio session opens.
   // A microphone gesture interrupts the current reply before starting iOS half-duplex capture.
-  if(call.requestingMic||call.transcribing)return true;
+  if(call.state!=='connected'||call.requestingMic||call.transcribing)return true;
   call.inlineNotice='';
    if(call.busy||call.audioReady||playback&&!playback.paused){
     if(!taiBehavior(ctx.store.get()).callInterrupt){call.inlineNotice='等熙泰說完再說話';ctx.refresh?.();return true;}
