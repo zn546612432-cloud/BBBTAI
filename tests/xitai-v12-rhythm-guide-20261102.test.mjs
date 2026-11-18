@@ -63,7 +63,8 @@ test('guidance is a grounded question, not a formulaic daily check-in',()=>{
  assert.match(prompt,/先接住熙蒙/);
  assert.match(prompt,/不主动汇报行程/);
  const runtime=buildTaiPrompt({day:37,channel:'noapp',recognized:true,messages:player,turnPlan:plan});
- assert.ok(runtime.endsWith(prompt));
+ assert.ok(runtime.includes(prompt));
+ assert.ok(runtime.indexOf(prompt)<runtime.indexOf('【最新作者表達規則】'));
  const plain=taiTurnShapePrompt({...plan,guide:false});
  assert.match(plain,/未触发主动引导/);
 });

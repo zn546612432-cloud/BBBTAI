@@ -4,7 +4,9 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {deepseekModelOptions,normalizeDeepSeekModel,DEEPSEEK_MODELS} from '../src/services/ai/model-config.js';
 import {apiConfig,saveApiConfig,askTai,BYOK_SESSION,AI_PREFERENCES} from '../src/services/ai/gateway.js';
-import {buildTaiPrompt,XITAI_SUBJECT_RULE} from '../src/services/ai/tai-profile.js';
+import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
+import {XITAI_EXPRESSION_STYLE,XITAI_DECISION_STYLE} from '../src/services/ai/expression-style.js';
+import {taiActionDecisionPrompt} from '../src/services/ai/action-protocol-v10.js';
 import {handleAIGateway} from '../server/ai-gateway.mjs';
 
 test('only two allowlisted models; V4 Pro defaults to non-thinking at temperature and top_p 0.6',()=>{
@@ -35,12 +37,19 @@ test('legacy saved settings migrate without changing credentials or voice; later
  }finally{globalThis.sessionStorage=oldSession;globalThis.localStorage=oldLocal;}
 });
 
-test('subject rule is final even after approved cloud examples, in text, voice and call',()=>{
+test('natural expression preferences are final even after approved cloud examples, in text, voice and call',()=>{
  for(const outputMode of ['text','voice','call']){
   const prompt=buildTaiPrompt({channel:'noapp',day:40,recognized:true,outputMode,approvedPersona:'approved cloud dialogue examples'});
-  assert.ok(prompt.endsWith(XITAI_SUBJECT_RULE));
-  assert.ok(prompt.indexOf('approved cloud dialogue examples')<prompt.indexOf(XITAI_SUBJECT_RULE));
+  assert.ok(prompt.endsWith(XITAI_EXPRESSION_STYLE));
+  assert.ok(prompt.indexOf('approved cloud dialogue examples')<prompt.indexOf(XITAI_EXPRESSION_STYLE));
+  assert.match(prompt,/主語在語境清楚時可以省略/);
+  assert.match(prompt,/陳述句為主/);
+  for(const pattern of ['不是……而是……','別……才……','把……那叫……','不……不……'])assert.ok(prompt.includes(pattern));
+  assert.doesNotMatch(prompt,/每個有完整語意的陳述句.*必須有明確的主語/);
  }
+ const decision=taiActionDecisionPrompt({channel:'noapp',day:40,recognized:true});
+ assert.ok(decision.includes(XITAI_DECISION_STYLE));
+ assert.match(decision,/tease、ask_back、brief_pushback、challenge 是低頻選項/);
 });
 
 test('browser session saves model choice; direct API and retry both use V4 Pro settings',async()=>{
