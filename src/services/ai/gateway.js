@@ -3,7 +3,7 @@ import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText,unpackTaiReply} from './format.js';
-import {hasBannedTaiConstruction,XITAI_STYLE_REPAIR} from './expression-style.js';
+import {hasBannedTaiConstruction,hasBannedTaiReassurance,XITAI_STYLE_REPAIR} from './expression-style.js';
 import {applyTaiPrivacyDecision,hasPrematureTaiDisclosure} from './conversation-momentum-v11.js';
 import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
@@ -83,7 +83,7 @@ export async function askTai(request){
  let entries;
  try{entries=unpackTaiReply(first,request.outputMode==='call'?'call':request.channel);}catch{return first;}
  const texts=entries.map(e=>e.text),privateLeak=hasPrematureTaiDisclosure(texts,request);
- if(!hasBannedTaiConstruction(texts)&&!privateLeak)return first;
+ if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiReassurance(entries.map(e=>e.speechText||e.text))&&!privateLeak)return first;
  // Only the offending generation gets one corrective attempt. Preserve the
  // original approved action and fall back to the reply if the provider fails.
  try{
@@ -91,7 +91,7 @@ export async function askTai(request){
   const corrected=await askTaiOnce({...request,scene:privacyRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
   const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
   const revised=lines.map(e=>e.text);
-  if(!hasBannedTaiConstruction(revised)&&!hasPrematureTaiDisclosure(revised,request))return corrected;
+  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiReassurance(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request))return corrected;
  }catch{}
  // A mistaken early revelation cannot be unsent. In the exceptional case
  // both drafts leak, use the author's own privacy-boundary line, not a fact.
@@ -99,6 +99,7 @@ export async function askTai(request){
   const mode=request.outputMode==='call'||request.outputMode==='voice'||request.approvedDecision?.action==='send_voice'?'voice':'text';
   return {...first,text:JSON.stringify({messages:[{text:'等到我們見面的時候，說不定我會跟你說。',mode,tone:'neutral'}]})};
  }
+ if(hasBannedTaiReassurance(texts)||hasBannedTaiReassurance(entries.map(e=>e.speechText||e.text)))throw Error('Blocked Tai dialogue after correction');
  return first;
 }
 async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){

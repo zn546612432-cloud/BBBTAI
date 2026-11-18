@@ -337,3 +337,15 @@
 .tai-parameter-group>summary{font-weight:650;cursor:pointer;margin-bottom:12px}
 .tai-parameter-group>label{margin:10px 0}
 .app-noapp .tai-parameter-group input,.app-noapp .tai-parameter-group select{width:100%;box-sizing:border-box}
+.app-noapp .tai-contact-page{padding:24px 16px;color:#eef3f8;display:flex;flex-direction:column;gap:18px}
+.app-noapp .tai-contact-card{display:flex;align-items:center;gap:16px;padding:18px 16px;background:#1d2e3e;border-radius:14px}
+.app-noapp .tai-contact-card img{width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none}
+.app-noapp .tai-contact-card strong{display:block;font-size:22px;overflow-wrap:anywhere}
+.app-noapp .tai-contact-card small{display:block;font-size:13px;color:#a8bac9;margin-top:5px}
+.app-noapp .tai-contact-remark{display:flex;flex-wrap:wrap;gap:10px;padding:16px;background:#1d2e3e;border-radius:14px;align-items:center}
+.app-noapp .tai-contact-remark label{width:100%;font-size:14px;color:#bdcbd7}
+.app-noapp .tai-contact-remark input{flex:1;min-width:0;border:1px solid #506575;border-radius:9px;background:#162632;color:#fff;padding:12px;font-size:16px}
+.app-noapp .tai-contact-remark button{background:#d2e1ee;color:#182b3c;border:0;border-radius:9px;padding:12px 15px;font-weight:600}
+.app-noapp .tai-contact-call{display:flex;justify-content:space-between;background:#1d2e3e;color:#eef3f8;border:0;border-radius:14px;padding:17px 16px;font-size:15px;text-align:left}
+.app-noapp .tai-read-receipt{display:block;text-align:right;margin:4px 2px 0;font-size:10px;line-height:1.2;color:#8c9eae}
+.app-noapp .tai-read-receipt.is-read{color:#a1c7dc}

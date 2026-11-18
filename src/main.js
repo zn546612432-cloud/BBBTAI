@@ -25,6 +25,7 @@ import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
+import {unlockTaiVoice} from './services/ai/voice-budget.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
@@ -729,7 +730,9 @@ $('#root').addEventListener('touchcancel',()=>{if(noticeGesture)noticeReset(noti
 $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeStart(e.target,e.clientX,e.clientY);});
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
-$('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{if(await submitStory55Form(e.target,ctx()))return;
+$('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{
+  if(e.target.dataset.form==='send-chat'&&e.target.dataset.channel==='noapp'&&e.target.dataset.id==='tai'&&unlockTaiVoice(store,new FormData(e.target).get('text'))){e.target.elements.text.value='';return;}
+  if(await submitStory55Form(e.target,ctx()))return;
   if(e.target.dataset.storyScene){
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
    if(!conversationId)throw Error('预设聊天尚未选中联系人');

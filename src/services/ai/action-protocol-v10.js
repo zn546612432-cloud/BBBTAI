@@ -81,7 +81,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   '本轮允许动作：'+actions.join(', ')+'。输出的action必须来自此列。',
   mode==='text'&&channel==='noapp'&&recognized?(allowVoice?'本轮语音可用：你可以自行选择 send_voice，不必等待熙蒙要求，也不受第60天限制。想让他听见语气、较长解释或觉得说话更自然时，可以直接发一条语音；主动联系也可以用语音。根据当前对话和本人意愿选择，不按固定概率轮换，不必每次发语音。':'本轮语音不可用或自主语音已关闭，请选择文字；不要声称自己已经发出了语音。'):'',
   '表述策略 strategy 仅可选：'+TAI_STRATEGIES.join(', ')+ '。情绪 tone 仅可选：'+TAI_EMOTIONS.join(', ')+ '。声线提示 vocal_cue 可选：'+TAI_VOCAL_CUES.join(', ')+'。情绪与声线提示是结构化元数据，不得变更 MiniMax 固定音色、calm声线、音高与语速，也不写进聊天内容。',
-  'intensity: low/medium/high；intent: 180字以内简短内容方向，不是台词、详细推理或隐私；仅 defer_reply 可给 delay_seconds（30到3600秒）。',
+  'intensity: low/medium/high；intent: 180字以内简短内容方向，不是台词、详细推理或隐私；仅 defer_reply 可给 delay_seconds（30到3600游戏秒，非现实秒）；表示当前暂未打开消息，游戏时间到达后再决定响应。空闲时可马上回覆，忙碌时合理延迟，紧急情况仍可及时查看。',
   '可选 mood_after（'+XITAI_MOODS.join('/')+'）、mood_intensity（low/medium/high）和 mood_reason（180字以内，具体事件或自己的主观感受）。只有真正改变心情才填写；无变化时省略。心情不等于台词语气，不把猜测说成事实。',
   recognized&&channel==='noapp'&&mode!=='ringing'&&(hasIncoming||worldbookEvents.includes('call_ended_player'))?'可选 memory_update：只有本輪有值得跨日保留的真實分歧、擔憂、界線或未完之事才記。格式 {"op":"open","category":"conflict/concern/boundary/unfinished（擇一）","evidence":"逐字摘錄熙蒙本輪原話或真實通話逐字稿，4–160字","reason":"熙泰主觀感受，180字內"}。若本輪真正釐清已有分歧，可用 {"op":"resolve","id":"記憶中既有episode ID","evidence":"本輪真實原話","reason":"為何已釐清"}。不要因時間流逝、轉換話題或普通問候而釐清。不要每輪記憶，不編造原話；沒有就省略。':'',
   worldbookEvents.includes('call_ended_player')&&!hasIncoming?'本輪附加 call_responsibility（self/player/shared/none/unclear）與 call_reason（180字內，依據真實通話內容的主觀判斷）。正常告別為 none；不知道原因就是 unclear。誰按下掛斷鍵不等於誰造成矛盾。只選 send_text 或 end_session。':'',
