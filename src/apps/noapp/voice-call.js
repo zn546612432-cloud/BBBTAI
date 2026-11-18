@@ -20,11 +20,11 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,wantsMoreCallSpeech,expandCallSegments} from './call-engine-v2.js';
 import {taiShouldHangUpCall} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
 import {isConversationOpen} from '../../services/messaging/delivery.js';
-import {validateCallReplyAction} from '../../services/ai/action-protocol-v10.js';
+import {validateCallReplyAction,validateTaiAction} from '../../services/ai/action-protocol-v10.js';
 
 let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,nudgeCount:0};
 let recording=null;
@@ -71,6 +71,8 @@ const glyph={
  quiet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM3 3l18 18"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
  layout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="1.5"/><rect x="10" y="10" width="11" height="11" rx="1.5"/></svg>',
+ keyboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 15h8"/></svg>',
+ micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 8V5a3 3 0 0 1 6 0v8M5 10v2a7 7 0 0 0 12 5M12 19v3M8 22h8M3 3l18 18"/></svg>',
  answer:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z" transform="rotate(180 12 12)"/></svg>'
 };
 function phoneButton(action,title,art,kind=''){
@@ -83,30 +85,27 @@ function duration(){
 }
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
- const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'邀请你语音通话':dial?'正在呼叫…':active?(call.busy?'熙泰正在回复…':call.listening?'正在听你说话…':'语音通话中 · '+duration()):'通话已结束';
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':call.audioReady?'輕點繼續收聽':call.caption?'熙泰正在說話…':call.busy?'熙泰正在回覆…':call.inlineNotice||'通話中'):'通話已結束';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
-   phoneButton('tai-speaker',call.speaker?'声音已开':'声音已关',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-speaker-on':''))+
-   phoneButton('tai-expand','通话字幕',glyph.layout,'is-secondary')+
-   phoneButton('tai-mute',call.muted?'取消静音':'静音',call.muted?glyph.quiet:glyph.mic,'is-secondary')+
-   phoneButton('tai-mic',call.listening?'结束说话':'按下说话',glyph.mic,'is-secondary'+(call.listening?' is-listening':''))+
-   phoneButton('tai-hangup','结束',glyph.hang,'is-hang')+
-   phoneButton('tai-expand','文字输入',glyph.plus,'is-secondary'):
+   phoneButton('tai-mute',call.muted?'取消靜音':'靜音',call.muted?glyph.micOff:glyph.mic,'is-secondary'+(call.muted?' is-selected':''))+
+   phoneButton('tai-mic',call.listening?'結束說話':'說話',glyph.mic,'is-mic'+(call.listening?' is-listening':''))+
+   phoneButton('tai-speaker','揚聲器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-selected':''))+
+   phoneButton('tai-expand','文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
+   phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'';
- const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="文字转写"><header>通话文字 <button type="button" data-action="tai-expand" aria-label="关闭文字转写">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="发文字继续通话…"><button type="submit">发送</button></form></div>':'';
+ const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form></div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
   (call.caption?'<p class="theirs">'+esc(call.caption)+'</p>':'')+
   (call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 继续收听</button>':'')+'</div>':'';
- return '<section class="tai-call-screen" aria-label="NoApp语音通话">'
-  +'<div class="tai-call-ambient" aria-hidden="true"></div>'
+ return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
+  +'<div class="tai-call-ambient" aria-hidden="true"><img src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt=""></div>'
   +'<nav class="tai-call-topbar">'+
-   '<button type="button" data-action="tai-expand" aria-label="查看或收起通话文字">'+glyph.layout+'</button>'+
-   '<span class="tai-call-channel">NOAPP · AUDIO</span>'+
-   '<button type="button" data-action="tai-expand" aria-label="展开通话文字">'+glyph.plus+'</button></nav>'+
-   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陈熙泰</h1><p>'+subtitle+'</p><div class="tai-call-dots" aria-hidden="true"><i></i><i></i><i></i></div></div>'+
+   '<span class="tai-call-channel">NoApp 語音</span></nav>'+
+   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>陳熙泰</h1><p role="status" aria-live="polite">'+esc(subtitle)+'</p>'+(active?'<small class="tai-call-duration">'+duration()+'</small>':'')+'</div>'+
    liveCaptions+transcript+
-   '<div class="tai-call-bottom'+(ring?' two-actions':active?' grid-six':'')+'">'+controls+'</div>'+
+   '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
    '</section>';
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText=''}={}){
@@ -158,9 +157,9 @@ export function startOutgoing(ctx){
 }
 // A blocked play keeps this segment pending. Only its completion allows the
 // next caption/track; hanging up resolves and cancels the pending segment.
-let finishSegment=null;
+let finishSegment=null,callPlaybackStarted=null;
 // Generated text is NOT a completed utterance until the audio ended event.
-async function playCallAudio(ctx,blob,sessionId,revision){
+async function playCallAudio(ctx,blob,sessionId,revision,onStart){
  if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision)return 'interrupted';
  playback??=createGestureAudio();
  if(!playback)throw Error('此设备不能播放音频');
@@ -170,12 +169,15 @@ async function playCallAudio(ctx,blob,sessionId,revision){
  audio.src=URL.createObjectURL(blob);
  audio.muted=!call.speaker;
  return new Promise(resolve=>{
-  let settled=false;
+  let settled=false,started=false;
+  const begin=()=>{if(started||settled||call.sessionId!==sessionId||call.revision!==revision)return;started=true;onStart?.();};
+  callPlaybackStarted=begin;
   const finish=(outcome='completed')=>{
    if(settled)return;settled=true;
    audio.removeEventListener('ended',ended);
    audio.removeEventListener('error',failed);
    if(finishSegment===finish)finishSegment=null;
+   if(callPlaybackStarted===begin)callPlaybackStarted=null;
    if(call.sessionId===sessionId){
     call.audioReady=false;
     if(outcome==='completed')call.lastTaiEndAt=Date.now();
@@ -186,7 +188,7 @@ async function playCallAudio(ctx,blob,sessionId,revision){
   const blocked=()=>{
    if(settled||call.sessionId!==sessionId||call.revision!==revision)return;
    call.audioReady=true;
-   ctx.toast?.('本段语音未能播放，请点「继续收听」重试。');
+   call.inlineNotice='輕點繼續收聽';
    ctx.refresh?.();
   };
   const failed=()=>finish('failed');
@@ -196,7 +198,7 @@ async function playCallAudio(ctx,blob,sessionId,revision){
   Promise.resolve().then(()=>audio.play()).then(()=>{
    if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision){
     audio.pause();finish('interrupted');
-   }
+   }else begin();
   }).catch(blocked);
  });
 }
@@ -207,7 +209,7 @@ function interruptCallTurn(ctx,source='player'){
  call.revision=(call.revision||0)+1;
  playback?.pause();
  finishSegment?.('interrupted');
- call.caption='';call.audioReady=false;call.busy=false;
+ call.caption='';call.audioReady=false;call.busy=false;call.transcribing=false;
  call.lastTaiEndAt=Date.now();call.nudgeCount=0;
  ctx.store.update(s=>{
   s.events??=[];
@@ -217,12 +219,12 @@ function interruptCallTurn(ctx,source='player'){
  return true;
 }
 export function callScene({opening=false,event='',direction='outgoing',reason=''}={}){
- if(opening&&direction==='incoming'&&reason.startsWith('【刚才的通话约定】'))return '你是陈熙泰，电话现在已接通。刚才是熙蒙主动请求听你说话，你也明确答应现在拨号。'+reason+' 这是你兑现承诺的第一句话，不要说自己又准备打电话、不问他为什么打给你，不要没来由地夸自己的声音或发明他刚说的话。可以先短短逗他一句，再关心他在做什么，留给他接话的空隙。';
+ if(opening&&direction==='incoming'&&reason.startsWith('【刚才的通话约定】'))return '你是陈熙泰，电话现在已接通。刚才是熙蒙主动请求听你说话，你也明确答应现在拨号。'+reason+' 这是你兑现承诺的第一句话，不要说自己又准备打电话、不问他为什么打给你，不要没来由地夸自己的声音或发明他刚说的话。可以先自然回应，再关心他在做什么，留给他接话的空隙。';
  if(opening)return direction==='incoming'
   ?'电话刚接通，是你陈熙泰主动拨给熙蒙的。先说明自己为何找他：'+(reason||'关心熙蒙真实提过的事，不主动汇报自己的日程')+'。不要反问他为什么给你打电话，不要说他这通电话打断了你。'
   :'电话刚接通，是熙蒙拨给你。按自己的当下状态开口，可以忙、困、好奇或高兴，别默认责备他打扰。';
  if(event==='unheard')return '刚才熙蒙试着说话，但这段语音未能识别，没有任何可用内容。你只知道没听清，不能猜他的话；简短问一句或两句让他再说一次，不谈ASR、权限、浏览器或技术接口。';
- if(event==='nudge')return '上一段已经说完，熙蒙在电话里一直安静。先依据前文问怎么了、是不是有事；如果刚在亲密调情，可带一点坏心思问是不是想你、怎么不肯说。不要默认他生气，不要催三遍。';
+ if(event==='nudge')return '上一段已经说完，熙蒙在电话里一直安静。先依据前文问怎么了、是不是有事；可以自然关心他是否还在听。不要默认他生气，不要催三遍。';
  if(event==='closing')return '对方很久没说话，你可以告别并真正结束通话。说一句符合当下情绪的告别，程序会执行挂断，而不是只说要挂。';
  return '熙蒙刚在实时电话里讲了话。先准确理解他问了什么，承接上一句话的具体意思，认真回答；如果他在分享、追问、愿意聊天，就展开讲几段有信息的新内容，顺着话题表达个人态度与具体见闻。不是文字聊天，不能假装电话已挂。避免无来由自夸、空洞问答和极短气泡式语音。';
 }
@@ -230,6 +232,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  if(call.state!=='connected'||call.busy)return;
  const sessionId=call.sessionId,revision=call.revision||0,day=ctx.store.get().day;
  const forceHangUp=!opening&&!event&&taiShouldHangUpCall(text);
+ const shouldClose=forceHangUp||event==='closing'||endAfter;
+ const moreSpeech=!shouldClose&&!opening&&!event&&wantsMoreCallSpeech(text);
  endAfter=endAfter||forceHangUp;
  const current=()=>call.sessionId===sessionId&&call.revision===revision&&call.state==='connected'&&ctx.store.get().day===day;
  if(!opening&&!event&&!String(text).trim())return;
@@ -239,7 +243,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   call.lastPlayerAt=Date.now();call.nudgeCount=0;
   call.quietUntil=isQuietCallRequest(playerText)?Date.now()+taiBehavior(ctx.store.get()).callQuietSeconds*1000:0;
  }
- call.busy=true;
+ call.inlineNotice='';call.busy=true;
  call.generationId=(call.generationId||0)+1;
  const generationId=call.generationId;
  const turnId='call:'+call.started+':'+sessionId+':'+generationId;
@@ -248,11 +252,12 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  try{
   const history=call.turns.slice(-20);
   const behavior=taiBehavior(ctx.store.get());
-  const speechDepth=forceHangUp||event==='closing'?'【明确结束通话】熙蒙已要求你结束这通电话。你本人先亲口说一小段有态度的自然告别，之后程序立刻挂断；不用继续追问，也不能将这句发成文字消息。':
+  const speechDepth=shouldClose?'【明确结束通话】本轮程序已决定结束这通电话。你本人先亲口说一小段自然告别，之后程序立刻挂断；不用继续追问，也不能将这句发成文字消息。':
+   moreSpeech?'【本轮明确要求多说】程序已生成通话表达计划 {"min_segments":3,"max_segments":5,"mode":"voice"}。messages 必须包含3至5段有实质内容、各自完整的口语，每段1至3句。围绕刚才的话题自然多讲，不以一个短句或反问收尾，不披露未经许可的私事；若确实要结束通话，给出真实理由及告别。':
    opening||event==='unheard'?'【简短开场/没听清】自然说一两句即可，不为了凑长而扩写。':
    behavior.callDetail==='brief'?'【通话简短模式】以1～2段自然口语回答；有必要的内容要说完，别只留半句。':
    behavior.callDetail==='natural'?'【通话自然模式】能谈的话题可自然用2～3段内容不同的完整话意，不强制每次多段。':
-   '【通话丰富模式】熙蒙认真说话或问到有意思的事情时，偏向用2～5段连续口语，每段可包含1～3个完整句子。先回应，再展开有实质内容的细节、判断或个人态度；中间可以自然补充、改口、推进话题。不是每段只有一小句，不要把同一句安慰换个说法重复；简单招呼、拒绝和告别仍可只有一段。';
+   '【通话丰富模式】普通连续聊天以2～4段完整口语为目标，每段1～3句；先回应，再自然展开有实质内容的细节、判断或个人态度。短招呼、明确拒绝、告别可以短。不是每段只有一小句，不重复同一个意思。';
   const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+
    ' 【NoApp V3｜真人电话】这轮只调用一次台词生成。你现在仍在真实通话里。'+speechDepth+
    ' 允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
@@ -261,54 +266,74 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
   const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId});
-  const decision=forceHangUp?{schema_version:10,action:'hang_up',strategy:'answer_directly',intensity:'low',tone:'neutral',vocal_cue:'none',intent:'熙蒙明确让你现在结束通话：亲口告别，然后由程序真正挂断。'}:
-   presetText||event==='unheard'?null:await chooseTaiAction({
-   channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',
-   scene,relationshipContext,worldbookSnapshot,sourceMessageId:'call:'+sessionId+':'+revision+':'+call.turns.length+':'+(event||'dialogue'),
-   hasIncoming:!opening&&!event&&!!text,callConnected:true,allowDefer:false
-  });
-  if(!current())return;
-  if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
-  if(decision?.action==='listen'){endAfter=false;call.lastTaiEndAt=Date.now();return;}
-  if(decision)endAfter=decision.action==='hang_up';
-  const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
-   event==='unheard'?null:await askTai({
+  // Calls need one model round-trip: return the legal action and spoken
+  // messages together. Ringing and text still use their existing decisions.
+  let decision=shouldClose?{schema_version:10,action:'hang_up',strategy:'answer_directly',intensity:'low',tone:'neutral',vocal_cue:'none',intent:'自然告别，然后由程序真正挂断。'}:null;
+  const request={
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
-   });
+  };
+  let data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
+   event==='unheard'?null:await askTai(request);
   if(!current())return;
-  if(!presetText&&!event&&validateCallReplyAction(data,{callConnected:current(),approvedDecision:decision}))endAfter=true;
-  const raw=event==='unheard'?[unheardReply(sessionId+':'+generationId)]:
-   dedupeTaiTurnEntries(unpackTaiReply(data,'call'));
-  const {segments,blocked}=selectCallSegments(raw,{
-   maxSegments:endAfter?Math.min(2,behavior.callMaxSegments):Math.min(behavior.maxMessages,behavior.callMaxSegments),
+  const readDecision=value=>validateTaiAction(value,{mode:'call',channel:'noapp',recognized:request.recognized,callConnected:current(),hasIncoming:!opening&&!event&&!!text}).decision;
+  if(!decision&&!presetText&&event!=='unheard')decision=readDecision(data);
+  if(decision?.action==='listen'&&!shouldClose){rememberTaiMood(ctx.store,decision,turnId);call.lastTaiEndAt=Date.now();return;}
+  endAfter=shouldClose||decision?.action==='hang_up'||validateCallReplyAction(data,{callConnected:current(),approvedDecision:decision});
+  const parse=value=>dedupeTaiTurnEntries(unpackTaiReply(value,'call'));
+  let raw;
+  try{raw=event==='unheard'?[unheardReply(sessionId+':'+generationId)]:parse(data);}
+  catch(error){if(endAfter)raw=[];else throw error;}
+  const select=entries=>selectCallSegments(!endAfter&&!opening&&!event&&(moreSpeech||behavior.callDetail==='detailed')?expandCallSegments(entries):entries,{
+   maxSegments:endAfter?2:moreSpeech?5:behavior.callMaxSegments,
    dedupe:behavior.callDedupe,
    recent:call.turns.filter(t=>t.role==='assistant').slice(-2).map(t=>t.content)
   });
+  let {segments,blocked}=select(raw);
+  if(moreSpeech&&!endAfter&&segments.length<3){
+   // A single bounded correction, only when the actual delivered plan is short.
+   try{
+    const revised=await askTai({...request,scene:scene+' 【多段语音补足】上一稿只有'+segments.length+'段有效口语。重新输出整轮3至5段有不同内容的 messages JSON，不重复上一轮旧话，不要编造私人事实。'});
+    if(!current())return;
+    const nextDecision=readDecision(revised);
+    const revisedRaw=parse(revised),next=select(revisedRaw);
+    if(nextDecision?.action==='hang_up'||validateCallReplyAction(revised,{callConnected:current(),approvedDecision:nextDecision})){
+     data=revised;decision=nextDecision;endAfter=true;raw=revisedRaw;({segments,blocked}=select(raw));
+    }else if(next.segments.length>segments.length){data=revised;decision=nextDecision||decision;raw=revisedRaw;({segments,blocked}=next);}
+   }catch{}
+  }
+  if(!current())return;
+  if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
+  if(endAfter&&!segments.length)segments=[{text:'先掛了。',tone:'neutral',mode:'voice'}];
   ctx.store.update(state=>{
    state.events??=[];
    state.events.push({type:'tai_call_v2_turn',sessionId,generationId,day:state.day,clock:state.clock,
     proposed:raw.length,planned:segments.length,blocked:blocked.length,
-    endAfter,forcedByPlayer:forceHangUp,mode:behavior.callDetail,at:Date.now()});
+    endAfter,forcedByPlayer:forceHangUp,moreSpeech,minSegments:moreSpeech?3:0,mode:behavior.callDetail,at:Date.now()});
   });
-  for(const r of segments){
+  // Prepare one upcoming clip while the current clip plays; no overlapping
+  // playback, and never queue more work after interruption.
+  const synth=r=>Promise.resolve().then(()=>voicePreview({text:composeCallSpeech([r],behavior),tone:r.tone||decision?.tone||'neutral',directed:true})).then(blob=>({blob}),error=>({error}));
+  let pending=segments.length?synth(segments[0]):null;
+  for(let i=0;i<segments.length;i++){
    if(!current())break;
-   const speech=composeCallSpeech([r],behavior);
-   if(!speech)continue;
-    const blob=await voicePreview({text:speech,tone:r.tone||decision?.tone||'neutral',directed:true});
+   const r=segments[i],prepared=await (pending||synth(r));
    if(!current())break;
+   if(prepared.error)throw prepared.error;
+   const blob=prepared.blob;
+   pending=null;
    call.caption=r.text;call.lastSpeech=r.text;ctx.refresh?.();
-   const outcome=await playCallAudio(ctx,blob,sessionId,revision);
+   const outcome=await playCallAudio(ctx,blob,sessionId,revision,()=>{if(current()&&i+1<segments.length)pending=synth(segments[i+1]);});
    if(outcome==='failed')throw Error('Call audio playback failed');
    if(!current()||outcome!=='completed')break;
    call.turns.push({role:'assistant',content:r.text,tone:r.tone||decision?.tone||'neutral',
     vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now()});
    if(!presetText&&event!=='unheard')ctx.store.update(s=>rememberTaiDelivered(s,r.text,{sourceId:turnId+':played:'+call.turns.length}));
    call.caption='';call.audioReady=false;ctx.refresh?.();
-   await new Promise(resolve=>setTimeout(resolve,behavior.callPause*1000));
+   if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
   if(current()){
@@ -348,7 +373,7 @@ export function submitCall(form,ctx){
  const text=String(new FormData(form).get('text')||'').trim();
  if(text){
   if(call.busy||call.audioReady||playback&&!playback.paused){
-   if(!taiBehavior(ctx.store.get()).callInterrupt){ctx.toast?.('等熙泰说完再输入');return true;}
+   if(!taiBehavior(ctx.store.get()).callInterrupt){call.inlineNotice='等熙泰說完再輸入';ctx.refresh?.();return true;}
    interruptCallTurn(ctx,'text');
   }
   void respond(text,ctx);
@@ -402,25 +427,26 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
    if(endedBy==='connection_error'){ctx.refresh?.();setTimeout(back,1100);}else back();
   }
   return true;
- case 'tai-play-audio':if(playback){playback.muted=!call.speaker;playback.play().then(()=>{call.audioReady=false;ctx.refresh();}).catch(()=>ctx.toast('浏览器尚未允许播放，请再次点击继续收听。'));}return true;
+ case 'tai-play-audio':if(playback){playback.muted=!call.speaker;playback.play().then(()=>{call.audioReady=false;callPlaybackStarted?.();ctx.refresh();}).catch(()=>{call.inlineNotice='請再次點擊繼續收聽';ctx.refresh?.();});}return true;
  case 'tai-expand':call.expanded=!call.expanded;ctx.refresh();return true;
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
   // iOS lowers or interrupts remote audio when a new mic audio session opens.
   // A microphone gesture interrupts the current reply before starting iOS half-duplex capture.
-  if(call.requestingMic){ctx.toast('正在请求麦克风权限');return true;}
+  if(call.requestingMic||call.transcribing)return true;
+  call.inlineNotice='';
    if(call.busy||call.audioReady||playback&&!playback.paused){
-    if(!taiBehavior(ctx.store.get()).callInterrupt){ctx.toast('等熙泰说完，再按麦克风。');return true;}
+    if(!taiBehavior(ctx.store.get()).callInterrupt){call.inlineNotice='等熙泰說完再說話';ctx.refresh?.();return true;}
     interruptCallTurn(ctx,'microphone');
    }
-  if(call.muted){ctx.toast('解除静音后再说话');return true;}
+  if(call.muted){call.inlineNotice='請先解除靜音';ctx.refresh?.();return true;}
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(navigator.mediaDevices?.getUserMedia&&globalThis.MediaRecorder){
    if(recording?.call){
-    const active=recording;recording=null;call.listening=false;active.recorder.stop();ctx.refresh();ctx.toast('正在识别这一段通话语音…');return true;
+    const active=recording;recording=null;call.listening=false;call.transcribing=true;active.recorder.stop();ctx.refresh();return true;
    }
-   const sessionId=call.sessionId,captureRevision=call.revision||0;call.requestingMic=true;
+   const sessionId=call.sessionId,captureRevision=call.revision||0;call.requestingMic=true;ctx.refresh?.();
    (async()=>{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==captureRevision){stream.getTracks().forEach(t=>t.stop());return;}
@@ -437,7 +463,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
        }
       }catch(e){
        if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){
-        call.transcribing=false;call.busy=false;ctx.toast('这段话没能识别，可重说或用文字输入。');
+        call.transcribing=false;call.busy=false;call.inlineNotice='沒有聽清，請再說一次';
         await generateTurn(ctx,{event:'unheard'});
        }
       }finally{
@@ -447,22 +473,22 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
        }
       }
     };
-    recording={recorder,call:true};call.listening=true;recorder.start();ctx.refresh();ctx.toast('正在听，请再点一次麦克风结束。');
-    setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;call.listening=false;recorder.stop();ctx.refresh();}},18000);
-   })().catch(e=>{if(call.sessionId===sessionId){call.listening=false;ctx.toast('麦克风不可用：'+e.message);void generateTurn(ctx,{event:'unheard'});}}).finally(()=>{if(call.sessionId===sessionId)call.requestingMic=false;});
+    recording={recorder,call:true};call.listening=true;recorder.start();call.requestingMic=false;ctx.refresh();
+    setTimeout(()=>{if(recording?.recorder===recorder&&recorder.state==='recording'){recording=null;call.listening=false;call.transcribing=true;recorder.stop();ctx.refresh();}},18000);
+   })().catch(e=>{if(call.sessionId===sessionId){call.listening=false;call.inlineNotice='麥克風不可用，請使用文字輸入';ctx.refresh?.();}}).finally(()=>{if(call.sessionId===sessionId){call.requestingMic=false;ctx.refresh?.();}});
    return true;
   }
-  if(!Speech){ctx.toast('此设备未开放麦克风，请用文字输入。');void generateTurn(ctx,{event:'unheard'});return true;}
+  if(!Speech){call.inlineNotice='此裝置未開放麥克風，請使用文字輸入';ctx.refresh?.();return true;}
   try{
-   if(activeRecognition){activeRecognition.stop();activeRecognition=null;call.listening=false;ctx.refresh();return true;}
+   if(activeRecognition){activeRecognition.stop();activeRecognition=null;call.listening=false;call.transcribing=true;ctx.refresh();return true;}
    const sessionId=call.sessionId,captureRevision=call.revision||0,recognition=new Speech();recognition.lang='zh-CN';recognition.interimResults=false;recognition.maxAlternatives=1;
    let heard=false,failed=false;
    activeRecognition=recognition;call.listening=true;
-   recognition.onresult=e=>{heard=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;void respond(e.results[0][0].transcript,ctx);}};
-   recognition.onend=()=>{const active=activeRecognition===recognition;if(active)activeRecognition=null;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;ctx.refresh();if(active&&!heard&&!failed)void generateTurn(ctx,{event:'unheard'});}};
-   recognition.onerror=e=>{failed=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision&&e.error!=='aborted'){call.listening=false;ctx.toast('这段语音没能识别，请重说或用文字输入。');void generateTurn(ctx,{event:'unheard'});}};
+   recognition.onresult=e=>{heard=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;call.transcribing=false;void respond(e.results[0][0].transcript,ctx);}};
+   recognition.onend=()=>{const active=activeRecognition===recognition;if(active)activeRecognition=null;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision){call.listening=false;call.transcribing=false;ctx.refresh();if(!heard&&!failed)void generateTurn(ctx,{event:'unheard'});}};
+   recognition.onerror=e=>{failed=true;if(call.sessionId===sessionId&&call.state==='connected'&&call.revision===captureRevision&&e.error!=='aborted'){call.listening=false;call.transcribing=false;call.inlineNotice='沒有聽清，請再說一次';void generateTurn(ctx,{event:'unheard'});}};
    recognition.start();ctx.refresh();
-  }catch(e){ctx.toast(e.message);}
+  }catch(e){call.listening=false;call.transcribing=false;call.inlineNotice='麥克風不可用，請使用文字輸入';ctx.refresh?.();}
   return true;
  }
  default:return false;

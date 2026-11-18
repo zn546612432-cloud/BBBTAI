@@ -10,8 +10,8 @@ import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 import {startIncoming,callAction,submitCall,callView,callState} from '../src/apps/noapp/voice-call.js';
 
 test('explicit commands delegate an actual phone hangup to Tai without confusing discussions or negations',()=>{
- const yes=['你挂电话吧','你先挂','你挂吧','你来挂','熙泰挂电话吧','帮我挂了','挂了88','挂了，拜拜','挂电话吧','晚安','88','拜拜','那就挂了吧','结束通话吧','不聊了，拜拜','再見','我要睡了','你先忙吧'];
- const no=['你别挂电话','不要挂','我不想挂电话','等一下再挂','刚才是谁挂的电话','你是不是刚才挂了','我们刚才挂断了','挂电话和打字有什么不可以','我挂断电话还能打字','谁让你挂电话了','刚挂了怎么又找我','我讨厌你','如果你挂了怎么办'];
+ const yes=['你挂电话吧','你先挂','你挂吧','你来挂','熙泰挂电话吧','帮我挂了','挂了88','挂了，拜拜','挂电话吧','晚安','88','拜拜','那就挂了吧','结束通话吧','不聊了，拜拜','再見','我要睡了','你先忙吧','那你挂我电话吧，再见。','挂我电话吧拜拜','那你掛我的電話吧，再見'];
+ const no=['你别挂电话','不要挂','我不想挂电话','等一下再挂','刚才是谁挂的电话','你是不是刚才挂了','我们刚才挂断了','挂电话和打字有什么不可以','我挂断电话还能打字','谁让你挂电话了','刚挂了怎么又找我','我讨厌你','如果你挂了怎么办','你不要挂我电话','你別掛我的電話'];
  for(const text of yes)assert.equal(taiShouldHangUpCall(text),true,'positive '+text);
  for(const text of no)assert.equal(taiShouldHangUpCall(text),false,'negative '+text);
 });
@@ -50,7 +50,7 @@ test('DeepSeek prompt receives mutually exclusive phone, voice note, and message
 
 async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
  const old=Object.fromEntries(['Audio','fetch','sessionStorage','FormData'].map(k=>[k,globalThis[k]]));
- const players=[],requests=[];
+ const players=[],requests=[],toasts=[];
  let playerInput='';
  class FakeAudio {
   constructor(){this.src='';this.paused=true;this.listeners=new Map();players.push(this);}
@@ -63,7 +63,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
  const state=initialState();state.day=60;state.clock='22:30';state.unlocked=true;
  state.aiDraft.behavior={...state.aiDraft.behavior,callPause:0.3,callMaxSegments:5,callDetail:'detailed'};
  const store={get:()=>state,update:fn=>fn(state)};
- const ctx={store,refresh(){},router:{open(){}},toast(){}};
+ const ctx={store,refresh(){},router:{open(){}},toast(message){toasts.push(message);}};
  const waitFor=async(testFn,description='condition')=>{
   for(let i=0;i<180;i++){if(testFn())return;await new Promise(resolve=>setTimeout(resolve,10));}
   throw Error('waiting for '+description);
@@ -79,7 +79,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
    const isDecision=body.messages[0].content.includes('【行为决策层】');
    return Response.json({choices:[{message:{content:isDecision?
     JSON.stringify({schema_version:10,action:'speak',tone:'dry',strategy:'answer_directly'}):
-    JSON.stringify({messages:replyEntries.map(text=>({text,mode:'voice',tone:'dry'})),actions})}}]});
+    JSON.stringify({schema_version:10,action:actions.length?'hang_up':'speak',messages:(typeof replyEntries==='function'?replyEntries(body):replyEntries).map(text=>({text,mode:'voice',tone:'dry'})),actions})}}]});
   };
   assert.equal(startIncoming(ctx,'熙泰找你',{openingText:'喂。'}),true);
   assert.equal(callAction('tai-accept',ctx),true);
@@ -87,7 +87,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
   players[0].finish();
   await waitFor(()=>callState().turnCount===1,'completed greeting');
   await run({
-   state,store,ctx,players,requests,waitFor,
+   state,store,ctx,players,requests,waitFor,toasts,
    send(text){playerInput=text;return submitCall({dataset:{form:'tai-call-turn'}},ctx);}
   });
  }finally{
@@ -100,7 +100,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
 
 test('player requests Tai to hang up: spoken farewell executes actual hangup after audio completes',async()=>{
  await withMockCall(['好，先挂了。明天再说，别熬得太晚。'],async({state,ctx,players,requests,waitFor,send})=>{
-  assert.equal(send('你挂电话吧'),true);
+  assert.equal(send('那你挂我电话吧，再见。'),true);
   await waitFor(()=>callView(state).includes('好，先挂了'),'farewell caption');
   assert.equal(callState().state,'connected','should not disconnect before goodbye is heard');
   assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').length,0);
@@ -161,9 +161,48 @@ test('substantive call can speak four distinct paragraphs in one generation with
   await waitFor(()=>callState().turnCount===1+1+lines.length,'all completed voice thoughts');
   assert.equal(callState().state,'connected','speaking 4 segments must not end the call');
   const calls=requests.filter(x=>x.url.includes('chat/completions'));
-  assert.equal(calls.length,2,'one action selection and one natural speech generation');
+  assert.equal(calls.length,1,'action and speech share one JSON request');
   const tts=requests.filter(x=>x.url.includes('t2a_v2'));
   assert.equal(tts.length,1+lines.length,'greeting plus four segments');
+ });
+});
+
+test('explicit request for more speech has a JSON segment plan and repairs a short draft only once',async()=>{
+ const lines=['我有些話還沒有說完。','你剛剛說起那件事，我想了一下。','我想聽聽你當時具體是怎麼處理的。'];
+ await withMockCall(body=>body.messages[0].content.includes('【多段语音补足】')?lines:['好。'],async({state,players,requests,waitFor,send})=>{
+  send('能不能多说几句');
+  for(const line of lines){await waitFor(()=>callView(state).includes(line),line);players[0].finish();}
+  await waitFor(()=>callState().turnCount===5);
+  const calls=requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【单次通话 JSON'));
+  assert.equal(calls.length,2);
+  assert.match(calls[0].body.messages[0].content,/"min_segments":3/);
+  assert.match(calls[1].body.messages[0].content,/多段语音补足/);
+  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,3);
+ });
+});
+
+test('microphone listening and recognition are inline beneath the contact, with no app toast',async()=>{
+ await withMockCall(['聽到了。'],async({state,ctx,players,toasts,waitFor})=>{
+  const priorWindow=globalThis.window,priorNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator');
+  let recognition;
+  class Speech{constructor(){recognition=this;}start(){}stop(){}abort(){}}
+  try{
+   globalThis.window={SpeechRecognition:Speech};
+   Object.defineProperty(globalThis,'navigator',{value:{},configurable:true});
+   assert.equal(callAction('tai-mic',ctx),true);
+   assert.match(callView(state),/<p role="status" aria-live="polite">正在聆聽/);
+   assert.equal(callAction('tai-mic',ctx),true);
+   assert.match(callView(state),/<p role="status" aria-live="polite">正在識別/);
+   recognition.onresult({results:[[{transcript:'你聽得到嗎？'}]]});
+   recognition.onend();
+   await waitFor(()=>callView(state).includes('聽到了。'));
+   players[0].finish();
+   assert.equal(toasts.length,0);
+   assert.match(callView(state),/native-controls/);
+  }finally{
+   if(priorWindow===undefined)delete globalThis.window;else globalThis.window=priorWindow;
+   if(priorNavigator)Object.defineProperty(globalThis,'navigator',priorNavigator);else delete globalThis.navigator;
+  }
  });
 });
 
