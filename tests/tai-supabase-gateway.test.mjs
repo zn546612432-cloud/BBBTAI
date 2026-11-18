@@ -67,6 +67,7 @@ test('provider errors, daily limits and missing identity do not fabricate NPC me
   return new Response(JSON.stringify({error:'daily_limit_reached'}),{status:429});
  };
  await assert.rejects(()=>taiCloudCall('chat',{messages:[]}),/今日 AI 使用额度/);
+ await assert.rejects(()=>taiCloudCall('tts',{}),{code:'TAI_CLOUD_LIMIT'});
 }));
 test('no sensitive secrets or public unauthenticated paid calls are present in Edge source',()=>{
  const code=readFileSync(new URL('../supabase/functions/tai-provider-gateway/index.ts',import.meta.url),'utf8');
@@ -78,6 +79,17 @@ test('no sensitive secrets or public unauthenticated paid calls are present in E
  assert.match(code,/MINIMAX_API_KEY/);
  assert.doesNotMatch(code,/sk-api-[a-zA-Z0-9_-]{16,}/);
 });
+test('private test activation uses only the existing authenticated gateway, not a public client-side bypass',async()=>installMocks(async()=>{
+ globalThis.fetch=async(url,init)=>{
+  if(String(url).endsWith('/auth/v1/signup'))return Response.json({session:{access_token:'jwt-owner',refresh_token:'refresh-owner',expires_in:3600}});
+  assert.equal(String(url),TAI_PROVIDER_ENDPOINT);assert.equal(init.headers.Authorization,'Bearer jwt-owner');
+  const body=JSON.parse(init.body);
+  assert.equal(body.op,'redeem_test_access');assert.equal(body.payload.code,'TEST-'+'a'.repeat(48));
+  return Response.json({tester:true});
+ };
+ const {activateTaiPrivateTest}=await import('../src/services/ai/supabase-gateway.js');
+ assert.deepEqual(await activateTaiPrivateTest('TEST-'+'a'.repeat(48)),{tester:true});
+}));
 
 test('cloud MiniMax ASR uses the same user JWT, no browser key, and preserves text',async()=>installMocks(async()=>{
  globalThis.fetch=async(url,init)=>{

@@ -25,7 +25,7 @@ import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {unlockTaiVoice} from './services/ai/voice-budget.js';
+import {submitTaiVoiceUnlock,taiVoiceUnlockCommand} from './services/ai/voice-budget.js';
 import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
@@ -734,7 +734,7 @@ $('#root').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')noticeS
 $('#root').addEventListener('pointermove',e=>{if(e.pointerType==='mouse')noticeMove(e.clientX,e.clientY);});
 $('#root').addEventListener('pointerup',e=>{if(e.pointerType==='mouse')noticeFinish(e.clientX,e.clientY);});
 $('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preventDefault();return;}const app=registry.get(store.get().nav.current.appId);if(!app?.submit&&!e.target.dataset.form?.startsWith('s55-'))return;e.preventDefault();try{
-  if(e.target.dataset.form==='send-chat'&&e.target.dataset.channel==='noapp'&&e.target.dataset.id==='tai'&&unlockTaiVoice(store,new FormData(e.target).get('text'))){e.target.elements.text.value='';return;}
+  if(store.get().nav.current.appId==='noapp'&&(e.target.dataset.form==='tai-call-turn'||e.target.dataset.form==='send-chat'&&e.target.dataset.id==='tai')&&submitTaiVoiceUnlock(e.target,ctx()))return;
   if(await submitStory55Form(e.target,ctx()))return;
   if(e.target.dataset.storyScene){
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
@@ -749,7 +749,7 @@ $('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preve
    return;
   }
   const channel=e.target.dataset.channel,conversationId=e.target.dataset.id,hasText=String(new FormData(e.target).get('text')||'').trim().length>0;app.submit(e.target,ctx(),store.get().nav.current);if(e.target.dataset.form==='send-chat'&&channel&&conversationId&&hasText)presets.onOutgoing(channel,conversationId);}catch(err){toast(err.message);}});
-$('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{s.drafts[e.target.form.dataset.id]=e.target.value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
+$('#root').addEventListener('input',e=>{if(!store.get().unlocked)return;if(e.target.matches('.composer input[name="text"]')){try{quietEditorUpdate=true;store.update(s=>{const value=e.target.value;if(e.target.form.dataset.channel==='noapp'&&e.target.form.dataset.id==='tai'&&(taiVoiceUnlockCommand(value)||/^草莓是香蕉\s+TEST-/i.test(value)))delete s.drafts.tai;else s.drafts[e.target.form.dataset.id]=value;});}finally{quietEditorUpdate=false;}return;}const app=registry.get(store.get().nav.current.appId);if(!app?.input)return;try{quietEditorUpdate=true;app.input(e.target,ctx());}catch(err){toast(err.message);}finally{quietEditorUpdate=false;}});
 $('#root').addEventListener('focusin',e=>{
   if(store.get().unlocked&&store.get().nav.current.appId==='wechat')registry.get('wechat')?.dismissEmojiForKeyboard?.(e.target);
 });

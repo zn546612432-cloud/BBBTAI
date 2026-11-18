@@ -119,4 +119,6 @@ test('badge CSS stays outside the clipped app tile for both Home icons and Dock'
  assert.match(css,/\.home-app \.home-unread-badge\{[^}]*position:absolute[^}]*background:#ff3b30/);
  assert.match(css,/\.home-dock \.home-unread-badge\{/);
  assert.match(appButton(home(blank()),'messages'),/home-icon-wrap/);
+ const motion=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
+ assert.match(motion,/\.home-page\{[^}]*padding:10px/,'first row has enough space above it for the protruding badge');
 });
