@@ -8,8 +8,11 @@ export function patchElement(old,fresh){
  const incomingWechatStage=old.tagName==='INPUT'&&!!old.closest('.wx-conversation')
   &&old.getAttribute('data-story-stage')!==fresh.getAttribute('data-story-stage')
   &&fresh.hasAttribute('data-story-type');
- for(const a of [...old.attributes])if(!fresh.hasAttribute(a.name))old.removeAttribute(a.name);
- for(const a of fresh.attributes)if(old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);
+ // Opt-in details (e.g. a NoApp voice transcript) are initially opened by
+ // the template; later toggles belong to the user, not the periodic clock.
+ const preserveOpen=old.tagName==='DETAILS'&&old.hasAttribute('data-preserve-open')&&fresh.hasAttribute('data-preserve-open');
+ for(const a of [...old.attributes])if(!(preserveOpen&&a.name==='open')&&!fresh.hasAttribute(a.name))old.removeAttribute(a.name);
+ for(const a of fresh.attributes)if(!(preserveOpen&&a.name==='open')&&old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);
  const focused=old===old.ownerDocument.activeElement;
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
  if(old.tagName==='INPUT'){const nativeWechat=!!old.closest('.wx-conversation');if((!focused||incomingWechatStage)&&(!storyAnimating||nativeWechat)&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}

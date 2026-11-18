@@ -80,3 +80,11 @@ test('author-approved outgoing pickups never use the caller name and sleep farew
   const reply={text,mode:'voice'};assert.deepEqual(finalizeCallSegments([reply],10,{close:true}),{segments:[reply],endAfter:true});
  }
 });
+
+test('NoApp clears an old offline banner when live presence becomes contactable',async()=>{
+ const {currentTaiFeedback}=await import('../src/apps/noapp/index.js');
+ const s=initialState();s.day=63;s.clock='22:30';
+ assert.equal(currentTaiFeedback(s,'暫時不在線'),'');
+ assert.equal(currentTaiFeedback(s,'已送达'),'已送达');
+ s.day=1;assert.equal(currentTaiFeedback(s,'暫時不在線'),'暫時不在線');
+});

@@ -30,6 +30,11 @@ let personaDiagnosis={state:'idle',message:''};
 let budgetDiagnosis='';
 // Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
 let settingsDraft={};
+export function currentTaiFeedback(s,feedback){
+ if(feedback!=='暫時不在線')return feedback;
+ const presence=taiPresence(s);
+ return presence.contactable&&presence.status!=='away'?'':feedback;
+}
 function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get().nav.current;if(nav.appId==='noapp'&&nav.route==='/chat/tai')ctx.refresh();}
 function queueTaiReply(ctx,messageId){
  const version=++replyVersion;
@@ -115,6 +120,7 @@ export function render({store},loc){
  '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button>'+
  '</nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
+ if(id==='tai')taiFeedback=currentTaiFeedback(s,taiFeedback);
  return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
