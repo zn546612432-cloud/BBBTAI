@@ -104,6 +104,6 @@ test('notification centre is transparent frosted glass, not an opaque sheet',()=
 test('home pager spans the screen and pages re-add the gutter so neighbouring pages stay off-screen',()=>{
  const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
  assert.match(block(css,'.home-pager'),/margin:0 calc\(var\(--home-gutter\) \* -1\)/);
- assert.match(block(css,'.home-page'),/padding:0 calc\(var\(--home-gutter\) \+ 8px\)/);
+ assert.match(block(css,'.home-page'),/padding:10px calc\(var\(--home-gutter\) \+ 8px\) 8px/);
  assert.match(block(css,'.home-screen'),/--home-gutter:14px/);
 });
