@@ -3,7 +3,7 @@ import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText} from './format.js';
-import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL} from './model-config.js';
+import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
 // Shared AI gateway. Production deployments should use a protected same-origin server.
 // For the user's isolated phone preview, keys may be entered per browser tab and
@@ -16,11 +16,16 @@ export const AI_PREFERENCES='ximeng-ai-preferences-v2';
 function savedPreferences(){try{return JSON.parse(globalThis.localStorage?.getItem(AI_PREFERENCES)||'{}');}catch{return {};}}
 export function apiConfig(){
  let c={};try{c=JSON.parse(sessionStorage.getItem(BYOK_SESSION)||'{}');}catch{}
- const merged={...savedPreferences(),...c};
+ const preferences=savedPreferences();
+ // Retire the old Flash preset even in existing tabs; credentials and voice settings stay untouched.
+ const currentSession=c.xitaiPresetRevision===XITAI_MODEL_PRESET_REVISION;
+ const currentPreferences=preferences.xitaiPresetRevision===XITAI_MODEL_PRESET_REVISION;
+ const sampling=currentSession?c:currentPreferences?preferences:XITAI_MODEL_PRESET;
+ const merged={...preferences,...c,model:sampling.model,temperature:sampling.temperature,topP:sampling.topP,xitaiPresetRevision:XITAI_MODEL_PRESET_REVISION};
  return {...merged,...normalizeAiParameters(merged),...normalizeTtsSettings(merged),model:normalizeDeepSeekModel(merged.model),ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(merged.ttsModel)?merged.ttsModel:'speech-2.8-hd',voiceStyle:normalizeVoiceStyle(merged.voiceStyle),voiceId:normalizeXitaiVoiceId(merged.voiceId)};
 }
 export function saveApiConfig(config){
- const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),
+ const out={deepseek:String(config.deepseek||'').trim(),minimax:String(config.minimax||'').trim(),xitaiPresetRevision:XITAI_MODEL_PRESET_REVISION,
  model:normalizeDeepSeekModel(config.model),region:config.region==='intl'?'intl':'cn',voiceId:normalizeXitaiVoiceId(config.voiceId),voiceStyle:normalizeVoiceStyle(config.voiceStyle),
  ttsModel:['speech-2.8-hd','speech-2.8-turbo'].includes(config.ttsModel)?config.ttsModel:'speech-2.8-hd',
  ...normalizeAiParameters(config),...normalizeTtsSettings(config)};
@@ -63,9 +68,10 @@ export async function aiStatus(){
 export async function askTear({day,messages,scene=''}){
  const {buildTearPrompt}=await import('./tear-prompt.js'),c=apiConfig();
  const history=messages.slice(-12).map(m=>({role:m.role,content:String(m.content).slice(0,1800)}));
- const body={...deepseekModelOptions(TEAR_DEEPSEEK_MODEL,c),messages:[{role:'system',content:buildTearPrompt(scene)},...history],max_tokens:Math.min(1000,c.maxTokens)};
+ const tearParameters={...normalizeAiParameters(c),temperature:1.3,topP:1};
+ const body={...deepseekModelOptions(TEAR_DEEPSEEK_MODEL,tearParameters),messages:[{role:'system',content:buildTearPrompt(scene)},...history],max_tokens:Math.min(1000,c.maxTokens)};
  if(isTaiCloudHost())return taiCloudCall('chat',body);
- if(!c.deepseek)return localJSON('/api/ai/chat',{channel:'tear',day,messages:history,scene,model:TEAR_DEEPSEEK_MODEL,parameters:normalizeAiParameters(c)});
+ if(!c.deepseek)return localJSON('/api/ai/chat',{channel:'tear',day,messages:history,scene,model:TEAR_DEEPSEEK_MODEL,parameters:tearParameters});
  const result=await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,{...body,response_format:{type:'json_object'},stream:false});
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
@@ -77,7 +83,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  if(isTaiCloudHost()){
   const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
   const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
-  const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
+  const system=buildTaiPrompt({...req,approvedPersona:v8});
   const params=deepseekModelOptions(c.model,c);
   const answer=await taiCloudCall('chat',{...params,model:c.model,
    messages:assembleTaiMessages(system,messages,worldbookSnapshot),max_tokens:Math.min(2800,c.maxTokens)});
@@ -87,7 +93,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  // Cloud V8 is additive and read-only; offline or fetch failure uses current local rules.
  const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
  const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
- const system=buildTaiPrompt(req)+(v8?'\n\n'+v8:'');
+ const system=buildTaiPrompt({...req,approvedPersona:v8});
  const base={...deepseekModelOptions(c.model,c),
   messages:assembleTaiMessages(system,messages,worldbookSnapshot),max_tokens:c.maxTokens,stream:false};
  // DeepSeek warns that JSON mode can return whitespace/empty content.
