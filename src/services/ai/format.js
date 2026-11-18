@@ -2,12 +2,13 @@
 // string, or a fenced JSON snippet. None of that syntax is a voice transcript.
 import {humanizeTaiText} from './humanize.js';
 import {safeTaiTranslation} from './portuguese.js';
+import {xitaiSpeechCaption,validateXitaiSpeechDirection} from '../voice/voice-regex.js';
 // Only a leading (phone) is an executable call request; middle-of-sentence
 // mentions are plain text, not commands. Both forms are always removed from UI.
 const phonePrefix=/^\s*(?:\(phone\)|（phone）)\s*\+?\s*/i;
 const phoneMarks=/\(phone\)|（phone）/gi;
 const voiceMarks=/\((?:laughs|chuckle|coughs|clear-throat|groans|breath|pant|inhale|exhale|gasps|sniffs|sighs|snorts|burps|lip-smacking|humming|hissing|emm|sneezes)\)/gi;
-const cleanedText=value=>String(value||'').replace(voiceMarks,'').replace(/<#\d+(?:\.\d+)?#>/g,'').replace(/[ \t]{2,}/g,' ').trim();
+const cleanedText=value=>xitaiSpeechCaption(value).replace(voiceMarks,'').replace(/[ \t]{2,}/g,' ').trim();
 const structural=s=>/^\s*(?:```(?:json)?|\{\s*"(?:messages|text|reply|mode)"|\[\s*\{|\\"|\[\s*\")/i.test(s);
 function decodeJSON(value){
  let v=value;
@@ -61,8 +62,10 @@ export function unpackTaiReply(response,channel='noapp'){
   // A phone event is not a voice message; text after the command is the
   // *first phone utterance*, delivered only when the player answers.
   const mode=phone?'text':channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
-  const speechText=humanizeTaiText(cleaned,{stripStage:false});
-  const display=humanizeTaiText(cleanedText(speechText));
+  const legacySpeech=humanizeTaiText(cleaned,{stripStage:false});
+  const display=humanizeTaiText(cleanedText(legacySpeech));
+  const speechText=mode==='voice'?
+   (validateXitaiSpeechDirection(display,x.speech_text)??legacySpeech):legacySpeech;
   const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
   const vocalCue=['small_laugh','sigh','hesitate','tired','whisper'].includes(x?.vocal_cue)?x.vocal_cue:'none';
   if(!display&&!phone)return [];

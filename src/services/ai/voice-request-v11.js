@@ -20,12 +20,12 @@ export function combineTaiVoiceThoughts(entries=[]){
  if(!Array.isArray(entries)||entries.length<2||entries.some(m=>m?.action==='phone'))return entries;
  const contents=entries.map(m=>String(m?.speechText||m?.text||'').trim()).filter(Boolean);
  if(contents.length<2)return entries;
- const spoken=contents.map((part,i)=>{
+ const joinThoughts=(parts,separator=' ')=>parts.map((part,i)=>{
   const stripped=part.replace(/[\s]+$/,'');
   // Preserve original punctuation, add a small breath only when needed.
-  return i<contents.length-1&&!/[。！？!?…，,；;]$/.test(stripped)?stripped+'。':stripped;
- }).join(' ');
- return [{...entries[0],text:spoken,speechText:spoken,mode:'voice',
+  return i<parts.length-1&&!/[。！？!?…，,；;]$/.test(stripped)?stripped+'。':stripped;
+ }).join(separator);
+ return [{...entries[0],text:joinThoughts(entries.map(m=>String(m?.text||'').trim()).filter(Boolean)),speechText:joinThoughts(contents,'\n'),mode:'voice',
   // The entire voice note is one utterance by the same character.
   tone:entries.at(-1)?.tone||entries[0]?.tone||'neutral',
   vocalCue:entries.at(-1)?.vocalCue||entries[0]?.vocalCue||'none',

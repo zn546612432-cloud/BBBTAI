@@ -14,7 +14,7 @@ function hash(s){let n=2166136261;for(const ch of s)n=Math.imul(n^ch.charCodeAt(
 function withoutMarks(s){return s.replace(/\([a-z-]+\)/gi,'').replace(/<#\d+(?:\.\d+)?#>/g,'');}
 function sanitize(raw){
  return String(raw||'')
-  .replace(/\(([\w\s-]+)\)/gi,(_,s)=>{const tag=ALIASES[s.trim().toLowerCase()]||s.trim().toLowerCase();return TAGS.has(tag)?'('+tag+')':'';})
+  .replace(/\(([\w\s-]+)\)/gi,(_,s)=>{const tag=ALIASES[s.trim().toLowerCase()]||s.trim().toLowerCase();return TAGS.has(tag)||tag==='le5'?'('+tag+')':'';})
   .replace(/（[^（）]{1,50}）/g,'')
   .replace(/<#[^>#]{0,40}#>/g,m=>{const n=Number(m.slice(2,-2));return Number.isFinite(n)&&n>=.01&&n<=99.99&&/^\d+(?:\.\d{1,2})?$/.test(m.slice(2,-2))?m:'';})
   .replace(/(?:\s*<#(?:\d+(?:\.\d+)?)#>\s*){2,}/g,' <#0.35#> ')
@@ -61,15 +61,17 @@ function addThoughtPause(s,tone){
  const pause=tone==='serious'||tone==='soft'?'0.35':'0.20';
  return s.slice(0,selected)+'<#'+pause+'#>'+s.slice(selected);
 }
-export function prepareXitaiSpeech(input,{tone='neutral',autoTags=true}={}){
+export function prepareXitaiSpeech(input,{tone='neutral',autoTags=true,directed=false}={}){
  const setting=MOODS[tone]||MOODS.neutral;
- let result=sanitize(input);
+ let result=directed?prepareDirectedXitaiSpeech(input):sanitize(input);
  if(!result)return {text:'',speed:setting.speed,emotion:setting.emotion,tagCount:0,characterCount:0,prosodyBeats:0};
  // Only the actual sound is kept, never the accompanying onomatopoeia.
- result=result.replace(/(?:木啊|木嘛|啵啵)/g,'(lip-smacking)');
- result=dedupeEvents(result);
+ if(!directed){
+  result=result.replace(/(?:木啊|木嘛|啵啵)/g,'(lip-smacking)');
+  result=dedupeEvents(result);
+ }
  const spoken=withoutMarks(result),characterCount=spoken.length;
- if(autoTags&&spoken.trim()){
+ if(autoTags&&!directed&&spoken.trim()){
   result=sentenceBreaths(result);
   result=addExpressiveCue(result,tone);
   result=addThoughtPause(result,tone);
@@ -84,3 +86,48 @@ export function prepareXitaiSpeech(input,{tone='neutral',autoTags=true}={}){
   prosodyBeats:(result.match(/<#/g)||[]).length+1};
 }
 export const XITAI_SUPPORTED_TAGS=[...TAGS];
+
+// Character-specific, light-density port of minimax-tts-format (MIT):
+// docs/third-party/minimax-tts-skill/. Round 15 approved these five cues,
+// two pauses and neutral-tone 了; other native tags remain authoring-only.
+const DIRECTED_MARK=/\((?:emm|snorts|chuckle|sighs|breath)\)|<#(?:0\.2|0\.5)#>|\(le5\)/g;
+const DIRECTED_CUE=/\((?:emm|snorts|chuckle|sighs|breath)\)/g;
+const PAUSE=/<#(?:0\.2|0\.5)#>/g;
+export const XITAI_DIRECTED_SPEED=.86;
+export function xitaiSpeechCaption(value){
+ return String(value??'').replace(/\(le5\)/gi,'了')
+  .replace(/\(([a-z-]+)\)/gi,(m,tag)=>TAGS.has(tag.toLowerCase())?'':m)
+  .replace(/<#[^<>]*#>/g,'').trim();
+}
+const comparison=value=>xitaiSpeechCaption(value).normalize('NFKC')
+ .replace(/[\s，,、。.;；：:…—–-]/gu,'');
+// Keep the same words AND question/exclamation marks. A broken sidecar
+// never becomes an alternative reply, and unknown control syntax never
+// reaches the provider.
+export function validateXitaiSpeechDirection(caption,value){
+ if(typeof value!=='string'||!value.trim()||value.length>3000)return null;
+ const text=value.trim();
+ const remaining=text.replace(DIRECTED_MARK,'');
+ if(/[()（）<>\[\]{}*~`]/u.test(remaining)||comparison(text)!==comparison(caption))return null;
+ if(!/[\p{L}\p{N}]/u.test(xitaiSpeechCaption(text)))return null;
+ for(const paragraph of text.split(/\n+/)){
+  const cues=paragraph.match(DIRECTED_CUE)||[];
+  if(cues.length>2||new Set(cues).size!==cues.length)return null;
+  const parts=paragraph.split(PAUSE);
+  if(parts.length>3)return null;
+  if(parts.length>1&&parts.some(part=>!/[\p{L}\p{N}]/u.test(xitaiSpeechCaption(part))))return null;
+  if(/[，,。！？?!；;、：:]\s*<#|#>\s*[，,。！？?!；;、：:]/u.test(paragraph))return null;
+  if(/熙<#(?:0\.2|0\.5)#>[蒙泰]|[蒙泰]<#(?:0\.2|0\.5)#>|<#(?:0\.2|0\.5)#>熙[蒙泰]/u.test(paragraph))return null;
+ }
+ return text;
+}
+export function prepareDirectedXitaiSpeech(value){
+ // Do not add affect from the emotion label, elongation, breath after every
+ // sentence, or a random sound based on lexical matching.
+ const caption=xitaiSpeechCaption(value).replace(/[（(][^()（）\n]{0,50}[)）]/g,'')
+  .replace(/<[^>]*>/g,'').replace(/[~～]+/g,'').trim();
+ const chosen=validateXitaiSpeechDirection(caption,value)??caption;
+ // The only automatic pronunciation fix is the approved light final 了
+ // in a question. Punctuation must preserve the interrogative contour.
+ return chosen.replace(/了(?=[？?])/gu,'(le5)');
+}

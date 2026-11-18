@@ -15,10 +15,10 @@ let queue=Promise.resolve();
 export function prepareTaiVoice(message,{speechText=message.text,tone=message.aiTone}={}){
  const work=async()=>{
   try{
-   const clip=await voicePreview({text:speechText,tone});
+   const clip=await voicePreview({text:speechText,tone,directed:true});
    const audioId='tai-'+message.id;
    await saveClip(audioId,clip);
-   return {...message,kind:'voice',audioId,voiceCaption:message.text,voiceRequested:undefined};
+   return {...message,kind:'voice',audioId,voiceCaption:message.text,speechText,voiceRequested:undefined};
   }catch(error){
    console.warn('NoApp voice delivery failed:',error?.message);
    return {...message,kind:'text',text:voiceFailureLine(message.id),translation:undefined,voiceRequested:undefined};
