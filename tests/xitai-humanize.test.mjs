@@ -30,7 +30,7 @@ test('真人口语可夹葡语英语，不把例句直接下发模型',()=>{
  const prompt=buildTaiPrompt({day:60,channel:'noapp',outputMode:'text',messages:[{role:'user',content:'在干嘛'}]});
  assert.match(prompt,/熙泰本人语气/);
  assert.match(prompt,/不设最低数量/);
- assert.match(prompt,/葡萄牙成长背景和英语教育/);
+ assert.match(prompt,/葡萄牙葡语和英语都是母语/);
  assert.doesNotMatch(taiHumanPrompt({messages:[{role:'user',content:'在吗'}]}),/刚过隧道/);
  assert.match(taiHumanPrompt({outputMode:'call'}),/语音和电话/);
 });
