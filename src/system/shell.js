@@ -3,6 +3,7 @@ import {restartDialog} from './restart/index.js';
 import {btn,esc,icon,timeLabel,demo} from './ui.js';
 import {registry,installed,homePages,dockApps,appUnlocked} from './registry.js';
 import {taiPresence} from '../services/presence.js';
+import {taiDisplayName} from '../apps/noapp/contact.js';
 import {reminders} from '../services/reminders.js';
 import {wishPurchaseOverlay} from '../apps/reminders/index.js';
 import {storyDay,dateParts,dateLabel} from '../services/calendar.js';
@@ -18,7 +19,7 @@ const notificationApp=(n)=>{
   const id=n.link?.appId||({'微信':'wechat','短信':'messages','信息':'messages','电话':'phone','邮件':'kira','KIRA':'kira','天气':'weather','时钟':'clock','闹钟':'clock','MIRAGE':'mirage'}[n.title]);
   return registry.get(id)?.manifest||registry.get('messages')?.manifest;
 };
-export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
+export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.link?.appId==='noapp'&&(['/chat/tai','/call'].includes(n.link.route))?taiDisplayName(s):n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
 const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
 export function reminderWidget(s){
   const items=reminders(s),pending=items.filter(r=>!r.done);
@@ -40,10 +41,10 @@ export function appFrame(s,app,body){
   const c=id?s.content.conversations[app.manifest.id]?.find(c=>c.id===id):null;
   const p=app.manifest.id==='noapp'&&id==='tai'?taiPresence(s):null;
   const viewKey=(app.manifest.id==='wechat'&&['/','/contacts','/discover','/me'].includes(loc.route))?'wechat-tabs':(app.manifest.id==='photos'&&['/','/collections'].includes(loc.route))?'photos-tabs':(app.manifest.id==='mirage'&&['/','/contacts','/bounties','/bounties/completed','/market','/manage'].includes(loc.route))?'mirage-tabs':app.manifest.id+loc.route;
-  const wechatChat=app.manifest.id==='wechat'&&!!c,wechatMoments=app.manifest.id==='wechat'&&loc.route.startsWith('/moments'),displayName=c?.name||app.manifest.name;
+  const wechatChat=app.manifest.id==='wechat'&&!!c,wechatMoments=app.manifest.id==='wechat'&&loc.route.startsWith('/moments'),displayName=p?taiDisplayName(s):loc.route==='/contact/tai'?'聊天資訊':c?.name||app.manifest.name;
   const nav=['aomi','browser'].includes(app.manifest.id)||wechatMoments?'':wechatChat?
     `<div class="app-nav wx-native-nav">${btn('back',wxBackIcon,'nav-back','aria-label="返回微信"')}<strong>${esc(displayName)}${isGroup(c)?' ('+actors(c).length+')':''}</strong>${btn('wx-chat-more',wxMoreIcon,'nav-home wx-native-more','aria-label="聊天详情"')}</div>`:
-    `<div class="app-nav">${btn('back','‹','nav-back','aria-label="返回"')}<div><strong>${esc(displayName)}</strong>${p?`<small class="nav-presence">${esc(p.reason)}</small>`:''}</div>${btn('home','⌂','nav-home','aria-label="主屏幕"')}</div>`;
+    `<div class="app-nav">${btn('back','‹','nav-back','aria-label="返回"')}<div><strong>${esc(displayName)}</strong>${p?`<small class="nav-presence">${esc(p.reason)}</small>`:''}</div>${p?btn('tai-contact-more',wxMoreIcon,'nav-home wx-native-more','aria-label="聊天資訊"'):btn('home','⌂','nav-home','aria-label="主屏幕"')}</div>`;
   return `<div data-view-key="${esc(viewKey)}" class="app-view ${dark?'app-dark':''} ${c?'has-chat':''} ${wechatMoments?'has-moments':''} app-${app.manifest.id}">${nav}<div class="app-content" id="app-content">${body}</div></div>`;
 }
 export function status(s,{islandExpanded=false,islandPage='home'}={}){return `<div class="status-bar"><button data-action="notify" aria-label="通知中心">${esc(s.clock)}</button><div class="status-right"><button class="status-control-trigger" data-action="control-center" aria-label="控制中心">${signal}<span class="status-network">5G</span></button>${battery(s)}</div></div>${dynamicIsland(s,{expanded:islandExpanded,page:islandPage})}`;}

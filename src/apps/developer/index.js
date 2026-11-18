@@ -35,6 +35,7 @@ function nav(route,s){return `<div class="editor-nav-grid">${tabs.map((group,i)=
 export function render({store},loc){const s=store.get(),route=loc.route.slice(1)||'conversations';return `<div class="page-pad editor-page"><span class="eyebrow">LOCAL DRAFT ${demo()}</span><div class="large-title">开发人员 · 内容工作台</div><p class="editor-help">先编辑历史与剧情，再用时间测试触发；GHOST 的订单关联与随机关卡单独检查。所有修改只在当前预览数据中生效，完成后可导出。</p>${nav(route,s)}${route==='story55'?story55Editor(s):route==='voice-authoring'?voicePanel(s):route==='diary'?diaryEditor(s):route==='moments'?momentsEditor(s):route==='ai'?aiVoicePanel(s):route==='worldbook'?worldbookPanel(s):route==='tai-phone'?taiPhonePanel(s):route==='ghost'?ghostEditor(s):route==='mission'?missionEditor(s):route==='presets'?presetEditor(s):route==='assets'?assets(s):route==='preview'?preview(s):route==='sms'?sms(s):route==='phone'?phoneEditor(s):conversations(s)}</div>`;}
 export function handle(a,t,ctx){
  const {store,router}=ctx,id=t.dataset.id;
+ if(a==='editor-tai-settings'){router.open({appId:'noapp',route:'/settings-ai'});return;}
  if(a==='s55-speed-default'){
   store.update(s=>setStory55MinutesPerSecond(s,STORY55_SPEED_DEFAULT));
   ctx.toast(`主畫面掛機已恢復：1 秒＝${STORY55_SPEED_DEFAULT} 分鐘；App 內 1 分鐘＝${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘`);

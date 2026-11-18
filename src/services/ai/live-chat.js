@@ -3,6 +3,10 @@ import {unheardReply} from '../voice/unheard.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
+import {absoluteMinute} from '../../system/time/clock.js';
+import {taiVoiceRemaining} from './voice-budget.js';
+import {hasBannedTaiReassurance} from './expression-style.js';
+import {taiDisplayName,markTaiRead} from '../../apps/noapp/contact.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
 import {deathLocked} from '../../system/power/story.js';
@@ -24,6 +28,7 @@ import {researchTaiPhone} from './phone-mcp/curiosity.js';
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const replyAfter=(c,id)=>{
  if(!c)return true;
+ if(c.messages.some(m=>m.from==='tai'&&m.replySourceId===id))return true;
  const source=c.messages.find(m=>m.id===id);
  const messages=visibleMessages(c).filter(m=>!m.demo&&(!Number.isInteger(source?.day)||!Number.isInteger(m.day)||m.day<=source.day));
  const i=messages.findIndex(m=>m.id===id);
@@ -34,21 +39,22 @@ export const isTaiReplyPending=store=>pendingRequests.has(store);
 export function isCurrentTaiTurn(s,sourceMessageId,day){
  const c=conversation(s);
  return !!c&&s.day===day&&!deathLocked(s)&&!s.poweredOff&&s.powerMode==='idle'&&
-  taiPresence(s).status!=='away'&&visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.day<=s.day).at(-1)?.id===sourceMessageId;
+  taiPresence(s).contactable&&visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.day<=s.day).at(-1)?.id===sourceMessageId;
 }
 // Recover persisted deferrals after a page reload while the game is active.
-// Real time is persisted on the source message, but NO background web worker is used.
+// New deferrals follow the game clock; old wall-clock saves remain readable.
 const deferredResumes=new WeakSet(),deferredFailures=new WeakMap();
 export function maybeResumeTaiDeferred(store,{now=Date.now,wait}={}){
  const current=store.get(),c=conversation(current);
  if(!c||deferredResumes.has(store)||pendingRequests.has(store)||now()<(deferredFailures.get(store)||0))return false;
  if(!taiRecognized(current)||deathLocked(current)||current.poweredOff||current.powerMode!=='idle')return false;
  const source=visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.actual!==false&&m.day<=current.day).at(-1);
- if(!source?.taiDeferredUntil||source.taiDeferredUntil>now()||source.taiHandledAction||replyAfter(c,source.id))return false;
+ if(!source?.taiPending&&!source?.taiDeferredUntil&&!source?.taiDeferredGameMinute)return false;
+ if(source.taiDeferredUntil>now()||source.taiDeferredGameMinute>absoluteMinute(current)||source.taiHandledAction||replyAfter(c,source.id))return false;
  const presence=taiPresence(current);
  if(!presence.contactable||presence.status==='away')return false;
  deferredResumes.add(store);
- const task=replyToTaiMessage(store,source.id,{retryDeferred:true,now,...(wait?{wait}:{})}).catch(error=>{
+ const task=replyToTaiMessage(store,source.id,{retryDeferred:!!(source.taiDeferredGameMinute||source.taiDeferredUntil),now,...(wait?{wait}:{})}).catch(error=>{
   deferredFailures.set(store,now()+60000);
   console.warn('Tai persisted deferred reply retry failed:',error?.message);
  }).finally(()=>deferredResumes.delete(store));
@@ -62,15 +68,21 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||c.messages.some(m=>m.id===sourceMessageId&&['read_no_reply','end_session','start_call'].includes(m.taiHandledAction))||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
  const pendingSource=c.messages.find(m=>m.id===sourceMessageId);
  if(pendingSource?.taiDeferredUntil&&now()<pendingSource.taiDeferredUntil)return {status:'deferred',retryAfterMs:pendingSource.taiDeferredUntil-now()};
+ if(pendingSource?.taiDeferredGameMinute>absoluteMinute(initial))return {status:'deferred'};
  if(!taiRecognized(initial)||deathLocked(initial))return {status:'unavailable',message:'当前剧情暂不能回复'};
  const presence=taiPresence(initial);
- if(!presence.contactable||presence.status==='away')return {status:'offline',message:'熙泰暂时不在线，消息已保存'};
+ if(!presence.contactable||presence.status==='away'){
+  store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiPending=true;});
+  return {status:'offline',message:'熙泰暫時不在線，訊息已保存'};
+ }
  markTaiEngaged();
  if(pendingRequests.has(store))return {status:'busy',message:'熙泰正在输入'};
+ if(pendingSource?.kind==='image'){store.update(s=>{markTaiRead(s,sourceMessageId,now());const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiHandledAction='read_no_reply';});return {status:'read_no_reply',count:0};}
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day)
   .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};
  pendingRequests.add(store);
+ store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiPending=true;});
  const startedAt=now(),behavior=taiBehavior(initial);
  try{
   const source=c.messages.find(m=>m.id===sourceMessageId);
@@ -88,8 +100,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    firstTextAfterCall?({player:'call_ended_player',tai:'call_ended_tai',connection_error:'call_ended_error'}[lastEndedCall.endedBy]):null].filter(Boolean);
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
-  const allowVoice=!!status.minimax&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
-  const voiceTurn=unheard?!!apiConfig().minimax:!!status.minimax&&voiceRequested;
+  const voiceAvailable=!!status.minimax&&taiVoiceRemaining(initial,'message')>0;
+  const allowVoice=voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
+  const voiceTurn=unheard?!!apiConfig().minimax&&taiVoiceRemaining(initial,'message')>0:voiceAvailable&&voiceRequested;
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
    (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':lastEndedCall.endedBy==='connection_error'?'连接异常导致电话断开，不是任何一方主动挂断。':'系统已结束电话。')+
@@ -97,16 +110,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,worldbookEvents,
-   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':voiceRequested&&status.minimax?' 現在無法再發新語音，正常用文字回覆，不提內部額度或接口。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:availableCall&&!!status.minimax&&(!firstTextAfterCall||requestedCall),allowVoice,
+   allowCall:availableCall&&!!status.minimax&&taiVoiceRemaining(initial,'call')>0&&(!firstTextAfterCall||requestedCall),allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
-  decision=honorTaiVoiceRequest(decision,{text:lastUser,available:!!status.minimax});
+  decision=honorTaiVoiceRequest(decision,{text:lastUser,available:voiceAvailable});
   if(!unheard&&decision?.action!=='defer_reply'&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&!replyAfter(conversation(store.get()),sourceMessageId)){
    store.update(s=>rememberTaiConversation(s,lastUser,{sourceId:sourceMessageId}));
    if(decision)rememberTaiMood(store,decision,'text:'+sourceMessageId,{evidence:lastUser});
@@ -115,17 +128,17 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(decision.action==='start_call'){
     const called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason:'【熙泰本轮主动决定来电】'+(decision.intent||'想亲自听熙蒙说话')});
-    if(called){store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiReadAt=now();m.taiHandledAction='start_call';}
+    if(called){store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){markTaiRead(s,sourceMessageId,now());m.taiHandledAction='start_call';}
       s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock,protocol:'v10'});});
      return {status:'called',count:0,action:'start_call'};}
     // A failed real call is NOT replaced by a false spoken promise.
    }else if(decision.action==='defer_reply'){
-    const until=now()+decision.delay_seconds*1000;
-    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiDeferredUntil=until;m.taiDeferredCount=(m.taiDeferredCount||0)+1;}
+    const until=absoluteMinute(store.get())+Math.max(1,Math.ceil(decision.delay_seconds/60));
+    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){delete m.taiDeferredUntil;m.taiDeferredGameMinute=until;m.taiDeferredCount=(m.taiDeferredCount||0)+1;}
      s.events.push({type:'tai_deferred_reply',sourceId:sourceMessageId,day:s.day,clock:s.clock,dueAt:until});});
-    return {status:'deferred',retryAfterMs:decision.delay_seconds*1000};
+    return {status:'deferred'};
    }else{
-    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){m.taiReadAt=now();m.taiHandledAction=decision.action;}
+    store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){markTaiRead(s,sourceMessageId,now());m.taiHandledAction=decision.action;}
      s.events.push({type:'tai_action_'+decision.action,sourceId:sourceMessageId,day:s.day,clock:s.clock});});
     return {status:decision.action,count:0};
    }
@@ -146,8 +159,10 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
    request.scene+='\\n'+observed;
   }
+  if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
+  store.update(s=>markTaiRead(s,sourceMessageId,now(),{keepPending:true}));
   if(!unheard)onTyping();
-  const result=unheard?null:await askTai(request);
+  const result=unheard?null:await askTai({...request,relationshipContext:xitaiRelationshipContext(store.get(),{mode:'text'})});
   let draftEntries=unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
   // A bare mirrored greeting is a model-continuation artifact, not a choice
   // rooted in Tai's personality. Repair it only when he replied with nothing
@@ -196,6 +211,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
   // bubble; the first phone utterance is played only after the player answers.
+  if((hasBannedTaiReassurance(draftEntries.map(e=>e.text))||hasBannedTaiReassurance(draftEntries.map(e=>e.speechText||e.text))))throw Error('Blocked combined dialogue');
   const limit=Math.max(1,behavior.maxMessages);
   const phoneAt=draftEntries.findIndex(item=>item.action==='phone');
   const selected=phoneAt>=limit?[...draftEntries.slice(0,limit-1),draftEntries[phoneAt]]:draftEntries.slice(0,limit);
@@ -220,16 +236,17 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    }
    const id=uid();
    let msg={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',aiGenerated:true,actual:true,replySourceId:sourceMessageId,voiceRequested:false,...(item.translation?{translation:item.translation}:{})};
-   if(item.mode==='voice')msg=await prepareTaiVoice(msg,{speechText:item.speechText||item.text,tone:item.tone});
+   if(item.mode==='voice')msg=await prepareTaiVoice(msg,{speechText:item.speechText||item.text,tone:item.tone,store});
    if(unavailableVoice)msg={...msg,text:voiceFailureLine(id),translation:undefined};
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||emitted===0&&replyAfter(conversation(store.get()),sourceMessageId))break;
    store.update(s=>{
     const target=conversation(s);if(!target)return;
+    markTaiRead(s,sourceMessageId,now());
     target.messages.push({...msg,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
     if(!unheard&&!unavailableVoice)rememberTaiDelivered(s,msg.voiceCaption||msg.text,{sourceId:id});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=Math.max(0,Number(target.unread)||0)+1;
-     s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:target.name,
+     s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),
        body:msg.kind==='voice'?'語音訊息':msg.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
     }
    });
@@ -242,7 +259,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // (phone) has priority over fragile sentence regexes. The old phrase
   // detector remains as compatibility for models that forget the marker.
   const alreadyCalled=store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId);
-  const shouldCall=!actualDecision&&!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
+  const shouldCall=taiVoiceRemaining(store.get(),'call')>0&&!actualDecision&&!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
    !!phoneCommand||emitted>0&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered}));
   let called=false;
   if(shouldCall){
@@ -265,8 +282,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const id=uid(),text='晚點再說吧。';
   store.update(s=>{
    const target=conversation(s);if(!target)return;
+   markTaiRead(s,sourceMessageId,now());
    target.messages.push({id,from:'tai',text,kind:'text',actual:true,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
-   if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:target.name,body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+   if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
   });
   return {status:'replied',count:1,text};
  }finally{pendingRequests.delete(store);}

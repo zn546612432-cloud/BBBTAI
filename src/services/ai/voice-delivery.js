@@ -1,4 +1,6 @@
 import {voicePreview} from './gateway.js';
+import {synthesizeTaiVoice} from './voice-budget.js';
+import {taiPresence} from '../presence.js';
 import {saveClip} from '../voice/audio-store.js';
 
 const failedVoiceLines=['語音發不出去。','網不太好，還是打字吧。','不行，發不了語音。','算了，打字說。'];
@@ -12,14 +14,17 @@ export function callFailureLine({endedAfter=false,turns=[]}={}){
 
 // One shared queue. No message, unread count or notification until delivery.
 let queue=Promise.resolve();
-export function prepareTaiVoice(message,{speechText=message.text,tone=message.aiTone}={}){
+export function prepareTaiVoice(message,{speechText=message.text,tone=message.aiTone,store}={}){
  const work=async()=>{
   try{
-   const clip=await voicePreview({text:speechText,tone,directed:true});
+   if(store&&!taiPresence(store.get()).contactable)return message;
+   const options={text:speechText,tone,directed:true};
+   const clip=store?await synthesizeTaiVoice(store,'message',options,voicePreview):await voicePreview(options);
    const audioId='tai-'+message.id;
    await saveClip(audioId,clip);
    return {...message,kind:'voice',audioId,voiceCaption:message.text,speechText,voiceRequested:undefined};
   }catch(error){
+   if(error?.code==='TAI_VOICE_LIMIT'||error?.code==='TAI_STYLE')return {...message,kind:'text',voiceRequested:undefined};
    console.warn('NoApp voice delivery failed:',error?.message);
    return {...message,kind:'text',text:voiceFailureLine(message.id),translation:undefined,voiceRequested:undefined};
   }

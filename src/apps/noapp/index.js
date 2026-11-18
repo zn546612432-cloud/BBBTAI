@@ -15,6 +15,10 @@ import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID,XITAI
 import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
 import {isTaiCloudHost} from '../../services/ai/supabase-gateway.js';
 import {taiPresence} from '../../services/presence.js';
+import {unlockTaiVoice} from '../../services/ai/voice-budget.js';
+import {TAI_ID,taiDisplayName} from './contact.js';
+import {sendMessage} from '../../services/messaging/index.js';
+import {TAI_PORTRAIT} from './portrait.js';
 import {btn,demo,esc} from '../../system/ui.js';
 import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice,callState} from './voice-call.js';
 
@@ -29,7 +33,7 @@ function showFeedback(ctx,message){taiFeedback=message;const nav=ctx.store.get()
 function queueTaiReply(ctx,messageId){
  const version=++replyVersion;
  if(pendingTai)clearTimeout(pendingTai);
- ctx.store.update(s=>{const m=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===messageId);if(m&&!m.receivedAt)m.receivedAt=Date.now();});
+ ctx.store.update(s=>{const m=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===messageId);if(m){m.receivedAt??=Date.now();m.taiPending=true;}});
  showFeedback(ctx,'已发送');
  const run=async(retryDeferred=false)=>{
   if(version!==replyVersion)return;
@@ -42,15 +46,14 @@ function queueTaiReply(ctx,messageId){
    if(result.status==='busy'){pendingTai=setTimeout(()=>run(retryDeferred),500);return;}
    if(result.status==='deferred'){
     showFeedback(ctx,'已送达');
-    pendingTai=setTimeout(()=>run(true),Math.max(50,result.retryAfterMs||90000));
-    pendingTai.unref?.();
+    // Persisted deferrals are resumed by the shared game-clock tick.
     return;
    }
    showFeedback(ctx,['read_no_reply','end_session'].includes(result.status)?'已读':
      result.status==='offline'?'暫時不在線':result.status==='unavailable'?'已送達':'');
   }catch(error){console.warn('NoApp text reply failed:',error?.message);if(version===replyVersion)showFeedback(ctx,'已送達');}
  };
- pendingTai=setTimeout(run,3000);
+ pendingTai=setTimeout(run,500);
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft},cloud=isTaiCloudHost();
@@ -95,6 +98,7 @@ function finalAudioBubble(s,line){
 export function render({store},loc){
  const s=store.get();
   if(loc.route==='/settings-ai')return setting(s);
+  if(loc.route==='/contact/tai'&&taiRecognized(s))return `<div class="tai-contact-page"><div class="tai-contact-card"><img src="${esc(s.characterAvatars?.['熙泰']||TAI_PORTRAIT)}" alt=""><div><strong>${esc(taiDisplayName(s))}</strong><small>NoApp ID：${TAI_ID}</small></div></div><form data-form="tai-save-remark" class="tai-contact-remark"><label for="tai-remark">設定備註</label><input id="tai-remark" name="remark" maxlength="32" placeholder="未設定" value="${esc(s.aiDraft?.taiRemark||'')}"><button type="submit">儲存</button></form><button class="tai-contact-call" data-action="tai-outgoing">語音通話 <span>›</span></button></div>`;
   if(isStory55(s)&&!taiRecognized(s)&&(!s.story55?.noappInstalled||nodeStatus(s,'recognition').state!=='ready'))return noappGate(s);
  const legacyStoryRoute=loc.route==='/story55/recognition'||loc.route==='/story55/ending';
  const id=legacyStoryRoute?'tai':loc.route.startsWith('/chat/')?loc.route.slice(6):null;
@@ -102,10 +106,9 @@ export function render({store},loc){
  if(loc.route==='/call')return callView(s);
  if(loc.route==='/settings-ai')return setting(s);
  const phoneIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.7 19.7 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.7L7.1 10a16 16 0 0 0 7 7l1.6-1.9a2 2 0 0 1 1.7-.6l3 .5a2 2 0 0 1 1.6 1.9Z"/></svg>';
- const settingsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.5 1.5 0 0 0 .3 1.7l.1.1-2.2 2.2-.1-.1a1.5 1.5 0 0 0-1.7-.3l-.7.3a1.5 1.5 0 0 0-.9 1.4v.2H11v-.2a1.5 1.5 0 0 0-.9-1.4l-.7-.3a1.5 1.5 0 0 0-1.7.3l-.1.1-2.2-2.2.1-.1a1.5 1.5 0 0 0 .3-1.7l-.3-.7a1.5 1.5 0 0 0-1.4-.9H4v-3.2h.2a1.5 1.5 0 0 0 1.4-.9l.3-.7a1.5 1.5 0 0 0-.3-1.7l-.1-.1 2.2-2.2.1.1a1.5 1.5 0 0 0 1.7.3l.7-.3a1.5 1.5 0 0 0 .9-1.4V4h3.2v.2a1.5 1.5 0 0 0 .9 1.4l.7.3a1.5 1.5 0 0 0 1.7-.3l.1-.1 2.2 2.2-.1.1a1.5 1.5 0 0 0-.3 1.7l.3.7a1.5 1.5 0 0 0 1.4.9h.2v3.2h-.2a1.5 1.5 0 0 0-1.4.9Z"/></svg>';
- const toolbar=taiRecognized(s)?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
+ const toolbar=taiRecognized(s)&&id==='tai'?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
- '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button></nav>':'';
+ '</nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
  return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
 }
@@ -115,7 +118,8 @@ export async function handle(action,target,ctx){
  if(action==='accept-invite'){const matchId=receiveInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='defer-invite')deferInvitation(ctx.store,id);
  if(action==='open-invite-match'){const matchId=startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
- if(action==='attach-chat')attachChat(id,'noapp',ctx);
+ if(action==='attach-chat'){if(id==='tai'){ctx.pickImage(src=>queueTaiReply(ctx,sendMessage(ctx.store,{channel:'noapp',conversationId:id,text:src,kind:'image'})));}else attachChat(id,'noapp',ctx);return;}
+ if(action==='tai-contact-more'){ctx.router.open({appId:'noapp',route:'/contact/tai'});return;}
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
  if(action==='tai-clear-ai'){settingsDraft={};voiceDiagnosis={state:'idle',message:''};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
  if(action==='tai-check-persona'){
@@ -169,7 +173,8 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='tai-save-remark'){const remark=String(new FormData(form).get('remark')||'').trim().slice(0,32);ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.taiRemark=remark;});ctx.router.open({appId:'noapp',route:'/chat/tai'});return;}
+ if(form.dataset.form==='send-chat'){if(form.dataset.id==='tai'&&unlockTaiVoice(ctx.store,new FormData(form).get('text'))){form.elements.text.value='';ctx.refresh();return;}const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-behavior'){
   const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));

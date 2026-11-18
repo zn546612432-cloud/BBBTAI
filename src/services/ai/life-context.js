@@ -1,23 +1,28 @@
 import {isStory55,taiRecognized} from '../story55/state.js';
-import {displayDate} from '../calendar.js';
-// Original game life, stable within each game day. No real-world event claims.
-// Keep a small authored itinerary rather than rerolling a new life every prompt.
-const days=[
- {place:'英国住处',zone:'Europe/London',focus:'早上赖了一会儿床，晚些时候准备训练；今天惦记的是一杯像样的咖啡和早饭吃什么'},
- {place:'英国校园',zone:'Europe/London',focus:'有课程和阅读安排，今天惦记的是出门吃顿像样的饭；学习之外也有自己的口味'},
- {place:'英国住处',zone:'Europe/London',focus:'训练日，练完有些酸，洗澡、吃饭，可能抱怨健身房里一件小事'},
- {place:'巴黎酒店',zone:'Europe/Paris',focus:'短途旅行，看展与看秀后回酒店；可聊某个剪裁、作品或现场小插曲，不编真实品牌场次日期'},
- {place:'巴黎酒店',zone:'Europe/Paris',focus:'旅行第二天，在城里走走、吃饭，晚上小酌后准备休息；不要一整天都喝醉'},
- {place:'英国住处',zone:'Europe/London',focus:'旅行回来整理衣物和书，恢复学习；可以接着聊旅行中见到的东西'},
- {place:'英国住处',zone:'Europe/London',focus:'有自己的学习与理财安排，空下来会听音乐、找电影、聊朋友聚餐；不用强行聊研究'}
-];
+import {dateParts} from '../calendar.js';
+import {taiVoiceRemaining} from './voice-budget.js';
+
+const londonFormat=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+// Same game civil date/clock as the phone; Intl handles British summer time.
+export function taiLife(s){
+ const date=dateParts(s).iso,instant=new Date(`${date}T${s.clock||'00:00'}:00+08:00`);
+ const p=Object.fromEntries(londonFormat.formatToParts(instant).map(p=>[p.type,p.value]));
+ const local=`${p.hour}:${p.minute}`,minute=Number(p.hour)*60+Number(p.minute),localDate=`${p.year}-${p.month}-${p.day}`;
+ const variant=(Number(p.day)+Number(p.month))%3;
+ let activity,status='online';
+ if(minute>=90&&minute<450){activity='睡覺';status='offline';}
+ else if(minute<90||minute>=1260)activity=minute<90?'準備休息或私人時間':'私人時間';
+ else if(minute<540)activity=['早餐','洗漱、早餐','起床後整理私事'][variant];
+ else if(minute<720){activity=['處理工作','專注技術事務','工作與會議'][variant];status='busy';}
+ else if(minute<840)activity=['午餐','休息','午餐及私人事務'][variant];
+ else if(minute<1080){activity=['工作與會議','處理團隊事務','專注工作'][variant];status='busy';}
+ else {activity=['晚餐','運動及休息','外出或私人事務'][variant];status=variant===1?'busy':'online';}
+ return {localDate,local,minute,activity,status};
+}
 export function taiLifeContext(s){
  if(!taiRecognized(s))return '';
- const routine=[days[0],days[1],days[2],days[6]];
- const plan=isStory55(s)?(s.day>=43?{place:'巴黎酒店',zone:'Europe/Paris',focus:'学术会议期间，承接巴黎通话与见面约定，只有空闲时才聊生活，不预知后续危险结果'}:routine[s.day%routine.length]):s.day===64?days[3]:s.day===65?days[4]:s.day===66?days[5]:routine[((s.day-56)%routine.length+routine.length)%routine.length];
- // Game D01 = 2025-05-19. A Macau clock is not his local clock overseas.
- const [h,m]=String(s.clock||'00:00').split(':').map(Number);
- const instant=new Date(displayDate(s).getTime()+((h-8)*60+m)*60000);
- const local=new Intl.DateTimeFormat('zh-CN',{timeZone:plan.zone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(instant);
- return `本日原创生活背景 D${s.day}：${plan.place}，当地 ${local}；澳门游戏钟 ${s.clock}。${plan.focus}。先按当地时间推导当前身体状态：刚起床、出门、吃饭、忙完、疲惫或睡前；不能因为澳门是凌晨就断言英国或巴黎也已经凌晨。以上是仅供判断角色时间、精力与可联系状态的内部候选，不是聊天话题或已完成的真实行程。熙蒙没问时，严禁主动交代你今天在哪、做了什么、去过哪里、健身或参加了什么活动；独立生活只通过真实可用性与态度产生影响。熙蒙明确问起或需要解释无法回应时，可以选择性说一点且不虚构已发生的活动；已经亲口说过的近况才可自然延续，不无故改地点。谈话兴趣放在熙蒙实际说过的事上，不重复问他在干什么；涉及危险或难过先接住眼前的事。`;
+ const life=taiLife(s);
+ // Preserve the retired D64 preview's explicitly established trip context.
+ const legacyTrip=!isStory55(s)&&[64,65].includes(s.day)?`舊預覽已設定巴黎酒店，当地 ${new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(`${dateParts(s).iso}T${s.clock}:00+08:00`))}。`:'';
+ return `【當前生活狀態，隨遊戲時間更新】D${s.day} 澳門 ${s.clock}；英國 ${life.localDate} ${life.local}（Europe/London）。${legacyTrip}當前活動：${life.activity}；可用性：${life.status}；今日電話語音剩餘 ${Number.isFinite(taiVoiceRemaining(s,'call'))?taiVoiceRemaining(s,'call'):'無限制'} 段、語音訊息剩餘 ${Number.isFinite(taiVoiceRemaining(s,'message'))?taiVoiceRemaining(s,'message'):'無限制'} 段。以上是內部狀態，不要報備、不念出額度或時間換算。空閒時可以即時回覆，忙時根據訊息重要程度決定延後、已讀不回或正常回覆；睡眠 01:30–07:30 不收讀、不回覆、不接電話。不編造已發生的行程；只有熙蒙問及或確有必要時才透露一點近況。`;
 }

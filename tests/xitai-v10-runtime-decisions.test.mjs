@@ -5,6 +5,7 @@ import {replyToTaiMessage,maybeResumeTaiDeferred} from '../src/services/ai/live-
 import {callState,callAction} from '../src/apps/noapp/voice-call.js';
 import {chatView} from '../src/components/chat.js';
 import {saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js';
+import {absoluteMinute} from '../src/system/time/clock.js';
 
 function setup(input='在吗？'){
  const state=initialState();
@@ -47,12 +48,12 @@ test('real read_no_reply marks receipt but sends zero bubbles and skips expressi
  });
 });
 
-test('defer_reply creates a real future retry time without claiming to read',async()=>{
- const {chat,store}=setup();
+test('defer_reply creates a future game-clock retry time without claiming to read',async()=>{
+ const {chat,store,state}=setup();
  await withMockDirect('defer_reply',async calls=>{
   const result=await replyToTaiMessage(store,'u-v10',quick);
-  assert.equal(result.status,'deferred');assert.equal(result.retryAfterMs,90000);
-  assert.equal(chat.messages.at(-1).taiDeferredUntil,1090000);
+  assert.equal(result.status,'deferred');
+  assert.equal(chat.messages.at(-1).taiDeferredGameMinute,absoluteMinute(state)+2);
   assert.equal(chat.messages.at(-1).taiReadAt,undefined);
   assert.equal(chat.messages.filter(m=>m.from==='tai'&&m.replySourceId==='u-v10').length,0);
   assert.equal(calls.length,1);

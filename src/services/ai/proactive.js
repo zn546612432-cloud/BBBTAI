@@ -8,6 +8,9 @@ import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {isTaiReplyPending} from './live-chat.js';
 import {prepareTaiVoice} from './voice-delivery.js';
+import {taiVoiceRemaining} from './voice-budget.js';
+import {hasBannedTaiReassurance} from './expression-style.js';
+import {taiDisplayName} from '../../apps/noapp/contact.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
@@ -25,7 +28,8 @@ const chat=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 const stamp=x=>Number(x.day)*1440+Number((x.clock||x.time||'00:00').slice(0,2))*60+Number((x.clock||x.time||'00:00').slice(3,5));
 const history=s=>visibleMessages(chat(s)||{messages:[]}).filter(m=>!m.demo&&m.day<=s.day&&m.kind!=='image'&&m.kind!=='call'&&m.kind!=='app_invitation'&&m.text?.trim());
 function eligible(s){
- return taiRecognized(s)&&(isStory55(s)?!final55(s):s.day<90)&&!s.poweredOff&&s.powerMode==='idle'&&taiPresence(s).status==='online';
+ const p=taiPresence(s);
+ return taiRecognized(s)&&(isStory55(s)?!final55(s):s.day<90)&&!s.poweredOff&&s.powerMode==='idle'&&p.contactable&&['online','busy'].includes(p.status);
 }
 function elapsed(s,entry,c,now){
  if(c.triggerClock==='real'&&entry.receivedAt)return Math.max(0,(now-entry.receivedAt)/60000);
@@ -83,7 +87,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
  inFlight.add(store);
  try{
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
-  const allowVoice=!afterCall&&!!status.minimax&&c.autonomousVoice;
+  const allowVoice=!afterCall&&!!status.minimax&&c.autonomousVoice&&taiVoiceRemaining(initial,'message')>0;
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
   let scene=afterCall?'【真實通話回執】熙蒙親自按下掛斷鍵。實際聽見的通話如下：\n'+String(postCall.transcript||'（沒有已播放對白）').slice(0,900)+'\n判斷是否正常告別或突然中斷，若正常則不發；若確有話沒說完、對方突然終止或自己說重了，可以發一至三條實際文字，語氣符合此刻的心情。不能把按鍵者直接等同於過錯者。不發語音、不另撥電話。':followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
@@ -103,7 +107,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
   const worldbookSnapshot=captureTaiWorldbook(store,{channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scenario:scene,worldbookEvents,trigger:'quiet',turnId,messageIndex:history(initial).length});
   const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,worldbookEvents,worldbookSnapshot,
    relationshipContext,sourceMessageId:afterCall?postCall.id:'',hasIncoming:false,allowDefer:false,allowVoice,
-   allowCall:!afterCall&&!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
+   allowCall:!afterCall&&!!status.minimax&&taiVoiceRemaining(initial,'call')>0&&!['ringing','dialing','connected'].includes(callState().state)});
   if(afterCall){if(!decision||chat(store.get())?.messages.at(-1)?.id!==postCall.id||isTaiReplyPending(store)||['ringing','dialing','connected'].includes(callState().state))return false;store.update(s=>{s.events.push({type:'tai_postcall_handled',sourceId:postCall.id,day:s.day,clock:s.clock,responsibility:decision.call_responsibility,reason:decision.call_reason});});}
   if(decision&&eligible(store.get())&&history(store.get()).at(-1)?.id===history(initial).at(-1)?.id)rememberTaiMood(store,decision,turnId,{evidence:afterCall?postCall.transcript:''});
   if(decision?.action==='end_session'){
@@ -146,6 +150,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
   }
   items=dedupeTaiTurnEntries(items,turnPlan.target);
   if(approvedDecision?.action==='send_voice'||!approvedDecision&&allowVoice&&items.every(m=>m.mode==='voice'))items=combineTaiVoiceThoughts(items);
+  if((hasBannedTaiReassurance(items.map(e=>e.text))||hasBannedTaiReassurance(items.map(e=>e.speechText||e.text))))return false;
   let expected=history(initial).at(-1)?.id,emitted=0;
   for(const item of items){
    if(emitted)await wait(replyDelayMs(item.text,c,{random}));
@@ -155,7 +160,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    const id=uid();
    const voiceMode=approvedDecision?approvedDecision.action==='send_voice':allowVoice&&item.mode==='voice';
    let message={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:approvedDecision?.vocal_cue||'none',aiGenerated:true,actual:true,proactive:true,followup,followupSourceId:followup?source.id:undefined,voiceRequested:false};
-   if(voiceMode)message=await prepareTaiVoice(message,{speechText:item.speechText||item.text,tone:item.tone});
+   if(voiceMode)message=await prepareTaiVoice(message,{speechText:item.speechText||item.text,tone:item.tone,store});
    const after=store.get();
    if(!eligible(after)||after.day!==initial.day||isTaiReplyPending(store)||history(after).at(-1)?.id!==expected||afterCall&&['ringing','dialing','connected'].includes(callState().state))break;
    store.update(s=>{
@@ -164,7 +169,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
     rememberTaiDelivered(s,message.voiceCaption||message.text,{sourceId:id});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=(target.unread||0)+1;
-     s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:message.kind==='voice'?'語音訊息':message.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
+     s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:taiDisplayName(s),body:message.kind==='voice'?'語音訊息':message.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});
     }
     if(!emitted)s.events.push({type:afterCall?'tai_postcall_sent':followup?'tai_proactive_followup':'tai_proactive_sent',sourceId:afterCall?postCall.id:source?.id,
      day:s.day,clock:s.clock,receivedAt:now(),testOnly:!!force&&!afterCall});
