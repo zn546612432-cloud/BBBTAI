@@ -31,7 +31,7 @@ test('sticky and cooldown only advance across new message indices',()=>{
  }
 });
 test('one saved source has one snapshot and mood survives later turns',()=>{
- const state={day:3,clock:'12:00',aiDraft:{worldbook:defaultWorldbook()}},store={get:()=>state,update:fn=>fn(state)};
+ const state={day:60,clock:'12:00',aiDraft:{worldbook:defaultWorldbook(),memories:[]}},store={get:()=>state,update:fn=>fn(state)};
  const context={...input('想聽聲音'),channel:'noapp',turnId:'unique'};
  const a=captureTaiWorldbook(store,context),cursor=state.aiDraft.worldbook.runtime.noapp.cursor;
  assert.equal(captureTaiWorldbook(store,{...context,messages:[{role:'user',content:'別的'}]}),a);

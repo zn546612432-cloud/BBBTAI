@@ -4,6 +4,7 @@ import {buildTaiPrompt} from '../../../../services/ai/tai-profile.js';
 import {taiActionDecisionPrompt} from '../../../../services/ai/action-protocol-v10.js';
 import {defaultWorldbook,readWorldbook,ensureWorldbook,normalizeEntry,normalizeSettings,importWorldbook,exportWorldbook,POSITIONS} from '../../../../services/ai/worldbook/format.js';
 import {previewTaiWorldbook,assembleTaiMessages} from '../../../../services/ai/worldbook/index.js';
+import {readTaiMood} from '../../../../services/ai/worldbook/mood.js';
 
 const v=esc,attr=x=>`data-id="${v(x)}"`,field=(name,label,value,type='text',extra='')=>`<label>${label}<input name="${name}" type="${type}" value="${v(value??'')}" ${extra}></label>`;
 const check=(name,label,value)=>`<label><input type="checkbox" name="${name}"${value?' checked':''}> ${label}</label>`;
@@ -20,8 +21,9 @@ const settingsFlags=[['recursive','遞歸掃描'],['caseSensitive','區分大小
 const tri=(name,label,value)=>opts(name,label,[['','繼承全局'],['true','是'],['false','否']],value===null?'':String(value));
 
 export function worldbookPanel(s){
- const w=readWorldbook(s),book=selected(s,w),e=picked(s,book),last=w.runtime?.noapp?.snapshot;
+ const w=readWorldbook(s),book=selected(s,w),e=picked(s,book),last=w.runtime?.noapp?.snapshot,mood=readTaiMood(s),episodes=(s.aiDraft?.memories||[]).filter(m=>m.kind==='episode'&&m.enabled!==false&&m.day<=s.day);
  return `<section class="editor-panel"><div class="card"><span class="eyebrow">XITAI / WORLD INFO</span><h2>熙泰 · 專屬世界書</h2><p class="editor-help">酒館 JSON 相容格式。條目僅在符合情境時注入；人格、劇情鎖與聲線仍以已確認設定為準。修改保存於當前手機存檔，匯出備份可跨裝置匯入。</p><p>${w.books.length} 本世界書 · ${w.books.reduce((n,b)=>n+b.entries.length,0)} 條目</p></div>
+ <div class="card"><h3>熙泰 · 當前心理狀態</h3><p>${mood?v(mood.mood+' / '+mood.intensity):'尚未形成新的情緒紀錄'}</p>${mood?'<p class="editor-help">'+v(mood.reason)+' · D'+v(mood.day)+' '+v(mood.clock)+'</p>':''}<p class="editor-help">尚未釐清 ${episodes.filter(m=>m.status==='open').length} 件 · 上輪提取 ${last?.longMemory?.length||0} 條跨日記憶。情緒自然淡化，不等於問題已解決；完整證據在 AI / 語音的人設與記憶審閱。</p></div>
  <div class="card"><h3>世界書庫</h3>${w.books.map(b=>btn('worldbook-select-book',v(b.name)+(b.enabled?'':'（停用）'),b.id===book?.id?'button-primary':'button-quiet',attr(b.id))).join(' ')}${btn('worldbook-new-book','＋ 新建','button-quiet wide')}
  <form data-form="worldbook-import">${area('json','貼上酒館 JSON / 角色卡 JSON','',4)}<button class="button-primary wide" type="submit">匯入世界書</button></form></div>
  ${book?`<form class="card" data-form="worldbook-book" ${attr(book.id)}><h3>世界書設定</h3>${field('name','名稱',book.name)}${opts('scope','範圍',[['character','人物'],['global','全局'],['chat','對話'],['persona','玩家設定']],book.scope)}${field('character','限定人物（可留空）',book.character)}${field('chat','限定對話 ID（可留空）',book.chat)}${field('persona','限定玩家設定（可留空）',book.persona)}${check('enabled','啟用此世界書',book.enabled!==false)}<button type="submit" class="button-primary wide">保存世界書</button>${btn('worldbook-export','匯出酒館 JSON','button-quiet',attr(book.id))}${book.id!=='xitai'?btn('worldbook-delete-book','刪除世界書','button-quiet',attr(book.id)):''}</form>

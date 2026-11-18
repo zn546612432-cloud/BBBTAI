@@ -4,7 +4,7 @@ import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {TAI_PORTRAIT} from './portrait.js';
-import {rememberTaiConversation} from '../../services/ai/memory.js';
+import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {askTai,chooseTaiAction,voicePreview,speechToText,apiConfig} from '../../services/ai/gateway.js';
@@ -242,6 +242,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  call.busy=true;
  call.generationId=(call.generationId||0)+1;
  const generationId=call.generationId;
+ const turnId='call:'+call.started+':'+sessionId+':'+generationId;
+ if(!opening&&!event)ctx.store.update(s=>rememberTaiConversation(s,text,{sourceId:turnId}));
  markTaiEngaged();ctx.refresh?.();
  try{
   const history=call.turns.slice(-20);
@@ -258,7 +260,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    taiMomentumPrompt(history,{mode:'call'});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
-  const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId:'call:'+call.started+':'+sessionId+':'+generationId});
+  const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId});
   const decision=forceHangUp?{schema_version:10,action:'hang_up',strategy:'answer_directly',intensity:'low',tone:'neutral',vocal_cue:'none',intent:'熙蒙明确让你现在结束通话：亲口告别，然后由程序真正挂断。'}:
    presetText||event==='unheard'?null:await chooseTaiAction({
    channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',
@@ -266,7 +268,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    hasIncoming:!opening&&!event&&!!text,callConnected:true,allowDefer:false
   });
   if(!current())return;
-  if(decision)rememberTaiMood(ctx.store,decision,'call:'+sessionId+':'+generationId);
+  if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
   if(decision?.action==='listen'){endAfter=false;call.lastTaiEndAt=Date.now();return;}
   if(decision)endAfter=decision.action==='hang_up';
   const data=presetText?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
@@ -304,6 +306,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!current()||outcome!=='completed')break;
    call.turns.push({role:'assistant',content:r.text,tone:r.tone||decision?.tone||'neutral',
     vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now()});
+   if(!presetText&&event!=='unheard')ctx.store.update(s=>rememberTaiDelivered(s,r.text,{sourceId:turnId+':played:'+call.turns.length}));
    call.caption='';call.audioReady=false;ctx.refresh?.();
    await new Promise(resolve=>setTimeout(resolve,behavior.callPause*1000));
   }
@@ -375,14 +378,9 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
    s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock,
     endedBy:previous.state==='connected'?call.endedBy:outcomeOverride&&endedBy==='tai'?'tai':null,endReason:previous.state==='connected'||outcomeOverride?endReason:'',
     durationSeconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
-   if(previous.turns.length){
-    s.aiDraft??={};s.aiDraft.memories??=[];
-    const transcript=previous.turns.slice(-8).map(t=>(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(0,600);
-    s.aiDraft.memories.push({day:s.day,visibility:'noapp',source:'NoApp已发生通话',text:transcript});
-    s.aiDraft.memories=s.aiDraft.memories.slice(-30);
-   }
    endedRecord=recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,endedBy:outcome==='declined'||outcome==='missed'?endedBy:call.endedBy,endReason,
     seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
+   if(endedRecord?.callStatus==='ended')rememberTaiCall(s,endedRecord);
    if(endedBy==='connection_error'&&fallback){
     const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
     if(chat){const id='tai-call-fallback-'+uid();chat.messages.push({id,from:'tai',kind:'text',text:fallback,day:s.day,time:s.clock,sentDate:dateParts(s).iso,actual:true,receivedAt:Date.now()});
@@ -504,7 +502,6 @@ async function beginVoiceRecording(ctx){
     ctx.store.update(s=>{
      const c=s.content.conversations.noapp?.find(c=>c.id==='tai');if(!c)return;
      c.messages.push({id,from:'me',text:'[语音消息 '+duration+'秒]',kind:'voice',audioId:id,voiceCaption:transcript||null,recognitionFailed:!transcript,duration,time:s.clock,day:s.day,sentDate:dateParts(s).iso,actual:true});
-     if(transcript)rememberTaiConversation(s,transcript);
      s.events.push({type:'voice_sent',channel:'noapp',messageId:id,day:s.day,clock:s.clock});
     });
     if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('ximeng:noapp-voice-sent',{detail:{messageId:id}}));
