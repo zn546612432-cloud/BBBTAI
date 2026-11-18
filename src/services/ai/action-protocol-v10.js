@@ -1,5 +1,6 @@
 // V10 two-stage protocol. This file decides WHAT may happen; it never performs UI effects.
 // Author's fixed scripted events take precedence over every AI decision.
+import {taiWorldbookPrompt} from './worldbook/index.js';
 export const TAI_TEXT_ACTIONS=Object.freeze(['send_text','send_voice','start_call','read_no_reply','defer_reply','end_session']);
 export const TAI_CALL_ACTIONS=Object.freeze(['speak','hang_up','listen']);
 export const TAI_STRATEGIES=Object.freeze(['answer_directly','tease','ask_back','brief_pushback','challenge','comfort','serious','deflect','set_boundary','repair_misunderstanding']);
@@ -57,7 +58,7 @@ export function validateCallReplyAction(input,{callConnected=false,approvedDecis
  if(approvedDecision?.action==='listen')return false;
  return !!(typeof data.reply==='string'&&data.reply.trim()||Array.isArray(data.messages)&&data.messages.some(m=>typeof m?.text==='string'&&m.text.trim()));
 }
-export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recognized=false,sourceMessageId='',scene='',relationshipContext='',hasIncoming=true,allowDefer=true,allowVoice=true}={}){
+export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recognized=false,sourceMessageId='',scene='',relationshipContext='',hasIncoming=true,allowDefer=true,allowVoice=true,messages=[],worldbookEvents=[]}={}){
  const actions=mode==='call'?TAI_CALL_ACTIONS:TAI_TEXT_ACTIONS;
  return [
   '你是互动叙事《熙蒙的手机》中陈熙泰的【行为决策层】，现在只决定是否行动。不要生成对白，不要输出思考过程，只输出一个JSON对象。',
@@ -75,6 +76,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   '当前 D'+day+'，频道 '+channel+'，'+(recognized?'剧情已确认相认':'未公开亲缘身份')+'。'+(allowDefer?'可考虑一次真实的延期。':'这次是到期重试，不得重复延期。'),
   relationshipContext?'真实且已授权的关系上下文：'+String(relationshipContext).slice(0,3600):'',
   scene?'当前系统事件（不是熙蒙台词）：'+String(scene).slice(0,1200):'',
+  taiWorldbookPrompt({channel,recognized,outputMode:mode,messages,worldbookEvents,phase:'decision'}),
   'JSON结构严格为 {"schema_version":10,"source_message_id":'+JSON.stringify(String(sourceMessageId))+',"action":"send_text","strategy":"answer_directly","intensity":"low","tone":"neutral","vocal_cue":"none","intent":"简短内容方向","delay_seconds":0}。只改字段值，禁止额外解释。'
  ].filter(Boolean).join('\n\n');
 }
