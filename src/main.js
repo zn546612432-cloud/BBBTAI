@@ -26,7 +26,7 @@ import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {submitTaiVoiceUnlock,taiVoiceUnlockCommand} from './services/ai/voice-budget.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,maybeAdvanceCall} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -208,7 +208,7 @@ function render(){
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
   // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
   $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
- patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s));
+ patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s)+minimizedCallView(s));
  $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
  patchHTML($('#shade-layer'),notifications(s));
  if(s.deathPhase==='passcode'&&lockscreen.stage==='cover')lockscreen.open();
@@ -610,6 +610,11 @@ $('#root').addEventListener('click',async e=>{
       if(action==='passcode-key'){enterDigit(target.dataset.key);return;}
       if(action==='notification'){const n=store.get().notifications.find(x=>x.id===target.dataset.id);if(!n)return;pendingNoticeId=n.id;requestUnlock(n.link||null);return;}
       return;
+    }
+    // The minimized call belongs to the phone shell, not the app underneath it.
+    if(target.closest('.tai-mini-call')){
+      if(action==='tai-resume-call'){setShade({progress:0});if(tasks.visible)tasks.hide();}
+      callAction(action,ctx());return;
     }
     if(action==='home'){if(tasks.visible)tasks.hide();else if(store.get().nav.current.appId==='home')tasks.show(store.get().nav.current);else router.home();return;}
     if(action==='back'){router.back();return;}
