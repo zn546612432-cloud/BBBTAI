@@ -7,6 +7,7 @@ import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
+import {taiLife} from '../../services/ai/life-context.js';
 import {taiVoiceRemaining,synthesizeTaiVoice} from '../../services/ai/voice-budget.js';
 import {hasBannedTaiReassurance} from '../../services/ai/expression-style.js';
 import {taiDisplayName} from './contact.js';
@@ -23,7 +24,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,callPersonaGuidance} from './call-engine-v2.js';
 import {taiShouldHangUpCall} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
 import {isConversationOpen} from '../../services/messaging/delivery.js';
@@ -241,7 +242,7 @@ export function callScene({opening=false,event='',direction='outgoing',reason=''
  if(opening&&direction==='incoming'&&reason.startsWith('【刚才的通话约定】'))return '你是陈熙泰，电话现在已接通。刚才是熙蒙主动请求听你说话，你也明确答应现在拨号。'+reason+' 这是你兑现承诺的第一句话，不要说自己又准备打电话、不问他为什么打给你，不要没来由地夸自己的声音或发明他刚说的话。可以先自然回应，再关心他在做什么，留给他接话的空隙。';
  if(opening)return direction==='incoming'
   ?'电话刚接通，是你陈熙泰主动拨给熙蒙的。先说明自己为何找他：'+(reason||'关心熙蒙真实提过的事，不主动汇报自己的日程')+'。不要反问他为什么给你打电话，不要说他这通电话打断了你。'
-  :'电话刚接通，是熙蒙拨给你。按自己的当下状态开口，可以忙、困、好奇或高兴，别默认责备他打扰。';
+  :'电话刚接通，是熙蒙拨给你。不要喊熙蒙、阿蒙、哥哥等称呼，不做自我介绍。通常直接用「怎么了？」开口，别默认责备他打扰；只有真实情境需要时才简单说明当下情况。';
  if(event==='unheard')return '刚才熙蒙试着说话，但这段语音未能识别，没有任何可用内容。你只知道没听清，不能猜他的话；简短问一句或两句让他再说一次，不谈ASR、权限、浏览器或技术接口。';
  if(event==='nudge')return '上一段已经说完，熙蒙在电话里一直安静。根据刚才真实的对话自然接一句，可以问怎么了、怎么不说话了，也可以接着刚才的玩笑或自己的想法。不要默认他生气，不重复催促；如果确实要忙，告别并主动挂断。';
  if(event==='closing')return '对方很久没说话，你可以告别并真正结束通话。说一句符合当下情绪的告别，程序会执行挂断，而不是只说要挂。';
@@ -280,6 +281,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    (plan.smallTalk&&!shouldClose?' 熙蒙已经连续问了几轮短问题。判断这些话是否有意义；如果他只是想闲聊，你可以接着聊、自然逗他一句，或者直接询问还有什么正事；若现在确实忙或不想继续，说明一句并选择 hang_up，不需要迎合每一个无意义的问题。':'');
   const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+
    ' 【NoApp V3｜真人电话】这轮只调用一次台词生成。你现在仍在真实通话里。'+speechDepth+
+   callPersonaGuidance(taiLife(ctx.store.get()))+
    ' 允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
    (remainingAtStart<=5?' 当前能继续讲话的时间有限；自然安排收尾，不提系统或额度。':'')+
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
@@ -297,7 +299,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
-  let data=presetText&&!shouldClose?{text:JSON.stringify({messages:[{text:presetText,mode:'voice',tone:'neutral'}]})}:
+  let data=presetText&&!shouldClose?{text:JSON.stringify({messages:(Array.isArray(presetText)?presetText:[presetText]).map(text=>({text,mode:'voice',tone:'neutral'}))})}:
    event==='unheard'&&!shouldClose?null:await askTai(request);
   if(!current())return;
   const readDecision=value=>validateTaiAction(value,{mode:'call',channel:'noapp',recognized:request.recognized,callConnected:current(),hasIncoming:!opening&&!event&&!!text}).decision;
@@ -393,7 +395,7 @@ async function respond(text,ctx){return generateTurn(ctx,{text});}
 function startGreeting(ctx){
  if(call.state==='connected'&&!call.greeted){
   call.greeted=true;
-  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.openingText||''});});
+  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.direction==='outgoing'?outgoingCallOpening(taiLife(ctx.store.get()),{sessionId:call.sessionId}):call.openingText||''});});
  }
 }
 export function submitCall(form,ctx){

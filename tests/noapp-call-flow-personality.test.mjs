@@ -7,7 +7,7 @@ import {startOutgoing,callAction} from '../src/apps/noapp/voice-call.js';
 import {render,manifest} from '../src/apps/noapp/index.js';
 import {appFrame} from '../src/system/shell.js';
 import {unreadAppCount} from '../src/services/unread-badges.js';
-import {planCallSpeech,needsCallContinuation,finalizeCallSegments,nextNaturalCallIdleEvent} from '../src/apps/noapp/call-engine-v2.js';
+import {planCallSpeech,needsCallContinuation,finalizeCallSegments,nextNaturalCallIdleEvent,outgoingCallOpening,callPersonaGuidance} from '../src/apps/noapp/call-engine-v2.js';
 import {taiCallAvailabilityQuestion,shortTaiCallReply} from '../src/services/ai/call-intent.js';
 import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 
@@ -69,4 +69,14 @@ test('call availability refusal is one short text, actual call command survives,
  const text=buildTaiPrompt({day:60,channel:'noapp',recognized:true,outputMode:'text'});
  assert.match(call,/三个工作日后我大概有空回复你/);
  assert.doesNotMatch(text,/三个工作日后我大概有空回复你/);
+});
+test('author-approved outgoing pickups never use the caller name and sleep farewells stay intact',()=>{
+ assert.deepEqual(outgoingCallOpening({activity:'工作與會議'},{sessionId:3}),['怎么了？']);
+ assert.deepEqual(outgoingCallOpening({activity:'外出或私人事務'},{sessionId:3}),['喂？我这边风很大，听得不是很清楚。等我一下。','好了，说吧。']);
+ assert.deepEqual(outgoingCallOpening({activity:'外出或私人事務'},{sessionId:4}),['怎么了？']);
+ assert.match(callPersonaGuidance({minute:75,local:'01:15'}),/凌晨1点了。你不睡觉，我要睡觉的。/);
+ assert.doesNotMatch(callPersonaGuidance({minute:720,local:'12:00'}),/凌晨12点/);
+ for(const text of ['很晚了，我这边已经是凌晨1点了。你不睡觉，我要睡觉的。','今天很累，有什么事情明天再说吧。','你去找你的好哥哥熙旺聊吧，我要睡觉了。']){
+  const reply={text,mode:'voice'};assert.deepEqual(finalizeCallSegments([reply],10,{close:true}),{segments:[reply],endAfter:true});
+ }
 });
