@@ -22,6 +22,23 @@ export function isQuietCallRequest(value){
  const s=String(value||'');
  return /(?:别|不要|先别)(?:再)?(?:问|说话|讲话|吵)|(?:不想|不愿|懒得)(?:再)?(?:说话|讲话)|(?:安静|静静)(?:陪|待|一会|一下)|(?:陪我|陪着我).{0,8}(?:安静|待会|不说话)|(?:让我|我想)(?:安静|静静)/.test(s);
 }
+// Explicit "speak more" is a per-turn request, not a persistent preference.
+export function wantsMoreCallSpeech(value){
+ const s=String(value||'').replace(/[\s，,。！？!?]/g,'');
+ if(/(?:不要|別|别|不用|不必|不想|不需要).{0,5}(?:多[說说]|多[講讲])/.test(s))return false;
+ return /(?:多[說说講讲][點点一幾几]|多[說说講讲](?:兩两|三|四|五|幾几)段|[說说講讲]多一[點点]|[說说講讲]詳細一[點点]|[說说講讲]久一[點点]|[繼继]續[說说講讲]|接[著着][說说講讲]|[別别]只[說说講讲]一句|[說说講讲]完整一[點点]|多[說说講讲]一[會会])/.test(s);
+}
+// If the model put several complete sentences in one item, retain its
+// actual words and split only the natural boundaries, never invent content.
+export function expandCallSegments(entries){
+ if(entries.length!==1)return entries;
+ const entry=entries[0];
+ // Do not discard a valid MiniMax-directed performance to split it.
+ if(entry.speechText&&entry.speechText!==entry.text)return entries;
+ const parts=entry.text.match(/[^。！？!?]+[。！？!?]+|[^。！？!?]+$/g)?.map(s=>s.trim()).filter(Boolean)||[];
+ if(parts.length<2)return entries;
+ return parts.slice(0,5).map((text,i)=>({...entry,text:i===4?parts.slice(4).join(''):text,speechText:undefined}));
+}
 export function selectCallSegments(entries=[],{maxSegments=3,recent=[],dedupe=true}={}){
  const cap=Math.max(1,Math.min(5,Math.round(Number(maxSegments)||3)));
  const selected=[],blocked=[];
@@ -39,7 +56,7 @@ export function selectCallSegments(entries=[],{maxSegments=3,recent=[],dedupe=tr
  return {segments:selected,blocked};
 }
 export function nextNaturalCallIdleEvent(snapshot,now=Date.now(),settings={}){
- if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||snapshot.requestingMic||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
+ if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||snapshot.requestingMic||snapshot.transcribing||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
  if(snapshot.quietUntil&&now<snapshot.quietUntil)return '';
  const mode=settings.callIdleMode||'natural';
  const scale=mode==='active'?0.65:mode==='quiet'?2:1;

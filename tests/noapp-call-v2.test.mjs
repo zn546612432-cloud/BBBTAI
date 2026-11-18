@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sameCallMeaning,isQuietCallRequest,selectCallSegments,nextNaturalCallIdleEvent} from '../src/apps/noapp/call-engine-v2.js';
+import {sameCallMeaning,isQuietCallRequest,selectCallSegments,nextNaturalCallIdleEvent,wantsMoreCallSpeech,expandCallSegments} from '../src/apps/noapp/call-engine-v2.js';
 import {DEFAULT_TAI_BEHAVIOR,normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {behaviorSettings} from '../src/apps/noapp/settings/behavior.js';
 
@@ -31,6 +31,13 @@ test('V2 honors explicit quiet companionship and applies natural silence cooldow
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0,busy:true},140000,DEFAULT_TAI_BEHAVIOR),'');
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},50000,{...DEFAULT_TAI_BEHAVIOR,callIdleMode:'quiet'}),'');
  assert.equal(nextNaturalCallIdleEvent({...state,quietUntil:0},50000,{...DEFAULT_TAI_BEHAVIOR,callIdleMode:'active'}),'nudge');
+});
+test('more speech is requested explicitly and grouped along natural sentence boundaries',()=>{
+ for(const text of ['能不能多说几句','多說幾句吧','多说一点','别只说一句','繼續說','講詳細一點'])assert.equal(wantsMoreCallSpeech(text),true,text);
+ for(const text of ['不用多说了','別多說','我想你','挂了吧'])assert.equal(wantsMoreCallSpeech(text),false,text);
+ const entry={text:'第一句。第二句？第三句。',speechText:'第一句。第二句？第三句。',tone:'neutral'};
+ const parts=expandCallSegments([entry]);assert.deepEqual(parts.map(e=>e.text),['第一句。','第二句？','第三句。']);assert.ok(parts.every(e=>!e.speechText));
+ assert.equal(expandCallSegments([{...entry,speechText:'第一句。<#0.3#>第二句？第三句。'}]).length,1);
 });
 
 test('V2 developer controls are persisted and normalized with safe bounds',()=>{
@@ -87,7 +94,7 @@ test('V2 call captions are not presented as delivered transcript until actual pl
   assert.equal(callState().turnCount,0,'the unplayed greeting must not be committed');
   globalThis.FormData=class{get(key){return key==='text'?'我今天好累，想要你陪我说话。':null;}};
   assert.equal(submitCall({dataset:{form:'tai-call-turn'}},ctx),true);
-  await waitFor(()=>requests.filter(x=>x.url.includes('chat/completions')).length>=2);
+  await waitFor(()=>requests.filter(x=>x.url.includes('chat/completions')).length>=1);
   await waitFor(()=>players[0]?.src?.startsWith('blob:')&&callView(state).includes('累了就先休息'));
   assert.equal(callState().turnCount,1,'only the new player message is committed before playback');
   players[0].finish();
@@ -96,7 +103,7 @@ test('V2 call captions are not presented as delivered transcript until actual pl
   const transcript=callView(state);
   assert.match(transcript,/累了就先休息/);
   assert.doesNotMatch(transcript,/累了别费劲说话/);
-  assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【行为决策层】')).length,1);
+  assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【行为决策层】')).length,0);
   assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&!x.body.messages[0].content.includes('【行为决策层】')).length,1,'only one text generation is allowed for a spoken turn');
   assert.equal(state.events.filter(e=>e.type==='tai_call_v2_interrupt').length,1);
   assert.ok(state.events.filter(e=>e.type==='tai_call_v2_turn').at(-1).blocked>=1,'upstream and V2 filters together must reject redundant/unfinished speech');

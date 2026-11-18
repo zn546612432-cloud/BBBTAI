@@ -273,6 +273,51 @@
  border-radius:9px;padding:6px 10px;min-height:32px;font-size:12px;
 }
 .app-noapp .noapp-shell .composer .noapp-composer-mic{flex:0 0 38px;min-width:38px;padding:4px}
+
+/* Free NoApp calls: native iOS-style full-screen audio controls.
+   Reference: Apple iPhone User Guide, While on a call; the fixed story
+   call and shared Phone system remain untouched. */
+#phone:has(.tai-native-call) #status-layer{background:#27282a;color:#fff}
+#phone:has(.tai-native-call) #homebar{background:transparent}
+.app-noapp .tai-native-call{padding:0 24px calc(32px + env(safe-area-inset-bottom,0px));background:#27282a;gap:0;justify-content:flex-start}
+.app-noapp .tai-native-call .tai-call-ambient{inset:0;filter:none;background:#252628;overflow:hidden}
+.app-noapp .tai-native-call .tai-call-ambient img{width:100%;height:65%;object-fit:cover;transform:scale(1.2);filter:blur(45px) saturate(.35);opacity:.34}
+.app-noapp .tai-native-call .tai-call-ambient:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#27282a 0%,#24252877 34%,#191a1cee 73%,#18191b 100%)}
+.app-noapp .tai-native-call:after{display:none}
+.app-noapp .tai-native-call .tai-call-topbar{height:42px;min-height:42px;justify-content:center;margin:0}
+.app-noapp .tai-native-call .tai-call-channel{font-size:12px;letter-spacing:.1px;color:#ffffff80;font-weight:500}
+.app-noapp .tai-native-call .tai-call-identity{flex:1;min-height:0;justify-content:center;padding:10px 0 22px}
+.app-noapp .tai-native-call .tai-call-avatar{width:clamp(88px,27vw,116px);height:clamp(88px,27vw,116px);box-shadow:0 8px 30px #0003}
+.app-noapp .tai-native-call .tai-call-identity h1{font-size:clamp(27px,8vw,34px);font-weight:600;letter-spacing:-.7px;line-height:1.2;margin:16px 0 7px}
+.app-noapp .tai-native-call .tai-call-identity p{font-size:14px;color:#e7e7e9;font-weight:400;min-height:22px}
+.app-noapp .tai-native-call .tai-call-duration{font-size:12px;letter-spacing:.2px;font-variant-numeric:tabular-nums;color:#b7b7be;margin-top:2px}
+.app-noapp .tai-native-call .tai-live-captions{min-height:0;max-height:22%;padding:0 2px;margin:0 0 14px;overflow:auto;flex-shrink:1}
+.app-noapp .tai-native-call .tai-live-captions:empty{display:none}
+.app-noapp .tai-native-call .tai-live-captions p.theirs{font-size:15px;line-height:1.5;background:none;backdrop-filter:none;padding:6px 2px;color:#f5f5f7}
+.app-noapp .tai-native-call .tai-live-captions button{align-self:center}
+.app-noapp .tai-native-call .native-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));row-gap:23px;column-gap:6px;min-height:0;margin:0 auto 5px;max-width:340px;flex:none}
+.app-noapp .tai-native-call .tai-call-control{padding:0;gap:8px;min-height:0}
+.app-noapp .tai-native-call .tai-control-circle{width:clamp(51px,15vw,64px);height:clamp(51px,15vw,64px);background:#ffffff22;box-shadow:none}
+.app-noapp .tai-native-call .tai-call-control svg{width:27px;height:27px}
+.app-noapp .tai-native-call .tai-control-label{font-size:11px;font-weight:450;color:#f0f0f2}
+.app-noapp .tai-native-call .is-selected .tai-control-circle,.app-noapp .tai-native-call .is-listening .tai-control-circle{background:#f8f8fa;color:#1d1e21}
+.app-noapp .tai-native-call .is-listening .tai-control-circle{box-shadow:0 0 0 5px #ffffff35}
+.app-noapp .tai-native-call .native-controls .is-hang{grid-column:2 / 4;justify-self:center}
+.app-noapp .tai-native-call .is-hang .tai-control-circle,.app-noapp .tai-native-call .is-decline .tai-control-circle{width:66px;height:66px;background:#ff453a;color:white}
+.app-noapp .tai-native-call .is-accept .tai-control-circle{width:66px;height:66px;background:#30d158;color:white}
+.app-noapp .tai-native-call .native-single{display:flex;justify-content:center;min-height:0}
+.app-noapp .tai-native-call .two-actions{min-height:0;padding:0 18px 12px}
+.app-noapp .tai-native-call .tai-call-caption-sheet{position:relative;inset:auto;flex:0 1 auto;min-height:0;max-height:38%;width:100%;margin:0 0 14px;padding:12px 14px;display:flex;flex-direction:column;border:0;border-radius:22px;background:#ffffff12;box-shadow:none}
+.app-noapp .tai-native-call .tai-call-caption-sheet header{font-size:13px;margin:0 0 3px;color:#ffffffbb}
+.app-noapp .tai-native-call .tai-call-transcript{flex:1;max-height:130px;min-height:0;font-size:13px;overflow:auto;scrollbar-width:none}
+.app-noapp .tai-native-call .tai-call-caption-sheet form{flex:none;margin-top:8px;align-items:center}
+.app-noapp .tai-native-call .tai-call-caption-sheet input{min-height:36px;border:0;border-radius:18px;background:#ffffff12;padding:8px 12px}
+.app-noapp .tai-native-call .tai-call-caption-sheet form button{flex:0 0 34px;width:34px;height:34px;min-height:34px;border-radius:50%;background:#f1f1f4;font-size:21px;font-weight:600;padding:0}
+.app-noapp .tai-native-call.is-expanded .tai-call-identity{padding:4px 0 12px}
+.app-noapp .tai-native-call.is-expanded .tai-call-avatar{width:66px;height:66px}
+.app-noapp .tai-native-call.is-expanded .tai-call-identity h1{font-size:23px;margin-top:8px}
+@media(max-height:740px){.app-noapp .tai-native-call .native-controls{row-gap:12px}.app-noapp .tai-native-call .tai-call-topbar{height:32px;min-height:32px}.app-noapp .tai-native-call .tai-call-caption-sheet{max-height:34%}.app-noapp .tai-native-call .tai-control-circle{width:51px;height:51px}.app-noapp .tai-native-call .is-hang .tai-control-circle{width:58px;height:58px}}
+@media(max-width:600px){#phone.keyboard-open .app-noapp .tai-native-call .tai-call-caption-sheet{flex:1;max-height:none;margin:0 0 8px}#phone.keyboard-open .app-noapp .tai-native-call .tai-call-transcript{max-height:none}}
 .app-noapp .noapp-shell .composer input[name=text]{min-width:0}
 
 /* An iPhone has no hover tooltip: display the actual TTS error in the chat. */
