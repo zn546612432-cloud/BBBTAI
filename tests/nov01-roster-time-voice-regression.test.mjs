@@ -34,13 +34,16 @@ test('DeepSeek splits text semicolons and newlines, not voice',()=>{
  const voice=unpackTaiReply({text:JSON.stringify({messages:[{text:'你又熬夜了；昨天怎么答应我的',mode:'voice'}]})},'noapp');
  assert.equal(voice.length,1);
 });
-test('Tai voice bubble has waveform and hidden transcript; Ximeng text only',()=>{
+test('Tai voice bubble shows the existing transcript automatically, with legacy text fallback',()=>{
  const s=initialState(),c=s.content.conversations.noapp.find(c=>c.id==='tai');
- c.messages=[{id:'tt',from:'tai',kind:'voice',text:'你好',voiceCaption:'你好',duration:6,audioId:'tai-tt'},{id:'me',from:'me',kind:'text',text:'哥，好久不见'}];
+ c.messages=[{id:'tt',from:'tai',kind:'voice',text:'你好',voiceCaption:'你好',duration:6,audioId:'tai-tt'},{id:'legacy',from:'tai',kind:'voice',text:'早點休息',audioId:'tai-legacy'},{id:'unknown',from:'tai',kind:'voice',text:'[语音消息 3秒]',audioId:'unknown'},{id:'me',from:'me',kind:'text',text:'哥，好久不见'}];
  const html=chatView(s,'noapp','tai');
  assert.match(html,/class="noapp-wave"/);
  assert.match(html,/6″/);
  assert.match(html,/<summary>转文字<\/summary>/);
+ assert.equal((html.match(/data-preserve-open open/g)||[]).length,2);
+ assert.match(html,/<p>早點休息<\/p>/);
+ assert.doesNotMatch(html,/<p>\[语音消息 3秒\]<\/p>/);
  assert.doesNotMatch(html,/data-action="tai-record"/);
 });
 test('D55 recording uses the deployment-aware shared audio resolver',()=>{

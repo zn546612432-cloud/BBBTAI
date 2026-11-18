@@ -18,3 +18,16 @@ test('Leaflet owns its children and generic game redraw must not replace them',(
  assert.doesNotThrow(()=>patchElement(old,fresh));
  assert.strictEqual(old.childNodes[0],marker);
 });
+
+test('opt-in voice details keep manual open and closed states during redraws',()=>{
+ const details=(open,optIn=true)=>{
+  const attrs=new Map(optIn?[['data-preserve-open','']]:[]);if(open)attrs.set('open','');
+  return {nodeType:1,tagName:'DETAILS',ownerDocument:{activeElement:null},childNodes:[],
+   get attributes(){return [...attrs].map(([name,value])=>({name,value}));},
+   getAttribute:name=>attrs.get(name)??null,hasAttribute:name=>attrs.has(name),setAttribute:(name,value)=>attrs.set(name,value),removeAttribute:name=>attrs.delete(name)};
+ };
+ const opened=details(true),closed=details(false);
+ patchElement(opened,details(false));assert.equal(opened.hasAttribute('open'),true);
+ patchElement(closed,details(true));assert.equal(closed.hasAttribute('open'),false);
+ const ordinary=details(true,false);patchElement(ordinary,details(false,false));assert.equal(ordinary.hasAttribute('open'),false);
+});
