@@ -49,7 +49,8 @@ test('natural expression preferences are final even after approved cloud example
  }
  const decision=taiActionDecisionPrompt({channel:'noapp',day:40,recognized:true});
  assert.ok(decision.includes(XITAI_DECISION_STYLE));
- assert.match(decision,/tease、ask_back、brief_pushback、challenge 是低頻選項/);
+ assert.match(decision,/不要傲嬌、毒舌、故意挖苦/);
+ assert.doesNotMatch(decision,/strategy 仅可选：[^。]*\btease\b/);
 });
 
 test('banned constructions trigger only a bounded corrective generation',async()=>{

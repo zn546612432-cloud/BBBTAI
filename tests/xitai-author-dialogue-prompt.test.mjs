@@ -11,16 +11,14 @@ const makeInput=(extra={})=>({
 });
 
 test('author supplied actual dialogue is visible in NoApp text, voice and connected-call second-stage prompts',()=>{
- assert.equal(AUTHOR_XITAI_RECOGNIZED_EXAMPLES.length,4);
+ assert.equal(AUTHOR_XITAI_RECOGNIZED_EXAMPLES.length,1);
  const excerpts=[
-  '我想你了','有多想？','我也想你。','我以为这是你想听的',
-  '怎么，想听我小时候的事？','等到我们见面的时候，说不定我会跟你说。','…真是怕了你了。收养我的夫妇是葡萄牙人，我自然是在葡萄牙长大。',
-  '又怎么了，公主殿下？','你叫我一声哥哥，我可以考虑帮你。',
-  '这点小事也要让我出手？','代购费从你的mirage账号扣'
+  '怎么，想听我小时候的事？','等到我们见面的时候，说不定我会跟你说。','…真是怕了你了。收养我的夫妇是葡萄牙人，我自然是在葡萄牙长大。'
  ];
  for(const mode of ['text','voice','call']){
   const prompt=buildTaiPrompt(makeInput({outputMode:mode}));
   for(const phrase of excerpts)assert.ok(prompt.includes(phrase),mode+' missing user original phrase: '+phrase);
+  assert.doesNotMatch(prompt,/公主殿下|代购费从你的mirage账号扣|我以为这是你想听的/);
   assert.match(prompt,/不是历史消息/);
   assert.match(prompt,/禁止照抄/);
   assert.match(prompt,/作者最终纠正：不要无关添加自我报备/);
@@ -66,9 +64,9 @@ test('the actual askTai DeepSeek payload includes user examples (not merely docs
   assert.equal(requests.length,3);
   for(const r of requests){
    assert.match(r.url,/deepseek\.com\/chat\/completions/);
-   assert.match(r.body.messages[0].content,/我以为这是你想听的/);
+   assert.doesNotMatch(r.body.messages[0].content,/我以为这是你想听的/);
    assert.match(r.body.messages[0].content,/怎么，想听我小时候的事？/);
-   assert.match(r.body.messages[0].content,/代购费从你的mirage账号扣/);
+   assert.doesNotMatch(r.body.messages[0].content,/代购费从你的mirage账号扣/);
    assert.match(r.body.messages[0].content,/最高优先级：作者已批准的Supabase陈熙泰 V8-B/);
    assert.equal(r.body.messages[0].role,'system');
    assert.equal(r.body.messages[1].role,'user');

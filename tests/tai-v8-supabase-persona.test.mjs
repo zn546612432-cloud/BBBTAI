@@ -40,16 +40,15 @@ test('unrecognized stage never receives relationship dialogue examples',()=>{
  assert.match(early,/身份保密/);
  assert.doesNotMatch(early,/我也想你。/);
  const later=formatApprovedTaiV8(data,{recognized:true});
- assert.match(later,/我也想你。/);
+ assert.doesNotMatch(later,/我也想你。|自负|调戏后收回/);
  assert.match(later,/记住不等于主动提起/);
  assert.match(later,/55天主线锁定/);
 });
 
 test('author-corrected example contains no gym / five-fly boasts',()=>{
  const example=authorXitaiDialogueExamples({channel:'noapp',recognized:true});
- assert.match(example,/哦？有多想？/);
- assert.match(example,/我也想你。/);
- assert.match(example,/我以为这是你想听的。/);
+ assert.match(example,/怎么，想听我小时候的事？/);
+ assert.doesNotMatch(example,/哦？有多想？|我也想你。|我以为这是你想听的。/);
  assert.doesNotMatch(example,/练完五十组飞鸟/);
  assert.doesNotMatch(example,/我还在健身房/);
  assert.equal(authorXitaiDialogueExamples({channel:'noapp',recognized:false}), '');

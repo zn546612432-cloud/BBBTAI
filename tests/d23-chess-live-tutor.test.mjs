@@ -313,7 +313,7 @@ test('AI prompt contains style examples and board facts; multiple answers are pa
  try{
   postMatchMessage(store,matchId,'我看不懂現在在下什麼');
   await Promise.all([replyToMatch(store,matchId),replyToMatch(store,matchId)]);
-  assert.equal(calls,1);assert.match(prompt,/語氣參考/);assert.match(prompt,/不要開口就報/);
+  assert.equal(calls,1);assert.match(prompt,/沉穩、自信、願意認真教/);assert.match(prompt,/不要開口就報/);
   assert.match(prompt,/pieces/);assert.match(prompt,/legalMoves/);assert.match(prompt,/不是.*最佳|不許稱為最佳/);
   assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).from,'player');
   assert.equal(await replyToMatch(store,matchId),false,'same player message may not queue twice');

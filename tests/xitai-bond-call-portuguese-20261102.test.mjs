@@ -31,7 +31,7 @@ test('trust grows from real NoApp interaction, not random short messages or repe
 });
 test('unrecognized Ouroboros remains dominant regardless of saved bond',()=>{
  const s=initialState();s.day=28;s.aiDraft.taiBond={score:97};
- assert.match(taiBondPrompt(s,{channel:'mirage'}),/上位者/);
+ assert.match(taiBondPrompt(s,{channel:'mirage'}),/冷静、有判断力/);
  assert.doesNotMatch(taiBondPrompt(s,{channel:'mirage'}),/温柔恋人.*可以/);
  s.day=56;
  assert.match(taiBondPrompt(s,{channel:'noapp'}),/97\/100/);

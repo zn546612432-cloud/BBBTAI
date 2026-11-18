@@ -39,8 +39,30 @@ export function normalizeSettings(s={}){
 
 export function defaultWorldbook(){return {version:WORLD_INFO_VERSION,settings:{...DEFAULT_WORLD_SETTINGS},books:[{id:'xitai',name:'陳熙泰 · 專屬世界書',enabled:true,scope:'character',entries:[...TAI_WORLDBOOK.map(e=>normalizeEntry({...e,comment:e.comment||e.id,protected:!!e.constant,scanDepth:e.key?e.sticky||1:null,sticky:e.key?0:e.sticky},e.id,'xitai')),...XITAI_SITUATIONAL_LORE.map(e=>normalizeEntry(e.id==='xi-relationship-boundary'?{...e,recognized:true,channels:['noapp','chess']}:e,e.id,'xitai'))]}],runtime:{}};}
 
-export function readWorldbook(s){const w=s?.aiDraft?.worldbook;return w?.version===WORLD_INFO_VERSION&&Array.isArray(w.books)?w:defaultWorldbook();}
-export function ensureWorldbook(s){s.aiDraft??={};if(s.aiDraft.worldbook?.version!==WORLD_INFO_VERSION||!Array.isArray(s.aiDraft.worldbook?.books))s.aiDraft.worldbook=defaultWorldbook();return s.aiDraft.worldbook;}
+// Retire the shipped older tone guidance, without replacing custom entries or settings.
+const retiredToneFragments={
+ affection:['可以接住、逗他、坦率一点或保留态度','可以自然接住、坦率一点或保留态度'],
+ 'xi-quiet':['調戲有對象和前因，點到即止','關心與不同意見都可直接表達'],
+ 'xi-misunderstanding':['可以嘴硬但具體地澄清','可以具體地澄清']
+};
+function migrateTone(world){
+ let changed=false;
+ const books=world.books.map(b=>b.id!=='xitai'?b:{...b,entries:b.entries.map(e=>{
+  const pair=retiredToneFragments[e.id];
+  if(!pair||!e.content?.includes(pair[0]))return e;
+  changed=true;return {...e,content:e.content.replace(...pair)};
+ })});
+ if(!changed)return world;
+ const runtime=Object.fromEntries(Object.entries(world.runtime||{}).map(([scope,state])=>[scope,{
+  ...state,snapshot:state.snapshot?{...state.snapshot,entries:(state.snapshot.entries||[]).map(e=>{
+   const pair=retiredToneFragments[e.id];
+   return pair&&e.content?.includes(pair[0])?{...e,content:e.content.replace(...pair)}:e;
+  })}:state.snapshot
+ }]));
+ return {...world,books,runtime};
+}
+export function readWorldbook(s){const w=s?.aiDraft?.worldbook;return w?.version===WORLD_INFO_VERSION&&Array.isArray(w.books)?migrateTone(w):defaultWorldbook();}
+export function ensureWorldbook(s){s.aiDraft??={};s.aiDraft.worldbook=readWorldbook(s);return s.aiDraft.worldbook;}
 
 // Native ST map and Character Card V2/V3 embedded lorebook, preserving unknown fields.
 export function importWorldbook(input,{id,name}={}){

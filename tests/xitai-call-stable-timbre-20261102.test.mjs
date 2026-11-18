@@ -63,7 +63,7 @@ test('accepted text-call promise is context for first spoken line, not a fresh s
  assert.match(followup,/承接上一句话的具体意思/);
  const prompt=buildTaiPrompt({day:42,channel:'noapp',recognized:true,outputMode:'call',
    messages:[{role:'user',content:'你刚才在说什么？'}]});
- assert.match(prompt,/禁止随口说无因果的挑衅/);
+ assert.match(prompt,/禁止故意挑衅或挖苦/);
  assert.match(prompt,/连贯、有内容/);
  assert.match(prompt,/清冷/);
 });
