@@ -55,13 +55,44 @@ export function selectCallSegments(entries=[],{maxSegments=3,recent=[],dedupe=tr
  }
  return {segments:selected,blocked};
 }
+// A complete spoken turn can contain several *different* thoughts. Short
+// acknowledgements, privacy boundaries and explicit quiet are exceptions.
+const briefTurn=/^(?:[嗯哦噢啊好行对對是收到]|好的|好吧|知道了|明白了|謝謝|谢谢|晚安|早安|喂|哈[哈]*|hi|hello)[。！？!?…\s]*$/i;
+const boundary=/[見见]面.{0,15}(?:[說说]|[聊谈談])|不想[說说談谈]|不方便[說说]|晚[點点]再[說说]|[先別别].{0,8}[問问]|[沒没]什[麼么]好[說说]/;
+export function planCallSpeech({text='',history=[],behavior={},opening=false,event='',closing=false,remaining=Infinity}={}){
+ const quotaClosing=remaining<=3;
+ const max=Math.min(Math.max(1,Math.min(5,Number(behavior.callMaxSegments)||5)),remaining);
+ const explicit=wantsMoreCallSpeech(text);
+ const short=opening||event==='unheard'||event==='nudge'||briefTurn.test(String(text).trim())||isQuietCallRequest(text)||behavior.callDetail==='brief';
+ const recent=history.filter(t=>t.role==='user').slice(-3);
+ const smallTalk=recent.length>=3&&recent.every(t=>String(t.content||'').trim().length<=28);
+ const close=closing||quotaClosing;
+ const cap=Math.min(max,close?2:explicit||opening?5:short?2:behavior.callDetail==='natural'?3:4);
+ return {minSegments:close?1:explicit?Math.min(3,cap):short?1:Math.min(2,cap),maxSegments:cap,smallTalk,quotaClosing,close,explicit};
+}
+export function needsCallContinuation(segments,plan){
+ if(plan.close||segments.length>=plan.minSegments||!segments.length)return false;
+ if(!plan.explicit&&segments.some(e=>boundary.test(e.text)||/[。！？!?].+[。！？!?]/.test(e.text)))return false;
+ return true;
+}
+const farewell=/先掛|先挂|掛了|挂了|聊到[這这][裡里]|先聊到|晚安|再[見见]|拜拜|下次聊|晚[點点](?:再)?[聊說说]|改天聊|先去忙|先這樣|先这样|去吃[飯饭]吧/;
+export function finalizeCallSegments(entries,remaining,{close=false,closingLine='好了，先聊到這裡吧。',maxSegments=5}={}){
+ if(remaining<=0)return {segments:[],endAfter:true};
+ const endAfter=close||entries.length>=remaining;
+ if(!endAfter)return {segments:entries,endAfter:false};
+ const limit=Math.min(remaining,maxSegments);
+ const selected=entries.slice(0,limit);
+ if(selected.length&&farewell.test(selected.at(-1).text))return {segments:selected,endAfter:true};
+ // Reserve the final playable segment. Never cut away the actual goodbye.
+ return {segments:[...selected.slice(0,Math.max(0,limit-1)),{text:closingLine,tone:'neutral',mode:'voice'}],endAfter:true};
+}
 export function nextNaturalCallIdleEvent(snapshot,now=Date.now(),settings={}){
  if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||snapshot.requestingMic||snapshot.transcribing||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
  if(snapshot.quietUntil&&now<snapshot.quietUntil)return '';
  const mode=settings.callIdleMode||'natural';
  const scale=mode==='active'?0.65:mode==='quiet'?2:1;
  const elapsed=now-snapshot.lastTaiEndAt;
- if(snapshot.nudgeCount===0&&elapsed>=Math.max(10000,Number(settings.callNudgeSeconds||45)*1000*scale))return 'nudge';
+ if(snapshot.nudgeCount===0&&elapsed>=Math.max(10000,Number(settings.callNudgeSeconds||10)*1000*scale))return 'nudge';
  if(snapshot.nudgeCount===1&&elapsed>=Math.max(20000,Number(settings.callCloseSeconds||125)*1000*scale))return 'closing';
  return '';
 }

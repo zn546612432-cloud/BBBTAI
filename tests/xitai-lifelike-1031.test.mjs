@@ -87,8 +87,8 @@ test('Curated Xitai-specific voice direction is used ONLY by call/voice prompts,
 });
 test('Call silence gently nudges once and closes only after prolonged silence',()=>{
  const call={state:'connected',busy:false,listening:false,lastTaiEndAt:10000,nudgeCount:0};
- assert.equal(nextCallIdleEvent(call,54000),'');
- assert.equal(nextCallIdleEvent(call,55000),'nudge');
+ assert.equal(nextCallIdleEvent(call,19999),'');
+ assert.equal(nextCallIdleEvent(call,20000),'nudge');
  call.nudgeCount=1;call.lastTaiEndAt=55000;
  assert.equal(nextCallIdleEvent(call,177000),'');
  assert.equal(nextCallIdleEvent(call,180000),'closing');

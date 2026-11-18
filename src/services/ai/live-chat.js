@@ -18,7 +18,7 @@ import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
 import {rememberTaiConversation,rememberTaiDelivered} from './memory.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
+import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText,taiCallAvailabilityQuestion,taiShortCallBoundaryPrompt,shortTaiCallReply} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
@@ -91,6 +91,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const lastUser=source?.voiceCaption||source?.text||'';
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
+  const shortCallReply=requestedCall||taiCallAvailabilityQuestion(lastUser);
   const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
   const lastCallIndex=c.messages.findLastIndex(m=>m.kind==='call'&&m.callStatus==='ended');
   const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
@@ -101,7 +102,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
   const voiceAvailable=!!status.minimax&&taiVoiceRemaining(initial,'message')>0;
-  const allowVoice=voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
+  const allowVoice=!shortCallReply&&voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
   const voiceTurn=unheard?!!apiConfig().minimax&&taiVoiceRemaining(initial,'message')>0:voiceAvailable&&voiceRequested;
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
@@ -113,6 +114,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':voiceRequested&&status.minimax?' 現在無法再發新語音，正常用文字回覆，不提內部額度或接口。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
+  if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
@@ -148,12 +150,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=!unheard&&!requestedCall&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const turnPlan=!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.
-  const observed=!unheard&&!firstTextAfterCall?await researchTaiPhone(store,{
+  const observed=!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
    text:lastUser,sourceMessageId,random,now
   }):null;
   if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
@@ -174,7 +176,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
-  if(!unheard&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+  if(!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
@@ -203,6 +205,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // A second pass may accidentally repeat the answer in different words.
   // Retain only genuinely new clauses before any text reaches the phone.
   if(!unheard)draftEntries=dedupeTaiTurnEntries(draftEntries);
+  if(shortCallReply&&!taiShouldCallAfterText({lastUser,entries:draftEntries}))draftEntries=shortTaiCallReply(draftEntries);
   // One v10 send_voice decision should be one playable MiniMax clip, not
   // five fragile calls. The selected 1-5 thoughts remain audible inside it.
   if(!unheard&&!requestedCall&&(actualDecision?.action==='send_voice'||!actualDecision&&(voiceTurn||allowVoice&&draftEntries.every(m=>m.mode==='voice')))){

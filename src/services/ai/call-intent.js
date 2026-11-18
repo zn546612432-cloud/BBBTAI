@@ -8,6 +8,18 @@ const traditional='給個電話過來撥語別準發條錄聲聽現幾分鐘會�
 const simplified='给个电话过来拨语别准发条录声听现几分钟会点后这';
 export const normalizeTaiPhoneRequest=text=>String(text||'').replace(/[給個電話過來撥語別準發條錄聲聽現幾分鐘會點後這]/g,char=>simplified[traditional.indexOf(char)]);
 export const taiPlayerRequestedCall=text=>request.test(normalizeTaiPhoneRequest(text))&&!withdraw.test(normalizeTaiPhoneRequest(text));
+// Only current availability or a refusal, not general conversation about phones.
+export function taiCallAvailabilityQuestion(text){
+ const x=normalizeTaiPhoneRequest(text).replace(/[為麼甚沒開掛斷]/g,c=>({'為':'为','麼':'么','甚':'什','沒':'没','開':'开','掛':'挂','斷':'断'}[c]));
+ return /(?:为什么|怎么|干嘛|为何).{0,12}(?:不接|没接|拒接|打不了)|(?:不接|没接).{0,6}(?:电话|吗|呢|我)|(?:方便|可以|能不能|能否|要不要).{0,8}(?:打电话|通话|接电话)/.test(x);
+}
+export const taiShortCallBoundaryPrompt='【電話請求／未接後的文字】如果目前在忙、拒接、無法接聽或不想打電話，一條很短的自然口語即可。不要反覆解釋、不連發、不另找話題，也不要用對比句辯解。作者示例：在忙，晚點再說。／沒什麼要緊事別打電話了。／知道你想我了，但現在不行。僅學習簡潔和態度。若確實願意接通，按既有真實來電協議執行。';
+export function shortTaiCallReply(entries){
+ if(entries.some(e=>e.action==='phone'))return entries;
+ const first=entries[0];if(!first)return entries;
+ const line=first.text.match(/^[^。！？!?]+[。！？!?]?/)?.[0]||first.text;
+ return [{...first,text:line.length<=32?line:'現在不方便，晚點再說。',mode:'text',speechText:undefined,translation:undefined}];
+}
 export const taiPlayerDeclinedCall=text=>/^(?:不要|别|先别|不准|别打|不用|取消|stop|no[!.]?)(?:[，,！!。.?？\s]|$)/i.test(normalizeTaiPhoneRequest(text).trim())||withdraw.test(normalizeTaiPhoneRequest(text));
 export function taiShouldCallAfterText({lastUser='',entries=[],alreadyCalled=false}={}){
  if(alreadyCalled||!taiPlayerRequestedCall(lastUser))return false;
