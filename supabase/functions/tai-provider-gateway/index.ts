@@ -82,7 +82,7 @@ async function speech(req,body){
   voice_setting:{
    voice_id:body.voiceId,speed:num(voice.speed,.5,2,1),
    vol:num(voice.vol,.01,10,1),pitch:Math.round(num(voice.pitch,-12,12,0)),
-   ...(['happy','sad','angry','fearful','disgusted','surprised'].includes(voice.emotion)?{emotion:voice.emotion}:{})
+   ...(['calm','happy','sad','angry','fearful','disgusted','surprised'].includes(voice.emotion)?{emotion:voice.emotion}:{})
   },
   audio_setting:{sample_rate:[8000,16000,22050,24000,32000,44100].includes(options.sample_rate)?options.sample_rate:32000,
    bitrate:[32000,64000,128000,256000].includes(options.bitrate)?options.bitrate:128000,

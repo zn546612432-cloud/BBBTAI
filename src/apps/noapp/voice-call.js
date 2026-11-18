@@ -277,7 +277,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!current())break;
    const speech=composeCallSpeech([r],behavior);
    if(!speech)continue;
-   const blob=await voicePreview({text:speech,tone:r.tone||decision?.tone||'neutral'});
+    const blob=await voicePreview({text:speech,tone:r.tone||decision?.tone||'neutral',directed:true});
    if(!current())break;
    call.caption=r.text;call.lastSpeech=r.text;ctx.refresh?.();
    const outcome=await playCallAudio(ctx,blob,sessionId,revision);
@@ -549,7 +549,7 @@ export async function playVoiceMessage(id,ctx){
    const clean=readableTaiVoiceText(oldCaption);
    if(!clean||clean==='语音转写异常，原始数据已隐藏'){ctx.toast('旧语音格式异常，请重新生成');continue;}
    try{
-    blob=await voicePreview({text:clean,tone:m.aiTone||'neutral',...m.voiceSettings});
+     blob=await voicePreview({text:m.speechText||clean,tone:m.aiTone||'neutral',...m.voiceSettings,directed:Boolean(m.aiGenerated&&!m.testOnly&&!m.voiceSettings)});
     await saveClip(m.audioId||m.id,blob);
     ctx.store.update(state=>{
      const record=state.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(x=>x.id===m.id);
@@ -569,7 +569,7 @@ export async function playVoiceMessage(id,ctx){
   // provided the developer has configured MiniMax. Cache it for next time.
   if(!blob&&!asset&&m.from==='tai'&&String(m.voiceCaption||m.text||'').trim()){
    try{
-    blob=await voicePreview({text:m.voiceCaption||m.text,tone:m.aiTone||'neutral',...m.voiceSettings});
+     blob=await voicePreview({text:m.speechText||m.voiceCaption||m.text,tone:m.aiTone||'neutral',...m.voiceSettings,directed:Boolean(m.aiGenerated&&!m.testOnly&&!m.voiceSettings)});
     await saveClip(m.audioId||m.id,blob);
    }catch(error){
     console.warn('NoApp voice playback unavailable:',error?.message);
@@ -617,7 +617,7 @@ async function convertVoice(ctx,id){
   if(record){delete record.voiceRequested;delete record.voiceFailed;delete record.voiceError;}
  });
  try{
-  const clip=await voicePreview({text:clean,tone:m.aiTone||'neutral',...m.voiceSettings});
+   const clip=await voicePreview({text:m.speechText||clean,tone:m.aiTone||'neutral',...m.voiceSettings,directed:Boolean(m.aiGenerated&&!m.testOnly&&!m.voiceSettings)});
   await saveClip('tai-'+id,clip);
   ctx.store.update(s=>{
    const record=s.content.conversations.noapp.find(x=>x.id==='tai')?.messages.find(x=>x.id===id);

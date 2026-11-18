@@ -201,18 +201,19 @@ export async function chooseTaiAction(args={}){
  return result.decision;
 }
 
-export async function voicePreview({text,voiceId,model,tone='neutral',...overrides}){
- const c=apiConfig(),settings=normalizeTtsSettings(overrides,c);
+export async function voicePreview({text,voiceId,model,tone='neutral',directed=false,...overrides}){
+ const c=apiConfig();
+ const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle,directed});
+ const settings=directed?normalizeTtsSettings({speed:prepared.speed,emotion:prepared.emotion}):normalizeTtsSettings(overrides,c);
  let language=settings.language;
- model=model||c.ttsModel||'speech-2.8-hd';
- const prepared=prepareTaiVoicePerformance(text,{tone,style:c.voiceStyle});
+ model=directed?'speech-2.8-hd':model||c.ttsModel||'speech-2.8-hd';
  text=ttsCueText(prepared.text,settings.cue);
  if(!String(prepared.text||'').trim())throw Error('语音文字不能为空');
  // Calm remains the default; explicit user tuning overrides it.
  // Code-switch to the provider's multilingual pronunciation mode only when
  // actual Latin words occur outside native Speech 2.8 sound tags.
  if(language==='Chinese'){
-  const spokenWithoutTags=text.replace(/\([a-z-]+\)/gi,'');
+  const spokenWithoutTags=text.replace(/\([a-z-]+\d?\)/gi,'');
   if(containsPortuguese(spokenWithoutTags)&&!/[\u3400-\u9fff]/u.test(spokenWithoutTags))language='Portuguese';
   else if(/\b[A-Za-z]{2,}\b/.test(spokenWithoutTags))language='auto';
  }
