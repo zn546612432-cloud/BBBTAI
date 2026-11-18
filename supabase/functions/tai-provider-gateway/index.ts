@@ -147,6 +147,22 @@ Deno.serve(async(req)=>{
   try{input=JSON.parse(raw);}catch{throw error(400,'invalid_json');}
   if(!input||typeof input!=='object'||Array.isArray(input))throw error(400,'invalid_body');
   const operation=input.op;
+  // The ordinary public gameplay phrase never grants provider privileges.
+  // Only a random, server-issued, one-use token can enroll this verified UID.
+  if(operation==='redeem_test_access'){
+   const code=input.payload?.code;
+   if(typeof code!=='string'||!/^TEST-[a-f0-9]{48}$/.test(code))throw error(400,'invalid_test_access_code');
+   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(code))),b=>b.toString(16).padStart(2,'0')).join('');
+   const {data:allowed,error:accessError}=await admin.rpc('redeem_tai_private_test_access',{p_user:user.id,p_hash:hash});
+   if(accessError)throw error(503,'test_access_unavailable');
+   if(allowed!==true)throw error(403,'test_access_invalid_or_used');
+   return respond(req,200,{tester:true});
+  }
+  if(operation==='test_access_status'){
+   const {data:account,error:accessError}=await admin.from('tai_private_test_access').select('user_id').eq('user_id',user.id).maybeSingle();
+   if(accessError)throw error(503,'test_access_unavailable');
+   return respond(req,200,{tester:!!account});
+  }
   if(operation==='status')return respond(req,200,{
    mode:'supabase-protected',deepseek:!!Deno.env.get('DEEPSEEK_API_KEY')?.trim(),
    minimax:!!Deno.env.get('MINIMAX_API_KEY')?.trim()

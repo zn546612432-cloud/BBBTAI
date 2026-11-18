@@ -59,13 +59,14 @@ export async function taiCloudCall(op,payload={}){
  let data;try{data=await r.json();}catch{throw Error('云端 AI 返回了无效响应');}
  if(!r.ok){
   const reason=String(data?.error||'AI 暂时不可用');
-  if(r.status===429)throw Error('今日 AI 使用额度已达到上限，明天可以继续');
+  if(r.status===429)throw Object.assign(Error('今日 AI 使用额度已达到上限（云端服务保护额度，与游戏内语音段数无关）'),{code:'TAI_CLOUD_LIMIT'});
   if(r.status===401)throw Error('熙泰 AI 云端会话已失效，请重新打开网页');
   if(r.status===503)throw Error('Supabase 后端未完成配置：'+reason);
   throw Error('云端 AI：'+reason);
  }
  return data;
 }
+export const activateTaiPrivateTest=async code=>taiCloudCall('redeem_test_access',{code});
 
 /** Player's recording is sent only to the authenticated Supabase ASR route. */
 export async function taiCloudTranscribe(blob,{region='cn'}={}){
@@ -82,7 +83,8 @@ export async function taiCloudTranscribe(blob,{region='cn'}={}){
   body:form,cache:'no-store'});}
  catch{throw Error('无法连接云端语音识别服务');}
  let value;try{value=await response.json();}catch{throw Error('语音识别返回了无效响应');}
- if(!response.ok)throw Error(response.status===429?'今日语音服务已达到使用额度':'语音识别失败：'+String(value?.error||response.status));
+ if(response.status===429)throw Object.assign(Error('今日语音服务已达到云端使用额度'),{code:'TAI_CLOUD_LIMIT'});
+ if(!response.ok)throw Error('语音识别失败：'+String(value?.error||response.status));
  if(typeof value?.text!=='string'||!value.text.trim())throw Error('未识别出文字');
  return value.text.trim();
 }

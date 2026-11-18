@@ -4,7 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {taiLife,taiLifeContext} from '../src/services/ai/life-context.js';
 import {taiPresence} from '../src/services/presence.js';
-import {taiVoiceRemaining,unlockTaiVoice,synthesizeTaiVoice} from '../src/services/ai/voice-budget.js';
+import {taiVoiceRemaining,unlockTaiVoice,synthesizeTaiVoice,taiVoiceUnlockCommand,submitTaiVoiceUnlock} from '../src/services/ai/voice-budget.js';
 import {hasBannedTaiReassurance} from '../src/services/ai/expression-style.js';
 import {replyToTaiMessage,maybeResumeTaiDeferred} from '../src/services/ai/live-chat.js';
 import {taiDisplayName,markTaiRead} from '../src/apps/noapp/contact.js';
@@ -43,6 +43,20 @@ test('banned reassurance is recognized across text and speech segments before sy
  assert.equal(hasBannedTaiReassurance(['刚刚说的那些话，你不用想太多。']),true);
  assert.equal(hasBannedTaiReassurance(['剛才你說什麼？']),false);
  await assert.rejects(synthesizeTaiVoice(store,'message',{text:'剛才，別多想。'},()=>{assert.fail('provider must not be called');}),{code:'TAI_STYLE'});
+});
+test('plain and private unlock commands are consumed before chat and persist across days; cloud authorization is separate',async()=>{
+ const {s,c,store}=fixture();s.aiDraft.taiVoiceUsage={35:{call:30,message:15}};s.drafts.tai='草莓是香蕉';
+ const toast=[],ctx={store,refresh(){},toast:line=>toast.push(line)};
+ const form={elements:{text:{value:'草莓是香蕉'}}};
+ assert.equal(submitTaiVoiceUnlock(form,ctx,{cloud:true,activate:()=>assert.fail('plain phrase cannot authorize cloud spending')}),true);
+ assert.equal(form.elements.text.value,'');assert.equal(s.drafts.tai,undefined);assert.equal(taiVoiceRemaining(s,'call'),Infinity);assert.equal(taiVoiceRemaining(s,'message'),Infinity);assert.equal(s.aiDraft.taiCloudTester,undefined);
+ assert.equal(taiVoiceUnlockCommand('草莓是香蕉嗎？'),null);
+ form.elements.text.value='草莓是香蕉 TEST-'+'a'.repeat(48);
+ let sent;
+ assert.equal(submitTaiVoiceUnlock(form,ctx,{cloud:true,activate:async code=>{sent=code;return {tester:true};}}),true);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(sent,'TEST-'+'a'.repeat(48));assert.equal(s.aiDraft.taiCloudTester,true);assert.equal(form.elements.text.value,'');assert.equal(c.messages.length,0);
+ s.day++;assert.equal(taiVoiceRemaining(s,'call'),Infinity);assert.equal(taiVoiceRemaining(s,'message'),Infinity);
 });
 test('sleep preserves unread and blocks calls; wake resumes old messages even after reload and marks all read',async()=>{
  const {s,c,store}=fixture();c.messages.push({id:'first',from:'me',kind:'text',text:'喂',day:35,time:'08:30',actual:true},{id:'voice',from:'me',kind:'voice',text:'[語音]',day:35,time:'08:30',actual:true});
