@@ -188,7 +188,7 @@ test('ordinary live conversation continues after a one-line draft without a new 
   await waitFor(()=>callView(state).includes(first),first);players[0].finish();
   await waitFor(()=>callView(state).includes(second),second);players[0].finish();
   await waitFor(()=>callState().turnCount===4);
-  assert.equal(requests.filter(x=>x.url.includes('chat/completions')).length,2);
+  assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【单次通话 JSON')).length,2);
   assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,2);
  });
 });

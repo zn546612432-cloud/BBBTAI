@@ -67,7 +67,7 @@ export function planCallSpeech({text='',history=[],behavior={},opening=false,eve
  const recent=history.filter(t=>t.role==='user').slice(-3);
  const smallTalk=recent.length>=3&&recent.every(t=>String(t.content||'').trim().length<=28);
  const close=closing||quotaClosing;
- const cap=Math.min(max,close?2:explicit?5:short?2:behavior.callDetail==='natural'?3:4);
+ const cap=Math.min(max,close?2:explicit||opening?5:short?2:behavior.callDetail==='natural'?3:4);
  return {minSegments:close?1:explicit?Math.min(3,cap):short?1:Math.min(2,cap),maxSegments:cap,smallTalk,quotaClosing,close,explicit};
 }
 export function needsCallContinuation(segments,plan){
