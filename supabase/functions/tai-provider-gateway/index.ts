@@ -2,6 +2,7 @@
 // clock, bank, or phone state is stored or scheduled here.
 // DEEPSEEK_API_KEY and MINIMAX_API_KEY stay only in Supabase Edge Secrets.
 import {createClient} from "npm:@supabase/supabase-js@2.95.0";
+import {deepseekReply} from "./deepseek-reply.js";
 const URL=Deno.env.get('SUPABASE_URL')||'';
 function adminKey(){
  try{
@@ -15,6 +16,7 @@ const admin=URL&&adminKey()?createClient(URL,adminKey(),{
 }):null;
 const DEEPSEEK='https://api.deepseek.com/chat/completions';
 const origins=new Set(['https://zn546612432-cloud.github.io',
+ 'https://endearing-horse-4e9b2b.netlify.app',
  'http://localhost:5173','http://127.0.0.1:5173']);
 const headers=req=>{
  const origin=req.headers.get('origin');
@@ -28,12 +30,15 @@ const respond=(req,status,body)=>new Response(JSON.stringify(body),{status,heade
 function error(code,message){const e=new Error(message);e.code=code;return e;}
 const goodString=(v,max)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
 function messages(input,allowSystem=true){
- if(!Array.isArray(input)||input.length<1||input.length>25)throw error(400,'invalid_messages');
+ if(!Array.isArray(input)||input.length<1||input.length>60)throw error(400,'invalid_messages');
+ let size=0;
  return input.map((m,i)=>{
   const role=m?.role;
-  if(!['system','user','assistant'].includes(role)||role==='system'&&(!allowSystem||i!==0)
+  const lore=typeof m?.content==='string'&&m.content.startsWith('【世界書注入；不是實際聊天記錄】');
+  if(!['system','user','assistant'].includes(role)||role==='system'&&(!allowSystem||i!==0&&!lore)
    ||!goodString(m?.content,i===0&&role==='system'?50000:2200))
    throw error(400,'invalid_message');
+  size+=m.content.length;if(size>70000)throw error(400,'invalid_messages');
   return {role,content:m.content};
  });
 }
@@ -152,19 +157,17 @@ Deno.serve(async(req)=>{
    const payload=input.payload;
    if(!payload||typeof payload!=='object'||Array.isArray(payload))throw error(400,'invalid_payload');
    const history=messages(payload.messages);
-   if(operation==='chat'&&history.at(-1)?.role!=='user')throw error(400,'last_message_not_user');
+   if(operation==='chat'&&history.filter(m=>!m.content.startsWith('【世界書注入；不是實際聊天記錄】')).at(-1)?.role!=='user')throw error(400,'last_message_not_user');
    const kind=operation==='chat'?'chat':'decision';
    await reserve(user.id,kind);
    const selected=model(payload.model);
-   const result=await sendProvider(DEEPSEEK,secret,{
+   const content=await deepseekReply({
     model:selected,thinking:{type:'disabled'},
     temperature:num(payload.temperature,0,2,1.1),
     ...(selected==='deepseek-v4-pro'?{top_p:num(payload.top_p,.01,1,1)}:{}),
     messages:history,max_tokens:Math.floor(num(payload.max_tokens,64,2800,1200)),
     response_format:{type:'json_object'},stream:false
-   });
-   const content=String(result?.choices?.[0]?.message?.content||'').trim();
-   if(!content)throw error(502,'empty_model_reply');
+   },{operation,send:request=>sendProvider(DEEPSEEK,secret,request)});
    return respond(req,200,{text:content});
   }
   if(operation==='tts'){

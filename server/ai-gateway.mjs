@@ -4,6 +4,7 @@ import {normalizeAiParameters} from '../src/services/ai/model-config.js';
 import {normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {deepseekModelOptions,TEAR_DEEPSEEK_MODEL} from '../src/services/ai/model-config.js';
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
+import {assembleTaiMessages} from '../src/services/ai/worldbook/index.js';
 import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
@@ -80,7 +81,7 @@ export async function handleAIGateway(req,res,pathname) {
       const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         ...deepseekModelOptions(channel==='tear'?TEAR_DEEPSEEK_MODEL:payload.model??process.env.DEEPSEEK_MODEL,payload.parameters),
-        messages:[{role:'system',content:channel==='tear'?buildTearPrompt(scene):buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,worldbookEvents:payload.worldbookEvents,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY})},...messages],
+        messages:assembleTaiMessages(channel==='tear'?buildTearPrompt(scene):buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,worldbookEvents:payload.worldbookEvents,worldbookSnapshot:payload.worldbookSnapshot,worldbook:payload.worldbook,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY}),messages,channel==='tear'?null:payload.worldbookSnapshot),
         stream:false,max_tokens:normalizeAiParameters(payload.parameters).maxTokens,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;

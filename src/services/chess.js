@@ -1,4 +1,5 @@
 import {askTai} from './ai/gateway.js';
+import {captureTaiWorldbook} from './ai/worldbook/index.js';
 import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {taiRecognized} from './story55/state.js';
@@ -215,7 +216,8 @@ async function generateMatchReply(store,matchId){
      stalemate:nowFacts.stalemate,draw:nowFacts.draw
     };
     const messages=(match.chat||[]).slice(-12).map(m=>({role:m.from==='player'?'user':'assistant',content:m.text}));
-    const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,profile:current.aiDraft?.profile,
+    const worldbookSnapshot=captureTaiWorldbook(store,{channel:'chess',day:current.day,recognized:taiRecognized(current),messages,outputMode:'text',turnId:'chess:'+matchId+':'+(match.chat||[]).length,messageIndex:(match.chat||[]).length});
+    const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,worldbookSnapshot,profile:current.aiDraft?.profile,
      memories:current.aiDraft?.memories,recognized:taiRecognized(current),storyVersion:55,outputMode:'text',allowVoice:false,
      scene:buildChessTutorPrompt(factPacket)+'\n'+(isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。')}),65000);
     parts=unpackTaiReply(response,'chess').slice(0,3);
