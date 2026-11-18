@@ -2,6 +2,7 @@
 // Author's fixed scripted events take precedence over every AI decision.
 import {taiWorldbookPrompt} from './worldbook/index.js';
 import {normalizeTaiMood,XITAI_MOODS} from './worldbook/mood.js';
+import {normalizeTaiMemoryUpdate} from './memory.js';
 export const TAI_TEXT_ACTIONS=Object.freeze(['send_text','send_voice','start_call','read_no_reply','defer_reply','end_session']);
 export const TAI_CALL_ACTIONS=Object.freeze(['speak','hang_up','listen']);
 export const TAI_RING_ACTIONS=Object.freeze(['accept_call','decline_call','ignore_call']);
@@ -50,7 +51,8 @@ export function validateTaiAction(input,{mode='text',channel='noapp',recognized=
   intent:String(typeof data.intent==='string'?data.intent:'').slice(0,180),
   delay_seconds:action==='defer_reply'?clamp(data.delay_seconds,30,3600,90):0
  };
- const mood=normalizeTaiMood(data);if(mood){decision.mood_after=mood.mood;decision.mood_reason=mood.reason;}
+ const mood=normalizeTaiMood(data);if(mood){decision.mood_after=mood.mood;decision.mood_reason=mood.reason;decision.mood_intensity=mood.intensity;}
+ const memory=normalizeTaiMemoryUpdate(data.memory_update);if(memory&&recognized&&channel==='noapp'&&mode!=='ringing'&&(hasIncoming||postCall)&&action!=='defer_reply')decision.memory_update=memory;
  if(postCall&&mode==='text'){decision.call_responsibility=oneOf(data.call_responsibility,['self','player','shared','none','unclear'],'unclear');decision.call_reason=String(typeof data.call_reason==='string'?data.call_reason:'').slice(0,180);}
  return {ok:true,reason,decision};
 }
@@ -77,7 +79,8 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   mode==='text'&&channel==='noapp'&&recognized?(allowVoice?'本轮语音可用：你可以自行选择 send_voice，不必等待熙蒙要求，也不受第60天限制。想让他听见语气、较长解释或觉得说话更自然时，可以直接发一条语音；主动联系也可以用语音。根据当前对话和本人意愿选择，不按固定概率轮换，不必每次发语音。':'本轮语音不可用或自主语音已关闭，请选择文字；不要声称自己已经发出了语音。'):'',
   '表述策略 strategy 仅可选：'+TAI_STRATEGIES.join(', ')+ '。情绪 tone 仅可选：'+TAI_EMOTIONS.join(', ')+ '。声线提示 vocal_cue 可选：'+TAI_VOCAL_CUES.join(', ')+'。情绪与声线提示是结构化元数据，不得变更 MiniMax 固定音色、calm声线、音高与语速，也不写进聊天内容。',
   'intensity: low/medium/high；intent: 180字以内简短内容方向，不是台词、详细推理或隐私；仅 defer_reply 可给 delay_seconds（30到3600秒）。',
-  '可选 mood_after（'+XITAI_MOODS.join('/')+'）和 mood_reason（180字以内，具体事件或自己的主观感受）。只有真正改变心情才填写；无变化时省略。心情不等于台词语气，不把猜测说成事实。',
+  '可选 mood_after（'+XITAI_MOODS.join('/')+'）、mood_intensity（low/medium/high）和 mood_reason（180字以内，具体事件或自己的主观感受）。只有真正改变心情才填写；无变化时省略。心情不等于台词语气，不把猜测说成事实。',
+  recognized&&channel==='noapp'&&mode!=='ringing'&&(hasIncoming||worldbookEvents.includes('call_ended_player'))?'可选 memory_update：只有本輪有值得跨日保留的真實分歧、擔憂、界線或未完之事才記。格式 {"op":"open","category":"conflict/concern/boundary/unfinished（擇一）","evidence":"逐字摘錄熙蒙本輪原話或真實通話逐字稿，4–160字","reason":"熙泰主觀感受，180字內"}。若本輪真正釐清已有分歧，可用 {"op":"resolve","id":"記憶中既有episode ID","evidence":"本輪真實原話","reason":"為何已釐清"}。不要因時間流逝、轉換話題或普通問候而釐清。不要每輪記憶，不編造原話；沒有就省略。':'',
   worldbookEvents.includes('call_ended_player')&&!hasIncoming?'本輪附加 call_responsibility（self/player/shared/none/unclear）與 call_reason（180字內，依據真實通話內容的主觀判斷）。正常告別為 none；不知道原因就是 unclear。誰按下掛斷鍵不等於誰造成矛盾。只選 send_text 或 end_session。':'',
   '输入来源：'+(hasIncoming?'熙蒙最近真实发送了消息。':'程序邀请你考虑是否主动联系；没有熙蒙的新消息。'),
   '当前 D'+day+'，频道 '+channel+'，'+(recognized?'剧情已确认相认':'未公开亲缘身份')+'。'+(allowDefer?'可考虑一次真实的延期。':'这次是到期重试，不得重复延期。'),

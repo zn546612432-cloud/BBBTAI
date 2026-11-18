@@ -12,6 +12,7 @@ import {unpackTaiReply} from './format.js';
 import {callBridgeNote,isRecentTaiCall} from './humanize.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
+import {rememberTaiConversation,rememberTaiDelivered} from './memory.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
@@ -106,7 +107,10 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:!!status.minimax});
-  if(decision&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&!replyAfter(conversation(store.get()),sourceMessageId))rememberTaiMood(store,decision,'text:'+sourceMessageId);
+  if(!unheard&&decision?.action!=='defer_reply'&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&!replyAfter(conversation(store.get()),sourceMessageId)){
+   store.update(s=>rememberTaiConversation(s,lastUser,{sourceId:sourceMessageId}));
+   if(decision)rememberTaiMood(store,decision,'text:'+sourceMessageId,{evidence:lastUser});
+  }
   if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(decision.action==='start_call'){
@@ -222,6 +226,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    store.update(s=>{
     const target=conversation(s);if(!target)return;
     target.messages.push({...msg,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
+    if(!unheard&&!unavailableVoice)rememberTaiDelivered(s,msg.voiceCaption||msg.text,{sourceId:id});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=Math.max(0,Number(target.unread)||0)+1;
      s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:target.name,

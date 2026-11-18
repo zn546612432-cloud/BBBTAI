@@ -73,7 +73,7 @@ export async function askTai({channel,day,messages,profile,memories,outputMode='
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const {assembleTaiMessages,compactWorldbookSnapshot,previewTaiWorldbook}=await import('./worldbook/index.js');
  if(!worldbookSnapshot&&worldbook)worldbookSnapshot=previewTaiWorldbook(worldbook,{channel,day,recognized,messages,outputMode,scenario:scene,worldbookEvents});
- const c=apiConfig(),req={channel,day,messages,profile,memories:visibleTaiMemories(memories,day,channel),outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,worldbookSnapshot:compactWorldbookSnapshot(worldbookSnapshot),worldbook,model:c.model,parameters:normalizeAiParameters(c)};
+ const records=Array.isArray(memories)?memories:[],c=apiConfig(),req={channel,day,messages,profile,memories:[...visibleTaiMemories(records.filter(m=>!m?.kind),day,channel),...(!worldbookSnapshot?visibleTaiMemories(records.filter(m=>m?.kind),day,channel):[])],outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,worldbookSnapshot:compactWorldbookSnapshot(worldbookSnapshot),worldbook,model:c.model,parameters:normalizeAiParameters(c)};
  if(isTaiCloudHost()){
   const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
   const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});
@@ -187,7 +187,7 @@ export async function chooseTaiAction(args={}){
  try{
   const body={...deepseekModelOptions(c.model,c),
    messages:assembleTaiMessages(system,Array.isArray(args.messages)?args.messages.slice(-16):[],args.worldbookSnapshot,'decision'),
-   response_format:{type:'json_object'},max_tokens:450,stream:false};
+   response_format:{type:'json_object'},max_tokens:750,stream:false};
   const response=isTaiCloudHost()?{choices:[{message:{content:(await taiCloudCall('decision',body)).text}}]}:
    await directJSON('https://api.deepseek.com/chat/completions',c.deepseek,body);
   raw=response.choices?.[0]?.message?.content;

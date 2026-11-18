@@ -1,7 +1,8 @@
 import {TAI_WORLDBOOK} from './entries.js';
 import {normalizeEntry,readWorldbook,ensureWorldbook,worldEntries} from './format.js';
 import {evaluateWorldbook} from './engine.js';
-import {taiMoodPrompt} from './mood.js';
+import {taiMoodPrompt,readTaiMood} from './mood.js';
+import {selectTaiLongMemories,taiLongMemoryPrompt} from '../memory.js';
 
 export const TAI_WORLDBOOK_BUDGET=1800;
 // Legacy diagnostic signature still uses the same engine.
@@ -22,7 +23,9 @@ export function captureTaiWorldbook(store,context={}){
  const existing=world.runtime?.[scope],id=String(context.turnId||context.sourceMessageId||'');
  if(id&&existing?.lastId===id&&existing.snapshot)return existing.snapshot;
  const cursor=Math.max((existing?.cursor??0)+1,Number(context.messageIndex)||0);
- const snapshot={...previewTaiWorldbook(world,{...context,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}}),mood:store.get().aiDraft?.xitaiMood||null};
+ const state=store.get(),privateContext=scope==='noapp'&&context.recognized===true;
+ const snapshot={...previewTaiWorldbook(world,{...context,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}}),
+  mood:privateContext?readTaiMood(state):null,longMemory:privateContext?selectTaiLongMemories((state.aiDraft?.memories||[]).filter(m=>m.kind),{day:state.day,channel:scope,recognized:true,messages:context.messages||[]}):[]};
  store.update(s=>{
   const w=ensureWorldbook(s);w.runtime??={};w.runtime[scope]={cursor,lastId:id,effects:snapshot.effects,snapshot};
  });
@@ -51,11 +54,11 @@ export function assembleTaiMessages(system,messages,snapshot,phase='expression')
  if(out.length>60)throw Error('世界書深度注入超出安全消息數預算，請降低條目預算或合併相同位置。');
  return out;
 }
-export function compactWorldbookSnapshot(snapshot){if(!snapshot)return undefined;return {entries:(snapshot.entries||[]).map(({id,content,order,position,depth,role,outletName,phase})=>({id,content,order,position,depth,role,outletName,phase})),mood:snapshot.mood,authorNote:snapshot.authorNote,automationIds:snapshot.automationIds};}
+export function compactWorldbookSnapshot(snapshot){if(!snapshot)return undefined;return {entries:(snapshot.entries||[]).map(({id,content,order,position,depth,role,outletName,phase})=>({id,content,order,position,depth,role,outletName,phase})),mood:snapshot.mood,longMemory:snapshot.longMemory,authorNote:snapshot.authorNote,automationIds:snapshot.automationIds};}
 export function taiWorldbookPrompt(context={}){
  const snapshot=context.worldbookSnapshot|| (context.worldbook?previewTaiWorldbook(context.worldbook,context):selectTaiWorldbook(context));
  const s=splitWorldbook(snapshot,context.phase);
  const actions={'tai:consider-call':'考慮 start_call','tai:consider-voice':'考慮 send_voice','tai:consider-hangup':'考慮 hang_up','tai:consider-decline':'考慮 decline_call','tai:consider-silence':'考慮 read_no_reply 或 end_session'};
  const hints=context.phase==='decision'?(snapshot.automationIds||[]).filter(id=>Object.hasOwn(actions,id)).map(id=>actions[id]):[];
- return [worldbookText([...s.before,...s.after,...s.authorTop,...s.authorBottom,...s.exampleBefore,...s.exampleAfter]),snapshot.authorNote?resolveWorldbookOutlets(snapshot.authorNote,s.outlets):'',taiMoodPrompt(snapshot.mood),hints.length?'【已登記的手機自動化意向】'+hints.join('；')+'。只有目前合法的結構化動作經程序驗證後才真正執行，不是強制命令。':''].filter(Boolean).join('\n\n');
+ return [worldbookText([...s.before,...s.after,...s.authorTop,...s.authorBottom,...s.exampleBefore,...s.exampleAfter]),snapshot.authorNote?resolveWorldbookOutlets(snapshot.authorNote,s.outlets):'',taiMoodPrompt(snapshot.mood),taiLongMemoryPrompt(snapshot.longMemory),hints.length?'【已登記的手機自動化意向】'+hints.join('；')+'。只有目前合法的結構化動作經程序驗證後才真正執行，不是強制命令。':''].filter(Boolean).join('\n\n');
 }

@@ -4,7 +4,6 @@ import {currentScript55} from '../../services/story55/scripted-chat.js';
 import {finalVoiceBubble} from './final-voice.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
-import {rememberTaiConversation} from '../../services/ai/memory.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat} from '../../services/invitations.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
@@ -170,7 +169,7 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg){rememberTaiConversation(s,msg.text);updateTaiBond(s,{messageId:id,text:msg.text});}});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-behavior'){
   const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));

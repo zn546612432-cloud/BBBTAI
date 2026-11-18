@@ -3,6 +3,7 @@ import {xitaiRelationshipContext} from './relationship-context.js';
 import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
+import {rememberTaiDelivered} from './memory.js';
 import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {isTaiReplyPending} from './live-chat.js';
@@ -104,7 +105,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    relationshipContext,sourceMessageId:afterCall?postCall.id:'',hasIncoming:false,allowDefer:false,allowVoice,
    allowCall:!afterCall&&!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
   if(afterCall){if(!decision||chat(store.get())?.messages.at(-1)?.id!==postCall.id||isTaiReplyPending(store)||['ringing','dialing','connected'].includes(callState().state))return false;store.update(s=>{s.events.push({type:'tai_postcall_handled',sourceId:postCall.id,day:s.day,clock:s.clock,responsibility:decision.call_responsibility,reason:decision.call_reason});});}
-  if(decision&&eligible(store.get())&&history(store.get()).at(-1)?.id===history(initial).at(-1)?.id)rememberTaiMood(store,decision,turnId);
+  if(decision&&eligible(store.get())&&history(store.get()).at(-1)?.id===history(initial).at(-1)?.id)rememberTaiMood(store,decision,turnId,{evidence:afterCall?postCall.transcript:''});
   if(decision?.action==='end_session'){
    if(!afterCall)store.update(s=>s.events.push({type:'tai_proactive_skipped',day:s.day,clock:s.clock,receivedAt:now()}));
    return false;
@@ -160,6 +161,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    store.update(s=>{
     const target=chat(s);if(!target)return;
     target.messages.push({...message,time:s.clock,day:s.day,sentDate:dateParts(s).iso,receivedAt:now()});
+    rememberTaiDelivered(s,message.voiceCaption||message.text,{sourceId:id});
     if(!isConversationOpen(s,'noapp','tai')){
      target.unread=(target.unread||0)+1;
      s.notifications.unshift({id:'tai-proactive-'+id,conversationId:'tai',title:'陈熙泰',body:message.kind==='voice'?'語音訊息':message.text,link:{appId:'noapp',route:'/chat/tai',params:{}}});

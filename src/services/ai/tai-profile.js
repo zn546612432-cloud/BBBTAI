@@ -11,6 +11,7 @@ import {taiMomentumPrompt} from './conversation-momentum-v11.js';
 import {taiTurnShapePrompt} from './conversation-shape-v12.js';
 import {taiWorldbookPrompt,splitWorldbook,worldbookText,worldbookDepthText,resolveWorldbookOutlets,previewTaiWorldbook} from './worldbook/index.js';
 import {taiMoodPrompt} from './worldbook/mood.js';
+import {taiLongMemoryPrompt,selectTaiLongMemories,migrateTaiMemories} from './memory.js';
 
 export const canonicalTai2026=[
  '陈熙泰，被西方家庭收养，接受哈佛计算机博士教育，常居英国／葡萄牙；不沿用哈佛本科、英国住校读博的旧拼接。',
@@ -56,6 +57,7 @@ export function ensureTaiDraft(s){
  if(s.aiDraft.profile.interaction===previousDefaultInteraction){s.aiDraft.profile.interaction=defaults.profile.interaction;changed=true;}
  if(s.aiDraft.profile.interaction===legacyInteraction){s.aiDraft.profile.interaction=defaults.profile.interaction;changed=true;}
  if(!Array.isArray(s.aiDraft.memories)){s.aiDraft.memories=[];changed=true;}
+ if(migrateTaiMemories(s.aiDraft.memories))changed=true;
  if(!Array.isArray(s.aiDraft.testTurns)){s.aiDraft.testTurns=[];changed=true;}
  return changed;
 }
@@ -63,7 +65,7 @@ export function visibleTaiMemories(memories,day,channel){
  if(!Array.isArray(memories))return [];
  return memories.filter(m=>m&&m.enabled!==false&&Number.isInteger(m.day)&&m.day<=day&&m.day>=1&&
    ['shared',channel].includes(m.visibility)&&typeof m.text==='string'&&m.text.trim())
-  .slice(-30).map(m=>({day:m.day,visibility:m.visibility,source:String(m.source||'开发者记录').slice(0,80),text:m.text.trim().slice(0,600)}));
+  .slice(-30).map(m=>({day:m.day,visibility:m.visibility,source:String(m.source||'开发者记录').slice(0,80),text:m.text.trim().slice(0,600),...(m.kind?{kind:m.kind,id:m.id,category:m.category,speaker:m.speaker,status:m.status,reason:m.reason,resolution:m.resolution}: {})}));
 }
 export function taiKnowledgeContext({day,channel,recognized}={}){
  // NoApp is already an installed private channel. Explicit false wins in prompt tests.
@@ -83,7 +85,7 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
 export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}={}){
- const seen=visibleTaiMemories(memories,day,channel);
+ const seen=visibleTaiMemories((Array.isArray(memories)?memories:[]).filter(m=>!m?.kind),day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
  const effectiveMode=outputMode==='call'?'call':channel==='noapp'?outputMode:'text';
@@ -97,6 +99,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   '人物编辑补充：可补充个性，不能覆盖本卡的自然口语、禁止过度文艺、无动作、身份公开范围与不预知未来要求。\n'+reviewed,
   worldbookText(sections?.after),
   taiMoodPrompt(snapshot?.mood),
+  channel==='noapp'&&recognized!==false?taiLongMemoryPrompt(snapshot?.longMemory??selectTaiLongMemories((Array.isArray(memories)?memories:[]).filter(m=>m?.kind),{day,channel,recognized:true,messages})): '',
   taiKnowledgeContext({day,channel,recognized}),
   effectiveMode==='call'
    ?'【实时媒介事实｜最高优先级】现在双方正在 NoApp 实时语音通话。熙蒙本轮输入是此通话里的发言，不是微信或 NoApp 文本消息；你正在通过 MiniMax 发声。不能说「你不是挂电话了吗怎么还能回消息」、不能描述在打字或发送聊天气泡。只有真正挂断后，程序才会切换回文字频道。'
