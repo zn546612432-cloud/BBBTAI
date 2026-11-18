@@ -14,7 +14,7 @@ test('author supplied actual dialogue is visible in NoApp text, voice and connec
  assert.equal(AUTHOR_XITAI_RECOGNIZED_EXAMPLES.length,4);
  const excerpts=[
   '我想你了','有多想？','我也想你。','我以为这是你想听的',
-  '我的童年？','养父母？','精英教育？','高中谈了几次恋爱？',
+  '怎么，想听我小时候的事？','等到我们见面的时候，说不定我会跟你说。','…真是怕了你了。收养我的夫妇是葡萄牙人，我自然是在葡萄牙长大。',
   '又怎么了，公主殿下？','你叫我一声哥哥，我可以考虑帮你。',
   '这点小事也要让我出手？','代购费从你的mirage账号扣'
  ];
@@ -39,7 +39,7 @@ test('never expose recognized private-family examples to anonymous MIRAGE or to 
   const prompt=buildTaiPrompt(makeInput(item));
   assert.doesNotMatch(prompt,/作者本人提供的陈熙泰原始对白示例/);
   assert.doesNotMatch(prompt,/刚练完五十组飞鸟/);
-  assert.doesNotMatch(prompt,/高中谈了几次恋爱/);
+ assert.doesNotMatch(prompt,/等到我们见面的时候，说不定我会跟你说/);
  }
  assert.equal(authorXitaiDialogueExamples({channel:'mirage',recognized:true}), '');
  assert.match(buildTaiPrompt(makeInput({channel:'chess',recognized:true})),/作者本人提供的陈熙泰原始对白示例/);
@@ -67,7 +67,7 @@ test('the actual askTai DeepSeek payload includes user examples (not merely docs
   for(const r of requests){
    assert.match(r.url,/deepseek\.com\/chat\/completions/);
    assert.match(r.body.messages[0].content,/我以为这是你想听的/);
-   assert.match(r.body.messages[0].content,/我的童年？/);
+   assert.match(r.body.messages[0].content,/怎么，想听我小时候的事？/);
    assert.match(r.body.messages[0].content,/代购费从你的mirage账号扣/);
    assert.match(r.body.messages[0].content,/最高优先级：作者已批准的Supabase陈熙泰 V8-B/);
    assert.equal(r.body.messages[0].role,'system');

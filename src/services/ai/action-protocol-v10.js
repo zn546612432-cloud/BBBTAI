@@ -5,6 +5,7 @@ import {normalizeTaiMood,XITAI_MOODS} from './worldbook/mood.js';
 import {normalizeTaiMemoryUpdate} from './memory.js';
 import {XITAI_DECISION_STYLE} from './expression-style.js';
 import {XITAI_BIOGRAPHY,XITAI_BIOGRAPHY_PRIORITY} from './character-biography.js';
+import {taiPrivateDisclosurePrompt} from './conversation-momentum-v11.js';
 export const TAI_TEXT_ACTIONS=Object.freeze(['send_text','send_voice','start_call','read_no_reply','defer_reply','end_session']);
 export const TAI_CALL_ACTIONS=Object.freeze(['speak','hang_up','listen']);
 export const TAI_RING_ACTIONS=Object.freeze(['accept_call','decline_call','ignore_call']);
@@ -92,6 +93,7 @@ export function taiActionDecisionPrompt({mode='text',channel='noapp',day=1,recog
   XITAI_BIOGRAPHY,
   XITAI_BIOGRAPHY_PRIORITY,
   XITAI_DECISION_STYLE,
+  taiPrivateDisclosurePrompt(messages,{recognized:recognized&&channel!=='mirage'}),
   'JSON结构严格为 {"schema_version":10,"source_message_id":'+JSON.stringify(String(sourceMessageId))+',"action":"'+actions[0]+'","strategy":"answer_directly","intensity":"low","tone":"neutral","vocal_cue":"none","intent":"简短内容方向","delay_seconds":0}。只改字段值，可附上述情緒字段，禁止额外解释。'
  ].filter(Boolean).join('\n\n');
 }
