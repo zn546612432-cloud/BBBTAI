@@ -335,7 +335,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
   const remaining=taiVoiceRemaining(ctx.store.get(),'call');
   ({segments,endAfter}=finalizeCallSegments(segments,remaining,{close:endAfter,maxSegments:endAfter?Math.min(2,plan.maxSegments):plan.maxSegments}));
-  if((hasBannedTaiConstruction(segments.map(r=>r.text))||hasBannedTaiConstruction(segments.map(r=>r.speechText||r.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
+  // The local unheard repair is authored and must remain available without AI.
+  if((event!=='unheard'||shouldClose)&&(hasBannedTaiConstruction(segments.map(r=>r.text))||hasBannedTaiConstruction(segments.map(r=>r.speechText||r.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
   ctx.store.update(state=>{
    state.events??=[];
    state.events.push({type:'tai_call_v2_turn',sessionId,generationId,day:state.day,clock:state.clock,

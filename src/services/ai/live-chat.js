@@ -225,7 +225,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
   // bubble; the first phone utterance is played only after the player answers.
-  if((hasBannedTaiConstruction(draftEntries.map(e=>e.text))||hasBannedTaiConstruction(draftEntries.map(e=>e.speechText||e.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
+  // An unheard voice uses the existing authored network-repair line, not an AI draft.
+  if(!unheard&&(hasBannedTaiConstruction(draftEntries.map(e=>e.text))||hasBannedTaiConstruction(draftEntries.map(e=>e.speechText||e.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
   const limit=Math.max(1,behavior.maxMessages);
   const phoneAt=draftEntries.findIndex(item=>item.action==='phone');
   const selected=phoneAt>=limit?[...draftEntries.slice(0,limit-1),draftEntries[phoneAt]]:draftEntries.slice(0,limit);
