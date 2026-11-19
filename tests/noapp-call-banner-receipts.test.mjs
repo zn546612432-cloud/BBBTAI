@@ -18,6 +18,9 @@ test('incoming call shows supplied user-photo banner with separate answer and de
  const html=incomingCallBanner(store.get());
  assert.match(html,/tai-banner-accept/);
  assert.match(html,/tai-banner-decline/);
+ assert.match(html,/tai-banner-accept[^>]+><svg class="tai-handset-up"/);
+ assert.match(html,/tai-banner-decline[^>]+><svg class="tai-handset-down"/);
+ assert.doesNotMatch(html,/rotate\(180/,'answer is drawn as a diagonal handset rather than an inverted hang-up icon');
  assert.match(html,/\/assets\/tai-portrait\.webp/);
  assert.equal(callState().state,'ringing');
  assert.equal(callAction('tai-decline',ctx),true);

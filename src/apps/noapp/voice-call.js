@@ -71,7 +71,7 @@ const AVATAR=TAI_PORTRAIT; // user-supplied, cropped high clarity portrait
 const AVATAR_SOURCE=TAI_PORTRAIT;
 const glyph={
  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0014 0v-2M12 19v3M8 22h8"/></svg>',
- hang:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z"/></svg>',
+ hang:'<svg class="tai-handset-down" viewBox="0 0 28 28" fill="currentColor" aria-hidden="true"><path d="M1 16c0-4.8 5.8-8.3 13-8.3S27 11.2 27 16c0 1.8-.9 2.8-2.4 2.8-.3 0-.6 0-.9-.1l-4.5-1.1c-1.1-.3-1.8-1-1.8-2.1v-2.2a15.8 15.8 0 0 0-6.8 0v2.2c0 1.1-.7 1.8-1.8 2.1l-4.5 1.1-.9.1C1.9 18.8 1 17.8 1 16Z"/></svg>',
  speaker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9c2 2 2 4 0 6M20 5c4 4 4 10 0 14"/></svg>',
  quiet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM3 3l18 18"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
@@ -79,7 +79,7 @@ const glyph={
  phone:'<svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path fill="currentColor" d="M5.1 3.2c-1.5.8-2.9 3.1-2.5 5.6.9 6.8 10.5 16.4 17.3 17.1 2.5.3 4.9-1.2 5.6-2.7.4-.8.1-1.7-.6-2.2l-5.1-3.6c-.7-.5-1.6-.4-2.2.2l-2 2.1c-3.2-1.6-5.9-4.3-7.4-7.5l2.2-2c.6-.6.7-1.5.2-2.2L7 3.8c-.5-.7-1.2-1-1.9-.6Z"/><path d="M16 3a10 10 0 0 1 9 9M16 7a6 6 0 0 1 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  keyboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 15h8"/></svg>',
  micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 8V5a3 3 0 0 1 6 0v8M5 10v2a7 7 0 0 0 12 5M12 19v3M8 22h8M3 3l18 18"/></svg>',
- answer:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13.8c5.8-4.2 13.2-4.2 19 0l-2.4 4.2a1.7 1.7 0 01-2.1.8l-2.8-1.1v-3.1a23 23 0 00-4.4 0v3.1L7 18.8a1.7 1.7 0 01-2.1-.8z" transform="rotate(180 12 12)"/></svg>'
+ answer:'<svg class="tai-handset-up" viewBox="0 0 28 28" fill="currentColor" aria-hidden="true"><path d="M5.1 3.2c-1.5.8-2.9 3.1-2.5 5.6.9 6.8 10.5 16.4 17.3 17.1 2.5.3 4.9-1.2 5.6-2.7.4-.8.1-1.7-.6-2.2l-5.1-3.6c-.7-.5-1.6-.4-2.2.2l-2 2.1c-3.2-1.6-5.9-4.3-7.4-7.5l2.2-2c.6-.6.7-1.5.2-2.2L7 3.8c-.5-.7-1.2-1-1.9-.6Z"/></svg>'
 };
 function phoneButton(action,title,art,kind=''){
  return '<button type="button" data-action="'+action+'" class="tai-call-control '+kind+'" aria-label="'+title+'"><span class="tai-control-circle">'+art+'</span><span class="tai-control-label">'+title+'</span></button>';
