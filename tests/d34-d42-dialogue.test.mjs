@@ -2,15 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,advanceScene55,scene55,sceneLines,tickStory55} from '../src/services/story55/runtime.js';
-import {nodeStatus,completed,date55,story55ChargeGate} from '../src/services/story55/state.js';
+import {nodeStatus,completed,date55,story55ChargeGate,timedStoryPaused,pendingTimedStoryEvent} from '../src/services/story55/state.js';
 import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
-import {advanceGameMinutes} from '../src/system/time/clock.js';
+import {advanceGameMinutes,tickWorld} from '../src/system/time/clock.js';
+import {settlePhoneBackground} from '../src/system/runtime/controller.js';
 import {visibleMessages} from '../src/services/messaging/delivery.js';
 import {D41_CALL,D42_CALL,RETIRED_SCENES} from '../src/story/d34-d42/definition.js';
-import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,callAction,callState,callView,scriptedCallDraft,submitCall} from '../src/apps/noapp/voice-call.js';
+import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,maybeStartD42Call,callAction,callState,callView,scriptedCallDraft,submitCall} from '../src/apps/noapp/voice-call.js';
 import {D41_CHESS_INVITATION,offerD41ChessInvitation,receiveInvitation,deferInvitation} from '../src/services/invitations.js';
-import {playMove,postMatchMessage} from '../src/services/chess.js';
+import {playMove,postMatchMessage,resignChessMatch} from '../src/services/chess.js';
 import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 
 function phone(day,clock){const s=initialState();activateStory55(s);rebuildStory55AtDay(s,day,clock);return s;}
@@ -35,13 +36,21 @@ test('D41 23:30 and next calendar day 02:00 use native send and shared overnight
  const s=phone(41,'23:29'),group=s.content.conversations.wechat.find(c=>c.id==='group');
  assert.equal(nodeStatus(s,'d41-opening').state,'locked');
  assert.equal(nodeStatus(s,'show').state,'locked');
- advanceGameMinutes(s,1);assert.equal(s.clock,'23:30');
+ advanceGameMinutes(s,100);assert.equal(s.clock,'23:30');
+ assert.equal(timedStoryPaused(s),true);const battery=s.batteryPercent;
+ advanceGameMinutes(s,100);assert.equal(s.clock,'23:30');assert.equal(s.batteryPercent,battery);
  finish(s,'d41-opening','group');
  assert.equal(group.messages.find(m=>m.id==='s55-d41-opening-0').time,'23:30');
  assert.equal(nodeStatus(s,'show').state,'locked');
- advanceGameMinutes(s,149);assert.equal(s.day,41);assert.equal(s.clock,'01:59');
+ advanceGameMinutes(s,149);assert.equal(s.clock,'23:40');
+ assert.equal(pendingTimedStoryEvent(s).id,D41_CALL.id);
+ s.story55.scriptedCallCompleted={[D41_CALL.id]:true};
+ assert.equal(timedStoryPaused(s),true); // voice completed, chess still outstanding
+ s.matches.push({invitationId:D41_CHESS_INVITATION,status:'finished'});
+ advanceGameMinutes(s,139);assert.equal(s.day,41);assert.equal(s.clock,'01:59');
  assert.equal(nodeStatus(s,'show').state,'locked');
- advanceGameMinutes(s,1);assert.equal(nodeStatus(s,'show').state,'ready');
+ advanceGameMinutes(s,100);assert.equal(s.clock,'02:00');assert.equal(nodeStatus(s,'show').state,'ready');
+ assert.equal(timedStoryPaused(s),true);
  finish(s,'show','group');
  const messages=visibleMessages(group,s).filter(m=>m.id.startsWith('s55-d42-celebration-'));
  assert.equal(messages.length,9);assert.equal(messages[0].time,'02:00');assert.equal(messages[0].sentDate,date55(42));
@@ -50,7 +59,8 @@ test('D41 23:30 and next calendar day 02:00 use native send and shared overnight
 });
 test('D42 morning call is due once at 09:25 and unconfirmed later scenes have no copy',()=>{
  const s=phone(42,'09:24');assert.equal(completed(s,'show'),true);assert.equal(d42CallDue(s),false);
- s.clock='09:25';assert.equal(d42CallDue(s),true);s.story55.d42CallTriggered=true;assert.equal(d42CallDue(s),false);
+ s.clock='09:25';assert.equal(d42CallDue(s),true);s.story55.d42CallTriggered=true;assert.equal(d42CallDue(s),true);
+ s.story55.scriptedCallCompleted={[D42_CALL.id]:true};assert.equal(d42CallDue(s),false);
  for(const id of RETIRED_SCENES){assert.equal(sceneLines(s,id).length,0);assert.equal(nodeStatus(s,id).state,'locked');}
 });
 test('D42 preset plays the three exact lines in order with two 2500ms post-playback gaps; hangup cancels',async()=>{
@@ -61,14 +71,14 @@ test('D42 preset plays the three exact lines in order with two 2500ms post-playb
  events.length=0;await playScriptedCallSequence(D42_CALL,{...opts,wait:async ms=>{events.push(ms);active=false;}});
  assert.deepEqual(events,[D42_CALL.lines[0],2500]);
 });
-test('D41 preset call waits for opening and 23:40; invitation opens a normal legal chess game with no unapproved chat',()=>{
+test('D41 preset call is due at 23:40 independently of group replies; invitation opens a normal legal chess game with no unapproved chat',()=>{
  const s=phone(41,'23:30');
  assert.equal(d41CallDue(s),false);
- finish(s,'d41-opening','group');
  s.clock='23:39';assert.equal(d41CallDue(s),false);
  s.clock='23:40';assert.equal(d41CallDue(s),true);
+ assert.equal(completed(s,'d41-opening'),false);
  assert.deepEqual(D41_CALL.steps.map(step=>step[0]),['tai','me','me','tai','tai','invite','tai']);
- s.story55.d41CallTriggered=true;assert.equal(d41CallDue(s),false);
+ s.story55.d41CallTriggered=true;assert.equal(d41CallDue(s),true);
  assert.equal(offerD41ChessInvitation(s),true);assert.equal(offerD41ChessInvitation(s),false);
  const c=s.content.conversations.noapp.find(c=>c.id==='tai');
  const card=c.messages.find(m=>m.id==='s55-chess-card-d41');
@@ -80,6 +90,34 @@ test('D41 preset call waits for opening and 23:40; invitation opens a normal leg
  assert.equal(postMatchMessage(store,matchId,'試試'),false);
  assert.equal(playMove(store,matchId,'e2','e4').san,'e4');
  assert.equal(receiveInvitation(store,D41_CHESS_INVITATION),matchId);
+});
+test('D41 incoming call is retained through a locked screen and recovered after an interrupted ringing session',()=>{
+ const s=phone(41,'23:39');finish(s,'d41-opening','group');s.unlocked=false;
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(){}}};
+ advanceGameMinutes(s,201);assert.equal(s.clock,'23:40');
+ assert.equal(d41CallDue(s),true);
+ assert.equal(maybeStartD41Call(ctx),false);assert.equal(s.story55.d41CallTriggered,undefined);
+ s.unlocked=true;
+ s.story55.d41CallTriggered=true;s.notifications.push({id:'stale-d41',type:'tai-incoming-call',scriptedCallId:D41_CALL.id});
+ assert.equal(maybeStartD41Call(ctx),true);assert.equal(callState().state,'ringing');
+ assert.equal(s.notifications.filter(n=>n.type==='tai-incoming-call').length,1);
+ assert.equal(maybeStartD41Call(ctx),false);
+ callAction('tai-decline',ctx);
+ assert.equal(maybeStartD41Call(ctx),false);
+ assert.equal(d41CallDue(s),true); // retry remains pending after decline
+});
+test('D42 checkpoints clip fast-forward and background elapsed time; completing each native chat releases the clock',()=>{
+ const s=phone(42,'09:24');s.unlocked=true;
+ advanceGameMinutes(s,100);assert.equal(s.clock,'09:25');assert.equal(timedStoryPaused(s),true);
+ const battery=s.batteryPercent;tickWorld(s,300000);assert.equal(s.clock,'09:25');assert.equal(s.batteryPercent,battery);
+ s.story55.scriptedCallCompleted={[D42_CALL.id]:true};
+ advanceGameMinutes(s,600);assert.equal(s.clock,'14:30');
+ for(const [id,clock] of [['d42-operation-1','14:30'],['d42-operation-2','14:35'],['d42-operation-3','15:05'],['target','15:50'],['d42-group','16:30']]){
+  assert.equal(s.clock,clock);assert.equal(timedStoryPaused(s),true);assert.equal(pendingTimedStoryEvent(s).id,id);
+  settlePhoneBackground(s,60000);assert.equal(s.clock,clock);
+  finish(s,id,id==='d42-group'?'group':'tai',id==='d42-group'?'wechat':'noapp');
+  assert.equal(timedStoryPaused(s),false);advanceGameMinutes(s,600);
+ }
 });
 test('D42 NoApp action, group and Zai private, then D43 Xin private retain time gates and native Send',()=>{
  const s=phone(42,'10:05');
@@ -98,7 +136,7 @@ test('D42 NoApp action, group and Zai private, then D43 Xin private retain time 
  assert.equal(completed(s,'d43-xin'),true);
 });
 test('D41 real call accepts only the two preset player sends and plays through the chess invitation without AI generation',async()=>{
- const s=phone(41,'23:40');finish(s,'d41-opening','group');
+ const s=phone(41,'23:40');s.unlocked=true;
  const old=Object.fromEntries(['Audio','fetch','sessionStorage','FormData'].map(k=>[k,globalThis[k]]));
  let audio,submitted='',route;const synthesized=[];
  class FakeAudio{
@@ -133,5 +171,28 @@ test('D41 real call accepts only the two preset player sends and plays through t
   await waitFor(()=>!audio.paused);audio.finish();
   await waitFor(()=>callState().turnCount===6);
   assert.equal(synthesized.length,4);
+  assert.equal(s.story55.scriptedCallCompleted[D41_CALL.id],true);
+  finish(s,'d41-opening','group');
+  const matchId=receiveInvitation(ctx.store,D41_CHESS_INVITATION);
+  assert.equal(timedStoryPaused(s),true);
+  resignChessMatch(ctx.store,matchId);assert.equal(timedStoryPaused(s),false);
+ }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
+test('D42 voice failure cannot permanently lock a mandatory call; read all three exact lines before clock resumes',async()=>{
+ const s=phone(42,'09:25');s.unlocked=true;
+ const old=Object.fromEntries(['Audio','fetch','sessionStorage'].map(k=>[k,globalThis[k]]));
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(){}}};
+ try{
+  globalThis.Audio=class{constructor(){this.src='';this.paused=true;}play(){return Promise.resolve();}pause(){}};
+  globalThis.sessionStorage={getItem:k=>k===BYOK_SESSION?JSON.stringify({minimax:'test-minimax',region:'cn'}):null};
+  globalThis.fetch=async()=>{throw Error('offline');};
+  assert.equal(maybeStartD42Call(ctx),true);callAction('tai-accept',ctx);
+  for(const line of D42_CALL.lines){
+   for(let i=0;i<100&&!callView(s).includes('tai-scripted-next');i++)await new Promise(r=>setTimeout(r,10));
+   assert.match(callView(s),/tai-scripted-next/);assert.ok(callView(s).includes(line));
+   assert.equal(timedStoryPaused(s),true);callAction('tai-scripted-next',ctx);
+  }
+  assert.equal(s.story55.scriptedCallCompleted[D42_CALL.id],true);
+  assert.equal(timedStoryPaused(s),false);assert.equal(callState().state,'ended');
  }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });

@@ -37,6 +37,8 @@ For **every registered App**, the planning-level capability inventory is [`app-c
 2. **Optional daily-life event** — friendships, gifts, social chat, photos, dinners; cannot block story day. Missing a time window may expire the opportunity while preserving bank history.
 3. **Player-authored action** — WeChat `me` message, purchase or accept/submit; **never simulate an intentional click** in a content tick. Composer drafts are not committed messages.
 
+For an approved action with a strictly planned time, mark the existing Story55 node or scripted call `pauseTimeUntilComplete: true` with its `at` time. `pendingTimedStoryEvent` derives the earliest unfinished checkpoint from canonical completion records; `advanceGameMinutes` clips the shared clock to that minute, including overnight events. Do not set this flag on ordinary optional chats or add a day-specific clock. The App must provide a completion/retry path (e.g. D41 call audio and chess result, D42 call audio); real-time replies and audio continue while game time is stopped. Developer-only runtime panel shows the checkpoints and status. Existing `gateDay`/`holdAt03` remain separate from the exact-time checkpoint.
+
 ## Golden behaviors
 
 - The timeline is D01 = **2025-05-19** and D55 = **2025-07-12**. D06 = 2025-05-24.

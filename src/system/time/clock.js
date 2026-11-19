@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate,overnightSceneGate55,overnightSceneNight55} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,overnightSceneGate55,overnightSceneNight55,pendingTimedStoryEvent,storyDayMinute,timedStoryPaused} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
@@ -60,6 +60,12 @@ export function advanceGameMinutes(s,requested){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
+ const checkpoint=pendingTimedStoryEvent(s);
+ if(checkpoint){
+  const remaining=checkpoint.minute-storyDayMinute(s);
+  if(remaining<=0)return {minutes:0,event:'timed-story-hold'};
+  requested=Math.min(requested,remaining);
+ }
  // Short charging never crosses midnight or skips into the next story day.
  const short=isShortCharging(s);
  if(short&&shortChargeBlock(s)){endShortCharge(s);return {minutes:0,event:'short-charge-story'};}
@@ -75,7 +81,7 @@ export function advanceGameMinutes(s,requested){
   if(!short)drainGameBattery(s,target-from);
   if(short&&target===1439)endShortCharge(s);
   if(target===1440+180){d.frozenAt03=true;s.batteryPercent=2;return {minutes:target-from,event:'d01-hold'};}
-  return {minutes:target-from,event:short&&target===1439?'short-charge-end':'none'};
+  return {minutes:target-from,event:short&&target===1439?'short-charge-end':timedStoryPaused(s)?'timed-story-hold':'none'};
  }
  // The same 03:00 hold serves any explicitly required late mainline scene.
  // Keep D23's saved night flag intact; D24 uses the shared overnight ledger.
@@ -98,7 +104,7 @@ export function advanceGameMinutes(s,requested){
   s.clock=isoTime(target%1440);night.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
   if(target===1440+180){s.batteryPercent=2;return {minutes:target-from,event:holdEvent};}
-  return {minutes:target-from,event:'none'};
+  return {minutes:target-from,event:timedStoryPaused(s)?'timed-story-hold':'none'};
  }
  const from=absoluteMinute(s);let target=from+Math.max(0,Math.floor(requested));
  if(short)target=Math.min(target,s.day*DAY_MINUTES-1);
@@ -145,10 +151,11 @@ export function advanceGameMinutes(s,requested){
   s.batteryPercent=1;s.powerActiveMs=0;s.emergencyCharge=true;
  }
  syncDeathNight(s);
- return {minutes:advanced,event:stop.type==='none'&&reachedShortEnd?'short-charge-end':stop.type};
+ return {minutes:advanced,event:stop.type==='none'&&reachedShortEnd?'short-charge-end':stop.type==='none'&&timedStoryPaused(s)?'timed-story-hold':stop.type};
 }
 export function isTaiConversation(s){const n=s.nav?.current||{};return (n.appId==='noapp'&&(n.route==='/chat/tai'||n.route==='/call'))||(n.appId==='mirage'&&/^\/chat\//.test(n.route)&&/ouroboros/i.test(n.route));}
 export function worldMinuteRate(s,options={}){
+ if(timedStoryPaused(s))return 0;
  const {focused=false,taiChat=false,fastForward=true}=options;
  if(endingAwaitingReply55(s))return STORY55_FINALE_REPLY_MINUTES_PER_MS;
  if(isStory55(s))return phoneSceneMinuteRate(s,options);

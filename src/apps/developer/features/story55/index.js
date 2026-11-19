@@ -1,6 +1,6 @@
 import {PHONE_RUNTIME_POLICY} from '../../../../system/runtime/policy.js';
 import {STORY55_DAYS} from '../../../../story/story55/catalog.js';
-import {isStory55,story55Config,nodeStatus,completed,date55} from '../../../../services/story55/state.js';
+import {isStory55,story55Config,nodeStatus,completed,date55,timedStoryEvents,timedStoryEventComplete,pendingTimedStoryEvent,timedStoryPaused} from '../../../../services/story55/state.js';
 import {deploymentPercent} from '../../../../services/story55/projects.js';
 import {exportStory55Config} from '../../../../services/story55/config.js';
 import {s55Button as b} from '../../../../services/story55/views.js';
@@ -12,6 +12,8 @@ import {listTestSnapshots,storySourceVersion} from '../../../../services/story55
 // on change so dragging never rewrites the entire phone on every pointer move.
 function timeSpeedPanel(s){
  const speed=story55MinutesPerSecond(s);
+ const pending=pendingTimedStoryEvent(s);
+ const checkpoints=timedStoryEvents(s).filter(n=>n.day===s.day).sort((a,b)=>Number(!!a.afterMidnight)-Number(!!b.afterMidnight)||a.at.localeCompare(b.at));
  return `<section class="card s55-time-speed"><h3>遊戲時間流速</h3>
  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
   <label for="s55-clock-speed">主畫面掛機</label>
@@ -26,6 +28,7 @@ function timeSpeedPanel(s){
  </div>
  <p class="editor-help">所有 App（含 GHOST、微信、Mirage）內、鎖屏、通知與通話：現實 1 分鐘＝手機 ${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘。滑桿只調整主畫面掛機；設為 0 時全局暫停時間與耗電。電量按實際經過的手機時間計算，滿電從 08:00 到 23:00 約剩 20%。短充仍按現實 1 分鐘最多補 10%，長充與終章保持既定流程。</p>
  <button class="s55-button" type="button" data-action="s55-speed-default">恢復預設（${STORY55_SPEED_DEFAULT} 分鐘／秒）</button>
+ ${checkpoints.length?`<h4>固定時間 · 主線暫停</h4>${checkpoints.map(n=>`<p>${n.afterMidnight?'次日 ':''}${esc(n.at)} · ${esc(n.title||n.id)} · ${timedStoryEventComplete(s,n)?'已完成':pending?.id===n.id&&timedStoryPaused(s)?'暫停中':'待觸發'}</p>`).join('')}`:''}
  </section>`;
 }
 function snapshotPanel(s){

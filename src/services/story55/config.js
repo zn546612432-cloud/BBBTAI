@@ -20,6 +20,7 @@ export function validateStory55Config(input){
  const ids=new Set();
  for(const n of c.nodes){if(!/^[a-z][a-z0-9-]{0,50}$/.test(n.id)||ids.has(n.id)||typeof n.title!=='string'||n.title.length>150||!Number.isInteger(n.day)||n.day<1||n.day>55||!kinds.has(n.kind)||!Array.isArray(n.requires))throw Error('节点字段或ID无效');ids.add(n.id);}
  for(const n of c.nodes)if(n.gateDay!==undefined&&(!Number.isInteger(n.gateDay)||n.gateDay<n.day||n.gateDay>55))throw Error('节点完成期限不能早于开放日');
+ for(const n of c.nodes)if(n.pauseTimeUntilComplete!==undefined&&(typeof n.pauseTimeUntilComplete!=='boolean'||n.pauseTimeUntilComplete&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(n.at||'')||n.optional||n.authoredPending)))throw Error('固定時間暫停需要有效時間及必做节点：'+n.id);
  for(const n of STORY55_CONFIG.nodes)if(!ids.has(n.id))throw Error('缺少核心节点：'+n.id);
  const visit=(id,path=[])=>{if(path.includes(id))throw Error('剧情树存在循环：'+[...path,id].join('→'));const n=c.nodes.find(n=>n.id===id);if(!n)throw Error('缺少前置节点：'+id);for(const p of n.requires){const parent=c.nodes.find(n=>n.id===p);if(parent?.day>n.day)throw Error('前置节点晚于当前节点');visit(p,[...path,id]);}};
  c.nodes.forEach(n=>visit(n.id));
