@@ -31,7 +31,7 @@ export function validateStory55Config(input){
  if(c.finalAudio&&!(typeof c.finalAudio==='string'&&/^\/(?!\/)[a-zA-Z0-9_./-]+\.(mp3|wav|m4a|ogg)$/.test(c.finalAudio)))throw Error('终局音频须为站内音频路径');
  if(!c.scenes||typeof c.scenes!=='object'||Array.isArray(c.scenes))throw Error('场景正文无效');
  for(const [id,lines] of Object.entries(c.scenes))if(!ids.has(id)||!Array.isArray(lines)||lines.length>150||lines.some(x=>!Array.isArray(x)||x.length!==2||x.some(v=>typeof v!=='string')||x[1].length>3000))throw Error('场景台词无效');
- for(const n of c.nodes)if(n.kind==='scene'&&!c.scenes[n.id]?.length)throw Error('固定场景需要至少一行正文');
+ for(const n of c.nodes)if(n.kind==='scene'&&!n.authoredPending&&!c.scenes[n.id]?.length)throw Error('固定场景需要至少一行正文');
  const e=c.economics;if(!e||!Array.isArray(e.hardwarePrices)||e.hardwarePrices.some(v=>!Number.isFinite(v)||v<0)||!Number.isFinite(e.dailyExpense)||e.dailyExpense<0||!Number.isFinite(e.openingBalance)||e.openingBalance<0)throw Error('经济参数无效');
  for(const n of c.nodes)if([n.cost,n.credit].some(v=>v!==undefined&&(!Number.isFinite(v)||v<0)))throw Error('节点金额无效');
  return c;

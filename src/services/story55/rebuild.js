@@ -245,6 +245,9 @@ function simulateScene(s,node){
  scene.test=true;
 }
 function simulateNode(s,node){
+ // Unwritten future scenes remain locked in gameplay; developer date jumps
+ // may cross them without inserting invented dialogue into real chat history.
+ if(node.authoredPending){completeNode(s,node.id,{test:true});return true;}
  if(node.kind==='wallet'){
   if(node.id==='d13-wallet-bind')bindD13Wallet(s);
   else{transferD13Wallet(s,0);enterD13Chat(s);}
@@ -347,11 +350,12 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
     if(node.id==='plan')s.story55.d29ChessExited=true;
     if(node.id==='questions'&&!s.story55.identityContact)s.story55.identityContact={count:4,replyDay:day+1};
     if(node.id==='invite'&&completed(s,'photo'))s.story55.identityInviteRequested=true;
-    if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
+    if(node.afterMidnight&&s.day===node.day){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=node.at;}
+    else if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
     // The historical mock invitation has no real match or postgame chat.
     // Only the developer replay may settle that synthetic prerequisite.
     const historicalPostgame=node.id==='d23-chess-finish'&&s.story55.scenes?.['d23-chess']?.test===true;
-    if(!historicalPostgame&&nodeStatus(s,node.id).state!=='ready')continue;
+    if(!historicalPostgame&&!node.authoredPending&&nodeStatus(s,node.id).state!=='ready')continue;
     if(simulateNode(s,node)){tickStory55(s);changed=true;}
    }
   }
@@ -407,7 +411,9 @@ export function prepareStory55NodeAtDay(s,id){
   if(node.id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
   if(node.id==='invite')s.story55.identityInviteRequested=true;
   if(completed(s,depId))return;
-  if(nodeStatus(s,depId).state!=='ready')throw Error('无法预览：'+nodeStatus(s,depId).reason);
+  if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
+  if(node.afterMidnight&&s.day===node.day){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=node.at;}
+  if(!node.authoredPending&&nodeStatus(s,depId).state!=='ready')throw Error('无法预览：'+nodeStatus(s,depId).reason);
   const progressed=simulateNode(s,node);
   if(!progressed||!completed(s,depId)){
    throw Error('前置项目需要跨天完成：'+depId+'。请调整剧情时间线。');
@@ -415,6 +421,7 @@ export function prepareStory55NodeAtDay(s,id){
   tickStory55(s);
  };
  for(const depId of current.requires)visit(depId,[id]);
+ if(current.afterMidnight){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=current.at;}
  if(id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
  if(id==='invite')s.story55.identityInviteRequested=true;
  s.story55.previewNode=id;

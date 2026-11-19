@@ -1,4 +1,5 @@
-import {isStory55,taiRecognized} from '../../services/story55/state.js';
+import {isStory55,taiRecognized,completed} from '../../services/story55/state.js';
+import {D42_CALL} from '../../story/d34-d42/definition.js';
 import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
@@ -81,8 +82,8 @@ const glyph={
  micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 8V5a3 3 0 0 1 6 0v8M5 10v2a7 7 0 0 0 12 5M12 19v3M8 22h8M3 3l18 18"/></svg>',
  answer:'<svg class="tai-handset-up" viewBox="0 0 28 28" fill="currentColor" aria-hidden="true"><path d="M5.1 3.2c-1.5.8-2.9 3.1-2.5 5.6.9 6.8 10.5 16.4 17.3 17.1 2.5.3 4.9-1.2 5.6-2.7.4-.8.1-1.7-.6-2.2l-5.1-3.6c-.7-.5-1.6-.4-2.2.2l-2 2.1c-3.2-1.6-5.9-4.3-7.4-7.5l2.2-2c.6-.6.7-1.5.2-2.2L7 3.8c-.5-.7-1.2-1-1.9-.6Z"/></svg>'
 };
-function phoneButton(action,title,art,kind=''){
- return '<button type="button" data-action="'+action+'" class="tai-call-control '+kind+'" aria-label="'+title+'"><span class="tai-control-circle">'+art+'</span><span class="tai-control-label">'+title+'</span></button>';
+function phoneButton(action,title,art,kind='',disabled=false){
+ return '<button type="button" data-action="'+action+'" class="tai-call-control '+kind+'" aria-label="'+title+'"'+(disabled?' disabled':'')+'><span class="tai-control-circle">'+art+'</span><span class="tai-control-label">'+title+'</span></button>';
 }
 function duration(){
  if(!call.started)return '等待连接';
@@ -94,10 +95,10 @@ export function minimizedCallView(s){
  if(!s.unlocked||isNoAppCallRoute(s.nav.current)||!['dialing','connected'].includes(call.state))return '';
  const dialing=call.state==='dialing',listening=!!call.listening;
  const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':call.muted?'已靜音':'通話中';
- const action=dialing?'tai-resume-call':call.audioReady?'tai-play-audio':'tai-mic';
+ const action=call.audioReady?'tai-play-audio':dialing||call.scripted?'tai-resume-call':'tai-mic';
  const disabled=!dialing&&(call.requestingMic||call.transcribing);
  return '<aside class="tai-mini-call'+(listening?' is-recording':'')+'" aria-label="NoApp 通話">'+
-  '<button type="button" class="tai-mini-call-main" data-action="'+action+'" aria-label="'+(dialing?'返回通話':listening?'結束錄音並傳送':call.audioReady?'繼續收聽':'開始說話')+'"'+(disabled?' disabled':'')+'>'+glyph.phone+'<span>'+label+'</span></button>'+
+  '<button type="button" class="tai-mini-call-main" data-action="'+action+'" aria-label="'+(call.audioReady?'繼續收聽':dialing||call.scripted?'返回通話':listening?'結束錄音並傳送':'開始說話')+'"'+(disabled?' disabled':'')+'>'+glyph.phone+'<span>'+label+'</span></button>'+
   '<div class="tai-mini-call-actions"><button type="button" data-action="tai-resume-call" aria-label="展開通話">'+glyph.layout+'</button><button type="button" data-action="tai-hangup" aria-label="掛斷">'+glyph.hang+'</button></div></aside>';
 }
 export function callView(s){
@@ -107,12 +108,12 @@ export function callView(s){
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
    phoneButton('tai-mute',call.muted?'取消靜音':'靜音',call.muted?glyph.micOff:glyph.mic,'is-secondary'+(call.muted?' is-selected':''))+
-   phoneButton('tai-mic',call.listening?'結束說話':'說話',glyph.mic,'is-mic'+(call.listening?' is-listening':''))+
+   phoneButton('tai-mic',call.listening?'結束說話':'說話',glyph.mic,'is-mic'+(call.listening?' is-listening':''),!!call.scripted)+
    phoneButton('tai-speaker','揚聲器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-selected':''))+
    phoneButton('tai-expand','文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
    phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
- const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div><form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form></div>':'';
+ const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div>'+(call.scripted?'':'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>')+'</div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
   (call.caption?'<p class="theirs">'+esc(call.caption)+'</p>':'')+
   (call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 继续收听</button>':'')+'</div>':'';
@@ -125,11 +126,12 @@ export function callView(s){
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
    '</section>';
 }
-export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText='',requestedByPlayer=false}={}){
- if(!taiRecognized(ctx.store.get())||!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0||['ringing','dialing','connected'].includes(call.state))return false;
+export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText='',requestedByPlayer=false,scripted=null}={}){
+ if(!taiRecognized(ctx.store.get())||!scripted&&(!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0)||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
  call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,requestedByPlayer,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
- ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
+ call.scripted=scripted;
+ ctx.store.update(s=>{if(scripted)s.story55.d42CallTriggered=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
  ctx.refresh?.();
@@ -148,6 +150,12 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
  },60000);
  missedTimer.unref?.(); // Node tests should not remain open for a missed-call timeout.
  return true;
+}
+export function d42CallDue(s){
+ return isStory55(s)&&!s.story55.ended&&s.day===D42_CALL.day&&s.clock>=D42_CALL.at&&completed(s,'show')&&taiRecognized(s)&&!s.story55.d42CallTriggered;
+}
+export function maybeStartD42Call(ctx){
+ return d42CallDue(ctx.store.get())&&startIncoming(ctx,'熙泰邀请你语音通话',{scripted:D42_CALL});
 }
 export function startOutgoing(ctx){
  if(!taiRecognized(ctx.store.get()))return false;
@@ -385,6 +393,7 @@ export function nextCallIdleEvent(snapshot,now=Date.now(),config){
  return nextNaturalCallIdleEvent(snapshot,now,taiBehavior({aiDraft:{behavior:config}}));
 }
 export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
+ if(call.scripted)return false; // authored call never hands off to a model or idle nudge
  if(call.state==='connected'&&!taiPresence(ctx.store.get()).contactable){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
  if(playback&&!playback.paused)return false;
  const event=nextCallIdleEvent(call,now,taiBehavior(ctx.store.get()));
@@ -394,14 +403,46 @@ export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
  return true;
 }
 async function respond(text,ctx){return generateTurn(ctx,{text});}
+// Prepare all three clips first, so TTS latency cannot stretch the authored
+// 2.5-second silence. The same live call player handles each clip and hangup.
+export async function playScriptedCallSequence(script,{current,synthesize,play,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}){
+ const clips=await Promise.all(script.lines.map(text=>synthesize(text)));
+ for(let i=0;i<clips.length;i++){
+  if(!current())return;
+  if(await play(clips[i],script.lines[i])!=='completed'||!current())return;
+  if(i+1<clips.length)await wait(script.gapMs);
+ }
+}
+async function playScriptedOpening(ctx){
+ const sessionId=call.sessionId,revision=call.revision,script=call.scripted;
+ const current=()=>call.sessionId===sessionId&&call.revision===revision&&call.state==='connected';
+ call.busy=true;ctx.refresh?.();
+ try{
+  await playScriptedCallSequence(script,{current,
+   synthesize:text=>voicePreview({text:text.replace(/\bnya\b/gi,'奈亞'),tone:'neutral',directed:true}),
+   play:async(blob,text)=>{
+    call.caption=text;call.lastSpeech=text;ctx.refresh?.();
+    const outcome=await playCallAudio(ctx,blob,sessionId,revision);
+    if(outcome==='failed')throw Error('Call audio playback failed');
+    if(current()&&outcome==='completed'){
+     call.turns.push({role:'assistant',content:text,playedAt:Date.now()});call.caption='';call.audioReady=false;ctx.refresh?.();
+    }
+    return outcome;
+   }});
+ }catch(error){
+  if(current()){console.warn('NoApp scripted call connection failed:',error?.message);callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error'});}
+ }finally{if(current()){call.busy=false;call.lastTaiEndAt=Date.now();ctx.refresh?.();}}
+}
 function startGreeting(ctx){
  if(call.state==='connected'&&!call.greeted){
   call.greeted=true;
+  if(call.scripted){void playScriptedOpening(ctx);return;}
   queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.direction==='outgoing'?outgoingCallOpening(taiLife(ctx.store.get()),{sessionId:call.sessionId}):incomingCallOpening(call)});});
  }
 }
 export function submitCall(form,ctx){
  if(form.dataset.form!=='tai-call-turn')return false;
+ if(call.scripted)return true;
  const text=String(new FormData(form).get('text')||'').trim();
  if(text){
   if(call.busy||call.audioReady||playback&&!playback.paused){
@@ -422,7 +463,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
   return true;
  case 'tai-accept':
   if(call.state!=='ringing')return false;
-  if(!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0){callAction('tai-decline',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
+  if(!call.scripted&&(!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0)){callAction('tai-decline',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
   playback=createGestureAudio();
   call.state='connected';call.started=Date.now();markTaiEngaged();
   ctx.store.update(s=>{s.notifications=s.notifications.filter(n=>n.id!==call.notificationId);});
@@ -454,7 +495,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
     }
    }
   });
-  if(endedRecord?.callStatus==='ended'&&endedBy==='player'&&endReason==='manual'&&endedRecord.transcript){
+  if(!previous.scripted&&endedRecord?.callStatus==='ended'&&endedBy==='player'&&endReason==='manual'&&endedRecord.transcript){
    // Existing proactive queue owns actual delivery; no second messaging system.
    const timer=setTimeout(()=>import('../../services/ai/proactive.js').then(({maybeSendProactive})=>maybeSendProactive(ctx.store,{force:'postcall',postCall:endedRecord})).catch(()=>{}),350);
    timer.unref?.();
@@ -473,6 +514,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
+  if(call.scripted)return true;
   // iOS lowers or interrupts remote audio when a new mic audio session opens.
   // A microphone gesture interrupts the current reply before starting iOS half-duplex capture.
   if(call.state!=='connected'||call.requestingMic||call.transcribing)return true;
