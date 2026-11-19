@@ -26,7 +26,7 @@ import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
 import {submitTaiVoiceUnlock,taiVoiceUnlockCommand} from './services/ai/voice-budget.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartD42Call} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartD41Call,maybeStartD42Call} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -494,7 +494,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
- if(!maybeStartD42Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
+ if(!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));

@@ -345,7 +345,7 @@ export function tickStory55(s){
  applyD34D42Definition(story55Config(s));
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
-  const oldIds=new Set(['show',...RETIRED_SCENES]);
+  const oldIds=new Set(['show','target',...RETIRED_SCENES]);
   const obsolete=id=>[...oldIds].some(n=>String(id||'').startsWith('s55-'+n+'-'));
   for(const chat of s.content.conversations.wechat||[]){
    const removed=s.notifications.filter(n=>n.conversationId===chat.id&&obsolete(n.messageId)).length;
@@ -358,6 +358,15 @@ export function tickStory55(s){
   else delete s.story55.scenes.show;
   if(oldIds.has(s.story55.activeScene))s.story55.activeScene=null;
   s.story55.d34D42Revision=1;
+ }
+ if(!s.story55.d42OperationRevision){
+  // Old saves already beyond D42 retain their completed progress, rather than
+  // being locked on newly authored scenes in a day they can no longer visit.
+  if(s.day>42||completed(s,'target')){
+   for(const id of ['d42-operation-1','d42-operation-2','d42-operation-3'])if(!completed(s,id))completeNode(s,id,{test:true});
+   if(s.day>42)for(const id of ['target','d42-group'])if(!completed(s,id))completeNode(s,id,{test:true});
+  }
+  s.story55.d42OperationRevision=1;
  }
  // Old archives that were prematurely unlocked must obey the new interaction gate.
  const personal=s.content.localFiles?.find(f=>f.id==='personal-files');
