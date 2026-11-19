@@ -1,6 +1,7 @@
 import {wishDefinition} from '../../../../services/wishes/catalog.js';
 import {btn,esc} from '../../../../system/ui.js';
 const rows=items=>items.map(r=>{
+  if(r.id==='ghost-car-plan')return '<div class="reminder-item"><span class="reminder-circle '+(r.done?'done':'')+'">'+(r.done?'✓':'')+'</span><button type="button" class="reminder-project-link" data-action="reminder-project-open" data-id="'+esc(r.id)+'"><span><strong>'+esc(r.title)+'</strong><small>'+Number(r.progress||0)+'% · '+(r.children||[]).filter(t=>t.done).length+' / '+(r.children||[]).length+' 已完成</small></span><span aria-hidden="true">›</span></button></div>';
   if(r.storyProject)return '<div class="reminder-item"><span class="reminder-circle '+(r.done?'done':'')+'">'+(r.done?'✓':'')+'</span><span>'+esc(r.title)+(r.date?'<small style="display:block;opacity:.65">'+esc(r.date)+'</small>':'')+(r.children||[]).map(c=>'<small style="display:block;margin:10px 0 0 12px;opacity:.75">○ '+esc(c.title)+' · '+Number(c.progress||0)+'%</small>').join('')+'</span></div>';
   const w=r.wishId&&wishDefinition(r.wishId);
   if(w)return '<div class="reminder-item wish-reminder-row">'+

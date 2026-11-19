@@ -29,6 +29,7 @@ import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55,identityReplyMode55} from './state.js';
 import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
+import {syncGhostCarProgress} from './ghost-car.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
@@ -245,6 +246,7 @@ export function chatNodeLink55(s,id){
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
 export function nodeLink55(s,id){
+ if(id==='prep')return {appId:'reminders',route:'/project/ghost-car-plan',params:{}};
  if(id==='dossier'||id==='photo-decrypt'||id==='photo'){
   const personal=s.content?.localFiles?.find(f=>f.id==='personal-files'&&!f.deleted);
   if(personal)return {appId:'files',route:'/item/personal-files'+(id==='dossier'?'':'/tai'),params:{}};
@@ -352,8 +354,9 @@ export function tickStory55(s){
  if(s.day===29&&completed(s,'d29-father')&&s.nav?.current?.appId==='chess'&&(s.clock>='21:36'||overnightSceneNight55(s)))s.story55.d29ChessOpened=true;
  syncBaseFrameworkRevision(s);
  syncBaseLinkPipeRevision(s);
- syncTearReminders(s);
  tickTearAgent(s);
+ syncGhostCarProgress(s);
+ syncTearReminders(s);
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);

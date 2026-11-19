@@ -4,9 +4,10 @@ import {objectives55} from '../../services/story55/views.js';
 import {btn,esc} from '../../system/ui.js';
 import {reminders,toggleReminder,addReminder} from '../../services/reminders.js';
 import {listHome,listDetail} from './features/lists/index.js';
+import {ghostCarDetail} from './features/project/index.js';
 import {wishDefinition} from '../../services/wishes/catalog.js';
 import {getWish,purchaseWish,wishExpired} from '../../services/wishes/index.js';
-export const manifest={id:'reminders',name:'提醒事项',glyph:'☑',tone:'#dce9ec',defaultRoute:'/',kicker:'REMINDERS'};
+export const manifest={id:'reminders',name:'提醒事项',glyph:'☑',tone:'#dce9ec',defaultRoute:'/',supportsDeepLink:true,kicker:'REMINDERS'};
 let search='';
 let pendingPurchase=null;
 let recentPurchase=null;
@@ -51,10 +52,12 @@ export function wishPurchaseOverlay(s){
 }
 export function render({store},loc){
  const s=store.get(),items=reminders(s).filter(r=>r.title.toLowerCase().includes(search.toLowerCase()));
- const body=loc.route==='/completed'?listDetail(items.filter(x=>x.done),'已完成'):loc.route==='/all'?listDetail(items,'全部'):listHome(items,search);
+ const body=loc.route==='/project/ghost-car-plan'?ghostCarDetail(s,reminders(s).find(r=>r.id==='ghost-car-plan')):loc.route==='/completed'?listDetail(items.filter(x=>x.done),'已完成'):loc.route==='/all'?listDetail(items,'全部'):listHome(items,search);
  return '<div class="reminders-app" data-native-scroll="reminders">'+body+'</div>'+wishPurchaseOverlay(s);
 }
 export function handle(a,t,c){
+ if(a==='reminder-project-open'){if(reminders(c.store.get()).some(r=>r.id==='ghost-car-plan'))c.router.open({appId:'reminders',route:'/project/ghost-car-plan'});return;}
+ if(a==='reminder-project-file'){const f=reminders(c.store.get()).find(r=>r.id==='ghost-car-plan')?.children?.find(tk=>tk.file===t.dataset.id&&tk.delivered);if(f)c.router.open({appId:'files',route:'/item/'+encodeURIComponent(f.file)});return;}
  if(a==='reminder-wish-open'){openWishPurchase(t.dataset.id,c);return;}
  if(a==='reminder-wish-cancel'||a==='reminder-wish-finish'){pendingPurchase=null;recentPurchase=null;c.refresh();return;}
  if(a==='reminder-wish-buy'){

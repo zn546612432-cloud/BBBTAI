@@ -19,6 +19,7 @@ import {submitTaiVoiceUnlock,taiVoiceRemaining} from '../../services/ai/voice-bu
 import {TAI_ID,taiDisplayName} from './contact.js';
 import {sendMessage} from '../../services/messaging/index.js';
 import {TAI_PORTRAIT} from './portrait.js';
+import {modelDelivered} from '../../services/story55/ghost-car.js';
 import {btn,demo,esc} from '../../system/ui.js';
 import {callView,startIncoming,startOutgoing,callAction,submitCall,toggleVoiceRecord,playVoiceMessage,convertTaiTextToVoice,sendTaiTestVoice,callState} from './voice-call.js';
 
@@ -125,6 +126,7 @@ export function render({store},loc){
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;
+ if(action==='tai-story-archive'){if(modelDelivered(ctx.store.get(),id))ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});return;}
  if(action==='open-chat')ctx.router.open({appId:'noapp',route:'/chat/'+id});
  if(action==='accept-invite'){const matchId=receiveInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='defer-invite')deferInvitation(ctx.store,id);

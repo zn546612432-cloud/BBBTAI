@@ -1,8 +1,12 @@
 // Authored journal: narrative prose, not a task board or hidden progression UI.
 import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.js';
+import {GHOST_CAR_DIARY} from '../d35-d40/diary.js';
+import {GHOST_CAR_MODEL_FILES} from '../d35-d40/progress.js';
+import {modelDelivered} from '../../services/story55/ghost-car.js';
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
+  ...GHOST_CAR_DIARY,
   25:{title:'銜尾蛇之淚',afterNode:'d25-survey',body:'終於把程序跑起來了。\n\n阿威送來了第一批資料。估計這幾天機房都得開著。'},
   26:{title:'維保記錄',afterNode:'d26-records',body:'銀行今年三月換過安保公司。\n\n阿楓帶回來了新的維保記錄，重新調整研究方向。\n\n讓它繼續跑吧。'},
   27:{title:'四年',afterNode:'d27-ouroboros',body:'原來他花了四年才寫出這個程序。\n\n換作是我，恐怕連看都不肯給別人看一眼。\n\n他倒好，說給就給了。\n\n明天樣品就到，試試看。'},
@@ -67,6 +71,7 @@ export function diaryDate(day,start=DIARY_START){
  return d.toISOString().slice(0,10);
 }
 export const diaryWeatherLabel=value=>value.replace(/[云阴雾阵风]/g,ch=>({'云':'雲','阴':'陰','雾':'霧','阵':'陣','风':'風'}[ch]));
+const diaryFacts={'ghost-car-models':s=>GHOST_CAR_MODEL_FILES.every(f=>modelDelivered(s,f.id))};
 export function entryFor(s,day){
  const extra=s.content?.storyDiary?.[String(day)];
  const authored=DEFAULT_DIARY_ENTRIES[day];
@@ -75,6 +80,7 @@ export function entryFor(s,day){
  // Approved authored entries appear only when their source scene has happened.
  // User-edited diary entries remain independent and visible as written.
  if(!extra&&authored?.afterNode&&!Object.hasOwn(s.story55?.completed||{},authored.afterNode))return null;
+ if(!extra&&authored?.afterFact&&!diaryFacts[authored.afterFact]?.(s))return null;
  const authoredChat=s.story55?.authoredDays?.['d'+String(day).padStart(2,'0')]?.[authored?.afterChat];
  if(!extra&&authored?.afterChat&&!authoredChat?.completed)return null;
  const overrides=extra?.stages||{};

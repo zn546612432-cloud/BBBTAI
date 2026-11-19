@@ -21,6 +21,7 @@ async function open(s,viewport={width:390,height:844}){
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
+ const boot=page.locator('#xm-boot-next');if(await boot.count()){await boot.click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.waitForFunction(()=>!document.querySelector('#phone')?.classList.contains('show-passcode'));

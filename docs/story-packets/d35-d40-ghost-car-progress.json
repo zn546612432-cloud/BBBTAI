@@ -1,0 +1,26 @@
+{
+  "schemaVersion":2,"day":35,"date":"2025-06-22","title":"鬼車行動進度及模型檔案","stage":"approved","scope":"main",
+  "systems":["story55","reminders","noapp","files","ghost","schedule"],"assets":[],
+  "events":[
+    {"id":"ghost-car-reminder","kind":"reminder","surface":"reminders","capability":"story.ghost-car-progress","owner":"reminders","actor":"me","trigger":{"type":"node-completed","ref":"plan"},"requires":["node:plan"],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-models","kind":"link","surface":"noapp","capability":"story.ghost-car-models","owner":"story55","actor":"tai","trigger":{"type":"day-time","ref":"d39-model-delivery"},"requires":["ghost-car-reminder","node:recognition","fact:tai-recognized"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-parse","kind":"link","surface":"ghost","capability":"story.archive-reader","owner":"ghost","actor":"me","trigger":{"type":"user-action","ref":"share-both-models"},"requires":["ghost-car-models"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-acceptance","kind":"reminder","surface":"reminders","capability":"story.ghost-car-progress","owner":"reminders","actor":"me","trigger":{"type":"previous-event","ref":"ghost-car-parse"},"requires":["ghost-car-parse"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d35","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d35"},"requires":["node:plan"],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d36","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d36"},"requires":["node:plan"],"timing":{"day":36,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d37","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d37"},"requires":["node:plan"],"timing":{"day":37,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d38","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d38"},"requires":["node:plan"],"timing":{"day":38,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d39","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"previous-event","ref":"ghost-car-models"},"requires":["ghost-car-models","node:recognition"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d40","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"node-completed","ref":"prep"},"requires":["node:prep"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
+  ],
+  "acceptance":[
+    {"id":"progress-trigger","type":"trigger","verify":"D35 30%，D36 40%，D37 50%，D38 70%；D39 兩個已解析檔案分別加 10%，D40 驗收後 100%。"},
+    {"id":"progress-negative","type":"negative","verify":"未相認時不投遞模型；D40 未解析完不通過；舊 GHOST 批次不能完成此節點。"},
+    {"id":"progress-idempotent","type":"idempotency","verify":"同 ID 文件和訊息不重發，完成節點只記錄一次。"},
+    {"id":"progress-save","type":"save-restore","verify":"既有完成的 prep 不退回；未完成的舊提醒以同一 ID 更新。"},
+    {"id":"progress-cross","type":"cross-app","verify":"NoApp 附件 → Files → TAI 分享；Home 提醒點擊同一詳情，第二份可從清單進入。"},
+    {"id":"progress-late","type":"late-entry","verify":"遲到 D40 仍可完成兩份檔案；不提前暴露未交付檔。"},
+    {"id":"progress-assets","type":"assets","verify":"模型檔案為本地純文本故事記錄，不含可執行資源。"},
+    {"id":"progress-clock","type":"date-clock","verify":"僅以 Story55 日期及既有解析結果更新任務，無獨立時鐘。"}
+  ]
+}
