@@ -6,6 +6,7 @@ import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
+import {applyD34D42Definition,RETIRED_SCENES} from '../../story/d34-d42/definition.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
@@ -105,7 +106,7 @@ export function finishScene55(s,id){
  if(!n||n.kind!=='scene'||r.index<sceneLines(s,id).length)throw Error('请先完成本场对话');
  if(id==='ending'&&!s.story55.finalAudioHeard)throw Error('最后的语音尚未同步；请先配置并播放终局音频');
  if(!completeNode(s,id))return false;
- s.story55.activeScene=null;
+ if(s.story55.activeScene===id)s.story55.activeScene=null;
  if(n.credit)creditScene55(s,n);
  if(id==='ending')startFinale55(s);
  if(id==='intrusion'&&s.story55.d13)s.story55.d13.phase='complete';
@@ -156,7 +157,7 @@ function creditScene55(s,n){
  }
  export function advanceScene55(s,id,{disconnect=false,now=Date.now()}={}){
  const n=nodeById(s,id);if(n?.kind!=='scene'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
- s.story55.activeScene=id;
+ if(!n.optional)s.story55.activeScene=id;
  const r=s.story55.scenes[id]??={index:0,accepted:false};
  if(id==='questions'&&!r.openingMode)r.openingMode=r.index?'normal':identityReplyMode55(s);
  const lines=sceneLines(s,id);
@@ -211,8 +212,9 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const list=s.content.conversations[channel]??=[];
   let c=list.find(c=>c.id===cid);if(!c){c={id:cid,name:channel==='mirage'?'Dr Ouroboros':channel==='noapp'?'陈熙泰':'狼崽团',...(channel==='wechat'?{group:true,members:['me','wang','胡枫','小辛','阿威','仔仔']}:{}),messages:[],unread:0};list.push(c);}
   const shown=plannedSceneLineClock55(s,id,index);
+  const firstNightClock=index===0&&['d41-opening','show'].includes(id)&&s.day===n.day?n.at:null;
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
-   (authoredTime||s.clock):(authoredTime||(shown&&shown<=s.clock?shown:s.clock));
+   (authoredTime||s.clock):(authoredTime||firstNightClock||(shown&&shown<=s.clock?shown:s.clock));
   const image=n.imageLines?.[index];
   appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
   if(id==='plan'&&line[1]===D29_IP)seedAuthoredNotes(s,[{id:'s55-d29-ip',day:s.day,at:s.clock,title:'Ouroboros',text:D29_IP}]);
@@ -340,6 +342,23 @@ export function tickStory55(s){
  applyD25Definition(story55Config(s));
  applyD26D28Definition(story55Config(s));
  applyD29Definition(story55Config(s));
+ applyD34D42Definition(story55Config(s));
+ if(!s.story55.d34D42Revision){
+  // Remove only obsolete authored bubbles, not player-written messages.
+  const oldIds=new Set(['show',...RETIRED_SCENES]);
+  const obsolete=id=>[...oldIds].some(n=>String(id||'').startsWith('s55-'+n+'-'));
+  for(const chat of s.content.conversations.wechat||[]){
+   const removed=s.notifications.filter(n=>n.conversationId===chat.id&&obsolete(n.messageId)).length;
+   chat.messages=chat.messages.filter(m=>!obsolete(m.id));
+   chat.unread=Math.max(0,(chat.unread||0)-removed);
+  }
+  s.notifications=s.notifications.filter(n=>!obsolete(n.id)&&!obsolete(n.messageId));
+  if(s.story55.developerChatArchive)s.story55.developerChatArchive=s.story55.developerChatArchive.filter(e=>!obsolete(e.message?.id));
+  if(completed(s,'show'))s.story55.completed['d41-opening']??=s.story55.completed.show;
+  else delete s.story55.scenes.show;
+  if(oldIds.has(s.story55.activeScene))s.story55.activeScene=null;
+  s.story55.d34D42Revision=1;
+ }
  // Old archives that were prematurely unlocked must obey the new interaction gate.
  const personal=s.content.localFiles?.find(f=>f.id==='personal-files');
  if(personal&&!completed(s,'questions'))personal.unlocked=false;

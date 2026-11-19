@@ -1,5 +1,7 @@
 import {d01Gate} from '../../story/d01/runtime.js';
 import {STORY55_CONFIG} from '../../story/story55/catalog.js';
+import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
+import {modelDelivered} from './ghost-car.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
@@ -36,7 +38,11 @@ export function nodeStatus(s,id){
  const n=nodeById(s,id);if(!n)return {state:'missing',reason:'不存在的节点'};
  if(completed(s,id))return {state:'done',reason:'已完成'};
  if(final55(s))return {state:'locked',reason:'第一视角已结束'};
+ if(n.authoredPending)return {state:'locked',reason:'等待後續劇情'};
  if(s.day<n.day)return {state:'locked',reason:`等待D${n.day}`};
+ if(n.optional&&(s.day>n.throughDay||s.day===n.throughDay&&overnightSceneNight55(s)))return {state:'locked',reason:'已過聊天時間'};
+ if(n.afterMidnight&&s.day===n.day&&(!overnightSceneNight55(s)||s.clock<n.at))return {state:'locked',reason:`等待次日 ${n.at}`};
+ if(n.requiresModels&&!GHOST_CAR_MODEL_FILES.every(f=>modelDelivered(s,f.id)))return {state:'locked',reason:'等待數字人與數字車輛交付'};
  if(n.at&&s.day===n.day&&(s.clock||'00:00')<n.at&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))return {state:'locked',reason:`等待 ${n.at}`};
  if(n.authorizedProject&&!s.story55?.projects?.[n.authorizedProject]?.authorized)return {state:'locked',reason:'等待本地專案部署'};
  if(id==='loan'&&!s.story55?.projects?.base?.batches?.[0]?.complete)return {state:'locked',reason:'等待D14基础框架首次运行报告'};

@@ -4,6 +4,7 @@ import {applyD17Definition} from '../d17/definition.js';
 import {applyD25Definition} from '../d25/definition.js';
 import {applyD26D28Definition} from '../d26-d28/definition.js';
 import {applyD29Definition} from '../d29/definition.js';
+import {applyD34D42Definition} from '../d34-d42/definition.js';
 // Story version and editable definitions; no player progress or provider keys.
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
@@ -698,42 +699,7 @@ export const STORY55_CONFIG={
         "还要更早，从我发现那份孤儿院档案开始；你能自学到这个程度，确实值得我花一些时间，而现在，你终于知道我为什么一直没有离开。"
       ]
     ],
-    "show": [
-      [
-        "wang",
-        "密钥拿到了，大家都回来了。"
-      ],
-      [
-        "zai",
-        "以后想去巴黎。"
-      ],
-      [
-        "tai",
-        "我在英国和葡萄牙都有房子，平时空着，你和熙旺可以考虑过去；我想听听，你自己准备去哪。"
-      ],
-      [
-        "me",
-        "我其实一直都不太信任你。"
-      ],
-      [
-        "tai",
-        "你愿意亲自查到这里，已经比最初有趣得多；至于你还没有说完的那些意见，我们可以在下一盘棋里继续。"
-      ]
-    ],
-    "target": [
-      [
-        "system",
-        "金辉资金中心：发现段志鸿的十五亿美元账户密钥，行动受阻。"
-      ],
-      [
-        "wang",
-        "你先回来，别一个人憋着。"
-      ],
-      [
-        "me",
-        "陈熙泰，这次我真的需要你的帮忙。"
-      ]
-    ],
+    "target": [],
     "paris": [
       [
         "tai",
@@ -752,32 +718,9 @@ export const STORY55_CONFIG={
         "熙蒙搬往孤儿院，重新安排计划。"
       ]
     ],
-    "confide": [
-      [
-        "me",
-        "如果除不掉黄德忠，就把傅隆生杀掉。"
-      ],
-      [
-        "wang",
-        "我知道了。"
-      ]
-    ],
-    "failure": [
-      [
-        "system",
-        "熙旺刺杀黄德忠失败。"
-      ],
-      [
-        "mercenary",
-        "炸警察金库，要五千万。"
-      ]
-    ],
-    "ready": [
-      [
-        "me",
-        "明天按计划走，东西都带好。"
-      ]
-    ],
+    "confide": [],
+    "failure": [],
+    "ready": [],
     "ending": [
       [
         "system",
@@ -1250,3 +1193,4 @@ applyD17Definition(STORY55_CONFIG);
 applyD25Definition(STORY55_CONFIG);
 applyD26D28Definition(STORY55_CONFIG);
 applyD29Definition(STORY55_CONFIG);
+applyD34D42Definition(STORY55_CONFIG);
