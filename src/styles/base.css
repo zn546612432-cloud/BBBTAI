@@ -528,8 +528,12 @@ to{opacity:1;transform:none}
 #tai-call-banner-layer .tai-banner-info small{color:#d0d6e1;font-size:12px}
 #tai-call-banner-layer button{border-radius:50%;flex:0 0 42px;height:42px;display:grid;place-items:center;color:#fff;padding:9px;touch-action:manipulation}
 #tai-call-banner-layer button svg{width:24px;height:24px}
-#tai-call-banner-layer .tai-banner-decline{background:#f34b56}
-#tai-call-banner-layer .tai-banner-accept{background:#40bc73}
+#tai-call-banner-layer .tai-incoming-banner button{border:0;border-radius:50%;flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;color:#fff;padding:0;touch-action:manipulation;transition:filter .15s,transform .15s}
+#tai-call-banner-layer .tai-incoming-banner button:active{filter:brightness(.85)}
+#tai-call-banner-layer .tai-incoming-banner .tai-handset-down{display:block;width:30px;height:30px}
+#tai-call-banner-layer .tai-incoming-banner .tai-handset-up{display:block;width:26px;height:26px}
+#tai-call-banner-layer .tai-banner-decline{background:#ff453a}
+#tai-call-banner-layer .tai-banner-accept{background:#30d158}
 @keyframes tai-call-slide-in{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){#tai-call-banner-layer .tai-incoming-banner{animation:none}}
 
