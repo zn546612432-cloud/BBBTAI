@@ -115,6 +115,7 @@ if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='und
 }
 export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(suppressClick&&action==='gh-tile')return;if(action.startsWith('gh-tear-')&&handleTearAgent(action,t,ctx))return;if(handleFlowD03(action,ctx))return;if(action==='gh-tool'&&t.dataset.tool==='verify'&&isStory55(ctx.store.get())){ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}const a=action.slice(3),id=loc.params?.orderId,s=ctx.store.get(),o=s.ghost?.orders[id];
  if(a==='tear-return'){prepareMirageGhostShareEntry();return ctx.router.open({appId:'mirage',route:'/order/'+t.dataset.id,params:{}});}
+ if(a==='ghost-car-reminder')return ctx.router.open({appId:'reminders',route:'/project/ghost-car-plan'});
  if(a==='tear-open'){
   if(!tearDeployed(s))return;
   ctx.store.update(n=>ensureAgent(n));

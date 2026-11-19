@@ -143,9 +143,8 @@ test('identity conversation becomes real MIRAGE history and NoApp installation p
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.text.includes('欢迎回家')));
 });
-test('independent preparation and second program award20 percent only for complete five-game batches',()=>{
- for(const id of ['prep','second']){const s=fixture();previewNode55(s,id);s.day=id==='prep'?35:49;s.story55.hardware=3;const other=id==='prep'?'second':'prep',before=deploymentPercent(s,other);authorizeProject(s,id,story55Config(s).projects.find(p=>p.id===id).key);
-  for(let i=1;i<=5;i++){runBatch(s,id);assert.equal(deploymentPercent(s,id),i*20);}
-  assert.equal(deploymentPercent(s,other),before);assert.ok(completed(s,id));
- }
+test('second program still awards 20 percent only for complete five-game batches',()=>{
+ const s=fixture(),id='second';previewNode55(s,id);s.day=49;s.story55.hardware=3;const before=deploymentPercent(s,'prep');authorizeProject(s,id,story55Config(s).projects.find(p=>p.id===id).key);
+ for(let i=1;i<=5;i++){runBatch(s,id);assert.equal(deploymentPercent(s,id),i*20);}
+ assert.equal(deploymentPercent(s,'prep'),before);assert.ok(completed(s,id));
 });

@@ -24,3 +24,19 @@
 .wish-reminder-row .reminder-circle{flex:none;width:22px;height:22px;border:2px solid #e9a23b;border-radius:50%;display:grid;place-items:center;font-size:12px}
 .wish-reminder-row .reminder-circle.done{background:#e9a23b;color:#fff}
 .reminders-app ~ .wx-wish-overlay{z-index:100}
+.reminder-project-link{display:flex;flex:1;justify-content:space-between;align-items:center;text-align:left;border:0;background:none;color:inherit;padding:9px 0;min-width:0}
+.reminder-project-link strong,.reminder-project-list strong{display:block;font-size:14px;font-weight:500}
+.reminder-project-link small,.reminder-project-list small{display:block;font-size:11px;color:#777;margin-top:4px}
+.reminder-project-summary{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0}
+.reminder-project-summary>strong{font-size:45px;line-height:1;font-weight:600;letter-spacing:-2px;color:#222}
+.reminder-project-summary>strong>small{font-size:20px;margin-left:2px}
+.reminder-project-summary>span{font-size:12px;color:#777}
+.reminder-project-meter{height:6px;background:#dcdde3;border-radius:4px;overflow:hidden;margin:3px 0 15px}
+.reminder-project-meter i{display:block;height:100%;border-radius:inherit;background:#3478f6}
+.reminder-project-list{list-style:none;padding:0;margin:0;border-radius:12px;background:#fff}
+.reminder-project-list li{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid #e9e9ec;min-height:52px}
+.reminder-project-list li:last-child{border:0}
+.reminder-project-list li>div{flex:1;min-width:0}
+.reminder-project-list .reminder-circle{display:grid;place-items:center;flex:none;width:22px;height:22px}
+.reminder-project-file{background:transparent;border:0;color:#3478f6;font-size:22px;padding:0 8px}
+.reminder-project-hint{font-size:13px;color:#777;line-height:1.5}

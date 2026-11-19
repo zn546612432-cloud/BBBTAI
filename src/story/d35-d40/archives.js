@@ -108,6 +108,16 @@ GHOST CAR TRAP — REV.04
 連續運行測試完成。
 設備運行正常，車內溫度偏高。
 總體驗收結果：通過。`),
+ doc('digital-human','數字人模型',39,`PROJECT: GHOST CAR TRAP
+ASSET: DIGITAL HUMAN
+檔案完整性：通過
+模型資料已讀取。
+狀態：待最終驗收。`,{model:true}),
+ doc('digital-vehicle','數字車輛模型',39,`PROJECT: GHOST CAR TRAP
+ASSET: DIGITAL VEHICLE
+檔案完整性：通過
+模型資料已讀取。
+狀態：待最終驗收。`,{model:true}),
  doc('validation','最終驗收記錄',40,`日期：2025.06.27
 
 PROJECT: GHOST CAR TRAP

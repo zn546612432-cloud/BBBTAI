@@ -1,6 +1,7 @@
 import {isStory55,projectById,nodeStatus,completed,completeNode,story55Config} from './state.js';
 import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID} from '../../apps/mirage/data.js';
 import {postBankTransaction} from '../bank.js';
+import {ghostCarProgress} from './ghost-car.js';
 export function settleStory55Wallet(s,{test=false}={}){
  if(!isStory55(s)||!completed(s,'wallet'))return false;
  const order=s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID);
@@ -17,6 +18,7 @@ export function settleStory55Wallet(s,{test=false}={}){
 }
 export function deployment(s,id){return s.story55?.projects?.[id]||{authorized:false,batches:[],active:null};}
 export function deploymentPercent(s,id){
+ if(id==='prep')return ghostCarProgress(s);
  const p=projectById(s,id),r=deployment(s,id);
  if(!p)return 0;
  if(id==='identity'&&completed(s,'identity'))return 100;
@@ -83,6 +85,7 @@ export function syncBaseLinkPipeRevision(s){
  * tests use the same order runner as other commissions; upgrades are a
  * separate bank-backed action only after the D15 loan. */
 export function deploymentReadiness(s,id){
+ if(id==='prep')return {canStart:false,reason:'請在提醒事項查看鬼車行動',batch:0};
  const p=projectById(s,id);
  if(!isStory55(s)||!p)return {canStart:false,reason:'本地程序不存在',batch:0};
  const r=deployment(s,id),status=nodeStatus(s,p.node);
@@ -106,6 +109,7 @@ export function deploymentReadiness(s,id){
  return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
 }
 export function authorizeProject(s,id,key){
+ if(id==='prep')throw Error('請在提醒事項查看鬼車行動');
  if(id==='wallet')throw Error('請從 MIRAGE 接單並打開 KIRA 附件，使用 GHOST 執行公開錢包挑戰');
  const p=projectById(s,id);if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');
  if(id==='wallet'&&(s.content.orders?.find(o=>o.id===STORY55_BOUNTY_ID)?.status!=='ACCEPTED'
@@ -151,6 +155,7 @@ export function upgradeBaseFramework(s){
  return true;
 }
 export function completeDeploymentRun(s,run){
+ if(run?.story55Project==='prep')return false;
  if(!run?.story55Project||!isStory55(s)||run.status!=='success')return false;
  const p=projectById(s,run.story55Project),r=deployment(s,run.story55Project);
  if(!p||!r.authorized)return false;

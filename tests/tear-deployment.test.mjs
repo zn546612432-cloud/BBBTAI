@@ -94,7 +94,7 @@ test('D29 reminder group appears only after plan dialogue and never creates exec
  syncTearReminders(s);assert.ok(!s.content.reminders.some(r=>r.id==='ghost-car-plan'));
  s.story55.completed.plan={day:29,clock:'22:00'};syncTearReminders(s);syncTearReminders(s);
  const groups=s.content.reminders.filter(r=>r.id==='ghost-car-plan');
- assert.equal(groups.length,1);assert.deepEqual(groups[0].children.map(c=>c.progress),[0,0,0,0]);
+ assert.equal(groups.length,1);assert.equal(groups[0].children.length,10);assert.ok(groups[0].children.every(c=>c.progress===0&&!c.done));
 });
 
 

@@ -7,6 +7,9 @@ import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../../story/d13/runt
 import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from './state.js';
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
 import {deployment,projectCapacity,upgradeHardware,completeDeploymentRun,upgradeBaseFramework,baseUpgradeCost} from './projects.js';
+import {syncGhostCarProgress,modelDelivered} from './ghost-car.js';
+import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
+import {sendAgent,tickTearAgent,agent,DOCUMENT_READ_MS} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
 import {defaultProducts} from '../../apps/mirage/data.js';
 import {D06_ORDER_ID,D06_CONTRACT} from '../../story/d06/commission.js';
@@ -119,6 +122,17 @@ function hardware(s,minimum){
 function simulateProjectBatch(s,node){
  const p=story55Config(s).projects.find(x=>x.id===node.project);
  if(!p)throw Error('缺少GHOST项目：'+node.project);
+ if(p.id==='prep'){
+  if(s.day<40)return false;
+  syncGhostCarProgress(s);
+  if(!GHOST_CAR_MODEL_FILES.every(f=>modelDelivered(s,f.id)))return false;
+  for(const f of GHOST_CAR_MODEL_FILES){
+   sendAgent(s,'',f.id);
+   const job=agent(s).jobs[f.id];if(job&&!job.done)job.startedAt=Date.now()-DOCUMENT_READ_MS;
+  }
+  tickTearAgent(s);syncGhostCarProgress(s);
+  return completed(s,'prep');
+ }
  if(node.id==='wallet'){
   // Developer jumps replay the same FIVE-stage D06 commission as the player;
   // no prototype GHOST-wallet shortcut and no extra authorization email.

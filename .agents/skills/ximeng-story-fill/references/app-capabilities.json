@@ -149,6 +149,7 @@
       "module": "src/apps/noapp/index.js",
       "appId": "noapp",
       "capabilities": {
+        "story.ghost-car-models": {"state":"wired-day","owner":"story55","kinds":["link"],"proof":"src/services/story55/ghost-car.js","originDays":[35]},
         "ai.scripted-message": {
           "state": "adapter-required",
           "owner": "noapp",
@@ -319,7 +320,7 @@
       "appId": "ghost",
       "capabilities": {
         "story.identity-deploy": {"state":"wired-day","owner":"story55","kinds":["commission"],"proof":"src/services/story55/projects.js","originDays":[30]},
-        "story.archive-reader": {"state":"wired-day","owner":"ghost","kinds":["link"],"proof":"src/apps/ghost/deployment/tear-agent/state.js","originDays":[33]},
+        "story.archive-reader": {"state":"wired-day","owner":"ghost","kinds":["link"],"proof":"src/apps/ghost/deployment/tear-agent/state.js","originDays":[33,35]},
         "mission.start-stages": {
           "state": "adapter-required",
           "owner": "ghost",
@@ -764,6 +765,7 @@
           "proof": "src/apps/ghost/deployment/reminders.js",
           "originDays": [14]
         },
+        "story.ghost-car-progress": {"state":"wired-day","owner":"reminders","kinds":["reminder"],"proof":"src/apps/ghost/deployment/reminders.js","originDays":[35]},
         "reminder.add": {
           "state": "adapter-required",
           "owner": "reminders",

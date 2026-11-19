@@ -620,6 +620,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='back'){router.back();return;}
     if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,store.get()))return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
     if(action==='home-reminder-wish'){openWishPurchase(target.dataset.wishId,ctx());return;}
+    if(action==='home-reminder-project'){registry.get('reminders')?.handle('reminder-project-open',target,ctx());return;}
     if(['reminder-wish-buy','reminder-wish-cancel','reminder-wish-finish','reminder-wish-chat','reminder-wish-bank'].includes(action)&&store.get().nav.current.appId==='home'){
       registry.get('reminders')?.handle(action,target,ctx());
       return;
