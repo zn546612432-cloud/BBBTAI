@@ -9,7 +9,7 @@ import {taiBehavior,replyDelayMs} from './behavior.js';
 import {isTaiReplyPending} from './live-chat.js';
 import {prepareTaiVoice} from './voice-delivery.js';
 import {taiVoiceRemaining} from './voice-budget.js';
-import {hasBannedTaiReassurance} from './expression-style.js';
+import {hasBannedTaiConstruction} from './expression-style.js';
 import {taiDisplayName} from '../../apps/noapp/contact.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {uid} from '../id.js';
@@ -150,7 +150,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
   }
   items=dedupeTaiTurnEntries(items,turnPlan.target);
   if(approvedDecision?.action==='send_voice'||!approvedDecision&&allowVoice&&items.every(m=>m.mode==='voice'))items=combineTaiVoiceThoughts(items);
-  if((hasBannedTaiReassurance(items.map(e=>e.text))||hasBannedTaiReassurance(items.map(e=>e.speechText||e.text))))return false;
+  if((hasBannedTaiConstruction(items.map(e=>e.text))||hasBannedTaiConstruction(items.map(e=>e.speechText||e.text))))return false;
   let expected=history(initial).at(-1)?.id,emitted=0;
   for(const item of items){
    if(emitted)await wait(replyDelayMs(item.text,c,{random}));

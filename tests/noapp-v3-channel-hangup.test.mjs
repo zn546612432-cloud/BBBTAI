@@ -114,6 +114,17 @@ test('accepted player-requested callback plays exactly one fixed greeting withou
  },{incomingOptions:{requestedByPlayer:true,openingText:'熙蒙。电话我打了。现在能听到我说话吗？'}});
 });
 
+test('a rejected dialogue draft never becomes speech or a fabricated connection failure',async()=>{
+ await withMockCall(['不是勉强承认，是因为你这个人。'],async({state,requests,waitFor,send})=>{
+  assert.equal(send('你怎么想？'),true);
+  await waitFor(()=>requests.filter(r=>r.url.includes('chat/completions')).length===2,'one rejected draft plus one correction');
+  await waitFor(()=>!callView(state).includes('熙泰正在回覆'),'expression finished');
+  assert.equal(callState().state,'connected');
+  assert.equal(requests.filter(r=>r.url.includes('t2a_v2')).length,1,'only the original greeting was synthesized');
+  assert.doesNotMatch(callView(state),/连线不稳|連線不穩|通話失敗|勉强承认/);
+ });
+});
+
 test('player requests Tai to hang up: spoken farewell executes actual hangup after audio completes',async()=>{
  await withMockCall(['好，先挂了。明天再说，别熬得太晚。'],async({state,ctx,players,requests,waitFor,send})=>{
   assert.equal(send('那你挂我电话吧，再见。'),true);

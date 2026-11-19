@@ -5,7 +5,7 @@ import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {absoluteMinute} from '../../system/time/clock.js';
 import {taiVoiceRemaining} from './voice-budget.js';
-import {hasBannedTaiReassurance} from './expression-style.js';
+import {hasBannedTaiConstruction,isTaiDirectAffectionRequest,TAI_DIRECT_AFFECTION_LINE,TAI_DIRECT_AFFECTION_PROMPT} from './expression-style.js';
 import {taiDisplayName,markTaiRead} from '../../apps/noapp/contact.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
 import {isConversationOpen,visibleMessages} from '../messaging/delivery.js';
@@ -26,6 +26,11 @@ import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntr
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
+function finishSilentTaiTurn(store,sourceId,now){
+ store.update(s=>{markTaiRead(s,sourceId,now());const m=conversation(s)?.messages.find(x=>x.id===sourceId);if(m)m.taiHandledAction='read_no_reply';
+  s.events.push({type:'tai_action_read_no_reply',sourceId,day:s.day,clock:s.clock});});
+ return {status:'read_no_reply',count:0};
+}
 const replyAfter=(c,id)=>{
  if(!c)return true;
  if(c.messages.some(m=>m.from==='tai'&&m.replySourceId===id))return true;
@@ -89,10 +94,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const unheard=source?.kind==='voice'&&!source?.voiceCaption;
   const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
+  const directAffection=!unheard&&isTaiDirectAffectionRequest(lastUser);
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
   const shortCallReply=requestedCall||taiCallAvailabilityQuestion(lastUser);
-  const voiceRequested=!requestedCall&&taiExplicitVoiceRequest(lastUser);
+  const voiceRequested=!directAffection&&!requestedCall&&taiExplicitVoiceRequest(lastUser);
   const lastCallIndex=c.messages.findLastIndex(m=>m.kind==='call'&&m.callStatus==='ended');
   const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
   const messagesAfterCall=lastCallIndex<0?[]:c.messages.slice(lastCallIndex+1).filter(m=>m.from==='me'&&m.actual!==false);
@@ -102,7 +108,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
   const voiceAvailable=!!status.minimax&&taiVoiceRemaining(initial,'message')>0;
-  const allowVoice=!shortCallReply&&voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
+  const allowVoice=!directAffection&&!shortCallReply&&voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
   const voiceTurn=unheard?!!apiConfig().minimax&&taiVoiceRemaining(initial,'message')>0:voiceAvailable&&voiceRequested;
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
@@ -115,10 +121,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
+  if(directAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:availableCall&&!!status.minimax&&taiVoiceRemaining(initial,'call')>0&&(!firstTextAfterCall||requestedCall),allowVoice,
+   allowCall:!directAffection&&availableCall&&!!status.minimax&&taiVoiceRemaining(initial,'call')>0&&(!firstTextAfterCall||requestedCall),allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:voiceAvailable});
@@ -150,12 +157,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const turnPlan=!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.
-  const observed=!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
+  const observed=!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
    text:lastUser,sourceMessageId,random,now
   }):null;
   if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
@@ -165,7 +172,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   store.update(s=>markTaiRead(s,sourceMessageId,now(),{keepPending:true}));
   if(!unheard)onTyping();
   const result=unheard?null:await askTai({...request,relationshipContext:xitaiRelationshipContext(store.get(),{mode:'text'})});
-  let draftEntries=unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
+  if(directAffection){
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+   if(!result?.directAffectionAccepted)return finishSilentTaiTurn(store,sourceMessageId,now);
+  }
+  let draftEntries=directAffection?[{text:TAI_DIRECT_AFFECTION_LINE,mode:'text',tone:'neutral'}]:unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
   // A bare mirrored greeting is a model-continuation artifact, not a choice
   // rooted in Tai's personality. Repair it only when he replied with nothing
   // but the exact same greeting; preserve other genuine one-line replies.
@@ -176,7 +187,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
-  if(!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+  if(!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
@@ -214,7 +225,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // Keep an explicit phone action even if the model returned the configured
   // maximum number of text bubbles before it. Never interpret it as a voice
   // bubble; the first phone utterance is played only after the player answers.
-  if((hasBannedTaiReassurance(draftEntries.map(e=>e.text))||hasBannedTaiReassurance(draftEntries.map(e=>e.speechText||e.text))))throw Error('Blocked combined dialogue');
+  if((hasBannedTaiConstruction(draftEntries.map(e=>e.text))||hasBannedTaiConstruction(draftEntries.map(e=>e.speechText||e.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
   const limit=Math.max(1,behavior.maxMessages);
   const phoneAt=draftEntries.findIndex(item=>item.action==='phone');
   const selected=phoneAt>=limit?[...draftEntries.slice(0,limit-1),draftEntries[phoneAt]]:draftEntries.slice(0,limit);
@@ -282,6 +293,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  }catch(error){
   console.warn('NoApp reply unavailable:',error?.message);
   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+  if(error?.code==='TAI_STYLE'||isTaiDirectAffectionRequest(pendingSource?.voiceCaption||pendingSource?.text))return finishSilentTaiTurn(store,sourceMessageId,now);
   const id=uid(),text='晚點再說吧。';
   store.update(s=>{
    const target=conversation(s);if(!target)return;

@@ -9,7 +9,7 @@ import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {taiLife} from '../../services/ai/life-context.js';
 import {taiVoiceRemaining,synthesizeTaiVoice} from '../../services/ai/voice-budget.js';
-import {hasBannedTaiReassurance} from '../../services/ai/expression-style.js';
+import {hasBannedTaiConstruction} from '../../services/ai/expression-style.js';
 import {taiDisplayName} from './contact.js';
 import {askTai,chooseTaiAction,voicePreview,speechToText,apiConfig} from '../../services/ai/gateway.js';
 import {captureTaiWorldbook} from '../../services/ai/worldbook/index.js';
@@ -335,7 +335,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
   const remaining=taiVoiceRemaining(ctx.store.get(),'call');
   ({segments,endAfter}=finalizeCallSegments(segments,remaining,{close:endAfter,maxSegments:endAfter?Math.min(2,plan.maxSegments):plan.maxSegments}));
-  if((hasBannedTaiReassurance(segments.map(r=>r.text))||hasBannedTaiReassurance(segments.map(r=>r.speechText||r.text))))throw Error('Blocked combined dialogue');
+  if((hasBannedTaiConstruction(segments.map(r=>r.text))||hasBannedTaiConstruction(segments.map(r=>r.speechText||r.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
   ctx.store.update(state=>{
    state.events??=[];
    state.events.push({type:'tai_call_v2_turn',sessionId,generationId,day:state.day,clock:state.clock,
@@ -364,6 +364,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
+  if(error?.code==='TAI_STYLE')return; // stay connected; an expression veto is not a network failure
   if(current()&&error?.code==='TAI_VOICE_LIMIT'){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});return;}
   if(current()){
    console.warn('NoApp call connection failed:',error?.message);

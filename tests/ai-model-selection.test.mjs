@@ -57,6 +57,10 @@ test('banned constructions trigger only a bounded corrective generation',async()
  for(const line of ['不是你的錯，而是我的錯。','別急，這才開始。','把這個放下，那叫尊重。','我不習慣主動說，不是故意只問你。'])assert.ok(hasBannedTaiConstruction([line]));
  assert.ok(hasBannedTaiConstruction(['不是我想的','而是你決定的']));
  assert.ok(hasBannedTaiConstruction(['不是故意瞞你。','只是我本來就不習慣主動說這些。']));
+ assert.ok(hasBannedTaiConstruction(['我爱你，熙蒙。不是勉强承认，是因为你这个人。']));
+ assert.ok(hasBannedTaiConstruction(['不是勉強承認。','是因為你這個人。']));
+ assert.ok(hasBannedTaiConstruction(['並非一時衝動','是我早就想說的話。']));
+ assert.equal(hasBannedTaiConstruction(['我沒想過會在這裡遇見你。','你還記得那件事嗎？']),false);
  assert.equal(hasBannedTaiConstruction(['我不想出門。','那家店不遠。','還有點事。']),false);
  assert.equal(hasBannedTaiConstruction(['不過早就不上課了。']),false);
  const oldSession=globalThis.sessionStorage,oldFetch=globalThis.fetch,db=new Map(),requests=[];
