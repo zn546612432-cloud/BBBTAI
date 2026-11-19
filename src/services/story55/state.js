@@ -2,6 +2,7 @@ import {d01Gate} from '../../story/d01/runtime.js';
 import {STORY55_CONFIG} from '../../story/story55/catalog.js';
 import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
 import {modelDelivered} from './ghost-car.js';
+import {TIMED_SCRIPTED_CALLS} from '../../story/d34-d42/definition.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
@@ -32,6 +33,31 @@ export const overnightSceneGate55=s=>isStory55(s)
  ?story55Config(s).nodes.find(n=>n.holdAt03===true&&n.gateDay===s.day&&!completed(s,n.id))||null
  :null;
 export const overnightSceneNight55=s=>isStory55(s)&&s.story55?.overnightHold?.day===s.day&&s.story55.overnightHold.nightAfterMidnight===true;
+const minuteOf=clock=>Number(clock.slice(0,2))*60+Number(clock.slice(3));
+export const storyDayMinute=s=>minuteOf(s.clock)+(overnightSceneNight55(s)||s.day===23&&s.story55?.d23?.nightAfterMidnight||s.day===1&&s.story55?.d01?.nightAfterMidnight?1440:0);
+export function scriptedCallPlayed(s,event){
+ if(s.story55?.scriptedCallCompleted?.[event.id])return true;
+ // Existing saves may predate the completion marker. Only a real recorded
+ // call containing its final authored line is evidence of completion.
+ if(!s.story55?.[event.triggerKey])return false;
+ const last=event.steps?.at(-1)?.[1]||event.lines?.at(-1);
+ return !!last&&!!s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages?.some(m=>m.kind==='call'&&m.day===event.day&&m.transcript?.includes(last));
+}
+export function timedStoryEventComplete(s,event){
+ if(!event.triggerKey)return completed(s,event.id);
+ return scriptedCallPlayed(s,event)&&(!event.completionMatch||s.matches?.some(m=>m.invitationId===event.completionMatch&&m.status==='finished'));
+}
+// One declarative gate for native scenes and calls; completion remains owned
+// by the actual App action, not by the clock or a second scheduler.
+export function timedStoryEvents(s){
+ return [...story55Config(s).nodes,...TIMED_SCRIPTED_CALLS].filter(n=>n.pauseTimeUntilComplete===true&&typeof n.at==='string');
+}
+export function pendingTimedStoryEvent(s){
+ if(!isStory55(s)||s.story55.ended)return null;
+ return timedStoryEvents(s).filter(n=>n.day===s.day&&!timedStoryEventComplete(s,n))
+  .map(n=>({...n,minute:minuteOf(n.at)+(n.afterMidnight?1440:0)})).sort((a,b)=>a.minute-b.minute)[0]||null;
+}
+export function timedStoryPaused(s){const n=pendingTimedStoryEvent(s);return !!n&&storyDayMinute(s)>=n.minute;}
 export const taiRecognized=s=>isStory55(s)?completed(s,'recognition'):s.day>=56;
 export const final55=s=>isStory55(s)&&!!s.story55.ended;
 export function nodeStatus(s,id){
@@ -77,6 +103,7 @@ export function story55ChargeGate(s){
  if(!isStory55(s))return null;
  if(s.day>=55)return 'death';
  if(d01Gate(s))return 'plot';
+ if(pendingTimedStoryEvent(s))return 'plot';
  // Every day's LINK and explicit equipment payment must settle before
  // advancing; the existing overnight hold handles the 03:00 2% state.
  if(s.day>=14&&s.day<=24&&!completed(s,'base')&&!s.story55.projects?.base?.batches?.[s.day-14]?.complete)return 'plot';

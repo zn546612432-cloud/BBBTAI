@@ -1,4 +1,4 @@
-import {isStory55,story55Config,nodeStatus} from '../../services/story55/state.js';
+import {isStory55,story55Config,nodeStatus,timedStoryPaused} from '../../services/story55/state.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55} from '../../services/story55/finale.js';
 import {deathLocked} from '../power/story.js';
 import {drainBattery,tickShortChargeBattery,settleOfflineShortCharge} from '../power/battery.js';
@@ -17,7 +17,7 @@ export function backgroundStoryBlocked(s){
   &&nodeStatus(s,n.id).state==='ready');
 }
 export function phoneRuntimePaused(s,{hidden=false,background=false,restarting=false,callActive=false}={}){
- return hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||s.dayChargeRemainingMs>0||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
+ return timedStoryPaused(s)||hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||s.dayChargeRemainingMs>0||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
   ||['ringing','connected'].includes(s.phoneCall?.state)||s.story55?.d13?.phase==='green'
   ||['off','passcode'].includes(s.deathPhase)||!!s.alarmRinging||!!s.emergencyCharge||!!s.poweredOff
   ||s.nav.current.appId==='editor'&&!deathLocked(s)&&s.powerMode!=='short-charging';
