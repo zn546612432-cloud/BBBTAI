@@ -24,7 +24,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,callPersonaGuidance} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance} from './call-engine-v2.js';
 import {taiShouldHangUpCall} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
 import {isConversationOpen} from '../../services/messaging/delivery.js';
@@ -125,10 +125,10 @@ export function callView(s){
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
    '</section>';
 }
-export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText=''}={}){
+export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText='',requestedByPlayer=false}={}){
  if(!taiRecognized(ctx.store.get())||!taiPresence(ctx.store.get()).contactable||taiVoiceRemaining(ctx.store.get(),'call')<=0||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
- call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
+ call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,requestedByPlayer,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
  ctx.store.update(s=>{s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
@@ -282,7 +282,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   const scene=callScene({opening,event,direction:call.direction,reason:call.reason})+
    ' 【NoApp V3｜真人电话】这轮只调用一次台词生成。你现在仍在真实通话里。'+speechDepth+
    callPersonaGuidance(taiLife(ctx.store.get()))+
-   ' 允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
+   ' 通话开场不喊对方名字；需要称呼时只叫 nya（奈亚），不要念熙蒙、陈熙蒙。允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
    (remainingAtStart<=5?' 当前能继续讲话的时间有限；自然安排收尾，不提系统或额度。':'')+
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
    taiMomentumPrompt(history,{mode:'call'});
@@ -395,7 +395,7 @@ async function respond(text,ctx){return generateTurn(ctx,{text});}
 function startGreeting(ctx){
  if(call.state==='connected'&&!call.greeted){
   call.greeted=true;
-  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.direction==='outgoing'?outgoingCallOpening(taiLife(ctx.store.get()),{sessionId:call.sessionId}):call.openingText||''});});
+  queueMicrotask(()=>{if(call.state==='connected')generateTurn(ctx,{opening:true,presetText:call.direction==='outgoing'?outgoingCallOpening(taiLife(ctx.store.get()),{sessionId:call.sessionId}):incomingCallOpening(call)});});
  }
 }
 export function submitCall(form,ctx){

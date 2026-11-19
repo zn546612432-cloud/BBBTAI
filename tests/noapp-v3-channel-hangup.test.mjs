@@ -48,7 +48,7 @@ test('DeepSeek prompt receives mutually exclusive phone, voice note, and message
  assert.match(behaviorSettings(normalizeTaiBehavior(),{},[]),/name="behavior_callDetail"/);
 });
 
-async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
+async function withMockCall(replyEntries,run,{actions=[],failVoice=false,incomingOptions={openingText:'喂。'}}={}){
  const old=Object.fromEntries(['Audio','fetch','sessionStorage','FormData'].map(k=>[k,globalThis[k]]));
  const players=[],requests=[],toasts=[];
  let playerInput='';
@@ -81,7 +81,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
     JSON.stringify({schema_version:10,action:'speak',tone:'dry',strategy:'answer_directly'}):
     JSON.stringify({schema_version:10,action:actions.length?'hang_up':'speak',messages:(typeof replyEntries==='function'?replyEntries(body):replyEntries).map(text=>({text,mode:'voice',tone:'dry'})),actions})}}]});
   };
-  assert.equal(startIncoming(ctx,'熙泰找你',{openingText:'喂。'}),true);
+  assert.equal(startIncoming(ctx,'熙泰找你',incomingOptions),true);
   assert.equal(callAction('tai-accept',ctx),true);
   await waitFor(()=>players[0]?.src?.startsWith('blob:'),'greeting audio');
   players[0].finish();
@@ -97,6 +97,22 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false}={}){
   }
  }
 }
+
+test('accepted player-requested callback plays exactly one fixed greeting without a model request',async()=>{
+ await withMockCall(['熙蒙，你说。'],async({state,ctx,requests,players,waitFor,send})=>{
+  const speech=requests.filter(r=>r.url.includes('t2a_v2'));
+  assert.equal(speech.length,1);
+  assert.match(speech[0].body.text,/^(?:怎么(?:了|\(le5\))|喂)[？?]$/);
+  assert.equal(requests.filter(r=>r.url.includes('chat/completions')).length,0);
+  assert.equal(callState().turnCount,1);
+  send('嗯');
+  await waitFor(()=>callView(state).includes('nya，你说。'),'nickname caption');
+  assert.match(requests.filter(r=>r.url.includes('t2a_v2')).at(-1).body.text,/nya/);
+  assert.doesNotMatch(requests.filter(r=>r.url.includes('t2a_v2')).at(-1).body.text,/熙蒙/);
+  players[0].finish();
+  await waitFor(()=>callState().turnCount===3,'nickname delivered');
+ },{incomingOptions:{requestedByPlayer:true,openingText:'熙蒙。电话我打了。现在能听到我说话吗？'}});
+});
 
 test('player requests Tai to hang up: spoken farewell executes actual hangup after audio completes',async()=>{
  await withMockCall(['好，先挂了。明天再说，别熬得太晚。'],async({state,ctx,players,requests,waitFor,send})=>{

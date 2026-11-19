@@ -39,18 +39,19 @@ export function expandCallSegments(entries){
  if(parts.length<2)return entries;
  return parts.slice(0,5).map((text,i)=>({...entry,text:i===4?parts.slice(4).join(''):text,speechText:undefined}));
 }
+const callAddress=value=>String(value||'').replace(/(?:陈|陳)?熙蒙/g,'nya');
 export function selectCallSegments(entries=[],{maxSegments=3,recent=[],dedupe=true}={}){
  const cap=Math.max(1,Math.min(5,Math.round(Number(maxSegments)||3)));
  const selected=[],blocked=[];
  for(const entry of (Array.isArray(entries)?entries:[]).slice(0,6)){
-  const text=String(entry?.text||'').trim();
+  const text=callAddress(entry?.text).trim();
   if(!text)continue;
   // A trailing comma/colon is an unfinished thought, not a standalone voice clip.
   if(/[，,、：:；;]$/.test(text)){blocked.push({text,reason:'unfinished'});continue;}
   if(dedupe&&[...selected.map(x=>x.text),...recent].some(prior=>sameCallMeaning(prior,text))){
    blocked.push({text,reason:'duplicate'});continue;
   }
-  selected.push({...entry,text});
+  selected.push({...entry,text,...(entry.speechText?{speechText:callAddress(entry.speechText)}:{})});
   if(selected.length>=cap)break;
  }
  return {segments:selected,blocked};
@@ -64,6 +65,10 @@ export function outgoingCallOpening(life,{sessionId=0}={}){
  return life?.activity?.startsWith('外出')&&sessionId%3===0
   ?['喂？我这边风很大，听得不是很清楚。等我一下。','好了，说吧。']
   :['怎么了？'];
+}
+// A requested callback starts with one natural pickup, never a generated recap.
+export function incomingCallOpening({requestedByPlayer=false,sessionId=0,openingText=''}={}){
+ return requestedByPlayer?[sessionId%2===0?'喂？':'怎么了？']:openingText;
 }
 export function callPersonaGuidance(life){
  const late=life&&life.minute<90;

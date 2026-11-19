@@ -1,8 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sameCallMeaning,isQuietCallRequest,selectCallSegments,nextNaturalCallIdleEvent,wantsMoreCallSpeech,expandCallSegments} from '../src/apps/noapp/call-engine-v2.js';
+import {sameCallMeaning,isQuietCallRequest,selectCallSegments,nextNaturalCallIdleEvent,wantsMoreCallSpeech,expandCallSegments,incomingCallOpening} from '../src/apps/noapp/call-engine-v2.js';
 import {DEFAULT_TAI_BEHAVIOR,normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {behaviorSettings} from '../src/apps/noapp/settings/behavior.js';
+
+test('requested callbacks ignore AI opening copy and use only a short pickup; actual autonomous openings remain intact',()=>{
+ const openingText='熙蒙。电话我打了。现在能听到我说话吗？';
+ assert.deepEqual(incomingCallOpening({requestedByPlayer:true,sessionId:1,openingText}),['怎么了？']);
+ assert.deepEqual(incomingCallOpening({requestedByPlayer:true,sessionId:2,openingText}),['喂？']);
+ assert.equal(incomingCallOpening({openingText:'有件事想问你。'}),'有件事想问你。');
+ assert.equal(incomingCallOpening({}),'');
+ const {segments}=selectCallSegments([{text:'陈熙蒙，你听我说。',speechText:'陳熙蒙，<#0.2#>你听我说。'}]);
+ assert.equal(segments[0].text,'nya，你听我说。');
+ assert.equal(segments[0].speechText,'nya，<#0.2#>你听我说。');
+});
 
 test('V2 rejects same-meaning comfort, repeat promises and unfinished clips without limiting genuine new thoughts',()=>{
  const entries=[

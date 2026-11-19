@@ -129,7 +129,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(decision.action==='start_call'){
-    const called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason:'【熙泰本轮主动决定来电】'+(decision.intent||'想亲自听熙蒙说话')});
+    const called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason:'【熙泰本轮主动决定来电】'+(decision.intent||'想亲自听熙蒙说话'),requestedByPlayer:requestedCall});
     if(called){store.update(s=>{const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m){markTaiRead(s,sourceMessageId,now());m.taiHandledAction='start_call';}
       s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock,protocol:'v10'});});
      return {status:'called',count:0,action:'start_call'};}
@@ -267,7 +267,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   let called=false;
   if(shouldCall){
    const reason='【刚才的通话约定】熙蒙刚刚说「'+String(lastUser).slice(0,140)+'」，熙泰决定立即拨号。'+(phoneCommand?.text?'接通后第一句话已准备好。':'文字中明确答应「'+String(delivered.at(-1)?.text||'').slice(0,120)+'」。')+'请自然承接正在发生的话题，不是陌生人初次通话。';
-   called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason,openingText:phoneCommand?.text||''});
+   called=startIncoming({store,refresh},'陈熙泰发起语音通话',{reason,openingText:phoneCommand?.text||'',requestedByPlayer:requestedCall});
    if(called)store.update(s=>s.events.push({type:'tai_text_call_trigger',sourceId:sourceMessageId,day:s.day,clock:s.clock,protocol:phoneCommand?'phone':'legacy'}));
   }
   // Developer-only audit: the actual length may be lower than the sampled
