@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "day": 33,
+  "date": "2025-06-20",
+  "title": "TAI 私人舊檔及鬼車行動工作資料",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": ["files", "ghost", "story55"],
+  "assets": [],
+  "events": [
+    {"id":"archive-private","kind":"link","surface":"files","capability":"story.archive-reader","owner":"files","actor":"me","trigger":{"type":"node-completed","ref":"photo"},"requires":["node:photo","node:photo-decrypt"],"timing":{"day":33,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"archive-private-read","kind":"link","surface":"ghost","capability":"story.archive-reader","owner":"ghost","actor":"me","trigger":{"type":"user-action","ref":"share-archive"},"requires":["archive-private"],"timing":{"day":33,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"archive-work","kind":"link","surface":"files","capability":"story.archive-reader","owner":"files","actor":"me","trigger":{"type":"day-time","ref":"d35-d38-work-records"},"requires":[],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"archive-work-read","kind":"link","surface":"ghost","capability":"story.archive-reader","owner":"ghost","actor":"me","trigger":{"type":"user-action","ref":"share-archive"},"requires":["archive-work"],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"archive-final","kind":"link","surface":"files","capability":"story.archive-reader","owner":"files","actor":"me","trigger":{"type":"node-completed","ref":"prep"},"requires":["node:prep"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
+  ],
+  "acceptance": [
+    {"id":"archive-trigger","type":"trigger","verify":"D35-D37 工作資料逐日顯示；D38 出席表更新。私人舊檔在解鎖且查看照片後顯示。"},
+    {"id":"archive-negative","type":"negative","verify":"不提前公開三胞胎檔案；不因進入 D40 宣告驗收，未完成 prep 不顯示最終驗收記錄。"},
+    {"id":"archive-once","type":"idempotency","verify":"相同文件解析使用同一 job ID；內容變動可重新解析，不複製檔案。"},
+    {"id":"archive-save","type":"save-restore","verify":"退出及重進 TAI 保留已解析正文、金點及完成狀態。"},
+    {"id":"archive-cross","type":"cross-app","verify":"Files 點檔案 → 分享至 Ouroboros’ Tear → 解析動畫 → 查看完整解析結果；亦可從 TAI 附件選取。"},
+    {"id":"archive-late","type":"late-entry","verify":"遲開 Files 可看到截至當日的資料；舊存檔不覆寫既有照片。"},
+    {"id":"archive-assets","type":"assets","verify":"文字檔案使用原生 ENC 圖示；不製作或執行外部檔案，沿用原照片。"},
+    {"id":"archive-clock","type":"date-clock","verify":"資料可見性使用 Story55 日期，模擬解析沿用 TAI 短動畫，不修改時鐘。"}
+  ]
+}

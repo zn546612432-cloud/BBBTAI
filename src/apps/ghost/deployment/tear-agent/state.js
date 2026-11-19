@@ -6,6 +6,7 @@ import {absoluteMinute} from '../../../../system/time/clock.js';
 import {blocksAnonymousMirageInput} from '../../../../services/story55/mirage-input.js';
 import {localFileList,localWorkAttachments,personalFileAttachments,saveGeneratedLocalFile} from '../../../files/features/local-library/index.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
+import {archiveFile} from '../../../files/features/local-library/story-archives.js';
 
 // All fictional research follows the existing phone clock. No real scanning,
 // external access, code execution, or physical-system control is possible here.
@@ -14,6 +15,7 @@ export const agent=s=>s.story55?.tearAgent||{messages:[],jobs:{}};
 // Quick archive execution is a fixed story animation, like the existing Tear
 // commission executor. It uses no external service and works during clock holds.
 export const ARCHIVE_RUN_MS=3200;
+export const DOCUMENT_READ_MS=3200;
 // Presentation only: use the existing Tear heartbeat, even when story time is held.
 export const IDENTITY_REVEAL_DELAY_MS=1600;
 export const IDENTITY_REVEAL_INTERVAL_MS=1200;
@@ -139,6 +141,11 @@ export const agentFiles=s=>[...localFileList(s),...localWorkAttachments(s),...pe
 const clamp01=n=>Math.max(0,Math.min(1,Number(n)||0));
 export function tearTaskInfo(s,id){
  const a=agent(s),job=a.jobs?.[id],definition=TEAR_STAGES[id];
+ if(job?.kind==='document-read'){
+  const file=archiveFile(s,id);if(!file)return null;
+  const elapsed=Math.max(0,Date.now()-job.startedAt),progress=job.done?1:Math.min(.99,elapsed/DOCUMENT_READ_MS);
+  return {id,title:file.name,elapsedMinutes:0,elapsedSeconds:Math.floor(Math.min(elapsed,DOCUMENT_READ_MS)/1000),progress,percent:Math.floor(progress*100),running:!job.done,complete:!!job.done,status:job.done?'COMPLETE':'PROCESSING',document:true};
+ }
  if(id==='personal-files'&&a.archiveRun){
   const run=a.archiveRun,elapsed=Math.max(0,Date.now()-run.startedAt),progress=run.done?1:Math.min(.99,elapsed/ARCHIVE_RUN_MS);
   return {id,title:'Personal Files',elapsedMinutes:0,progress,percent:Math.floor(progress*100),running:!run.done,complete:!!run.done,status:run.done?'COMPLETE':'PROCESSING'};
@@ -209,11 +216,11 @@ export function beginTearChatSession(s){
  const a=ensureAgent(s);
  a.chatSession=(a.chatSession||0)+1;a.messageSequence=0;
  a.messages=[];addMessage(s,'assistant',TEAR_GREETING);
- a.draft='';a.selected=null;a.selectedTask=null;a.picking=false;
+ a.draft='';a.selected=null;a.selectedTask=null;a.documentReading=false;a.picking=false;
  delete a.thinking;delete a.thinkingAt;
  a.history=false;a.displayRevision=4;
  a.visualSessionStart=now(s);a.visualProgress=0;a.visualTaskIds=[];a.visualTaskBaseline={};
- for(const id of [...Object.keys(TEAR_STAGES),'identity','personal-files']){
+ for(const id of [...new Set([...Object.keys(TEAR_STAGES),...Object.keys(a.jobs),'identity','personal-files'])]){
   const info=tearTaskInfo(s,id);
   if(!info||!info.running)continue;
   a.visualTaskIds.push(id);a.visualTaskBaseline[id]=info.progress;
@@ -235,6 +242,13 @@ export function tickTearAgent(s){
  }
  if(a.thinking||a.thinkingAt){delete a.thinking;delete a.thinkingAt;changed=true;}
  for(const [id,j] of Object.entries(a.jobs)){
+  if(j.kind==='document-read'){
+   if(!j.done&&Date.now()-j.startedAt>=DOCUMENT_READ_MS&&archiveFile(s,id)){
+    j.done=true;changed=true;
+    addMessage(s,'assistant','解析成功。',{documentResult:id,job:id});
+   }
+   continue;
+  }
   const d=TEAR_STAGES[id];if(!d||j.done)continue;
   const elapsed=Math.max(0,now(s)-j.start);
   while(j.shown<d.logs.length&&elapsed>=d.logs[j.shown][0]){
@@ -266,6 +280,17 @@ export function sendAgent(s,text,fileId){
  if(!value&&!file)return {kind:'empty'};
  if(identityRevealPending(s))return {kind:'busy'};
  if(blockedTearText(s,value))return invalidCommand(s);
+ if(file?.kind==='story-archive'){
+  const doc=archiveFile(s,file.id);if(!doc)return {kind:'empty'};
+  addMessage(s,'user',value||doc.name,{file:doc.name,job:doc.id});a.selected=null;
+  const previous=a.jobs[doc.id];
+  if(previous?.done&&previous.text===doc.text){addMessage(s,'assistant','解析成功。',{documentResult:doc.id,job:doc.id});return {kind:'preset'};}
+  if(previous&&!previous.done){addMessage(s,'assistant','正在解析檔案……',{job:doc.id});return {kind:'preset'};}
+  a.jobs[doc.id]={kind:'document-read',startedAt:Date.now(),text:doc.text,done:false};
+  a.visualTaskIds=[];a.visualTaskBaseline={};a.visualProgress=0;
+  for(const taskId of [...Object.keys(a.jobs),'identity','personal-files'])if(tearTaskInfo(s,taskId)?.running)registerTearVisualTask(s,taskId);
+  addMessage(s,'assistant','正在解析檔案……',{job:doc.id});return {kind:'preset'};
+ }
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
  addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}

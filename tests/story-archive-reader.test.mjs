@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {archiveFile,storyArchives} from '../src/apps/files/features/local-library/story-archives.js';
+import {renderLibrary,handleLibraryAction,personalFileAttachments,localFileList} from '../src/apps/files/features/local-library/index.js';
+import {agent,beginTearChatSession,sendAgent,tickTearAgent,tearTaskInfo,DOCUMENT_READ_MS} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {handleTearAgent} from '../src/apps/ghost/deployment/tear-agent/actions.js';
+import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
+
+const plan='story-archive-ghost-car-plan',intake='story-archive-intake',rehearsal='story-archive-rehearsal';
+const fixture=()=>activateStory55(initialState());
+const ctxFor=(s,routes=[])=>({store:{get:()=>s,update:fn=>fn(s)},router:{open:loc=>routes.push(loc)}});
+test('dated work archive files remain opaque in Files; no spoilers or premature final report',()=>{
+ const s=fixture();s.day=34;assert.equal(archiveFile(s,plan),null);
+ s.day=35;assert.equal(storyArchives(s).length,4);assert.ok(localFileList(s).some(f=>f.id===plan));
+ const list=renderLibrary(s,'/folder/documents');assert.match(list,/鬼車行動計劃書\.enc/);assert.doesNotMatch(list,/貨車改裝清單/);
+ const preview=renderLibrary(s,'/item/'+plan);assert.match(preview,/無法預覽此檔案/);assert.match(preview,/分享至 Ouroboros/);assert.doesNotMatch(preview,/V11/);
+ const routes=[];handleLibraryAction('files-local-share-archive',{dataset:{id:plan}},ctxFor(s,routes));assert.deepEqual(routes,[{appId:'ghost',route:'/tear',params:{shareArchive:plan}}]);
+ s.day=36;assert.ok(archiveFile(s,'story-archive-truck'));s.day=37;assert.ok(archiveFile(s,'story-archive-equipment'));
+ assert.match(archiveFile(s,rehearsal).text,/待確認/);s.day=38;assert.match(archiveFile(s,rehearsal).text,/出席　出席/);
+ s.day=40;assert.equal(archiveFile(s,'story-archive-validation'),null);s.story55.completed.prep={day:40,clock:'18:00'};assert.ok(archiveFile(s,'story-archive-validation'));
+ assert.doesNotMatch(archiveFile(s,plan).text,/熙泰|Ouroboros|05｜/);
+});
+test('personal records appear only after the existing photograph checkpoint and cannot be opened via deep link early',()=>{
+ const s=fixture();s.day=33;s.content.localFiles=[{id:'personal-files',kind:'personal-folder',name:'Personal Files',folder:'downloads',unlocked:false}];
+ assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai'),/嬰兒收容登記表/);assert.equal(archiveFile(s,intake),null);
+ s.content.localFiles[0].unlocked=true;assert.equal(archiveFile(s,intake),null);
+ s.story55.completed.photo={day:33,clock:'12:00'};assert.equal(storyArchives(s,{personal:true}).length,4);
+ assert.match(renderLibrary(s,'/item/personal-files/tai'),/修女手記/);assert.ok(personalFileAttachments(s).some(f=>f.id===intake));
+ const preview=renderLibrary(s,'/item/'+intake);assert.match(preview,/無法預覽此檔案/);assert.doesNotMatch(preview,/三胞胎/);
+ assert.doesNotMatch(renderLibrary(s,'/folder/documents'),/嬰兒收容登記表/);
+});
+test('same reader job supports work and private documents, persists across fresh sessions, and repeats safely',t=>{
+ let now=100000;t.mock.method(Date,'now',()=>now);
+ const s=fixture();s.day=35;const ctx=ctxFor(s);beginTearChatSession(s);
+ assert.equal(sendAgent(s,'',plan).kind,'preset');assert.equal(tearTaskInfo(s,plan).running,true);assert.match(renderTearAgent(s),/正在解析檔案/);
+ assert.doesNotMatch(renderTearAgent(s),/V11/);now+=DOCUMENT_READ_MS;tickTearAgent(s);
+ assert.equal(tearTaskInfo(s,plan).percent,100);assert.equal(agent(s).visualProgress,1);assert.match(renderTearAgent(s),/查看完整解析結果/);
+ handleTearAgent('gh-tear-document-read',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/V11/);
+ assert.match(renderTearAgent(s),/END OF DOCUMENT/);handleTearAgent('gh-tear-task-close',{dataset:{}},ctx);
+ const job=agent(s).jobs[plan];beginTearChatSession(s);assert.doesNotMatch(renderTearAgent(s),/V11/);
+ handleTearAgent('gh-tear-task',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/查看完整解析結果/);
+ handleTearAgent('gh-tear-document-read',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/行動目標/);
+ sendAgent(s,'',plan);assert.equal(agent(s).jobs[plan],job);
+ s.content.localFiles=[{id:'personal-files',kind:'personal-folder',unlocked:true,name:'Personal Files'}];s.story55.completed.photo={day:33,clock:'12:00'};
+ sendAgent(s,'',intake);now+=DOCUMENT_READ_MS;tickTearAgent(s);handleTearAgent('gh-tear-document-read',{dataset:{id:intake}},ctx);
+ assert.match(renderTearAgent(s),/陳熙泰/);s.content.localFiles[0].unlocked=false;
+ assert.equal(tearTaskInfo(s,intake),null);assert.doesNotMatch(renderTearAgent(s),/陳熙泰/);
+});

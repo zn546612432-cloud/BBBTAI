@@ -319,6 +319,7 @@
       "appId": "ghost",
       "capabilities": {
         "story.identity-deploy": {"state":"wired-day","owner":"story55","kinds":["commission"],"proof":"src/services/story55/projects.js","originDays":[30]},
+        "story.archive-reader": {"state":"wired-day","owner":"ghost","kinds":["link"],"proof":"src/apps/ghost/deployment/tear-agent/state.js","originDays":[33]},
         "mission.start-stages": {
           "state": "adapter-required",
           "owner": "ghost",
@@ -539,6 +540,7 @@
       "appId": "files",
       "capabilities": {
         "story.identity-evidence": {"state":"wired-day","owner":"files","kinds":["link"],"proof":"src/apps/files/features/local-library/index.js","originDays":[30]},
+        "story.archive-reader": {"state":"wired-day","owner":"files","kinds":["link"],"proof":"src/apps/files/features/local-library/story-archives.js","originDays":[33]},
         "attachment.add": {
           "state": "adapter-required",
           "owner": "files",

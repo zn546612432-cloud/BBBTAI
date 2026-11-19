@@ -4,6 +4,7 @@ import {esc} from '../../../../system/ui.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
 import {completed,projectById,completeNode,nodeStatus} from '../../../../services/story55/state.js';
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
+import {storyArchives,archiveFile} from './story-archives.js';
 
 const FOLDERS=Object.freeze([
  {id:'downloads',name:'已下載'},
@@ -28,7 +29,7 @@ const chatFile=(s,chatId,messageId)=>{
  return canArchive(message)?{chat,message}:null;
 };
 export const isLibraryRoute=route=>route==='/'||/^\/(iphone|folder|recent|trash|item|rename|move|search|incoming|work-key)\b/.test(route);
-export const localFileList=s=>library(s).filter(f=>!f.deleted);
+export const localFileList=s=>[...library(s).filter(f=>!f.deleted),...storyArchives(s)];
 export const PERSONAL_FILES_ID='personal-files';
 const personalPath='/item/'+PERSONAL_FILES_ID;
 const personalImages=['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg'];
@@ -90,8 +91,9 @@ export function copyLocalFile(s,id){
  files.push(copy);return copy;
 }
 const nav=(label,back='')=>'<header class="fl-nav"><button type="button" data-action="files-local-nav" data-route="'+esc(back)+'" aria-label="返回">‹</button><strong>'+esc(label)+'</strong><span></span></header>';
-const row=f=>f.kind==='personal-folder'?folderRow(personalPath,f.name):'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+icon()+
- '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(f.kind==='tear-artifact'?'Ouroboros’ Tear':sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
+const archiveIcon='<span class="fl-archive-icon fl-encrypted-icon" aria-hidden="true">ENC</span>';
+const row=f=>f.kind==='personal-folder'?folderRow(personalPath,f.name):'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+(f.kind==='story-archive'?archiveIcon:icon())+
+ '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(f.kind==='story-archive'?'加密檔案':f.kind==='tear-artifact'?'Ouroboros’ Tear':sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
 const empty='<p class="fl-empty">尚無檔案</p>';
 const path=(route,prefix)=>decode(route.slice(prefix.length));
 const heading=(title)=>'<h1 class="fl-title">'+esc(title)+'</h1>';
@@ -123,7 +125,7 @@ const personalRow=(path,name,detail,thumb='')=>'<button type="button" class="fl-
 const personalImage=name=>'/assets/story55/personal-files/'+name;
 export function personalFileAttachments(s){
  const f=fileById(s,PERSONAL_FILES_ID);if(!f||f.deleted)return [];
- return [['account','account.txt'],['tai','TAI'],['photos','Photos'],...personalImages.map(name=>['photos/'+name,name]),...(f.unlocked?[['tai/photo','IMG_0001.jpg']]:[])].map(([path,name])=>({id:'personal-files/'+path,name,kind:'personal-evidence',path}));
+ return [...[['account','account.txt'],['tai','TAI'],['photos','Photos'],...personalImages.map(name=>['photos/'+name,name]),...(f.unlocked?[['tai/photo','IMG_0001.jpg']]:[])].map(([path,name])=>({id:'personal-files/'+path,name,kind:'personal-evidence',path})),...storyArchives(s,{personal:true})];
 }
 function personalView(s,route){
  const f=fileById(s,PERSONAL_FILES_ID),tail=route.slice(personalPath.length);
@@ -133,7 +135,7 @@ function personalView(s,route){
  if(tail==='/account')return shell('account.txt',personalPath,'<div class="fl-personal-text">room404</div>');
  if(tail==='/tai'||tail.startsWith('/tai/')){
   if(!f.unlocked)return shell('TAI',personalPath,'<section class="fl-preview-main">'+folderIcon+heading('TAI')+'<p>此檔案夾已加密</p></section><form class="fl-editor" data-form="files-local-personal-unlock"><input name="password" type="password" placeholder="輸入密碼" aria-label="密碼" autocomplete="off" required><button type="submit" class="fl-primary">解鎖</button></form>');
-  if(tail==='/tai')return shell('TAI',personalPath,'<div class="fl-section">'+personalRow(personalPath+'/tai/photo','IMG_0001.jpg','JPEG 影像','/assets/story55/triplets-baby-photo.jpg')+'</div>');
+  if(tail==='/tai')return shell('TAI',personalPath,'<div class="fl-section">'+personalRow(personalPath+'/tai/photo','IMG_0001.jpg','JPEG 影像','/assets/story55/triplets-baby-photo.jpg')+storyArchives(s,{personal:true}).map(row).join('')+'</div>');
   if(tail==='/tai/photo')return shell('IMG_0001.jpg',personalPath+'/tai','<img class="fl-personal-photo" src="/assets/story55/triplets-baby-photo.jpg" alt="三名嬰兒合照">');
  }
  if(tail==='/photos')return shell('Photos',personalPath,'<div class="fl-section">'+personalImages.map(name=>personalRow(personalPath+'/photos/'+name,name,'JPEG 影像',personalImage(name))).join('')+'</div><p class="fl-count">'+personalImages.length+' 個項目</p>');
@@ -162,6 +164,8 @@ const archive=(s,route)=>{
  (saved&&!saved.deleted?' disabled':'')+'>'+(saved&&!saved.deleted?'已儲存':'儲存到檔案')+'</button></div>';
 };
 const itemView=(s,id)=>{
+ const document=archiveFile(s,id);
+ if(document)return '<div class="fl-library">'+nav('檔案預覽',document.personal?personalPath+'/tai':'/folder/documents')+'<section class="fl-preview-main">'+archiveIcon+heading(document.name)+'<p>加密檔案</p><p>無法預覽此檔案</p></section><button type="button" class="fl-primary fl-share-archive" data-action="files-local-share-archive" data-id="'+esc(id)+'">分享至 Ouroboros’ Tear</button></div>';
  const f=fileById(s,id);if(!f)return '<div class="fl-library">'+nav('檔案')+empty+'</div>';
  if(f.kind==='tear-artifact')return '<div class="fl-library">'+nav('檔案','/folder/documents')+'<section class="fl-preview-main"><span class="fl-archive-icon">LOG</span>'+heading(f.name)+'<p>Ouroboros’ Tear</p><p>'+esc(f.description)+'</p>'+(f.id==='tear-artifact-program'?'<button type="button" class="button-quiet wide" data-action="files-local-share-program" data-id="'+esc(f.id)+'" '+(s.story55?.tearAgent?.programShared?'disabled':'')+'>'+(s.story55?.tearAgent?.programShared?'已分享給胡楓':'分享給胡楓')+'</button>':'')+'</section></div>';
  return '<div class="fl-library">'+nav('檔案','/folder/'+f.folder)+
@@ -199,7 +203,7 @@ export function renderLibrary(s,route,params={}){
  const folder=route.startsWith('/folder/')?path(route,'/folder/'):'downloads';
  const title=trash?'最近刪除':recent?'最近使用':search?'搜尋結果':FOLDERS.find(f=>f.id===folder)?.name||'已下載';
  const query=String(params.query||'').trim().toLocaleLowerCase();
- const items=library(s).filter(f=>trash?f.deleted:!f.deleted&&(recent||search||f.folder===folder||folder==='downloads'&&f.folder==='reports'))
+ const items=[...library(s),...storyArchives(s)].filter(f=>trash?f.deleted:!f.deleted&&(recent||search||f.folder===folder||folder==='downloads'&&f.folder==='reports'))
   .filter(f=>!search||f.name.toLocaleLowerCase().includes(query)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  const keys=!trash&&(recent||search||folder==='documents')?workFiles(s).filter(f=>!search||f.name.toLocaleLowerCase().includes(query)):[];
  return '<div class="fl-library">'+nav(title,route.startsWith('/folder/')?'/iphone':'/')+ (search?'<p class="fl-search-term">'+esc(params.query||'')+'</p>':'')+
@@ -218,6 +222,9 @@ export function handleLibraryAction(a,t,c){
    c.router.open({appId:'files',route});
   }
  }else if(a==='files-local-item')c.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});
+ else if(a==='files-local-share-archive'){
+  if(archiveFile(c.store.get(),id))c.router.open({appId:'ghost',route:'/tear',params:{shareArchive:id}});
+ }
  else if(a==='files-local-save'){
   let result;c.store.update(s=>result=saveIncomingZip(s,t.dataset.chat,t.dataset.message));
   c.toast?.(result.created?'已儲存到已下載':'檔案已儲存');

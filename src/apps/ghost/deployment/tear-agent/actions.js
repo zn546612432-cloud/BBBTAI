@@ -13,7 +13,7 @@ export function buildTearAgentScene(state){
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
- if(!['picker','select','clear-file','prompt','artifact','collect','identity','archive-save','task','task-close','history','history-close'].includes(key))return false;
+ if(!['picker','select','clear-file','prompt','artifact','collect','identity','archive-save','task','task-close','history','history-close','document-read'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){
   const s=ctx.store.get();if(identityRevealPending(s)||!tearTaskInfo(s,'identity')?.complete)return true;
@@ -30,9 +30,10 @@ export function handleTearAgent(action,t,ctx){
  }
  ctx.store.update(s=>{const a=ensureAgent(s);
   if(key==='collect'){const id=t.dataset.id;if(tearTaskInfo(s,id)?.complete&&agentFiles(s).some(f=>f.id==='tear-artifact-'+id)){a.collectedArtifacts??={};a.collectedArtifacts[id]=true;}}
-  if(key==='task'){a.history=false;a.picking=false;}
+  if(key==='task'){a.history=false;a.picking=false;a.documentReading=false;}
   if(key==='task')a.selectedTask=tearTaskInfo(s,t.dataset.id)?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
-  if(key==='task-close')a.selectedTask=null;
+  if(key==='document-read'){const info=tearTaskInfo(s,t.dataset.id);if(info?.document&&info.complete){a.selectedTask=info.id;a.documentReading=true;a.history=false;a.picking=false;}}
+  if(key==='task-close'){a.selectedTask=null;a.documentReading=false;}
   if(key==='history'){a.history=!a.history;a.selectedTask=null;a.picking=false;}
   if(key==='history-close')a.history=false;
   if(key==='picker')a.picking=!a.picking;
