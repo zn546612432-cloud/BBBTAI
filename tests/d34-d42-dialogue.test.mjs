@@ -7,13 +7,16 @@ import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {visibleMessages} from '../src/services/messaging/delivery.js';
-import {D42_CALL,RETIRED_SCENES} from '../src/story/d34-d42/definition.js';
-import {d42CallDue,playScriptedCallSequence} from '../src/apps/noapp/voice-call.js';
+import {D41_CALL,D42_CALL,RETIRED_SCENES} from '../src/story/d34-d42/definition.js';
+import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,callAction,callState,callView,scriptedCallDraft,submitCall} from '../src/apps/noapp/voice-call.js';
+import {D41_CHESS_INVITATION,offerD41ChessInvitation,receiveInvitation,deferInvitation} from '../src/services/invitations.js';
+import {playMove,postMatchMessage} from '../src/services/chess.js';
+import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 
 function phone(day,clock){const s=initialState();activateStory55(s);rebuildStory55AtDay(s,day,clock);return s;}
-function finish(s,id,chat){while(!completed(s,id)){
+function finish(s,id,chat,channel='wechat'){while(!completed(s,id)){
  const next=sceneLines(s,id)[scene55(s,id).index];
- if(next[0]==='me')sendScriptedDraft55(s,'wechat',chat,next[1]);
+ if(next[0]==='me')sendScriptedDraft55(s,channel,chat,next[1]);
  else advanceScene55(s,id);
 }}
 test('D34 is recognition-dependent, optional and expires; D39 requires actual delivery',()=>{
@@ -57,4 +60,78 @@ test('D42 preset plays the three exact lines in order with two 2500ms post-playb
  assert.deepEqual(events,[D42_CALL.lines[0],2500,D42_CALL.lines[1],2500,D42_CALL.lines[2]]);
  events.length=0;await playScriptedCallSequence(D42_CALL,{...opts,wait:async ms=>{events.push(ms);active=false;}});
  assert.deepEqual(events,[D42_CALL.lines[0],2500]);
+});
+test('D41 preset call waits for opening and 23:40; invitation opens a normal legal chess game with no unapproved chat',()=>{
+ const s=phone(41,'23:30');
+ assert.equal(d41CallDue(s),false);
+ finish(s,'d41-opening','group');
+ s.clock='23:39';assert.equal(d41CallDue(s),false);
+ s.clock='23:40';assert.equal(d41CallDue(s),true);
+ assert.deepEqual(D41_CALL.steps.map(step=>step[0]),['tai','me','me','tai','tai','invite','tai']);
+ s.story55.d41CallTriggered=true;assert.equal(d41CallDue(s),false);
+ assert.equal(offerD41ChessInvitation(s),true);assert.equal(offerD41ChessInvitation(s),false);
+ const c=s.content.conversations.noapp.find(c=>c.id==='tai');
+ const card=c.messages.find(m=>m.id==='s55-chess-card-d41');
+ assert.equal(card.kind,'app_invitation');assert.equal(card.invitationId,D41_CHESS_INVITATION);
+ const store={get:()=>s,update:fn=>fn(s)};
+ const size=c.messages.length;deferInvitation(store,D41_CHESS_INVITATION);assert.equal(c.messages.length,size);
+ const matchId=receiveInvitation(store,D41_CHESS_INVITATION),match=s.matches.find(m=>m.id===matchId);
+ assert.deepEqual(match.chat,[]);assert.equal(!!match.lesson,false);
+ assert.equal(postMatchMessage(store,matchId,'試試'),false);
+ assert.equal(playMove(store,matchId,'e2','e4').san,'e4');
+ assert.equal(receiveInvitation(store,D41_CHESS_INVITATION),matchId);
+});
+test('D42 NoApp action, group and Zai private, then D43 Xin private retain time gates and native Send',()=>{
+ const s=phone(42,'10:05');
+ assert.equal(nodeStatus(s,'d42-wang').state,'locked');
+ s.clock='10:06';finish(s,'d42-wang','wang');
+ for(const [id,time,before] of [['d42-operation-1','14:30','14:29'],['d42-operation-2','14:35','14:34'],['d42-operation-3','15:05','15:04'],['target','15:50','15:49']]){
+  s.clock=before;assert.equal(nodeStatus(s,id).state,'locked',id);
+  s.clock=time;assert.equal(nodeStatus(s,id).state,'ready',id);
+  finish(s,id,'tai','noapp');
+ }
+ s.clock='16:29';assert.equal(nodeStatus(s,'d42-group').state,'locked');
+ s.clock='16:30';assert.equal(nodeStatus(s,'d42-zai').state,'locked');
+ finish(s,'d42-group','group');finish(s,'d42-zai','zaizai');
+ s.day=43;s.clock='09:39';assert.equal(nodeStatus(s,'d43-xin').state,'locked');
+ s.clock='09:40';finish(s,'d43-xin','xiaoxin');
+ assert.equal(completed(s,'d43-xin'),true);
+});
+test('D41 real call accepts only the two preset player sends and plays through the chess invitation without AI generation',async()=>{
+ const s=phone(41,'23:40');finish(s,'d41-opening','group');
+ const old=Object.fromEntries(['Audio','fetch','sessionStorage','FormData'].map(k=>[k,globalThis[k]]));
+ let audio,submitted='',route;const synthesized=[];
+ class FakeAudio{
+  constructor(){audio=this;this.src='';this.paused=true;this.listeners=new Map();}
+  addEventListener(n,cb){const set=this.listeners.get(n)||new Set();set.add(cb);this.listeners.set(n,set);}
+  removeEventListener(n,cb){this.listeners.get(n)?.delete(cb);}
+  play(){this.paused=false;return Promise.resolve();}
+  pause(){this.paused=true;}
+  finish(){this.paused=true;for(const cb of [...(this.listeners.get('ended')||[])])cb();}
+ }
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(r){route=r;}},toast(){}};
+ const waitFor=async check=>{for(let i=0;i<500;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}throw Error('Scripted call timed out');};
+ try{
+  globalThis.Audio=FakeAudio;
+  globalThis.sessionStorage={getItem:k=>k===BYOK_SESSION?JSON.stringify({minimax:'test-minimax',region:'cn'}):null};
+  globalThis.fetch=async(url,init)=>{assert.match(String(url),/t2a_v2/);synthesized.push(JSON.parse(init.body).text);return Response.json({base_resp:{status_code:0},data:{audio:'494433'}});};
+  globalThis.FormData=class{get(){return submitted;}};
+  assert.equal(maybeStartD41Call(ctx),true);callAction('tai-accept',ctx);
+  await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);audio.finish();
+  await waitFor(()=>scriptedCallDraft()===D41_CALL.steps[1][1]);
+  assert.match(callView(s),/readonly/);
+  const form={dataset:{form:'tai-call-turn'}};
+  submitted='arbitrary';submitCall(form,ctx);assert.equal(callState().turnCount,1);
+  submitted=D41_CALL.steps[1][1];submitCall(form,ctx);
+  await waitFor(()=>scriptedCallDraft()===D41_CALL.steps[2][1]);
+  submitted=D41_CALL.steps[2][1];submitCall(form,ctx);
+  await waitFor(()=>!audio.paused);audio.finish();
+  await waitFor(()=>!audio.paused);audio.finish();
+  await waitFor(()=>s.invitations.some(i=>i.id===D41_CHESS_INVITATION));
+  assert.match(callView(s),/tai-scripted-chess/);callAction('tai-scripted-chess',ctx);
+  assert.equal(route.appId,'chess');assert.equal(route.params.invitationId,D41_CHESS_INVITATION);
+  await waitFor(()=>!audio.paused);audio.finish();
+  await waitFor(()=>callState().turnCount===6);
+  assert.equal(synthesized.length,4);
+ }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });

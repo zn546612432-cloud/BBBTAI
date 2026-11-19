@@ -3,6 +3,7 @@ import {captureTaiWorldbook} from './ai/worldbook/index.js';
 import {unpackTaiReply} from './ai/format.js';
 import {blocksAnonymousMirageInput} from './story55/mirage-input.js';
 import {taiRecognized} from './story55/state.js';
+import {D41_CHESS_INVITATION} from './invitations.js';
 import {
  isD23ChessLesson,beginD23ChessLesson,noteD23PlayerMove,noteD23OpponentMove,noteD23HangingPiece,
  finishD23ChessLesson,resignD23ChessLesson,predeterminedChessReply,needsChessAnalysis,enqueueChessTaiReply,
@@ -149,7 +150,7 @@ export function postMatchMessage(store,matchId,text){
   // Exactly the original MIRAGE Send gate: no ghost bubble, no persisted
   // record and no model call for a pre-recognition spoiler.
   if(isD23ChessLesson(match)&&blocksAnonymousMirageInput(s,'s55-ouroboros',value))return;
-  if(match.status!=='active')return;
+  if(match.status!=='active'||match.invitationId===D41_CHESS_INVITATION)return;
   (match.chat??=[]).push({id:globalThis.crypto?.randomUUID?.()||String(Date.now()),from:'player',text:value,time:s.clock});
   accepted=true;
  });
@@ -164,7 +165,7 @@ function playerAwaitingChessReply(match){
 }
 export function replyToMatch(store,matchId){
  const match=store.get().matches.find(m=>m.id===matchId);
- if(!match||match.opponent!=='tai'||match.status!=='active')return Promise.resolve(false);
+ if(!match||match.opponent!=='tai'||match.status!=='active'||match.invitationId===D41_CHESS_INVITATION)return Promise.resolve(false);
  const player=playerAwaitingChessReply(match);
  if(!player)return Promise.resolve(false);
  let pending=pendingMatchReplies.get(store);
