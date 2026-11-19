@@ -1,6 +1,7 @@
 // Author-directed turn rhythm. Distribution is sampled by the PROGRAM,
 // not a vague probability sentence sent to a language model.
 import {taiConversationMomentum} from './conversation-momentum-v11.js';
+import {hasTaiDirectAffectionDeclaration} from './expression-style.js';
 //
 // Author supplied 3:45, 2:30, 1:30, 4-5:30. These sum to 135, so use
 // them as RELATIVE WEIGHTS (33.33%, 22.22%, 22.22%, 22.22%).
@@ -83,6 +84,7 @@ export function taiTurnNeedsMore({plan,entries=[],messages=[],action='send_text'
  const last=contentOf((Array.isArray(messages)?messages:[]).filter(fromUser).at(-1));
  if(stop.test(last)||personalLimit.test(last)||nowish.test(last))return false;
  if(entries.some(e=>e?.action==='phone'))return false;
+ if(hasTaiDirectAffectionDeclaration(entries))return false;
  const text=entries.map(e=>String(e.text||'')).join(' ');
  if(/(?:我不想聊|没空|不方便|先挂了|晚点说|明天再聊|我先忙了|不愿意谈这个|这是我的私事|到此为止|不谈这个)[。！？!?~\s]*$/.test(text.trim()))return false;
  return true;
@@ -158,6 +160,7 @@ export function taiContainsGroundedQuestion(entries=[]){
 export function taiGuidanceNeedsRepair({plan,entries=[],messages=[]}={}){
  if(!plan?.guide||!taiGuideEligible(messages,{mode:plan.mode})||!entries.length)return false;
  if(entries.some(x=>x.action==='phone'))return false;
+ if(hasTaiDirectAffectionDeclaration(entries))return false;
  const text=entries.map(x=>String(x.text||'')).join(' ');
  if(/我不想谈|我不想聊|先挂了|我先忙|稍后说|晚安|到此为止|别问了/.test(text))return false;
  return !taiContainsGroundedQuestion(entries);

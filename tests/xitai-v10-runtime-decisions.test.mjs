@@ -35,6 +35,42 @@ async function withMockDirect(action,run,{minimax=false,body='我听到了'}={})
 const quick={wait:async()=>{},random:()=>0,now:()=>1000000};
 const close=store=>callAction('tai-decline',{store,refresh:()=>{},toast:()=>{},router:{open:()=>{}}});
 
+test('an explicit request for an expression of love preserves Tai’s choice; a declaration ends after one exact line',async()=>{
+ const {chat,store}=setup('说爱我');
+ await withMockDirect('send_text',async calls=>{
+  const result=await replyToTaiMessage(store,'u-v10',quick);
+  assert.equal(result.status,'replied');assert.equal(result.count,1);
+  assert.equal(chat.messages.at(-1).text,'我爱你，熙蒙。');
+  assert.equal(calls.length,2,'no extra correction, bubble-count continuation or guided question');
+  assert.match(calls[0].system,/已读不回、暂不回应/);
+ },{body:'电话断了，但这句话我听见了。\n我爱你，熙蒙。不是勉强承认，是因为你这个人。'});
+});
+test('a direct affection request never manufactures a declaration from a refusal or quotation',async()=>{
+ for(const body of ['我不想说。','你想让我说“我爱你”？','我爱你，才怪。','我爱你。\n才怪。']){
+  const {chat,store}=setup('說愛我');
+  await withMockDirect('send_text',async calls=>{
+   const result=await replyToTaiMessage(store,'u-v10',quick);
+   assert.equal(result.status,'read_no_reply');assert.equal(result.count,0);
+   assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,0);
+   assert.equal(chat.messages.at(-1).taiHandledAction,'read_no_reply');assert.equal(calls.length,2);
+  },{body});
+ }
+ const {store,chat}=setup('说爱我');
+ await withMockDirect('read_no_reply',async calls=>{
+  assert.equal((await replyToTaiMessage(store,'u-v10',quick)).status,'read_no_reply');
+  assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,0);assert.equal(calls.length,1);
+ });
+});
+test('a twice-rejected construction never leaks back to the user',async()=>{
+ const {chat,store}=setup('你怎么想？');
+ await withMockDirect('send_text',async calls=>{
+  const result=await replyToTaiMessage(store,'u-v10',quick);
+  assert.equal(result.status,'read_no_reply');assert.equal(result.count,0);
+  assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,0);
+  assert.equal(calls.length,3,'at most one corrective model request');
+ },{body:'不是勉强承认，是因为你这个人。'});
+});
+
 test('real read_no_reply marks receipt but sends zero bubbles and skips expression phase',async()=>{
  const {state,chat,store}=setup('我刚修好了代码');
  await withMockDirect('read_no_reply',async calls=>{
