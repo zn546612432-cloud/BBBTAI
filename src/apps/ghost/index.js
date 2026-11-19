@@ -11,7 +11,7 @@ import {renderFlowD03,handleFlowD03,submitFlowD03Form} from './features/flow-d03
 import {deploymentHome,deploymentView} from './deployment/index.js';
 import {renderTearRun,renderTearHome,tickTearRun,tearDeployed,tearRunAvailability} from './deployment/tear-run.js';
 import {handleTearAgent,submitTearAgent,inputTearAgent} from './deployment/tear-agent/actions.js';
-import {beginTearChatSession,ensureAgent,tickTearAgent} from './deployment/tear-agent/state.js';
+import {beginTearChatSession,ensureAgent,tickTearAgent,sendAgent} from './deployment/tear-agent/state.js';
 import {miningView55} from '../../services/story55/mining-view.js';
 import {WALLET_CHALLENGE_ID} from '../mirage/contacts-seed.js';
 import {esc} from '../../system/ui.js';
@@ -44,7 +44,7 @@ export function tick(ctx){
  }
  // Presentation expiry only; task time remains owned by the phone clock.
  if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear'){
-  if(s.story55?.tearAgent?.archiveRun&&!s.story55.tearAgent.archiveRun.done)ctx.store.update(n=>tickTearAgent(n));
+  if(s.story55?.tearAgent?.archiveRun&&!s.story55.tearAgent.archiveRun.done||Object.values(s.story55?.tearAgent?.jobs||{}).some(j=>j.kind==='document-read'&&!j.done))ctx.store.update(n=>tickTearAgent(n));
   else ctx.refresh();
  }
  if(s.nav.current.appId==='ghost'&&s.nav.current.route==='/tear-run'){
@@ -72,7 +72,7 @@ export function render(ctx,loc){lastContext=ctx;bindControls();
   ctx.store.subscribe(s=>{if(s.nav.current.appId!=='ghost'||s.nav.current.route!=='/tear')tearChatSessionOpen=false;});
  }
 if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='undefined'){clock=setInterval(()=>{if(lastContext)tick(lastContext);},250);}let s=ctx.store.get();if(loc.route==='/tear'){
- if(!tearChatSessionOpen){tearChatSessionOpen=true;ctx.store.update(n=>beginTearChatSession(n));s=ctx.store.get();}
+ if(!tearChatSessionOpen){tearChatSessionOpen=true;ctx.store.update(n=>{beginTearChatSession(n);if(loc.params?.shareArchive)sendAgent(n,'',loc.params.shareArchive);});s=ctx.store.get();}
  return renderTearHome(s)||deploymentHome(s);
 }if(loc.route==='/tear-run')return renderTearRun(s,loc.params?.orderId)||deploymentHome(s);if(isStory55(s)&&['/flow-deploy','/flow-install','/flow-projects','/flow-record'].includes(loc.route))return renderFlowD03(s,loc);if(isStory55(s)&&['/deployments','/deployment','/mining'].includes(loc.route))return (loc.route==='/mining'?miningView55(s):loc.route==='/deployment'?deploymentView(s,loc.params?.project):deploymentHome(s))+shareDialogMarkup(s,loc);const g=s.ghost||{orders:{},history:[]},o=g.orders[loc.params?.orderId],tool=tools.find(t=>t.id===(o?.type||loc.params?.tool));let body='';
  if(loc.route==='/history')body=title('home','执行记录')+`<h1>历史记录<span>${g.history.length}</span></h1><div class="gh-history">${g.history.length?g.history.map(h=>`<div><i>${h.success?'↗':'—'}</i><section><b>${tools.find(t=>t.id===h.type)?.name}</b><small>${esc(h.orderId)}<br>${new Date(h.at).toLocaleString('zh-CN',{hour12:false})}</small></section><span>${h.success?'成功':'失败'}</span></div>`).join(''):'<div class="gh-empty">暂无记录</div>'}</div>`;

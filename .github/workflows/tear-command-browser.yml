@@ -7,12 +7,15 @@ on:
       - 'src/story/d25/tear-agent.js'
       - 'src/services/ai/tear-prompt.js'
       - 'scripts/verify-tear-command-browser.mjs'
+      - 'scripts/verify-story-archive-browser.mjs'
+      - 'src/apps/files/features/local-library/story-archives.js'
+      - 'src/story/d35-d40/archives.js'
       - '.github/workflows/tear-command-browser.yml'
 permissions:
   contents: read
 jobs:
   local-command:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +28,13 @@ jobs:
       - run: npm install --no-save --no-package-lock playwright@1.55.0
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify-tear-command-browser.mjs
+      - run: node scripts/verify-story-archive-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tear-command-mobile
-          path: qa/tear-command/
+          path: |
+            qa/tear-command/
+            qa/story-archives/
           if-no-files-found: ignore
           retention-days: 14
