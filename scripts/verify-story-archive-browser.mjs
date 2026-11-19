@@ -30,6 +30,7 @@ function seed(personal){
 async function unlock(page){
  const boot=page.locator('#xm-boot-next');if(await boot.count()){await boot.click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
  await page.locator('[data-action=unlock]').click({timeout:45000});for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
+ await page.locator('#phone:not(.is-locked) .app-view').waitFor({timeout:10000});
 }
 try{
  for(const [width,personal,id,expected] of (process.env.GHOST_CAR_ONLY?[]:[[390,false,'story-archive-ghost-car-plan','行動目標'],[375,true,'story-archive-intake','陳熙泰']])){
@@ -55,7 +56,9 @@ try{
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});await unlock(page);
   const live=page.locator('#screen-layer');
-  await page.locator('#homebar').click();
+  await live.locator('[data-action=tai-story-archive]').first().waitFor();
+  const goHome=async()=>{await page.locator('#homebar').click();await live.locator('.home-screen').waitFor();};
+  await goHome();
   await live.locator('[data-app=schedule]').click();
   await live.locator('.diary-empty').waitFor();
   await live.locator('[data-action=diary-archive]').first().click();
@@ -64,13 +67,13 @@ try{
   await live.locator('[data-action=diary-open-day][data-day="39"]').click();
   assert.match(await live.locator('.diary-prose').innerText(),/收到陳熙泰交付的資產了。/);
   await page.screenshot({path:`${out}/390-journal-d39.png`});
-  await page.locator('#homebar').click();
+  await goHome();
   await live.locator('[data-action=page][data-page="2"]').click();
   await live.locator('[data-app=noapp]').click();
   const incoming=live.locator('[data-action=tai-story-archive][data-id=story-archive-digital-human]');
   if(!await incoming.count())await live.locator('[data-action=chat-open][data-id=tai], [data-action=open-chat][data-id=tai]').first().click();
   await incoming.click();
-  const share=async()=>{await live.locator('[data-action=files-local-share-archive]').click();await live.locator('[data-action=gh-tear-document-read]').waitFor({timeout:15000});await page.locator('#homebar').click();};
+  const share=async()=>{await live.locator('[data-action=files-local-share-archive]').click();await live.locator('[data-action=gh-tear-document-read]').waitFor({timeout:15000});await goHome();};
   await share();
   await live.locator('[data-action=page][data-page="1"]').click();
   await live.locator('[data-action=home-reminder-project]').click();
@@ -82,7 +85,7 @@ try{
   await live.locator('[aria-valuenow="100"]').waitFor();await page.screenshot({path:`${out}/390-project-100.png`});
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
   assert.ok(saved.story55.completed.prep);assert.ok(saved.content.reminders.find(r=>r.id==='ghost-car-plan').done);assert.deepEqual(errors,[]);
-  await page.locator('#homebar').click();
+  await goHome();
   await live.locator('[data-app=schedule]').click();
   await live.locator('.diary-prose').waitFor();assert.match(await live.locator('.diary-prose').innerText(),/所有的準備工作都已經完成了。/);
   await page.screenshot({path:`${out}/390-journal-d40.png`});

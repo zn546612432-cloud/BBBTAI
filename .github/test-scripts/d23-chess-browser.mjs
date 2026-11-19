@@ -262,6 +262,16 @@ try{
  assert.equal(entered.farewell,false,'board completion never releases the next day');
  await capture(mobile.page,'mobile-d23-mirage-postgame.png');
  // A pending earlier Story55 scene must not steal a genuine D23 free-chat Send.
+ // CI has no real provider keys. Verify the native request and delivery with
+ // a deterministic HTTP response, leaving the production gateway unchanged.
+ let postgameRequestSeen=false;
+ await mobile.page.route('**/api/ai/chat',async route=>{
+  const request=route.request().postDataJSON();
+  assert.equal(request.channel,'mirage');assert.equal(request.day,23);
+  assert.equal(request.messages.at(-1).content,'你剛才是在欺負新手嗎？');
+  postgameRequestSeen=true;
+  await route.fulfill({json:{text:'你下次贏回來就是了。'}});
+ });
  const chatComposer=mobile.page.locator('[data-form="mc-send"] input[name="text"]');
  await chatComposer.fill('你剛才是在欺負新手嗎？');
  await mobile.page.locator('[data-form="mc-send"] button[type="submit"]').click();
@@ -270,6 +280,7 @@ try{
   return pg?.rounds===1&&pg.phase==='chat'&&s.content.conversations.mirage
    .find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-d23-mirage-reply-1-0');
  },key,{timeout:27000});
+ assert.equal(postgameRequestSeen,true,'postgame must reach the existing AI gateway');
  await mobile.page.locator('[data-action="mc-d23-finish-conversation"]').click();
  await mobile.page.waitForTimeout(3600);
  const afterD23Farewell=await mobile.page.evaluate(k=>{
