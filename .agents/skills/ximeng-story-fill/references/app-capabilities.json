@@ -450,6 +450,7 @@
       "module": "src/apps/schedule/index.js",
       "appId": "schedule",
       "capabilities": {
+        "story.ghost-car-journal": {"state":"wired-day","owner":"schedule","kinds":["reminder"],"proof":"src/story/diary/entries.js","originDays":[35]},
         "journal.entry": {
           "state": "adapter-required",
           "owner": "schedule",

@@ -1,11 +1,17 @@
 {
   "schemaVersion":2,"day":35,"date":"2025-06-22","title":"鬼車行動進度及模型檔案","stage":"approved","scope":"main",
-  "systems":["story55","reminders","noapp","files","ghost"],"assets":[],
+  "systems":["story55","reminders","noapp","files","ghost","schedule"],"assets":[],
   "events":[
     {"id":"ghost-car-reminder","kind":"reminder","surface":"reminders","capability":"story.ghost-car-progress","owner":"reminders","actor":"me","trigger":{"type":"node-completed","ref":"plan"},"requires":["node:plan"],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"ghost-car-models","kind":"link","surface":"noapp","capability":"story.ghost-car-models","owner":"story55","actor":"tai","trigger":{"type":"day-time","ref":"d39-model-delivery"},"requires":["ghost-car-reminder","node:recognition","fact:tai-recognized"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
     {"id":"ghost-car-parse","kind":"link","surface":"ghost","capability":"story.archive-reader","owner":"ghost","actor":"me","trigger":{"type":"user-action","ref":"share-both-models"},"requires":["ghost-car-models"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
-    {"id":"ghost-car-acceptance","kind":"reminder","surface":"reminders","capability":"story.ghost-car-progress","owner":"reminders","actor":"me","trigger":{"type":"previous-event","ref":"ghost-car-parse"},"requires":["ghost-car-parse"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
+    {"id":"ghost-car-acceptance","kind":"reminder","surface":"reminders","capability":"story.ghost-car-progress","owner":"reminders","actor":"me","trigger":{"type":"previous-event","ref":"ghost-car-parse"},"requires":["ghost-car-parse"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d35","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d35"},"requires":["node:plan"],"timing":{"day":35,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d36","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d36"},"requires":["node:plan"],"timing":{"day":36,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d37","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d37"},"requires":["node:plan"],"timing":{"day":37,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d38","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"day-time","ref":"d38"},"requires":["node:plan"],"timing":{"day":38,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d39","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"previous-event","ref":"ghost-car-models"},"requires":["ghost-car-models","node:recognition"],"timing":{"day":39,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"ghost-car-journal-d40","kind":"reminder","surface":"schedule","capability":"story.ghost-car-journal","owner":"schedule","actor":"me","trigger":{"type":"node-completed","ref":"prep"},"requires":["node:prep"],"timing":{"day":40,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
   ],
   "acceptance":[
     {"id":"progress-trigger","type":"trigger","verify":"D35 30%，D36 40%，D37 50%，D38 70%；D39 兩個已解析檔案分別加 10%，D40 驗收後 100%。"},

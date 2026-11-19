@@ -42,6 +42,7 @@ async function open(state,{width,height}){
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
  // Phone boot intentionally relocks restored sessions; unlock through the real UI.
+ const boot=page.locator('#xm-boot-next');if(await boot.count()){await boot.click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  // All screenshots must show the settled phone, not the unlock transition or banner.
@@ -241,6 +242,7 @@ try{
  const beforeRefresh=await mobile.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(m=>m.opponent==='tai'),key);
  assert.ok(beforeRefresh.feedbackEvents.every(e=>e.consumed));
  await mobile.page.reload();
+ const reloadBoot=mobile.page.locator('#xm-boot-next');if(await reloadBoot.count()){await reloadBoot.click({timeout:45000});await mobile.page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
  await mobile.page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await mobile.page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await mobile.page.locator('.board-grid').waitFor();

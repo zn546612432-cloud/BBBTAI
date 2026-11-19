@@ -18,7 +18,9 @@ const screen=page.locator('#screen-layer');
 const action=a=>screen.locator(`[data-action="${a}"]`).last();
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
 async function unlock(){
- await screen.locator('.lock-screen').waitFor({timeout:90000});await action('unlock').click();
+ await screen.locator('.lock-screen').waitFor({timeout:90000});
+ const boot=page.locator('#xm-boot-next');if(await boot.count()){await boot.click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
+ await action('unlock').click();
  await screen.locator('[data-action="passcode-key"][data-key="0"]').waitFor();
  for(const key of '0816')await screen.locator(`[data-action="passcode-key"][data-key="${key}"]`).click();
 }

@@ -13,6 +13,9 @@ import {sendAgent,tickTearAgent,DOCUMENT_READ_MS} from '../src/apps/ghost/deploy
 import {GHOST_CAR_MODEL_FILES} from '../src/story/d35-d40/progress.js';
 import {chatView} from '../src/components/chat.js';
 import {handle as noappHandle} from '../src/apps/noapp/index.js';
+import {entryFor,diaryDate} from '../src/story/diary/entries.js';
+import {diaryView,diaryAction} from '../src/apps/schedule/features/diary/index.js';
+import {GHOST_CAR_DIARY} from '../src/story/d35-d40/diary.js';
 const fixture=()=>activateStory55(initialState());
 const stamp=(s,id)=>s.story55.completed[id]={day:s.day,clock:s.clock};
 const sync=s=>{syncGhostCarProgress(s);syncTearReminders(s);};
@@ -53,4 +56,25 @@ test('D39 files from TAI contact, actual user parsing, D40 final report, no repl
 test('old completed prep remains completed instead of asking players to redo it',()=>{
  const s=fixture();s.day=40;stamp(s,'plan');stamp(s,'prep');sync(s);
  assert.equal(ghostCarProgress(s),100);assert.ok(ghostCarTasks(s).every(t=>t.done));assert.ok(archiveFile(s,'story-archive-validation'));
+});
+test('approved journal unlocks on the existing plan, model delivery and final acceptance facts',()=>{
+ const s=fixture();s.day=34;assert.equal(entryFor(s,35),null);
+ stamp(s,'plan');
+ for(let day=35;day<=38;day++){
+  assert.doesNotMatch(diaryView(s,{route:'/archive'}),new RegExp(GHOST_CAR_DIARY[day].title));
+  s.day=day;assert.equal(diaryDate(day),`2025-06-${day-13}`);
+  assert.equal(entryFor(s,day).body,GHOST_CAR_DIARY[day].body);
+  assert.match(diaryView(s,{route:'/archive'}),new RegExp(GHOST_CAR_DIARY[day].title));
+ }
+ s.day=39;sync(s);assert.equal(entryFor(s,39),null);
+ stamp(s,'recognition');assert.equal(entryFor(s,39),null);sync(s);
+ assert.equal(entryFor(s,39).body,GHOST_CAR_DIARY[39].body);
+ assert.match(entryFor(s,39).body,/收到陳熙泰交付的資產了。/);
+ assert.doesNotMatch(entryFor(s,39).body,/檔案/);
+ s.day=40;sync(s);assert.equal(entryFor(s,40),null);
+ const routes=[];diaryAction('diary-open-day',{dataset:{day:'39'}},{store:{get:()=>s},router:{open:loc=>routes.push(loc)}});
+ assert.equal(routes[0].params.day,'39');assert.match(diaryView(s,routes[0]),/好陌生又好熟悉的名字/);
+ stamp(s,'prep');assert.equal(entryFor(s,40).body,GHOST_CAR_DIARY[40].body);
+ const saved=JSON.parse(JSON.stringify(s));assert.match(diaryView(saved,{route:'/archive'}),/萬事俱備/);
+ assert.equal(entryFor(saved,39).body,GHOST_CAR_DIARY[39].body);
 });
