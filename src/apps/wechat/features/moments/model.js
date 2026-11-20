@@ -15,12 +15,22 @@ export function allMoments(s){
  const m=getMomentContent(s),deleted=new Set(m.deletedIds||[]);
  // Retain the original authored D01–D55 posts, including all linked photographs.
  // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
- return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>m.editedPosts?.[p.id]||p),...(m.posts||[])]
+ return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>{
+   const post=m.editedPosts?.[p.id]||p;
+   return post.id==='xw-0519'&&post.text==='早上好。今天的云很好看。'?{...post,text:p.text}:post;
+  }),...(m.posts||[])]
   .filter(p=>p&&p.id&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
    &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);
-export const momentProfiles=s=>Object.fromEntries(Object.entries(originalProfiles).map(([name,profile])=>[name,{...profile,...getMomentContent(s).profiles?.[name]}]));
+export const momentProfiles=s=>Object.fromEntries(Object.entries(originalProfiles).map(([name,profile])=>{
+ const saved=getMomentContent(s).profiles?.[name],resolved={...profile,...saved};
+ if(name==='熙蒙'){
+  if(resolved.bio==='别打电话，在工房。')resolved.bio=profile.bio;
+  if(resolved.cover==='harbor')resolved.cover=profile.cover;
+ }
+ return [name,resolved];
+}));
 export function editMoment(s,id,edit){
  const m=editableMoments(s),fresh=m.posts.find(p=>p.id===id);
  if(fresh){edit(fresh);return fresh;}

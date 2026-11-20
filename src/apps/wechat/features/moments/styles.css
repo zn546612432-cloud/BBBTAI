@@ -20,6 +20,7 @@
 .wx-moments-bio{height:80px;text-align:right;padding:35px 20px 8px 6px;color:#888;font-size:12px}
 .wx-moments-my-header{display:block;width:100%;padding:0;text-align:initial;background:#fff}
 .wx-moments-my-header .wx-moments-bio{height:55px}
+.wx-moments-bio:empty,.wx-moments-my-header .wx-moments-bio:empty{height:32px;padding:0}
 .wx-moments-timeline{background:#fff}
 .wx-moments-period{font-size:15px;color:#222;display:block;padding:15px 16px 12px;border-top:1px solid #f0f0f0}
 .wx-moments-pinned{border-top:1px solid #ececec;border-bottom:1px solid #ececec;padding:15px 16px 18px;display:flex;align-items:center;gap:15px}
