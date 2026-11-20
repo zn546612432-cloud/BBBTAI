@@ -60,7 +60,7 @@ export function tickFlowD03(s){
  push(c,FLOW_INVITE,FLOW_CONTACT,FLOW_INVITE_TEXT,3,'08:15',date55(3));
  c.unread=(Number(c.unread)||0)+1;
  s.notifications.unshift({
-  id:'flow-d03-mirage-invite',title:'MIRAGE',body:'Flow：'+FLOW_INVITE_TEXT,
+  id:'flow-d03-mirage-invite',storyMessage:true,title:'MIRAGE',body:'Flow：'+FLOW_INVITE_TEXT,
   day:3,clock:'08:15',conversationId:FLOW_CONTACT,
   link:{appId:'mirage',route:'/chat/'+FLOW_CONTACT,params:{}}
  });
@@ -85,7 +85,7 @@ export function openFlowTest(s){
  const p=progress(s);if(p.linkOpened)return false;
  p.linkOpened=true;
  s.notifications.unshift({
-  id:'flow-d03-ghost-install',title:'GHOST',body:'请将新工具部署在 Ghost。',
+  id:'flow-d03-ghost-install',storyMessage:true,title:'GHOST',body:'请将新工具部署在 Ghost。',
   day:s.day,clock:s.clock,
   link:{appId:'ghost',route:'/',params:{}}
  });
@@ -124,7 +124,7 @@ export function submitFlowScan(s){
  }
  if(!s.notifications.some(n=>n.id==='flow-d03-kira-reward'))
   s.notifications.unshift({
-   id:'flow-d03-kira-reward',title:'KIRA',
+   id:'flow-d03-kira-reward',storyMessage:true,title:'KIRA',
    body:'【币速达网安系统】已收到您提交的漏洞，奖励已发放到您的账户。',
    day:s.day,clock:s.clock,
    link:{appId:'kira',route:'/mail/'+FLOW_REWARD_ID,params:{}}

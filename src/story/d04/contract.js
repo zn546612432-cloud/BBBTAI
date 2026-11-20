@@ -52,7 +52,7 @@ const issueMail=(s,c)=>{
   day:s.day,time:s.clock,date:dateOf(s.day)});
  const nid='d04-order-mail-'+c.id;
  if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-  id:nid,title:'KIRA',body:'【mirage】委託資料已發送',day:s.day,clock:s.clock,
+  id:nid,storyMessage:true,title:'KIRA',body:'【mirage】委託資料已發送',day:s.day,clock:s.clock,
   link:{appId:'kira',route:'/mail/'+mailId,params:{}}
  });
  return true;
@@ -206,7 +206,7 @@ export function submitD04Contract(s,id){
  });
  const nid='d04-order-paid-'+id;
  if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-  id:nid,title:'KIRA',body:'【mirage】委託已完成 · '+(c.asset==='BTC'?'10 BTC':'US$ '+c.amount.toLocaleString('en-US')),
+  id:nid,storyMessage:true,title:'KIRA',body:'【mirage】委託已完成 · '+(c.asset==='BTC'?'10 BTC':'US$ '+c.amount.toLocaleString('en-US')),
   day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+receiptId,params:{}}
  });
  if(c.marketDaily)emitMirageEmployerMessage(s,o,'completed');

@@ -6,7 +6,7 @@ export const D01_ATTACHMENT_BODY='尊敬的 Nyarlathotep：\\n\\n僱主已透過
 export const D01_DONE='d01-mirage001-completed';
 export const D01_CONTACT='mc-rookery-13-d01';
 const onD01=s=>s.story55?.version===1&&s.day===1;
-const notify=(s,id,subject)=>{if(s.notifications.some(n=>n.id===id))return;s.notifications.unshift({id,title:'KIRA',body:subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+id,params:{}}});};
+const notify=(s,id,subject)=>{if(s.notifications.some(n=>n.id===id))return;s.notifications.unshift({storyMessage:true,id,title:'KIRA',body:subject,day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+id,params:{}}});};
 const mail=(s,id,subject,body)=>{if(s.content.mail.some(m=>m.id===id))return false;s.content.mail.unshift({id,from:'MIRAGE',subject,body,read:false,day:s.day,time:s.clock,d01:true});notify(s,id,subject);return true;};
 export function seedD01(s){
  if(!onD01(s))return;
@@ -50,7 +50,7 @@ export function acceptD01Repair(s){
  o.status='ACCEPTED';const d=s.story55.d01??={};d.repairAccepted=true;d.acceptedAt=Date.now();
  const list=s.content.conversations.mirage;
  if(!list.some(c=>c.id===D01_CONTACT))list.push({id:D01_CONTACT,name:'Rookery 13',avatar:'R13',online:false,unread:1,lastMessageAt:Date.now(),storySeed:true,messages:[{id:'d01-link-established',from:D01_CONTACT,text:'通信已建立。',day:1,time:s.clock,sentDate:'2025-05-19',kind:'text',actual:true}]});
- if(!s.notifications.some(n=>n.id==='d01-mirage-link-established'))s.notifications.unshift({id:'d01-mirage-link-established',title:'MIRAGE',body:'Rookery 13：通信已建立。',conversationId:D01_CONTACT,day:1,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
+ if(!s.notifications.some(n=>n.id==='d01-mirage-link-established'))s.notifications.unshift({storyMessage:true,id:'d01-mirage-link-established',title:'MIRAGE',body:'Rookery 13：通信已建立。',conversationId:D01_CONTACT,day:1,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
  return true;
 }
 export function deliverD01Attachment(s){
@@ -126,7 +126,7 @@ export function tickD01ContactReply(s,now=Date.now()){
  if(!open){
   contact.unread=(Number(contact.unread)||0)+1;
   const noticeId='d01-rookery-notice-'+(done?'done':'key');
-  if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({id:noticeId,title:'MIRAGE',body:'Rookery 13：'+text,conversationId:D01_CONTACT,day,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
+  if(!s.notifications.some(n=>n.id===noticeId))s.notifications.unshift({storyMessage:true,id:noticeId,title:'MIRAGE',body:'Rookery 13：'+text,conversationId:D01_CONTACT,day,clock:s.clock,link:{appId:'mirage',route:'/chat/'+D01_CONTACT,params:{}}});
  }
  return true;
 }

@@ -1,10 +1,79 @@
-/* Music player: keep transport controls clear of the browser/home gesture area. */
+/* Native-style Music surfaces. The phone shell supplies status and home bars. */
 .app-music .app-content{min-height:0;overflow:hidden}
-.app-music .ios-music{min-height:0;height:100%}
-.app-music .music-player{height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 26px calc(64px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
-.app-music .music-player::-webkit-scrollbar{display:none}
-.app-music .music-art{width:min(100%,38dvh);max-width:340px;aspect-ratio:1;flex:none;align-self:center;margin:10px 0 17px}
-.app-music .music-player p{margin-bottom:15px}
-.app-music .music-big-controls{margin:16px 0 10px;flex:none;min-height:52px}
-.app-music .music-share{margin-top:12px;flex:none}
-@media(max-height:760px){.app-music .music-art{width:min(100%,32dvh)}.app-music .music-player{padding-top:8px;padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}}
+.ios-music{--music-red:#fa2d48;--music-secondary:#8e8e93;--music-line:#e5e5ea;height:100%;min-height:0;color:#111;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif}
+.ios-music button{color:inherit}
+.ios-music [hidden]{display:none!important}
+.music-icon{display:inline-block;width:24px;height:24px;flex:none;background:currentColor;mask:var(--music-icon) center/contain no-repeat;-webkit-mask:var(--music-icon) center/contain no-repeat}
+.ios-music svg{width:24px;height:24px;flex:none}
+.music-library{height:100%;display:flex;flex-direction:column;padding-top:calc(60px + env(safe-area-inset-top,0px))}
+.music-scroll{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding:10px 20px 20px}
+.music-scroll::-webkit-scrollbar{display:none}
+.music-header{display:flex;justify-content:space-between;align-items:center;margin:0 0 22px}
+.music-header h1,.music-browse h1{font-size:34px;font-weight:750;letter-spacing:-1.1px;margin:0}
+.music-avatar{width:38px;height:38px;border-radius:50%;background:#e8e8ed;color:#37373c!important;font-size:21px;font-weight:600;display:grid;place-items:center}
+.music-scroll h2{font-size:22px;letter-spacing:-.45px;margin:22px 0 12px;font-weight:700}
+.music-scroll h2:first-of-type{margin-top:0}
+.music-albums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.music-album{min-width:0;text-align:left;padding:0;display:flex;flex-direction:column;gap:3px}
+.music-album-art{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;margin-bottom:5px}
+.music-album strong,.music-track strong{font-size:15px;font-weight:550;line-height:1.25}
+.music-album small,.music-track small{font-size:13px;color:var(--music-secondary)}
+.music-track{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:8px 0;border-bottom:1px solid var(--music-line)}
+.music-track-art{width:48px;height:48px;object-fit:cover;border-radius:5px}
+.music-track-copy{display:flex;flex-direction:column;flex:1;min-width:0;gap:3px}
+.music-track>svg{color:var(--music-red);width:23px}
+.music-library-list{border-top:1px solid var(--music-line);margin-bottom:24px}
+.music-library-row{display:flex;align-items:center;gap:14px;width:100%;min-height:54px;padding:0;border-bottom:1px solid var(--music-line);font-size:17px;text-align:left}
+.music-library-row>.music-icon:first-child{color:var(--music-red)}
+.music-library-row>span:nth-child(2){flex:1}
+.music-library-row>.music-icon:last-child{width:17px;height:17px;color:#c7c7cc}
+.music-search{display:flex;align-items:center;gap:7px;background:#eeeef0;border-radius:11px;padding:8px 11px;margin-bottom:24px;color:#8e8e93}
+.music-search .music-icon{width:18px;height:18px}
+.music-search input{background:none;border:0;padding:0;color:#111;font-size:16px;min-width:0;outline:none}
+.music-no-results{color:var(--music-secondary);text-align:center;padding:22px 0}
+.music-bottom{flex:none;padding:0 8px calc(22px + env(safe-area-inset-bottom,0px));background:#fafafaeb;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid #eee}
+.music-mini-player{display:flex;align-items:center;min-height:58px;background:#f3f3f5;border-radius:14px;margin:6px 0 7px;padding:5px 7px;gap:1px;box-shadow:0 2px 8px #0000000b}
+.music-mini-title{display:flex;align-items:center;gap:10px;min-width:0;flex:1;padding:0;text-align:left}
+.music-mini-title span{font-size:15px;font-weight:550;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.music-mini-art{width:44px;height:44px;object-fit:cover;border-radius:6px}
+.music-mini-toggle{width:39px;height:44px;display:grid;place-items:center;padding:0}
+.music-mini-toggle svg{width:28px;height:28px}
+.music-tabs{display:flex;align-items:center;justify-content:space-around;padding:3px 0 0}
+.music-tabs button{color:#87878c;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:65px;font-size:10px;padding:4px 0}
+.music-tabs button.active{color:var(--music-red)}
+.music-tabs .music-icon{width:25px;height:25px}
+.music-account,.music-browse{height:100%;padding:calc(65px + env(safe-area-inset-top,0px)) 20px 30px;overflow-y:auto}
+.music-account header{display:flex;align-items:center;justify-content:space-between}
+.music-account header h2{font-size:20px;margin:0}
+.music-done{display:flex;align-items:center;color:var(--music-red)!important;font-weight:600;padding:8px 0}
+.music-account-profile{text-align:center;margin-top:55px}
+.music-account-profile>span{display:grid;place-items:center;background:#e5e5ea;color:#53535a;border-radius:50%;width:90px;height:90px;font-size:43px;font-weight:600;margin:auto}
+.music-account-profile h1{font-size:26px;margin:16px 0 5px}
+.music-account-profile small{color:var(--music-secondary)}
+.music-browse h1{margin:17px 0 20px}
+.music-full-player{color:#fff;background:#18282d}
+.music-player{height:100%;overflow-y:auto;scrollbar-width:none;background:radial-gradient(ellipse at 30% 24%,#53676b 0,#34484e 38%,#192b32 73%,#132229 100%);padding:calc(58px + env(safe-area-inset-top,0px)) 28px calc(25px + env(safe-area-inset-bottom,0px))}
+.music-player::-webkit-scrollbar{display:none}
+.music-player-inner{min-height:100%;display:flex;flex-direction:column;align-items:stretch;max-width:430px;margin:auto}
+.music-down{width:100%;height:27px;display:grid;place-items:center;flex:none;padding:0}
+.music-down span{width:36px;height:5px;border-radius:5px;background:#ffffff55}
+.music-art{display:block;width:min(100%,39dvh);max-width:340px;aspect-ratio:1;object-fit:cover;border-radius:9px;align-self:center;margin:12px 0 clamp(18px,4dvh,34px);box-shadow:0 15px 35px #0005;flex:none}
+.music-now-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:19px}
+.music-now-title h2{font-size:24px;letter-spacing:-.5px;margin:0 0 2px;line-height:1.2}
+.music-now-title p{font-size:19px;color:#ffffffa8;margin:0}
+.music-more{width:37px;height:37px;border-radius:50%;background:#ffffff22;display:grid;place-items:center}
+.music-more svg{width:19px;height:19px}
+.music-seek-input{appearance:none;-webkit-appearance:none;display:block;background:#ffffff40;border:0;border-radius:8px;height:6px;padding:0;margin:7px 0 0;accent-color:white}
+.music-seek-input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff}
+.music-seek-input::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:#fff}
+.music-time{display:flex;justify-content:space-between;font-size:12px;font-variant-numeric:tabular-nums;color:#ffffff9c;margin:9px 0 0}
+.music-big-controls{display:flex;align-items:center;justify-content:space-around;margin:clamp(15px,4dvh,34px) 0 17px;flex:none}
+.music-big-controls button{display:grid;place-items:center;width:64px;height:58px;padding:0}
+.music-big-controls .music-skip svg{width:37px;height:37px}
+.music-big-controls .music-main-play svg{width:55px;height:55px}
+.music-player-options{display:flex;align-items:center;justify-content:space-evenly;margin-top:auto;padding:7px 0 0}
+.music-secondary{width:44px;height:38px;display:grid;place-items:center;border-radius:7px;color:#ffffffa0!important}
+.music-secondary.active{background:#ffffff29;color:#fff!important}
+#phone:has(.music-full-player) #status-layer{color:#fff}
+#phone:has(.music-full-player) #homebar span{background:#fff}
+@media(max-height:760px){.music-art{width:min(100%,35dvh);margin-bottom:18px}.music-player{padding-left:23px;padding-right:23px}.music-big-controls{margin:12px 0 9px}}

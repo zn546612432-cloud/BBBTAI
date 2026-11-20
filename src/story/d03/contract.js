@@ -60,7 +60,7 @@ export function acceptD03Contract(s){
  });
  const nid='d03-intel-kira-notice';
  if(!s.notifications.some(n=>n.id===nid))s.notifications.unshift({
-  id:nid,title:'KIRA',body:'【mirage】委託資料已發送',
+  id:nid,storyMessage:true,title:'KIRA',body:'【mirage】委託資料已發送',
   day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D03_MAIL,params:{}}
  });
  // GHOST is entered by opening KIRA's encrypted file; do not authorize

@@ -16,3 +16,7 @@ export function suppressQuietBanners(s){
  return changed;
 }
 export const hasQuietBanners=s=>quietNotifications(s)&&(s.notifications||[]).some(n=>!alarm(n)&&!n.bannerSuppressed);
+
+// Independent of the banner policy: author-written incoming messages are felt
+// once, even under Focus. Historical deliveries stay silent.
+export const hasNewStoryMessage=(notices,seen)=>notices.some(n=>n.storyMessage===true&&!n.silent&&!seen.has(n.id));

@@ -1,4 +1,4 @@
-import {notificationMuted,hasQuietBanners,suppressQuietBanners} from './services/messaging/notification-policy.js';
+import {notificationMuted,hasQuietBanners,suppressQuietBanners,hasNewStoryMessage} from './services/messaging/notification-policy.js';
 import {createControlCenter} from './system/control-center/index.js';
 import {audioDestination} from './system/audio/index.js';
 import {isStory55} from './services/story55/state.js';
@@ -48,7 +48,7 @@ import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
 import {dragOffset,nearestPage,pageTarget} from './system/pager.js';
 import {isNativeTabSwitch} from './system/navigation.js';
-import {errorHaptic} from './system/haptics.js';
+import {errorHaptic,storyMessageHaptic} from './system/haptics.js';
 import {mountWeatherSwipe} from './apps/weather/replica.js';
 import {createTaskSwitcher} from './system/task-switcher.js';
 import {createTaiRemoteController,recoverTaiRemoteSession} from './system/remote-control/controller.js';
@@ -404,7 +404,9 @@ store.subscribe(()=>{
  if(shortChargeStoryInterrupted(s)){store.update(next=>endShortCharge(next));return;}
  if(hasQuietBanners(s)){store.update(suppressQuietBanners);return;}
  const added=queueableNotices(s.notifications.filter(n=>!notificationMuted(s,n)),seenNotices);
+ const vibrate=hasNewStoryMessage(s.notifications,seenNotices);
  seenNotices=new Set(s.notifications.map(n=>n.id));
+ if(vibrate&&!s.poweredOff&&s.haptics!==false)storyMessageHaptic({reducedMotion:s.reduceMotion||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
  const shown=$('#toast')?.dataset.noticeId;
  if(shown&&s.notifications.some(n=>n.id===shown&&notificationMuted(s,n))){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
  if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
