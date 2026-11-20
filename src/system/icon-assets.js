@@ -5,4 +5,4 @@ const utilityIds=['calendar','weather','maps','clock','schedule','messages','rem
 export const iconAssets={};
 originalIds.forEach((id,i)=>{iconAssets[id]={src:original,x:[37,339,641,942][i%4],y:[35,331,627,923][Math.floor(i/4)],w:276,h:272,size:1254};});
 utilityIds.forEach((id,i)=>{iconAssets[id]={src:utilities,x:[40,443,839][i%3],y:[46,428,803][Math.floor(i/3)],w:[370,366,371][i%3],h:[356,352,359][Math.floor(i/3)],size:1254};});
-iconAssets.kira={src:'/icons/kira-envelope.svg',x:0,y:0,w:256,h:256,size:256};
+iconAssets.kira={...iconAssets.mail};
