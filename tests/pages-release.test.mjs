@@ -19,6 +19,8 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   await put('src/styles/child.css','body{color:black}');
   await put('public/assets/icon.svg','<svg/>');
   const evidence=['apps/browser/room404/media/avatar.webp','apps/browser/room404/wordmark.svg','assets/story55/personal-files/IMG_4982.jpg','assets/story55/triplets-baby-photo.jpg'];
+  const moment='apps/wechat/media/macau-morning.webp';
+  await put('public/'+moment,'fixture: current Moments image');
   for(const item of evidence)await put('public/'+item,'fixture: '+item);
   await put('node_modules/chess.js/dist/esm/chess.js','export class Chess{}');
   // Copy the real bundled engine, not simulated worker assets.
@@ -46,6 +48,8 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   const manifest=JSON.parse((await read(root+'src/system/startup/image-manifest.js')).match(/export default (\[.*\]);/)[1]);
   assert.ok(manifest.includes(`${prefix}assets/icon.svg`));
   for(const item of evidence)assert.ok(manifest.includes(`/AAATAI/${item}`),`preload must use the same stable media URL: ${item}`);
+  assert.ok(manifest.includes('/AAATAI/'+moment),'Moments preload must warm the stable URL requested by its renderer');
+  assert.ok(!manifest.includes(prefix+moment),'do not download a second release copy of the same photo');
   for(const item of evidence){
    const resource=item.includes('/media/')||item.includes('/personal-files/')?item.slice(0,item.lastIndexOf('/')+1):item;
    assert.ok(oldCode.includes(`'/AAATAI/${resource}'`),`stable media URL: ${resource}`);

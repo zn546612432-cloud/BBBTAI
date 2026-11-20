@@ -27,6 +27,15 @@ export function momentImage(source,{base=stablePublicAssetBase()}={}){
 }
 const allPosts=s=>allMoments(s).filter(p=>p.privacy!=='private'||p.author==='熙蒙');
 const nowDate=s=>dateParts(s).iso;
+// Use the same resolver and visibility rules as the rendered feed/profiles.
+export function momentImageUrls(s){
+ const profiles=momentProfiles(s);
+ const posts=visibleMoments(allPosts(s),nowDate(s),{clock:s.clock});
+ return [...new Set([
+  ...Object.entries(profiles).flatMap(([name,profile])=>[momentImage(profile.cover),resolveWeChatAvatar(name,profile.avatar)]),
+  ...posts.flatMap(post=>(post.media||[]).map(src=>momentImage(src)))
+ ].filter(src=>src&&!/\.(?:mp4|webm)(?:[?#]|$)/i.test(src)))];
+}
 const clockLabel=(date,now)=>date.slice(0,10)===now?'今天 '+date.slice(11):date.slice(5,7).replace(/^0/,'')+'月'+Number(date.slice(8,10))+'日 '+date.slice(11);
 const im=(src,alt,cls='')=>'<img class="'+cls+'" src="'+esc(momentImage(src))+'" alt="'+esc(alt)+'" loading="eager" decoding="async">';
 const avatar=(name,s)=>'<img class="wx-moments-avatar" src="'+esc(resolveWeChatAvatar(name,momentProfiles(s)[name]?.avatar))+'" alt="'+esc(name)+'头像" loading="eager">';

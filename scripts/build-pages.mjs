@@ -15,6 +15,7 @@ const resourcePattern=/(["'`(=])\/(src|assets|apps|icons|vendor|wallpapers)(?=\/
 // use the stable, per-site public copies for these approved static assets.
 // Keep modules, CSS and all other existing cache contracts unchanged.
 const stableMediaPaths=[
+ '/apps/wechat/media/',
  '/apps/browser/room404/media/',
  '/apps/browser/room404/wordmark.svg',
  '/assets/story55/personal-files/',

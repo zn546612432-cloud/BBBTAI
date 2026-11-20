@@ -23,8 +23,20 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
  const input=String(source||'');
  // moduleUrl is injectable so old release paths can be tested explicitly.
  const base=new URL('../../../../',moduleUrl).pathname;
- const updated=rebaseBundledPublicAsset(input,{base});
+ // Chat photos and Moments share the same cached public copy.
+ const mediaBase=/\/apps\/wechat\/media\//.test(input)?base.replace(/\/releases\/[^/]+\/$/,'/'):base;
+ const updated=rebaseBundledPublicAsset(input,{base:mediaBase});
  return updated===input?input:new URL(updated,moduleUrl).href;
+}
+
+export function chatImageUrls(s,id){
+ const c=wechatConversation(s,id);
+ if(!c)return [];
+ return visibleMessages(c,s).slice(-24).flatMap(m=>{
+  const asset=m.assetId?historyMediaById.get(m.assetId):null;
+  const source=asset?(asset.kind==='video'?asset.posterUrl:asset.directUrl):m.kind==='image'?m.text:'';
+  return source?[pictureSrc(source)]:[];
+ });
 }
 
 // Messages are frequently patched in place and live in an inner scroll area.
