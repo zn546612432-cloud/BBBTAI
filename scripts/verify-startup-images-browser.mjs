@@ -56,8 +56,16 @@ try{
  assert.ok(imageSources.every(url=>!url.includes('/releases/')||!url.includes('/apps/wechat/media/')));
  assert.deepEqual(pngRequests,[],'preload and icons must both request the optimized WebP atlas');
  assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
+ await page.locator('.wx-moments-screen img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ const visiblePhoto=await page.locator('.wx-moments-photo img').first().evaluate(img=>{
+  const rect=img.getBoundingClientRect(),style=getComputedStyle(img);
+  return {width:rect.width,height:rect.height,visibility:style.visibility,opacity:style.opacity,display:style.display,src:img.src};
+ });
+ assert.ok(visiblePhoto.width>100&&visiblePhoto.height>100,JSON.stringify(visiblePhoto));
+ assert.equal(visiblePhoto.visibility,'visible');assert.equal(visiblePhoto.opacity,'1');
  await page.screenshot({path:out+'/390-moments-ready.png'});
- await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,delayedFutureImage:'did not block entry',optimizedAtlases:'no original PNG requests'},null,2));
+ await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,visiblePhoto,delayedFutureImage:'did not block entry',optimizedAtlases:'no original PNG requests'},null,2));
  console.log('PASS cold-cache readiness, decoded images, shared image URLs and background priority',foregroundReadyMs+'ms');
 }catch(error){await page.screenshot({path:out+'/failure.png'});throw error;}
 finally{releaseCurrent();releaseFuture();await context.close();await browser.close();await new Promise(resolve=>server.close(resolve));}
