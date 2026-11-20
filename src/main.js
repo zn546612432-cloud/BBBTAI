@@ -423,6 +423,7 @@ store.subscribe(()=>{
  };
  globalThis.__xmBootStarted?.();
   lockAssets=beginLockscreenPreload({
+  state:store.get(),
   wallpaper:store.get().wallpaper,
   onProgress:({finished,total,failed})=>{
    const percent=Math.floor(finished/Math.max(1,total)*100);
