@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "day": 41,
+  "date": "2025-06-28",
+  "title": "D41 胡枫好友圈 Good Show",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": ["moments", "time"],
+  "assets": [{"id":"d41-good-show","source":"bundled-local","path":"public/apps/wechat/media/d41-hufeng-good-show.jpeg"}],
+  "events": [
+    {"id":"hf-d41","kind":"moment","surface":"wechat","capability":"moments.d41-good-show","owner":"moments","actor":"胡枫","text":"good show.","assetId":"d41-good-show","trigger":{"type":"day-time","ref":"23:35"},"requires":[],"timing":{"day":41,"at":"23:35"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"hf-d41-reactions","kind":"moment","surface":"wechat","capability":"moments.d41-good-show","owner":"moments","actor":"小辛、仔仔、阿威、熙旺","likes":["小辛","仔仔","阿威","熙旺"],"comments":[{"by":"仔仔","text":"帅气逼人组合"},{"by":"小辛","to":"仔仔","text":"原地出道。"}],"trigger":{"type":"day-time","ref":"02:00"},"requires":["hf-d41"],"timing":{"day":42,"at":"02:00"},"once":true,"delivery":{"late":"silent"}}
+  ],
+  "acceptance": [
+    {"id":"hf-trigger","type":"trigger","verify":"D41 23:35 出现指定照片及 good show.。"},
+    {"id":"hf-negative","type":"negative","verify":"D42 01:59 前不显示预设互动；删除 6 月 28 日熙蒙的旧动态。"},
+    {"id":"hf-once","type":"idempotency","verify":"刷新不重复点赞或评论。"},
+    {"id":"hf-save","type":"save-restore","verify":"旧存档导入的 xm-d41 仍不显示；保留玩家其他动态。"},
+    {"id":"hf-surface","type":"cross-app","verify":"仅微信好友圈及个人相册，沿用统一游戏时钟，无跨 App 写入。"},
+    {"id":"hf-late","type":"late-entry","verify":"D42 02:00 后进入可看完整互动，沿用三天可见规则。"},
+    {"id":"hf-assets","type":"assets","verify":"使用用户第二次发送的 JPEG，照片可点击查看原图。"},
+    {"id":"hf-clock","type":"date-clock","verify":"D41 为 6 月 28 日，D42 为 6 月 29 日。"}
+  ]
+}
