@@ -246,33 +246,41 @@
       "conversationName": "阿威",
       "messages": [
         {
-          "id": "wx-awei-20250219-001",
+          "id": "wx-awei-20250219-rev-001",
           "from": "阿威",
-          "text": "蒙哥，上次你说的监控延迟还没好？",
+          "text": "二哥监控现在能用了吗？",
           "time": "14:41",
           "sentDate": "2025-02-19",
           "appearance": "immediate"
         },
         {
-          "id": "wx-awei-20250219-002",
+          "id": "wx-awei-20250219-rev-002",
           "from": "me",
-          "text": "好了，昨天改完了",
+          "text": "昨天就弄好了",
           "time": "14:46",
           "sentDate": "2025-02-19",
           "appearance": "immediate"
         },
         {
-          "id": "wx-awei-20250219-003",
+          "id": "wx-awei-20250219-rev-003",
+          "from": "me",
+          "text": "你试一下",
+          "time": "14:46",
+          "sentDate": "2025-02-19",
+          "appearance": "immediate"
+        },
+        {
+          "id": "wx-awei-20250219-rev-004",
           "from": "阿威",
-          "text": "辛苦了",
+          "text": "行，我晚点过去",
           "time": "14:48",
           "sentDate": "2025-02-19",
           "appearance": "immediate"
         },
         {
-          "id": "wx-awei-20250219-004",
-          "from": "me",
-          "text": "记得请我喝奶茶",
+          "id": "wx-awei-20250219-rev-005",
+          "from": "阿威",
+          "text": "OK",
           "time": "14:49",
           "sentDate": "2025-02-19",
           "appearance": "immediate"

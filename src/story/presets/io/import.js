@@ -11,8 +11,31 @@ export const correctedBuiltInMessages=[
  {conversationId:'hufeng',id:'wx-hufeng-20250505-004',previous:'给他盖件衣服，别又感冒',next:'你是不是又把网线踩松了'}
 ];
 export function hasBuiltInTextCorrections(state){
- return correctedBuiltInMessages.some(rule=>state.content.conversations.wechat?.find(c=>c.id===rule.conversationId)?.messages.some(m=>m.id===rule.id&&m.text===rule.previous&&m.storyImported&&!m.actual));
+ return (state.content.conversations.wechat||[]).some(c=>c.messages.some(m=>isRetiredSavedHistory(c.id,m)))||correctedBuiltInMessages.some(rule=>state.content.conversations.wechat?.find(c=>c.id===rule.conversationId)?.messages.some(m=>m.id===rule.id&&m.text===rule.previous&&m.storyImported&&!m.actual));
 }
+// Revised author-approved pre-D01 threads use fresh stable IDs. Retire only
+// exact shipped history rows (not player messages or editor-customized copy).
+const retiredBuiltInHistory = new Map([
+ ["wechat:xiaoxin:wx-xiaoxin-20250109-001",{"from":"小辛","text":"蒙哥你说我练德语怎么记不住这些词"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250109-002",{"from":"me","text":"你上次不是说自己语言天赋一流"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250109-003",{"from":"小辛","text":"天才也是需要一个适应期的"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250109-004",{"from":"me","text":"适应了半年了"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250109-005",{"from":"小辛","text":"哈哈哈哈哈哈你说话好伤人"}],
+ ["wechat:awei:wx-awei-20250219-001",{"from":"阿威","text":"蒙哥，上次你说的监控延迟还没好？"}],
+ ["wechat:awei:wx-awei-20250219-002",{"from":"me","text":"好了，昨天改完了"}],
+ ["wechat:awei:wx-awei-20250219-003",{"from":"阿威","text":"辛苦了"}],
+ ["wechat:awei:wx-awei-20250219-004",{"from":"me","text":"记得请我喝奶茶"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250323-001",{"from":"小辛","text":"蒙哥帮我看个视频"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250323-002",{"from":"me","text":"你自己看"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250323-003",{"from":"小辛","text":"是我昨天训练那段！我觉得自己超帅"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250323-004",{"from":"me","text":"看到你摔倒的部分了"}],
+ ["wechat:xiaoxin:wx-xiaoxin-20250323-005",{"from":"小辛","text":"那个不算啊啊啊啊"}],
+]);
+const isRetiredHistory=(conversationId,message)=>{
+ const previous=retiredBuiltInHistory.get(historyKey('wechat',conversationId,message.id));
+ return previous&&message.from===previous.from&&message.text===previous.text;
+};
+const isRetiredSavedHistory=(conversationId,message)=>message.storyImported===true&&!message.actual&&isRetiredHistory(conversationId,message);
 const authoredMessage=(pack,chat,message)=>({
  id:message.id,from:message.from,text:message.text,time:message.time,
  ...(message.assetId?{assetId:message.assetId}:{}),
@@ -58,6 +81,9 @@ export function previewPresetImport(state,payload){
 export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=false}={}){
  if(!['merge','replace-conflicts'].includes(mode))throw Error('未知的导入方式');
  const packs=parsePresetPayload(payload),report=previewPresetImport(state,packs),presets=ensurePresets(state);
+ if(packs.some(pack=>pack.channel==='wechat'))for(const conversation of state.content.conversations.wechat||[]){
+  conversation.messages=conversation.messages.filter(message=>!isRetiredSavedHistory(conversation.id,message));
+ }
  const positions=new Map(presets.rules.map((r,i)=>[r.id,i]));
  presets.deletedRuleIds??=[];
  const deleted=new Set(presets.deletedRuleIds);
@@ -76,6 +102,7 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
    if(!conversation){conversation={id:h.conversationId,name:h.conversationName||h.conversationId,avatar:(h.conversationName||h.conversationId).slice(0,1),messages:[]};conversations.push(conversation);}
    const known=new Set(conversation.messages.map(m=>m.id));
    for(const message of h.messages){
+    if(pack.channel==='wechat'&&isRetiredHistory(h.conversationId,message))continue;
     if(known.has(message.id)){
      const current=conversation.messages.find(m=>m.id===message.id);
      if(message.text===correctedHistoryLink.next&&isCorrectableHistoryLink(h.conversationId,current))current.text=correctedHistoryLink.next;

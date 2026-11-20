@@ -216,52 +216,6 @@
           "appearance": "immediate"
         }
       ]
-    },
-    {
-      "conversationId": "xiaoxin",
-      "conversationName": "小辛",
-      "messages": [
-        {
-          "id": "wx-xiaoxin-20250323-001",
-          "from": "小辛",
-          "text": "蒙哥帮我看个视频",
-          "time": "00:41",
-          "sentDate": "2025-03-23",
-          "appearance": "immediate"
-        },
-        {
-          "id": "wx-xiaoxin-20250323-002",
-          "from": "me",
-          "text": "你自己看",
-          "time": "00:45",
-          "sentDate": "2025-03-23",
-          "appearance": "immediate"
-        },
-        {
-          "id": "wx-xiaoxin-20250323-003",
-          "from": "小辛",
-          "text": "是我昨天训练那段！我觉得自己超帅",
-          "time": "00:46",
-          "sentDate": "2025-03-23",
-          "appearance": "immediate"
-        },
-        {
-          "id": "wx-xiaoxin-20250323-004",
-          "from": "me",
-          "text": "看到你摔倒的部分了",
-          "time": "00:49",
-          "sentDate": "2025-03-23",
-          "appearance": "immediate"
-        },
-        {
-          "id": "wx-xiaoxin-20250323-005",
-          "from": "小辛",
-          "text": "那个不算啊啊啊啊",
-          "time": "00:50",
-          "sentDate": "2025-03-23",
-          "appearance": "immediate"
-        }
-      ]
     }
   ]
 }

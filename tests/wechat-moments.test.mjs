@@ -5,6 +5,8 @@ import {initialState,repairLegacyWechatDates} from '../src/services/storage.js';
 import {timestampGroups} from '../src/services/messaging/timestamps.js';
 import {authoredMoments,visibleMoments} from '../src/apps/wechat/features/moments/data.js';
 import {renderMoments,momentImage,avatarUrl,handleMoment,submitMoment} from '../src/apps/wechat/features/moments/index.js';
+import {momentProfiles,findMoment} from '../src/apps/wechat/features/moments/model.js';
+import {stablePublicAssetBase} from '../src/services/public-assets.js';
 import {wechatAvatars} from '../src/apps/wechat/avatars.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
 import {pictureSrc} from '../src/apps/wechat/components/chat-view.js';
@@ -116,4 +118,29 @@ test('40 authored posts span D01–D90 with optional zero-comment brother post a
  assert.equal(chat.history[0].messages[1].from,'熙蒙');
  assert.equal(chat.history[0].messages[1].appearance,'game-time');
  assert.equal(chat.history[0].messages[1].sentDate,find('xm-d78').publishedAt.slice(0,10));
+});
+
+
+test('Moments use the stable site media directory even when older release folders disappear',()=>{
+ const module='https://example.test/BBBTAI/releases/0123456789abcdef/src/services/public-assets.js';
+ assert.equal(stablePublicAssetBase(module),'/BBBTAI/');
+ assert.equal(stablePublicAssetBase(module.replace('/BBBTAI/','/BBBTAI/preview/')),'/BBBTAI/preview/');
+ const base='/BBBTAI/';
+ assert.equal(momentImage('morning',{base}),base+'apps/wechat/media/macau-morning.webp');
+ assert.equal(momentImage('/BBBTAI/releases/0123456789abcdef/apps/wechat/media/macau-morning.webp',{base}),base+'apps/wechat/media/macau-morning.webp');
+ assert.equal(momentImage(base+'apps/wechat/media/macau-morning.webp',{base}),base+'apps/wechat/media/macau-morning.webp');
+ assert.ok(existsSync(new URL('../public/apps/wechat/media/ximeng-moments-cover.webp',import.meta.url)));
+});
+
+test('approved Jack Moments cover, empty signature and greeting update preserve other player edits',()=>{
+ const s=initialState();s.day=1;s.clock='13:00';
+ s.content.moments={profiles:{'熙蒙':{bio:'别打电话，在工房。',cover:'harbor'}},editedPosts:{'xw-0519':{...authoredMoments.find(p=>p.id==='xw-0519'),text:'早上好。今天的云很好看。'}}};
+ const profile=momentProfiles(s)['熙蒙'];
+ assert.equal(profile.bio,'');assert.equal(profile.cover,'ximengCover');
+ assert.equal(findMoment(s,'xw-0519').text,'今天的云很好看。');
+ const html=renderMoments(s,'/moments');
+ assert.match(html,/ximeng-moments-cover\.webp/);assert.match(html,/macau-morning\.webp/);
+ assert.doesNotMatch(html,/别打电话，在工房。|早上好。/);
+ s.content.moments.profiles['熙蒙'].bio='本人自己写的签名';
+ assert.equal(momentProfiles(s)['熙蒙'].bio,'本人自己写的签名');
 });

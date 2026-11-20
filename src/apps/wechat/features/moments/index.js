@@ -1,7 +1,7 @@
 import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
-import {wechatAvatars,publicWeChatAsset,resolveWeChatAvatar} from '../../avatars.js';
-import {rebaseBundledPublicAsset} from '../../../../services/public-assets.js';
+import {wechatAvatars,resolveWeChatAvatar} from '../../avatars.js';
+import {publicAssetPath,stablePublicAssetBase,rebaseBundledPublicAsset} from '../../../../services/public-assets.js';
 import {profiles,authoredMoments,visibleMoments} from './data.js';
 import {allMoments,findMoment,momentProfiles,addGameMomentComment} from './model.js';
 import {momentIcons} from './icons.js';
@@ -9,19 +9,19 @@ import {wxIcon} from '../../components/icons.js';
 let openActions=null,replyTo=null,replyToName=null,replyDraft='';
 const heart=momentIcons.heart;
 
-const photos={d03Breakfast:'d03-breakfast.webp',d03Street:'d03-street.webp',macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg',foodMenu:'user-food-menu.jpeg',foodRice:'user-food-rice.jpeg',foodCheesecake:'user-food-cheesecake.jpeg',foodScallop:'user-food-scallop.jpeg',foodCooking:'user-food-cooking.jpeg',foodSashimi:'user-food-sashimi.jpeg',wynnFountain:'user-wynn-fountain.jpeg',wynnNight:'user-wynn-night.jpeg',yellowWall:'user-yellow-wall.jpeg'};
-const local=filename=>publicWeChatAsset('media/'+filename);
+const photos={ximengCover:'ximeng-moments-cover.webp',d03Breakfast:'d03-breakfast.webp',d03Street:'d03-street.webp',macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg',foodMenu:'user-food-menu.jpeg',foodRice:'user-food-rice.jpeg',foodCheesecake:'user-food-cheesecake.jpeg',foodScallop:'user-food-scallop.jpeg',foodCooking:'user-food-cooking.jpeg',foodSashimi:'user-food-sashimi.jpeg',wynnFountain:'user-wynn-fountain.jpeg',wynnNight:'user-wynn-night.jpeg',yellowWall:'user-yellow-wall.jpeg'};
+const local=(filename,base)=>publicAssetPath('apps/wechat/media/'+filename,{base});
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
-export function momentImage(source){
+export function momentImage(source,{base=stablePublicAssetBase()}={}){
  const input=String(source||'');
  if(!input)return '';
  if(input.startsWith('avatar:'))return avatarUrl(input.slice(7));
- if(photos[input])return local(photos[input]);
+ if(photos[input])return local(photos[input],base);
  // Preserve media that was edited into a Moment or imported from an older
  // storyline package; previously these were silently replaced with "".
- const rebased=rebaseBundledPublicAsset(input);
- if(rebased!==input)return rebased;
+ const rebased=rebaseBundledPublicAsset(input,{base});
+ if(rebased!==input||input.startsWith(base+'apps/wechat/media/'))return rebased;
  if(/^(?:https:\/\/|data:image\/|blob:)/i.test(input))return input;
  return '';
 }
@@ -66,7 +66,7 @@ function postCard(post,s){
 function cover(name,s){
  const profile=momentProfiles(s)[name]||profiles['熙蒙'];
  return '<section class="wx-moments-cover" style="background-image:linear-gradient(0deg,#101c2c75,transparent 70%),url(&quot;'+esc(momentImage(profile.cover))+'&quot;)">'+
-  '<div class="wx-moments-cover-user"><span>'+esc(name)+'</span>'+avatar(name,s)+'</div></section><div class="wx-moments-bio">'+esc(profile.bio||' ')+'</div>';
+  '<div class="wx-moments-cover-user"><span>'+esc(name)+'</span>'+avatar(name,s)+'</div></section><div class="wx-moments-bio">'+esc(profile.bio||'')+'</div>';
 }
 function topBar(title){
  return '<div class="wx-moments-header"><button type="button" data-action="back" aria-label="返回">'+wxIcon('chevron',25)+'</button><strong>'+esc(title)+'</strong>'+(title==='朋友圈'?'<button type="button" data-action="wx-moment-compose" aria-label="发表朋友圈">'+momentIcons.camera+'</button>':'<span></span>')+'</div>';

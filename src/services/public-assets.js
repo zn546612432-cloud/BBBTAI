@@ -5,6 +5,11 @@ export function publicAssetBase(moduleUrl=import.meta.url){
  return /^https?:$/.test(url.protocol)?url.pathname:'/';
 }
 
+// Media viewed long after boot must remain reachable after a new Pages release.
+export function stablePublicAssetBase(moduleUrl=import.meta.url){
+ return publicAssetBase(moduleUrl).replace(/\/releases\/[a-f0-9]{16}\/$/i,'/');
+}
+
 export function publicAssetPath(path,{base=publicAssetBase()}={}){
  const prefix=base.replace(/\/?$/,'/');
  let name=String(path||'').replace(/^\/+/, '');
