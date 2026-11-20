@@ -22,13 +22,14 @@ test('new authored notifications vibrate independently of Focus and history',()=
  assert.equal(hasNewStoryMessage([{id:'ordinary'}],seen),false);
 });
 test('real vibration when supported and visual fallback otherwise',()=>{
- const calls=[];const phone={animate:(...args)=>calls.push(args)};
+ const calls=[],animations=[];const phone={animate:(...args)=>animations.push(args)};
  assert.equal(storyMessageHaptic({nav:{vibrate:pattern=>{calls.push(pattern);return true;}},phone}), 'vibrate');
  assert.deepEqual(calls,[[45,65,45]]);
+ assert.equal(animations.length,1);
  assert.equal(storyMessageHaptic({nav:{},phone,reducedMotion:false}),'visual');
- assert.ok(calls[1][0].some(frame=>frame.translate==='2px 0'));
+ assert.ok(animations[1][0].some(frame=>frame.translate==='2px 0'));
  assert.equal(storyMessageHaptic({nav:{vibrate:()=>false},phone,reducedMotion:true}),'visual');
- assert.ok(calls[2][0].every(frame=>'opacity' in frame));
+ assert.ok(animations[2][0].every(frame=>'opacity' in frame));
 });
 test('music uses actual track and shared Apple account, with working action targets',()=>{
  const home=musicLibrary({playing:false,tab:'listen',query:''});
