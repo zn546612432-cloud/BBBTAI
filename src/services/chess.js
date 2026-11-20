@@ -178,7 +178,7 @@ export function replyToMatch(store,matchId){
  return reply;
 }
 
-const FALLBACK='先看清棋盤再動。別只顧著聊天。';
+const FALLBACK='等我一下。';
 async function boundedAI(promise,ms){
  let timeout;
  try{return await Promise.race([promise,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('chess AI timeout')),ms);})]);}
@@ -221,7 +221,7 @@ async function generateMatchReply(store,matchId){
     const worldbookSnapshot=captureTaiWorldbook(store,{channel:'chess',day:current.day,recognized:taiRecognized(current),messages,outputMode:'text',turnId:'chess:'+matchId+':'+(match.chat||[]).length,messageIndex:(match.chat||[]).length});
     const response=await boundedAI(askTai({channel:'chess',day:current.day,messages,worldbookSnapshot,profile:current.aiDraft?.profile,
      memories:current.aiDraft?.memories,recognized:taiRecognized(current),storyVersion:55,outputMode:'text',allowVoice:false,
-     scene:buildChessTutorPrompt(factPacket)+'\n'+(isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；只回答現場已發生的棋局。')}),65000);
+     scene:buildChessTutorPrompt(factPacket,{casual:!isD23ChessLesson(match)})+'\n'+(isD23ChessLesson(match)?'正在進行的 D23 匿名真實棋局；只回答當前棋局，不得劇透。':'正在進行的真實棋局；可自然閒聊，以棋局為主，不得捏造盤面。')}),65000);
     parts=unpackTaiReply(response,'chess').slice(0,3);
     if(!parts.every(p=>chessReplyUsesLegalMoves(p.text,nowFacts)))parts=[];
     // Anonymous D23 chess must never leak the hidden name or family relation.

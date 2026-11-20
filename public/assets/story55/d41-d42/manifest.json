@@ -1,0 +1,87 @@
+{
+  "voice": "moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4",
+  "region": "cn",
+  "model": "speech-2.8-hd",
+  "clips": [
+    {
+      "id": "d41-call-0",
+      "text": "我已經連上了附近監控，目前一切安全。不信的，你可以自己來看。",
+      "path": "/assets/story55/d41-d42/d41-call-0.mp3",
+      "textHash": "d4fbf7ded3ad789d0496414b391911d7581b9ae6f16f8f8ea2c95a9820e93e11",
+      "audioHash": "72f4b7ee2b8b3e47cda933b9fc3253c2a4d0ae6883e09af84237f4695264556f",
+      "size": 93876
+    },
+    {
+      "id": "d41-call-3",
+      "text": "相信我",
+      "path": "/assets/story55/d41-d42/d41-call-3.mp3",
+      "textHash": "f0d4bb87339a4d2589e6bcb3bb08792eacbcfee22a16c7e8e215c5a7cad3917a",
+      "audioHash": "0e090aff3a21af87ed0fc830947a5c1e65db8934bf5e77f81f199f3b748674e7",
+      "size": 18996
+    },
+    {
+      "id": "d41-call-4",
+      "text": "對了 既然是鬼車陷阱，要不要來跟我下一盤國際象棋？",
+      "path": "/assets/story55/d41-d42/d41-call-4.mp3",
+      "textHash": "9ebfe45427ffa4dcc81b64bad72215003a0c9c0600623fb57e7586f9255a06c0",
+      "audioHash": "22e23f15920912b46b06e3299784932b7fed2e01041f9bbcf1a747cb068767d9",
+      "size": 83508
+    },
+    {
+      "id": "d41-call-6",
+      "text": "別告訴我你還沒搞明白國際象棋怎麼下。",
+      "path": "/assets/story55/d41-d42/d41-call-6.mp3",
+      "textHash": "de87d65967a64ed49b1df004df5dc449fec138d31fd20166d047c1d8b9585012",
+      "audioHash": "d7c0de9cc295696b4ccc81502295eac64c0951d9e19ca5dc66e019a6d727e650",
+      "size": 52404
+    },
+    {
+      "id": "d41-chess-1",
+      "text": "Opening with a little pawn.",
+      "path": "/assets/story55/d41-d42/d41-chess-1.mp3",
+      "textHash": "5855d4560b91c8758c0f7051f1bff7cc09d6aae3275b338797c800d747d8be4c",
+      "audioHash": "30b234af99f5da268eb2c20ad2a028da0f29c38e0fb9c73aa0187615056d8876",
+      "size": 28788
+    },
+    {
+      "id": "d41-chess-7",
+      "text": "Pawn out.",
+      "path": "/assets/story55/d41-d42/d41-chess-7.mp3",
+      "textHash": "a31cd8cf83ca083e1f411a28cc00f3e72437b925d22a62df319c9b00fc982a13",
+      "audioHash": "1100cf4a0eb89586b762e2300caa94f256b88a7fc1d8d65218a45a35a2c2716c",
+      "size": 16116
+    },
+    {
+      "id": "d41-chess-19",
+      "text": "Go bishop.",
+      "path": "/assets/story55/d41-d42/d41-chess-19.mp3",
+      "textHash": "a4a009ee7a811de43e21637c5af947943d2473dc09f3f762e1e71b381bc91386",
+      "audioHash": "37be25cda5ce493d631dd80be2161a528fca98ae30505e9b8aa0126671ce41f3",
+      "size": 24756
+    },
+    {
+      "id": "d41-chess-25",
+      "text": "Rook line blocked. Go queen.",
+      "path": "/assets/story55/d41-d42/d41-chess-25.mp3",
+      "textHash": "9a096503704576744368d2c9e7334effd189254297b62843e2808bff7c42633c",
+      "audioHash": "9b848228dc91de0a3d84a43e514d89cf1a08c41a9b95c75392e5acc15b14cea9",
+      "size": 41460
+    },
+    {
+      "id": "d41-chess-31",
+      "text": "King's move.",
+      "path": "/assets/story55/d41-d42/d41-chess-31.mp3",
+      "textHash": "01fc2bfa6611579e2101242f531961eb253492c969a7a58628ebf1b66d7bd170",
+      "audioHash": "0bc7df14c3fccccbcc6f7454d28a34fe2208354cde73969193b3912cdb09dfbc",
+      "size": 24756
+    },
+    {
+      "id": "d41-chess-37",
+      "text": "恭喜，這次是你贏了。",
+      "path": "/assets/story55/d41-d42/d41-chess-37.mp3",
+      "textHash": "4e39a247386733c8f64022ed92068b2b5c1ad1e0b74574edb8e649ad878ebcce",
+      "audioHash": "d4c59b712c63bca16f985e5f1ec0236c281dca3dd947b6ef4cf477556993b20e",
+      "size": 39732
+    }
+  ]
+}

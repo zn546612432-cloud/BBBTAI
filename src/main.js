@@ -32,7 +32,7 @@ import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
-import {processDemoReply,sendUnansweredChessReminders,dueChessReminders} from './services/invitations.js';
+import {processDemoReply,duePlayerInviteReply,sendUnansweredChessReminders,dueChessReminders} from './services/invitations.js';
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed.js';
 import {maybeSendProactive,isProactiveCallDue} from './services/ai/proactive.js';
@@ -494,6 +494,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get())||identityRevealDue55(store.get()))store.update(s=>tickStory55(s));
  if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
+ if(duePlayerInviteReply(store.get()))processDemoReply(store);
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();

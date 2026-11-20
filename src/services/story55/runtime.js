@@ -22,6 +22,7 @@ import {restoreDeveloperChatArchive} from './developer-chat-archive.js';
 import {appendAuthoredPhoneMessage} from '../messaging/phone-messages.js';
 import {offerD23ChessInvitation,offerStoryChessInvitation} from '../invitations.js';
 import {tickD23ChessLesson} from '../chess-lesson.js';
+import {reconcileD41ChessCues,isD41Chess} from '../chess-scripted.js';
 import {tickD23MiragePostgame,repairRebuiltD23Postgame} from './d23-postgame.js';
 import {CHAT_LIFECYCLE_POLICY} from '../messaging/lifecycle/engine.js';
 import {tickD04Contracts} from '../../story/d04/contract.js';
@@ -384,7 +385,13 @@ export function tickStory55(s){
  syncBaseLinkPipeRevision(s);
  tickTearAgent(s);
  syncGhostCarProgress(s);
+ if(s.day===41){for(const m of s.matches||[])if(isD41Chess(m))reconcileD41ChessCues({get:()=>s,update:fn=>fn(s)},m.id);}
  syncTearReminders(s);
+ if(s.day===41&&!s.story55.d41OperationReminderAdded){
+  s.content.reminders??=[];
+  if(!s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'))s.content.reminders.push({id:'s55-d41-operation-reminder',title:'23:00 行动开始',done:false});
+  s.story55.d41OperationReminderAdded=true;
+ }
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);

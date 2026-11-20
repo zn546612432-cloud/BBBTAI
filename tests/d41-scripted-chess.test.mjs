@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Chess} from 'chess.js';
 import {D41_CHESS_MOVES,D41_CHESS_CUES,D41_CHESS_DRAFT,D41_CHESS_INVITATION,d41ChessComplete} from '../src/story/d34-d42/d41-chess.js';
-import {advanceD41Chess,completeD41ChessCue,sendD41ChessDraft,d41ChessDraft,initializeD41Chess} from '../src/services/chess-scripted.js';
+import {advanceD41Chess,completeD41ChessCue,sendD41ChessDraft,d41ChessDraft,initializeD41Chess,reconcileD41ChessCues} from '../src/services/chess-scripted.js';
 import {render,submit} from '../src/apps/chess/index.js';
 import {playMove,applyStockfishMove,resignChessMatch,loadGame} from '../src/services/chess.js';
 
@@ -11,7 +11,7 @@ test('37 legal plies, six cue points and a genuine white mate',()=>{
  const game=new Chess(),moves=D41_CHESS_MOVES.map(m=>game.move(m));
  assert.equal(moves.length,37);assert.equal(game.isCheckmate(),true);assert.equal(game.turn(),'b');
  assert.equal(moves[0].piece,'p');assert.equal(moves[5].captured,'p');assert.equal(moves[12].piece,'n');assert.equal(moves[18].piece,'b');assert.equal(moves[24].piece,'q');assert.equal(moves[30].piece,'k');
- assert.deepEqual(Object.keys(D41_CHESS_CUES).map(Number),[1,7,13,19,25,31,37]);
+ assert.deepEqual(Object.keys(D41_CHESS_CUES).map(Number),[1,7,19,25,31,37]);
 });
 test('automatic D41 sequence is resumable, refuses manual moves, stops at each cue and waits for native Send and final voice',()=>{
  const store=make(),id='d41',match=()=>store.get().matches[0];
@@ -22,6 +22,7 @@ test('automatic D41 sequence is resumable, refuses manual moves, stops at each c
    assert.equal(match().chat.at(-1).text,D41_CHESS_CUES[ply]);assert.equal(advanceD41Chess(store,id),false);
    assert.equal(applyStockfishMove(store,id,loadGame(match()).fen(),'a7a6'),null);
    store.reload();assert.equal(match().d41Script.pendingVoice,ply);
+   assert.equal(completeD41ChessCue(store,id,ply,{played:false}),false);assert.equal(advanceD41Chess(store,id),false);
    assert.equal(completeD41ChessCue(store,id,ply),true);assert.equal(completeD41ChessCue(store,id,ply),false);
   }
  }
@@ -34,10 +35,21 @@ test('automatic D41 sequence is resumable, refuses manual moves, stops at each c
  assert.equal(match().chat.at(-2).from,'player');assert.equal(match().chat.at(-2).text,D41_CHESS_DRAFT);
  assert.equal(match().chat.at(-1).text,D41_CHESS_CUES[37]);assert.equal(d41ChessComplete(match()),false);
  assert.equal(sendD41ChessDraft(store,id,D41_CHESS_DRAFT),false);store.reload();
- assert.equal(completeD41ChessCue(store,id,37),true);assert.equal(d41ChessComplete(match()),true);assert.equal(match().chat.length,8);
+ assert.equal(completeD41ChessCue(store,id,37),true);assert.equal(d41ChessComplete(match()),true);assert.equal(match().chat.length,7);
 });
 test('old active D41 history is retained on migration, completed legacy games remain complete',()=>{
  const old={invitationId:D41_CHESS_INVITATION,status:'active',history:[{san:'e4'}],pgn:'1. e4',chat:[]};
  assert.equal(initializeD41Chess(old),true);assert.equal(old.legacyBeforeD41Script.pgn,'1. e4');assert.equal(old.history.length,0);assert.equal(initializeD41Chess(old),false);
  assert.equal(d41ChessComplete({invitationId:D41_CHESS_INVITATION,status:'finished'}),true);
+});
+test('a saved D41 match recovers skipped audio in order without replaying moves or the deleted knight line',()=>{
+ const store=make(),m=store.get().matches[0];m.status='finished';m.result='player-win';
+ m.history=Array(37).fill({san:'historical'});
+ m.d41Script={spoken:[1,7,13],pendingVoice:null,voiceUnavailable:[19,25,31,37],completed:true};
+ m.chat=[{id:'d41-d41-cue-13',text:'Knight, knight.'}];
+ assert.equal(reconcileD41ChessCues(store,m.id),true);assert.equal(m.chat.length,0);
+ assert.equal(m.d41Script.pendingVoice,19);assert.equal(d41ChessComplete(m),false);
+ for(const p of [19,25,31,37])assert.equal(completeD41ChessCue(store,m.id,p),true);
+ assert.deepEqual(m.d41Script.spoken,[1,7,19,25,31,37]);assert.equal(m.history.length,37);
+ assert.equal(d41ChessComplete(m),true);assert.equal(reconcileD41ChessCues(store,m.id),false);
 });

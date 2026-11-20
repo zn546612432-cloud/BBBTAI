@@ -6,19 +6,20 @@ import {loadClip,saveClip} from './audio-store.js';
 const clips=new Map(),warmed=new Map();
 const cacheKey=clip=>'scripted-v1-'+apiConfig().voiceId+'-'+clip.id+'-'+clip.text;
 async function prepareClip(clip,key){
- const saved=await loadClip(key).catch(()=>null);
- if(saved?.size)return saved;
  // The optional published recording takes precedence; a configured game
  // voice can prepare the same asset even when the repository has no API key.
- const bundled=await fetch(resolvePhoneAudioPath(clip.path)).then(async response=>{
-  if(!response.ok)return null;
+ const bundled=fetch(resolvePhoneAudioPath(clip.path)).then(async response=>{
+  if(!response.ok)throw Error('No bundled recording');
   const blob=await response.blob();
-  return blob.size&&/^audio\//i.test(blob.type)?blob:null;
- }).catch(()=>null);
- if(bundled)return bundled;
+  if(!blob.size||!/^audio\//i.test(blob.type))throw Error('Invalid bundled recording');
+  return blob;
+ });
+ const saved=loadClip(key).then(blob=>{if(!blob?.size)throw Error('No cached recording');return blob;});
+ const recording=await Promise.any([bundled,saved]).catch(()=>null);
+ if(recording)return recording;
  const blob=await voicePreview({text:clip.text.replace(/\bnya\b/gi,'奈亞'),tone:'neutral',directed:true});
  if(!blob?.size)throw Error('Empty authored recording');
- void saveClip(key,blob);
+ void saveClip(key,blob).catch(()=>{});
  return blob;
 }
 export function loadScriptedVoice(text){
@@ -40,5 +41,7 @@ export function preloadScriptedVoice(day){
  const recordings=SCRIPTED_VOICE_CLIPS.filter(c=>c.id.startsWith('d'+day+'-'));
  // Prioritize the opening line; never bombard the provider with 11 simultaneous
  // requests. The actual scene can reuse an in-flight promise at any time.
- void (async()=>{for(const clip of recordings){try{await loadScriptedVoice(clip.text);}catch{break;}}})();
+ const queue=recordings.map(clip=>({clip,attempt:0}));
+ const worker=async()=>{while(queue.length){const {clip,attempt}=queue.shift();try{await loadScriptedVoice(clip.text);}catch(error){if(attempt<1&&error?.code!=='TAI_CLOUD_LIMIT')queue.push({clip,attempt:attempt+1});}}};
+ void worker();void worker();
 }

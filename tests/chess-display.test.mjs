@@ -1,7 +1,21 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {initialState} from '../src/services/storage.js';import {render} from '../src/apps/chess/index.js';import {createSoloMatch,playMove,postMatchMessage,replyToMatch} from '../src/services/chess.js';import {registry,homePages} from '../src/system/registry.js';
 import {receiveInvitation} from '../src/services/invitations.js';
+import {createPlayerInvitation,processDemoReply} from '../src/services/invitations.js';
+import {renderChessInviteCard} from '../src/components/chess-invitation.js';
 
 function chessStore(){let state=initialState();return {get:()=>state,update(fn){state=structuredClone(state);fn(state);}};}
+
+test('chess lobby has only a native invitation button; the outgoing card belongs to NoApp',()=>{
+ const store=chessStore();store.update(s=>{s.day=56;s.clock='21:35';});
+ const html=render({store},{route:'/'});
+ assert.match(html,/data-action="invite-tai"/);assert.doesNotMatch(html,/chess-friend|Dr Ouroboros|等待回应/);
+ const id=createPlayerInvitation(store);
+ assert.ok(store.get().content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.from==='me'&&m.invitationId===id));
+ const invite=()=>store.get().invitations.find(i=>i.id===id);
+ assert.doesNotMatch(renderChessInviteCard(invite()),/data-action="accept-invite"|data-action="defer-invite"/);
+ assert.equal(processDemoReply(store,id,{random:()=>.1}),true);
+ assert.match(renderChessInviteCard(invite()),/data-action="open-invite-match"/);
+});
 
 test('finished checkmate and draw never display a running turn',()=>{
  const store=chessStore(),id=createSoloMatch(store);
@@ -32,7 +46,7 @@ test('concurrent replies share one request and failed AI falls back silently',as
   assert.equal(calls,1);assert.equal(store.get().matches[0].chat.filter(m=>m.from==='tai').length,1);
   postMatchMessage(store,'concurrent','再來');fail=true;
   assert.equal(await replyToMatch(store,'concurrent'),true);
-  assert.match(store.get().matches[0].chat.at(-1).text,/先看清棋盤/);
+  assert.equal(store.get().matches[0].chat.at(-1).text,'等我一下。');
   fail=false;assert.equal(await replyToMatch(store,'concurrent'),false,'fallback already answered the message');
   assert.equal(calls,2);
  }finally{globalThis.fetch=prior;}

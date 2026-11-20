@@ -37,7 +37,7 @@ const scenes=[
   ['小辛','哥，你的臉沒事吧？'],['me','沒事'],['小辛','蒙哥'],['小辛','就是想告訴你，不管你做什麼決定，我都會開團秒跟'],['me','好'],['me','我們都會過上自己想要的人生。']]}
 ];
 
-export const D41_CALL={id:'d41-night-call',day:41,pauseTimeUntilComplete:true,at:'23:40',completionMatch:'s55-d41-chess-invite',gapMs:2500,triggerKey:'d41CallTriggered',steps:[
+export const D41_CALL={id:'d41-night-call',day:41,pauseTimeUntilComplete:true,at:'23:40',completionMatch:'s55-d41-chess-invite',inviteGapMs:4000,gapMs:2500,triggerKey:'d41CallTriggered',steps:[
  ['tai','我已經連上了附近監控，目前一切安全。不信的，你可以自己來看。'],
  ['me','可我眼皮總跳。左眼跳財右眼跳災，我們真的安全？'],
  ['me','忘了你是外國人，聽不懂'],
