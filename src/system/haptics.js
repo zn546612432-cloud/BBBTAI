@@ -22,18 +22,13 @@ function switchTap(doc) {
   }
 }
 
-// Async notifications cannot use the gesture-only iOS switch tap. Always also
-// show the simulated handset vibrating: desktop browsers may accept vibrate()
-// without being attached to physical vibration hardware.
-export function storyMessageHaptic({nav=globalThis.navigator,phone=globalThis.document?.querySelector('#phone'),reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches}={}){
-  let hardware=false;
-  try {hardware=typeof nav?.vibrate==='function'&&nav.vibrate([45,65,45]);}catch{}
-  if(!phone?.animate)return hardware?'vibrate':'none';
+// Incoming story notifications request physical vibration only. Unsupported
+// browsers remain silent: no screen shake, flash or gesture-only switch trick.
+export function storyMessageHaptic({nav=globalThis.navigator}={}){
   try {
-    const frames=reducedMotion?[{opacity:1},{opacity:.86},{opacity:1}]:[0,-2,2,-2,2,-1,0].map(x=>({translate:`${x}px 0`}));
-    phone.animate(frames,{duration:260,easing:'ease-in-out'});
-    return hardware?'vibrate':'visual';
-  }catch{return hardware?'vibrate':'none';}
+    if(typeof nav?.vibrate==='function'&&nav.vibrate([45,65,45]))return 'vibrate';
+  }catch{}
+  return 'none';
 }
 
 // iOS-like "wrong passcode": three short pulses. Returns which mechanism was used.
