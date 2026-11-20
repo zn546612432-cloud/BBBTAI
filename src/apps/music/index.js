@@ -16,11 +16,11 @@ export function handle(a,t,c){
  if(a==='music-shuffle'){shuffle=!shuffle;c.refresh();}
  if(a==='music-repeat'){repeat=!repeat;if(audio)audio.loop=repeat;c.refresh();}
  if(a==='music-toggle'){
-  if(!audio){audio=registerAudio(new Audio('/assets/night.wav'));audio.loop=repeat;audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{c.store.update(s=>s.musicPlaying=false);});}
+  if(!audio){audio=registerAudio(new Audio('/assets/music/tonight-rain.m4a'));audio.loop=repeat;audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{c.store.update(s=>s.musicPlaying=false);});}
   if(c.store.get().musicPlaying){audio.pause();c.store.update(s=>s.musicPlaying=false);}
   else audio.play().then(()=>c.store.update(s=>s.musicPlaying=true)).catch(()=>c.toast('音频播放失败'));
  }
- if(a==='music-share'){c.store.update(s=>s.content.conversations.noapp[0].messages.push({id:uid(),from:'me',text:'分享音乐：夜航',kind:'text',time:s.clock,actual:true}));c.router.open({appId:'noapp',route:'/chat/tai'});}
+ if(a==='music-share'){c.store.update(s=>s.content.conversations.noapp[0].messages.push({id:uid(),from:'me',text:'分享音乐：今夜有雨',kind:'text',time:s.clock,actual:true}));c.router.open({appId:'noapp',route:'/chat/tai'});}
 }
-export function input(el){if(el.name==='music-search'){query=el.value;const match='夜航'.includes(query.trim())||!query.trim();const track=el.closest('.music-library')?.querySelector('.music-track'),empty=el.closest('.music-library')?.querySelector('.music-no-results');if(track)track.hidden=!match;if(empty)empty.hidden=match;}}
+export function input(el){if(el.name==='music-search'){query=el.value;const match='今夜有雨 h3r3'.includes(query.trim().toLowerCase())||!query.trim();const track=el.closest('.music-library')?.querySelector('.music-track'),empty=el.closest('.music-library')?.querySelector('.music-no-results');if(track)track.hidden=!match;if(empty)empty.hidden=match;}}
 export function change(el){if(el.name==='music-seek'&&audio&&audio.duration){audio.currentTime=Number(el.value)/100*audio.duration;sync();}}

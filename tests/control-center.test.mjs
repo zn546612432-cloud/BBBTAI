@@ -22,8 +22,8 @@ test('uses existing settings silent flag and retains persisted brightness and vo
 });
 
 test('idle media has no imaginary title or cover; playing media is rendered from the existing music flag',()=>{
- const idle=controlCenter({musicPlaying:false});assert.match(idle,/未在播放/);assert.doesNotMatch(idle,/cc-album|夜航|正在播放/);
- const active=controlCenter({musicPlaying:true});assert.match(active,/cc-album/);assert.match(active,/夜航/);assert.doesNotMatch(active,/未在播放/);
+ const idle=controlCenter({musicPlaying:false});assert.match(idle,/未在播放/);assert.doesNotMatch(idle,/cc-album|今夜有雨|正在播放/);
+ const active=controlCenter({musicPlaying:true});assert.match(active,/cc-album/);assert.match(active,/今夜有雨/);assert.doesNotMatch(active,/未在播放/);
 });
 test('connectivity controls all expose real on and off states; rotation does not lock the screen',()=>{
  const keys=['airplane','airdrop','wifi','cellular','bluetooth','hotspot','vpn','rotationLock','lowPower','focus'];
