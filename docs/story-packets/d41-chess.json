@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "day": 41,
+  "date": "2025-06-28",
+  "title": "D41 鬼車陷阱・Checkmate",
+  "stage": "approved",
+  "scope": "main",
+  "systems": ["story55", "chess", "noapp", "time"],
+  "assets": [],
+  "events": [
+    {"id":"d41-board","kind":"system-notice","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","trigger":{"type":"user-action","ref":"s55-d41-chess-invite"},"requires":["fact:chess-scene-active","fact:d41-call-played"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-pawn","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"Opening with a little pawn.","trigger":{"type":"previous-event","ref":"d41-board"},"requires":["d41-board","fact:chess-scene-active","fact:d41-ply-one"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-out","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"Pawn out.","trigger":{"type":"previous-event","ref":"d41-cue-pawn"},"requires":["d41-cue-pawn","fact:chess-scene-active","fact:d41-ply-seven"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-knight","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"Knight, knight.","trigger":{"type":"previous-event","ref":"d41-cue-out"},"requires":["d41-cue-out","fact:chess-scene-active","fact:d41-ply-thirteen"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-bishop","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"Go bishop.","trigger":{"type":"previous-event","ref":"d41-cue-knight"},"requires":["d41-cue-knight","fact:chess-scene-active","fact:d41-ply-nineteen"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-queen","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"Rook line blocked. Go queen.","trigger":{"type":"previous-event","ref":"d41-cue-bishop"},"requires":["d41-cue-bishop","fact:chess-scene-active","fact:d41-ply-twenty-five"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-cue-king","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"King's move.","trigger":{"type":"previous-event","ref":"d41-cue-queen"},"requires":["d41-cue-queen","fact:chess-scene-active","fact:d41-ply-thirty-one"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-checkmate","kind":"player-send","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"me","text":"Checkmate.","trigger":{"type":"user-send","ref":"fact:d41-ply-thirty-six"},"requires":["d41-cue-king","fact:chess-scene-active","fact:d41-ply-thirty-six"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}},
+    {"id":"d41-congratulations","kind":"incoming-text","surface":"chess","capability":"story.d41-cinematic","owner":"chess","actor":"tai","text":"恭喜，這次是你贏了。","trigger":{"type":"previous-event","ref":"d41-checkmate"},"requires":["d41-checkmate","fact:chess-scene-active","fact:d41-real-checkmate"],"timing":{"day":41,"at":"on-trigger"},"once":true,"delivery":{"late":"silent"}}
+  ],
+  "acceptance": [
+    {"id":"d41-trigger","type":"trigger","verify":"接受 D41 NoApp 邀請，且固定通話已完成，才播放棋譜。"},
+    {"id":"d41-negative","type":"negative","verify":"不能手動落子、認輸或提前發送；語音失敗仍可重試或閱讀原文後繼續。"},
+    {"id":"d41-once","type":"idempotency","verify":"每步與暗號只寫入一次；重複 Send 無效。"},
+    {"id":"d41-save","type":"save-restore","verify":"PGN、待播放暗號、聊天和結局均隨原棋局存檔。"},
+    {"id":"d41-cross","type":"cross-app","verify":"NoApp 邀請 → 國際象棋 → 玩家發送 Checkmate → 真實將死 → 結尾語音。"},
+    {"id":"d41-late","type":"late-entry","verify":"離開棋局暫停演出，返回繼續；既有已結束記錄不回退。"},
+    {"id":"d41-assets","type":"assets","verify":"沿用棋子資源、共用音量與熙泰預設語音服務。"},
+    {"id":"d41-clock","type":"date-clock","verify":"D41 23:40 主線檢查點待最後一句完成才釋放。"}
+  ]
+}

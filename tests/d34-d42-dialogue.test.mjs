@@ -12,6 +12,8 @@ import {D41_CALL,D42_CALL,RETIRED_SCENES} from '../src/story/d34-d42/definition.
 import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,maybeStartD42Call,callAction,callState,callView,scriptedCallDraft,submitCall} from '../src/apps/noapp/voice-call.js';
 import {D41_CHESS_INVITATION,offerD41ChessInvitation,receiveInvitation,deferInvitation} from '../src/services/invitations.js';
 import {playMove,postMatchMessage,resignChessMatch} from '../src/services/chess.js';
+import {advanceD41Chess,completeD41ChessCue,sendD41ChessDraft,d41ChessDraft} from '../src/services/chess-scripted.js';
+import {D41_CHESS_CUES,D41_CHESS_DRAFT} from '../src/story/d34-d42/d41-chess.js';
 import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 
 function phone(day,clock){const s=initialState();activateStory55(s);rebuildStory55AtDay(s,day,clock);return s;}
@@ -71,7 +73,7 @@ test('D42 preset plays the three exact lines in order with two 2500ms post-playb
  events.length=0;await playScriptedCallSequence(D42_CALL,{...opts,wait:async ms=>{events.push(ms);active=false;}});
  assert.deepEqual(events,[D42_CALL.lines[0],2500]);
 });
-test('D41 preset call is due at 23:40 independently of group replies; invitation opens a normal legal chess game with no unapproved chat',()=>{
+test('D41 preset call is due at 23:40 independently of group replies; invitation opens the authored cinematic game',()=>{
  const s=phone(41,'23:30');
  assert.equal(d41CallDue(s),false);
  s.clock='23:39';assert.equal(d41CallDue(s),false);
@@ -88,7 +90,11 @@ test('D41 preset call is due at 23:40 independently of group replies; invitation
  const matchId=receiveInvitation(store,D41_CHESS_INVITATION),match=s.matches.find(m=>m.id===matchId);
  assert.deepEqual(match.chat,[]);assert.equal(!!match.lesson,false);
  assert.equal(postMatchMessage(store,matchId,'試試'),false);
- assert.equal(playMove(store,matchId,'e2','e4').san,'e4');
+ assert.equal(playMove(store,matchId,'e2','e4'),null);
+ assert.equal(resignChessMatch(store,matchId),false);
+ assert.equal(advanceD41Chess(store,matchId),true);
+ assert.equal(match.history[0].san,'d4');
+ assert.equal(match.chat[0].text,D41_CHESS_CUES[1]);
  assert.equal(receiveInvitation(store,D41_CHESS_INVITATION),matchId);
 });
 test('D41 incoming call is retained through a locked screen and recovered after an interrupted ringing session',()=>{
@@ -175,7 +181,16 @@ test('D41 real call accepts only the two preset player sends and plays through t
   finish(s,'d41-opening','group');
   const matchId=receiveInvitation(ctx.store,D41_CHESS_INVITATION);
   assert.equal(timedStoryPaused(s),true);
-  resignChessMatch(ctx.store,matchId);assert.equal(timedStoryPaused(s),false);
+  assert.equal(resignChessMatch(ctx.store,matchId),false);
+  const match=s.matches.find(m=>m.id===matchId);
+  while(!d41ChessDraft(match)){
+   if(match.d41Script.pendingVoice)completeD41ChessCue(ctx.store,matchId,match.d41Script.pendingVoice);
+   else assert.equal(advanceD41Chess(ctx.store,matchId),true);
+  }
+  assert.equal(timedStoryPaused(s),true);
+  assert.equal(sendD41ChessDraft(ctx.store,matchId,D41_CHESS_DRAFT),true);
+  assert.equal(timedStoryPaused(s),true,'final voice is still pending');
+  completeD41ChessCue(ctx.store,matchId,37);assert.equal(timedStoryPaused(s),false);
  }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
 test('D42 voice failure cannot permanently lock a mandatory call; read all three exact lines before clock resumes',async()=>{

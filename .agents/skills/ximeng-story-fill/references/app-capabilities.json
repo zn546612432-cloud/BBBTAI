@@ -176,6 +176,13 @@
       "module": "src/apps/chess/index.js",
       "appId": "chess",
       "capabilities": {
+        "story.d41-cinematic": {
+          "state": "wired-day",
+          "owner": "chess",
+          "kinds": ["system-notice", "incoming-text", "player-send"],
+          "proof": "src/services/chess-scripted.js",
+          "originDays": [41]
+        },
         "chess.story-invite": {
           "state": "adapter-required",
           "owner": "chess",

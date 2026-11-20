@@ -54,6 +54,7 @@ export function playMove(store,matchId,from,to,promotion='q'){
  store.update(s=>{
   const match=s.matches.find(m=>m.id===matchId);
   if(!match||match.status!=='active')throw Error('棋局不存在');
+  if(match.invitationId===D41_CHESS_INVITATION)return;
   const game=loadGame(match);
   if(game.turn()!=='w')throw Error('请等待对手');
   const move=game.move({from,to,promotion});
@@ -77,7 +78,7 @@ export function playMove(store,matchId,from,to,promotion='q'){
 }
 export function demoOpponentMove(store,matchId){
  const match=store.get().matches.find(m=>m.id===matchId);
- if(!match||match.status!=='active')return null;
+ if(!match||match.status!=='active'||match.invitationId===D41_CHESS_INVITATION)return null;
  const game=loadGame(match);
  if(game.turn()!=='b')return null;
  const moves=game.moves({verbose:true});
@@ -99,7 +100,7 @@ export function applyStockfishMove(store,matchId,expectedFen,uci){
  let played=null;
  store.update(s=>{
   const match=s.matches.find(m=>m.id===matchId);
-  if(!match||match.status!=='active')return;
+  if(!match||match.status!=='active'||match.invitationId===D41_CHESS_INVITATION)return;
   const game=loadGame(match);
   if(game.turn()!=='b'||game.fen()!==expectedFen)return;
   let move;
@@ -130,7 +131,7 @@ export function resignChessMatch(store,matchId){
  let resigned=false;
  store.update(s=>{
   const match=s.matches.find(m=>m.id===matchId);
-  if(!match||match.status!=='active')return;
+  if(!match||match.status!=='active'||match.invitationId===D41_CHESS_INVITATION)return;
   match.status='finished';match.result='player-resigned';
   match.turn=loadGame(match).turn();
   s.events.push({type:'chess_resigned',matchId,by:'player',day:s.day,clock:s.clock});

@@ -3,6 +3,7 @@ import {STORY55_CONFIG} from '../../story/story55/catalog.js';
 import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
 import {modelDelivered} from './ghost-car.js';
 import {TIMED_SCRIPTED_CALLS} from '../../story/d34-d42/definition.js';
+import {isD41Chess,d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
@@ -45,7 +46,7 @@ export function scriptedCallPlayed(s,event){
 }
 export function timedStoryEventComplete(s,event){
  if(!event.triggerKey)return completed(s,event.id);
- return scriptedCallPlayed(s,event)&&(!event.completionMatch||s.matches?.some(m=>m.invitationId===event.completionMatch&&m.status==='finished'));
+ return scriptedCallPlayed(s,event)&&(!event.completionMatch||s.matches?.some(m=>m.invitationId===event.completionMatch&&(isD41Chess(m)?d41ChessComplete(m):m.status==='finished')));
 }
 // One declarative gate for native scenes and calls; completion remains owned
 // by the actual App action, not by the clock or a second scheduler.
