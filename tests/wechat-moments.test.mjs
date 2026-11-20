@@ -138,6 +138,9 @@ test('approved Jack Moments cover, empty signature and greeting update preserve 
  const profile=momentProfiles(s)['熙蒙'];
  assert.equal(profile.bio,'');assert.equal(profile.cover,'ximengCover');
  assert.equal(findMoment(s,'xw-0519').text,'今天的云很好看。');
+ assert.deepEqual(findMoment(s,'xw-0519').likes,['小辛','阿威']);
+ assert.deepEqual(findMoment(s,'xw-0519').comments,[{by:'阿威',text:'天气真好'}]);
+ assert.equal(momentProfiles(s)['熙旺'].bio,'平安是福');
  const html=renderMoments(s,'/moments');
  assert.match(html,/ximeng-moments-cover\.webp/);assert.match(html,/macau-morning\.webp/);
  assert.doesNotMatch(html,/别打电话，在工房。|早上好。/);

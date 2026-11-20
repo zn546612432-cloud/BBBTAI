@@ -1,5 +1,5 @@
 import {GUIDE_NOTE_ID,GUIDE_URL} from '../../browser/features/cheat-guide/content.js';
-const guideNote={id:GUIDE_NOTE_ID,title:'作弊代碼',text:GUIDE_URL,authored:true,pinned:true,createdDay:1,updatedDay:1,updatedClock:'08:00'};
+const guideNote={id:GUIDE_NOTE_ID,title:'Cheat Code',text:GUIDE_URL,authored:true,pinned:false,createdDay:1,updatedDay:1,updatedClock:'08:00'};
 // Historical notes left on the phone before the player's first day.
 // These are fictional story credentials, not authentication for the Site.
 export const authoredNotes = [
@@ -65,10 +65,13 @@ export const authoredNotes = [
 
 export function ensureAuthoredNotes(s){
  const content=s.content;if(!content)return false;
+ const existing=content.notes?.find(n=>n.id===GUIDE_NOTE_ID);
+ const revised=existing&&['作弊代碼','作弊代码'].includes(existing.title)&&existing.text===GUIDE_URL;
+ if(revised){existing.title=guideNote.title;existing.pinned=false;}
  // A previous D55 build falsely marked an EMPTY Notes library as seeded.
  // Repair those existing saves once; future user deletions remain respected.
  if(content.notesSeedVersion===1&&(!s.story55?.version||content.notesSeedRepairVersion===1)){
-  if(content.cheatGuideSeedVersion===1)return false;
+  if(content.cheatGuideSeedVersion===1)return !!revised;
   content.notes??=[];
   if(!content.notes.some(n=>n.id===GUIDE_NOTE_ID))content.notes.push(structuredClone(guideNote));
   content.cheatGuideSeedVersion=1;return true;

@@ -24,7 +24,7 @@ import {pipeFlow,pipeSolved} from './games/pipe-network.js';
 import {arcadeAction,arcadeTick,arcadeNeedsTick} from './games/arcade.js';
 import {renderArcade} from './games/arcade-ui.js';
 import {ghostDevSkipAvailable,previewSkipD01} from './features/dev-skip/index.js';
-export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'工具程序'};
+export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'LOCAL WORKSPACE'};
 const button=(action,label,attrs='',cls='')=>`<button class="gh-button ${cls}" data-action="gh-${action}" ${attrs}>${label}</button>`;
 const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params});
 const fmt=ms=>`${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor(Math.max(0,ms)/1000%60).toString().padStart(2,'0')}`;

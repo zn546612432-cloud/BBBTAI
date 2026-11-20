@@ -33,7 +33,7 @@
   '查看行事曆，記住接下來的安排。',
   '別忽略朋友圈，偶爾也會有新的動態。',
   '在照片裡，也可以把喜歡的圖片設為壁紙。',
-  '備忘錄裡的「作弊代碼」，每天都有新的提示。'
+  '備忘錄裡的「Cheat Code」，每天都有新的提示。'
  ];
  const seenKey='xm-startup-intro-seen-v1';
  let seen=false,finished=false,ready=false,closed=false,failed=false,tipTimer,deadline,position=0;

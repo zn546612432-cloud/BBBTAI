@@ -8,6 +8,10 @@ on:
       - 'src/apps/ghost/features/workspace/**'
       - 'src/apps/ghost/features/flow-d03/**'
       - 'src/apps/ghost/index.js'
+      - 'src/apps/camera/**'
+      - 'src/apps/files/features/local-library/**'
+      - 'src/apps/mirage/index.js'
+      - 'scripts/verify-mobile-app-polish.mjs'
       - 'public/apps/ghost/deployment/**'
       - 'scripts/verify-ghost-deploy-motion-browser.mjs'
       - '.github/workflows/ghost-deploy-motion-browser.yml'
@@ -28,10 +32,14 @@ jobs:
       - run: npm install --no-save --no-package-lock playwright@1.55.0
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify-ghost-deploy-motion-browser.mjs
+      - name: Verify camera, Files and contract navigation
+        run: node scripts/verify-mobile-app-polish.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ghost-deploy-motion-mobile
-          path: qa/ghost-deploy-motion/
+          path: |
+            qa/ghost-deploy-motion/
+            qa/mobile-app-polish/
           if-no-files-found: ignore
           retention-days: 14

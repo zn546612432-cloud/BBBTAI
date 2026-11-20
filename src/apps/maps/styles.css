@@ -12,3 +12,8 @@
 .xm-maps-app .xm-map-tiles.leaflet-container{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 
 .xm-maps-app xm-leaflet-map,.xm-maps-app .xm-map-tiles{background:#b8d9e9}.xm-maps-app .leaflet-top.leaflet-left{top:77px}.xm-maps-app .leaflet-control-zoom{box-shadow:0 3px 12px #25415430;border:0;border-radius:12px;overflow:hidden}
+/* The marker is centred on its coordinate; callout tip floats above it. */
+.xm-map-pin,.xm-map-pin.is-fictional{display:grid;place-items:center}
+.xm-map-pin span,.xm-map-pin.is-fictional span{box-sizing:border-box;width:20px;height:20px;background:#007aff;border:3px solid white;border-radius:50%;box-shadow:0 1px 6px #003d8140}
+.xm-map-pin.is-fictional span:after{display:none}
+.xm-maps-app .leaflet-popup-content-wrapper{border-radius:12px}

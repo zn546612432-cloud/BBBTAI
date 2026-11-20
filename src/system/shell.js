@@ -38,14 +38,14 @@ export function lock(s,stage='cover',digits=''){
 const wxBackIcon='<svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4.8-7.2 7.2 7.2 7.2"/></svg>';
 const wxMoreIcon='<svg viewBox="0 0 28 24" width="29" height="24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.85"/><circle cx="14" cy="12" r="1.85"/><circle cx="23" cy="12" r="1.85"/></svg>';
 export function appFrame(s,app,body){
-  const dark=['mirage','ghost','noapp','weather'].includes(app.manifest.id),loc=s.nav.current;
+  const dark=['mirage','ghost','noapp','weather','camera'].includes(app.manifest.id),loc=s.nav.current;
   const id=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
   const c=id?s.content.conversations[app.manifest.id]?.find(c=>c.id===id):null;
   const p=app.manifest.id==='noapp'&&id==='tai'?taiPresence(s):null;
   const viewKey=(app.manifest.id==='wechat'&&['/','/contacts','/discover','/me'].includes(loc.route))?'wechat-tabs':(app.manifest.id==='photos'&&['/','/collections'].includes(loc.route))?'photos-tabs':(app.manifest.id==='mirage'&&['/','/contacts','/bounties','/bounties/completed','/market','/manage'].includes(loc.route))?'mirage-tabs':app.manifest.id+loc.route;
   const wechatChat=app.manifest.id==='wechat'&&!!c,wechatMoments=app.manifest.id==='wechat'&&loc.route.startsWith('/moments'),displayName=p?taiDisplayName(s):loc.route==='/contact/tai'?'聊天資訊':c?.name||app.manifest.name;
   const noappList=app.manifest.id==='noapp'&&loc.route==='/';
-  const nav=['aomi','browser'].includes(app.manifest.id)||wechatMoments?'':noappList?
+  const nav=['aomi','browser','camera'].includes(app.manifest.id)||wechatMoments?'':noappList?
     '<div class="app-nav"><span></span><strong>NoApp</strong><span></span></div>':wechatChat?
     `<div class="app-nav wx-native-nav">${btn('back',wxBackIcon,'nav-back','aria-label="返回微信"')}<strong>${esc(displayName)}${isGroup(c)?' ('+actors(c).length+')':''}</strong>${btn('wx-chat-more',wxMoreIcon,'nav-home wx-native-more','aria-label="聊天详情"')}</div>`:
     `<div class="app-nav">${btn('back','‹','nav-back','aria-label="返回"')}<div><strong>${esc(displayName)}</strong>${p?`<small class="nav-presence">${esc(p.reason)}</small>`:''}</div>${p?btn('tai-contact-more',wxMoreIcon,'nav-home wx-native-more','aria-label="聊天資訊"'):btn('home','⌂','nav-home','aria-label="主屏幕"')}</div>`;

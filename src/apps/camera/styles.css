@@ -1,0 +1,3 @@
+#screen-layer .app-view.app-camera{background:#000;padding-top:calc(60px + env(safe-area-inset-top,0px));color:white}
+.app-camera .app-content{overflow:hidden;min-height:0}
+#phone:has(.app-camera) #status-layer{background:#000}

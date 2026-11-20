@@ -1,4 +1,6 @@
-const idleSrc='/apps/ghost/deployment/field-idle.mp4',pulseSrc='/apps/ghost/deployment/field-pulse.mp4',idleWebm='/apps/ghost/deployment/field-idle.webm',pulseWebm='/apps/ghost/deployment/field-pulse.webm',poster='/apps/ghost/deployment/field-poster.webp';
+import {publicAssetPath} from '../../../../services/public-assets.js';
+const field=name=>publicAssetPath('apps/ghost/deployment/'+name);
+const idleSrc=field('field-idle.mp4'),pulseSrc=field('field-pulse.mp4'),idleWebm=field('field-idle.webm'),pulseWebm=field('field-pulse.webm'),poster=field('field-poster.webp');
 // No task clock, synthetic completion, or saved state. The actual receipt
 // count triggers a short visual response, and the normal store owns progress.
 const lastToken=new Map();

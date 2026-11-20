@@ -17,7 +17,9 @@ export function allMoments(s){
  // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
  return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>{
    const post=m.editedPosts?.[p.id]||p;
-   return post.id==='xw-0519'&&post.text==='早上好。今天的云很好看。'?{...post,text:p.text}:post;
+   if(post.id!=='xw-0519')return post;
+   const legacy=(post.likes||[]).length===1&&post.likes[0]==='熙蒙'&&(post.comments||[]).some(c=>c.by==='熙蒙'&&c.text==='哥哥早安');
+   return {...post,...(post.text==='早上好。今天的云很好看。'?{text:p.text}:{}),...(legacy?{likes:p.likes,comments:p.comments}:{})};
   }),...(m.posts||[])]
   .filter(p=>p&&p.id&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
    &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
@@ -29,6 +31,7 @@ export const momentProfiles=s=>Object.fromEntries(Object.entries(originalProfile
   if(resolved.bio==='别打电话，在工房。')resolved.bio=profile.bio;
   if(resolved.cover==='harbor')resolved.cover=profile.cover;
  }
+ if(name==='熙旺'&&resolved.bio==='平安就好。')resolved.bio=profile.bio;
  return [name,resolved];
 }));
 export function editMoment(s,id,edit){

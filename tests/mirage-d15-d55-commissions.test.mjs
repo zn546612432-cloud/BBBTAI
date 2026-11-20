@@ -118,7 +118,10 @@ test('Mirage shows exactly five daily rows and never offers acceptance on restri
  seedD04Contracts(s);
  setMirageAuthenticated(true);
  try{
-  let html=render({store},{route:'/bounties'});
+  const landing=render({store},{route:'/bounties'});
+  assert.ok(landing.indexOf('我的訂單')<landing.indexOf('訂單大廳'));
+  assert.doesNotMatch(landing,/data-action="mc-open-bounty"/);
+  let html=render({store},{route:'/bounties/hall'});
   assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
   for(const id of ['M-001','M-002','M-003','M-004','M-005'])assert.ok(html.includes(id),id);
   const restricted=render({store},{route:'/order/M-003'});
@@ -127,7 +130,7 @@ test('Mirage shows exactly five daily rows and never offers acceptance on restri
   assert.ok(render({store},{route:'/order/M-001'}).includes('data-action="mc-accept-bounty"'));
 
   s.day=16;tickD04Contracts(s);
-  html=render({store},{route:'/bounties'});
+  html=render({store},{route:'/bounties/hall'});
   assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
   assert.ok(html.includes('M-006')&&html.includes('M-007'));
   assert.ok(!html.includes('M-001'));
@@ -135,12 +138,12 @@ test('Mirage shows exactly five daily rows and never offers acceptance on restri
   assert.equal(render({store},{route:'/my-orders/active'}).includes('M-003'),false);
 
   s.day=23;tickD04Contracts(s);
-  html=render({store},{route:'/bounties'});
+  html=render({store},{route:'/bounties/hall'});
   assert.equal((html.match(/data-action="mc-open-bounty"/g)||[]).length,5);
   assert.ok(html.includes('R-004')&&html.includes('R-005')&&html.includes('R-006'));
   assert.ok(!html.includes('M-003'));
   s.content.orders.push({id:'editor-custom-open',title:'私人掛單',owner:'@private',reward:'500 USD',status:'OPEN',authored:true});
-  html=render({store},{route:'/bounties'});
+  html=render({store},{route:'/bounties/hall'});
   assert.ok(html.includes('私人掛單'),'developer-authored custom offers must remain accessible');
  }finally{setMirageAuthenticated(false);}
 });
@@ -151,7 +154,7 @@ test('Mirage puts SABC tiers directly in both the new bounty titles and their de
  const s=state(15);seedD04Contracts(s);setMirageAuthenticated(true);
  try{
   const ctx={store:{get:()=>s}};
-  const board=render(ctx,{route:'/bounties'});
+  const board=render(ctx,{route:'/bounties/hall'});
   assert.match(board,/【C級】 收私人會所會員資料/);
   assert.match(board,/【B級】 碼頭倉庫監控處理/);
   assert.match(board,/【S級】 收非法入境人員完整名冊/);
