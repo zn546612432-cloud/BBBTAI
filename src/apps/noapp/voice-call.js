@@ -1,7 +1,9 @@
 import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlayed} from '../../services/story55/state.js';
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {phoneBlocked} from '../../system/power/story.js';
-import {offerD41ChessInvitation,D41_CHESS_INVITATION} from '../../services/invitations.js';
+import {offerD41ChessInvitation,D41_CHESS_INVITATION,receiveInvitation,startAcceptedInvitation} from '../../services/invitations.js';
+import {renderChessInviteCard} from '../../components/chess-invitation.js';
+import {loadScriptedVoice,preloadScriptedVoice} from '../../services/voice/scripted-voice.js';
 import {d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
@@ -117,12 +119,11 @@ export function callView(s){
    phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
  const draft=scriptedCallDraft(),invitation=call.scripted?.id===D41_CALL.id&&s.invitations?.find(i=>i.id===D41_CHESS_INVITATION);
- const inviteButton=invitation&&['pending','deferred','accepted'].includes(invitation.status)?'<button type="button" class="button-primary tai-scripted-chess" data-action="tai-scripted-chess">♞ '+(invitation.status==='accepted'?'繼續棋局':'國際象棋邀請')+'</button>':'';
+ const inviteButton=invitation&&['pending','deferred','accepted'].includes(invitation.status)?'<div class="tai-scripted-chess">'+renderChessInviteCard(invitation,{name:'Dr Ouroboros',acceptAction:'tai-scripted-chess',continueAction:'tai-scripted-chess',showDefer:false})+'</div>':'';
  const composer=call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div>'+composer+'</div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
   (call.caption?'<p class="theirs">'+esc(call.caption)+'</p>':'')+
-  (call.scriptedTextFallback?'<button type="button" data-action="tai-scripted-next">繼續通話</button>':'')+
   (call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 继续收听</button>':'')+'</div>':'';
  return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
   +'<div class="tai-call-ambient" aria-hidden="true"><img src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt=""></div>'
@@ -138,6 +139,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
  call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,requestedByPlayer,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
  call.scripted=scripted;
+ if(scripted)preloadScriptedVoice(scripted.day);
  ctx.store.update(s=>{if(scripted)s.story55[scripted.triggerKey||'d42CallTriggered']=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',...(scripted?{scriptedCallId:scripted.id}:{}),link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
@@ -163,12 +165,14 @@ export function d42CallDue(s){
  return isStory55(s)&&!s.story55.ended&&s.day===D42_CALL.day&&s.clock>=D42_CALL.at&&completed(s,'show')&&taiRecognized(s)&&!scriptedCallPlayed(s,D42_CALL);
 }
 export function maybeStartD42Call(ctx){
+ if([41,42].includes(ctx.store.get().day))preloadScriptedVoice(42);
  return startTimedScriptedCall(ctx,D42_CALL,d42CallDue);
 }
 export function d41CallDue(s){
  return isStory55(s)&&!s.story55.ended&&s.day===D41_CALL.day&&taiRecognized(s)&&!scriptedCallPlayed(s,D41_CALL)&&(s.clock>=D41_CALL.at||overnightSceneNight55(s));
 }
 export function maybeStartD41Call(ctx){
+ if([40,41].includes(ctx.store.get().day))preloadScriptedVoice(41);
  return startTimedScriptedCall(ctx,D41_CALL,d41CallDue);
 }
 function startTimedScriptedCall(ctx,script,due,{retryNow=false}={}){
@@ -256,6 +260,17 @@ async function playCallAudio(ctx,blob,sessionId,revision,onStart){
    }else begin();
   }).catch(blocked);
  });
+}
+export const d41CallConnected=()=>call.state==='connected'&&call.scripted?.id===D41_CALL.id;
+export async function playD41ChessVoice(ctx,blob,text){
+ if(!d41CallConnected())return null;
+ const sessionId=call.sessionId,revision=call.revision;
+ call.caption=text;call.busy=true;ctx.refresh?.();
+ try{
+  const outcome=await playCallAudio(ctx,blob,sessionId,revision);
+  if(outcome==='completed'&&call.sessionId===sessionId)call.turns.push({role:'assistant',content:text,playedAt:Date.now()});
+  return outcome;
+ }finally{if(call.sessionId===sessionId){call.caption='';call.busy=false;ctx.refresh?.();}}
 }
 function interruptCallTurn(ctx,source='player'){
  if(call.state!=='connected')return false;
@@ -437,13 +452,13 @@ export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
  return true;
 }
 async function respond(text,ctx){return generateTurn(ctx,{text});}
-// Prepare all three clips first, so TTS latency cannot stretch the authored
-// 2.5-second silence. The same live call player handles each clip and hangup.
+// Preload concurrently, but never make the first line wait for later clips.
 export async function playScriptedCallSequence(script,{current,synthesize,play,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}){
- const clips=await Promise.all(script.lines.map(text=>synthesize(text)));
+ const clips=script.lines.map(text=>Promise.resolve(synthesize(text)).catch(()=>null));
  for(let i=0;i<clips.length;i++){
   if(!current())return;
-  if(await play(clips[i],script.lines[i])!=='completed'||!current())return;
+  const clip=await clips[i];if(!current())return;
+  if(await play(clip,script.lines[i])!=='completed'||!current())return;
   if(i+1<clips.length)await wait(script.gapMs);
  }
 }
@@ -463,13 +478,15 @@ async function playScriptedOpening(ctx){
    const lines=[];for(let i=call.scriptIndex;i<steps.length&&steps[i][0]==='tai';i++)lines.push(steps[i][1]);
    const before=call.scriptIndex;
    await playScriptedCallSequence({...script,lines},{current,
-   synthesize:text=>voicePreview({text:text.replace(/\bnya\b/gi,'奈亞'),tone:'neutral',directed:true}).catch(()=>null),
+   synthesize:text=>loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)).catch(()=>null),
    play:async(blob,text)=>{
     call.caption=text;call.lastSpeech=text;ctx.refresh?.();
     const outcome=blob?await playCallAudio(ctx,blob,sessionId,revision):'failed';
-    // Mandatory calls must remain playable even on a device whose TTS/audio
-    // fails. Show the exact authored line and require a deliberate Continue.
-    if(outcome==='failed'&&current()){call.scriptedTextFallback=text;call.audioReady=false;ctx.refresh?.();return 'interrupted';}
+    // Do not create a separate troubleshooting flow inside the story.
+    if(outcome==='failed'&&current()){
+     call.turns.push({role:'assistant',content:text,voiceUnavailable:true});call.scriptIndex++;call.audioReady=false;
+     ctx.refresh?.();return 'completed';
+    }
     if(current()&&outcome==='completed'){
      call.turns.push({role:'assistant',content:text,playedAt:Date.now()});call.scriptIndex++;call.caption='';call.audioReady=false;ctx.refresh?.();
     }
@@ -519,16 +536,11 @@ export function submitCall(form,ctx){
 }
 export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback='',outcomeOverride=''}={}){
  switch(action){
- case 'tai-scripted-next':{
-  if(call.state!=='connected'||call.busy||!call.scriptedTextFallback)return true;
-  const text=call.scriptedTextFallback;call.scriptedTextFallback=null;call.caption='';
-  call.turns.push({role:'assistant',content:text,playedAt:Date.now()});call.scriptIndex++;
-  void playScriptedOpening(ctx);return true;
- }
  case 'tai-scripted-chess':{
   const inv=ctx.store.get().invitations?.find(i=>i.id===D41_CHESS_INVITATION);
   if(call.scripted?.id!==D41_CALL.id||!inv)return true;
-  ctx.router.open(inv.matchId?{appId:'chess',route:'/match/'+inv.matchId}:{appId:'chess',route:'/invitation',params:{invitationId:inv.id}});
+  const matchId=inv.status==='accepted'?startAcceptedInvitation(ctx.store,inv.id):receiveInvitation(ctx.store,inv.id);
+  if(matchId)ctx.router.open({appId:'chess',route:'/match/'+matchId});
   return true;
  }
  case 'tai-minimize-call':

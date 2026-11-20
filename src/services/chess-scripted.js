@@ -33,8 +33,9 @@ export function sendD41ChessDraft(store,id,text){
  let sent=false;store.update(s=>{const m=s.matches.find(x=>x.id===id);if(!d41ChessDraft(m)||text!==D41_CHESS_DRAFT)return;
  m.chat.push({id:`${m.id}-d41-checkmate`,from:'player',text,time:s.clock});moveOne(s,m);sent=true;});return sent;
 }
-export function completeD41ChessCue(store,id,ply){
+export function completeD41ChessCue(store,id,ply,{played=true}={}){
  let done=false;store.update(s=>{const m=s.matches.find(x=>x.id===id);const script=m?.d41Script;
  if(!isD41Chess(m)||script?.pendingVoice!==ply)return;
- script.spoken.push(ply);script.pendingVoice=null;if(ply===D41_CHESS_MOVES.length&&m.result==='player-win')script.completed=true;done=true;});return done;
+ if(played)script.spoken.push(ply);else (script.voiceUnavailable??=[]).push(ply);
+ delete script.voiceFailed;script.pendingVoice=null;if(ply===D41_CHESS_MOVES.length&&m.result==='player-win')script.completed=true;done=true;});return done;
 }
