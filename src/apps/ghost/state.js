@@ -63,7 +63,7 @@ export function nextGhostRound(s,id){
 export function begin(s,id,now=Date.now()){const g=ensureGhost(s),o=g.orders[id];if(!o||!['authorized','failed'].includes(o.status))return false;if(o.requiresKeyEntry&&!o.keyVerified)return false;const d02=d02OrderOfStep(id);if(d02&&(s.content.orders?.find(x=>x.id===d02)?.status!=='ACCEPTED'||!s.story55?.d02?.deployed?.[d02]||s.day>D02_DEADLINES[d02].day||s.day===D02_DEADLINES[d02].day&&s.clock>D02_DEADLINES[d02].clock))return false;
  if(d03OrderOfStep(id)&&!d03CanRun(s,id))return false;
  if(d04OrderOfStep(id)&&!d04CanRun(s,id))return false;
- if(id===D01_REPAIR){o.settings??={};o.settings.pipeNetwork=true;o.settings.pipeSize=[5,5,6,6,7][Math.min(4,Math.max(0,Number(s.story55?.d01?.completedRounds)||0))];o.settings.seconds=null;}
+ if(id===D01_REPAIR){o.settings??={};o.settings.pipeNetwork=true;o.settings.pipeSize=3;o.settings.seconds=null;}
  const cfg=configFor(s,o.type,o.id);/* Mistakes and timeouts only restart the current level; attempts are unlimited. */o.attempts++;o.status='running';o.startedAt=now;o.deadline=Number.isFinite(cfg.seconds)&&cfg.seconds>0?now+cfg.seconds*1000:null;o.board=uniqueBoard(g,o.type,cfg);
  // Keep the old board fields for existing story contracts and saved fixtures.
  // New attempts use the playable arcade engine; pre-existing attempts resume their old UI.
@@ -151,12 +151,19 @@ export function submit(s,id,now=Date.now()){if(linkedMission(s,id))return false;
  const o=s.ghost?.orders[id];if(o?.status!=='success')return false;o.status='settling';o.submittedAt=now;o.dueAt=now+120000;return true;}
 export function settle(s,now=Date.now()){const g=s.ghost;if(!g)return false;let changed=false;for(const o of Object.values(g.orders)){if(linkedMission(s,o.id))continue;if(o.status==='settling'&&now>=o.dueAt){const reward=configFor(s,o.type,o.id).reward;if(Number.isFinite(reward)&&reward>=0){g.balance+=reward;if(s.content){const wallet=s.content.mirage??={};wallet.digitalBalance=(wallet.digitalBalance||0)+reward;wallet.digitalTransactions??=[];wallet.digitalTransactions.unshift({orderId:o.id,amount:reward,at:now});const order=s.content.orders?.find(x=>x.id===o.id);if(order)order.status='COMPLETED';}o.status='paid';o.paidAt=now;advanceLinkedMission(s,o.id,6);recordLinkedMissionPayment(s,o.id,reward,now);changed=true;}}}return tickLinkedContracts(s)||changed;}
 
-export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>!isTaiRemoteOrderPaused(s,o)&&(o.status==='preview-win'&&now>=o.previewUntil||o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board)||o.status==='running'&&(o.type==='strike'&&!o.board?.arcade?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward)));}
+export function needsWorldTick(s,now=Date.now()){return linkedNeedsWorldTick(s)||Object.values(s.ghost?.orders||{}).some(o=>!isTaiRemoteOrderPaused(s,o)&&(o.status==='preview-win'&&now>=o.previewUntil||o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&(o.board.size>3||pipeSolved(o.board))||o.status==='running'&&(o.type==='strike'&&!o.board?.arcade?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline)||o.status==='settling'&&now>=o.dueAt&&Number.isFinite(configFor(s,o.type,o.id).reward)));}
 export function advanceGhost(s,now=Date.now()){for(const o of Object.values(s.ghost?.orders||{})){
  if(isTaiRemoteOrderPaused(s,o))continue;
  // Repair persisted D01 puzzles that visibly connected the endpoints before
  // the corrected rule shipped; the player does not need to rotate again.
  if(o.id===D01_REPAIR&&o.status==='running'&&o.board?.size&&pipeSolved(o.board))startD01PipePreview(s,o.id,now);
+ // Migrate only the unfinished current tutorial board. Completed 20%
+ // checkpoints, attempts and an already-connected board are preserved.
+ if(o.id===D01_REPAIR&&o.status==='running'&&o.board?.size>3){
+  o.settings??={};Object.assign(o.settings,{pipeNetwork:true,pipeSize:3,seconds:null});
+  o.board=uniqueBoard(s.ghost,o.type,configFor(s,o.type,o.id));
+  o.deadline=null;o.moves=0;o.errors=0;
+ }
  if(o.status==='preview-win'&&now>=o.previewUntil){finish(s,o.id,true,now);continue;}
  if(o.status==='running'&&(o.type==='strike'&&!o.board?.arcade?now-o.startedAt>=configFor(s,o.type,o.id).attackMs:o.deadline!==null&&now>=o.deadline))finish(s,o.id,o.type==='strike'&&!o.board?.arcade,now);
  }
