@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "day": 6,
+  "date": "2025-05-24",
+  "title": "D06 小辛日落视频置顶",
+  "stage": "approved",
+  "scope": "optional",
+  "systems": [
+    "moments",
+    "time"
+  ],
+  "assets": [
+    {
+      "id": "d06-sunset-video",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/media/d06-xiaoxin-sunset.mp4"
+    },
+    {
+      "id": "d06-sunset-cover",
+      "source": "bundled-local",
+      "path": "public/apps/wechat/media/d06-xiaoxin-sunset-cover.webp"
+    }
+  ],
+  "events": [
+    {
+      "id": "xs-d06",
+      "kind": "moment",
+      "surface": "wechat",
+      "capability": "moments.d06-sunset",
+      "owner": "moments",
+      "actor": "小辛",
+      "text": "一起看个日落叭",
+      "assetId": "d06-sunset-video",
+      "pinned": true,
+      "likes": [
+        "熙蒙",
+        "熙旺",
+        "胡枫",
+        "仔仔",
+        "阿威"
+      ],
+      "comments": [
+        {
+          "by": "仔仔",
+          "text": "你什么时候拍的？！！"
+        },
+        {
+          "by": "小辛",
+          "to": "仔仔",
+          "text": "🕶️路过黑沙滩不得不来整一下"
+        },
+        {
+          "by": "胡枫",
+          "text": "这么韩，过来韩国陪我"
+        },
+        {
+          "by": "小辛",
+          "to": "胡枫",
+          "text": "给我买头等舱机票我全天候可✈️"
+        }
+      ],
+      "trigger": {
+        "type": "day-time",
+        "ref": "18:24"
+      },
+      "requires": [],
+      "timing": {
+        "day": 6,
+        "at": "18:24"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "sunset-trigger",
+      "type": "trigger",
+      "verify": "沿用原 D06 18:24 发布时间，出现用户原文、视频与全部互动。"
+    },
+    {
+      "id": "sunset-negative",
+      "type": "negative",
+      "verify": "D06 18:23 前不可见，熙泰不出现在点赞或评论。"
+    },
+    {
+      "id": "sunset-idempotency",
+      "type": "idempotency",
+      "verify": "同一 xs-d06 ID，刷新不新增重复内容。"
+    },
+    {
+      "id": "sunset-save-restore",
+      "type": "save-restore",
+      "verify": "已有存档沿用原朋友圈数据模型，不清空玩家评论或点赞覆盖。"
+    },
+    {
+      "id": "sunset-cross-app",
+      "type": "cross-app",
+      "verify": "微信发现和个人资料走原 Moments renderer；不引入其他 App 副作用。"
+    },
+    {
+      "id": "sunset-late-entry",
+      "type": "late-entry",
+      "verify": "超过三天后小辛个人主页仍可通过置顶打开此视频与评论。"
+    },
+    {
+      "id": "sunset-assets",
+      "type": "assets",
+      "verify": "视频分段裁边去除上下移动水印，保留原声及11.5秒完整时长；封面取自同一视频日落画面。"
+    },
+    {
+      "id": "sunset-date-clock",
+      "type": "date-clock",
+      "verify": "D06 为 2025-05-24，发布时间沿用原记录18:24。"
+    }
+  ]
+}

@@ -144,6 +144,28 @@ test('D41 Good Show photo appears at 23:35; four NPC likes and threaded comments
  assert.doesNotMatch(render(),/把桌面收拾干净/);
 });
 
+test('D06 sunset video respects publication time and remains playable through the profile pin after feed expiry',()=>{
+ const s=initialState();s.day=6;s.clock='18:23';
+ assert.doesNotMatch(renderMoments(s,'/moments/profile/小辛'),/查看置顶动态/);
+ s.clock='18:24';
+ assert.match(renderMoments(s,'/moments'),/一起看个日落叭/);
+ assert.match(renderMoments(s,'/moments/profile/小辛'),/data-action="wx-moment-focus" data-id="xs-d06"/);
+ s.day=12;
+ assert.doesNotMatch(renderMoments(s,'/moments'),/一起看个日落叭/);
+ assert.match(renderMoments(s,'/moments/profile/小辛'),/d06-xiaoxin-sunset-cover.webp/);
+ let next;
+ const ctx={store:{get:()=>s},router:{open:route=>next=route}};
+ handleMoment('wx-moment-focus',{dataset:{id:'xs-d06'}},ctx);
+ const detail=renderMoments(s,next.route);
+ for(const text of ['一起看个日落叭','熙蒙、熙旺、胡枫、仔仔、阿威','仔仔：</strong>你什么时候拍的？！！','小辛 回复 仔仔：</strong>🕶️路过黑沙滩不得不来整一下','胡枫：</strong>这么韩，过来韩国陪我','小辛 回复 胡枫：</strong>给我买头等舱机票我全天候可✈️'])assert.ok(detail.includes(text),text);
+ handleMoment('wx-moment-video',{dataset:{id:'xs-d06'}},ctx);
+ const player=renderMoments(s,next.route);
+ assert.match(player,/<video controls autoplay playsinline/);
+ assert.match(player,/d06-xiaoxin-sunset.mp4/);
+ for(const asset of ['d06-xiaoxin-sunset.mp4','d06-xiaoxin-sunset-cover.webp'])assert.ok(existsSync(new URL('../public/apps/wechat/media/'+asset,import.meta.url)));
+ assert.equal(renderMoments(s,'/moments/comment/xs-d06'),detail);
+});
+
 
 test('Moments use the stable site media directory even when older release folders disappear',()=>{
  const module='https://example.test/BBBTAI/releases/0123456789abcdef/src/services/public-assets.js';
