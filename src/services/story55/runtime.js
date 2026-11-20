@@ -443,7 +443,7 @@ export function tickStory55(s){
   const node=nodeById(s,m.node);
   const arrivalDay=m.id==='s55-d13-wallet-mail'?s.day:node?.at?node.day:s.day,arrivalClock=m.id==='s55-d13-wallet-mail'?s.clock:node?.at||s.clock;
   s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,time:arrivalClock,receivedClock:arrivalClock,date:date55(arrivalDay)});
-  s.notifications.unshift({id:'s55-mail-'+m.id,title:'KIRA',body:m.subject,day:arrivalDay,clock:arrivalClock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
+  s.notifications.unshift({id:'s55-mail-'+m.id,storyMessage:true,title:'KIRA',body:m.subject,day:arrivalDay,clock:arrivalClock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
  }}
  // Previous prototype inserted every scene as a Calendar event. Never do that.
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));

@@ -1,16 +1,19 @@
 import {registerAudio} from '../../system/audio/index.js';
-import {musicLibrary} from './features/library/index.js';
+import {musicLibrary,musicAccount,musicBrowse} from './features/library/index.js';
 import {musicPlayer} from './features/player/index.js';
 import {uid} from '../../services/id.js';
 export const manifest={id:'music',name:'音乐',icon:14,defaultRoute:'/',supportsDeepLink:true,kicker:'MUSIC'};
-let audio=null,progress=0,view='library',tab='listen',query='',repeat=true,shuffle=false;
+let audio=null,progress=0,view='library',tab='listen',query='',repeat=true,shuffle=false,category='歌曲';
 export const isPlaying=()=>!!audio&&!audio.paused;
 const format=n=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
-export const render=({store})=>`<div class="ios-music">${view==='player'?musicPlayer(store.get().musicPlaying,progress,repeat,shuffle):musicLibrary({playing:store.get().musicPlaying,tab,query})}</div>`;
+export const render=({store})=>`<div class="ios-music${view==='player'?' music-full-player':''}">${view==='player'?musicPlayer(store.get().musicPlaying,progress,repeat,shuffle):view==='account'?musicAccount():view==='browse'?musicBrowse(category):musicLibrary({playing:store.get().musicPlaying,tab,query})}</div>`;
 const sync=()=>{if(!audio)return;progress=audio.duration?audio.currentTime/audio.duration*100:0;const seek=document.querySelector('#screen-layer .music-seek-input');if(seek&&document.activeElement!==seek)seek.value=String(progress);const current=document.querySelector('[data-music-current]'),duration=document.querySelector('[data-music-duration]');if(current)current.textContent=format(audio.currentTime);if(duration)duration.textContent=format(audio.duration||0);};
 export function handle(a,t,c){
  if(a==='music-tab'){tab=t.dataset.tab;view='library';c.refresh();}
  if(a==='music-open'){view='player';c.refresh();sync();}
+ if(a==='music-account'){view='account';c.refresh();}
+ if(a==='music-browse'){category=t.dataset.category;view='browse';c.refresh();}
+ if(a==='music-play-track'){view='player';c.refresh();sync();if(!c.store.get().musicPlaying)handle('music-toggle',t,c);}
  if(a==='music-library'){view='library';c.refresh();}
  if(a==='music-restart'||a==='music-next'){if(audio)audio.currentTime=0;sync();}
  if(a==='music-shuffle'){shuffle=!shuffle;c.refresh();}
@@ -22,5 +25,5 @@ export function handle(a,t,c){
  }
  if(a==='music-share'){c.store.update(s=>s.content.conversations.noapp[0].messages.push({id:uid(),from:'me',text:'分享音乐：今夜有雨',kind:'text',time:s.clock,actual:true}));c.router.open({appId:'noapp',route:'/chat/tai'});}
 }
-export function input(el){if(el.name==='music-search'){query=el.value;const match='今夜有雨 h3r3'.includes(query.trim().toLowerCase())||!query.trim();const track=el.closest('.music-library')?.querySelector('.music-track'),empty=el.closest('.music-library')?.querySelector('.music-no-results');if(track)track.hidden=!match;if(empty)empty.hidden=match;}}
+export function input(el){if(el.name==='music-search'){query=el.value;const match='今夜有雨 h3r3'.includes(query.trim().toLowerCase())||!query.trim();const track=el.closest('.music-library')?.querySelector('.music-tracks'),empty=el.closest('.music-library')?.querySelector('.music-no-results');if(track)track.hidden=!match;if(empty)empty.hidden=match;}}
 export function change(el){if(el.name==='music-seek'&&audio&&audio.duration){audio.currentTime=Number(el.value)/100*audio.duration;sync();}}

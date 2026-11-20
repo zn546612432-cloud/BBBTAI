@@ -89,7 +89,7 @@ export function seedD02(s){
  const legacyA=s.content.orders.find(o=>o.id===D02_A);
  if(legacyA?.status==='ACCEPTED'&&!s.content.mail.some(m=>m.id===D02_A_MAIL)){
   s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:D02_KIRA_BODY[D02_A],attachments:[D02_KEY_FILES[D02_A]],read:false,storyD02:true,day:s.day,time:s.clock});
-  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
+  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({storyMessage:true,id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
  }
  // D02 .key files use KIRA native attachments, including in older saves.
  for(const [id,mailId] of [[D02_S,D02_MAIL],[D02_A,D02_A_MAIL]]){
@@ -126,10 +126,10 @@ export function acceptD02(s,id){
   const list=s.content.conversations.mirage;
   if(!list.some(c=>c.id===D02_TALIA))list.push({id:D02_TALIA,name:'Talia',avatar:'T',online:false,unread:1,storyD02:true,lastMessageAt:Date.now(),messages:[msg('d02-talia-connected',D02_TALIA,'通信已建立',s.clock)]});
   if(!s.content.mail.some(m=>m.id===D02_MAIL))s.content.mail.unshift({id:D02_MAIL,from:'Talia · MIRAGE',subject:'[MIRAGE] CHIP ACCESS / KEY',body:D02_KIRA_BODY[D02_S],read:false,storyD02:true,day:s.day,time:s.clock,attachments:[D02_KEY_FILES[D02_S]]});
-  s.notifications.unshift({id:'d02-talia-mail-notice',title:'KIRA',body:'[MIRAGE] CHIP ACCESS / KEY',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_MAIL,params:{}}});
+  s.notifications.unshift({storyMessage:true,id:'d02-talia-mail-notice',title:'KIRA',body:'[MIRAGE] CHIP ACCESS / KEY',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_MAIL,params:{}}});
  }else{
   if(!s.content.mail.some(m=>m.id===D02_A_MAIL))s.content.mail.unshift({id:D02_A_MAIL,from:'ANONYMOUS / MIRAGE',subject:'[MIRAGE] ACCESS AUTHORIZATION',body:D02_KIRA_BODY[D02_A],attachments:[D02_KEY_FILES[D02_A]],read:false,storyD02:true,day:s.day,time:s.clock});
-  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
+  if(!s.notifications.some(n=>n.id==='d02-anonymous-mail-notice'))s.notifications.unshift({storyMessage:true,id:'d02-anonymous-mail-notice',title:'KIRA',body:'[MIRAGE] ACCESS AUTHORIZATION',day:s.day,clock:s.clock,link:{appId:'kira',route:'/mail/'+D02_A_MAIL,params:{}}});
  }
  const list=s.content.reminders??(s.content.reminders=[]);
  if(!list.some(r=>r.id===d02ReminderId(id)))list.push({id:d02ReminderId(id),title:'MIRAGE · '+(id===D02_S?'S 级 Talia 委托':'A 级监控系统干扰'),done:false,storyD02Order:true,orderId:id,deadlineDay:D02_DEADLINES[id].day,deadlineClock:'23:59'});

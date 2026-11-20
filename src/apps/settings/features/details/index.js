@@ -1,12 +1,13 @@
+import {APPLE_ACCOUNT_NAME} from '../../../../system/apple-account.js';
 import {settingRow as row,settingToggle as toggle,infoRow as info} from '../rows/index.js';
 import {registry} from '../../../../system/registry.js';
 import {esc} from '../../../../system/ui.js';
 import {rebaseBundledPublicAsset} from '../../../../services/public-assets.js';
-const title={account:'熙蒙',airplane:'飞行模式',wifi:'无线局域网',bluetooth:'蓝牙',cellular:'蜂窝网络',hotspot:'个人热点',battery:'电池',vpn:'VPN',general:'通用',about:'关于本机',update:'软件更新',storage:'iPhone 储存空间',date:'日期与时间',language:'语言与地区',accessibility:'辅助功能',wallpaper:'墙纸',notifications:'通知',sound:'声音与触感',focus:'专注模式',security:'面容 ID 与密码'};
+const title={account:APPLE_ACCOUNT_NAME,airplane:'飞行模式',wifi:'无线局域网',bluetooth:'蓝牙',cellular:'蜂窝网络',hotspot:'个人热点',battery:'电池',vpn:'VPN',general:'通用',about:'关于本机',update:'软件更新',storage:'iPhone 储存空间',date:'日期与时间',language:'语言与地区',accessibility:'辅助功能',wallpaper:'墙纸',notifications:'通知',sound:'声音与触感',focus:'专注模式',security:'面容 ID 与密码'};
 export function settingsDetail(s,key){const head=`<button class="settings-back" data-action="settings-back">‹ 设置</button><h1>${title[key]||'设置'}</h1>`;
  let body='';
  switch(key){
- case 'account':body=`<section>${info('姓名','熙蒙')}${info('此手机','熙蒙的 iPhone')}</section>`;break;
+ case 'account':body=`<section>${info('姓名',APPLE_ACCOUNT_NAME)}${info('此手机','熙蒙的 iPhone')}</section>`;break;
  case 'airplane':body=`<section>${toggle('飞行模式','airplane',s.airplane)}</section>`;break;
  case 'wifi':body=`<section>${toggle('Wi-Fi','wifi',s.wifi!==false)}</section>${s.wifi!==false?`<p class="settings-caption">我的网络</p><section>${info('澳门 · 虚拟网络','已连接')}</section>`:''}`;break;
  case 'bluetooth':body=`<section>${toggle('蓝牙','bluetooth',s.bluetooth!==false)}</section><p class="settings-caption">${s.bluetooth===false?'蓝牙已关闭':'我的设备 · 暂无已配对设备'}</p>`;break;

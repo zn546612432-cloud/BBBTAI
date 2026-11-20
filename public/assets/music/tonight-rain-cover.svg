@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Rainy city at night">
+  <defs>
+    <linearGradient id="sky" x2=".85" y2="1">
+      <stop stop-color="#172b36"/>
+      <stop offset=".55" stop-color="#667e80"/>
+      <stop offset="1" stop-color="#1e3338"/>
+    </linearGradient>
+    <linearGradient id="street" x1=".45" y1="0" x2=".6" y2="1">
+      <stop stop-color="#536e70"/>
+      <stop offset="1" stop-color="#101e25"/>
+    </linearGradient>
+    <radialGradient id="light"><stop stop-color="#e9cfa0" stop-opacity=".85"/><stop offset=".2" stop-color="#c4ad82" stop-opacity=".43"/><stop offset="1" stop-color="#9eac91" stop-opacity="0"/></radialGradient>
+    <pattern id="rain" width="53" height="73" patternUnits="userSpaceOnUse" patternTransform="rotate(14)">
+      <path d="M7 6v33M23 43v18M46 0v22" stroke="#b4cac9" stroke-width="1" opacity=".2"/>
+    </pattern>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".76" numOctaves="3" stitchTiles="stitch" result="n"/><feColorMatrix type="matrix" values="0 0 0 0 .72 0 0 0 0 .78 0 0 0 0 .77 0 0 0 .15 0"/><feBlend in="SourceGraphic" mode="soft-light"/></filter>
+    <filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <rect width="640" height="640" fill="url(#sky)"/>
+  <path d="M0 330 238 273 640 332V640H0Z" fill="url(#street)"/>
+  <path d="M0 0H170V335L0 410Zm640 0H490v337l150 104Z" fill="#172a31"/>
+  <path d="M170 106h48v229l-48 20m320-183h-49v178l49 17" fill="#2e4448"/>
+  <path d="M0 18h110v262H0m640-231h-83v223h83" stroke="#35484c" stroke-width="10" fill="none"/>
+  <g opacity=".65">
+    <path d="M33 122h19v53H33m51-32h13v35H84m477-64h18v42h-18m29 52h15v56h-15" fill="#c5bea1"/>
+    <path d="M0 253h136v6H0m499 32h141v6H499" fill="#7f9291"/>
+  </g>
+  <circle cx="397" cy="273" r="94" fill="url(#light)"/>
+  <path d="M399 271v159m0-159h-18" stroke="#14282d" stroke-width="4" stroke-linecap="round"/>
+  <path d="M379 271h23" stroke="#ead5b0" stroke-width="5" stroke-linecap="round"/>
+  <g filter="url(#blur)" opacity=".55" fill="#d6b37e">
+    <path d="M386 428h10l9 171-24-2Z"/><path d="M45 391h10L9 562H0Z"/><path d="M578 364h7l49 207-15-3Z"/>
+  </g>
+  <g stroke="#b0bcad" opacity=".32" fill="none">
+    <path d="m238 389-40 99m235-98 59 123M0 565l162-18m263 40 215 10M15 625l201-10M300 496l-38 2m64 43 75 3" stroke-width="3"/>
+  </g>
+  <g fill="#0e1b20">
+    <path d="M250 371Q300 296 350 371q-50-14-100 0Z"/>
+    <path d="M300 365v37" stroke="#0e1b20" stroke-width="3"/>
+    <circle cx="310" cy="390" r="13"/>
+    <path d="M295 403q12-7 26 0l13 72-14 3-3 50h-12l-4-48-7 47h-12l5-56Z"/>
+  </g>
+  <rect width="640" height="640" fill="url(#rain)"/>
+  <rect width="640" height="640" fill="transparent" filter="url(#grain)"/>
+  <g fill="#eeebe3" font-family="'PingFang SC','Noto Sans CJK SC',sans-serif">
+    <text x="30" y="54" font-size="21" letter-spacing="5" font-weight="500">今夜有雨</text>
+    <text x="31" y="77" font-size="13" letter-spacing="4" opacity=".85">h3r3</text>
+  </g>
+</svg>

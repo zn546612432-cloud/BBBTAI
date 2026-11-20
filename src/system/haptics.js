@@ -22,6 +22,18 @@ function switchTap(doc) {
   }
 }
 
+// Async notifications cannot use the gesture-only iOS switch tap. Show the
+// simulated handset vibrating on browsers without hardware vibration.
+export function storyMessageHaptic({nav=globalThis.navigator,phone=globalThis.document?.querySelector('#phone'),reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches}={}){
+  try {if(typeof nav?.vibrate==='function'&&nav.vibrate([45,65,45]))return 'vibrate';}catch{}
+  if(!phone?.animate)return 'none';
+  try {
+    const frames=reducedMotion?[{opacity:1},{opacity:.86},{opacity:1}]:[0,-2,2,-2,2,-1,0].map(x=>({translate:`${x}px 0`}));
+    phone.animate(frames,{duration:260,easing:'ease-in-out'});
+    return 'visual';
+  }catch{return 'none';}
+}
+
 // iOS-like "wrong passcode": three short pulses. Returns which mechanism was used.
 export function errorHaptic({ nav = globalThis.navigator, doc = globalThis.document, wait = setTimeout } = {}) {
   try {
