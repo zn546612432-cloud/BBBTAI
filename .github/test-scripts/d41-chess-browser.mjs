@@ -16,15 +16,20 @@ const context=await browser.newContext({viewport:{width:390,height:844},deviceSc
 await context.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,value);},{key,value:JSON.stringify(s)});
 mkdirSync('d23-chess-browser-results/d41',{recursive:true});
 const page=await context.newPage(),errors=[],tts=[];page.on('pageerror',e=>errors.push(e.message));
-// Use actual browser audio playback with a short synthetic WAV; no live key is used.
+// Use the published MP3 recordings. Force one transient load failure while
+// ensuring the game recovers without skipping audio or spending live quota.
 const wav=Buffer.alloc(44+2400);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(8000,24);wav.writeUInt32LE(16000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(2400,40);
-let bishopAttempts=0;
+let bishopAttempts=0,bishopFileAttempts=0;const recordings=new Set();
 await page.route('**/api/voice/tts',async route=>{
  const text=route.request().postDataJSON().text;tts.push(text);
  if(text.includes('Go bishop')&&++bishopAttempts===1){await new Promise(r=>setTimeout(r,12000));await route.fulfill({status:503,body:'temporary test failure'});return;}
  await route.fulfill({status:200,contentType:'audio/wav',body:wav});
 });
-await page.route('**/assets/story55/d41-d42/*.mp3',route=>route.fulfill({status:404,body:''}));
+await page.route('**/assets/story55/d41-d42/*.mp3',async route=>{
+ const file=new URL(route.request().url()).pathname.split('/').at(-1);recordings.add(file);
+ if(file==='d41-chess-19.mp3'&&++bishopFileAttempts===1){await route.fulfill({status:404,body:''});return;}
+ await route.continue();
+});
 try{
  await page.goto(process.env.CHESS_LOCAL_URL||'http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  const boot=page.locator('#xm-boot-next');if(await boot.count()){await boot.click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});}
@@ -56,8 +61,9 @@ try{
  const final=await match();assert.equal(final.history.length,37);assert.equal(final.history.at(-1).san,'Qh7#');assert.equal(final.result,'player-win');assert.equal(final.chat.length,7);
  assert.deepEqual(final.d41Script.spoken,[1,7,19,25,31,37]);assert.equal(final.d41Script.voiceUnavailable,undefined);
  assert.equal(await page.locator('[data-action="d41-retry-voice"],[data-action="d41-skip-voice"],[data-action="tai-scripted-next"]').count(),0);
- assert.equal(tts.filter(t=>t.includes('恭喜')).length,1);
- assert.equal(bishopAttempts,2);assert.ok(!tts.some(t=>/Knight, knight/i.test(t)));
+ assert.equal(tts.filter(t=>t.includes('恭喜')).length,0);
+ assert.equal(bishopAttempts,1);assert.equal(bishopFileAttempts,2);assert.equal(tts.length,1);
+ assert.equal(recordings.size,10);assert.ok(!recordings.has('d41-chess-13.mp3'));
  await page.locator('.board-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'d23-chess-browser-results/d41/checkmate.png'});
  assert.deepEqual(errors,[]);console.log('D41 MOBILE PASS',JSON.stringify({url:page.url(),title:await page.title(),plies:final.history.length,voiceCount:tts.length,final:final.history.at(-1).san,result:final.result,errors}));
 }finally{await browser.close();}
