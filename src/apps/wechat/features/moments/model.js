@@ -21,7 +21,7 @@ export function allMoments(s){
    const legacy=(post.likes||[]).length===1&&post.likes[0]==='熙蒙'&&(post.comments||[]).some(c=>c.by==='熙蒙'&&c.text==='哥哥早安');
    return {...post,...(post.text==='早上好。今天的云很好看。'?{text:p.text}:{}),...(legacy?{likes:p.likes,comments:p.comments}:{})};
   }),...(m.posts||[])]
-  .filter(p=>p&&p.id&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
+  .filter(p=>p&&p.id&&p.id!=='xm-d41'&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
    &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);

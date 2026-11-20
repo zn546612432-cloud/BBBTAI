@@ -37,7 +37,7 @@ export const authoredMoments=[
  p('xw-d35',35,'07:30','熙旺','石排湾看熊猫。阿蒙在馆里站得比熊猫还久。',['park'],[c('熙蒙','它刚才看我了'),c('阿威','下次我也去')]),
  p('xs-d37',37,'00:02','小辛','我只是想刷十分钟手机。',[],[c('胡枫','然后刷到了现在？')]),
  p('aw-d39',39,'19:17','阿威','一点点进步。',['gym'],[c('熙旺','稳着来'),c('小辛','可以帮我搬东西了')],{pinned:true}),
- p('xm-d41',41,'23:40','熙蒙','把桌面收拾干净，明天再继续。',[],[c('仔仔','我拍照存证了'),c('熙旺','好')]),
+ p('hf-d41',41,'23:35','胡枫','good show.',['d41GoodShow'],[c('仔仔','帅气逼人组合'),{by:'小辛',to:'仔仔',text:'原地出道。'}],{likes:['小辛','仔仔','阿威','熙旺'],reactionsAt:dayDate(42)+'T02:00'}),
  p('xm-d44',44,'13:08','熙蒙','西湖醋鱼吃完了。下次别点。',[],[c('胡枫','我就说你不爱吃'),c('熙旺','回去给你买烧腊')]),
  p('xs-d47',47,'16:42','小辛','学习德语第一天，我觉得可以宣布毕业了。',[],[c('胡枫','先把第一句念对'),c('仔仔','毕业证谁发？')]),
  p('xw-d49',49,'08:25','熙旺','路过公园，看见它们坐得很认真。',['park','morning'],[c('熙蒙','像你'),c('胡枫','哪只是旺旺哥')]),
@@ -59,6 +59,9 @@ export const authoredMoments=[
 const zaizaiLiked=new Set(['xs-d04','xw-d04','xm-d15','xs-d25','xw-d35','xs-d58','xw-d61','xw-d70','xm-d78']);
 for(const post of authoredMoments)if(zaizaiLiked.has(post.id))post.likes=[...new Set([...(post.likes||[]),'仔仔'])];
 export const dayDifference=(later,earlier)=>Math.floor((Date.parse(later+'T00:00:00Z')-Date.parse(earlier+'T00:00:00Z'))/86400000);
+export function momentReactionsAt(post,viewerDate,clock='23:59'){
+ return post.reactionsAt&&viewerDate+'T'+clock<post.reactionsAt?{likes:[],comments:[]}:post;
+}
 export function visibleMoments(posts,viewerDate,{author=null,includePinned=true,clock='23:59'}={}){
  const now=Date.parse(viewerDate+'T'+clock+':00Z');
  return posts.filter(post=>{

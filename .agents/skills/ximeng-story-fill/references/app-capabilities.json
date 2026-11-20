@@ -66,6 +66,13 @@
           ],
           "proof": "src/apps/wechat/index.js"
         },
+        "moments.d41-good-show": {
+          "state": "wired-day",
+          "owner": "moments",
+          "kinds": ["moment"],
+          "proof": "src/apps/wechat/features/moments/data.js",
+          "originDays": [41]
+        },
         "chat.d07-life": {
           "state": "wired-day",
           "owner": "messaging",
