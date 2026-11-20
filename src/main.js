@@ -406,7 +406,7 @@ store.subscribe(()=>{
  const added=queueableNotices(s.notifications.filter(n=>!notificationMuted(s,n)),seenNotices);
  const vibrate=hasNewStoryMessage(s.notifications,seenNotices);
  seenNotices=new Set(s.notifications.map(n=>n.id));
- if(vibrate&&!s.poweredOff&&s.haptics!==false)storyMessageHaptic({reducedMotion:s.reduceMotion||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
+ if(vibrate&&!s.poweredOff&&s.haptics!==false)storyMessageHaptic();
  const shown=$('#toast')?.dataset.noticeId;
  if(shown&&s.notifications.some(n=>n.id===shown&&notificationMuted(s,n))){$('#toast').classList.remove('visible');clearTimeout(toastTimer);}
  if(isShortCharging(s)&&added.some(n=>!n.silent&&n.link?.appId&&n.title!=='闹钟'))shortChargeNoticePausedUntil=Date.now()+5000;
