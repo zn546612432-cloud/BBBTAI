@@ -44,8 +44,8 @@ test('D03-D05 keep conversation quantity except explicitly retired Hu Feng DMs',
  assert.equal(Object.hasOwn(LATE_REPLIES.d05,'hufeng-check'),false);
 });
 
-test('Hu Feng has no authored Moments or shoes wishes, while others keep theirs',()=>{
- assert.equal(authoredMoments.filter(x=>x.author==='胡枫'||x.author==='胡楓').length,0);
+test('Hu Feng has no D01–D09 authored Moments or shoes wishes, while others keep theirs',()=>{
+ assert.equal(authoredMoments.filter(x=>x.storyDay<=9&&(x.author==='胡枫'||x.author==='胡楓')).length,0);
  assert.equal(Object.hasOwn(WISH_CATALOG,'d06-shoes'),false);
  assert.equal(Object.hasOwn(rewardSets,'d06-shoes'),false);
  assert.deepEqual(privateScenes,[]);
