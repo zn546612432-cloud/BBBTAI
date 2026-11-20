@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generatePipeNetwork,pipeFlow,pipeSolved} from '../src/apps/ghost/games/pipe-network.js';
 import {createBoard} from '../src/apps/ghost/games/logic.js';
-import {authorize,begin,finish,startD01PipePreview} from '../src/apps/ghost/state.js';
+import {authorize,begin,finish,startD01PipePreview,needsWorldTick,advanceGhost} from '../src/apps/ghost/state.js';
 import {render as renderGhost} from '../src/apps/ghost/index.js';
 import {seedD01,acceptD01Repair,queueD01ContactReply,d01ContactDue,tickD01ContactReply,D01_REPAIR,D01_CONTACT,deliverD01Opening,D01_OPENING,D01_ATTACHMENT,deliverD01Attachment} from '../src/story/d01/runtime.js';
 import {sendD01WeChat,tickD01WeChat} from '../src/story/d01/wechat.js';
@@ -33,13 +33,13 @@ test('GHOST network puzzle grows 5×5 to 7×7, two fixed glowing terminals on se
   }
  }
 });
-test('GHOST D01 shows the solved board for three full real seconds before awarding progress',()=>{
+test('D01 all five rounds use a randomized one-tap 3×3 board and keep the 3s victory preview',()=>{
  const s=fixture();seedD01(s);acceptD01Repair(s);
  s.story55.d01.deployed=true;s.story55.d01.completedRounds=0;
  authorize(s,{orderId:D01_REPAIR,type:'route',mailId:D01_ATTACHMENT});
  assert.equal(begin(s,D01_REPAIR,1000),true);
  const o=s.ghost.orders[D01_REPAIR];
- assert.equal(o.board.size,5);
+ assert.equal(o.board.size,3);
  o.board.masks=o.board.solvedMasks.slice();
  assert.equal(startD01PipePreview(s,D01_REPAIR,2000),true);
  assert.equal(o.status,'preview-win');
@@ -50,7 +50,7 @@ test('GHOST D01 shows the solved board for three full real seconds before awardi
  assert.doesNotMatch(victoryHTML,/3 秒後完成本次修復/);
  assert.match(victoryHTML,/gh-source-tile/);
  assert.match(victoryHTML,/gh-target-tile/);
- assert.equal((victoryHTML.match(/data-action="gh-pipe"/g)||[]).length,25);
+ assert.equal((victoryHTML.match(/data-action="gh-pipe"/g)||[]).length,9);
  assert.equal(s.story55.d01.completedRounds,0,'do not count a round immediately');
  finish(s,D01_REPAIR,true,4999);
  assert.equal(o.status,'preview-win');
@@ -62,13 +62,41 @@ test('GHOST D01 shows the solved board for three full real seconds before awardi
  assert.equal(s.story55.d01.completedRounds,1);
  o.status='authorized';
  assert.equal(begin(s,D01_REPAIR,6000),true);
- assert.equal(o.board.size,5);
+ assert.equal(o.board.size,3);
  s.story55.d01.completedRounds=2;o.status='authorized';
  assert.equal(begin(s,D01_REPAIR,7000),true);
- assert.equal(o.board.size,6);
+ assert.equal(o.board.size,3);
  s.story55.d01.completedRounds=4;o.status='authorized';
  assert.equal(begin(s,D01_REPAIR,8000),true);
- assert.equal(o.board.size,7);
+ assert.equal(o.board.size,3);
+});
+test('3×3 tutorial boards are never solved initially and need exactly one clockwise tap',()=>{
+ const signatures=new Set();
+ for(let i=0;i<100;i++){
+  let seed=(i+1)*2654435761>>>0;
+  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const board=createBoard('route',{pipeNetwork:true,pipeSize:3},random);
+  assert.equal(board.masks.length,9);
+  assert.equal(pipeSolved(board),false);
+  const changed=board.masks.map((m,j)=>m!==board.solvedMasks[j]?j:-1).filter(j=>j>=0);
+  assert.equal(changed.length,1);
+  const j=changed[0],m=board.masks[j];
+  assert.notEqual(j,board.source);assert.notEqual(j,board.sink);
+  const masks=board.masks.slice();masks[j]=((m<<1)&15)|(m>>3);
+  assert.equal(pipeSolved({...board,masks}),true);
+  signatures.add(JSON.stringify(board.masks));
+ }
+ assert.ok(signatures.size>90);
+});
+test('existing unfinished D01 large boards migrate without losing completed rounds',()=>{
+ const s=fixture();seedD01(s);acceptD01Repair(s);s.story55.d01.deployed=true;s.story55.d01.completedRounds=2;
+ const o=authorize(s,{orderId:D01_REPAIR,type:'route',mailId:D01_ATTACHMENT});
+ begin(s,D01_REPAIR,1000);o.board=generatePipeNetwork({size:6});o.settings.pipeSize=6;
+ const attempts=o.attempts;
+ assert.equal(needsWorldTick(s,2000),true);advanceGhost(s,2000);
+ assert.equal(o.board.size,3);assert.equal(o.attempts,attempts);
+ assert.equal(s.story55.d01.completedRounds,2);assert.equal(o.status,'running');
+ assert.equal(needsWorldTick(s,2001),false);
 });
 test('Rookery 13 gives at most one pre-completion key reply, one post-completion well done, then silence',()=>{
  const s=fixture();seedD01(s);

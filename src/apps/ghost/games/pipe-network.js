@@ -66,7 +66,21 @@ export function pipeSolved(board){
  if(!board?.size||board.source===board.sink)return false;
  return pipeFlow(board.masks,board.source,board.size).has(board.sink);
 }
+// Introductory 3×3 level: two fixed terminals, one misaligned middle pipe.
+// The six other tiles vary but never obstruct the direct three-cell solution.
+function easyPipeNetwork(random){
+ const size=3,middle=int(random,9),edges=neighbors(middle,size);
+ const a=edges.splice(int(random,edges.length),1)[0],b=edges[int(random,edges.length)];
+ const pieces=[1,2,4,8,3,6,9,12,5,10];
+ const solvedMasks=Array.from({length:9},()=>pieces[int(random,pieces.length)]);
+ solvedMasks[a.at]=a.back;solvedMasks[b.at]=b.back;
+ solvedMasks[middle]=a.bit|b.bit;
+ const masks=solvedMasks.slice();
+ for(let i=0;i<3;i++)masks[middle]=rotateMask(masks[middle]);
+ return {size,source:a.at,sink:b.at,masks,solvedMasks,solutionSteps:2};
+}
 export function generatePipeNetwork({size=5,random=Math.random}={}){
+ if(Number(size)===3)return easyPipeNetwork(random);
  const n=Math.max(5,Math.min(7,Math.floor(Number(size)||5)));
  let best=null;
  // Prefer a long, interesting solved route rather than two neighbouring dots.
