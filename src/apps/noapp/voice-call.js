@@ -2,6 +2,7 @@ import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlay
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {phoneBlocked} from '../../system/power/story.js';
 import {offerD41ChessInvitation,D41_CHESS_INVITATION} from '../../services/invitations.js';
+import {d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
@@ -422,7 +423,7 @@ export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
  if(call.scripted){
   if(call.scripted.id===D41_CALL.id&&call.state==='connected'){
    const s=ctx.store.get(),match=s.matches?.find(m=>m.invitationId===D41_CHESS_INVITATION);
-   const done=call.scriptIndex>=D41_CALL.steps.length&&!call.busy&&match?.status==='finished';
+   const done=call.scriptIndex>=D41_CALL.steps.length&&!call.busy&&d41ChessComplete(match);
    if(done||s.day>41){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'scripted_end'});return true;}
   }
   return false; // authored calls never hand off to a model or idle nudge

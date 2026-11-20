@@ -5,7 +5,8 @@ import {finalVoiceBubble} from './final-voice.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
 import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
-import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat} from '../../services/invitations.js';
+import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat,D41_CHESS_INVITATION} from '../../services/invitations.js';
+import {unlockD41Voice} from '../chess/scripted-match.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
 import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
@@ -128,9 +129,9 @@ export async function handle(action,target,ctx){
  const id=target.dataset.id;
  if(action==='tai-story-archive'){if(modelDelivered(ctx.store.get(),id))ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});return;}
  if(action==='open-chat')ctx.router.open({appId:'noapp',route:'/chat/'+id});
- if(action==='accept-invite'){const matchId=receiveInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
+ if(action==='accept-invite'){if(id===D41_CHESS_INVITATION)unlockD41Voice();const matchId=receiveInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='defer-invite')deferInvitation(ctx.store,id);
- if(action==='open-invite-match'){const matchId=startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
+ if(action==='open-invite-match'){if(id===D41_CHESS_INVITATION)unlockD41Voice();const matchId=startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}
  if(action==='attach-chat'){if(id==='tai'){ctx.pickImage(src=>queueTaiReply(ctx,sendMessage(ctx.store,{channel:'noapp',conversationId:id,text:src,kind:'image'})));}else attachChat(id,'noapp',ctx);return;}
  if(action==='tai-contact-more'){ctx.router.open({appId:'noapp',route:'/contact/tai'});return;}
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});

@@ -8,9 +8,11 @@ on:
       - 'src/services/invitations.js'
       - 'src/services/story55/runtime.js'
       - 'src/story/d14-d24/**'
+      - 'src/story/d34-d42/d41-chess.js'
       - 'scripts/build.mjs'
       - 'package*.json'
       - '.github/test-scripts/d23-chess-browser.mjs'
+      - '.github/test-scripts/d41-chess-browser.mjs'
       - '.github/workflows/d23-chess-browser.yml'
   workflow_dispatch:
 
@@ -41,6 +43,8 @@ jobs:
           exit 1
       - name: Play real Stockfish browser move and screenshot UI states
         run: CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
+      - name: Verify D41 cinematic chess, voice ordering and native Checkmate Send
+        run: CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d41-chess-browser.mjs
       - name: Verify iOS WebKit chess board, piece art and Tai tutoring
         run: CHESS_BROWSER=webkit CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
       - name: Upload screenshots
