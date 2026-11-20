@@ -30,7 +30,7 @@ export function controlCenter(s,{flashlight=false,outputOpen=false}={}){
     </section>
     <section class="cc-glass cc-media ${playing?'is-playing':'is-idle'}" aria-label="媒體播放">
      <div class="cc-media-top">${playing?`<span class="cc-album">${glyph('music')}</span>`:''}${button('output','airdrop','音訊輸出',`class="cc-output ${outputOpen?'is-on':''}" aria-expanded="${outputOpen}"`)}</div>
-     ${playing?'<strong class="cc-track-title">夜航</strong><span class="cc-track-subtitle">正在播放</span>':'<span class="cc-not-playing">未在播放</span>'}
+     ${playing?'<strong class="cc-track-title">今夜有雨</strong><span class="cc-track-subtitle">h3r3</span>':'<span class="cc-not-playing">未在播放</span>'}
      <div class="cc-transport">${button('restart','back','從頭播放',playing?'':'disabled')}${button('play',playing?'pause':'play',playing?'暫停':'播放')}${button('restart','next','重新播放',playing?'':'disabled')}</div>
      ${outputOpen?'<div class="cc-output-menu"><strong>音訊輸出</strong><button data-cc="output" aria-label="使用 iPhone 揚聲器">iPhone <span>✓</span></button></div>':''}
     </section>
