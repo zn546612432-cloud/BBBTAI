@@ -1,4 +1,5 @@
 /* Native-style Music surfaces. The phone shell supplies status and home bars. */
+#screen-layer .app-view.app-music{padding-top:0}
 .app-music .app-content{min-height:0;overflow:hidden}
 .ios-music{--music-red:#fa2d48;--music-secondary:#8e8e93;--music-line:#e5e5ea;height:100%;min-height:0;color:#111;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif}
 .ios-music button{color:inherit}
