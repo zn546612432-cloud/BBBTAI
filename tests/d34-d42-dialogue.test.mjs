@@ -9,7 +9,7 @@ import {advanceGameMinutes,tickWorld} from '../src/system/time/clock.js';
 import {settlePhoneBackground} from '../src/system/runtime/controller.js';
 import {visibleMessages} from '../src/services/messaging/delivery.js';
 import {D41_CALL,D42_CALL,RETIRED_SCENES} from '../src/story/d34-d42/definition.js';
-import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,maybeStartD42Call,callAction,callState,callView,scriptedCallDraft,submitCall} from '../src/apps/noapp/voice-call.js';
+import {d41CallDue,d42CallDue,playScriptedCallSequence,maybeStartD41Call,maybeStartD42Call,callAction,callState,callView,scriptedCallDraft,submitCall,playD41ChessVoice} from '../src/apps/noapp/voice-call.js';
 import {D41_CHESS_INVITATION,offerD41ChessInvitation,receiveInvitation,deferInvitation} from '../src/services/invitations.js';
 import {playMove,postMatchMessage,resignChessMatch} from '../src/services/chess.js';
 import {advanceD41Chess,completeD41ChessCue,sendD41ChessDraft,d41ChessDraft} from '../src/services/chess-scripted.js';
@@ -72,6 +72,16 @@ test('D42 preset plays the three exact lines in order with two 2500ms post-playb
  assert.deepEqual(events,[D42_CALL.lines[0],2500,D42_CALL.lines[1],2500,D42_CALL.lines[2]]);
  events.length=0;await playScriptedCallSequence(D42_CALL,{...opts,wait:async ms=>{events.push(ms);active=false;}});
  assert.deepEqual(events,[D42_CALL.lines[0],2500]);
+});
+test('the opening starts while later recordings are still being prepared',async()=>{
+ let releaseLater,openingPlayed=false;
+ const later=new Promise(resolve=>{releaseLater=resolve;});
+ const running=playScriptedCallSequence({lines:['first','second'],gapMs:0},{
+  current:()=>true,synthesize:text=>text==='first'?Promise.resolve(text):later,
+  play:async(clip)=>{if(clip==='first')openingPlayed=true;return 'completed';},wait:async()=>{}
+ });
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(openingPlayed,true);releaseLater('second');await running;
 });
 test('D41 preset call is due at 23:40 independently of group replies; invitation opens the authored cinematic game',()=>{
  const s=phone(41,'23:30');
@@ -158,7 +168,7 @@ test('D41 real call accepts only the two preset player sends and plays through t
  try{
   globalThis.Audio=FakeAudio;
   globalThis.sessionStorage={getItem:k=>k===BYOK_SESSION?JSON.stringify({minimax:'test-minimax',region:'cn'}):null};
-  globalThis.fetch=async(url,init)=>{assert.match(String(url),/t2a_v2/);synthesized.push(JSON.parse(init.body).text);return Response.json({base_resp:{status_code:0},data:{audio:'494433'}});};
+  globalThis.fetch=async(url)=>{assert.match(String(url),/assets\/story55\/d41-d42\/d41-call-\d+\.mp3$/);synthesized.push(String(url));return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
   globalThis.FormData=class{get(){return submitted;}};
   assert.equal(maybeStartD41Call(ctx),true);callAction('tai-accept',ctx);
   await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);audio.finish();
@@ -173,7 +183,7 @@ test('D41 real call accepts only the two preset player sends and plays through t
   await waitFor(()=>!audio.paused);audio.finish();
   await waitFor(()=>s.invitations.some(i=>i.id===D41_CHESS_INVITATION));
   assert.match(callView(s),/tai-scripted-chess/);callAction('tai-scripted-chess',ctx);
-  assert.equal(route.appId,'chess');assert.equal(route.params.invitationId,D41_CHESS_INVITATION);
+  assert.equal(route.appId,'chess');assert.equal(route.route,'/match/'+s.invitations.find(i=>i.id===D41_CHESS_INVITATION).matchId);
   await waitFor(()=>!audio.paused);audio.finish();
   await waitFor(()=>callState().turnCount===6);
   assert.equal(synthesized.length,4);
@@ -190,10 +200,15 @@ test('D41 real call accepts only the two preset player sends and plays through t
   assert.equal(timedStoryPaused(s),true);
   assert.equal(sendD41ChessDraft(ctx.store,matchId,D41_CHESS_DRAFT),true);
   assert.equal(timedStoryPaused(s),true,'final voice is still pending');
+  const sameAudio=audio;
+  const finalSpeech=playD41ChessVoice(ctx,new Blob(['test'],{type:'audio/mpeg'}),D41_CHESS_CUES[37]);
+  await waitFor(()=>!audio.paused);
+  assert.equal(audio,sameAudio,'final line must reuse the already unlocked call player');
+  audio.finish();assert.equal(await finalSpeech,'completed');
   completeD41ChessCue(ctx.store,matchId,37);assert.equal(timedStoryPaused(s),false);
  }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
-test('D42 voice failure cannot permanently lock a mandatory call; read all three exact lines before clock resumes',async()=>{
+test('D42 voice failure does not permanently lock a mandatory call or add troubleshooting buttons',async()=>{
  const s=phone(42,'09:25');s.unlocked=true;
  const old=Object.fromEntries(['Audio','fetch','sessionStorage'].map(k=>[k,globalThis[k]]));
  const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(){}}};
@@ -202,10 +217,9 @@ test('D42 voice failure cannot permanently lock a mandatory call; read all three
   globalThis.sessionStorage={getItem:k=>k===BYOK_SESSION?JSON.stringify({minimax:'test-minimax',region:'cn'}):null};
   globalThis.fetch=async()=>{throw Error('offline');};
   assert.equal(maybeStartD42Call(ctx),true);callAction('tai-accept',ctx);
-  for(const line of D42_CALL.lines){
-   for(let i=0;i<100&&!callView(s).includes('tai-scripted-next');i++)await new Promise(r=>setTimeout(r,10));
-   assert.match(callView(s),/tai-scripted-next/);assert.ok(callView(s).includes(line));
-   assert.equal(timedStoryPaused(s),true);callAction('tai-scripted-next',ctx);
+  for(let i=0;i<700&&callState().state!=='ended';i++){
+   assert.doesNotMatch(callView(s),/tai-scripted-next/);
+   await new Promise(r=>setTimeout(r,10));
   }
   assert.equal(s.story55.scriptedCallCompleted[D42_CALL.id],true);
   assert.equal(timedStoryPaused(s),false);assert.equal(callState().state,'ended');

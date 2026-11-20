@@ -44,7 +44,7 @@ jobs:
       - name: Play real Stockfish browser move and screenshot UI states
         run: CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
       - name: Verify D41 cinematic chess, voice ordering and native Checkmate Send
-        run: CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d41-chess-browser.mjs
+        run: CHESS_BROWSER=webkit CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d41-chess-browser.mjs
       - name: Verify iOS WebKit chess board, piece art and Tai tutoring
         run: CHESS_BROWSER=webkit CHESS_LOCAL_URL=http://127.0.0.1:5173/BBBTAI/index.html node .github/test-scripts/d23-chess-browser.mjs
       - name: Upload screenshots
