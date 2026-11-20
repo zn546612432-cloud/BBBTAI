@@ -16,7 +16,7 @@ test('map pin selection works as local UI, not a navigation and clock change',()
 test('GHOST descriptions use Chinese technical utility copy, not gameplay instructions',()=>{
  const s=initialState();activateStory55(s);
  const html=ghostRender({store:{get:()=>s},refresh(){}},{appId:'ghost',route:'/',params:{}});
- assert.match(html,/工具程序/);
+ assert.doesNotMatch(html,/工具程序/);assert.match(html,/LOCAL WORKSPACE/);
  assert.doesNotMatch(html,/解析加密结构，恢复可读取的数据/);
  assert.doesNotMatch(html,/建立节点连接，验证数据传输通路|gh-number|版本 01/);
  assert.doesNotMatch(html,/拼图：|翻牌配对|迷宫潜行|小游戏/);

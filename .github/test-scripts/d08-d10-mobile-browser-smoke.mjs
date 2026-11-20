@@ -96,6 +96,7 @@ try{
  await page.locator('form[data-form="mc-login"] button[type="submit"]').click();
  await page.locator('[data-action="mc-tab"][data-route="/bounties"]').waitFor({state:'visible',timeout:20000});
  await page.locator('[data-action="mc-tab"][data-route="/bounties"]').click();
+ await page.locator('[data-action="mc-contract-board"]').click();
  await page.locator('[data-action="mc-open-bounty"][data-id="d10-spectrum-test"]').waitFor({state:'visible',timeout:30000});
  await snapshot('04-d10-mirage-three-contracts');
  await page.locator('[data-action="mc-open-bounty"][data-id="d10-spectrum-test"]').click();

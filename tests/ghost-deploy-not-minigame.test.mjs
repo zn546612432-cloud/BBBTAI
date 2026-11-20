@@ -40,7 +40,7 @@ test('standalone game lab and developer test menu cannot generate a DEPLOY minig
  assert.match(preview,/t\.dataset\.tool==='verify'\)return router\.open\(\{appId:'ghost',route:'\/deploy-info'/);
  const editor=ghostEditor(initialState());
  assert.doesNotMatch(editor,/随机开启 部署 \/ DEPLOY/);
- assert.match(editor,/随机开启 破译 \/ CIPHER/);
+ assert.match(editor,/随机开启 破譯 \/ CIPHER/);
  const info=ghostRender({store:{get:()=>initialState()}},{route:'/deploy-info',params:{}});
  assert.match(info,/尚未取得授權/);
  assert.doesNotMatch(info,/01 部署|验证后安装并初始化工具/);

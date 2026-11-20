@@ -5,7 +5,7 @@ function ensureMotion(){
  if(typeof customElements==='undefined'||customElements.get('xm-ghost-deploy-motion'))return;
  loading??=import('./element.js').catch(error=>{loading=null;console.error('Ghost field unavailable',error);});
 }
-const label={cipher:'破譯',route:'鏈接',extract:'竊取',veil:'隱匿',verify:'驗證',strike:'攻擊'};
+const label={cipher:'破譯',route:'連結',extract:'竊取',veil:'隱匿',verify:'驗證',strike:'攻擊'};
 const devices='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="13" rx="2"/><path d="M2 20h20"/></svg>';
 const back='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg>';
 export function deviceButton(action,attrs='',caption='設備'){

@@ -561,11 +561,11 @@ test('Kira D02 attachments show the exact D01 receipt only after successful subm
 test('Ghost retains all six tool names without help text or decorative numbering and preserves mechanics',()=>{
  const expected=[
   ['部署','导入授权凭证，安装并初始化工具'],
-  ['破译','解析加密结构，恢复可读取的数据'],
-  ['链接','建立节点连接，验证数据传输通路'],
-  ['窃取','定位目标文件，提取并校验数据'],
-  ['隐匿','分析监测路径，验证隐匿方案'],
-  ['攻击','执行定向测试，记录目标响应']
+  ['破譯','解析加密结构，恢复可读取的数据'],
+  ['連結','建立节点连接，验证数据传输通路'],
+  ['竊取','定位目标文件，提取并校验数据'],
+  ['隱匿','分析监测路径，验证隐匿方案'],
+  ['攻擊','执行定向测试，记录目标响应']
  ];
  assert.deepEqual(ghostCatalog.map(t=>[t.name,t.detail]),expected);
  const s=phone(),store={get:()=>s,update:fn=>fn(s)};

@@ -40,7 +40,7 @@ function drawOfflineBase(L,map,{world=false,area='MACAU'}={}){
 export const prewarmOfflineMap=()=>loadLeaflet();
 const safeText=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function pinIcon(kind){
- return window.L.divIcon({className:'xm-map-pin'+(kind==='fictional'?' is-fictional':''),html:'<span></span>',iconSize:[24,30],iconAnchor:[12,29]});
+ return window.L.divIcon({className:'xm-map-pin'+(kind==='fictional'?' is-fictional':''),html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-18]});
 }
 class XimengMap extends HTMLElement {
  static get observedAttributes(){return ['data-visible','data-place','area'];}

@@ -1,7 +1,7 @@
 // Fictional in-game posts. D01 = 2025-05-19, D90 = 2025-08-16.
 export const profiles={
  '熙蒙':{bio:'',cover:'ximengCover'},
- '熙旺':{bio:'平安就好。',cover:'dawn'},
+ '熙旺':{bio:'平安是福',cover:'dawn'},
  '胡枫':{bio:'下次再一起去。',cover:'seoul'},
  '小辛':{bio:'帅哥无所畏惧✌️',cover:'morning'},
  '阿威':{bio:'今天也要好好练。',cover:'gym'},
@@ -14,7 +14,7 @@ const p=(id,day,time,author,text,media,comments,options={})=>({
  id,storyDay:day,author,publishedAt:dayDate(day)+'T'+time,text,media,comments,...options
 });
 export const authoredMoments=[
- p('xw-0519',1,'07:30','熙旺','今天的云很好看。',['morning'],[c('熙蒙','哥哥早安'),c('阿威','今天出车？')],{likes:['熙蒙']}),
+ p('xw-0519',1,'07:30','熙旺','今天的云很好看。',['morning'],[c('阿威','天气真好')],{likes:['小辛','阿威']}),
  p('xs-0519',1,'23:05','小辛','笑死，今天有人出门忘记带鞋。',[],[c('胡枫','你直接报我身份证好了'),c('仔仔','怎么做到的哈哈哈')]),
  p('xs-d03',3,'11:25','小辛','早飯午飯一起解決了',['d03Breakfast'],[c('仔仔','你不是說要減肥嗎'),c('小辛','明天開始')]),
  p('xw-d03',3,'19:15','熙旺','今天難得收工早。',['d03Street'],[],{likes:['胡楓','仔仔','小辛','阿威'],replyOptions:['想你了快回來']}),

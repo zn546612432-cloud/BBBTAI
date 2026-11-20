@@ -146,13 +146,18 @@ function personalView(s,route){
  return shell('檔案',personalPath,empty);
 }
 const keyRow=f=>'<button type="button" class="fl-row" data-action="files-local-nav" data-route="/work-key/'+encodeURIComponent(f.id)+'"><span class="fl-archive-icon">KEY</span><span class="fl-row-copy"><strong>'+esc(f.name)+'</strong><small>加密憑證</small></span><span class="fl-chevron">›</span></button>';
-const top=s=>'<div class="fl-library">'+heading('瀏覽')+
- '<form class="fl-search" data-form="files-local-search"><span aria-hidden="true">⌕</span><input name="query" aria-label="搜尋檔案" placeholder="搜尋" autocomplete="off"><button type="submit">搜尋</button></form>'+
+const flIcon=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+const recentIcon=flIcon('<circle cx="12" cy="12" r="9"/><path d="M12 6v6h5"/>');
+const browseIcon=flIcon('<path d="M3 6a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>');
+const trashIcon=flIcon('<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>');
+const searchIcon=flIcon('<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.1 15.1 5 5"/>');
+const fileTabs=active=>'<nav class="fl-tabs" aria-label="檔案導覽">'+[['/recent',recentIcon,'最近使用'],['/',browseIcon,'瀏覽']].map(([route,art,label])=>'<button type="button" data-action="files-local-nav" data-route="'+route+'" class="'+(active===route?'active':'')+'" '+(active===route?'aria-current="page"':'')+'>'+art+'<span>'+label+'</span></button>').join('')+'</nav>';
+const browserShell=(body,active='/')=>'<div class="fl-browser"><div class="fl-library">'+body+'</div>'+fileTabs(active)+'</div>';
+const top=s=>browserShell(heading('瀏覽')+
+ '<form class="fl-search" data-form="files-local-search">'+searchIcon+'<input name="query" aria-label="搜尋檔案" placeholder="搜尋" autocomplete="off"><button type="submit">搜尋</button></form>'+
  '<h2>位置</h2><div class="fl-section">'+
  folderRow('/iphone','我的 iPhone')+
- '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/recent"><span class="fl-folder-icon">◷</span><span>最近使用</span><span class="fl-chevron">›</span></button>'+
- '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/trash"><span class="fl-folder-icon">♻</span><span>最近刪除</span><span class="fl-chevron">›</span></button></div>'+
- '</div>';
+ '<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="/trash"><span class="fl-folder-icon">'+trashIcon+'</span><span>最近刪除</span><span class="fl-chevron">›</span></button></div>');
 const archive=(s,route)=>{
  const tail=route.slice('/incoming/wechat/'.length),sep=tail.indexOf('/'),chatId=sep>=0?decode(tail.slice(0,sep)):'',messageId=sep>=0?decode(tail.slice(sep+1)):'';
  const info=chatFile(s,chatId,messageId);if(!info)return nav('檔案預覽')+empty;
@@ -181,7 +186,7 @@ const itemView=(s,id)=>{
 export function renderLibrary(s,route,params={}){
  if(route.startsWith('/incoming/wechat/'))return archive(s,route);
  if(route==='/')return top(s);
- if(route==='/iphone')return '<div class="fl-library">'+nav('我的 iPhone','/')+'<div class="fl-section">'+FOLDERS.map(f=>folderRow('/folder/'+f.id,f.name)).join('')+'</div></div>';
+ if(route==='/iphone')return browserShell(nav('我的 iPhone','/')+heading('我的 iPhone')+'<div class="fl-section">'+FOLDERS.map(f=>folderRow('/folder/'+f.id,f.name)).join('')+'</div>');
  if(route.startsWith('/work-key/')){
   const f=workFiles(s).find(f=>f.id===path(route,'/work-key/'));
   if(!f)return '<div class="fl-library">'+nav('工作資料','/folder/documents')+empty+'</div>';
@@ -206,8 +211,8 @@ export function renderLibrary(s,route,params={}){
  const items=[...library(s),...storyArchives(s)].filter(f=>trash?f.deleted:!f.deleted&&(recent||search||f.folder===folder||folder==='downloads'&&f.folder==='reports'))
   .filter(f=>!search||f.name.toLocaleLowerCase().includes(query)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  const keys=!trash&&(recent||search||folder==='documents')?workFiles(s).filter(f=>!search||f.name.toLocaleLowerCase().includes(query)):[];
- return '<div class="fl-library">'+nav(title,route.startsWith('/folder/')?'/iphone':'/')+ (search?'<p class="fl-search-term">'+esc(params.query||'')+'</p>':'')+
- '<div class="fl-section">'+(items.length||keys.length?items.map(row).join('')+keys.map(keyRow).join(''):empty)+'</div><p class="fl-count">'+(items.length+keys.length)+' 個項目</p></div>';
+ return browserShell((recent?heading(title):nav(title,route.startsWith('/folder/')?'/iphone':'/'))+ (search?'<p class="fl-search-term">'+esc(params.query||'')+'</p>':'')+
+ '<div class="fl-section">'+(items.length||keys.length?items.map(row).join('')+keys.map(keyRow).join(''):empty)+'</div><p class="fl-count">'+(items.length+keys.length)+' 個項目</p>',recent?'/recent':'/');
 }
 export function handleLibraryAction(a,t,c){
  if(!a.startsWith('files-local-'))return false;

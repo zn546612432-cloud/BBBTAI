@@ -12,7 +12,9 @@ import {chargingBlock,shortChargeBlock} from '../src/system/power/story.js';
 const fresh=()=>activateStory55(initialState());
 test('new and previously seeded saves contain a single clickable one-URL note',()=>{
  const s=fresh(),note=s.content.notes.find(n=>n.id===GUIDE_NOTE_ID);
- assert.equal(note.title,'作弊代碼');assert.equal(note.text,GUIDE_URL);
+ assert.equal(note.title,'Cheat Code');assert.equal(note.pinned,false);assert.equal(note.text,GUIDE_URL);
+ note.title='作弊代碼';note.pinned=true;
+ assert.equal(ensureAuthoredNotes(s),true);assert.equal(note.title,'Cheat Code');assert.equal(note.pinned,false);
  s.content.notes=s.content.notes.filter(n=>n.id!==GUIDE_NOTE_ID);delete s.content.cheatGuideSeedVersion;
  s.content.notes.push({id:'private',title:'private',text:'keep'});
  assert.equal(ensureAuthoredNotes(s),true);assert.equal(ensureAuthoredNotes(s),false);

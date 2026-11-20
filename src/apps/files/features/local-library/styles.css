@@ -44,3 +44,27 @@
 /* Suppress only the shell navigation for the new Files browser, not legacy attachment viewers. */
 .app-view.app-files:has(.fl-library){padding-top:calc(60px + env(safe-area-inset-top,0px))}
 .app-view.app-files:has(.fl-library)>.app-nav{display:none}
+/* Files: native-style white list, inset search and persistent navigation. */
+.app-files .fl-browser{height:100%;min-height:0;display:flex;flex-direction:column;background:#f2f2f7}
+.app-files .fl-browser .fl-library{height:auto;flex:1;min-height:0;background:#f2f2f7;padding:8px 16px 20px}
+.app-files .fl-title{font-size:34px;letter-spacing:-1.2px;margin:10px 0 12px;line-height:1.15}
+.app-files .fl-library h2{margin:25px 0 8px;font-size:13px;font-weight:500;color:#6c6c70}
+.app-files .fl-search{min-height:38px;gap:7px;padding:5px 10px;background:#e5e5ea;border-radius:10px}
+.app-files .fl-search svg{width:17px;height:17px;flex:none}
+.app-files .fl-search input{font-size:16px}
+.app-files .fl-search button{color:#007aff}
+.app-files .fl-section{border-radius:10px}
+.app-files .fl-folder-row,.app-files .fl-row{position:relative;gap:11px;min-height:53px;padding:10px 14px;border:0!important}
+.app-files .fl-folder-row:not(:last-child):after,.app-files .fl-row:not(:last-child):after{content:'';position:absolute;height:1px;bottom:0;left:52px;right:0;background:#e5e5ea}
+.app-files .fl-folder-art{width:29px;height:26px}
+.app-files .fl-folder-icon{background:none;border-radius:0;color:#007aff;width:29px;height:29px}
+.app-files .fl-folder-icon svg{width:25px;height:25px}
+.app-files .fl-folder-row>span:nth-child(2){font-size:16px}
+.app-files .fl-chevron{font-size:21px;color:#b4b4b8}
+.app-files .fl-nav{min-height:38px;margin:0 0 6px}
+.app-files .fl-nav button{font-size:30px;color:#007aff}
+.app-files .fl-tabs{flex:none;display:flex;justify-content:space-around;background:#fbfbfc;border-top:1px solid #d6d6db;padding:7px 20px calc(20px + env(safe-area-inset-bottom,0px));min-height:66px}
+.app-files .fl-tabs button{display:grid;gap:4px;justify-items:center;flex:1;background:none;color:#8e8e93;font-size:10px;font-weight:500}
+.app-files .fl-tabs button svg{width:25px;height:25px}
+.app-files .fl-tabs button.active{color:#007aff}
+.app-files .fl-preview-main{min-height:250px}
