@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState} from '../src/services/storage.js';
+import {initialState,PhoneStore,KEY} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {batteryPercent,beginShortCharge,endShortCharge,tickShortChargeBattery,settleOfflineShortCharge,shortChargeGainToday,shortChargeStoryInterrupted,drainBattery,plugIn,SHORT_CHARGE_MAX_GAIN} from '../src/system/power/battery.js';
 import {tickWorld,advanceGameMinutes,worldMinuteRate,STORY55_CHAT_MINUTES_PER_MS} from '../src/system/time/clock.js';
@@ -8,6 +8,9 @@ import {dynamicIsland} from '../src/system/power/island.js';
 import {status} from '../src/system/shell.js';
 import {seedD02} from '../src/story/d02/runtime.js';
 import {MessageDelivery} from '../src/services/messaging/delivery.js';
+import {syncDeathNight,chargingBlock} from '../src/system/power/story.js';
+import {powerFullscreen} from '../src/system/power/controls.js';
+import {dailyGuide} from '../src/apps/browser/features/cheat-guide/index.js';
 const d02=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.unlocked=true;s.story55.completed.intro={day:1,clock:'12:00',test:true};return s;};
 test('Dynamic Island offers short and long charging choices',()=>{
  const s=d02();
@@ -67,9 +70,43 @@ test('D01 cannot skip overnight with short charge and D55 ending is protected',(
  assert.equal(advanceGameMinutes(s,120).event,'short-charge-end');
  assert.equal(s.day,1);assert.equal(s.clock,'23:59');
  s.story55.d01.nightAfterMidnight=true;s.clock='00:30';
- assert.equal(beginShortCharge(s),false,'D01 after midnight remains under the original lock');
+ assert.equal(beginShortCharge(s),true,'settled D01 may short charge after midnight');
+ assert.equal(advanceGameMinutes(s,180).event,'emergency');
+ assert.equal(s.clock,'03:00');assert.equal(s.day,1);assert.equal(s.batteryPercent,1);
+ assert.equal(s.emergencyCharge,true);assert.equal(s.powerMode,'idle');
+ assert.match(powerFullscreen(s),/power-emergency-screen/);
+ assert.equal(plugIn(s),true);assert.equal(s.day,2);assert.equal(s.batteryPercent,100);
  const last=d02();last.day=55;last.story55.ended=true;
  assert.equal(beginShortCharge(last),false);
+});
+
+test('D01 old 03:00 saves normalize from 2% without skipping an incomplete objective',()=>{
+ const s=activateStory55(initialState());s.clock='03:00';s.batteryPercent=2;
+ s.story55.d01.nightAfterMidnight=true;syncDeathNight(s);
+ assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,false);
+ assert.equal(chargingBlock(s),'plot');assert.equal(beginShortCharge(s),false);
+ assert.equal(plugIn(s),false);assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/);
+ Object.assign(s.story55.d01,{bankClaimed:true,rewardPaid:true});
+ s.story55.completed.intro={day:1,clock:'03:00'};s.batteryPercent=2;
+ syncDeathNight(s);assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,true);
+ assert.match(powerFullscreen(s),/power-emergency-screen/);
+ assert.deepEqual(dailyGuide(s).charge.slice(0,2).map(x=>x.copy),['短充：暫不可用','長充：可用']);
+ assert.equal(plugIn(s),true);assert.equal(s.day,2);
+});
+
+test('D01 normal clock and reloaded old saves enter the same 1% charging screen',()=>{
+ const s=activateStory55(initialState());s.clock='02:59';s.batteryPercent=37;
+ Object.assign(s.story55.d01,{bankClaimed:true,rewardPaid:true,nightAfterMidnight:true});
+ s.story55.completed.intro={day:1,clock:'23:50'};
+ assert.equal(advanceGameMinutes(s,5).event,'emergency');
+ assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.batteryPercent,1);
+ s.batteryPercent=2;s.emergencyCharge=false; // legacy frozen state
+ const entries=new Map([[KEY,JSON.stringify(s)]]),storage={getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v)};
+ const store=new PhoneStore(storage);
+ assert.equal(store.get().batteryPercent,1);assert.equal(store.get().emergencyCharge,true);
+ assert.match(powerFullscreen(store.get()),/power-emergency-screen/);
+ store.update(next=>assert.equal(plugIn(next),true));
+ assert.equal(store.get().day,2);assert.equal(store.get().clock,'08:00');assert.equal(store.get().batteryPercent,100);
 });
 
 test('D02 sale SMS still delivers at its original game timestamp during acceleration',()=>{

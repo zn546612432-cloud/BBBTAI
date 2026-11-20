@@ -4,6 +4,8 @@ import {sendD01WeChat,tickD01WeChat,d01Draft,d01ComposerDisabled,closeD01WeChat}
 import {exitD01Puzzle} from '../src/apps/ghost/state.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {plugIn} from '../src/system/power/battery.js';
+import {syncDeathNight,chargingBlock,shortChargeBlock} from '../src/system/power/story.js';
+import {powerFullscreen} from '../src/system/power/controls.js';
 import {randomRouteSolution,connected,createBoard} from '../src/apps/ghost/games/logic.js';
 import {seedD01,deliverD01Opening,claimD01Bank,acceptD01Repair,deliverD01Attachment,deployD01,finishD01Round,submitD01Attachment,settleD01Repair,D01_REPAIR,d01Gate} from '../src/story/d01/runtime.js';
 
@@ -115,14 +117,18 @@ test('D01 brother private replies after 3 followup bubbles and 2 game minutes ac
 test('D01 03:00 freeze keeps all apps usable and charging alone switches to D02',()=>{
  const s=fixture();seedD01(s);
  advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');
- assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(s.emergencyCharge,undefined);
+ assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(s.batteryPercent,1);assert.equal(s.emergencyCharge,false);
+ assert.equal(shortChargeBlock(s),'plot');assert.doesNotMatch(powerFullscreen(s),/power-emergency-screen/);
  assert.equal(advanceGameMinutes(s,200).minutes,0);
  assert.equal(plugIn(s),false);
  deliverD01Opening(s);claimD01Bank(s);acceptD01Repair(s);deliverD01Attachment(s);deployD01(s);
  for(let i=0;i<5;i++)finishD01Round(s);
  submitD01Attachment(s);settleD01Repair(s);
  assert.equal(s.story55.completed.intro.day,1);
+ syncDeathNight(s);assert.equal(s.emergencyCharge,true);assert.equal(chargingBlock(s),null);
+ assert.match(powerFullscreen(s),/power-emergency-screen/);
  assert.equal(plugIn(s),true);assert.equal(s.day,2);assert.equal(s.clock,'08:00');
+ assert.equal(s.batteryPercent,100);
 });
 
 test('GHOST save exit keeps current rotations; discard removes only unfinished level',()=>{

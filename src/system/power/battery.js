@@ -49,11 +49,11 @@ export function drainBattery(s,ms){
  s.batteryPercent=Math.max(chargingBlock(s)?20:2,before-points);
  return before-s.batteryPercent;
 }
-export const canShortCharge=s=>!!s&&!phoneBlocked(s)&&!shortChargeBlock(s)&&!s.story55?.activeScene&&!['charging','short-charging','sleeping'].includes(s.powerMode);
+export const canShortCharge=s=>!!s&&!phoneBlocked(s)&&!shortChargeBlock(s)&&!s.story55?.activeScene&&!['charging','short-charging','sleeping'].includes(s.powerMode)&&!s.emergencyCharge&&!s.poweredOff&&!s.story55?.ended&&!(isStory55(s)&&s.day===55)&&s.clock!=='23:59';
 export const canCharge=s=>!!s&&!phoneBlocked(s)&&!chargingBlock(s)&&(!s.story55?.activeScene||s.emergencyCharge||s.poweredOff)&&s.powerMode!=='charging'&&s.powerMode!=='short-charging'&&s.powerMode!=='sleeping';
 // Short charge respects the original wet-port/story gate for BOTH modes.
 export function beginShortCharge(s,now=Date.now()){
- if(!canShortCharge(s)||s.emergencyCharge||s.poweredOff||s.story55?.ended||(s.story55?.version===1&&(s.day===55||s.day===1&&s.story55?.d01?.nightAfterMidnight))||s.clock==='23:59')return false;
+ if(!canShortCharge(s))return false;
  s.powerMode='short-charging';
  s.shortCharge={startPercent:batteryPercent(s),elapsedMs:0,credited:0,lastAccruedAt:now};
  s.shortChargeGains??={};
