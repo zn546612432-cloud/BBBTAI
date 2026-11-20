@@ -75,12 +75,15 @@ export function advanceGameMinutes(s,requested){
  // at 03:00 instead of triggering an emergency battery overlay.
  if(isStory55(s)&&s.day===1){
   const d=s.story55.d01??={},from=clockMinutes(s.clock)+(d.nightAfterMidnight?1440:0);
-  const target=Math.min(short?1439:1440+180,from+Math.max(0,Math.floor(requested)));
+  const target=Math.min(short&&!d.nightAfterMidnight?1439:1440+180,from+Math.max(0,Math.floor(requested)));
   if(target<=from)return {minutes:0,event:'d01-hold'};
   s.clock=isoTime(target%1440);d.nightAfterMidnight=target>=1440;
   if(!short)drainGameBattery(s,target-from);
   if(short&&target===1439)endShortCharge(s);
-  if(target===1440+180){d.frozenAt03=true;s.batteryPercent=2;return {minutes:target-from,event:'d01-hold'};}
+  if(target===1440+180){
+   d.frozenAt03=true;if(short)endShortCharge(s);syncDeathNight(s);
+   return {minutes:target-from,event:s.emergencyCharge?'emergency':'d01-hold'};
+  }
   return {minutes:target-from,event:short&&target===1439?'short-charge-end':timedStoryPaused(s)?'timed-story-hold':'none'};
  }
  // The same 03:00 hold serves any explicitly required late mainline scene.

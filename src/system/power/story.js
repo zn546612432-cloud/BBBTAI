@@ -26,7 +26,13 @@ export function syncDeathNight(s){
   if(secondView55(s)){s.deathPhase='recovered';s.batteryPercent=100;return;}
   if(finaleInProgress55(s))return;
   // Normalize saved overnight holds before the fullscreen power UI renders.
-  if(s.clock==='03:00'&&s.day<55&&(s.day===1&&s.story55.d01?.nightAfterMidnight||s.day===23&&s.story55.d23?.nightAfterMidnight||overnightSceneNight55(s))){
+  if(s.day===1&&s.clock==='03:00'){
+   // D01 remains playable at 1% until both compulsory tasks settle. The
+   // same normalization runs after settlement and when loading older saves.
+   const blocked=!!story55ChargeGate(s);
+   s.batteryPercent=1;s.emergencyCharge=!blocked;s.powerActiveMs=0;
+   if(blocked)s.poweredOff=false;
+  }else if(s.clock==='03:00'&&s.day<55&&(s.day===23&&s.story55.d23?.nightAfterMidnight||overnightSceneNight55(s))){
    s.batteryPercent=2;s.emergencyCharge=false;s.poweredOff=false;
   }
   if(s.story55.ended&&s.deathPhase!=='recovered'){
@@ -54,6 +60,7 @@ export const shortChargeBlock=s=>isStory55(s)?(overnightSceneNight55(s)?'plot':s
 
 export function chargingBlock(s){
  if(isStory55(s)){
+  if(s.day===1)return story55ChargeGate(s);
   // A forced 03:00 emergency is physical recovery, not an authored skip.
   // Keep every incomplete node pending while permitting the battery to recover.
   if((s.emergencyCharge||s.poweredOff)&&s.day<55&&!s.story55?.ended){

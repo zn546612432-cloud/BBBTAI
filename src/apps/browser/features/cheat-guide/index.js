@@ -1,5 +1,6 @@
 import {esc} from '../../../../system/ui.js';
 import {chargingBlock,shortChargeBlock} from '../../../../system/power/story.js';
+import {canShortCharge,canCharge} from '../../../../system/power/battery.js';
 import {date55,isStory55,story55Config,completed,nodeStatus} from '../../../../services/story55/state.js';
 import {dailyContent,nodeInstructions,GUIDE_URL,GUIDE_ID} from './content.js';
 
@@ -42,7 +43,7 @@ export function dailyGuide(s){
  if(day===55)required.push(item('21:00、21:16、21:49、22:25、22:46、22:49：留意當晚消息與來電，依照手機畫面操作。'));
  const short=shortChargeBlock(s),long=chargingBlock(s);
  const blockers=required.filter(x=>x.status!=='已完成');
- const charge=[item(`短充：${short?'暫不可用':'可用'}`),item(`長充：${long?'暫不可用':'可用'}`)];
+ const charge=[item(`短充：${(day===1?!canShortCharge(s):short)?'暫不可用':'可用'}`),item(`長充：${(day===1?!canCharge(s):long)?'暫不可用':'可用'}`)];
  if(short||long)charge.push(item(day===55?'今日請依照手機當前畫面操作。':blockers.length?'先完成上方待完成事項；有時間標記的對話須等到指定時刻。':'仍有未完成的主線；請檢查微信、MIRAGE、KIRA 的預填回覆及 GHOST 項目。'));
  if(day>=14&&day<=24&&!completed(s,'base'))charge.push(item('每日連結測試及設備升級只限制長充，不單獨限制短充。'));
  if(day===13)charge.push(item('等待晚間郵件期間不必一直掛機；其他主線門檻仍然有效。'));
