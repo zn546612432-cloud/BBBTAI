@@ -18,7 +18,12 @@ mkdirSync('d23-chess-browser-results/d41',{recursive:true});
 const page=await context.newPage(),errors=[],tts=[];page.on('pageerror',e=>errors.push(e.message));
 // Use actual browser audio playback with a short synthetic WAV; no live key is used.
 const wav=Buffer.alloc(44+2400);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(8000,24);wav.writeUInt32LE(16000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(2400,40);
-await page.route('**/api/voice/tts',async route=>{tts.push(route.request().postDataJSON().text);await route.fulfill({status:200,contentType:'audio/wav',body:wav});});
+let bishopAttempts=0;
+await page.route('**/api/voice/tts',async route=>{
+ const text=route.request().postDataJSON().text;tts.push(text);
+ if(text.includes('Go bishop')&&++bishopAttempts===1){await new Promise(r=>setTimeout(r,12000));await route.fulfill({status:503,body:'temporary test failure'});return;}
+ await route.fulfill({status:200,contentType:'audio/wav',body:wav});
+});
 await page.route('**/assets/story55/d41-d42/*.mp3',route=>route.fulfill({status:404,body:''}));
 try{
  await page.goto(process.env.CHESS_LOCAL_URL||'http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
@@ -30,7 +35,13 @@ try{
   await page.waitForFunction(text=>document.querySelector('form[data-form="tai-call-turn"] input')?.value===text,D41_CALL.steps[i][1],{timeout:15000});
   await draft.locator('button[type=submit]').click();
  }
- await page.locator('.invite-card [data-action="tai-scripted-chess"]').click({timeout:20000});
+ await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).invitations.some(i=>i.id==='s55-d41-chess-invite'),key,{timeout:20000});
+ assert.equal(await page.locator('.tai-native-call .invite-card').count(),0);
+ await page.locator('[data-action="tai-minimize-call"]').click();
+ await page.locator('[data-action="page"][data-page="2"]').click();
+ await page.locator('[data-action="open-app"][data-app="noapp"]:visible').first().click();
+ await page.locator('[data-action="open-chat"][data-id="tai"]').click();
+ await page.locator('.invite-card [data-action="accept-invite"][data-id="s55-d41-chess-invite"]').click({timeout:20000});
  assert.equal(await page.locator('.invite-page-symbol').count(),0);
  await page.getByText('Opening with a little pawn.',{exact:true}).waitFor({timeout:15000});
  console.log('first cue and board visible',await page.locator('.board-grid .chess-piece img').count());
@@ -38,14 +49,15 @@ try{
  const match=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches.find(x=>x.invitationId==='s55-d41-chess-invite'),key);
  await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches.find(x=>x.invitationId==='s55-d41-chess-invite')?.history.length===36,key,{timeout:90000});
  const input=page.locator('.chess-chat-form input');await page.waitForFunction(()=>document.querySelector('.chess-chat-form input')?.value==='Checkmate.'&&!document.querySelector('.chess-chat-form button')?.disabled);
- assert.equal((await match()).status,'active');assert.equal((await match()).chat.length,6);assert.equal(await input.inputValue(),'Checkmate.');
+ assert.equal((await match()).status,'active');assert.equal((await match()).chat.length,5);assert.equal(await input.inputValue(),'Checkmate.');
  await input.scrollIntoViewIfNeeded();await page.screenshot({path:'d23-chess-browser-results/d41/before-send.png'});
  await page.locator('.chess-chat-form button').click();
  await page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).matches.find(x=>x.invitationId==='s55-d41-chess-invite')?.d41Script.completed,key,{timeout:15000});
- const final=await match();assert.equal(final.history.length,37);assert.equal(final.history.at(-1).san,'Qh7#');assert.equal(final.result,'player-win');assert.equal(final.chat.length,8);
- assert.deepEqual(final.d41Script.spoken,[1,7,13,19,25,31,37]);assert.equal(final.d41Script.voiceUnavailable,undefined);
+ const final=await match();assert.equal(final.history.length,37);assert.equal(final.history.at(-1).san,'Qh7#');assert.equal(final.result,'player-win');assert.equal(final.chat.length,7);
+ assert.deepEqual(final.d41Script.spoken,[1,7,19,25,31,37]);assert.equal(final.d41Script.voiceUnavailable,undefined);
  assert.equal(await page.locator('[data-action="d41-retry-voice"],[data-action="d41-skip-voice"],[data-action="tai-scripted-next"]').count(),0);
  assert.equal(tts.filter(t=>t.includes('恭喜')).length,1);
+ assert.equal(bishopAttempts,2);assert.ok(!tts.some(t=>/Knight, knight/i.test(t)));
  await page.locator('.board-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'d23-chess-browser-results/d41/checkmate.png'});
  assert.deepEqual(errors,[]);console.log('D41 MOBILE PASS',JSON.stringify({url:page.url(),title:await page.title(),plies:final.history.length,voiceCount:tts.length,final:final.history.at(-1).san,result:final.result,errors}));
 }finally{await browser.close();}

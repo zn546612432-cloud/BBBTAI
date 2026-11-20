@@ -2,6 +2,23 @@ import {Chess} from 'chess.js';
 import {recordChessFeedback} from './chess-feedback.js';
 import {D41_CHESS_MOVES,D41_CHESS_CUES,D41_CHESS_DRAFT,isD41Chess,d41ChessComplete} from '../story/d34-d42/d41-chess.js';
 
+// Recover previously skipped recordings in the current day's saved match.
+export function reconcileD41ChessCues(store,id){
+ const m=store.get().matches.find(x=>x.id===id),script=m?.d41Script;
+ if(!isD41Chess(m)||!script)return false;
+ const missed=(script.voiceUnavailable||[]).filter(p=>D41_CHESS_CUES[p]&&!script.spoken.includes(p));
+ if(script.pendingVoice!==13&&!script.spoken.includes(13)&&!(script.voiceUnavailable||[]).includes(13)&&(!missed.length||script.pendingVoice))return false;
+ store.update(s=>{
+  const match=s.matches.find(x=>x.id===id),a=match.d41Script;
+  a.spoken=a.spoken.filter(p=>p!==13);match.chat=match.chat.filter(c=>c.id!==match.id+'-d41-cue-13');
+  if(missed.length)a.voiceUnavailable=missed;else delete a.voiceUnavailable;
+  if(a.pendingVoice===13)a.pendingVoice=null;
+  if(!a.pendingVoice)a.pendingVoice=missed[0]??null;
+  if(a.pendingVoice)a.completed=false;
+  else if(match.result==='player-win'&&Object.keys(D41_CHESS_CUES).every(p=>a.spoken.includes(Number(p))))a.completed=true;
+ });
+ return true;
+}
 export {isD41Chess,d41ChessComplete};
 export function initializeD41Chess(match){
  if(!isD41Chess(match)||match.d41Script||match.status!=='active')return false;
@@ -36,6 +53,9 @@ export function sendD41ChessDraft(store,id,text){
 export function completeD41ChessCue(store,id,ply,{played=true}={}){
  let done=false;store.update(s=>{const m=s.matches.find(x=>x.id===id);const script=m?.d41Script;
  if(!isD41Chess(m)||script?.pendingVoice!==ply)return;
- if(played)script.spoken.push(ply);else (script.voiceUnavailable??=[]).push(ply);
- delete script.voiceFailed;script.pendingVoice=null;if(ply===D41_CHESS_MOVES.length&&m.result==='player-win')script.completed=true;done=true;});return done;
+ if(!played)return;
+ if(!script.spoken.includes(ply))script.spoken.push(ply);
+ if(script.voiceUnavailable){script.voiceUnavailable=script.voiceUnavailable.filter(p=>p!==ply);if(!script.voiceUnavailable.length)delete script.voiceUnavailable;}
+ delete script.voiceFailed;script.pendingVoice=script.voiceUnavailable?.find(p=>D41_CHESS_CUES[p]&&!script.spoken.includes(p))??null;
+ if(m.result==='player-win'&&!script.pendingVoice&&Object.keys(D41_CHESS_CUES).every(p=>script.spoken.includes(Number(p))))script.completed=true;done=true;});return done;
 }

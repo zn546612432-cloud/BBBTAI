@@ -1,0 +1,37 @@
+name: Record D41 and D42 fixed MiniMax dialogue
+on:
+  push:
+    branches: [fix/d41-noapp-voice-ready]
+    paths: ['scripts/generate-d41-d42-voice.mjs']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Record fixed dialogue with the existing approved voice
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_REGION: cn
+          SCRIPTED_VOICE_DAY: 41
+        run: node scripts/generate-d41-d42-voice.mjs
+      - name: Verify every D41 recording decodes as audio
+        run: |
+          test "$(find public/assets/story55/d41-d42 -name 'd41-*.mp3' | wc -l)" = 10
+          for clip in public/assets/story55/d41-d42/d41-*.mp3; do
+            ffmpeg -v error -i "$clip" -f null -
+          done
+      - name: Commit verified audio to the fix branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f public/assets/story55/d41-d42/
+          git commit -m 'assets: record fixed D41 and D42 dialogue'
+          git push origin HEAD:refs/heads/${GITHUB_REF_NAME}

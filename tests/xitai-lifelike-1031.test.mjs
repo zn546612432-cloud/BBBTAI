@@ -51,7 +51,7 @@ test('When Ximeng proposes chess, a deterministic chance can create a live invit
  const store=stub(s),c=s.content.conversations.noapp.find(c=>c.id==='tai');
  let id='case-1';for(let i=0;i<100;i++){
   const trial='case-'+i,hash=[...trial].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,0);
-  if(hash%100<48){id=trial;break;}
+  if(hash%100<35){id=trial;break;}
  }
  c.messages.push({id,from:'me',text:'我们来下国际象棋吗？',day:60,time:'21:00',actual:true});
  assert.equal(maybeInviteFromTaiChat(store,id),true);

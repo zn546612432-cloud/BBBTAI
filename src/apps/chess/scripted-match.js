@@ -1,7 +1,7 @@
 import {loadScriptedVoice} from '../../services/voice/scripted-voice.js';
 import {d41CallConnected,playD41ChessVoice} from '../noapp/voice-call.js';
 import {createGestureAudio,primeAudio} from '../../services/voice/playback.js';
-import {advanceD41Chess,completeD41ChessCue,isD41Chess,initializeD41Chess,d41ChessDraft} from '../../services/chess-scripted.js';
+import {advanceD41Chess,completeD41ChessCue,isD41Chess,initializeD41Chess,d41ChessDraft,reconcileD41ChessCues} from '../../services/chess-scripted.js';
 import {D41_CHESS_CUES,D41_CHESS_DRAFT} from '../../story/d34-d42/d41-chess.js';
 import {D41_CALL} from '../../story/d34-d42/definition.js';
 import {scriptedCallPlayed} from '../../services/story55/state.js';
@@ -19,7 +19,7 @@ export function d41DraftDisplay(match){
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function bounded(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('語音逾時')),ms);})]);}finally{clearTimeout(timer);}}
 async function speak(ctx,text,current){
- const blob=await bounded(loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)),8000);
+ const blob=await loadScriptedVoice(text);
  if(!current())return false;
  const onCall=await playD41ChessVoice(ctx,blob,text);
  if(onCall!==null){if(onCall==='failed')throw Error('語音播放失敗');return onCall==='completed';}
@@ -39,6 +39,9 @@ async function speak(ctx,text,current){
 export function scheduleD41Chess(ctx,id){
  const {store}=ctx,s=store.get(),m=matchFor(s,id);
  if(!globalThis.document||!isD41Chess(m)||!visible(s,id)||!scriptedCallPlayed(s,D41_CALL)||running.has(store))return;
+ if(s.day===41&&m.d41Script&&(m.d41Script.pendingVoice===13||m.d41Script.voiceUnavailable?.length||m.d41Script.spoken?.includes(13))) {
+  if(reconcileD41ChessCues(store,id))return;
+ }
  if(m.status==='finished'&&!m.d41Script?.pendingVoice||d41DraftDisplay(m).ready)return;
  running.add(store);
  void (async()=>{
@@ -49,10 +52,7 @@ export function scheduleD41Chess(ctx,id){
    if(ply){
     const current=()=>matchFor(store.get(),id)?.d41Script?.pendingVoice===ply;
     try{if(await speak(ctx,D41_CHESS_CUES[ply],()=>current()&&visible(store.get(),id))&&current())completeD41ChessCue(store,id,ply);}
-    catch{if(current()&&visible(store.get(),id)){
-     try{if(await speak(ctx,D41_CHESS_CUES[ply],()=>current()&&visible(store.get(),id))&&current())completeD41ChessCue(store,id,ply);}
-     catch{if(current()&&visible(store.get(),id))completeD41ChessCue(store,id,ply,{played:false});}
-    }}
+    catch{await delay(1800);}
     return;
    }
    await delay(m.history.length?1500:250);

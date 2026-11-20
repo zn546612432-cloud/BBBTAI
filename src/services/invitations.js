@@ -37,7 +37,24 @@ export function refuseD29ChessInvitation(s,id){
  for(const [index,line] of ['嘖。','怕了？'].entries())appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:`s55-d29-refusal-${index}`,from:'s55-ouroboros',text:line,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
  return true;
 }
-export function createPlayerInvitation(store){const s=store.get();if(!taiRecognized(s))throw Error('这个联系人尚未开放');const existing=s.invitations.find(i=>i.senderId==='player'&&i.status==='pending');if(existing)return existing.id;const id=uid();store.update(s=>{s.invitations.push({id,senderId:'player',recipientId:'tai',source:'local-demo',status:'pending',createdDay:s.day,expiresDay:s.day+2,matchId:null});s.events.push({type:'chess_invitation_sent',invitationId:id,day:s.day,clock:s.clock});});return id;}
+const playerInvite=i=>i.senderId==='player'&&['local-demo','noapp-player'].includes(i.source);
+function insertPlayerInviteCard(s,id){
+ const message=appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'player-chess-card-'+id,from:'me',kind:'app_invitation',text:'國際象棋邀請',attachment:{invitationId:id,type:'chess'}});
+ if(message)message.invitationId=id;
+}
+export function createPlayerInvitation(store){
+ const s=store.get();if(!taiRecognized(s))throw Error('这个联系人尚未开放');
+ const existing=s.invitations.find(i=>playerInvite(i)&&i.status==='pending'&&i.expiresDay>=s.day);
+ const id=existing?.id||uid();
+ store.update(s=>{
+  if(!existing){
+   s.invitations.push({id,senderId:'player',recipientId:'tai',source:'noapp-player',status:'pending',createdDay:s.day,createdClock:s.clock,createdAt:Date.now(),expiresDay:s.day+2,matchId:null});
+   s.events.push({type:'chess_invitation_sent',invitationId:id,day:s.day,clock:s.clock});
+  }
+  insertPlayerInviteCard(s,id);
+ });
+ return id;
+}
 export function receiveInvitation(store,id){const inv=store.get().invitations.find(i=>i.id===id),story=store.get().story55;if(!inv||inv.senderId!=='tai'||!(['demo-fixture','story-invitation'].includes(inv.source)||['d23-mirage-story','d29-mirage-story'].includes(inv.source)&&!!story?.completed?.[inv.source.slice(0,3)+'-chess']||inv.source==='d41-noapp-story'&&id===D41_CHESS_INVITATION&&story?.d41CallTriggered))throw Error('邀请来源不可验证');if(inv.status==='accepted')return inv.matchId;if(inv.expiresDay<store.get().day){store.update(s=>{s.invitations.find(i=>i.id===id).status='expired';});throw Error('邀请已过期');}if(inv.status!=='pending'&&inv.status!=='deferred')throw Error('邀请无法接受');const matchId=uid();store.update(s=>{const item=s.invitations.find(i=>i.id===id);item.status='accepted';item.matchId=matchId;const match={id:matchId,invitationId:id,opponent:'tai',pgn:'',status:'active',turn:'w',createdDay:s.day,history:[],chat:authoredChessSources.includes(item.source)?[]:[{id:uid(),from:'tai',text:'来一盘？',time:s.clock}]};initializeD41Chess(match);s.matches.push(match);beginD23ChessLesson(match,s.clock);s.events.push({type:'chess_match_started',matchId,invitationId:id,day:s.day,clock:s.clock});});return matchId;}
 export function deferInvitation(store,id){
  store.update(s=>{
@@ -70,7 +87,7 @@ export function maybeInviteFromTaiChat(store,messageId){
  const max=Math.min(2,Math.max(0,Number(s.aiDraft?.maxChessInvites??2)));
  if(count>=max||s.invitations.some(i=>i.senderId==='tai'&&['pending','deferred'].includes(i.status)))return false;
  const hash=[...message.id].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,0);
- if(hash%100>=48)return false;
+ if(hash%100>=35)return false;
  const index=count+1,invId='tai-chess-chat-'+index+'-'+message.id;
  store.update(state=>{
   state.invitations.push({id:invId,senderId:'tai',recipientId:'player',source:'story-invitation',status:'pending',createdDay:state.day,createdClock:state.clock,expiresDay:Math.min(89,state.day+7),matchId:null});
@@ -83,7 +100,27 @@ export function maybeInviteFromTaiChat(store,messageId){
 }
 export function startAcceptedInvitation(store,id){const inv=store.get().invitations.find(i=>i.id===id);if(!inv||inv.status!=='accepted')throw Error('邀请尚未接受');if(inv.matchId)return inv.matchId;const matchId=uid();store.update(s=>{const i=s.invitations.find(i=>i.id===id);if(i.matchId)return;i.matchId=matchId;const item=i;const match={id:matchId,invitationId:id,opponent:'tai',pgn:'',status:'active',turn:'w',createdDay:s.day,history:[],chat:['d23-mirage-story','d29-mirage-story'].includes(item.source)?[]:[{id:uid(),from:'tai',text:'来一盘？',time:s.clock}]};initializeD41Chess(match);s.matches.push(match);beginD23ChessLesson(match,s.clock);s.events.push({type:'chess_match_started',matchId,invitationId:id,day:s.day,clock:s.clock});});return store.get().invitations.find(i=>i.id===id).matchId;
 }
-export function processDemoReply(store){const s=store.get(),presence=taiPresence(s);const expired=s.invitations.filter(i=>i.source==='local-demo'&&i.senderId==='player'&&i.status==='pending'&&i.expiresDay<s.day);if(expired.length)store.update(s=>{for(const inv of s.invitations)if(expired.some(e=>e.id===inv.id))inv.status='expired';});if(presence.status!=='online')return false;const pending=store.get().invitations.find(i=>i.source==='local-demo'&&i.senderId==='player'&&i.status==='pending'&&i.createdDay<=s.day&&i.expiresDay>=s.day);if(!pending)return false;store.update(s=>{const inv=s.invitations.find(i=>i.id===pending.id);inv.status='accepted';s.notifications.unshift({id:uid(),title:'Dr Ouroboros',body:'邀请已接受 · 打开国际象棋',link:{appId:'chess',route:'/invitation',params:{invitationId:inv.id}},demo:true});s.events.push({type:'chess_invitation_demo_accepted',invitationId:inv.id,day:s.day,clock:s.clock});});return true;}
+export function duePlayerInviteReply(s,now=Date.now()){
+ const pending=s.invitations.filter(i=>playerInvite(i)&&i.status==='pending');
+ return pending.some(i=>i.expiresDay<s.day)||pending.some(i=>i.createdDay<=s.day&&now-(i.createdAt||0)>=1200)&&taiPresence(s).status==='online';
+}
+export function processDemoReply(store,id=null,{random=Math.random}={}){
+ const s=store.get();
+ const expired=s.invitations.filter(i=>playerInvite(i)&&i.status==='pending'&&i.expiresDay<s.day);
+ if(expired.length)store.update(s=>{for(const inv of s.invitations)if(expired.some(e=>e.id===inv.id))inv.status='expired';});
+ if(taiPresence(s).status!=='online')return false;
+ const pending=store.get().invitations.find(i=>playerInvite(i)&&i.status==='pending'&&i.createdDay<=s.day&&i.expiresDay>=s.day&&(!id||i.id===id));
+ if(!pending)return false;
+ const accepted=random()<.35;
+ store.update(s=>{
+  const inv=s.invitations.find(i=>i.id===pending.id);
+  insertPlayerInviteCard(s,inv.id);
+  inv.status=accepted?'accepted':'declined';
+  appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'player-chess-reply-'+inv.id,from:'tai',text:accepted?'來。':'晚點吧。'});
+  s.events.push({type:accepted?'chess_invitation_accepted':'chess_invitation_declined',invitationId:inv.id,day:s.day,clock:s.clock});
+ });
+ return accepted;
+}
 
 const asMinutes=(day,clock)=>Number(day)*1440+Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
 export function dueChessReminders(s){

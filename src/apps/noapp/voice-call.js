@@ -1,8 +1,7 @@
 import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlayed} from '../../services/story55/state.js';
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {phoneBlocked} from '../../system/power/story.js';
-import {offerD41ChessInvitation,D41_CHESS_INVITATION,receiveInvitation,startAcceptedInvitation} from '../../services/invitations.js';
-import {renderChessInviteCard} from '../../components/chess-invitation.js';
+import {offerD41ChessInvitation,D41_CHESS_INVITATION} from '../../services/invitations.js';
 import {loadScriptedVoice,preloadScriptedVoice} from '../../services/voice/scripted-voice.js';
 import {d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
@@ -118,8 +117,7 @@ export function callView(s){
    phoneButton('tai-expand','文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
    phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
- const draft=scriptedCallDraft(),invitation=call.scripted?.id===D41_CALL.id&&s.invitations?.find(i=>i.id===D41_CHESS_INVITATION);
- const inviteButton=invitation&&['pending','deferred','accepted'].includes(invitation.status)?'<div class="tai-scripted-chess">'+renderChessInviteCard(invitation,{name:'Dr Ouroboros',acceptAction:'tai-scripted-chess',continueAction:'tai-scripted-chess',showDefer:false})+'</div>':'';
+ const draft=scriptedCallDraft();
  const composer=call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+call.turns.slice(-9).map(t=>'<p><b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div>'+composer+'</div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
@@ -130,7 +128,7 @@ export function callView(s){
   +'<nav class="tai-call-topbar">'+
    '<span class="tai-call-channel">NoApp 語音</span>'+((active||dial)?'<button type="button" class="tai-call-minimize" data-action="tai-minimize-call" aria-label="縮小通話">'+glyph.layout+'</button>':'')+'</nav>'+
    '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>'+esc(taiDisplayName(s))+'</h1><p role="status" aria-live="polite">'+esc(subtitle)+'</p>'+(active?'<small class="tai-call-duration">'+duration()+'</small>':'')+'</div>'+
-   liveCaptions+inviteButton+transcript+
+   liveCaptions+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
    '</section>';
 }
@@ -165,7 +163,7 @@ export function d42CallDue(s){
  return isStory55(s)&&!s.story55.ended&&s.day===D42_CALL.day&&s.clock>=D42_CALL.at&&completed(s,'show')&&taiRecognized(s)&&!scriptedCallPlayed(s,D42_CALL);
 }
 export function maybeStartD42Call(ctx){
- if([41,42].includes(ctx.store.get().day))preloadScriptedVoice(42);
+ if(ctx.store.get().day===42)preloadScriptedVoice(42);
  return startTimedScriptedCall(ctx,D42_CALL,d42CallDue);
 }
 export function d41CallDue(s){
@@ -258,7 +256,7 @@ async function playCallAudio(ctx,blob,sessionId,revision,onStart){
    if(call.sessionId!==sessionId||call.state!=='connected'||call.revision!==revision){
     audio.pause();finish('interrupted');
    }else begin();
-  }).catch(blocked);
+  }).catch(error=>{if(call.scripted?.id===D41_CALL.id&&error?.name!=='NotAllowedError')failed();else blocked();});
  });
 }
 export const d41CallConnected=()=>call.state==='connected'&&call.scripted?.id===D41_CALL.id;
@@ -473,15 +471,23 @@ async function playScriptedOpening(ctx){
    const [role]=steps[call.scriptIndex];
    if(role==='me')break;
    if(role==='invite'){
-    ctx.store.update(offerD41ChessInvitation);call.scriptIndex++;ctx.refresh?.();continue;
+    ctx.store.update(offerD41ChessInvitation);call.scriptIndex++;ctx.refresh?.();await new Promise(resolve=>setTimeout(resolve,script.inviteGapMs));continue;
    }
    const lines=[];for(let i=call.scriptIndex;i<steps.length&&steps[i][0]==='tai';i++)lines.push(steps[i][1]);
    const before=call.scriptIndex;
    await playScriptedCallSequence({...script,lines},{current,
-   synthesize:text=>loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)).catch(()=>null),
+   synthesize:async text=>{
+    if(script.id!==D41_CALL.id)return loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)).catch(()=>null);
+    while(current()){try{return await loadScriptedVoice(text);}catch{await new Promise(resolve=>setTimeout(resolve,1800));}}
+    return null;
+   },
    play:async(blob,text)=>{
     call.caption=text;call.lastSpeech=text;ctx.refresh?.();
-    const outcome=blob?await playCallAudio(ctx,blob,sessionId,revision):'failed';
+    let outcome=blob?await playCallAudio(ctx,blob,sessionId,revision):'failed';
+    while(script.id===D41_CALL.id&&outcome==='failed'&&current()){
+     await new Promise(resolve=>setTimeout(resolve,1800));
+     if(current())outcome=await playCallAudio(ctx,blob,sessionId,revision);
+    }
     // Do not create a separate troubleshooting flow inside the story.
     if(outcome==='failed'&&current()){
      call.turns.push({role:'assistant',content:text,voiceUnavailable:true});call.scriptIndex++;call.audioReady=false;
@@ -536,13 +542,6 @@ export function submitCall(form,ctx){
 }
 export function callAction(action,ctx,{endedBy='player',endReason='manual',fallback='',outcomeOverride=''}={}){
  switch(action){
- case 'tai-scripted-chess':{
-  const inv=ctx.store.get().invitations?.find(i=>i.id===D41_CHESS_INVITATION);
-  if(call.scripted?.id!==D41_CALL.id||!inv)return true;
-  const matchId=inv.status==='accepted'?startAcceptedInvitation(ctx.store,inv.id):receiveInvitation(ctx.store,inv.id);
-  if(matchId)ctx.router.open({appId:'chess',route:'/match/'+matchId});
-  return true;
- }
  case 'tai-minimize-call':
   if(['dialing','connected'].includes(call.state))ctx.store.update(dismissNoAppCallRoute);
   return true;
