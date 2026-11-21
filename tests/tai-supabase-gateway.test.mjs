@@ -66,7 +66,7 @@ test('provider errors, daily limits and missing identity do not fabricate NPC me
    return new Response(JSON.stringify({session:{access_token:'jwt-limited',refresh_token:'refresh-limited',expires_in:3600}}),{status:200});
   return new Response(JSON.stringify({error:'daily_limit_reached'}),{status:429});
  };
- await assert.rejects(()=>taiCloudCall('chat',{messages:[]}),/今日 AI 使用额度/);
+ await assert.rejects(()=>taiCloudCall('chat',{messages:[]}),{code:'TAI_CLOUD_LIMIT',message:'云端 AI 服务暂时达到保护上限'});
  await assert.rejects(()=>taiCloudCall('tts',{}),{code:'TAI_CLOUD_LIMIT'});
 }));
 test('no sensitive secrets or public unauthenticated paid calls are present in Edge source',()=>{

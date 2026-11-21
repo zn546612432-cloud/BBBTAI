@@ -76,16 +76,15 @@ export function callPersonaGuidance(life){
  return '【作者确认的电话口吻】熙泰有自己的时间和脾气，不必每次陪聊到对方满意。'+sleep+' 真的累或准备休息时可说：「今天很累，有什么事情明天再说吧。」熟悉的吃醋语境、熙旺已经被提到或确有理由时可说：「你去找你的好哥哥熙旺聊吧，我要睡觉了。」不在无关情境突然提熙旺，不连续照搬范例。想结束就选 hang_up，台词说完由程序真实挂断，不再追加客套告别。';
 }
 const boundary=/[見见]面.{0,15}(?:[說说]|[聊谈談])|不想[說说談谈]|不方便[說说]|晚[點点]再[說说]|[先別别].{0,8}[問问]|[沒没]什[麼么]好[說说]/;
-export function planCallSpeech({text='',history=[],behavior={},opening=false,event='',closing=false,remaining=Infinity}={}){
- const quotaClosing=remaining<=3;
- const max=Math.min(Math.max(1,Math.min(5,Number(behavior.callMaxSegments)||5)),remaining);
+export function planCallSpeech({text='',history=[],behavior={},opening=false,event='',closing=false}={}){
+ const max=Math.max(1,Math.min(5,Number(behavior.callMaxSegments)||5));
  const explicit=wantsMoreCallSpeech(text);
  const short=opening||event==='unheard'||event==='nudge'||briefTurn.test(String(text).trim())||isQuietCallRequest(text)||behavior.callDetail==='brief';
  const recent=history.filter(t=>t.role==='user').slice(-3);
  const smallTalk=recent.length>=3&&recent.every(t=>String(t.content||'').trim().length<=28);
- const close=closing||quotaClosing;
+ const close=closing;
  const cap=Math.min(max,close?2:explicit||opening?5:short?2:behavior.callDetail==='natural'?3:4);
- return {minSegments:close?1:explicit?Math.min(3,cap):short?1:Math.min(2,cap),maxSegments:cap,smallTalk,quotaClosing,close,explicit};
+ return {minSegments:close?1:explicit?Math.min(3,cap):short?1:Math.min(2,cap),maxSegments:cap,smallTalk,close,explicit};
 }
 export function needsCallContinuation(segments,plan){
  if(plan.close||segments.length>=plan.minSegments||!segments.length)return false;
@@ -93,11 +92,10 @@ export function needsCallContinuation(segments,plan){
  return true;
 }
 const farewell=/先掛|先挂|掛了|挂了|聊到[這这][裡里]|先聊到|晚安|再[見见]|拜拜|下次聊|(?:晚[點点]|明天)(?:再)?[聊說说談谈]|改天聊|先去忙|先這樣|先这样|去吃[飯饭]吧|我要睡[覺觉]/;
-export function finalizeCallSegments(entries,remaining,{close=false,closingLine='好了，先聊到這裡吧。',maxSegments=5}={}){
- if(remaining<=0)return {segments:[],endAfter:true};
- const endAfter=close||entries.length>=remaining;
+export function finalizeCallSegments(entries,{close=false,closingLine='好了，先聊到這裡吧。',maxSegments=5}={}){
+ const endAfter=close;
  if(!endAfter)return {segments:entries,endAfter:false};
- const limit=Math.min(remaining,maxSegments);
+ const limit=maxSegments;
  const selected=entries.slice(0,limit);
  if(selected.length&&farewell.test(selected.at(-1).text))return {segments:selected,endAfter:true};
  // Reserve the final playable segment. Never cut away the actual goodbye.

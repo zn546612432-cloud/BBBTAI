@@ -59,7 +59,7 @@ export async function taiCloudCall(op,payload={}){
  let data;try{data=await r.json();}catch{throw Error('云端 AI 返回了无效响应');}
  if(!r.ok){
   const reason=String(data?.error||'AI 暂时不可用');
-  if(r.status===429)throw Object.assign(Error('今日 AI 使用额度已达到上限（云端服务保护额度，与游戏内语音段数无关）'),{code:'TAI_CLOUD_LIMIT'});
+  if(r.status===429)throw Object.assign(Error('云端 AI 服务暂时达到保护上限'),{code:'TAI_CLOUD_LIMIT'});
   if(r.status===401)throw Error('熙泰 AI 云端会话已失效，请重新打开网页');
   if(r.status===503)throw Error('Supabase 后端未完成配置：'+reason);
   throw Error('云端 AI：'+reason);

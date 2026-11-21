@@ -1,5 +1,5 @@
 import {voicePreview} from './gateway.js';
-import {synthesizeTaiVoice} from './voice-budget.js';
+import {synthesizeTaiVoice} from './voice-synthesis.js';
 import {taiPresence} from '../presence.js';
 import {saveClip} from '../voice/audio-store.js';
 
@@ -19,12 +19,12 @@ export function prepareTaiVoice(message,{speechText=message.text,tone=message.ai
   try{
    if(store&&!taiPresence(store.get()).contactable)return message;
    const options={text:speechText,tone,directed:true};
-   const clip=store?await synthesizeTaiVoice(store,'message',options,voicePreview):await voicePreview(options);
+   const clip=store?await synthesizeTaiVoice(options,voicePreview):await voicePreview(options);
    const audioId='tai-'+message.id;
    await saveClip(audioId,clip);
    return {...message,kind:'voice',audioId,voiceCaption:message.text,speechText,voiceRequested:undefined};
   }catch(error){
-   if(error?.code==='TAI_VOICE_LIMIT'||error?.code==='TAI_STYLE')return {...message,kind:'text',voiceRequested:undefined};
+   if(error?.code==='TAI_STYLE')return {...message,kind:'text',voiceRequested:undefined};
    console.warn('NoApp voice delivery failed:',error?.message);
    return {...message,kind:'text',text:voiceFailureLine(message.id),translation:undefined,voiceRequested:undefined};
   }

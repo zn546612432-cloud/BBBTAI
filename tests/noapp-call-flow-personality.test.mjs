@@ -45,7 +45,7 @@ test('NoApp list has no back/home buttons but chat retains call, AI setup and co
  const chat=appFrame(s,{manifest},render({store},s.nav.current));
  for(const action of ['tai-outgoing','tai-api-settings','tai-contact-more'])assert.match(chat,new RegExp('data-action="'+action+'"'));
 });
-test('ordinary call plan includes multiple thoughts, preserves short exceptions and closes near quota',()=>{
+test('ordinary call plan includes multiple thoughts, preserves short exceptions and closes only when requested',()=>{
  const plan=planCallSpeech({text:'你最近研究的东西有意思吗？',history:[{role:'user',content:'你好'},{role:'user',content:'你在忙吗？'},{role:'user',content:'你最近研究的东西有意思吗？'}]});
  assert.equal(plan.minSegments,2);assert.equal(plan.smallTalk,true);
  assert.equal(needsCallContinuation([{text:'還行。'}],plan),true);
@@ -53,8 +53,8 @@ test('ordinary call plan includes multiple thoughts, preserves short exceptions 
  assert.equal(planCallSpeech({text:'嗯'}).minSegments,1);
  assert.equal(planCallSpeech({text:'多說幾句'}).minSegments,3);
  const near=planCallSpeech({text:'你怎麼看？',remaining:3});
- assert.equal(near.quotaClosing,true);assert.equal(near.close,true);
- const farewell=finalizeCallSegments([{text:'我聽見了。'},{text:'這個晚點談。'}],1,{close:true});
+ assert.equal(near.close,false);
+ const farewell=finalizeCallSegments([{text:'我聽見了。'},{text:'這個晚點談。'}],{close:true,maxSegments:1});
  assert.equal(farewell.segments.length,1);assert.match(farewell.segments[0].text,/先聊到/);assert.equal(farewell.endAfter,true);
  assert.equal(nextNaturalCallIdleEvent({state:'connected',lastTaiEndAt:1000,nudgeCount:0},11000),'nudge');
  assert.equal(nextNaturalCallIdleEvent({state:'connected',lastTaiEndAt:1000,nudgeCount:0,quietUntil:20000},11000),'');
@@ -77,7 +77,7 @@ test('author-approved outgoing pickups never use the caller name and sleep farew
  assert.match(callPersonaGuidance({minute:75,local:'01:15'}),/凌晨1点了。你不睡觉，我要睡觉的。/);
  assert.doesNotMatch(callPersonaGuidance({minute:720,local:'12:00'}),/凌晨12点/);
  for(const text of ['很晚了，我这边已经是凌晨1点了。你不睡觉，我要睡觉的。','今天很累，有什么事情明天再说吧。','你去找你的好哥哥熙旺聊吧，我要睡觉了。']){
-  const reply={text,mode:'voice'};assert.deepEqual(finalizeCallSegments([reply],10,{close:true}),{segments:[reply],endAfter:true});
+  const reply={text,mode:'voice'};assert.deepEqual(finalizeCallSegments([reply],{close:true}),{segments:[reply],endAfter:true});
  }
 });
 

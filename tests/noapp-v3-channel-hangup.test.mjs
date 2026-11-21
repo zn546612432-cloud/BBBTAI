@@ -220,15 +220,15 @@ test('ordinary live conversation continues after a one-line draft without a new 
  });
 });
 
-test('game quota nearing its end makes Tai say goodbye and actually hang up',async()=>{
- await withMockCall(['我知道了。','好了，先聊到這裡吧。晚安。'],async({state,players,waitFor,send})=>{
-  state.aiDraft.taiVoiceUsage={60:{call:27,message:0}};
+test('an old exhausted game quota no longer causes Tai to hang up',async()=>{
+ await withMockCall(['我知道了。','這件事可以再仔細研究。'],async({state,players,waitFor,send})=>{
+  state.aiDraft.taiVoiceUsage={60:{call:30,message:15}};
   send('你覺得怎麼樣？');
   await waitFor(()=>callView(state).includes('我知道了。'),'reply');players[0].finish();
-  await waitFor(()=>callView(state).includes('好了，先聊到這裡吧。'),'farewell');players[0].finish();
-  await waitFor(()=>callState().state==='ended','quota farewell was actually played');
-  assert.equal(state.aiDraft.taiVoiceUsage[60].call,29);
-  assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').at(-1).endReason,'quota');
+  await waitFor(()=>callView(state).includes('這件事可以再仔細研究。'),'second reply');players[0].finish();
+  await waitFor(()=>!callState().busy,'speech completed');
+  assert.equal(callState().state,'connected');
+  assert.equal(state.aiDraft.taiVoiceUsage[60].call,30);
  });
 });
 

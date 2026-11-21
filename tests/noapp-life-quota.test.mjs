@@ -4,7 +4,7 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {taiLife,taiLifeContext} from '../src/services/ai/life-context.js';
 import {taiPresence} from '../src/services/presence.js';
-import {taiVoiceRemaining,unlockTaiVoice,synthesizeTaiVoice,taiVoiceUnlockCommand,submitTaiVoiceUnlock} from '../src/services/ai/voice-budget.js';
+import {synthesizeTaiVoice} from '../src/services/ai/voice-synthesis.js';
 import {hasBannedTaiReassurance} from '../src/services/ai/expression-style.js';
 import {replyToTaiMessage,maybeResumeTaiDeferred} from '../src/services/ai/live-chat.js';
 import {taiDisplayName,markTaiRead} from '../src/apps/noapp/contact.js';
@@ -26,37 +26,27 @@ test('London sleep inclusive at 01:30, exclusive at 07:30; DST is game-date base
  s.calendar={anchorDay:35,anchorDate:'2025-12-01'};s.clock='09:30';assert.equal(taiLife(s).local,'01:30');assert.equal(taiPresence(s).contactable,false);
  s.clock='15:30';assert.equal(taiPresence(s).contactable,true);
 });
-test('independent daily caps reserve before provider work, failure releases reservation, secret persists and is exact',async()=>{
- const {s,store,c}=fixture();s.aiDraft.taiVoiceUsage={35:{call:29,message:14}};
- let resolve,called=0;const synth=()=>{called++;return new Promise(r=>resolve=r);};
- const a=synthesizeTaiVoice(store,'call',{text:'嗯。'},synth);
- await assert.rejects(synthesizeTaiVoice(store,'call',{text:'嗯。'},synth),{code:'TAI_VOICE_LIMIT'});assert.equal(called,1);
- resolve(new Blob(['voice']));await a;assert.equal(taiVoiceRemaining(s,'call'),0);assert.equal(taiVoiceRemaining(s,'message'),1);
- await assert.rejects(synthesizeTaiVoice(store,'message',{text:'嗯。'},async()=>{throw Error('fake failure');}));assert.equal(taiVoiceRemaining(s,'message'),1);
- await synthesizeTaiVoice(store,'message',{text:'嗯。'},async()=>new Blob(['voice']));assert.equal(taiVoiceRemaining(s,'message'),0);
- s.day++;assert.equal(taiVoiceRemaining(s,'call'),30);assert.equal(taiVoiceRemaining(s,'message'),15);
- assert.equal(unlockTaiVoice(store,'草莓是香蕉嗎？'),false);assert.equal(unlockTaiVoice(store,'草莓是香蕉'),true);assert.equal(c.messages.length,0);
- s.day++;assert.equal(taiVoiceRemaining(s,'call'),Infinity);assert.equal(taiVoiceRemaining(s,'message'),Infinity);
+test('voice synthesis continues past all previous daily caps without consuming a game counter',async()=>{
+ const {s}=fixture();s.aiDraft.taiVoiceUsage={35:{call:99,message:99}};
+ let called=0;const synth=async()=>{called++;return new Blob(['voice']);};
+ const clips=await Promise.all(Array.from({length:50},()=>synthesizeTaiVoice({text:'嗯。'},synth)));
+ assert.equal(called,50);assert.equal(clips.length,50);
+ await assert.rejects(synthesizeTaiVoice({text:'嗯。'},async()=>{throw Error('fake failure');}));
+ await synthesizeTaiVoice({text:'嗯。'},synth);assert.equal(called,51);
+ assert.deepEqual(s.aiDraft.taiVoiceUsage,{35:{call:99,message:99}});
 });
 test('banned reassurance is recognized across text and speech segments before synthesis',async()=>{
- const {store}=fixture();assert.equal(hasBannedTaiReassurance(['剛才那件事。','別多想。']),true);
+ assert.equal(hasBannedTaiReassurance(['剛才那件事。','別多想。']),true);
  assert.equal(hasBannedTaiReassurance(['刚刚说的那些话，你不用想太多。']),true);
  assert.equal(hasBannedTaiReassurance(['剛才你說什麼？']),false);
- await assert.rejects(synthesizeTaiVoice(store,'message',{text:'剛才，別多想。'},()=>{assert.fail('provider must not be called');}),{code:'TAI_STYLE'});
+ await assert.rejects(synthesizeTaiVoice({text:'剛才，別多想。'},()=>{assert.fail('provider must not be called');}),{code:'TAI_STYLE'});
 });
-test('plain and private unlock commands are consumed before chat and persist across days; cloud authorization is separate',async()=>{
- const {s,c,store}=fixture();s.aiDraft.taiVoiceUsage={35:{call:30,message:15}};s.drafts.tai='草莓是香蕉';
- const toast=[],ctx={store,refresh(){},toast:line=>toast.push(line)};
- const form={elements:{text:{value:'草莓是香蕉'}}};
- assert.equal(submitTaiVoiceUnlock(form,ctx,{cloud:true,activate:()=>assert.fail('plain phrase cannot authorize cloud spending')}),true);
- assert.equal(form.elements.text.value,'');assert.equal(s.drafts.tai,undefined);assert.equal(taiVoiceRemaining(s,'call'),Infinity);assert.equal(taiVoiceRemaining(s,'message'),Infinity);assert.equal(s.aiDraft.taiCloudTester,undefined);
- assert.equal(taiVoiceUnlockCommand('草莓是香蕉嗎？'),null);
- form.elements.text.value='草莓是香蕉 TEST-'+'a'.repeat(48);
- let sent;
- assert.equal(submitTaiVoiceUnlock(form,ctx,{cloud:true,activate:async code=>{sent=code;return {tester:true};}}),true);
- await new Promise(resolve=>setImmediate(resolve));
- assert.equal(sent,'TEST-'+'a'.repeat(48));assert.equal(s.aiDraft.taiCloudTester,true);assert.equal(form.elements.text.value,'');assert.equal(c.messages.length,0);
- s.day++;assert.equal(taiVoiceRemaining(s,'call'),Infinity);assert.equal(taiVoiceRemaining(s,'message'),Infinity);
+test('old exhausted save no longer exposes quota or unlock UI or prompt',()=>{
+ const {s,store}=fixture('21:30');s.aiDraft.taiVoiceUsage={35:{call:30,message:15}};
+ assert.doesNotMatch(taiLifeContext(s),/額度|剩餘/);
+ const html=render({store},{route:'/settings-ai'});
+ assert.doesNotMatch(html,/遊戲內語音額度|tai-check-voice-budget/);
+ assert.match(html,/tai-test-voice/);
 });
 test('sleep preserves unread and blocks calls; wake resumes old messages even after reload and marks all read',async()=>{
  const {s,c,store}=fixture();c.messages.push({id:'first',from:'me',kind:'text',text:'喂',day:35,time:'08:30',actual:true},{id:'voice',from:'me',kind:'voice',text:'[語音]',day:35,time:'08:30',actual:true});
