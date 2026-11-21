@@ -1,3 +1,9 @@
 /* Dividers belong to each row, so they move naturally with the scrolling list. */
 .settings-row{position:relative}
 .settings-row:not(:last-child)::after{left:50px;right:0;bottom:0;transform:none;border-bottom:1px solid #e9e9ee;pointer-events:none}
+.wifi-row{gap:8px;text-align:left}
+.wifi-row strong{flex:1;font-size:15px;overflow-wrap:anywhere}
+.wifi-check{flex:none;width:20px;color:#007aff;font-size:18px}
+.wifi-icons{display:flex;align-items:center;gap:6px;flex:none;color:#161616}
+.wifi-icons svg{width:16px;height:16px}
+.wifi-icons b{font-size:20px;font-weight:400;color:#007aff}
