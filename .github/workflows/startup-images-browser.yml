@@ -8,6 +8,7 @@ on:
       - 'src/apps/wechat/features/moments/**'
       - 'scripts/build-pages.mjs'
       - 'scripts/verify-startup-images-browser.mjs'
+      - 'scripts/verify-d06-sunset-browser.mjs'
       - '.github/workflows/startup-images-browser.yml'
 permissions:
   contents: read
@@ -28,10 +29,13 @@ jobs:
       - run: npm install --no-save --no-package-lock playwright@1.55.0
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify-startup-images-browser.mjs
+      - run: node scripts/verify-d06-sunset-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: startup-image-readiness
-          path: qa/startup-images/
+          path: |
+            qa/startup-images/
+            qa/d06-sunset/
           if-no-files-found: warn
           retention-days: 14
