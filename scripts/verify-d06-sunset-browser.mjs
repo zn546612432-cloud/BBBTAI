@@ -17,7 +17,7 @@ const server=createServer(async(req,res)=>{try{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
 const state=activateStory55(initialState());state.day=6;state.clock='18:24';state.batteryPercent=85;state.content.alarms=[];state.story55.minutesPerSecond=0;state.nav.current={appId:'wechat',route:'/moments',params:{}};state.nav.stack=[];
 await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));},{key,state});
 await context.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());
@@ -45,12 +45,14 @@ try{
  await page.locator('[data-action=back]').first().click();
  await page.locator('[data-key="xs-d06"]').waitFor();
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#xm-boot-next').click({timeout:45000});
+ await page.locator('#xm-boot').waitFor({state:'detached'});
  await page.locator('[data-action=unlock]').click();for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
  await page.locator('[data-key="xs-d06"]').waitFor();
  assert.equal(await page.locator('[data-key="xs-d06"]').count(),1);
  // A late entry uses the same saved content and original profile handler.
  await context.close();
- const lateContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const lateContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
  state.day=12;state.nav.current={appId:'wechat',route:'/moments/profile/小辛',params:{}};
  await lateContext.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));},{key,state});
  const latePage=await lateContext.newPage();latePage.on('pageerror',e=>errors.push(e.message));
