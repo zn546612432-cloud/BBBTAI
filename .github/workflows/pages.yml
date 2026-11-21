@@ -108,8 +108,8 @@ jobs:
               files.push(root+'/releases/'+version.version+'/'+item);
             }
             const css=readFileSync(root+'/releases/'+version.version+'/src/apps/mirage/styles.css','utf8');
-            if(!css.includes(version.url+'apps/mirage/world-land.svg'))
-              throw new Error('MIRAGE map URL not versioned for '+root);
+            if(!css.includes(version.url.replace(/releases\/[^/]+\/$/,'')+'apps/mirage/world-land.svg'))
+              throw new Error('MIRAGE map URL not stable for '+root);
           }
           for(const file of files)if(!existsSync(file))throw new Error('Missing Pages asset: '+file);
           const index=readFileSync('dist/index.html','utf8');

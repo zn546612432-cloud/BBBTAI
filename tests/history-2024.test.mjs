@@ -70,7 +70,7 @@ test('2024-03-12 group, Wang, and Hufeng private messages include two local stic
  assert.equal(rows.filter(m=>m.kind==='image').length,2);
  assert.ok(readFileSync(new URL('../public/apps/wechat/stickers/whitecat.webp',import.meta.url)).length>1500);
  assert.equal(pictureSrc('/apps/wechat/stickers/dog.svg','https://example.org/BBBTAI/releases/v1/src/apps/wechat/components/chat-view.js'),
-  'https://example.org/BBBTAI/releases/v1/apps/wechat/stickers/dog.svg');
+  'https://example.org/BBBTAI/apps/wechat/stickers/dog.svg');
 });
 
 test('new March 11–12 history fills an existing save without erasing player chat or shifting later months',()=>{

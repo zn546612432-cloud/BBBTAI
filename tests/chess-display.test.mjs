@@ -52,13 +52,14 @@ test('concurrent replies share one request and failed AI falls back silently',as
  }finally{globalThis.fetch=prior;}
 });
 test('last move highlights both squares and pieces have explicit image assets',()=>{let state=initialState();const store={get:()=>state,update(fn){state=structuredClone(state);fn(state);}};const id=createSoloMatch(store);playMove(store,id,'e2','e4');const html=render({store},{route:'/match/'+id});assert.match(html,/last-move[^>]*data-square="e2"/);assert.match(html,/last-move[^>]*data-square="e4"/);assert.match(html,/\/apps\/chess\/pieces\/wP.png/);});
-test('chess pieces use exactly one release-relative visual per square',()=>{
+test('chess pieces use exactly one stable public visual per square',()=>{
  const store=chessStore(),id=createSoloMatch(store);
  const html=render({store},{route:'/match/'+id});
  assert.equal((html.match(/<img\b[^>]*\bsrc=/g)||[]).length,32);
  assert.equal((html.match(/data-piece="/g)||[]).length,32);
  assert.doesNotMatch(html,/chess-piece-fallback|is-loaded/,'no layered glyph below PNG');
- assert.doesNotMatch(html,/src="\/apps\/chess\/pieces\//,'no origin-root assets in Pages releases');
+ assert.match(html,/src="\/apps\/chess\/pieces\//,'local runtime uses the stable site root');
+ assert.doesNotMatch(html,/\/releases\//,'piece artwork does not rotate with the code release');
 });
 test('instagram is not installed or shown on the home screen',()=>{assert.equal(registry.has('instagram'),false);assert.equal(homePages.flat().includes('instagram'),false);});
 test('Tai match renders its own persisted chat and AI replies without NoApp audio',async()=>{

@@ -28,6 +28,9 @@ const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
 const state=activateStory55(initialState());state.clock='08:17';state.story55.minutesPerSecond=0;state.content.alarms=[];
+// The saved phone came from a release that no longer exists on this server.
+state.wallpaper='/BBBTAI/releases/obsolete/wallpapers/midnight-glass.png';
+state.characterAvatars={...state.characterAvatars,'熙旺':'/BBBTAI/releases/obsolete/apps/wechat/avatars/originals/xiwang.jpeg'};
 state.nav.current={appId:'wechat',route:'/moments',params:{}};
 await context.addInitScript(state=>localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state)),state);
 const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -53,7 +56,8 @@ try{
  await page.waitForFunction(()=>[...document.querySelectorAll('.wx-moments-screen img')].every(img=>img.complete&&img.naturalWidth>0));
  assert.equal(requests.filter(url=>url===current).length,countBefore,'opening Moments reuses the image fetched during boot');
  const imageSources=await page.locator('.wx-moments-screen img').evaluateAll(images=>images.map(img=>img.src));
- assert.ok(imageSources.every(url=>!url.includes('/releases/')||!url.includes('/apps/wechat/media/')));
+ assert.ok(imageSources.every(url=>!url.includes('/releases/')),'all visible public photos and avatars use stable URLs');
+ assert.ok(!requests.some(url=>/\/releases\/[^/]+\/(?:apps|assets|icons|wallpapers)\//.test(url)),'no bundled media relies on old release directories');
  assert.deepEqual(pngRequests,[],'preload and icons must both request the optimized WebP atlas');
  assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
  await page.locator('.wx-moments-screen img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
