@@ -7,6 +7,7 @@ import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
 import {applyD34D42Definition,RETIRED_SCENES} from '../../story/d34-d42/definition.js';
+import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
@@ -86,8 +87,11 @@ export function plannedSceneLineClock55(s,id,index){
 }
 // Restore the single existing lifecycle cadence; no special slow D23 timer.
 export function scene55ReplyDelay(s,id,index,{initial=false}={}){
- return initial?CHAT_LIFECYCLE_POLICY.initialDelayMs:CHAT_LIFECYCLE_POLICY.pauseMs;
+ const n=nodeById(s,id);
+ return initial?(n?.initialDelayMs??CHAT_LIFECYCLE_POLICY.initialDelayMs)
+  :(n?.lineDelayMs?.[index]??n?.pauseMs??CHAT_LIFECYCLE_POLICY.pauseMs);
 }
+export const explicitlyPacedScene55=(s,id)=>Number.isFinite(nodeById(s,id)?.pauseMs);
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){
  const lines=story55Config(s).scenes[id]||[],a=s.story55?.tearAgent;
@@ -275,6 +279,9 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   const lines=sceneLines(s,n.id),q=s.story55.scenes[n.id]??={index:0,accepted:false};
   const next=lines[q.index];if(!next)continue;
   // Do not enqueue NPC replies while the player owes a preset line.
+  if(next[0]==='me'&&explicitlyPacedScene55(s,n.id)&&Number.isFinite(q.nextAt)&&now>=q.nextAt){
+   delete q.nextAt;return true; // release the native composer, never send for the player.
+  }
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
@@ -288,6 +295,18 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   return true; // One incoming NPC bubble per scheduler tick.
  }
  return false;
+}
+// Explicitly paced scenes continue on the real-time heartbeat while the
+// shared game clock is paused. The visible-chat timer must not race them.
+export function pacedStorySceneDue55(s,now=Date.now()){
+ if(!isStory55(s)||s.story55.ended)return false;
+ return story55Config(s).nodes.some(n=>{
+  if(!explicitlyPacedScene55(s,n.id)||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready'||s.story55.activeScene&&s.story55.activeScene!==n.id)return false;
+  const q=scene55(s,n.id),next=sceneLines(s,n.id)[q.index];
+  if(!next||['call','disconnect'].includes(next[0]))return false;
+  if(next[0]==='me')return Number.isFinite(q.nextAt)&&now>=q.nextAt;
+  return !Number.isFinite(q.nextAt)||now>=q.nextAt;
+ });
 }
 // Reuse the phone heartbeat and the existing queued scene, including when
 // Mirage isn't on screen or the world clock is temporarily paused.
@@ -344,6 +363,16 @@ export function tickStory55(s){
  applyD26D28Definition(story55Config(s));
  applyD29Definition(story55Config(s));
  applyD34D42Definition(story55Config(s));
+ if(!story55Config(s).d43D44Revision){
+  // Older saves may have partially read the superseded test conversation.
+  // Keep actual past bubbles and completed nodes, but never map its line
+  // index onto the newly authored dialogue.
+  for(const id of ['paris','confide'])if(!completed(s,id)){
+   delete s.story55.scenes[id];
+   if(s.story55.activeScene===id)s.story55.activeScene=null;
+  }
+  applyD43D44Definition(story55Config(s));
+ }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);

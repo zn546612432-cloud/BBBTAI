@@ -19,6 +19,7 @@ const stableMediaPaths=[
  '/apps/browser/room404/media/',
  '/apps/browser/room404/wordmark.svg',
  '/assets/story55/personal-files/',
+ '/assets/story55/d43-eiffel.webp',
  '/assets/story55/triplets-baby-photo.jpg'
 ];
 

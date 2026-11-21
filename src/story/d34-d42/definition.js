@@ -51,7 +51,7 @@ export const D42_CALL={id:'d42-morning-call',day:42,pauseTimeUntilComplete:true,
  '警察已經盯上你們了，一大早就去了汪杰家。',
  '不過別擔心，一切都在我的掌控之中。'
 ]};
-export const RETIRED_SCENES=['confide','failure','ready'];
+export const RETIRED_SCENES=['failure','ready'];
 export const TIMED_SCRIPTED_CALLS=[D41_CALL,D42_CALL];
 export function applyD34D42Definition(c){
  for(const {id,chat,lines,...data} of scenes){

@@ -1,12 +1,14 @@
 // Authored journal: narrative prose, not a task board or hidden progression UI.
 import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.js';
 import {GHOST_CAR_DIARY} from '../d35-d40/diary.js';
+import {D44_DIARY} from '../d43-d44/definition.js';
 import {GHOST_CAR_MODEL_FILES} from '../d35-d40/progress.js';
 import {modelDelivered} from '../../services/story55/ghost-car.js';
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
 export const DIARY_START='2025-05-19';
 export const DEFAULT_DIARY_ENTRIES={
   ...GHOST_CAR_DIARY,
+  44:D44_DIARY,
   25:{title:'銜尾蛇之淚',afterNode:'d25-survey',body:'終於把程序跑起來了。\n\n阿威送來了第一批資料。估計這幾天機房都得開著。'},
   26:{title:'維保記錄',afterNode:'d26-records',body:'銀行今年三月換過安保公司。\n\n阿楓帶回來了新的維保記錄，重新調整研究方向。\n\n讓它繼續跑吧。'},
   27:{title:'四年',afterNode:'d27-ouroboros',body:'原來他花了四年才寫出這個程序。\n\n換作是我，恐怕連看都不肯給別人看一眼。\n\n他倒好，說給就給了。\n\n明天樣品就到，試試看。'},
