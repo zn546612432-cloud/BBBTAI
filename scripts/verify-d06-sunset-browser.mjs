@@ -16,7 +16,7 @@ const server=createServer(async(req,res)=>{try{
 }catch{res.writeHead(404).end('not found');}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
 const state=activateStory55(initialState());state.day=6;state.clock='18:24';state.batteryPercent=85;state.content.alarms=[];state.story55.minutesPerSecond=0;state.nav.current={appId:'wechat',route:'/moments',params:{}};state.nav.stack=[];
 await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));},{key,state});
@@ -37,11 +37,11 @@ try{
  await page.screenshot({path:out+'/detail.png'});
  await page.locator('[data-action=wx-moment-video][data-id="xs-d06"]').click();
  await page.locator('video').waitFor();
- console.log('Video layout',await page.locator('video').evaluate(v=>({width:v.clientWidth,height:v.clientHeight,readyState:v.readyState,error:v.error?.code})));
+ console.log('Video layout',await page.locator('video').evaluate(v=>({width:v.clientWidth,height:v.clientHeight,readyState:v.readyState,error:v.error?.code,errorMessage:v.error?.message,codec:v.canPlayType('video/mp4; codecs="avc1.64001f, mp4a.40.2"')})));
  await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.readyState>=2&&v.videoWidth>0;});
  const before=await page.locator('video').evaluate(v=>v.currentTime);
  await page.waitForFunction(t=>document.querySelector('video').currentTime>t+.6,before,{timeout:15000});
- const video=await page.locator('video').evaluate(v=>({src:v.currentSrc,duration:v.duration,time:v.currentTime,width:v.videoWidth,height:v.videoHeight,paused:v.paused,error:v.error?.code}));assert.ok(video.duration>=11.4&&video.duration<=11.6);assert.equal(video.paused,false);assert.equal(video.error,undefined);
+ const video=await page.locator('video').evaluate(v=>({src:v.currentSrc,duration:v.duration,time:v.currentTime,width:v.videoWidth,height:v.videoHeight,paused:v.paused,error:v.error?.code,errorMessage:v.error?.message,codec:v.canPlayType('video/mp4; codecs="avc1.64001f, mp4a.40.2"')}));assert.ok(video.duration>=11.4&&video.duration<=11.6);assert.equal(video.paused,false);assert.equal(video.error,undefined);
  await page.screenshot({path:out+'/playing.png'});
  await page.locator('[data-action=back]').first().click();
  await page.locator('[data-key="xs-d06"]').waitFor();
