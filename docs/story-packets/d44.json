@@ -1,0 +1,734 @@
+{
+  "schemaVersion": 2,
+  "day": 44,
+  "date": "2025-07-01",
+  "title": "D44 告訴熙旺與十天日程",
+  "stage": "approved",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "messaging",
+    "time",
+    "schedule"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "line-00",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "臉還疼嗎？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "13:15"
+      },
+      "requires": [
+        "node:paris"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "line-01",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "不疼了",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-00"
+      },
+      "requires": [
+        "line-00"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-02",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "前天的事，是哥不好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-01"
+      },
+      "requires": [
+        "line-01"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-03",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "又不是你打的我",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-02"
+      },
+      "requires": [
+        "line-02"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-04",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "……",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-03"
+      },
+      "requires": [
+        "line-03"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-05",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "哥，我想搬回孤兒院住幾天。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-04"
+      },
+      "requires": [
+        "line-04"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-06",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "什麼時候搬？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-05"
+      },
+      "requires": [
+        "line-05"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-07",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "今天吧",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-06"
+      },
+      "requires": [
+        "line-06"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-08",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "好，等我回來幫你搬東西。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-07"
+      },
+      "requires": [
+        "line-07"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-09",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "你不問我為什麼？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-08"
+      },
+      "requires": [
+        "line-08"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "你長大了，哥相信你知道自己在做什麼。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-09"
+      },
+      "requires": [
+        "line-09"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "嗯",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-10"
+      },
+      "requires": [
+        "line-10"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-12",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "那哥你會無條件站在我這邊嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-11"
+      },
+      "requires": [
+        "line-11"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "當然會。你是我弟弟，你做什麼我都會兜著。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-12"
+      },
+      "requires": [
+        "line-12"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-14",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "即使我要殺死干爹呢？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-13"
+      },
+      "requires": [
+        "line-13"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-15",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "蒙蒙，你冷靜一點，不要說氣話。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-14"
+      },
+      "requires": [
+        "line-14"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-16",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "他是狼，我們是狼崽子，我們從來都不是真正的家人，哥，這麼多年了，你還沒明白嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-15"
+      },
+      "requires": [
+        "line-15"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-17",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "為什麼當年在越南，只有傅隆生一個人逃出來了？他出賣了笨蛋，他當然也可以出賣我們。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-16"
+      },
+      "requires": [
+        "line-16"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-18",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "15億美金，現在警察已經盯上他了，他根本不可能出境的，我們等不了那麼久。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-17"
+      },
+      "requires": [
+        "line-17"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-19",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "你想怎麼做？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-18"
+      },
+      "requires": [
+        "line-18"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-20",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "我要你把他送到孤兒院，警察一定會跟著，到時候，就在孤兒院把他和警察一起處理掉。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-19"
+      },
+      "requires": [
+        "line-19"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-21",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "哥，你只需要送他，後面的事情我會處理。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-20"
+      },
+      "requires": [
+        "line-20"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-22",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "熙旺",
+      "thread": "wang",
+      "text": "警察還沒有動靜，我們不如先按兵不動，等你這邊拿電子錢包的計劃部署好後再動手，好嗎？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-21"
+      },
+      "requires": [
+        "line-21"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-23",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "你就是心軟了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-22"
+      },
+      "requires": [
+        "line-22"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "line-24",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d44-confide",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "wang",
+      "text": "哥，你總要做出選擇。這一次就聽我的吧。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-23"
+      },
+      "requires": [
+        "line-23"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 1.9
+      }
+    },
+    {
+      "id": "journal-ten-days",
+      "kind": "reminder",
+      "surface": "schedule",
+      "capability": "story.d44-confide-journal",
+      "owner": "schedule",
+      "actor": "me",
+      "text": "不知道是不是天意，十天以後，永利的巴黎畫展將要撤展。我們正好可以藉此機會離開澳門。\n\n今天跟哥攤牌了。\n\n原本沒打算這麼早告訴他，但實在忍不住想知道，到了非選不可的時候，他究竟會選誰。\n\n他還是心軟。\n\n有時候真不知道該拿他怎麼辦。明明是六個人裡最早學會殺人的那個，偏偏又是最重感情的那個。\n\n我知道他欠傅隆生一條命。但這麼多年，我們替他做過多少事，也早該還清了吧？\n\n下午搬回了孤兒院。哥幫我搬了半天設備，臨走前還囑咐我記得吃飯，也沒再提中午的事。\n\n突然想起小時候，我們也曾坐在這裡，商量長大以後要去哪兒。\n\n那時候連澳門有多大都不知道。\n\n昨天熙泰問我想不想去巴黎。\n\n其實去哪裡都好。等拿到那筆錢，先給弟弟們各自置辦一套房子。至於哥，他要是願意跟我走，我就帶他去里斯本見熙泰。\n\n不知道他們見面以後，會不會也像我和熙泰一樣，為了誰是哥哥這種無聊的事情吵起來。\n\n還挺想看看的。\n\n再給我十天吧。\n\n這一次，換我來照顧哥。",
+      "trigger": {
+        "type": "node-completed",
+        "ref": "node:confide"
+      },
+      "requires": [
+        "line-24",
+        "node:confide"
+      ],
+      "timing": {
+        "day": 44,
+        "at": "13:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "按指定日期和时间开始，前置节点满足才投递。"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未到时间及前置未完成不投递；玩家未发送时不自动推进。"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "刷新不重复显示。"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "旧存档保留已发送消息与已完成节点，新版未完节点从头接入。"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "使用原生消息记录、通知、剧情完成与日程服务。"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "未完成的固定主线保留，玩家仍需手动发送。"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "检查本地图片或纯文字内容的真实原生聊天显示。"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "共享世界时钟到点暂停，完成后恢复。"
+    }
+  ]
+}

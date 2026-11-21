@@ -1,0 +1,497 @@
+{
+  "schemaVersion": 2,
+  "day": 43,
+  "date": "2025-06-30",
+  "title": "D43 巴黎見",
+  "stage": "approved",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "messaging",
+    "time"
+  ],
+  "assets": [
+    {
+      "id": "eiffel-dawn",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d43-eiffel.webp",
+      "provenance": "OpenAI image generation; original generated for this fictional phone story; candid Paris street dawn Eiffel Tower smartphone photo; resized to 1000×1333 WebP."
+    }
+  ],
+  "events": [
+    {
+      "id": "line-00",
+      "kind": "incoming-image",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "assetId": "eiffel-dawn",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:20"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "node:d42-group"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 0
+      }
+    },
+    {
+      "id": "line-01",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "澳門也有巴黎鐵塔",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-00"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-00"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-02",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "想不想來看真的巴黎鐵塔？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-01"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-01"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-03",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "我更想看金字塔",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-02"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-02"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-04",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "逃出來，全世界都會為你展開",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-03"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-03"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-05",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "你要幫我？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-04"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-04"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-06",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "作為 Azathoth 的管理員，我當然會庇護我的信徒。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-05"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-05"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-07",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "哦？所以對於你而言，我只是一個信徒？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-06"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-06"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-08",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "你對所有的信徒都這麼感興趣嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-07"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-07"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-09",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "你是世界上另一個我，另一種可能",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-08"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-08"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 10
+      }
+    },
+    {
+      "id": "line-10",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "我是你哥。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-09"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-09"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-11",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "叫聲哥哥來聽聽。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-10"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-10"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-12",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "我還以為你會更想扮演弟弟的角色。你被熙旺保護得太好，當不了一個合格的哥哥。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-11"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-11"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-13",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "不過也沒關係。哥哥也好，弟弟也罷，乖乖待在我身後就好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-12"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-12"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-14",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "段志鴻的帳戶我會替你找，入侵程序的源代碼我也會給你。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-13"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-13"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-15",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "所以別讓我失望，熙蒙。我們巴黎見。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-14"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-14"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "按指定日期和时间开始，前置节点满足才投递。"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未到时间及前置未完成不投递；玩家未发送时不自动推进。"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "刷新不重复显示。"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "旧存档保留已发送消息与已完成节点，新版未完节点从头接入。"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "使用原生消息记录、通知、剧情完成与日程服务。"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "未完成的固定主线保留，玩家仍需手动发送。"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "检查本地图片或纯文字内容的真实原生聊天显示。"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "共享世界时钟到点暂停，完成后恢复。"
+    }
+  ]
+}

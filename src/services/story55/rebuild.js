@@ -234,7 +234,9 @@ function simulateCompletedD01(s){
 function simulateScene(s,node){
  const lines=story55Config(s).scenes[node.id];
  if(!Array.isArray(lines)||!lines.length)throw Error('无法重建场景台词：'+node.id);
- for(let i=0;i<lines.length;i++){
+ // The shared queue may already have delivered the opening bubble before
+ // reconstruction reaches this node. Resume from that real scene index.
+ for(let i=s.story55.scenes[node.id]?.index||0;i<lines.length&&!completed(s,node.id);i++){
   const kind=lines[s.story55.scenes[node.id]?.index||0]?.[0];
   if(kind==='call')s.phoneCall={id:'story-call-'+node.id,node:node.id,source:'story55',direction:'incoming',forced:true,state:'connected',answeredAt:0,test:true};
   advanceScene55(s,node.id,{disconnect:kind==='disconnect'});
