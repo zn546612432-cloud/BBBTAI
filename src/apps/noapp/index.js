@@ -18,6 +18,7 @@ import {isTaiCloudHost,taiCloudCall} from '../../services/ai/supabase-gateway.js
 import {taiPresence} from '../../services/presence.js';
 import {submitTaiVoiceUnlock,taiVoiceRemaining} from '../../services/ai/voice-budget.js';
 import {TAI_ID,taiDisplayName} from './contact.js';
+import {playTrack,isPlaying,handle as musicAction} from '../music/index.js';
 import {sendMessage} from '../../services/messaging/index.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {modelDelivered} from '../../services/story55/ghost-car.js';
@@ -123,10 +124,11 @@ export function render({store},loc){
  '</nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
  if(id==='tai')taiFeedback=currentTaiFeedback(s,taiFeedback);
- return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
+ return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'&&taiFeedback.includes('正在输入')?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;
+ if(action==='noapp-play-music'){if(isPlaying()&&ctx.store.get().musicTrack===target.dataset.track)musicAction('music-toggle',target,ctx);else playTrack(target.dataset.track,ctx);return;}
  if(action==='tai-story-archive'){if(modelDelivered(ctx.store.get(),id))ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});return;}
  if(action==='open-chat')ctx.router.open({appId:'noapp',route:'/chat/'+id});
  if(action==='accept-invite'){if(id===D41_CHESS_INVITATION)unlockD41Voice();const matchId=receiveInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}

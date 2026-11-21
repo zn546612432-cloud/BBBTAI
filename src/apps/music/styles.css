@@ -62,6 +62,9 @@
 .music-now-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:19px}
 .music-now-title h2{font-size:24px;letter-spacing:-.5px;margin:0 0 2px;line-height:1.2}
 .music-now-title p{font-size:19px;color:#ffffffa8;margin:0}
+.music-now-title>div{flex:1;min-width:0}
+.music-mode{flex:none}
+.music-melatonin{background:radial-gradient(ellipse at 30% 24%,#535c78,#2a354c 42%,#101928 82%)}
 .music-more{width:37px;height:37px;border-radius:50%;background:#ffffff22;display:grid;place-items:center}
 .music-more svg{width:19px;height:19px}
 .music-seek-input{appearance:none;-webkit-appearance:none;display:block;background:#ffffff40;border:0;border-radius:8px;height:6px;padding:0;margin:7px 0 0;accent-color:white}

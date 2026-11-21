@@ -32,7 +32,7 @@ export function createControlCenter({store,root,router,music,settings,context,cl
   if(action==='dismiss')return show(false);
   if(action==='mute')return update({muted:!controlsSettings(store.get()).muted});
   if(action==='torch'){flashlight=!flashlight;sync();return;}
-  if(action==='play'||action==='restart'){music.handle(action==='play'?'music-toggle':'music-restart',target,context());return;}
+  if(['play','restart','previous','next'].includes(action)){music.handle(action==='play'?'music-toggle':'music-'+action,target,context());return;}
   show(false);
   if(action==='lock'){lock();return;}
   if(!store.get().unlocked)return;

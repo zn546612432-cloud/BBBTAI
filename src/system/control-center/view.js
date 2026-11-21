@@ -1,3 +1,4 @@
+import {trackById} from '../../apps/music/features/shared/catalog.js';
 import {glyph} from './icons.js';
 export const controlsSettings=s=>({muted:s.silent===true,volume:s.deviceControls?.volume??.7,brightness:s.deviceControls?.brightness??1});
 const button=(action,name,label,extra='')=>`<button type="button" data-cc="${action}" aria-label="${label}" ${extra}>${glyph(name)}</button>`;
@@ -9,7 +10,7 @@ export function batteryGlyph(s){
  return `<svg class="cc-battery-icon" viewBox="0 0 30 16" fill="none" aria-hidden="true"><rect x=".75" y=".75" width="25.5" height="14.5" rx="3.25" stroke="currentColor" stroke-opacity=".55" stroke-width="1.5"/><rect data-cc-battery-fill x="2.5" y="2.5" width="${(21.5*level/100).toFixed(3)}" height="11" rx="1.5" fill="${color}"/><path d="M28 5v6a3 3 0 0 0 0-6" fill="currentColor" opacity=".5"/></svg>`;
 }
 export function controlCenter(s,{flashlight=false,outputOpen=false}={}){
- const p=controlsSettings(s),level=p.muted?0:p.volume,playing=s.musicPlaying===true;
+ const p=controlsSettings(s),level=p.muted?0:p.volume,playing=s.musicPlaying===true,track=trackById(s.musicTrack);
  const slider=(name,value,icon)=>`<label class="cc-slider" style="--fill:${Math.round(value*100)}%"><input type="range" min="${name==='brightness'?30:0}" max="100" value="${Math.round(value*100)}" data-cc-slider="${name}" aria-label="${name==='brightness'?'螢幕亮度':'音量'}"><span class="cc-slider-fill"></span>${glyph(icon)}</label>`;
  return `<section class="cc-surface" role="dialog" aria-label="控制中心" aria-modal="true">
   <button class="cc-backdrop" data-cc="dismiss" aria-label="關閉控制中心"></button>
@@ -29,9 +30,9 @@ export function controlCenter(s,{flashlight=false,outputOpen=false}={}){
      </div>
     </section>
     <section class="cc-glass cc-media ${playing?'is-playing':'is-idle'}" aria-label="媒體播放">
-     <div class="cc-media-top">${playing?`<span class="cc-album">${glyph('music')}</span>`:''}${button('output','airdrop','音訊輸出',`class="cc-output ${outputOpen?'is-on':''}" aria-expanded="${outputOpen}"`)}</div>
-     ${playing?'<strong class="cc-track-title">今夜有雨</strong><span class="cc-track-subtitle">h3r3</span>':'<span class="cc-not-playing">未在播放</span>'}
-     <div class="cc-transport">${button('restart','back','從頭播放',playing?'':'disabled')}${button('play',playing?'pause':'play',playing?'暫停':'播放')}${button('restart','next','重新播放',playing?'':'disabled')}</div>
+     <div class="cc-media-top">${playing?`<span class="cc-album" style="background-image:url('${track.cover}')"></span>`:''}${button('output','airdrop','音訊輸出',`class="cc-output ${outputOpen?'is-on':''}" aria-expanded="${outputOpen}"`)}</div>
+     ${playing?`<strong class="cc-track-title">${track.title}</strong><span class="cc-track-subtitle">${track.artist}</span>`:'<span class="cc-not-playing">未在播放</span>'}
+     <div class="cc-transport">${button('previous','back','上一首',playing?'':'disabled')}${button('play',playing?'pause':'play',playing?'暫停':'播放')}${button('next','next','下一首',playing?'':'disabled')}</div>
      ${outputOpen?'<div class="cc-output-menu"><strong>音訊輸出</strong><button data-cc="output" aria-label="使用 iPhone 揚聲器">iPhone <span>✓</span></button></div>':''}
     </section>
     ${toggle('rotationLock','rotation','直向鎖定',s.rotationLock!==false,'red','cc-glass cc-round cc-lock')}
