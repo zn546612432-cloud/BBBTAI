@@ -11,6 +11,8 @@ const heart=momentIcons.heart;
 
 const photos={ximengCover:'ximeng-moments-cover.webp',d03Breakfast:'d03-breakfast.webp',d03Street:'d03-street.webp',macau:'moment-0.webp',seoul:'moment-1.webp',food:'moment-2.webp',gym:'moment-3.webp',puppy:'moment-4.webp',harbor:'moment-5.webp',design:'zaizai-fashion-design.webp',catVideo:'moment-cat-video.mp4',catCover:'cat-video-cover.webp',hufengMirror:'hufeng-mirror.webp',hufengOutdoors:'hufeng-outdoors.webp',xiaoxinMirror:'xiaoxin-mirror-clean.webp',xiaoxinSelfie:'xiaoxin-selfie-clean.webp',morning:'macau-morning.webp',dawn:'macau-dawn.webp',shumai:'shumai.webp',fabric:'fabric-swatches.webp',xmCaught:'user-xiaoxin-ximeng.webp',xmDinner:'user-xiwang-ximeng.webp',dinnerDish:'user-dinner-dish.webp',brothers:'user-ximeng-brothers.webp',groupPhoto:'user-group-photo.webp',fountain:'user-fountain.webp',park:'user-park.webp',arcade:'user-hufeng-arcade.webp',gymGear:'awei-arm-20240324.jpg',foodMenu:'user-food-menu.jpeg',foodRice:'user-food-rice.jpeg',foodCheesecake:'user-food-cheesecake.jpeg',foodScallop:'user-food-scallop.jpeg',foodCooking:'user-food-cooking.jpeg',foodSashimi:'user-food-sashimi.jpeg',wynnFountain:'user-wynn-fountain.jpeg',wynnNight:'user-wynn-night.jpeg',yellowWall:'user-yellow-wall.jpeg'};
 const local=(filename,base)=>publicAssetPath('apps/wechat/media/'+filename,{base});
+photos.xiaoxinCover='xiaoxin-moments-cover.webp';
+photos.hufengCover='hufeng-moments-cover.webp';
 photos.xiaoxinSunsetCover='d06-xiaoxin-sunset-cover.webp';
 photos.xiaoxinSunsetVideo='d06-xiaoxin-sunset.mp4';
 photos.d41GoodShow='d41-hufeng-good-show.jpeg';
@@ -78,7 +80,7 @@ function postCard(post,s){
 }
 function cover(name,s){
  const profile=momentProfiles(s)[name]||profiles['熙蒙'];
- return '<section class="wx-moments-cover" style="background-image:linear-gradient(0deg,#101c2c75,transparent 70%),url(&quot;'+esc(momentImage(profile.cover))+'&quot;)">'+
+ return '<section class="wx-moments-cover" style="background-position:'+esc(profile.coverPosition||'center')+';background-image:linear-gradient(0deg,#101c2c75,transparent 70%),url(&quot;'+esc(momentImage(profile.cover))+'&quot;)">'+
   '<div class="wx-moments-cover-user"><span>'+esc(name)+'</span>'+avatar(name,s)+'</div></section><div class="wx-moments-bio">'+esc(profile.bio||'')+'</div>';
 }
 function topBar(title){
