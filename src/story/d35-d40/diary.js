@@ -72,7 +72,7 @@ export const GHOST_CAR_DIARY={
 回來翻了翻手機相冊，發現我們六個人已經很久沒有好好拍過一張合照了。
 
 等這次忙完，讓仔仔安排吧。`},
- 39:{title:'Ghost Car Trap',afterNode:'recognition',afterFact:'ghost-car-models',body:`收到陳熙泰交付的資產了。
+ 39:{title:'Ghost Car Trap',afterNode:'recognition',afterFact:'ghost-car-models',body:`收到熙泰交付的資產了。
 
 都過去這麼久了，還是不知道該怎麼稱呼他。
 

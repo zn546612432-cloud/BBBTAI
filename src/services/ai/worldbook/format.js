@@ -61,7 +61,10 @@ function migrateTone(world){
  }]));
  return {...world,books,runtime};
 }
-export function readWorldbook(s){const w=s?.aiDraft?.worldbook;return w?.version===WORLD_INFO_VERSION&&Array.isArray(w.books)?migrateTone(w):defaultWorldbook();}
+export function readWorldbook(s){const w=s?.aiDraft?.worldbook;if(w?.version!==WORLD_INFO_VERSION||!Array.isArray(w.books))return defaultWorldbook();
+ const migrated=migrateTone(w),entry=defaultWorldbook().books[0].entries.find(e=>e.id==='incoming-message-batch');
+ return {...migrated,books:migrated.books.map(b=>b.id==='xitai'&&!b.entries.some(e=>e.id===entry.id)?{...b,entries:[...b.entries,entry]}:b)};
+}
 export function ensureWorldbook(s){s.aiDraft??={};s.aiDraft.worldbook=readWorldbook(s);return s.aiDraft.worldbook;}
 
 // Native ST map and Character Card V2/V3 embedded lorebook, preserving unknown fields.
