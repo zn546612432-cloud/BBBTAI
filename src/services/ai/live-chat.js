@@ -24,6 +24,8 @@ import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
+import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
+import {musicListeningContext} from '../../apps/music/features/shared/listening.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
 function finishSilentTaiTurn(store,sourceId,now){
@@ -55,6 +57,7 @@ export function maybeResumeTaiDeferred(store,{now=Date.now,wait}={}){
  if(!taiRecognized(current)||deathLocked(current)||current.poweredOff||current.powerMode!=='idle')return false;
  const source=visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.actual!==false&&m.day<=current.day).at(-1);
  if(!source?.taiPending&&!source?.taiDeferredUntil&&!source?.taiDeferredGameMinute)return false;
+ if(source.receivedAt&&now()-source.receivedAt<TAI_INCOMING_QUIET_MS)return false;
  if(source.taiDeferredUntil>now()||source.taiDeferredGameMinute>absoluteMinute(current)||source.taiHandledAction||replyAfter(c,source.id))return false;
  const presence=taiPresence(current);
  if(!presence.contactable||presence.status==='away')return false;
@@ -82,6 +85,23 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  }
  markTaiEngaged();
  if(pendingRequests.has(store))return {status:'busy',message:'熙泰正在输入'};
+ const history=visibleMessages(c).filter(m=>!m.demo&&m.day<=initial.day);
+ const batch=incomingTaiBatch(history,sourceMessageId);
+ // A bare share is an ordinary acknowledgment, not an invitation to quiz the
+ // sender. Persist delivery through the same receipt/notification path.
+ if(pendingSource?.kind==='music'&&batch.every(m=>m.kind==='music')){
+  pendingRequests.add(store);
+  try{
+   const text=presence.status==='busy'?'等會聽':'好';
+   await wait(replyDelayMs(text,taiBehavior(initial),{first:true,random}));
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+   const id=uid();store.update(s=>{const target=conversation(s);if(!target)return;
+    markTaiRead(s,sourceMessageId,now());
+    target.messages.push({id,from:'tai',text,kind:'text',actual:true,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
+    if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+   });return {status:'replied',count:1,text};
+  }finally{pendingRequests.delete(store);}
+ }
  if(pendingSource?.kind==='image'){store.update(s=>{markTaiRead(s,sourceMessageId,now());const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiHandledAction='read_no_reply';});return {status:'read_no_reply',count:0};}
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day)
   .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
@@ -94,6 +114,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const unheard=source?.kind==='voice'&&!source?.voiceCaption;
   const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
+  const batchText=batch.map(m=>m.voiceCaption||m.text).filter(Boolean).join('\n')||lastUser;
+  const musicContext=musicListeningContext(history,batchText);
+  const consolidated=batch.length>1||!!musicContext;
   const directAffection=!unheard&&isTaiDirectAffectionRequest(lastUser);
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
@@ -103,7 +126,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
   const messagesAfterCall=lastCallIndex<0?[]:c.messages.slice(lastCallIndex+1).filter(m=>m.from==='me'&&m.actual!==false);
   const firstTextAfterCall=!!lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)&&messagesAfterCall[0]?.id===sourceMessageId;
-  const worldbookEvents=[voiceRequested?'voice_requested':null,requestedCall?'call_requested':null,
+  const worldbookEvents=[batch.length>1?'incoming_batch':null,musicContext?'music_context':null,voiceRequested?'voice_requested':null,requestedCall?'call_requested':null,
    firstTextAfterCall?({player:'call_ended_player',tai:'call_ended_tai',connection_error:'call_ended_error'}[lastEndedCall.endedBy]):null].filter(Boolean);
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
@@ -120,6 +143,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':voiceRequested&&status.minimax?' 現在無法再發新語音，正常用文字回覆，不提內部額度或接口。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
+  request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
+  if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
   if(directAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
@@ -130,7 +155,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:voiceAvailable});
   if(!unheard&&decision?.action!=='defer_reply'&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&!replyAfter(conversation(store.get()),sourceMessageId)){
-   store.update(s=>rememberTaiConversation(s,lastUser,{sourceId:sourceMessageId}));
+   store.update(s=>rememberTaiConversation(s,batchText,{sourceId:sourceMessageId}));
    if(decision)rememberTaiMood(store,decision,'text:'+sourceMessageId,{evidence:lastUser});
   }
   if(decision&&['read_no_reply','defer_reply','end_session','start_call'].includes(decision.action)){
@@ -157,7 +182,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const turnPlan=!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
@@ -187,7 +212,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
-  if(!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+  if(!consolidated&&!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));

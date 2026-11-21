@@ -8,6 +8,7 @@ import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat,D41_CHESS_INVITATION} from '../../services/invitations.js';
 import {unlockD41Voice} from '../chess/scripted-match.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
+import {TAI_INCOMING_QUIET_MS} from '../../services/ai/incoming-turn.js';
 import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
 import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
@@ -62,7 +63,7 @@ function queueTaiReply(ctx,messageId){
      result.status==='offline'?'暫時不在線':result.status==='unavailable'?'已送達':'');
   }catch(error){console.warn('NoApp text reply failed:',error?.message);if(version===replyVersion)showFeedback(ctx,'已送達');}
  };
- pendingTai=setTimeout(run,500);
+ pendingTai=setTimeout(run,TAI_INCOMING_QUIET_MS);
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft},cloud=isTaiCloudHost();
@@ -213,6 +214,7 @@ export const submit=(form,ctx)=>{
 export function mountCallEvents({store}){
  window.addEventListener('ximeng:tai-incoming-call',e=>startIncoming({store},String(e.detail?.preview||'熙泰邀请你语音通话')));
  window.addEventListener('ximeng:noapp-voice-sent',e=>{const id=e.detail?.messageId;if(id)queueTaiReply({store,refresh:()=>{},toast:()=>{}},id);});
+ window.addEventListener('ximeng:noapp-music-sent',e=>{const id=e.detail?.messageId;if(id)queueTaiReply({store,refresh:()=>{},toast:()=>{}},id);});
 }
 
 /** Persist API input values in memory while the Safari software keyboard is open. */
