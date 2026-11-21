@@ -5,12 +5,12 @@ import {wechatAvatars,resolveWeChatAvatar} from '../src/apps/wechat/avatars.js';
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {initialState} from '../src/services/storage.js';
 
-test('legacy saved wallpaper gets the active Pages release path rather than origin root',()=>{
+test('legacy saved wallpaper gets the stable review root rather than a release path',()=>{
  const base='/BBBTAI/review/d06-wishes-20261107/releases/version123/';
  assert.equal(rebaseBundledPublicAsset('/wallpapers/midnight-glass.png',{base}),
-  base+'wallpapers/midnight-glass.png');
+  '/BBBTAI/review/d06-wishes-20261107/wallpapers/midnight-glass.png');
  assert.equal(rebaseBundledPublicAsset('/BBBTAI/releases/previous/wallpapers/midnight-glass.png',{base}),
-  base+'wallpapers/midnight-glass.png');
+  '/BBBTAI/review/d06-wishes-20261107/wallpapers/midnight-glass.png');
 });
 test('historic one-character WeChat nickname resolves to the actual character portrait',()=>{
  assert.equal(resolveWeChatAvatar('胡','胡'),wechatAvatars['胡枫']);

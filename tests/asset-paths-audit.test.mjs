@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync,readdirSync,statSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {rebaseBundledPublicAsset} from '../src/services/public-assets.js';
+import {rebaseBundledPublicAsset,publicAssetPath,restoreSavedMediaPaths} from '../src/services/public-assets.js';
 import {wechatAvatars,resolveWeChatAvatar} from '../src/apps/wechat/avatars.js';
 import {groupAvatar} from '../src/apps/wechat/components/group-avatar.js';
 import {renderWeChatChat,pictureSrc} from '../src/apps/wechat/components/chat-view.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
 import {profiles,authoredMoments} from '../src/apps/wechat/features/moments/data.js';
 import {momentImage,renderMoments} from '../src/apps/wechat/features/moments/index.js';
-import {initialState} from '../src/services/storage.js';
+import {initialState,PhoneStore,KEY} from '../src/services/storage.js';
 import historical from '../src/story/assets/history-2024-mar-jun.media.json' with {type:'json'};
 
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -33,11 +33,11 @@ test('MIRAGE keeps its cartography and skull artwork in the actual Pages payload
  assert.ok(existsSync(publicFile('apps/mirage/skull.svg')));
 });
 
-test('old saved WeChat images and photos are re-based to the active release',()=>{
+test('old saved WeChat images and photos are re-based to the stable site',()=>{
  const base='/BBBTAI/releases/new-build/';
  const prev='/BBBTAI/releases/old-build/apps/wechat/avatars/originals/ximeng.jpeg';
- assert.equal(rebaseBundledPublicAsset(prev,{base}),base+'apps/wechat/avatars/originals/ximeng.jpeg');
- assert.equal(rebaseBundledPublicAsset('/apps/wechat/media/moment-0.webp',{base}),base+'apps/wechat/media/moment-0.webp');
+ assert.equal(rebaseBundledPublicAsset(prev,{base}),'/BBBTAI/apps/wechat/avatars/originals/ximeng.jpeg');
+ assert.equal(rebaseBundledPublicAsset('/apps/wechat/media/moment-0.webp',{base}),'/BBBTAI/apps/wechat/media/moment-0.webp');
  assert.equal(rebaseBundledPublicAsset('https://other.example/photo.jpg',{base}),'https://other.example/photo.jpg');
  assert.equal(rebaseBundledPublicAsset('data:image/png;base64,aGVsbG8=',{base}),'data:image/png;base64,aGVsbG8=');
  assert.equal(resolveWeChatAvatar('熙蒙','/BBBTAI/releases/outdated/apps/wechat/avatars/originals/ximeng.jpeg'),wechatAvatars['熙蒙']);
@@ -58,6 +58,39 @@ test('seven original avatars and group portraits are included and resolve on all
  const html=groupAvatar(group);
  assert.equal((html.match(/class="wx-group-cell"/g)||[]).length,6);
  assert.doesNotMatch(html,/old-build|obsolete/);
+});
+
+test('all public media use stable paths in production, preview and root deployments',()=>{
+ for(const site of ['/','/BBBTAI/','/BBBTAI/preview/','/BBBTAI/review/phone/']){
+  const base=site+'releases/previous/';
+  for(const key of ['apps/chess/pieces/wK.png','apps/maps/macau-offline.webp','apps/wechat/avatars/originals/xiwang.jpeg','assets/story55/d43-eiffel.webp','icons/glass-atlas.png','wallpapers/midnight-glass.png','apps/wechat/media/d06-xiaoxin-sunset.mp4']){
+   assert.equal(publicAssetPath(key,{base}),site+key);
+   assert.equal(rebaseBundledPublicAsset('https://phone.example'+base+key,{base,origin:'https://phone.example'}),site+key);
+  }
+  assert.equal(publicAssetPath('vendor/leaflet/leaflet.js',{base}),base+'vendor/leaflet/leaflet.js');
+ }
+});
+
+test('saved images and videos migrate safely without changing chat text or external media',()=>{
+ const old='/BBBTAI/releases/abc123/';
+ const s=initialState();s.wallpaper=old+'wallpapers/midnight-glass.png';
+ s.iconOverrides={wechat:old+'icons/glass-atlas.png',music:'data:image/png;base64,abc'};
+ const messages=s.content.conversations.noapp[0].messages;
+ messages.push({id:'stable-photo',kind:'image',text:old+'assets/story55/d43-eiffel.webp'},{id:'ordinary-text',kind:'text',text:'Keep this sentence /assets/story55/d43-eiffel.webp'},{id:'remote-photo',kind:'image',text:'https://other.example/assets/photo.jpg'});
+ const storage={value:JSON.stringify(s),getItem(k){return k===KEY?this.value:null;},setItem(k,v){if(k===KEY)this.value=v;}};
+ const store=new PhoneStore(storage);
+ assert.equal(store.get().wallpaper,'/wallpapers/midnight-glass.png');
+ assert.equal(store.get().iconOverrides.wechat,'/icons/glass-atlas.png');
+ const opened=store.get().content.conversations.noapp[0].messages;
+ assert.equal(opened.find(m=>m.id==='stable-photo').text,'/assets/story55/d43-eiffel.webp');
+ assert.equal(opened.find(m=>m.id==='ordinary-text').text,'Keep this sentence /assets/story55/d43-eiffel.webp');
+ assert.equal(opened.find(m=>m.id==='remote-photo').text,'https://other.example/assets/photo.jpg');
+ assert.equal(store.get().iconOverrides.music,'data:image/png;base64,abc');
+ const value={image:old+'apps/maps/macau-offline.webp',external:'//other.example/assets/photo.jpg'};
+ restoreSavedMediaPaths(value,{base:'/BBBTAI/preview/releases/next/'});
+ assert.equal(value.image,'/BBBTAI/preview/apps/maps/macau-offline.webp');
+ assert.equal(value.external,'//other.example/assets/photo.jpg');
+ store.replace(s);assert.equal(store.get().wallpaper,'/wallpapers/midnight-glass.png');
 });
 
 test('all authored Moment images, cover photos, videos and historical chat media are packaged',()=>{

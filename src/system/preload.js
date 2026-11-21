@@ -48,7 +48,7 @@ export function initialLockscreenImageUrls(wallpaper='',state=null){
   ...(state?momentImageUrls(state):[]),
   ...(state?.nav?.current?.appId==='wechat'&&state.nav.current.route.startsWith('/chat/')?chatImageUrls(state,state.nav.current.route.slice(6)):[]),
   ...Object.values(state?.characterAvatars||{}).filter(source=>/^(?:\/|https?:|data:image|blob:)/i.test(source)).map(source=>rebaseBundledPublicAsset(source)),
-  ...Object.values(state?.iconOverrides||{})
+  ...Object.values(state?.iconOverrides||{}).map(source=>rebaseBundledPublicAsset(source))
  ]);
 }
 

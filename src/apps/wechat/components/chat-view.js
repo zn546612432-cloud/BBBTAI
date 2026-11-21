@@ -24,8 +24,7 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
  // moduleUrl is injectable so old release paths can be tested explicitly.
  const base=new URL('../../../../',moduleUrl).pathname;
  // Chat photos and Moments share the same cached public copy.
- const mediaBase=/\/apps\/wechat\/media\//.test(input)?base.replace(/\/releases\/[^/]+\/$/,'/'):base;
- const updated=rebaseBundledPublicAsset(input,{base:mediaBase});
+ const updated=rebaseBundledPublicAsset(input,{base,origin:new URL(moduleUrl).origin});
  return updated===input?input:new URL(updated,moduleUrl).href;
 }
 

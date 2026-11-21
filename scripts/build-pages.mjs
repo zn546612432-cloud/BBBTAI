@@ -2,6 +2,7 @@ import {execFileSync} from 'node:child_process';
 import {cp,mkdir,readdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
+import {isStablePublicPath} from '../src/services/public-assets.js';
 
 // The game runs at / in local development, but project Pages lives at /BBBTAI/.
 // Rewrite absolute app asset URLs only in the generated site, never in sources or saves.
@@ -10,18 +11,8 @@ const projectPath=process.env.GITHUB_PAGES_BASE||`/${repo}/`;
 if(!/^\/[A-Za-z0-9._/-]*\/$/.test(projectPath)||projectPath.includes('..'))throw Error('Invalid GitHub Pages base path');
 const base=projectPath==='/'?'/':projectPath;
 const resourcePattern=/(["'`(=])\/(src|assets|apps|icons|vendor|wallpapers)(?=\/)/g;
-// Evidence photos are requested on demand, possibly days after the phone
-// loaded its JS. Pages removes old release directories on each deployment;
-// use the stable, per-site public copies for these approved static assets.
-// Keep modules, CSS and all other existing cache contracts unchanged.
-const stableMediaPaths=[
- '/apps/wechat/media/',
- '/apps/browser/room404/media/',
- '/apps/browser/room404/wordmark.svg',
- '/assets/story55/personal-files/',
- '/assets/story55/d43-eiffel.webp',
- '/assets/story55/triplets-baby-photo.jpg'
-];
+// Public media never depends on the current code hash. The versioned module
+// graph (including vendor JS and CSS) still avoids stale code caches.
 
 execFileSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});
 
@@ -48,7 +39,7 @@ async function rewriteTree(folder){
   const original=await readFile(file,'utf8');
   const rewritten=original.replace(resourcePattern,(_all,prefix,section,offset)=>{
    replacements++;
-   const stable=stableMediaPaths.some(item=>original.startsWith(item,offset+prefix.length));
+   const stable=isStablePublicPath(section);
    return `${prefix}${stable?base:releaseBase}${section}`;
   });
   if(rewritten!==original)await writeFile(file,rewritten);

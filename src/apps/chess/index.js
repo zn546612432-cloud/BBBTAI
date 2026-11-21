@@ -10,10 +10,11 @@ import {bestStockfishMove} from '../../services/chess-stockfish.js';
 import {isD41Chess,d41ChessDraft,d41ChessComplete,sendD41ChessDraft} from '../../services/chess-scripted.js';
 import {renderChessInviteCard} from '../../components/chess-invitation.js';
 import {scheduleD41Chess,unlockD41Voice,d41DraftDisplay} from './scripted-match.js';
+import {publicAssetPath} from '../../services/public-assets.js';
 export const manifest={id:'chess',name:'国际象棋',icon:13,defaultRoute:'/',supportsDeepLink:true,kicker:'A QUIET GAME'};
 const pieces={wk:'♔',wq:'♕',wr:'♖',wb:'♗',wn:'♘',wp:'♙',bk:'♚',bq:'♛',br:'♜',bb:'♝',bn:'♞',bp:'♟'};
-// Exactly one visual piece per square. Release URLs stay version-relative.
-const pieceAssetBase=new URL('../../../apps/chess/pieces/',import.meta.url).href;
+// Exactly one visual piece per square; artwork stays on the stable site root.
+const pieceAssetBase=publicAssetPath('apps/chess/pieces/');
 const pieceAssetURL=piece=>pieceAssetBase+piece.color+piece.type.toUpperCase()+'.png';
 // Failed PNGs become one Unicode glyph, never a second layer underneath.
 const boundChessImages=new WeakSet();

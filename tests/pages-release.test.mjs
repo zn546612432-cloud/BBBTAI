@@ -5,20 +5,21 @@ import {cp,mkdir,mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-test('Pages releases isolate cached modules, CSS and assets without changing source or saved-data paths',async()=>{
+test('Pages releases isolate code while all public media URLs survive version rotation',async()=>{
  const folder=await mkdtemp(path.join(os.tmpdir(),'ximeng-pages-'));
  const put=async(name,text)=>{const file=path.join(folder,name);await mkdir(path.dirname(file),{recursive:true});await writeFile(file,text);};
  try{
   await cp(new URL('../scripts/',import.meta.url),path.join(folder,'scripts'),{recursive:true});
+  await put('src/services/public-assets.js',await readFile(new URL('../src/services/public-assets.js',import.meta.url),'utf8'));
   await put('package.json','{"type":"module"}');
   const source='<!doctype html><html><head><link rel="stylesheet" href="/src/styles/base.css"><script type="importmap">{"imports":{"chess.js":"/vendor/chess.js"}}</script></head><body><script type="module" src="/src/main.js"></script></body></html>';
   await put('index.html',source);
-  await put('src/main.js',"import './child.js'; const image='/assets/icon.svg'; const ig='/apps/browser/room404/media/'; const logo='/apps/browser/room404/wordmark.svg'; const photos='/assets/story55/personal-files/'; const photo='/assets/story55/triplets-baby-photo.jpg';");
+  await put('src/main.js',"import './child.js'; const image='/assets/icon.svg'; const ig='/apps/browser/room404/media/'; const logo='/apps/browser/room404/wordmark.svg'; const photos='/assets/story55/personal-files/'; const photo='/assets/story55/triplets-baby-photo.jpg'; const avatar='/apps/wechat/avatars/new-person.webp'; const wallpaper='/wallpapers/new.png'; const icon='/icons/new.png';");
   await put('src/child.js','export const value=1;');
   await put('src/styles/base.css',"@import './child.css'; body{background:url('/assets/icon.svg')}");
   await put('src/styles/child.css','body{color:black}');
   await put('public/assets/icon.svg','<svg/>');
-  const evidence=['apps/browser/room404/media/avatar.webp','apps/browser/room404/wordmark.svg','assets/story55/personal-files/IMG_4982.jpg','assets/story55/triplets-baby-photo.jpg'];
+  const evidence=['apps/browser/room404/media/avatar.webp','apps/browser/room404/wordmark.svg','assets/story55/personal-files/IMG_4982.jpg','assets/story55/triplets-baby-photo.jpg','apps/wechat/avatars/new-person.webp','wallpapers/new.png','icons/new.png'];
   const moment='apps/wechat/media/macau-morning.webp';
   await put('public/'+moment,'fixture: current Moments image');
   for(const item of evidence)await put('public/'+item,'fixture: '+item);
@@ -43,10 +44,11 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   const root=`dist/releases/${release.version}/`;
   assert.equal(await read(root+'index.html'),html);
   assert.match(await read(root+'src/main.js'),/import '\.\/child.js'/);
-  assert.ok((await read(root+'src/main.js')).includes(`${prefix}assets/icon.svg`));
+  assert.ok((await read(root+'src/main.js')).includes('/AAATAI/assets/icon.svg'));
   const oldCode=await read(root+'src/main.js');
   const manifest=JSON.parse((await read(root+'src/system/startup/image-manifest.js')).match(/export default (\[.*\]);/)[1]);
-  assert.ok(manifest.includes(`${prefix}assets/icon.svg`));
+  assert.ok(manifest.includes('/AAATAI/assets/icon.svg'));
+  assert.ok(!manifest.some(url=>url.includes('/releases/')),'no public images are tied to a release');
   for(const item of evidence)assert.ok(manifest.includes(`/AAATAI/${item}`),`preload must use the same stable media URL: ${item}`);
   assert.ok(manifest.includes('/AAATAI/'+moment),'Moments preload must warm the stable URL requested by its renderer');
   assert.ok(!manifest.includes(prefix+moment),'do not download a second release copy of the same photo');
@@ -57,6 +59,7 @@ test('Pages releases isolate cached modules, CSS and assets without changing sou
   }
   assert.equal(await read(root+'src/child.js'),'export const value=1;');
   assert.match(await read(root+'src/styles/base.css'),/@import '\.\/child.css'/);
+  assert.ok((await read(root+'src/styles/base.css')).includes('/AAATAI/assets/icon.svg'));
   assert.equal(await read(root+'src/styles/child.css'),'body{color:black}');
   assert.equal(await read(root+'assets/icon.svg'),await read('dist/assets/icon.svg'));
   build();
