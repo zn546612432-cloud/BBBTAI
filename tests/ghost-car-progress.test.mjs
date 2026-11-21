@@ -69,7 +69,7 @@ test('approved journal unlocks on the existing plan, model delivery and final ac
  s.day=39;sync(s);assert.equal(entryFor(s,39),null);
  stamp(s,'recognition');assert.equal(entryFor(s,39),null);sync(s);
  assert.equal(entryFor(s,39).body,GHOST_CAR_DIARY[39].body);
- assert.match(entryFor(s,39).body,/收到陳熙泰交付的資產了。/);
+ assert.match(entryFor(s,39).body,/^收到熙泰交付的資產了。/);
  assert.doesNotMatch(entryFor(s,39).body,/檔案/);
  s.day=40;sync(s);assert.equal(entryFor(s,40),null);
  const routes=[];diaryAction('diary-open-day',{dataset:{day:'39'}},{store:{get:()=>s},router:{open:loc=>routes.push(loc)}});
