@@ -15,9 +15,8 @@ import {behaviorSettings,readBehaviorForm} from './settings/behavior.js';
 import {maybeSendProactive} from '../../services/ai/proactive.js';
 import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID,XITAI_VOICE_OPTIONS} from '../../services/ai/gateway.js';
 import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
-import {isTaiCloudHost,taiCloudCall} from '../../services/ai/supabase-gateway.js';
+import {isTaiCloudHost} from '../../services/ai/supabase-gateway.js';
 import {taiPresence} from '../../services/presence.js';
-import {submitTaiVoiceUnlock,taiVoiceRemaining} from '../../services/ai/voice-budget.js';
 import {TAI_ID,taiDisplayName} from './contact.js';
 import {playTrack,isPlaying,handle as musicAction} from '../music/index.js';
 import {sendMessage} from '../../services/messaging/index.js';
@@ -31,7 +30,6 @@ let taiFeedback='',pendingTai=null,replyVersion=0;
 // Result contains no API keys or full provider responses; suitable for iPhone UI.
 let voiceDiagnosis={state:'idle',message:''};
 let personaDiagnosis={state:'idle',message:''};
-let budgetDiagnosis='';
 // Keep unsaved iOS paste/keyboard contents across periodic world-clock renders.
 let settingsDraft={};
 export function currentTaiFeedback(s,feedback){
@@ -85,8 +83,6 @@ const setting=(s)=>{
  +'<p class="tai-bond-debug">当前关系温度 '+taiBond(s).score+'/100 · 随真实互动变化，不影响固定剧情</p>'
  +behaviorSettings(taiBehavior(s),settingsDraft,s.events||[])
  +'<section class="tai-test-controls"><h3>熙泰 · 测试控制</h3><p>只作用于当前测试标签页，不更改游戏原有的剧情天数。</p>'
- +'<p>遊戲內語音額度：'+(s.aiDraft?.taiVoiceUnlimited?'已解除（無限制）':'電話 '+taiVoiceRemaining(s,'call')+' / 30 · 語音訊息 '+taiVoiceRemaining(s,'message')+' / 15')+'</p>'
- +(cloud?'<p>雲端私人測試：'+esc(s.aiDraft?.taiCloudTester?'已授權（可驗證）':budgetDiagnosis||'尚未確認授權')+'</p><button type="button" data-action="tai-check-voice-budget">檢查雲端測試授權</button>':'')
  +'<label class="tai-test-toggle"><input type="checkbox" data-action="tai-force-online" '+(taiForcedOnline()?'checked':'')+'> 强制熙泰在线（仅测试）</label>'
  +'<div class="tai-test-actions"><button type="button" data-action="tai-test-incoming">模拟熙泰来电</button><button type="button" data-action="tai-outgoing">给熙泰打电话</button></div>'
  +'<label>测试语音台词<textarea name="testSpeech" rows="3" placeholder="例如：嗯？你还没睡？">'+esc(settingsDraft.testSpeech||'嗯？你还没睡？我还以为你终于肯休息了。')+'</textarea></label>'
@@ -138,12 +134,6 @@ export async function handle(action,target,ctx){
  if(action==='attach-chat'){if(id==='tai'){ctx.pickImage(src=>queueTaiReply(ctx,sendMessage(ctx.store,{channel:'noapp',conversationId:id,text:src,kind:'image'})));}else attachChat(id,'noapp',ctx);return;}
  if(action==='tai-contact-more'){ctx.router.open({appId:'noapp',route:'/contact/tai'});return;}
  if(action==='tai-api-settings')ctx.router.open({appId:'noapp',route:'/settings-ai'});
- if(action==='tai-check-voice-budget'){
-  budgetDiagnosis='正在檢查…';ctx.refresh();
-  try{const result=await taiCloudCall('test_access_status');const enabled=result?.tester===true;budgetDiagnosis=enabled?'私人測試額度已啟用':'一般帳號的雲端保護額度';ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.taiCloudTester=enabled;});}
-  catch{budgetDiagnosis='暫時無法檢查雲端授權';}
-  ctx.refresh();return;
- }
  if(action==='tai-clear-ai'){settingsDraft={};voiceDiagnosis={state:'idle',message:''};clearApiConfig();ctx.refresh();ctx.toast('当前会话 Key 已清除');}
  if(action==='tai-check-persona'){
   personaDiagnosis={state:'testing',message:'正在读取 Supabase 人物圣经…'};
@@ -197,8 +187,8 @@ export async function handle(action,target,ctx){
 }
 export const submit=(form,ctx)=>{
  if(form.dataset.form==='tai-save-remark'){const remark=String(new FormData(form).get('remark')||'').trim().slice(0,32);ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.taiRemark=remark;});ctx.router.open({appId:'noapp',route:'/chat/tai'});return;}
- if(form.dataset.form==='send-chat'){if(form.dataset.id==='tai'&&submitTaiVoiceUnlock(form,ctx))return;const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
- if(form.dataset.form==='tai-call-turn'){if(!submitTaiVoiceUnlock(form,ctx))submitCall(form,ctx);return;}
+ if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-behavior'){
   const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));
   ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.behavior=behavior;});

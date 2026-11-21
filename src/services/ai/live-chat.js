@@ -4,7 +4,6 @@ import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
 import {absoluteMinute} from '../../system/time/clock.js';
-import {taiVoiceRemaining} from './voice-budget.js';
 import {hasBannedTaiConstruction,isTaiDirectAffectionRequest,TAI_DIRECT_AFFECTION_LINE,TAI_DIRECT_AFFECTION_PROMPT} from './expression-style.js';
 import {taiDisplayName,markTaiRead} from '../../apps/noapp/contact.js';
 import {taiPresence,markTaiEngaged} from '../presence.js';
@@ -130,9 +129,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    firstTextAfterCall?({player:'call_ended_player',tai:'call_ended_tai',connection_error:'call_ended_error'}[lastEndedCall.endedBy]):null].filter(Boolean);
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
-  const voiceAvailable=!!status.minimax&&taiVoiceRemaining(initial,'message')>0;
+  const voiceAvailable=!!status.minimax;
   const allowVoice=!directAffection&&!shortCallReply&&voiceAvailable&&(behavior.autonomousVoice||voiceRequested)&&(!firstTextAfterCall||voiceRequested);
-  const voiceTurn=unheard?!!apiConfig().minimax&&taiVoiceRemaining(initial,'message')>0:voiceAvailable&&voiceRequested;
+  const voiceTurn=unheard?!!apiConfig().minimax:voiceAvailable&&voiceRequested;
   const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
    (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':lastEndedCall.endedBy==='connection_error'?'连接异常导致电话断开，不是任何一方主动挂断。':'系统已结束电话。')+
@@ -140,7 +139,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,worldbookEvents,
-   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':voiceRequested&&status.minimax?' 現在無法再發新語音，正常用文字回覆，不提內部額度或接口。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
+   scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
@@ -150,7 +149,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   let decision=unheard?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
-   allowCall:!directAffection&&availableCall&&!!status.minimax&&taiVoiceRemaining(initial,'call')>0&&(!firstTextAfterCall||requestedCall),allowVoice,
+   allowCall:!directAffection&&availableCall&&!!status.minimax&&(!firstTextAfterCall||requestedCall),allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
   decision=honorTaiVoiceRequest(decision,{text:lastUser,available:voiceAvailable});
@@ -299,7 +298,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // (phone) has priority over fragile sentence regexes. The old phrase
   // detector remains as compatibility for models that forget the marker.
   const alreadyCalled=store.get().events.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId);
-  const shouldCall=taiVoiceRemaining(store.get(),'call')>0&&!actualDecision&&!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
+  const shouldCall=!actualDecision&&!alreadyCalled&&!taiPlayerDeclinedCall(lastUser)&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)&&(
    !!phoneCommand||emitted>0&&delivered.length===emitted&&taiShouldCallAfterText({lastUser,entries:delivered}));
   let called=false;
   if(shouldCall){

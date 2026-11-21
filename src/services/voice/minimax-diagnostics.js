@@ -3,7 +3,7 @@
 // must NEVER display API keys in a chat bubble, debug page, or console.
 const clean=value=>String(value||'').replace(/Bearer\s+[^\s"'<>]+/gi,'Bearer [hidden]').replace(/\bsk-[A-Za-z0-9_-]{8,}\b/gi,'[hidden key]').replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,'[hidden key]').slice(0,360).trim();
 export function explainMinimaxFailure(error,{region='cn'}={}){
- if(error?.code==='TAI_CLOUD_LIMIT')return '云端 AI 服务保护额度已用完，与游戏内电话／语音消息额度无关。请在 AI 设置检查私人测试授权状态。';
+ if(error?.code==='TAI_CLOUD_LIMIT')return '云端 AI 服务暂时达到保护上限，请稍后再试。';
  const detail=typeof error==='string'?error:error?.message||error?.name||error?.type||'未收到错误详情';
  const raw=clean(detail);
  const original=raw.toLowerCase();

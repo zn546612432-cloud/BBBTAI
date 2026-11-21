@@ -1,6 +1,5 @@
 import {isStory55,taiRecognized} from '../story55/state.js';
 import {dateParts} from '../calendar.js';
-import {taiVoiceRemaining} from './voice-budget.js';
 
 const londonFormat=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 // Same game civil date/clock as the phone; Intl handles British summer time.
@@ -24,5 +23,5 @@ export function taiLifeContext(s){
  const life=taiLife(s);
  // Preserve the retired D64 preview's explicitly established trip context.
  const legacyTrip=!isStory55(s)&&[64,65].includes(s.day)?`舊預覽已設定巴黎酒店，当地 ${new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(`${dateParts(s).iso}T${s.clock}:00+08:00`))}。`:'';
- return `【當前生活狀態，隨遊戲時間更新】D${s.day} 澳門 ${s.clock}；英國 ${life.localDate} ${life.local}（Europe/London）。${legacyTrip}當前活動：${life.activity}；可用性：${life.status}；今日電話語音剩餘 ${Number.isFinite(taiVoiceRemaining(s,'call'))?taiVoiceRemaining(s,'call'):'無限制'} 段、語音訊息剩餘 ${Number.isFinite(taiVoiceRemaining(s,'message'))?taiVoiceRemaining(s,'message'):'無限制'} 段。以上是內部狀態，不要報備、不念出額度或時間換算。空閒時可以即時回覆，忙時根據訊息重要程度決定延後、已讀不回或正常回覆；睡眠 01:30–07:30 不收讀、不回覆、不接電話。不編造已發生的行程；只有熙蒙問及或確有必要時才透露一點近況。`;
+ return `【當前生活狀態，隨遊戲時間更新】D${s.day} 澳門 ${s.clock}；英國 ${life.localDate} ${life.local}（Europe/London）。${legacyTrip}當前活動：${life.activity}；可用性：${life.status}。以上是內部狀態，不要報備或念出時間換算。空閒時可以即時回覆，忙時根據訊息重要程度決定延後、已讀不回或正常回覆；睡眠 01:30–07:30 不收讀、不回覆、不接電話。不編造已發生的行程；只有熙蒙問及或確有必要時才透露一點近況。`;
 }
