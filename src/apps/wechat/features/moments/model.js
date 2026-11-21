@@ -31,6 +31,11 @@ export const momentProfiles=s=>Object.fromEntries(Object.entries(originalProfile
   if(resolved.bio==='别打电话，在工房。')resolved.bio=profile.bio;
   if(resolved.cover==='harbor')resolved.cover=profile.cover;
  }
+ if(name==='小辛'&&resolved.cover==='morning')resolved.cover=profile.cover;
+ if(name==='胡枫'){
+  if(resolved.cover==='seoul')resolved.cover=profile.cover;
+  if(resolved.bio==='下次再一起去。')resolved.bio=profile.bio;
+ }
  if(name==='熙旺'&&resolved.bio==='平安就好。')resolved.bio=profile.bio;
  return [name,resolved];
 }));

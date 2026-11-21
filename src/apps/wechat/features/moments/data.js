@@ -2,8 +2,8 @@
 export const profiles={
  '熙蒙':{bio:'',cover:'ximengCover'},
  '熙旺':{bio:'平安是福',cover:'dawn'},
- '胡枫':{bio:'下次再一起去。',cover:'seoul'},
- '小辛':{bio:'帅哥无所畏惧✌️',cover:'morning'},
+ '胡枫':{bio:'눈을 한 번 더 보자',cover:'hufengCover'},
+ '小辛':{bio:'帅哥无所畏惧✌️',cover:'xiaoxinCover',coverPosition:'center top'},
  '阿威':{bio:'今天也要好好练。',cover:'gym'},
  '仔仔':{bio:'缝缝补补的日常 🧵',cover:'seoul'},
  '傅隆生':{bio:'',cover:'harbor'}

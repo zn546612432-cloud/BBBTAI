@@ -65,6 +65,24 @@ try{
  await latePage.locator('[data-action=wx-moment-video][data-id="xs-d06"]').click();
  await latePage.waitForFunction(()=>document.querySelector('video')?.currentTime>.5);
  await latePage.screenshot({path:out+'/late-pin-playing.png'});
+ for(const [name,filename,bio] of [['小辛','xiaoxin-moments-cover.webp','帅哥无所畏惧✌️'],['胡枫','hufeng-moments-cover.webp','눈을 한 번 더 보자']]){
+  const profileContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  state.nav.current={appId:'wechat',route:'/moments/profile/'+name,params:{}};
+  state.content.moments={profiles:{'小辛':{cover:'morning'},'胡枫':{cover:'seoul',bio:'下次再一起去。'}}};
+  await profileContext.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));},{key,state});
+  await profileContext.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());
+  const profilePage=await profileContext.newPage();profilePage.on('pageerror',e=>errors.push(e.message));
+  await profilePage.goto(base+'/BBBTAI/',{waitUntil:'domcontentloaded'});
+  await profilePage.locator('#xm-boot-next').click({timeout:45000});
+  await profilePage.locator('#xm-boot').waitFor({state:'detached'});
+  await profilePage.locator('[data-action=unlock]').click();for(const digit of '0816')await profilePage.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
+  const cover=profilePage.locator('.wx-moments-cover');await cover.waitFor();
+  assert.ok((await cover.getAttribute('style')).includes(filename));
+  assert.equal(await profilePage.locator('.wx-moments-bio').innerText(),bio);
+  await cover.evaluate(async el=>{const match=getComputedStyle(el).backgroundImage.match(/url\("?([^"\)]+)"?\)/);const image=new Image();image.src=match[1];await image.decode();});
+  await profilePage.screenshot({path:out+'/'+filename+'.png'});
+  await profileContext.close();
+ }
  assert.deepEqual(errors,[]);
  await writeFile(out+'/result.json',JSON.stringify({passed:true,viewport:'390x844',checks:['D06 feed and exact comments','profile pin to detail','real video decode and time advancing','back navigation and reload without duplicates','D12 expired post plays from original pin'],video,errors},null,2));
  console.log(JSON.stringify({passed:true,video,screenshots:out}));
