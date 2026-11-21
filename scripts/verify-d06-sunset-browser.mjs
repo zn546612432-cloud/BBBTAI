@@ -37,6 +37,7 @@ try{
  await page.screenshot({path:out+'/detail.png'});
  await page.locator('[data-action=wx-moment-video][data-id="xs-d06"]').click();
  await page.locator('video').waitFor();
+ console.log('Video layout',await page.locator('video').evaluate(v=>({width:v.clientWidth,height:v.clientHeight,readyState:v.readyState,error:v.error?.code})));
  await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.readyState>=2&&v.videoWidth>0;});
  const before=await page.locator('video').evaluate(v=>v.currentTime);
  await page.waitForFunction(t=>document.querySelector('video').currentTime>t+.6,before,{timeout:15000});

@@ -72,8 +72,9 @@
 .wx-moments-gallery{background:#111}
 .wx-moments-gallery .wx-moments-header{background:#161616;color:white;border-bottom:1px solid #303030}
 .wx-moments-gallery .wx-moments-header button{color:white}
-.wx-moments-full-image{flex:1;min-height:0;display:grid;place-items:center;background:#111;padding:5px 4px 18px}
+.wx-moments-full-image{position:relative;flex:1;min-height:0;display:grid;place-items:center;background:#111;padding:5px 4px 18px}
 .wx-moments-full-image>img,.wx-moments-full-image>video{display:block;width:100%;max-height:100%;object-fit:contain}
+.wx-moments-full-image>video{position:absolute;inset:5px 4px 18px;width:calc(100% - 8px);height:calc(100% - 23px);max-height:none}
 .wx-moments-reading{padding:28px 22px;font-size:16px;line-height:1.8;color:#343434}
 .wx-moments-reading>small{color:#07a458}
 .wx-moments-reading>h2{font-size:22px;line-height:1.45;margin:12px 0 20px}
