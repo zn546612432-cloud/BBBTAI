@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "day": 53,
+  "date": "2025-07-10",
+  "title": "D53｜21:30 傅隆生來電",
+  "stage": "review",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "phone",
+    "assets"
+  ],
+  "assets": [
+    {
+      "id": "d53-fu-1",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d53/fu-1.mp3"
+    },
+    {
+      "id": "d53-fu-2",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d53/fu-2.mp3"
+    },
+    {
+      "id": "d53-fu-3",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d53/fu-3.mp3"
+    },
+    {
+      "id": "d53-fu-6",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d53/fu-6.mp3"
+    },
+    {
+      "id": "d53-fu-7",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d53/fu-7.mp3"
+    }
+  ],
+  "events": [
+    {
+      "id": "d53-fulongsheng-call",
+      "kind": "system-notice",
+      "surface": "phone",
+      "capability": "call.d53-authored",
+      "owner": "phone",
+      "actor": "傅隆生",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:30"
+      },
+      "requires": [],
+      "timing": {
+        "day": 53,
+        "at": "21:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "steps": [
+        {
+          "speaker": "傅隆生",
+          "text": "那對父女的底細你查了嗎？",
+          "audio": "/assets/story55/d53/fu-1.mp3",
+          "delayMs": 0
+        },
+        {
+          "speaker": "熙蒙",
+          "text": "查了。",
+          "delayMs": 2000
+        },
+        {
+          "speaker": "熙蒙",
+          "text": "沒什麼可擔心的。",
+          "delayMs": 2000
+        },
+        {
+          "speaker": "傅隆生",
+          "text": "那可能是我多慮了。",
+          "audio": "/assets/story55/d53/fu-2.mp3",
+          "delayMs": 2000
+        },
+        {
+          "speaker": "熙蒙",
+          "text": "你是不是察覺到什麼了？",
+          "delayMs": 3000
+        },
+        {
+          "speaker": "傅隆生",
+          "text": "我察覺到，你長大了，是時候該放手了。",
+          "audio": "/assets/story55/d53/fu-3.mp3",
+          "delayMs": 0
+        },
+        {
+          "speaker": "傅隆生",
+          "text": "就按你的計劃進行。",
+          "audio": "/assets/story55/d53/fu-6.mp3",
+          "delayMs": 2000
+        },
+        {
+          "speaker": "熙蒙",
+          "text": "知道了。",
+          "delayMs": 0
+        },
+        {
+          "speaker": "傅隆生",
+          "text": "有把握嗎？",
+          "audio": "/assets/story55/d53/fu-7.mp3",
+          "delayMs": 0
+        },
+        {
+          "speaker": "熙蒙",
+          "text": "放心吧。",
+          "delayMs": 2000
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "D53 21:29 不來電，統一時鐘截到21:30後顯示傅隆生來電，手動接聽。"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "D52/D54、鎖屏、低電或已有電話時不覆蓋；錄音失敗不略過台詞。"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "播完只寫一次完成標記和通話記錄；再次tick不重播；重試不重複字幕。"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "舊存檔無需重開；刷新後手動繼續，保留索引和已播台詞。"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "沿用原生電話界面、手勢解鎖音頻、通話記錄和統一劇情時間，沒有聊天代發。"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "同日遲到保留來電，已完成或跨日舊存檔不補播；拒接/掛斷五秒後可重接。"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "五個實際MP3均可解碼；fu-3包含原聲第3至5段及自然停頓，包內路徑穩定。"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "每句使用共享stampFixedLine時間戳並推進遊戲時鐘，21:30只作來電起點，最後一句21:33:20。"
+    },
+    {
+      "id": "check-dialogue",
+      "type": "dialogue",
+      "verify": "等待為2000/2000/2000/3000/2000/2000ms，從上句播完或顯示結束計；熙蒙僅預設字幕。"
+    },
+    {
+      "id": "check-mobile",
+      "type": "mobile",
+      "verify": "390×844瀏覽器手動接聽、查看兩方字幕與時戳、縮小返回、掛斷重接、完整播完。"
+    }
+  ]
+}

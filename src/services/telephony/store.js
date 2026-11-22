@@ -2,11 +2,11 @@
 import {ensurePhoneData} from '../phone-data.js';
 export const activePhoneCall=s=>['ringing','connected'].includes(s.phoneCall?.state)?s.phoneCall:null;
 export const canPresentPhoneCall=s=>!!s.unlocked&&!s.poweredOff&&!s.emergencyCharge&&!s.alarmRinging&&Number(s.batteryPercent)>1&&!s.dayChargeRemainingMs&&!['off','passcode','draining','s55-off','s55-charging','s55-one-percent','s55-zero-percent','s55-accelerating'].includes(s.deathPhase)&&!['sleeping','charging'].includes(s.powerMode);
-export function receiveCall(store,{id,source='phone',direction='incoming',number='',displayName='未知號碼',forced=false,node=null,autoAnswerMs=8000},now=Date.now()){
+export function receiveCall(store,{id,source='phone',direction='incoming',number='',displayName='未知號碼',forced=false,node=null,autoAnswerMs=8000,scriptId=null},now=Date.now()){
  if(!id||!Number.isFinite(autoAnswerMs)||autoAnswerMs<0)throw Error('來電資料無效');
  const s=store.get();
  if(activePhoneCall(s)||s.content.phone?.calls?.some(c=>c.id===id)||s.phoneCall?.id===id)return false;
- store.update(s=>{s.phoneCall={id,source,direction,number,displayName,forced:!!forced,state:'ringing',startedAt:now,answeredAt:null,node,autoAnswerMs,presentedAt:canPresentPhoneCall(s)?now:null};});
+ store.update(s=>{s.phoneCall={id,source,direction,number,displayName,forced:!!forced,state:'ringing',startedAt:now,answeredAt:null,node,autoAnswerMs,presentedAt:canPresentPhoneCall(s)?now:null,...(scriptId?{scriptId}:{})};});
  return true;
 }
 export function answerCall(store,id,now=Date.now(),{remote=false}={}){
@@ -24,7 +24,8 @@ export function endCall(store,id,now=Date.now(),{remote=false,reason='ended'}={}
    id,number:call.number||'UNKNOWN',name:call.displayName,direction:call.direction,
    missed:call.answeredAt===null,connected:call.answeredAt!==null,
    duration:call.answeredAt===null?0:Math.max(0,Math.floor((now-call.answeredAt)/1000)),
-   day:s.day,time:s.clock,place:'',source:call.source
+   day:s.day,time:s.clock,place:'',source:call.source,
+   ...(call.scriptId?{scriptId:call.scriptId,transcript:structuredClone(call.transcript||[])}:{})
   });
  });return true;
 }
