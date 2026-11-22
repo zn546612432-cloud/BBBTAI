@@ -7,7 +7,8 @@ import {render as ghostRender,handle as ghostHandle} from '../src/apps/ghost/ind
 import {render as smsRender,handle as smsHandle} from '../src/apps/messages/replica.js';
 import {registry} from '../src/system/registry.js';
 import {render as browserRender,submit as browserSubmit} from '../src/apps/browser/index.js';
-import {render as mirageRender,handle as mirageHandle,withMirageSessionDividers} from '../src/apps/mirage/index.js';
+import {render as mirageRender,handle as mirageHandle,submit as mirageSubmit,withMirageSessionDividers} from '../src/apps/mirage/index.js';
+import {MIRAGE_ACCOUNT,MIRAGE_PASSWORD} from '../src/apps/mirage/data.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {sendMessage} from '../src/services/messaging/index.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
@@ -443,13 +444,13 @@ test('GHOST D02 shows the original execution report without counters or a separa
   assert.match(report,/成功/);
   assert.match(report,/项目完成/);
   assert.match(report,/data-action="gh-d02-next"/);
-  assert.match(report,/返回 KIRA/);
+  assert.match(report,/返回 MIRAGE/);
   assert.doesNotMatch(report,/尝试次数|操作次数|undefined|等待玩家|MIRAGE 委托/);
   assert.equal(s.content.orders.find(o=>o.id===master).status,'READY');
   filesHandle('files-d02-open-ghost',{dataset:{id:mailId}},ctx);
   assert.deepEqual(routes.at(-1),{appId:'ghost',route:'/run',params:{orderId:lastStep}});
   ghostHandle('gh-d02-next',{dataset:{}},ctx,{route:'/run',params:{orderId:lastStep}});
-  assert.deepEqual(routes.at(-1),{appId:'kira',route:'/mail/'+mailId,params:{}});
+  assert.deepEqual(routes.at(-1),{appId:'mirage',route:'/order/'+master,params:{}});
  }
 });
 test('GHOST D02 retains the next step in-place, and legacy D01 reports without counters',()=>{
@@ -625,4 +626,56 @@ test('restored Messages keeps select/delete with confirmation without touching o
  assert.equal(s.content.conversations.messages.length,count-1);
  assert.equal(s.content.conversations.messages.some(c=>c.id===id),false);
  assert.doesNotMatch(live.render({store},{route:'/',params:{}}),/class="ios-msg-selection-bar"/);
+});
+
+test('Mirage rejects incomplete Talia presets and waiting turns before adding an outgoing bubble',()=>{
+ const s=phone();acceptD02(s,D02_S);revealD02Key(s);deployD02(s,D02_S,D02_KEYS[D02_S]);win(s,D02_S);submitD02(s,D02_S);
+ const chat=s.content.conversations.mirage.find(c=>c.id===D02_TALIA),notices=[];
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},toast:line=>notices.push(line)};
+ const previous=globalThis.FormData;
+ globalThis.FormData=class{constructor(form){this.form=form;}get(){return this.form.elements.text.value;}};
+ const form={dataset:{form:'mc-send',id:D02_TALIA},elements:{text:{value:'东西已经拿',dataset:{}}}};
+ setMirageAuthenticated(true);
+ try{
+  const before=chat.messages.length;
+  mirageSubmit(form,ctx);assert.equal(chat.messages.length,before);assert.equal(form.elements.text.value,'东西已经拿');
+  form.elements.text.value=d02TaliaDraft(s,D02_TALIA);mirageSubmit(form,ctx);
+  assert.equal(s.story55.d02.taliaStage,1);
+  const sent=chat.messages.length;
+  form.elements.text.value='哦？这份贡献值得再加一笔赏金吗？';mirageSubmit(form,ctx);
+  assert.equal(chat.messages.length,sent);assert.equal(s.story55.d02.taliaStage,1);
+  chat.messages.find(m=>m.id==='d02-talia-peace').delivery={day:2,clock:s.clock};
+  form.elements.text.value='哦？这份贡献值得再加一笔';mirageSubmit(form,ctx);assert.equal(chat.messages.length,sent);
+  form.elements.text.value=d02TaliaDraft(s,D02_TALIA);mirageSubmit(form,ctx);
+  assert.equal(s.story55.d02.taliaStage,2);assert.equal(chat.messages.filter(m=>m.from==='me').length,2);
+ }finally{globalThis.FormData=previous;setMirageAuthenticated(false);}
+});
+test('D02 completion receipts follow payment once and backfill paid saves without another credit',()=>{
+ for(const master of [D02_S,D02_A]){
+  const s=phone(),mailId=master===D02_S?D02_MAIL:D02_A_MAIL;
+  acceptD02(s,master);s.content.mail.find(m=>m.id===mailId).read=true;
+  if(master===D02_S)revealD02Key(s);
+  deployD02(s,master,D02_KEYS[master]);win(s,master);
+  const receiptId='d02-payment-'+master;
+  assert.equal(s.content.mail.some(m=>m.id===receiptId),false);
+  submitD02(s,master);const balance=s.bankData.balance;
+  const receipt=s.content.mail.find(m=>m.id===receiptId);
+  assert.equal(receipt.subject,'[MIRAGE] Order Completed');assert.match(receipt.body,new RegExp(D02_REWARDS[master].toLocaleString('en-US')));
+  s.content.mail=s.content.mail.filter(m=>m.id!==receiptId);
+  s.notifications=s.notifications.filter(n=>n.id!==receiptId+'-mail');
+  const restored=JSON.parse(JSON.stringify(s));tickD02Contracts(restored);tickD02Contracts(restored);
+  assert.equal(restored.bankData.balance,balance);
+  assert.equal(restored.content.mail.filter(m=>m.id===receiptId).length,1);
+  assert.equal(restored.notifications.filter(n=>n.id===receiptId+'-mail').length,1);
+  assert.equal(restored.bankData.transactions.filter(t=>t.id===receiptId).length,1);
+ }
+});
+
+test('Mirage sign-in preserves the order destination returned by Ghost',()=>{
+ const s=phone(),previous=globalThis.FormData;
+ globalThis.FormData=class{get(key){return key==='account'?MIRAGE_ACCOUNT:MIRAGE_PASSWORD;}};
+ try{
+  mirageSubmit({dataset:{form:'mc-login'}},{store:{get:()=>s,update:fn=>fn(s)},router:{open:()=>{}},toast:()=>{}},{route:'/order/'+D02_A});
+  assert.equal(s.nav.current.route,'/order/'+D02_A);
+ }finally{globalThis.FormData=previous;setMirageAuthenticated(false);}
 });

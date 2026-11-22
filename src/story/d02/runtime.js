@@ -52,6 +52,7 @@ export function tickD02Contracts(s,now=Date.now()){
   const o=s.content.orders?.find(o=>o.id===id);if(!o)continue;
   if(['OPEN','ACCEPTED'].includes(o.status)&&expired(s,id)&&!d.completed[id]){o.status='EXPIRED';changed=true;}
   syncD02Reminder(s,id);
+  if(d.submitted[id])changed=ensureD02Receipt(s,id)||changed;
  }
  const chat=s.content.conversations.mirage?.find(c=>c.id===D02_TALIA);
  const answer=chat?.messages.find(m=>m.id==='d02-talia-worth');
@@ -180,11 +181,25 @@ function creditD02(s,id,amount,suffix=''){
  s.notifications.unshift({id:'d02-payment-notice-'+id+suffix,title:'太平洋銀行',body:'MIRAGE 赏金入账 '+amount.toLocaleString('en-US')+' USD',day:s.day,clock:s.clock,link:{appId:'bank',route:'/',params:{}}});
  d.paid[id]=(d.paid[id]||0)+amount;
 }
+// The receipt belongs to the existing settlement, including already-paid saves.
+function ensureD02Receipt(s,id){
+ const transaction=s.bankData.transactions?.find(t=>t.id==='d02-payment-'+id);
+ if(!transaction)return false;
+ const receiptId=transaction.id,mail=s.content.mail??=[];
+ if(mail.some(m=>m.id===receiptId))return false;
+ const day=transaction.day||s.day,time=transaction.time||s.clock;
+ mail.unshift({id:receiptId,orderId:id,from:'MIRAGE / SETTLEMENT',subject:'[MIRAGE] Order Completed',
+  body:'委託結果已通過驗收。\n\n✓ 文件已驗收 · 交易回執已寄送\n\n報酬 US$ '+transaction.amount.toLocaleString('en-US')+' 已轉入您的指定帳戶。',
+  read:false,storyD02:true,day,time});
+ s.notifications.unshift({id:receiptId+'-mail',title:'KIRA',body:'[MIRAGE] Order Completed',day,clock:time,link:{appId:'kira',route:'/mail/'+receiptId,params:{}}});
+ return true;
+}
 export function submitD02(s,id){
  const d=s.story55?.d02,o=s.content.orders?.find(x=>x.id===id);
  if(!d?.completed?.[id]||!o||!['READY','ACCEPTED'].includes(o.status)||d.submitted[id])return false;
  o.status='COMPLETED';d.submitted[id]=true;
  creditD02(s,id,D02_REWARDS[id]);
+ ensureD02Receipt(s,id);
  if(s.day===2&&d.wechat&&d.wechat.earlyAt==null)d.wechat.earlyAt=gameMinute(s);
  syncD02Reminder(s,id);return true;
 }
