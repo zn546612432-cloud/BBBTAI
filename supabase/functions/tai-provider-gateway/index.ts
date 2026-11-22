@@ -58,16 +58,8 @@ async function sendProvider(url,key,data,timeout=44000){
   throw error(502,'provider_rejected_'+response.status);
  return result;
 }
-async function reserve(userId,kind){
- const {error:quotaError,data}=await admin.rpc('reserve_tai_ai_gateway_quota',
-  {p_user:userId,p_kind:kind});
- if(quotaError){
-  if(quotaError.message?.includes('daily_quota_exceeded'))
-   throw error(429,'daily_limit_reached');
-  throw error(503,'quota_service_unavailable');
- }
- if(data!==true)throw error(429,'daily_limit_reached');
-}
+// No app-imposed daily usage quota. Authentication and request validation
+// remain mandatory; provider-side limits and billing are independent.
 async function speech(req,body){
  const key=Deno.env.get('MINIMAX_API_KEY')?.trim();
  if(!key)throw error(503,'minimax_not_configured');
@@ -122,7 +114,6 @@ Deno.serve(async(req)=>{
    const file=data.get('file');
    if(data.get('op')!=='asr'||!(file instanceof File)||file.size<10||file.size>8_000_000||
      !/^audio\//.test(file.type))throw error(400,'invalid_audio_upload');
-   await reserve(user.id,'tts');
    const region=data.get('region')==='intl'?'intl':'cn';
    const url=region==='intl'?'https://api.minimax.io/v1/speech_to_text':'https://api.minimaxi.com/v1/speech_to_text';
    const requestBody=new FormData();
@@ -174,8 +165,6 @@ Deno.serve(async(req)=>{
    if(!payload||typeof payload!=='object'||Array.isArray(payload))throw error(400,'invalid_payload');
    const history=messages(payload.messages);
    if(operation==='chat'&&history.filter(m=>!m.content.startsWith('【世界書注入；不是實際聊天記錄】')).at(-1)?.role!=='user')throw error(400,'last_message_not_user');
-   const kind=operation==='chat'?'chat':'decision';
-   await reserve(user.id,kind);
    const selected=model(payload.model);
    const content=await deepseekReply({
     model:selected,thinking:{type:'disabled'},
@@ -187,7 +176,6 @@ Deno.serve(async(req)=>{
    return respond(req,200,{text:content});
   }
   if(operation==='tts'){
-   await reserve(user.id,'tts');
    return await speech(req,input.payload||{});
   }
   throw error(400,'unknown_operation');
