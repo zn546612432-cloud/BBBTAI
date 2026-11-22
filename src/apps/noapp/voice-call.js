@@ -45,7 +45,7 @@ let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],st
 let recording=null;
 let callSerial=0;
 let activeRecognition=null;
-export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length,endedBy:call.endedBy||null};}
+export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length,endedBy:call.endedBy||null,busy:!!call.busy};}
 export const scriptedCallCameraActive=()=>call.state==='connected'&&!!call.scripted?.camera;
 function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReason=''}){
  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -111,9 +111,14 @@ export function minimizedCallView(s){
   '<button type="button" class="tai-mini-call-main" data-action="'+action+'" aria-label="'+(call.audioReady?'繼續收聽':dialing||call.scripted?'返回通話':listening?'結束錄音並傳送':'開始說話')+'"'+(disabled?' disabled':'')+'>'+glyph.phone+'<span>'+label+'</span></button>'+
   '<div class="tai-mini-call-actions"><button type="button" data-action="tai-resume-call" aria-label="展開通話">'+glyph.layout+'</button><button type="button" data-action="tai-hangup" aria-label="掛斷">'+glyph.hang+'</button></div></aside>';
 }
+// Hide performance pauses in Tai's visible subtitles, not in the authored
+// script or the exact text used to retrieve prerecorded MP3s.
+const displayedCallText=(text,isTai)=>isTai?String(text||'').replace(/…+|\.{3,}|．{3,}/g,'').trim():String(text||'');
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
- const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':call.audioReady?'輕點繼續收聽':call.caption?(call.captionRole==='me'?'熙蒙正在說話…':'熙泰正在說話…'):call.busy?'熙泰正在回覆…':call.inlineNotice||'通話中'):'通話已結束';
+ const caption=active?displayedCallText(call.caption,call.captionRole!=='me'):'';
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':call.inlineNotice||'通話中')):'通話已結束';
+ const captionClass=caption&&subtitle===caption?' class="tai-call-spoken-caption '+(call.captionRole==='me'?'mine':'theirs')+'"':'';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
@@ -125,16 +130,14 @@ export function callView(s){
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
  const draft=scriptedCallDraft();
  const composer=call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
- const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+(call.scripted?call.turns:call.turns.slice(-9)).map(t=>'<p>'+(t.clock?'<small>'+esc(t.clock)+'</small> ':'')+'<b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div>'+composer+'</div>':'';
- const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
-  (call.caption?'<p class="'+(call.captionRole==='me'?'mine':'theirs')+'">'+esc(call.caption)+'</p>':'')+
-  (call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 继续收听</button>':'')+'</div>':'';
+ const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+(call.scripted?call.turns:call.turns.slice(-9)).map(t=>'<p>'+(t.clock?'<small>'+esc(t.clock)+'</small> ':'')+'<b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(displayedCallText(t.content,t.role!=='user'))+'</p>').join('')+'</div>'+composer+'</div>':'';
+ const resumeAudio=active&&call.audioReady?'<div class="tai-live-captions"><button type="button" data-action="tai-play-audio">▶ 继续收听</button></div>':'';
  return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
   +'<div class="tai-call-ambient" aria-hidden="true"><img src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt=""></div>'
   +'<nav class="tai-call-topbar">'+
    '<span class="tai-call-channel">NoApp 語音</span>'+((active||dial)?'<button type="button" class="tai-call-minimize" data-action="tai-minimize-call" aria-label="縮小通話">'+glyph.layout+'</button>':'')+'</nav>'+
-   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>'+esc(taiDisplayName(s))+'</h1><p role="status" aria-live="polite">'+esc(subtitle)+'</p>'+(active?'<small class="tai-call-duration">'+duration()+'</small>':'')+(scriptedCallCameraActive()?'<small class="tai-call-camera-status">● 攝像頭已開啟</small>':'')+'</div>'+
-   liveCaptions+transcript+
+   '<div class="tai-call-identity"><img class="tai-call-avatar" src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt="陈熙泰照片" data-source="'+AVATAR_SOURCE+'"><h1>'+esc(taiDisplayName(s))+'</h1><p role="status" aria-live="polite"'+captionClass+'>'+esc(subtitle)+'</p>'+(active?'<small class="tai-call-duration">'+duration()+'</small>':'')+(scriptedCallCameraActive()?'<small class="tai-call-camera-status">● 攝像頭已開啟</small>':'')+'</div>'+
+   resumeAudio+transcript+
    '<div class="tai-call-bottom'+(ring?' two-actions':active?' native-controls':' native-single')+'">'+controls+'</div>'+
    '</section>';
 }

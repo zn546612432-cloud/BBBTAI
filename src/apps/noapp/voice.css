@@ -309,6 +309,9 @@
 .app-noapp .tai-native-call .tai-call-avatar{width:clamp(88px,27vw,116px);height:clamp(88px,27vw,116px);box-shadow:0 8px 30px #0003}
 .app-noapp .tai-native-call .tai-call-identity h1{font-size:clamp(27px,8vw,34px);font-weight:600;letter-spacing:-.7px;line-height:1.2;margin:16px 0 7px}
 .app-noapp .tai-native-call .tai-call-identity p{font-size:14px;color:#e7e7e9;font-weight:400;min-height:22px}
+.app-noapp .tai-native-call .tai-call-identity .tai-call-spoken-caption{width:100%;max-width:33ch;max-height:min(24vh,9em);overflow:auto;overflow-wrap:anywhere;font-size:clamp(15px,4.2vw,17px);line-height:1.55;color:#f5f5f7;margin:6px 0 8px;scrollbar-width:none}
+.app-noapp .tai-native-call .tai-call-identity .tai-call-spoken-caption.mine{color:#c7d5da}
+.app-noapp .tai-native-call.is-expanded .tai-call-identity .tai-call-spoken-caption{max-height:5.5em}
 .app-noapp .tai-native-call .tai-call-duration{font-size:12px;letter-spacing:.2px;font-variant-numeric:tabular-nums;color:#b7b7be;margin-top:2px}
 .app-noapp .tai-native-call .tai-call-camera-status{font-size:12px;color:#ff6269;margin-top:6px;letter-spacing:.2px}
 .app-noapp .tai-native-call .tai-live-captions{min-height:0;max-height:22%;padding:0 2px;margin:0 0 14px;overflow:auto;flex-shrink:1}

@@ -119,7 +119,7 @@ test('a rejected dialogue draft never becomes speech or a fabricated connection 
  await withMockCall(['不是勉强承认，是因为你这个人。'],async({state,requests,waitFor,send})=>{
   assert.equal(send('你怎么想？'),true);
   await waitFor(()=>requests.filter(r=>r.url.includes('chat/completions')).length===2,'one rejected draft plus one correction');
-  await waitFor(()=>!callView(state).includes('熙泰正在回覆'),'expression finished');
+  await waitFor(()=>!callState().busy,'expression finished');
   assert.equal(callState().state,'connected');
   assert.equal(requests.filter(r=>r.url.includes('t2a_v2')).length,1,'only the original greeting was synthesized');
   assert.doesNotMatch(callView(state),/连线不稳|連線不穩|通話失敗|勉强承认/);
