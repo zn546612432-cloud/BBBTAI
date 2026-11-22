@@ -1,3 +1,5 @@
+// Stable save/message IDs retain their original names after the date move.
+export const WALLET_GIFT_DAY=47,PRIVATE_ACCEPT_DAY=48,PRIVATE_PAYMENT_DAY=50;
 export const D45_WALLET_SCENE='d45-wallet-gift';
 export const D45_PUBLISH='d45-private-publish';
 export const D46_ACCEPT='d46-isolde-accept';
@@ -50,19 +52,25 @@ export const D46_DIALOGUE=[
  ['isolde','等你消息。']
 ];
 export function applyD46Definition(c){
- if(c.d46Revision)return;
+ if(c.d46Revision===2)return;
+ if(c.d46Revision===1){
+  for(const [id,day] of [[D45_WALLET_SCENE,WALLET_GIFT_DAY],[D45_PUBLISH,WALLET_GIFT_DAY],[D46_ACCEPT,PRIVATE_ACCEPT_DAY],[D46_CHAT,PRIVATE_ACCEPT_DAY]]){
+   const n=c.nodes.find(n=>n.id===id);if(n){n.day=day;if(n.gateDay!==undefined)n.gateDay=day;}
+  }
+ }else{
  const scene=(id,day,at,title,channel,conversationId,requires,lines,extra={})=>{
   c.nodes.push({id,day,at,title,channel,conversationId,requires,kind:'scene',delivery:'queued',gateDay:day,pauseTimeUntilComplete:true,messagePrefix:'s55-'+id,initialDelayMs:0,pauseMs:3000,...extra});
   c.scenes[id]=structuredClone(lines);
  };
- scene(D45_WALLET_SCENE,45,'10:30','電子錢包解凍','noapp','tai',['confide','recognition'],D45_WALLET_DIALOGUE,{imageLines:{6:'/assets/story55/d45-ximeng-photo.jpg'}});
- const morning=c.nodes.pop(),groupIndex=c.nodes.findIndex(n=>n.id==='d45-group');
- if(groupIndex>=0){c.nodes.splice(groupIndex,0,morning);c.nodes[groupIndex+1].requires.push(D45_WALLET_SCENE);}else c.nodes.push(morning);
- c.nodes.push({id:D45_PUBLISH,day:45,title:'發佈僱傭兵招募訂單',kind:'private-contract',requires:[D45_WALLET_SCENE],gateDay:45});
- c.nodes.push({id:D46_ACCEPT,day:46,at:'14:20',title:'委託已被接取',kind:'mail',requires:[D45_PUBLISH],autoComplete:true});
+ scene(D45_WALLET_SCENE,WALLET_GIFT_DAY,'10:30','電子錢包解凍','noapp','tai',['confide','recognition'],D45_WALLET_DIALOGUE,{imageLines:{6:'/assets/story55/d45-ximeng-photo.jpg'}});
+ c.nodes.push({id:D45_PUBLISH,day:WALLET_GIFT_DAY,title:'發佈僱傭兵招募訂單',kind:'private-contract',requires:[D45_WALLET_SCENE],gateDay:WALLET_GIFT_DAY});
+ c.nodes.push({id:D46_ACCEPT,day:PRIVATE_ACCEPT_DAY,at:'14:20',title:'委託已被接取',kind:'mail',requires:[D45_PUBLISH],autoComplete:true});
  c.mails.push({id:D46_MAIL,node:D46_ACCEPT,from:'MIRAGE',subject:'委託已被接取',body:'您的委託已由 Isolde Mirage 接取。\n\nMIRAGE 已為雙方建立加密通訊，請前往訊息頁面聯繫接單人。\n\n— MIRAGE'});
- scene(D46_CHAT,46,'14:23','Isolde Mirage','mirage',D46_CONTACT,[D46_ACCEPT],D46_DIALOGUE,{requiresContact:true});
+ scene(D46_CHAT,PRIVATE_ACCEPT_DAY,'14:23','Isolde Mirage','mirage',D46_CONTACT,[D46_ACCEPT],D46_DIALOGUE,{requiresContact:true});
+ }
+ const group=c.nodes.find(n=>n.id==='d45-group');
+ if(group)group.requires=group.requires.filter(id=>id!==D45_WALLET_SCENE);
  const payment=c.nodes.find(n=>n.id==='mercenary');
- if(payment){payment.day=48;payment.requires=[...new Set([...payment.requires,D46_CHAT])];payment.cost=1282051.28;payment.quotedAmount=10000000;payment.quotedCurrency='HKD';}
- c.d46Revision=1;
+ if(payment){payment.day=PRIVATE_PAYMENT_DAY;payment.requires=[...new Set([...payment.requires,D46_CHAT])];payment.cost=1282051.28;payment.quotedAmount=10000000;payment.quotedCurrency='HKD';}
+ c.d46Revision=2;
 }
