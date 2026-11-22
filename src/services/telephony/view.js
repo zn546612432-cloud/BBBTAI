@@ -1,5 +1,6 @@
 import {esc} from '../../system/ui.js';
 import {activePhoneCall,canPresentPhoneCall} from './store.js';
+import {authoredPhoneView} from './native-view.js';
 export function callDuration(call,now=Date.now()){
  const n=call?.answeredAt==null?0:Math.max(0,Math.floor((now-call.answeredAt)/1000));
  return `${Math.floor(n/60).toString().padStart(2,'0')}:${(n%60).toString().padStart(2,'0')}`;
@@ -11,6 +12,7 @@ export function telephonyFullscreen(s){
  if(s.story55?.d13?.phase==='green')return '<section class="power-fullscreen tel-green-screen" role="presentation"></section>';
  const c=activePhoneCall(s);if(!c)return '';
  if(c.state==='connected'&&!c.resumeRequired&&!c.showControls)return '';
+ if(c.source==='authored-phone')return authoredPhoneView(c,callDuration(c));
  const connected=c.state==='connected',incoming=c.direction==='incoming';
  const name=esc(c.displayName||'未知號碼');
  const label=connected?'通話中':incoming?'來電':'撥號中';
@@ -22,7 +24,6 @@ export function telephonyFullscreen(s){
    :callButton('tel-end',handset,'取消','is-decline');
  return `<section class="power-fullscreen tel-call-screen" role="dialog" aria-modal="true" aria-label="${connected?'通話控制':'來電'}">
   <div class="tel-call-identity"><small>${label}</small><h1>${name}</h1><p>${subtitle}</p></div>
-  ${connected&&c.scriptId?`<div class="tel-call-caption" aria-live="polite">${c.caption?`<small>${esc(c.caption.speaker)} · <time>${esc(c.caption.clock)}</time></small><p>${esc(c.caption.text)}</p>`:''}</div>`:''}
   <div class="tel-call-bottom">
    ${c.resumeRequired?'<button type="button" class="tel-call-resume" data-action="tel-resume">繼續通話</button>':''}
    <div class="tel-call-actions">${actions}</div>
