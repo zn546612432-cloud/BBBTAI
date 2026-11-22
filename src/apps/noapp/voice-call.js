@@ -510,7 +510,7 @@ async function playScriptedOpening(ctx){
      await new Promise(resolve=>setTimeout(resolve,Math.max(2200,Array.from(text).length*180)));
      if(!current())return;
      call.caption='';call.captionRole=null;ctx.refresh?.();
-     if(call.scriptIndex<steps.length)await new Promise(resolve=>setTimeout(resolve,script.gapMs));
+     if(call.scriptIndex<steps.length)await new Promise(resolve=>setTimeout(resolve,script.gapAfterMs?.[call.scriptIndex-1]??script.gapMs));
      continue;
     }
     if(script.camera)await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(steps[call.scriptIndex][1],script.gapMs)));
@@ -536,6 +536,7 @@ async function playScriptedOpening(ctx){
     }
     // Do not create a separate troubleshooting flow inside the story.
     if(outcome==='failed'&&current()){
+     if(script.id===RECOGNITION_CALL.id){callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error'});return 'interrupted';}
      if(script.camera||script.autoPlayerLines){await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(text,script.gapMs)));if(!current())return 'interrupted';}
      call.turns.push({role:'assistant',content:text,voiceUnavailable:true,clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;call.audioReady=false;call.caption='';
      ctx.refresh?.();return 'completed';

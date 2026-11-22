@@ -1,5 +1,6 @@
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {SCRIPTED_VOICE_CLIPS} from '../src/story/d34-d42/voice-assets.js';
 import {prepareTaiVoicePerformance} from '../src/services/voice/voice-performance.js';
 import {normalizeTtsSettings,ttsProviderSettings} from '../src/services/voice/tts-settings.js';
@@ -9,12 +10,12 @@ import {taiCloudCall,taiCloudSession} from '../src/services/ai/supabase-gateway.
 const key=process.env.MINIMAX_API_KEY;
 const region=process.env.MINIMAX_REGION||'cn',voice=XITAI_VOICE_ID;
 const endpoint=region==='intl'?'https://api.minimax.io/v1/t2a_v2':'https://api.minimaxi.com/v1/t2a_v2';
-const dir=new URL('../public/assets/story55/d41-d42/',import.meta.url);
-await mkdir(dir,{recursive:true});
 const clips=[];
 const day=Number(process.env.SCRIPTED_VOICE_DAY||41);
 const targets=SCRIPTED_VOICE_CLIPS.filter(c=>c.id.startsWith('d'+day+'-'));
-if(!targets.length||targets.length>10)throw Error('Invalid fixed recording batch');
+if(!targets.length||targets.length>24)throw Error('Invalid fixed recording batch');
+const dir=new URL('.',new URL('../public'+targets[0].path,import.meta.url));
+await mkdir(dir,{recursive:true});
 // One approved publication batch uses the existing authenticated cloud
 // gateway and its normal quota. Never create another session to retry.
 if(!key){
@@ -27,7 +28,7 @@ if(!key){
 for(const clip of targets){
  const performance=prepareTaiVoicePerformance(clip.text.replace(/\bnya\b/gi,'奈亞'),{directed:true});
  const language=/[\u3400-\u9fff]/u.test(clip.text)?'Chinese':'English';
- const settings=ttsProviderSettings(normalizeTtsSettings({...performance,language}));
+ const settings=ttsProviderSettings(normalizeTtsSettings({...performance,language,...(day===33?{sampleRate:24000,bitrate:32000}:{})}));
  let bytes;
  if(key){
   const response=await fetch(endpoint,{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),body:JSON.stringify({model:'speech-2.8-hd',text:performance.text,stream:false,output_format:'hex',...settings,voice_setting:{voice_id:voice,...settings.voice_setting}})});
@@ -40,7 +41,9 @@ for(const clip of targets){
   bytes=Buffer.from(await blob.arrayBuffer());
  }
  if(bytes.length<1000)throw Error(`${clip.id}: invalid audio size`);
- await writeFile(new URL(`${clip.id}.mp3`,dir),bytes);
+ // Keep the fixed telephone speech compact enough for the existing Pages budget.
+ if(day===33)bytes=execFileSync('ffmpeg',['-v','error','-i','pipe:0','-ac','1','-ar','22050','-codec:a','libmp3lame','-b:a','24k','-f','mp3','pipe:1'],{input:bytes,maxBuffer:16*1024*1024});
+ await writeFile(new URL('../public'+clip.path,import.meta.url),bytes);
  clips.push({...clip,textHash:createHash('sha256').update(clip.text).digest('hex'),audioHash:createHash('sha256').update(bytes).digest('hex'),size:bytes.length});
  console.log(`${clip.id}: ${bytes.length} bytes`);
 }

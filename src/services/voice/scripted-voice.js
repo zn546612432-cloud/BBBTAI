@@ -4,7 +4,7 @@ import {apiConfig,voicePreview} from '../ai/gateway.js';
 import {loadClip,saveClip} from './audio-store.js';
 
 const clips=new Map(),warmed=new Map();
-const cacheKey=clip=>'scripted-v1-'+apiConfig().voiceId+'-'+clip.id+'-'+clip.text;
+const cacheKey=clip=>clip.bundledOnly?'scripted-recorded-v2-'+clip.id+'-'+clip.text:'scripted-v1-'+apiConfig().voiceId+'-'+clip.id+'-'+clip.text;
 async function prepareClip(clip,key){
  // The optional published recording takes precedence; a configured game
  // voice can prepare the same asset even when the repository has no API key.
@@ -16,6 +16,11 @@ async function prepareClip(clip,key){
  });
  const saved=loadClip(key).then(blob=>{if(!blob?.size)throw Error('No cached recording');return blob;});
  const recording=await Promise.any([bundled,saved]).catch(()=>null);
+ if(clip.bundledOnly){
+  if(!recording)throw Error('Missing fixed recording: '+clip.id);
+  void saveClip(key,recording).catch(()=>{});
+  return recording;
+ }
  if(recording)return recording;
  const blob=await voicePreview({text:clip.text.replace(/\bnya\b/gi,'奈亞'),tone:'neutral',directed:true});
  if(!blob?.size)throw Error('Empty authored recording');
