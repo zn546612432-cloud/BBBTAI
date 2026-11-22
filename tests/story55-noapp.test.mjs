@@ -46,8 +46,14 @@ test('NoApp installation rings immediately; recognition is an automatic preset c
  assert.doesNotMatch(show(s),/data-action="s55-scene-next"/);
  assert.equal(callState().state,'ringing');assert.match(incomingCallBanner(s),/接听来电/);assert.equal(timedStoryPaused(s),true);
  callAction('tai-accept',ctx);assert.equal(scriptedCallDraft(),null);
- for(const [i,[role]] of RECOGNITION_STEPS.entries()){
-  if(role==='tai'){await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);audio.finish();}
+ for(const [i,[role,line]] of RECOGNITION_STEPS.entries()){
+  if(role==='tai'){
+   await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);
+   const html=callView(s),visible=line.replace(/…+/g,'').trim();
+   assert.ok(html.includes('class="tai-call-spoken-caption theirs">'+visible+'</p>'));
+   assert.doesNotMatch(html,/正在說話|正在回覆|tai-live-captions/);
+   audio.finish();
+  }
   await waitFor(()=>callState().turnCount>=i+1||completed(s,'recognition'));
  }
  await waitFor(()=>completed(s,'recognition')&&callState().state==='ended');assert.equal(timedStoryPaused(s),false);

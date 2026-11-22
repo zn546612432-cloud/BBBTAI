@@ -64,7 +64,7 @@ test('D45 full scripted call plays both sides automatically with reading pauses,
   globalThis.Audio=FakeAudio;globalThis.fetch=async url=>{assert.match(String(url),/d45\/d45-call-\d+\.mp3$/);return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
   globalThis.setTimeout=(fn,ms,...args)=>{if(ms>=2200&&ms<=30000){delays.push(ms);return old.setTimeout(fn,2,...args);}return old.setTimeout(fn,ms,...args);};
   assert.equal(maybeStartD45Call(ctx),true);callAction('tai-accept',ctx);assert.equal(scriptedCallCameraActive(),true);assert.match(callView(s),/攝像頭已開啟/);assert.match(dynamicIsland(s),/island-remote-dot/);
-  assert.match(callView(s),/熙蒙正在說話/);assert.match(callView(s),/<p class="mine">/);assert.equal(scriptedCallDraft(),null);
+  assert.doesNotMatch(callView(s),/熙蒙正在說話|熙泰正在說話|熙泰正在回覆/);assert.match(callView(s),/class="tai-call-spoken-caption mine">/);assert.equal(scriptedCallDraft(),null);
   callAction('tai-expand',ctx);assert.doesNotMatch(callView(s),/data-form="tai-call-turn"/);callAction('tai-expand',ctx);
   assert.equal(submitCall({dataset:{form:'tai-call-turn'}},ctx),true);assert.equal(callState().turnCount,1);
   assert.equal(timedStoryPaused(s),true);
