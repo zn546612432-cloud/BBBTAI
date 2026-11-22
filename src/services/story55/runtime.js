@@ -9,7 +9,7 @@ import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALL
 import {applyD34D42Definition,RETIRED_SCENES,D42_OPERATION_SCENE_IDS} from '../../story/d34-d42/definition.js';
 import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
 import {applyD45Definition} from '../../story/d45/definition.js';
-import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT} from '../../story/d46/definition.js';
+import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
@@ -406,13 +406,19 @@ export function tickStory55(s){
   applyD45Definition(story55Config(s));
   if(s.day>45)for(const id of ['d45-group','d45-tai','d45-wang'])s.story55.completed[id]??={day:45,clock:'23:00',legacySkipped:true};
  }
- if(!story55Config(s).d46Revision){
+ if(story55Config(s).d46Revision!==2){
   applyD46Definition(story55Config(s));
-  if(s.day>45||s.day===45&&s.clock>='11:23'){
-   s.story55.completed[D45_WALLET_SCENE]??={day:45,clock:'10:30',legacySkipped:true};
+  // Keep real completed actions and receipts; only undo artificial skips from
+  // the former schedule while the rescheduled events are still reachable.
+  if(s.day<=PRIVATE_ACCEPT_DAY){
+   for(const id of [D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT])if(s.story55.completed[id]?.legacySkipped)delete s.story55.completed[id];
+   const active=s.story55.activeScene;
+   if(active===D45_WALLET_SCENE&&s.day<WALLET_GIFT_DAY||active===D46_CHAT&&s.day<PRIVATE_ACCEPT_DAY)s.story55.activeScene=null;
+  }else{
+   s.story55.completed[D45_WALLET_SCENE]??={day:WALLET_GIFT_DAY,clock:'10:30',legacySkipped:true};
    releaseD45Wallet(s);
+   for(const id of [D45_PUBLISH,D46_ACCEPT,D46_CHAT])s.story55.completed[id]??={day:id===D45_PUBLISH?WALLET_GIFT_DAY:PRIVATE_ACCEPT_DAY,clock:'14:23',legacySkipped:true};
   }
-  if(s.day>46)for(const id of [D45_PUBLISH,D46_ACCEPT,D46_CHAT])s.story55.completed[id]??={day:46,clock:'14:23',legacySkipped:true};
  }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
@@ -538,7 +544,7 @@ export function story55Presence(s,now=Date.now()){
  if(final55(s))return {status:'offline',contactable:false,reason:'连接中断'};
  if(s.story55.activeScene)return {status:'busy',contactable:false,reason:'正在通话或事件中'};
  if(!completed(s,'recognition'))return {status:'offline',contactable:false,reason:'尚未相认'};
- if(s.day===45&&completed(s,D45_WALLET_SCENE)&&s.clock<'16:40')return {status:'offline',contactable:false,reason:'離線'};
+ if(s.day===WALLET_GIFT_DAY&&completed(s,D45_WALLET_SCENE))return {status:'offline',contactable:false,reason:'離線'};
  if(s.day===42&&!completed(s,'paris'))return {status:'offline',contactable:false,reason:'暂时无法联系'};
  return {status:'online',contactable:true,reason:'在线'};
 }

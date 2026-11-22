@@ -14,7 +14,6 @@ import {dynamicIsland} from '../src/system/power/island.js';
 function phone(){
  const s=activateStory55(initialState());s.day=45;s.clock='11:22';s.story55.activeScene=null;s.story55.noappInstalled=true;
  for(const n of s.story55.config.nodes)if(n.day<45)s.story55.completed[n.id]={day:n.day,clock:'23:00'};
- s.story55.completed['d45-wallet-gift']={day:45,clock:'10:40'};
  return s;
 }
 function play(s,id,channel,chat,lines,start){
@@ -52,7 +51,7 @@ test('explicit per-message time anchors subsequent stamps; longer messages are s
 });
 test('older saves beyond D45 do not replay new historical conversations',()=>{
  const s=phone();s.day=46;delete s.story55.config.d45Revision;
- s.story55.config.nodes=s.story55.config.nodes.filter(n=>!n.id.startsWith('d45-'));
+ s.story55.config.nodes=s.story55.config.nodes.filter(n=>!['d45-group','d45-tai','d45-wang'].includes(n.id));
  tickStory55(s);assert.ok(s.story55.completed['d45-wang'].legacySkipped);
 });
 test('D45 full scripted call plays both sides automatically with reading pauses, timestamps, camera, and hangup',async()=>{

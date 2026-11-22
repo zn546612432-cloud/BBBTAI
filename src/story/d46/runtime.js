@@ -1,7 +1,7 @@
 import {D13_WALLET_ID} from '../d13/definition.js';
 import {completed,completeNode,nodeStatus,date55} from '../../services/story55/state.js';
 import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
-import {D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,D46_CONTACT,PRIVATE_ORDER,PRIVATE_REMINDER,PRIVATE_CONTRACT} from './definition.js';
+import {D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,D46_CONTACT,PRIVATE_ORDER,PRIVATE_REMINDER,PRIVATE_CONTRACT,PRIVATE_ACCEPT_DAY} from './definition.js';
 
 export function releaseD45Wallet(s){
  if(s.story55.d45WalletReleased)return;
@@ -32,7 +32,7 @@ export function publishPrivateContract(s){
 }
 export function syncD46(s){
  const order=s.content.orders.find(o=>o.id===PRIVATE_ORDER);
- if(completed(s,D45_WALLET_SCENE)&&(!s.story55.completed[D45_WALLET_SCENE].legacySkipped||s.day<=46)){
+ if(completed(s,D45_WALLET_SCENE)&&(!s.story55.completed[D45_WALLET_SCENE].legacySkipped||s.day<=PRIVATE_ACCEPT_DAY)){
   const reminders=s.content.reminders??=[];
   let r=reminders.find(r=>r.id===PRIVATE_REMINDER);
   if(!r){r={id:PRIVATE_REMINDER,title:'發佈僱傭兵招募訂單',done:false,storyPrivateContract:true};reminders.push(r);}
@@ -42,7 +42,7 @@ export function syncD46(s){
   const chats=s.content.conversations.mirage??=[];
   let chat=chats.find(c=>c.id===D46_CONTACT);
   if(!chat){chat={id:D46_CONTACT,name:'Isolde Mirage',avatar:'I',messages:[],unread:0};chats.push(chat);}
-  if(!chat.messages.some(m=>m.id==='s55-d46-isolde-contact'))appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:D46_CONTACT,messageId:'s55-d46-isolde-contact',from:'system',kind:'system',text:'── NEW CONTACT ──',notify:false,day:46,clock:'14:20',sentDate:date55(46),storyTag:'story55'});
+  if(!chat.messages.some(m=>m.id==='s55-d46-isolde-contact'))appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:D46_CONTACT,messageId:'s55-d46-isolde-contact',from:'system',kind:'system',text:'── NEW CONTACT ──',notify:false,day:PRIVATE_ACCEPT_DAY,clock:'14:20',sentDate:date55(PRIVATE_ACCEPT_DAY),storyTag:'story55'});
   order.status=completed(s,D46_CHAT)?'AGREED':'TAKEN';
   order.contractor='Isolde Mirage';
   if(completed(s,D46_CHAT)){order.reward='HK$ 10,000,000';order.currency='HKD';order.agreedAmount=10000000;}
