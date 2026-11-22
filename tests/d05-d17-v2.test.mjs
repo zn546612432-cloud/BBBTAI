@@ -19,6 +19,8 @@ import {bindD13Wallet,D13_MAIL_ID,D13_WALLET_ID} from '../src/story/d13/runtime.
 import {exchange} from '../src/services/bank.js';
 import {D14_D24_TRACKS} from '../src/story/d14-d24/wechat.js';
 const store=s=>({get:()=>s,update:fn=>fn(s)});
+// Preserve the immutable baseline; only these two explicitly approved lines may differ.
+const approvedCopy=(key,lines)=>lines.map(line=>({...line,text:key==='d03:xiaoxin'&&line.text==='最好不要超過八千'?'最好不要超過一萬':key==='d05:wang-morning'&&line.text==='看到了，我晾好了'?'看到了，我晚點幫你晾':line.text}));
 const chat=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
 const phone=(day,clock)=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.story55.activeScene=null;for(const n of s.story55.config.nodes)if(n.day<day)s.story55.completed[n.id]={day:n.day,clock:'23:00'};return s;};
 const wishFlush=s=>{for(let i=0;i<100;i++){if(s.story55.wishes)s.story55.wishes.story.nextAt=0;tickWishes(s,i*3000);}};
@@ -35,7 +37,7 @@ function drain(s,track,id,chatId){
 
 test('unlisted scenes and D13 remain frozen; D17 differs only by the withdrawn line',()=>{
  const s=phone(5,'08:00');const modified=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));
- for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,old.lines,old.source+':'+old.id);}
+ for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,approvedCopy(old.source+':'+old.id,old.lines),old.source+':'+old.id);}
  assert.deepEqual(s.story55.config.scenes.intrusion,baseline.story.find(x=>x.node.id==='intrusion').lines);
  const originalD17=baseline.story.find(x=>x.node.id==='azathoth-invitation').lines;
  const approvedD17=originalD17.filter(([who,text])=>!(who==='ouroboros'&&text==='呵呵……'));
@@ -162,5 +164,5 @@ test('every unmodified D01–D55 source remains byte-exact against the immutable
  // Author-approved D41/D42 replacement and deletion of the four unfinished
  // placeholders; every other frozen row remains subject to the byte check.
  for(const id of ['show','target','paris','confide','failure','ready'])changed.add('node:'+id);
- const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},old,old.key);count++;}}assert.equal(count,allMain.rows.filter(r=>!changed.has(r.key)).length);
+ const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},{...old,lines:approvedCopy(old.key,old.lines)},old.key);count++;}}assert.equal(count,allMain.rows.filter(r=>!changed.has(r.key)).length);
 });
