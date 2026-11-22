@@ -1,7 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync} from 'node:fs';
-import {trackById} from '../src/apps/music/features/shared/catalog.js';
+import {matchingTracks,trackById} from '../src/apps/music/features/shared/catalog.js';
+
+test('Elijah Woods track is searchable and uses its bundled MP3 and supplied PNG cover',()=>{
+ const track=trackById('where-were-going');
+ assert.equal(track.title,"where we're going");
+ assert.equal(track.artist,'Elijah Woods');
+ assert.equal(track.duration,182);
+ assert.equal(matchingTracks('Elijah Woods')[0].id,track.id);
+ assert.equal(track.fallback,undefined);
+ assert.match(track.src,/where-were-going\.mp3$/);
+ assert.match(track.cover,/where-were-going-cover\.png$/);
+ assert.ok(existsSync('public'+track.src));
+ assert.ok(existsSync('public'+track.cover));
+});
 
 test('Melatonin uses a packaged MP3 with an independent M4A fallback',async()=>{
  const track=trackById('melatonin');
