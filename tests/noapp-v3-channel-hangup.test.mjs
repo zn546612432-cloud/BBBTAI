@@ -65,7 +65,7 @@ async function withMockCall(replyEntries,run,{actions=[],failVoice=false,incomin
  const store={get:()=>state,update:fn=>fn(state)};
  const ctx={store,refresh(){},router:{open(){}},toast(message){toasts.push(message);}};
  const waitFor=async(testFn,description='condition')=>{
-  for(let i=0;i<180;i++){if(testFn())return;await new Promise(resolve=>setTimeout(resolve,10));}
+  for(let i=0;i<400;i++){if(testFn())return;await new Promise(resolve=>setTimeout(resolve,10));}
   throw Error('waiting for '+description);
  };
  try{
@@ -151,6 +151,40 @@ test('model JSON action ends the active call only after its farewell is played',
   players[0].finish();await waitFor(()=>callState().state==='ended','structured hangup');
   assert.equal(callState().endedBy,'tai');assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').length,1);
  },{actions:[{type:'end_call',timing:'after_reply'}]});
+});
+test('a self-directed spoken goodbye without action JSON actually ends the phone after a grace period',async()=>{
+ await withMockCall(['我還有事，先掛了。','這句不該再說。'],async({state,players,waitFor,send})=>{
+  send('還在嗎？');await waitFor(()=>callView(state).includes('先掛了'),'farewell');
+  assert.equal(callState().state,'connected');players[0].finish();
+  await new Promise(resolve=>setTimeout(resolve,300));assert.equal(callState().state,'connected');
+  await waitFor(()=>callState().state==='ended','natural farewell hangup');
+  const last=state.content.conversations.noapp.find(c=>c.id==='tai').messages.at(-1);
+  assert.equal(last.endedBy,'tai');assert.doesNotMatch(last.transcript,/這句不該再說/);
+  assert.ok(state.aiDraft.taiSocialEnergy.callUntil>Date.now());
+ });
+});
+test('call fatigue reserves an audible ending without blocking text or exceeding the daily speech cap',async()=>{
+ await withMockCall(['我還有事，先掛了。'],async({state,players,waitFor,send})=>{
+  state.aiDraft.taiSocialEnergy={day:state.day,call:29,message:0};
+  send('再多說幾句');await waitFor(()=>callView(state).includes('先掛了'),'last playable segment');players[0].finish();
+  await waitFor(()=>callState().state==='ended','energy ending');
+  assert.equal(state.aiDraft.taiSocialEnergy.call,30);assert.equal(state.aiDraft.taiSocialEnergy.message,0);
+ });
+});
+test('exhausted voice notes and calls gently decline while normal text still replies',async()=>{
+ await withMockCall(['好。'],async({state,ctx,store,requests})=>{
+  callAction('tai-hangup',ctx);
+  state.aiDraft.taiSocialEnergy={day:state.day,call:30,message:15};
+  const chat=state.content.conversations.noapp.find(c=>c.id==='tai');
+  const {replyToTaiMessage}=await import('../src/services/ai/live-chat.js');
+  for(const [id,text,expected] of [['rest-voice','給我發條語音',/不方便發語音/],['rest-call','給我打電話',/不方便打電話/],['rest-text','你覺得這樣可以嗎？',/好/]]){
+   chat.messages.push({id,from:'me',kind:'text',text,actual:true,day:state.day,time:state.clock});
+   const result=await replyToTaiMessage(store,id,{wait:async()=>{},random:()=>.99,now:Date.now,refresh(){}});
+   assert.equal(result.status,'replied');const reply=chat.messages.find(m=>m.replySourceId===id&&m.from==='tai');
+   assert.equal(reply.kind,'text');assert.match(reply.text,expected);
+  }
+  assert.equal(requests.filter(r=>r.url.includes('t2a_v2')).length,1,'only greeting generated, no voice after reaching limit');
+ });
 });
 test('quota error shows connection failure, records neither party as hangup initiator, sends one local fallback',async()=>{
  await withMockCall(['聽得見。'],async({state,ctx,waitFor,send})=>{
