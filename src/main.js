@@ -17,7 +17,8 @@ import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecon
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
-import {PhoneStore,isPreview} from './services/storage.js';
+import {openPhoneStore,isPreview} from './services/storage.js';
+import {mountSaveLifecycle} from './services/storage/recovery.js';
 import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
 import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
 import {isNoAppV3Review,prepareNoAppV3Review} from './apps/noapp/preview-v3.js';
@@ -59,7 +60,10 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
-const store=new PhoneStore();
+let store;
+try{store=await openPhoneStore();}
+catch(error){window.__xmBootError?.(error.message);throw error;}
+mountSaveLifecycle(store);
 // Telephone sessions are not persisted. Remove abandoned call routes on boot.
 if(isNoAppCallRoute(store.get().nav.current)||store.get().nav.stack?.some(isNoAppCallRoute))
  store.update(dismissNoAppCallRoute);
