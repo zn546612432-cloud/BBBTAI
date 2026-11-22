@@ -40,7 +40,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
  const nodes=validateStory55Config(story55Config(s)).nodes;
- assert.equal(nodes.length,74);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
+ assert.equal(nodes.length,78);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
  assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
@@ -104,7 +104,7 @@ test('config import rejects cycles, impossible deadlines and wrong completion to
 test('expenses, scene loans, direct commissions and mercenary payments settle once with no negative cash',()=>{
  const s=fixture();previewNode55(s,'loan');const before=s.bankData.balance;playScene(s,'loan');assert.equal(s.bankData.balance,before+1000000);assert.equal(s.story55.liabilities,1000000);playScene(s,'loan');assert.equal(s.story55.liabilities,1000000);
  tickStory55(s);tickStory55(s);assert.equal(new Set(s.story55.expenseDays).size,s.story55.expenseDays.length);
- previewNode55(s,'mercenary');s.bankData.balance=9999999;assert.throws(()=>payNode55(s,'mercenary'),/不足/);assert.equal(completed(s,'mercenary'),false);s.bankData.balance=10000000;payNode55(s,'mercenary');assert.equal(s.bankData.balance,0);assert.throws(()=>payNode55(s,'mercenary'));assert.equal(s.bankData.transactions.filter(x=>x.id==='s55-payment-mercenary').length,1);
+ previewNode55(s,'mercenary');const payment=story55Config(s).nodes.find(n=>n.id==='mercenary');assert.equal(payment.quotedCurrency,'HKD');assert.equal(payment.quotedAmount,10000000);s.bankData.balance=payment.cost-1;assert.throws(()=>payNode55(s,'mercenary'),/不足/);assert.equal(completed(s,'mercenary'),false);s.bankData.balance=payment.cost;payNode55(s,'mercenary');assert.equal(s.bankData.balance,0);assert.throws(()=>payNode55(s,'mercenary'));assert.equal(s.bankData.transactions.filter(x=>x.id==='s55-payment-mercenary').length,1);
 });
 test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits for final audio',()=>{
  const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(chargingBlock(s),'plot');
