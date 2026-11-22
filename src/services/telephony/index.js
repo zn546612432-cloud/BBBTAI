@@ -169,7 +169,8 @@ export function mountTelephony(getContext){
   const ctx=getContext(),call=activePhoneCall(ctx.store.get());if(!call)return;
   const action=button.dataset.action;
   if(action==='tel-answer'){primeTelephony(ctx);answerCall(ctx.store,call.id);}
-  if(action==='tel-resume'){primeTelephony(ctx);ctx.store.update(s=>{s.phoneCall.resumeRequired=false;s.phoneCall.showControls=false;});}
+  if(action==='tel-resume'){primeTelephony(ctx);ctx.store.update(s=>{s.phoneCall.resumeRequired=false;s.phoneCall.showControls=!!call.scriptId;});}
+  if(action==='tel-microphone'&&call.scriptId)ctx.store.update(s=>{s.phoneCall.microphoneMuted=!s.phoneCall.microphoneMuted;});
   if(action==='tel-decline'){
    if(call.forced)endCall(ctx.store,call.id,Date.now(),{remote:true,reason:'user-declined'});
    else declineCall(ctx.store,call.id);

@@ -2,7 +2,7 @@
 const voice=n=>`/assets/story55/d53/fu-${n}.mp3`;
 export const D53_CALL={
  id:'d53-fulongsheng-call',day:53,at:'21:30',title:'傅隆生來電',
- displayName:'傅隆生',number:'',triggerKey:'d53FuCallTriggered',pauseTimeUntilComplete:true,
+ displayName:'傅隆生',number:'',triggerKey:'d53FuCallTriggered',pauseTimeUntilComplete:true,allowHangup:false,
  steps:[
   {speaker:'傅隆生',text:'那對父女的底細你查了嗎？',audio:voice(1),delayMs:0},
   {speaker:'熙蒙',text:'查了。',delayMs:2000},

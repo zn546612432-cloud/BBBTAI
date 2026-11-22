@@ -1,5 +1,6 @@
 // All public mutations commit through the existing PhoneStore transaction.
 import {ensurePhoneData} from '../phone-data.js';
+import {NATIVE_PHONE_CALLS} from '../../story/phone-calls.js';
 export const activePhoneCall=s=>['ringing','connected'].includes(s.phoneCall?.state)?s.phoneCall:null;
 export const canPresentPhoneCall=s=>!!s.unlocked&&!s.poweredOff&&!s.emergencyCharge&&!s.alarmRinging&&Number(s.batteryPercent)>1&&!s.dayChargeRemainingMs&&!['off','passcode','draining','s55-off','s55-charging','s55-one-percent','s55-zero-percent','s55-accelerating'].includes(s.deathPhase)&&!['sleeping','charging'].includes(s.powerMode);
 export function receiveCall(store,{id,source='phone',direction='incoming',number='',displayName='未知號碼',forced=false,node=null,autoAnswerMs=8000,scriptId=null},now=Date.now()){
@@ -17,6 +18,8 @@ export function answerCall(store,id,now=Date.now(),{remote=false}={}){
 export function endCall(store,id,now=Date.now(),{remote=false,reason='ended'}={}){
  const c=activePhoneCall(store.get());
  if(!c||c.id!==id||c.forced&&!remote)return false;
+ if(c.state==='connected'&&NATIVE_PHONE_CALLS.find(n=>n.id===c.scriptId)?.allowHangup===false&&
+    !(reason==='scripted_end'&&store.get().story55?.scriptedCallCompleted?.[c.scriptId]))return false;
  store.update(s=>{
   const call=s.phoneCall;Object.assign(call,{state:'ended',endedAt:now,reason,speaking:false});
   ensurePhoneData(s);
