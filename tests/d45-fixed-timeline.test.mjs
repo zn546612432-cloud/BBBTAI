@@ -54,23 +54,29 @@ test('older saves beyond D45 do not replay new historical conversations',()=>{
  s.story55.config.nodes=s.story55.config.nodes.filter(n=>!n.id.startsWith('d45-'));
  tickStory55(s);assert.ok(s.story55.completed['d45-wang'].legacySkipped);
 });
-test('D45 full scripted call plays audio, records every timestamp, displays the fictional camera, and hangs up',async()=>{
+test('D45 full scripted call plays both sides automatically with reading pauses, timestamps, camera, and hangup',async()=>{
  const s=phone();s.clock='16:45';s.unlocked=true;s.story55.completed['d45-group']={day:45,clock:'11:25'};s.story55.completed['d45-tai']={day:45,clock:'16:45'};
  const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(){}},toast(){}};
- const old=Object.fromEntries(['Audio','fetch','FormData','setTimeout'].map(k=>[k,globalThis[k]]));let audio,submitted='';
+ const old=Object.fromEntries(['Audio','fetch','setTimeout'].map(k=>[k,globalThis[k]]));let audio;const delays=[];
  class FakeAudio{constructor(){audio=this;this.src='';this.paused=true;this.listeners=new Map();}addEventListener(n,cb){const a=this.listeners.get(n)||new Set();a.add(cb);this.listeners.set(n,a);}removeEventListener(n,cb){this.listeners.get(n)?.delete(cb);}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}finish(){this.paused=true;for(const cb of [...(this.listeners.get('ended')||[])])cb();}}
  const waitFor=async pred=>{for(let i=0;i<500;i++){if(pred())return;await new Promise(r=>old.setTimeout(r,2));}throw Error('Scripted call timed out');};
  try{
-  globalThis.Audio=FakeAudio;globalThis.fetch=async url=>{assert.match(String(url),/d45\/d45-call-\d+\.mp3$/);return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};globalThis.FormData=class{get(){return submitted;}};
-  globalThis.setTimeout=(fn,ms,...args)=>old.setTimeout(fn,ms>=3000&&ms<=14000?2:ms,...args);
+  globalThis.Audio=FakeAudio;globalThis.fetch=async url=>{assert.match(String(url),/d45\/d45-call-\d+\.mp3$/);return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
+  globalThis.setTimeout=(fn,ms,...args)=>{if(ms>=2200&&ms<=30000){delays.push(ms);return old.setTimeout(fn,2,...args);}return old.setTimeout(fn,ms,...args);};
   assert.equal(maybeStartD45Call(ctx),true);callAction('tai-accept',ctx);assert.equal(scriptedCallCameraActive(),true);assert.match(callView(s),/攝像頭已開啟/);assert.match(dynamicIsland(s),/island-remote-dot/);
+  assert.match(callView(s),/熙蒙正在說話/);assert.match(callView(s),/<p class="mine">/);assert.equal(scriptedCallDraft(),null);
+  callAction('tai-expand',ctx);assert.doesNotMatch(callView(s),/data-form="tai-call-turn"/);callAction('tai-expand',ctx);
+  assert.equal(submitCall({dataset:{form:'tai-call-turn'}},ctx),true);assert.equal(callState().turnCount,1);
+  assert.equal(timedStoryPaused(s),true);
+  assert.deepEqual(delays,[Math.max(2200,Array.from(D45_CALL.steps[0][1]).length*180)]);
   for(const [i,[role,text]] of D45_CALL.steps.entries()){
-   if(role==='me'){await waitFor(()=>scriptedCallDraft()===text);submitted=text;submitCall({dataset:{form:'tai-call-turn'}},ctx);}
-   else{await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);audio.finish();}
+   if(role==='tai'){await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);assert.equal(delays.at(-1),D45_CALL.gapMs);audio.finish();}
    await waitFor(()=>callState().turnCount>=i+1||s.story55.scriptedCallCompleted?.[D45_CALL.id]);
+   assert.equal(scriptedCallDraft(),null);
   }
   await waitFor(()=>s.story55.scriptedCallCompleted?.[D45_CALL.id]&&callState().state==='ended');assert.equal(scriptedCallCameraActive(),false);assert.equal(timedStoryPaused(s),false);
   const record=s.content.conversations.noapp.find(c=>c.id==='tai').messages.find(m=>m.kind==='call'&&m.transcript?.includes(D45_CALL.steps.at(-1)[1]));
   assert.equal(record.transcript.split('\n').length,D45_CALL.steps.length);assert.ok(record.transcript.split('\n').every(line=>/^\[\d\d:\d\d\]/.test(line)));
+  assert.deepEqual(record.transcript.split('\n').map(line=>line.slice(8)),D45_CALL.steps.map(([role,text])=>(role==='me'?'熙蒙':'熙泰')+'：'+text));
  }finally{callAction('tai-hangup',ctx);for(const [k,v] of Object.entries(old)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
