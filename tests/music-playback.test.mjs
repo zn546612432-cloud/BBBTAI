@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {existsSync} from 'node:fs';
 import {matchingTracks,trackById} from '../src/apps/music/features/shared/catalog.js';
 
-test('Elijah Woods track is searchable and uses its bundled MP3 and supplied PNG cover',()=>{
+test('Elijah Woods track is searchable and uses its bundled MP3 and supplied cover artwork',()=>{
  const track=trackById('where-were-going');
  assert.equal(track.title,"where we're going");
  assert.equal(track.artist,'Elijah Woods');
@@ -11,7 +11,7 @@ test('Elijah Woods track is searchable and uses its bundled MP3 and supplied PNG
  assert.equal(matchingTracks('Elijah Woods')[0].id,track.id);
  assert.equal(track.fallback,undefined);
  assert.match(track.src,/where-were-going\.mp3$/);
- assert.match(track.cover,/where-were-going-cover\.png$/);
+ assert.match(track.cover,/where-were-going-cover\.jpg$/);
  assert.ok(existsSync('public'+track.src));
  assert.ok(existsSync('public'+track.cover));
 });
