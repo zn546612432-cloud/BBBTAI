@@ -8,10 +8,16 @@ const correctedHistoryLink={id:'wx-group-20240310-019',previous:'【小红书分
 const isCorrectableHistoryLink=(conversationId,message)=>conversationId==='group'&&message.id===correctedHistoryLink.id&&message.text===correctedHistoryLink.previous&&message.storyImported===true&&!message.actual;
 export const correctedBuiltInMessages=[
  {conversationId:'hufeng',id:'wx-hufeng-20250505-003',previous:'小辛躺客厅沙发睡着了，空调开得好冷',next:'我电脑突然连不上内网了，明早还要看演习录像'},
- {conversationId:'hufeng',id:'wx-hufeng-20250505-004',previous:'给他盖件衣服，别又感冒',next:'你是不是又把网线踩松了'}
+ {conversationId:'hufeng',id:'wx-hufeng-20250505-004',previous:'给他盖件衣服，别又感冒',next:'你是不是又把网线踩松了'},
+ {conversationId:'zaizai',id:'wx-zaizai-20250420-001',previous:'蒙哥，能帮我看看这张设计图吗',next:'找到一件好适合你穿的西服'},
+ {conversationId:'zaizai',id:'wx-zaizai-20250420-design',previous:'/apps/wechat/media/zaizai-fashion-design.webp',next:'/apps/wechat/media/zaizai-suit-20250420.webp',image:true},
+ {conversationId:'zaizai',id:'wx-zaizai-20250420-002',previous:'颜色挺好，袖口是不是太窄了',next:'你这是损我呢？'},
+ {conversationId:'zaizai',id:'wx-zaizai-20250420-003',previous:'对！我也觉得',next:'哈哈'},
+ {conversationId:'zaizai',id:'wx-zaizai-20250420-004',previous:'别给我做，穿不了那么花',next:'天天穿格子，想看你穿不一样的风格',previousFrom:'me',nextFrom:'仔仔'}
 ];
+const matchesCorrection=(m,rule)=>m?.id===rule.id&&m.storyImported===true&&!m.actual&&(!rule.previousFrom||m.from===rule.previousFrom)&&(m.text===rule.previous||rule.image&&m.kind==='image'&&m.text.endsWith(rule.previous));
 export function hasBuiltInTextCorrections(state){
- return (state.content.conversations.wechat||[]).some(c=>c.messages.some(m=>isRetiredSavedHistory(c.id,m)))||correctedBuiltInMessages.some(rule=>state.content.conversations.wechat?.find(c=>c.id===rule.conversationId)?.messages.some(m=>m.id===rule.id&&m.text===rule.previous&&m.storyImported&&!m.actual));
+ return (state.content.conversations.wechat||[]).some(c=>c.messages.some(m=>isRetiredSavedHistory(c.id,m)))||correctedBuiltInMessages.some(rule=>state.content.conversations.wechat?.find(c=>c.id===rule.conversationId)?.messages.some(m=>matchesCorrection(m,rule)));
 }
 // Revised author-approved pre-D01 threads use fresh stable IDs. Retire only
 // exact shipped history rows (not player messages or editor-customized copy).
@@ -107,7 +113,10 @@ export function applyPresetImport(state,payload,{mode='merge',restoreDeleted=fal
      const current=conversation.messages.find(m=>m.id===message.id);
      if(message.text===correctedHistoryLink.next&&isCorrectableHistoryLink(h.conversationId,current))current.text=correctedHistoryLink.next;
      const correction=correctedBuiltInMessages.find(x=>x.id===message.id&&x.conversationId===h.conversationId);
-     if(correction&&current?.text===correction.previous&&current.storyImported&&!current.actual&&message.text===correction.next)current.text=correction.next;
+     if(correction&&matchesCorrection(current,correction)&&message.text===correction.next){
+      current.text=correction.next;
+      if(correction.nextFrom&&message.from===correction.nextFrom)current.from=correction.nextFrom;
+     }
      continue;
     }
     conversation.messages.push(authoredMessage(pack,h,message));known.add(message.id);

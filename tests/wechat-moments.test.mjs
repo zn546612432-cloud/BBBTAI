@@ -5,7 +5,7 @@ import {initialState,repairLegacyWechatDates} from '../src/services/storage.js';
 import {timestampGroups} from '../src/services/messaging/timestamps.js';
 import {authoredMoments,visibleMoments} from '../src/apps/wechat/features/moments/data.js';
 import {renderMoments,momentImage,avatarUrl,handleMoment,submitMoment} from '../src/apps/wechat/features/moments/index.js';
-import {momentProfiles,findMoment} from '../src/apps/wechat/features/moments/model.js';
+import {momentProfiles,findMoment,allMoments} from '../src/apps/wechat/features/moments/model.js';
 import {stablePublicAssetBase} from '../src/services/public-assets.js';
 import {wechatAvatars} from '../src/apps/wechat/avatars.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
@@ -24,6 +24,23 @@ test('Moments expire 72 hours after posting; profile pins remain',()=>{
  const pinned=visibleMoments(authoredMoments,'2025-08-16',{author:'仔仔',clock:'23:59'});
  assert.ok(pinned.some(p=>p.id==='zz-d15'));
  assert.ok(!visibleMoments(authoredMoments,'2025-08-16',{clock:'23:59',includePinned:false}).some(p=>p.id==='zz-d15'));
+});
+
+test('Awei outfit, night photos and pinned training use the approved posts and bundled media',()=>{
+ const find=id=>authoredMoments.find(p=>p.id===id);
+ assert.equal(find('aw-d05').pinned,true);
+ assert.deepEqual(find('aw-d05').media,['aweiTraining']);
+ assert.equal(find('aw-d17').text,'走在路上被健身房招去当教练，哈哈。');
+ assert.deepEqual(find('aw-d24').likes,['仔仔','小辛','阿威','熙旺','胡枫']);
+ assert.equal(find('aw-d24').publishedAt,'2025-06-11T17:20');
+ assert.equal(find('aw-d29').text,'耍起！');
+ assert.deepEqual(find('aw-d29').media,['aweiFriends']);
+ assert.equal(find('aw-d39').pinned,undefined);
+ assert.deepEqual(find('aw-d39').media,['aweiFountainFront','aweiFountainBack']);
+ assert.deepEqual(visibleMoments(authoredMoments,'2025-07-12',{author:'阿威'}).filter(p=>p.pinned).map(p=>p.id),['aw-d05']);
+ assert.deepEqual(authoredMoments.filter(p=>p.author==='阿威').map(p=>p.id),['aw-d05','aw-d17','aw-d24','aw-d29','aw-d39']);
+ const s=initialState();s.content.moments={posts:[{id:'aw-d53',author:'阿威',storyDay:53},{id:'aw-d69',author:'阿威',storyDay:69}]};
+ assert.deepEqual(allMoments(s).filter(p=>p.author==='阿威').map(p=>p.id),['aw-d05','aw-d17','aw-d24','aw-d29','aw-d39']);
 });
 
 test('Both native WeChat entrances open Moments, which have complete media & profile views',()=>{
@@ -87,10 +104,10 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  const post=authoredMoments.find(p=>p.id==='xs-0519');assert.equal(post.comments.length,2);
 });
 
-test('40 authored posts span D01–D90 with optional zero-comment brother post and mixed media',()=>{
- assert.equal(authoredMoments.length,40);
+test('39 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
+ assert.equal(authoredMoments.length,39);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d03'?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
