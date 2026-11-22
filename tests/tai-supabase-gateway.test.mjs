@@ -72,9 +72,9 @@ test('provider errors, daily limits and missing identity do not fabricate NPC me
 test('no sensitive secrets or public unauthenticated paid calls are present in Edge source',()=>{
  const code=readFileSync(new URL('../supabase/functions/tai-provider-gateway/index.ts',import.meta.url),'utf8');
  assert.match(code,/admin\.auth\.getUser\(token\)/);
- assert.match(code,/reserve_tai_ai_gateway_quota/);
+ assert.doesNotMatch(code,/reserve_tai_ai_gateway_quota|await reserve\(/);
  assert.match(code,/origin_not_allowed/);
- assert.match(code,/daily_limit_reached/);
+ assert.doesNotMatch(code,/daily_limit_reached|quota_service_unavailable/);
  assert.match(code,/DEEPSEEK_API_KEY/);
  assert.match(code,/MINIMAX_API_KEY/);
  assert.doesNotMatch(code,/sk-api-[a-zA-Z0-9_-]{16,}/);
