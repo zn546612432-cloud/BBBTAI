@@ -300,11 +300,18 @@ export function handle(action,t,ctx,loc){
 }
 
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
- if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract')?loc.route:'/');return;}
+ if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/order/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract')?loc.route:'/');return;}
  if(!isMirageAuthenticated())return;
  if(f==='mc-send'){
   const text=val('text'),id=form.dataset.id;
   if(text){
+   const state=ctx.store.get(),postgame=d23MiragePostgame(state,id);
+   const nativeOverride=postgame&&!postgame.closed&&postgame.phase!=='closing'||id===TAI_GHOST_THREAD&&state.story55?.ghostShare?.phase==='controlling'&&state.story55?.ghostShare?.remote?.active;
+   const expected=nativeOverride?null:scriptedDraft55(state,'mirage',id)?.text||ouroborosDraft(state,id)||d02TaliaDraft(state,id)||form.elements.text.dataset?.storyType;
+   if(expected&&text!==expected.trim()){ctx.toast('請先等待完整預設內容');return;}
+   if(id===D02_TALIA&&d02State(state).submitted?.[D02_S]&&d02State(state).taliaStage<2&&!d02TaliaDraft(state,id)){
+    ctx.toast('請等待對方的消息');return;
+   }
    form.elements.text.value='';decrypted.add(id);
    if(blocksAnonymousMirageInput(ctx.store.get(),id,text)){
     ctx.store.update(s=>{if(s.drafts)delete s.drafts[id];});return;
