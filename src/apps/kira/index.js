@@ -39,6 +39,7 @@ export function render({store},loc){
  return kiraInbox(s);
 }
 export function handle(a,t,c){
+ if(a==='kira-isolde-chat')return c.router.open({appId:'mirage',route:'/chat/mc-isolde-mirage',params:{}});
  if(a==='kira-d13-wallet')return c.router.open({appId:'mirage',route:'/wallet',params:{}});
  if(a==='kira-open-commission-file'){
   const mailId=t.dataset.id;

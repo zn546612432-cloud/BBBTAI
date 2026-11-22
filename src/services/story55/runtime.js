@@ -9,6 +9,8 @@ import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALL
 import {applyD34D42Definition,RETIRED_SCENES,D42_OPERATION_SCENE_IDS} from '../../story/d34-d42/definition.js';
 import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
 import {applyD45Definition} from '../../story/d45/definition.js';
+import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT} from '../../story/d46/definition.js';
+import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -201,6 +203,7 @@ function creditScene55(s,n){
   if(chat)appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  appendSceneMessage55(s,id,r.index,{authoredTime});
+ if(id===D45_WALLET_SCENE&&r.index===0)releaseD45Wallet(s);
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
  // The player must explicitly send their own line before any next NPC line.
@@ -262,6 +265,8 @@ export function chatNodeLink55(s,id){
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
 export function nodeLink55(s,id){
+ if(id===D45_PUBLISH)return {appId:'mirage',route:'/private-contract',params:{}};
+ if(id===D46_ACCEPT)return {appId:'kira',route:'/mail/s55-d46-isolde-mail',params:{}};
  if(id==='prep')return {appId:'reminders',route:'/project/ghost-car-plan',params:{}};
  if(id==='dossier'||id==='photo-decrypt'||id==='photo'){
   const personal=s.content?.localFiles?.find(f=>f.id==='personal-files'&&!f.deleted);
@@ -401,6 +406,14 @@ export function tickStory55(s){
   applyD45Definition(story55Config(s));
   if(s.day>45)for(const id of ['d45-group','d45-tai','d45-wang'])s.story55.completed[id]??={day:45,clock:'23:00',legacySkipped:true};
  }
+ if(!story55Config(s).d46Revision){
+  applyD46Definition(story55Config(s));
+  if(s.day>45||s.day===45&&s.clock>='11:23'){
+   s.story55.completed[D45_WALLET_SCENE]??={day:45,clock:'10:30',legacySkipped:true};
+   releaseD45Wallet(s);
+  }
+  if(s.day>46)for(const id of [D45_PUBLISH,D46_ACCEPT,D46_CHAT])s.story55.completed[id]??={day:46,clock:'14:23',legacySkipped:true};
+ }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);
@@ -452,6 +465,7 @@ export function tickStory55(s){
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);
+ syncD46(s);
  // Legacy D06 accepted saves are repaired by the shared commission runner.
  // Do not create a second prototype authorization email.
  // Migrate 55-day saves created before the D03 plot node existed.
@@ -501,7 +515,7 @@ export function tickStory55(s){
  tickQueuedStoryScenes55(s);
  tickD23ChessLesson(s);
  resolveGhostShare(s);
- for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
+ for(const m of mailDefs(s)){const existing=s.content.mail.find(x=>x.id===m.id);if(m.id==='s55-d13-wallet-mail'&&completed(s,'intrusion')&&!existing||m.node===D46_ACCEPT&&s.story55.completed[D46_ACCEPT]?.legacySkipped&&!existing)continue;if(existing)Object.assign(existing,{subject:m.subject,body:m.body,from:m.from||existing.from,...(m.attachmentName?{attachmentName:m.attachmentName}:{}),...(m.project?{project:m.project}:{})});if(['ready','done'].includes(nodeStatus(s,m.node).state)&&!s.content.mail.some(x=>x.id===m.id)){
   // D13 shows actual arrival time; other clock-authored mail retains its
   // scheduled timestamp when the saved phone resumes after midnight.
   // The existing mail ID is the idempotency key; no second queue or scheduler.
@@ -509,7 +523,9 @@ export function tickStory55(s){
   const arrivalDay=m.id==='s55-d13-wallet-mail'?s.day:node?.at?node.day:s.day,arrivalClock=m.id==='s55-d13-wallet-mail'?s.clock:node?.at||s.clock;
   s.content.mail.unshift({...m,from:m.from||'Dr Ouroboros',story55:true,storyNode:m.node,read:false,time:arrivalClock,receivedClock:arrivalClock,date:date55(arrivalDay)});
   s.notifications.unshift({id:'s55-mail-'+m.id,storyMessage:true,title:'KIRA',body:m.subject,day:arrivalDay,clock:arrivalClock,link:{appId:'kira',route:'/mail/'+m.id,params:{}}});
- }}
+ }
+ if(nodeById(s,m.node)?.autoComplete&&nodeStatus(s,m.node).state==='ready'&&s.content.mail.some(x=>x.id===m.id)){completeNode(s,m.node);syncD46(s);}
+ }
  // Previous prototype inserted every scene as a Calendar event. Never do that.
  s.content.calendarEvents=(s.content.calendarEvents||[]).filter(e=>!String(e.id||'').startsWith('s55-event-'));
  // Daily cost uses plot dates, not wall-clock time. Insufficient cash becomes a visible liability.
@@ -522,6 +538,7 @@ export function story55Presence(s,now=Date.now()){
  if(final55(s))return {status:'offline',contactable:false,reason:'连接中断'};
  if(s.story55.activeScene)return {status:'busy',contactable:false,reason:'正在通话或事件中'};
  if(!completed(s,'recognition'))return {status:'offline',contactable:false,reason:'尚未相认'};
+ if(s.day===45&&completed(s,D45_WALLET_SCENE)&&s.clock<'16:40')return {status:'offline',contactable:false,reason:'離線'};
  if(s.day===42&&!completed(s,'paris'))return {status:'offline',contactable:false,reason:'暂时无法联系'};
  return {status:'online',contactable:true,reason:'在线'};
 }

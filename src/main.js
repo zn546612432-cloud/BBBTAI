@@ -17,7 +17,8 @@ import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecon
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
-import {openPhoneStore,isPreview,RECOGNITION_PREVIEW} from './services/storage.js';
+import {openPhoneStore,isPreview,RECOGNITION_PREVIEW,D45D46_PREVIEW} from './services/storage.js';
+import {prepareD45D46Preview} from './story/d46/preview.js';
 import {prepareRecognitionPreview} from './apps/noapp/recognition-preview.js';
 import {mountSaveLifecycle} from './services/storage/recovery.js';
 import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
@@ -103,7 +104,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
 await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
-if(!RECOGNITION_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
+if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
 // Resuming an older save must not require visiting developer tools to receive
 // scheduled messages whose window has already passed.
 try{store.update(s=>{deliverMissedScheduled(s,{day:1,clock:'00:00'});tickFlowD03(s);flushFlowReply(s);if(endingReplyDue55(s))advanceScene55(s,'ending');if(secondView55(s))syncSecondClock55(s);});}catch(error){console.error('消息时间线恢复失败',error);}
@@ -117,6 +118,7 @@ if(taiV10MobileReview)store.update(s=>prepareTaiV10MobilePreview(s));
 if(noappV2Review)store.update(s=>prepareNoAppV2Review(s));
 if(noappV3Review)store.update(s=>prepareNoAppV3Review(s));
 if(RECOGNITION_PREVIEW)store.update(prepareRecognitionPreview);
+if(D45D46_PREVIEW)store.update(s=>prepareD45D46Preview(s,D45D46_PREVIEW));
 mountShell();
 let lockAssets=null;
 let shade=false,toastTimer,assetHandler=null,entryAnimation=false,lastNavigation=null,lastLocation=null,quietEditorUpdate=false,draggingHome=false,pagerBase=null,unlockingCover=false,swipeHomeReturn=null,islandExpanded=false,islandPage='home',islandTimer=null,alarmSound=null,pendingNoticeId=null;
@@ -124,7 +126,7 @@ const delivery=new MessageDelivery(store);
 const presets=new PresetConversationEngine(store);
 const tasks=createTaskSwitcher({router,registry});
 // Opening the display always requires a new unlock, without removing saved content.
-if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review&&!RECOGNITION_PREVIEW)store.update(s=>{s.unlocked=false;});
+if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review&&!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
 let shortChargeNoticePausedUntil=0;
@@ -427,7 +429,7 @@ store.subscribe(()=>{
   setTimeout(()=>boot.remove(),450);
  };
  globalThis.__xmBootStarted?.();
- if(RECOGNITION_PREVIEW)closeBoot();
+ if(RECOGNITION_PREVIEW||D45D46_PREVIEW)closeBoot();
   lockAssets=beginLockscreenPreload({
   state:store.get(),
   wallpaper:store.get().wallpaper,

@@ -14,6 +14,7 @@ import {dynamicIsland} from '../src/system/power/island.js';
 function phone(){
  const s=activateStory55(initialState());s.day=45;s.clock='11:22';s.story55.activeScene=null;s.story55.noappInstalled=true;
  for(const n of s.story55.config.nodes)if(n.day<45)s.story55.completed[n.id]={day:n.day,clock:'23:00'};
+ s.story55.completed['d45-wallet-gift']={day:45,clock:'10:40'};
  return s;
 }
 function play(s,id,channel,chat,lines,start){
