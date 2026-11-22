@@ -1,0 +1,97 @@
+name: Publish isolated D45-D46 story review
+on:
+  push:
+    branches: [review/d45-d46-20261122]
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: review-source
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production-source
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/story55-dev-snapshot-safety-20261101
+          path: story55-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build current production and retained Tai Vision preview
+        working-directory: production-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" GITHUB_PAGES_BASE="/BBBTAI/" npm run build:pages
+          mv dist production-dist
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/tai-vision-20261105/" npm run build:pages
+          mkdir -p production-dist/review/tai-vision-20261105
+          cp -a dist/. production-dist/review/tai-vision-20261105/
+          rm -r dist
+          mv production-dist dist
+      - name: Build retained Story55 snapshot
+        working-directory: story55-source
+        run: |
+          npm ci
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/55-20261101/" npm run build:pages
+      - name: Test and build D45-D46 isolated review
+        working-directory: review-source
+        run: |
+          npm ci
+          node --test tests/d45-fixed-timeline.test.mjs tests/d45-d46-private-contract.test.mjs
+          GITHUB_SHA="$(git rev-parse HEAD)" PHONE_PREVIEW=true GITHUB_PAGES_BASE="/BBBTAI/review/d45-d46-20261122/" npm run build:pages
+      - name: Stage isolated review and retain the existing two review paths
+        run: |
+          mkdir -p production-source/dist/review/55-20261101 production-source/dist/review/d45-d46-20261122
+          cp -a story55-source/dist/. production-source/dist/review/55-20261101/
+          cp -a review-source/dist/. production-source/dist/review/d45-d46-20261122/
+          test -s production-source/dist/index.html
+          test -s production-source/dist/review/d45-d46-20261122/assets/story55/d45-ximeng-photo.jpg
+          test ! -e production-source/dist/preview
+          grep -q phone-preview production-source/dist/review/d45-d46-20261122/index.html
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Optimize shared icon atlases
+        working-directory: production-source
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/optimize-icon-atlases.py dist
+          du -sh dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: production-source/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: d45-d46-review-pages
+      url: https://zn546612432-cloud.github.io/BBBTAI/review/d45-d46-20261122/
+    steps:
+      - name: Wait for artifact index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 18); do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?name=github-pages" --jq '.artifacts[] | select(.name == "github-pages" and .expired == false) | .id' | head -n1 || true)"
+            if [ -n "$artifact_id" ]; then sleep 15; exit 0; fi
+            sleep 8
+          done
+          exit 1
+      - uses: actions/deploy-pages@v4
+        id: deployment
+        with:
+          timeout: '600000'
