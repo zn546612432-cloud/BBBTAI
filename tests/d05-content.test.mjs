@@ -176,7 +176,8 @@ test('D05 Moments use real bundled images, keep old post, and follow the existin
  }
  assert.equal(visibleMoments(posts,'2025-05-23',{clock:'08:00'}).length,0);
  assert.equal(visibleMoments(posts,'2025-05-23',{clock:'23:00'}).length,3);
- assert.equal(visibleMoments(posts,'2025-05-27').length,0);
+ assert.deepEqual(visibleMoments(posts,'2025-05-27').map(p=>p.id),['aw-d05']);
+ assert.equal(visibleMoments(posts,'2025-05-27',{includePinned:false}).length,0);
 });
 test('D05 fills diary and a once-only editable note, preserving all existing timing rules',()=>{
  const s=fresh();assert.match(entryFor(s,5).body,/工房/);

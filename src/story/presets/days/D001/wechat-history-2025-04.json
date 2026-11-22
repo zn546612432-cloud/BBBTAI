@@ -254,7 +254,7 @@
         {
           "id": "wx-zaizai-20250420-001",
           "from": "仔仔",
-          "text": "蒙哥，能帮我看看这张设计图吗",
+          "text": "找到一件好适合你穿的西服",
           "time": "15:18",
           "sentDate": "2025-04-20",
           "appearance": "immediate"
@@ -263,7 +263,7 @@
           "id": "wx-zaizai-20250420-design",
           "from": "仔仔",
           "kind": "image",
-          "text": "/apps/wechat/media/zaizai-fashion-design.webp",
+          "text": "/apps/wechat/media/zaizai-suit-20250420.webp",
           "time": "15:19",
           "sentDate": "2025-04-20",
           "appearance": "immediate"
@@ -271,7 +271,7 @@
         {
           "id": "wx-zaizai-20250420-002",
           "from": "me",
-          "text": "颜色挺好，袖口是不是太窄了",
+          "text": "你这是损我呢？",
           "time": "15:22",
           "sentDate": "2025-04-20",
           "appearance": "immediate"
@@ -279,15 +279,15 @@
         {
           "id": "wx-zaizai-20250420-003",
           "from": "仔仔",
-          "text": "对！我也觉得",
+          "text": "哈哈",
           "time": "15:24",
           "sentDate": "2025-04-20",
           "appearance": "immediate"
         },
         {
           "id": "wx-zaizai-20250420-004",
-          "from": "me",
-          "text": "别给我做，穿不了那么花",
+          "from": "仔仔",
+          "text": "天天穿格子，想看你穿不一样的风格",
           "time": "15:25",
           "sentDate": "2025-04-20",
           "appearance": "immediate"

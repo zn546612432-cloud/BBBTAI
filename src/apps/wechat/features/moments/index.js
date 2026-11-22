@@ -16,6 +16,7 @@ photos.hufengCover='hufeng-moments-cover.webp';
 photos.xiaoxinSunsetCover='d06-xiaoxin-sunset-cover.webp';
 photos.xiaoxinSunsetVideo='d06-xiaoxin-sunset.mp4';
 photos.d41GoodShow='d41-hufeng-good-show.jpeg';
+Object.assign(photos,{aweiTraining:'awei-d05-training.webp',aweiStyle:'awei-d24-style.webp',aweiFriends:'awei-d29-friends.webp',aweiFountainFront:'awei-d39-fountain-front.webp',aweiFountainBack:'awei-d39-fountain-back.webp'});
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
 export function momentImage(source,{base=stablePublicAssetBase()}={}){

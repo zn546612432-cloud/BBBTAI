@@ -65,6 +65,20 @@ test('historical dialogue imports by stable ID without replacing live messages, 
  assert.equal(parsePresetPayload(result).length,1);
 });
 
+test('approved Zaizai suit history updates old authored rows in place and keeps actual messages',()=>{
+ const s=state(),pack=fixture('D001/wechat-history-2025-04.json');
+ const old=structuredClone(pack),chat=old.history.find(h=>h.conversationId==='zaizai');
+ const previous=['蒙哥，能帮我看看这张设计图吗','/apps/wechat/media/zaizai-fashion-design.webp','颜色挺好，袖口是不是太窄了','对！我也觉得','别给我做，穿不了那么花'];
+ chat.messages.forEach((m,i)=>{m.text=previous[i];if(i===4)m.from='me';});
+ applyPresetImport(s,old);
+ const convo=s.content.conversations.wechat.find(c=>c.id==='zaizai');
+ convo.messages.push({id:'real-zaizai',from:'me',text:'我的消息',actual:true});
+ applyPresetImport(s,pack);applyPresetImport(s,pack);
+ const current=convo.messages.filter(m=>m.id.startsWith('wx-zaizai-20250420-'));
+ assert.deepEqual(current.map(m=>[m.id,m.from,m.text,m.time]),pack.history.find(h=>h.conversationId==='zaizai').messages.map(m=>[m.id,m.from,m.text,m.time]));
+ assert.equal(convo.messages.find(m=>m.id==='real-zaizai').text,'我的消息');
+});
+
 test('editor deleted rule tombstone prevents fixture resurrection until explicit reimport',()=>{
  const s=state(),p=source()[0];
  s.storyPresets.deletedRuleIds=['wang-d57-0300'];
