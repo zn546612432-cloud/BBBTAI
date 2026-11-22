@@ -21,6 +21,9 @@ test('audio cache matches the exact bundled recordings and provides the actual 2
  assert.match(musicListeningContext([share],'2:15這裡'),/褪黑素[\s\S]*2:15/);
  assert.equal(musicListeningContext([], '2:15這裡'),'');
  assert.equal(musicListeningContext([share], '今天吃什麼'),'');
+ const elijah={...share,text:"分享音乐：where we're going",attachment:{trackId:'where-were-going'}};
+ assert.equal(listeningData['where-were-going'].sha256,createHash('sha256').update(readFileSync('public/assets/music/where-were-going.mp3')).digest('hex'));
+ assert.match(musicListeningContext([elijah],'2:15這裡'),/Elijah Woods[\s\S]*2:15/);
 });
 
 test('consecutive messages preserve their complete text and stop at a prior response',()=>{
