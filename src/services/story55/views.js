@@ -22,6 +22,6 @@ export function sceneView55(s,loc){
  return `<div class="s55"><h1>${esc(n.title)}</h1>${s55Button('node','開啟對話',`data-node="${esc(id)}"`)}</div>`;
 }
 export function mirage55(s,loc){if(loc.route==='/story55/payment'&&!['ready','done'].includes(nodeStatus(s,'mercenary').state))return unavailable(s,'mercenary');if(loc.route==='/story55/questions')return `<div class="s55 s55-dark"><h1>Dr Ouroboros</h1>${s55Button('anonymous-chat','開啟對話')}</div>`;
- if(loc.route==='/story55/payment')return `<div class="s55 s55-dark"><small>MIRAGE / CONTRACT</small><h1>雇佣兵</h1><article class="s55-card"><p>委託金額 HK$ 10,000,000</p><p>美元結算 US$ 1,282,051.28</p><strong>US$ ${s.bankData.balance.toLocaleString()} / AVAILABLE</strong>${s55Button('pay-node','確認支付','data-node="mercenary"')}</article></div>`;
+ if(loc.route==='/story55/payment')return `<div class="s55 s55-dark"><small>MIRAGE / CONTRACT</small><h1>委託訂金</h1><article class="s55-card"><p>HK$ 5,000,000</p>${s55Button('node','前往 Pacific 轉帳','data-node="mercenary"')}</article></div>`;
  return `<div class="s55 s55-dark"><small>MIRAGE / CONTRACTS</small><h1>悬赏与联络</h1>${s55Button('objectives','当前计划')}${completed(s,'intrusion')?s55Button('anonymous-chat','Dr Ouroboros / 私密联络'):''}${s55Button('node','钱包挑战','data-node="wallet"')}<h2>独立委托</h2><p>本地数据校验 / 20,000</p>${s55Button('commission','领取并运行委托')}<h2>资源与资产</h2>${s55Button('projects','本地程序')}${s55Button('mining','挖矿与BTC资产')}</div>`;
 }

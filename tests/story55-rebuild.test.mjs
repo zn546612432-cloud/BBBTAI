@@ -101,8 +101,8 @@ test('D45 rebuild reconstructs storyline, inbox, wallet, NoApp and phased GHOST'
  assert.equal(s.story55.noappInstalled,true);
  assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').name,'陈熙泰');
  assert.equal(completed(s,'mercenary'),false);
- assert.equal(completed(s,'second'),false); // D43-D47 deployment cannot finish at D44
- assert.equal(s.story55.projects.second.batches.length,2);
+ assert.equal(completed(s,'second'),false);
+ assert.equal(s.story55.tearAgent?.jobs?.['server-source'],undefined);
  assert.equal(s.story55.projects.base.batches.length,11);
  assert.equal(s.story55.reports['base-10'].percent,100);
  assert.equal(s.content.orders.find(o=>o.id==='s55-mirage-wallet-bounty').status,'COMPLETED');
@@ -150,7 +150,7 @@ test('D55 leaves final scene and audio playable, but finishes the prior-day task
  assert.equal(completed(s,'ready'),true);
  assert.equal(completed(s,'ending'),false);
  assert.equal(s.story55.ended,false);
- assert.equal(s.story55.projects.second.batches.length,5);
+ assert.equal(s.story55.tearAgent.jobs['server-source'].done,true);
 });
 test('scheduled authored messages are replayed chronologically and remain editable',()=>{
  const s=phone();

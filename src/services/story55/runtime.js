@@ -12,6 +12,7 @@ import {applyD45Definition} from '../../story/d45/definition.js';
 import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {applyD46Group,D46_GROUP_ID,D46_GROUP_AT} from '../../story/d46/group.js';
+import {applyD47Definition,SOURCE_SCENE,DEPOSIT_SCENE,DEPOSIT_REPLY} from '../../story/d47/definition.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -234,11 +235,12 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||firstNightClock||(shown&&shown<=s.clock?shown:s.clock));
   const image=n.imageLines?.[index];
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55'});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55',attachment:n.attachments?.[index]});
   if(id==='plan'&&line[1]===D29_IP)seedAuthoredNotes(s,[{id:'s55-d29-ip',day:s.day,at:s.clock,title:'Ouroboros',text:D29_IP}]);
  }
 }
 export function payNode55(s,id){
+ if(id==='mercenary')throw Error('請使用 Pacific 銀行轉帳');
  const n=nodeById(s,id);if(n?.kind!=='payment'||nodeStatus(s,id).state!=='ready')throw Error(nodeStatus(s,id).reason);
  if(s.bankData.balance<n.cost)throw Error('余额不足，定金尚未支付');
  s.bankData.balance-=n.cost;s.bankData.transactions.unshift({id:'s55-payment-'+id,label:n.title,amount:-n.cost,time:s.clock,date:date55(s.day)});completeNode(s,id);tickStory55(s);
@@ -266,6 +268,8 @@ export function chatNodeLink55(s,id){
  return {appId:channel,route:'/chat/'+conversation,params:{node:id}};
 }
 export function nodeLink55(s,id){
+ if(id==='mercenary')return {appId:'bank',route:'/transfer',params:{}};
+ if(id==='second')return {appId:'ghost',route:'/tear',params:{}};
  if(id===D45_PUBLISH)return {appId:'mirage',route:'/private-contract',params:{}};
  if(id===D46_ACCEPT)return {appId:'kira',route:'/mail/s55-d46-isolde-mail',params:{}};
  if(id==='prep')return {appId:'reminders',route:'/project/ghost-car-plan',params:{}};
@@ -422,6 +426,11 @@ export function tickStory55(s){
    for(const id of [D45_PUBLISH,D46_ACCEPT,D46_CHAT])s.story55.completed[id]??={day:id===D45_PUBLISH?WALLET_GIFT_DAY:PRIVATE_ACCEPT_DAY,clock:'14:23',legacySkipped:true};
   }
  }
+ if(applyD47Definition(story55Config(s))){
+  // Do not replay newly authored scenes from past days in already-progressed saves.
+  if(s.day>47)for(const id of ['d47-group','d47-wang',SOURCE_SCENE])s.story55.completed[id]??={day:47,clock:'21:30',legacySkipped:true};
+  if(completed(s,'mercenary'))for(const id of [DEPOSIT_SCENE,DEPOSIT_REPLY])s.story55.completed[id]??={day:50,clock:'10:00',legacySkipped:true};
+ }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);
@@ -546,7 +555,7 @@ export function story55Presence(s,now=Date.now()){
  if(final55(s))return {status:'offline',contactable:false,reason:'连接中断'};
  if(s.story55.activeScene)return {status:'busy',contactable:false,reason:'正在通话或事件中'};
  if(!completed(s,'recognition'))return {status:'offline',contactable:false,reason:'尚未相认'};
- if(s.day===WALLET_GIFT_DAY&&completed(s,D45_WALLET_SCENE))return {status:'offline',contactable:false,reason:'離線'};
+ if(s.day===WALLET_GIFT_DAY&&completed(s,D45_WALLET_SCENE)&&s.clock<'21:30')return {status:'offline',contactable:false,reason:'離線'};
  if(s.day===42&&!completed(s,'paris'))return {status:'offline',contactable:false,reason:'暂时无法联系'};
  return {status:'online',contactable:true,reason:'在线'};
 }

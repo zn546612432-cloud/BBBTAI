@@ -31,6 +31,12 @@ textarea{min-height:90px;resize:vertical;line-height:1.55}
 #toast.visible{opacity:1;transform:translateY(0);pointer-events:auto}
 #toast .notification-copy small{font-size:12px;font-weight:680;color:#1c2531}
 #toast .notification-copy strong{font-size:13px;font-weight:460;color:#27323f;line-height:1.45;overflow-wrap:anywhere}
+#toast[data-app-id="messages"]{box-sizing:border-box;height:88px;min-height:88px;max-height:88px;overflow:hidden;align-items:flex-start}
+#toast[data-app-id="messages"] .notification-app-icon{align-self:center}
+#toast[data-app-id="messages"] .notification-copy{min-width:0;max-height:65px;overflow:hidden;align-self:center}
+#toast[data-app-id="messages"] .notification-copy small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:17px}
+#toast[data-app-id="messages"] .notification-copy strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:18px;max-height:36px;white-space:normal}
+.bank-form .bank-field select{margin:5px 0 0;border:0;border-radius:0;padding:3px 0;background:transparent;box-shadow:none;font-size:18px;color:#173342;min-height:29px;width:100%}
 .eyebrow{font-size:10px;font-weight:700;letter-spacing:2.1px;color:#8394a7}
 .demo-tag{display:inline-block;vertical-align:middle;padding:2px 5px;border-radius:4px;background:#acd1e130;color:#8bb5c9;font-size:8px;font-weight:800;letter-spacing:1px;margin-left:4px}
 .muted{color:var(--muted)}

@@ -109,6 +109,7 @@ export function deploymentReadiness(s,id){
  return {canStart:true,reason:r.active?'可繼續目前的工具':'程序已就緒',batch};
 }
 export function authorizeProject(s,id,key){
+ if(id==='second')throw Error('請將源代碼交給 Ouroboros’ Tear');
  if(id==='prep')throw Error('請在提醒事項查看鬼車行動');
  if(id==='wallet')throw Error('請從 MIRAGE 接單並打開 KIRA 附件，使用 GHOST 執行公開錢包挑戰');
  const p=projectById(s,id);if(!p||nodeStatus(s,p.node).state!=='ready')throw Error(p?nodeStatus(s,p.node).reason:'项目不存在');

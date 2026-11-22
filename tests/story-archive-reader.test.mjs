@@ -36,11 +36,12 @@ test('same reader job supports work and private documents, persists across fresh
  const s=fixture();s.day=35;const ctx=ctxFor(s);beginTearChatSession(s);
  assert.equal(sendAgent(s,'',plan).kind,'preset');assert.equal(tearTaskInfo(s,plan).running,true);assert.match(renderTearAgent(s),/正在解析檔案/);
  assert.doesNotMatch(renderTearAgent(s),/V11/);now+=DOCUMENT_READ_MS;tickTearAgent(s);
- assert.equal(tearTaskInfo(s,plan).percent,100);assert.equal(agent(s).visualProgress,1);assert.match(renderTearAgent(s),/查看完整解析結果/);
+ assert.equal(tearTaskInfo(s,plan).percent,100);assert.equal(agent(s).visualProgress,1);assert.doesNotMatch(renderTearAgent(s),/開啟文件/);
+ handleTearAgent('gh-tear-task',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/開啟文件/);
  handleTearAgent('gh-tear-document-read',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/V11/);
  assert.match(renderTearAgent(s),/END OF DOCUMENT/);handleTearAgent('gh-tear-task-close',{dataset:{}},ctx);
  const job=agent(s).jobs[plan];beginTearChatSession(s);assert.doesNotMatch(renderTearAgent(s),/V11/);
- handleTearAgent('gh-tear-task',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/查看完整解析結果/);
+ handleTearAgent('gh-tear-task',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/開啟文件/);
  handleTearAgent('gh-tear-document-read',{dataset:{id:plan}},ctx);assert.match(renderTearAgent(s),/行動目標/);
  sendAgent(s,'',plan);assert.equal(agent(s).jobs[plan],job);
  s.content.localFiles=[{id:'personal-files',kind:'personal-folder',unlocked:true,name:'Personal Files'}];s.story55.completed.photo={day:33,clock:'12:00'};

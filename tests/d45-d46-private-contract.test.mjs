@@ -51,7 +51,7 @@ test('D47 morning unlocks the frozen wallet, preserves all lines and posts an ac
  const chat=play(s,D46_CHAT,'mirage',D46_CONTACT,D46_DIALOGUE);assert.equal(chat[0].time,'14:23');assert.equal(chat.length,17);
  const order=s.content.orders.find(o=>o.id===PRIVATE_ORDER);assert.equal(order.currency,'HKD');assert.equal(order.agreedAmount,10000000);assert.equal(order.status,'AGREED');
  tickStory55(s);assert.equal(s.content.mail.filter(m=>m.id===D46_MAIL).length,1);assert.equal(s.content.orders.filter(o=>o.id===PRIVATE_ORDER).length,1);
- assert.equal(nodeStatus(s,'mercenary').state,'locked');s.day=49;assert.equal(nodeStatus(s,'mercenary').state,'locked');s.day=50;assert.equal(nodeStatus(s,'mercenary').state,'ready');
+ assert.equal(nodeStatus(s,'mercenary').state,'locked');s.day=49;assert.equal(nodeStatus(s,'mercenary').state,'locked');s.day=50;assert.equal(nodeStatus(s,'mercenary').state,'locked');s.clock='10:00';assert.equal(nodeStatus(s,'d50-deposit-request').state,'ready');
 });
 test('isolated preview entry uses real prior-day reconstruction, not completed target content',()=>{
  const s=activateStory55(initialState());prepareD45D46Preview(s,47);assert.equal(s.clock,'10:30');assert.equal(s.nav.current.appId,'noapp');assert.equal(completed(s,D45_WALLET_SCENE),false);

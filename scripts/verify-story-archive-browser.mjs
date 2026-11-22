@@ -4,7 +4,8 @@ import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55} from '../src/services/story55/runtime.js';
+import {activateStory55,advanceScene55} from '../src/services/story55/runtime.js';
+import {SOURCE_SCENE,SOURCE_FILE} from '../src/story/d47/definition.js';
 import {story55Config,projectById} from '../src/services/story55/state.js';
 import {syncGhostCarProgress} from '../src/services/story55/ghost-car.js';
 import {syncTearReminders} from '../src/apps/ghost/deployment/reminders.js';
@@ -39,11 +40,11 @@ try{
   await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});await unlock(page);
   const live=page.locator('#screen-layer');await live.locator(`[data-action=files-local-item][data-id="${id}"]`).click();
   assert.match(await live.innerText(),/無法預覽此檔案/);assert.ok(!(await live.innerText()).includes(expected));await page.screenshot({path:`${out}/${width}-file.png`});
-  await live.locator('[data-action=files-local-share-archive]').click();await live.locator('.gh-agent-screen').waitFor();await live.locator('[data-action=gh-tear-document-read]').waitFor({timeout:15000});
+  await live.locator('[data-action=files-local-share-archive]').click();await live.locator('.gh-agent-screen').waitFor();await live.locator(`.gh-agent-task-dot.is-complete[data-id="${id}"]`).click({timeout:15000});await live.locator('[data-action=gh-tear-document-read]').waitFor({timeout:15000});
   await live.locator('[data-action=gh-tear-document-read]').click();await live.locator('.gh-agent-document-body').waitFor();assert.ok((await live.locator('.gh-agent-document-body').innerText()).includes(expected));
   await page.screenshot({path:`${out}/${width}-result.png`});
   const reader=live.locator('.gh-agent-document-body');if(!personal){const scroll=await reader.evaluate(el=>{el.scrollTop=500;return {top:el.scrollTop,overflow:el.scrollHeight>el.clientHeight};});assert.ok(scroll.overflow&&scroll.top>0);await page.waitForTimeout(700);assert.equal(await reader.evaluate(el=>el.scrollTop),scroll.top);}
-  await live.locator('.gh-agent-document [data-action=gh-tear-task-close]').click();await live.locator(`[data-action=gh-tear-task][data-id="${id}"]`).click();await live.locator('.gh-agent-task-detail [data-action=gh-tear-document-read]').click();assert.ok((await live.locator('.gh-agent-document-body').innerText()).includes(expected));
+  await live.locator('.gh-agent-document [data-action=gh-tear-task-close]').click();await live.locator(`.gh-agent-task-dot.is-accepted[data-id="${id}"]`).click();await live.locator(`.gh-agent-messages [data-action=gh-tear-document-read][data-id="${id}"]`).click();assert.ok((await live.locator('.gh-agent-document-body').innerText()).includes(expected));
   assert.deepEqual(errors,[]);console.log('PASS archive browser',width,id);await context.close();
  }
  {
@@ -73,13 +74,13 @@ try{
   const incoming=live.locator('[data-action=tai-story-archive][data-id=story-archive-digital-human]');
   if(!await incoming.count())await live.locator('[data-action=chat-open][data-id=tai], [data-action=open-chat][data-id=tai]').first().click();
   await incoming.click();
-  const share=async()=>{await live.locator('[data-action=files-local-share-archive]').click();await live.locator('[data-action=gh-tear-document-read]').waitFor({timeout:15000});await goHome();};
-  await share();
+  const share=async id=>{await live.locator('[data-action=files-local-share-archive]').click();await live.locator(`.gh-agent-task-dot.is-complete[data-id="${id}"]`).waitFor({timeout:15000});await goHome();};
+  await share('story-archive-digital-human');
   await live.locator('[data-action=page][data-page="1"]').click();
   await live.locator('[data-action=home-reminder-project]').click();
   await live.locator('[aria-valuenow="80"]').waitFor();await page.screenshot({path:`${out}/390-project-80.png`});
   await live.locator('[data-action=reminder-project-file][data-id=story-archive-digital-vehicle]').click();
-  await share();
+  await share('story-archive-digital-vehicle');
   await live.locator('.reminder-widget-title').click();
   await live.locator('[data-action=reminder-project-open]').click();
   await live.locator('[aria-valuenow="100"]').waitFor();await page.screenshot({path:`${out}/390-project-100.png`});
@@ -90,5 +91,21 @@ try{
   await live.locator('.diary-prose').waitFor();assert.match(await live.locator('.diary-prose').innerText(),/所有的準備工作都已經完成了。/);
   await page.screenshot({path:`${out}/390-journal-d40.png`});
   console.log('PASS ghost car model delivery and reminder progress 390');await context.close();
+ }
+ if(!process.env.GHOST_CAR_ONLY){
+  const s=seed(false);s.day=47;s.clock='21:30';s.story55.noappInstalled=true;
+  for(const n of story55Config(s).nodes)if(n.day<47||['d47-group','d47-wang'].includes(n.id))s.story55.completed[n.id]={day:n.day,clock:'09:00'};
+  for(const _ of s.story55.config.scenes[SOURCE_SCENE])advanceScene55(s,SOURCE_SCENE);
+  s.nav.current={appId:'noapp',route:'/chat/tai',params:{}};
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},s);
+  const page=await context.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});await unlock(page);
+  const live=page.locator('#screen-layer');
+  await live.locator(`[data-action=tai-story-archive][data-id="${SOURCE_FILE.id}"]`).click();
+  await live.locator('[data-action=files-local-share-archive]').click();
+  await live.locator('.gh-agent-task-dot.is-running[data-id=server-source]').waitFor({timeout:15000});
+  const sizes=await page.evaluate(()=>{const n=document.querySelector('#toast');n.dataset.appId='messages';n.classList.add('visible');n.innerHTML='<span class="notification-app-icon"></span><span class="notification-copy"><small>SMS</small><strong>短訊</strong></span>';const short=n.getBoundingClientRect().height;n.querySelector('strong').textContent='長短信文字'.repeat(90);return [short,n.getBoundingClientRect().height,n.querySelector('strong').getBoundingClientRect().height];});
+  assert.deepEqual(sizes,[88,88,36]);await page.screenshot({path:`${out}/390-source-sms.png`});
+  console.log('PASS D47 NoApp source and fixed SMS banner');await context.close();
  }
 }finally{await browser.close();server.close();}

@@ -6,7 +6,7 @@ import {previewNode55,handleStory55Action} from '../src/services/story55/control
 import {completed,nodeStatus} from '../src/services/story55/state.js';
 import {sendMessage} from '../src/services/messaging/index.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
-import {agent,agentFiles,ensureAgent,sendAgent,tickTearAgent,tearTaskInfo} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {agent,agentFiles,ensureAgent,sendAgent,tickTearAgent,tearTaskInfo,acceptTearTask} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {savePersonalFiles,unlockPersonalFiles,handleLibraryAction,renderLibrary,submitLibraryForm} from '../src/apps/files/features/local-library/index.js';
 import {appUnlocked} from '../src/system/registry.js';
 import {IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING} from '../src/story/d29/definition.js';
@@ -53,7 +53,7 @@ test('D33 fourth real message schedules D34, keeps archive sealed and delivers t
  assert.equal(tearTaskInfo(s,'archive-password').running,true);
  const [hours,minutes]=s.clock.split(':').map(Number),finish=hours*60+minutes+50;
  s.clock=String(Math.floor(finish/60)%24).padStart(2,'0')+':'+String(finish%60).padStart(2,'0');if(finish>=1440)s.day++;
- tickTearAgent(s);assert.match(agent(s).messages.at(-1).text,/破譯失敗/);
+ tickTearAgent(s);assert.doesNotMatch(agent(s).messages.at(-1).text,/破譯失敗/);acceptTearTask(s,'archive-password');assert.match(agent(s).messages.at(-1).text,/破譯失敗/);
  assert.equal(unlockPersonalFiles(s,'XITAI'),true);
  handleLibraryAction('files-local-personal-open',{dataset:{route:'/item/personal-files/tai/photo'}},ctx);
  assert.equal(completed(s,'photo'),true);tickStory55(s);

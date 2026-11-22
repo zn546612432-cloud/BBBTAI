@@ -2,12 +2,13 @@ import {GHOST_CAR_ARCHIVES} from '../../../../story/d35-d40/archives.js';
 import {ORPHANAGE_ARCHIVES} from '../../../../story/d29/archives.js';
 import {completed,isStory55} from '../../../../services/story55/state.js';
 import {modelDelivered,ghostCarTasks} from '../../../../services/story55/ghost-car.js';
+import {SOURCE_FILE} from '../../../../story/d47/definition.js';
 
 const personalReady=s=>s.day>=33&&completed(s,'photo')&&s.content?.localFiles?.some(f=>f.id==='personal-files'&&!f.deleted&&f.unlocked);
 export function storyArchives(s,{personal=false}={}){
  if(!isStory55(s))return [];
  if(personal&&!personalReady(s))return [];
- return (personal?ORPHANAGE_ARCHIVES:GHOST_CAR_ARCHIVES).filter(f=>s.day>=f.day&&(!f.requires||completed(s,f.requires))&&(!f.model||modelDelivered(s,f.id))).map(f=>({
+ return (personal?ORPHANAGE_ARCHIVES:[...GHOST_CAR_ARCHIVES,{...SOURCE_FILE,model:true}]).filter(f=>s.day>=f.day&&(!f.requires||completed(s,f.requires))&&(!f.model||modelDelivered(s,f.id))).map(f=>({
   id:f.id,name:f.name,kind:'story-archive',folder:personal?'personal':'documents',createdDay:f.day,personal,
   text: f.id==='story-archive-rehearsal'&&s.day>=38?f.text.replaceAll('出席　待確認','出席　出席'):
    f.id==='story-archive-ghost-car-plan'?planText(s,f.text):f.text

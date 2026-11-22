@@ -46,5 +46,6 @@ export function syncD46(s){
   order.status=completed(s,D46_CHAT)?'AGREED':'TAKEN';
   order.contractor='Isolde Mirage';
   if(completed(s,D46_CHAT)){order.reward='HK$ 10,000,000';order.currency='HKD';order.agreedAmount=10000000;}
+  if(completed(s,'mercenary'))order.depositPaid=true;
  }
 }

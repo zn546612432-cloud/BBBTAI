@@ -136,6 +136,7 @@ const showBanner=(notice,{duration=3700}={})=>{
  const node=$('#toast');if(!node)return;
  node.innerHTML=notificationCard(notice,store.get());
  node.dataset.noticeId=notice.id||'';
+ node.dataset.appId=notice.link?.appId||'';
  node.classList.add('visible');
  clearTimeout(toastTimer);
  toastTimer=setTimeout(()=>{node.classList.remove('visible');node.dataset.noticeId='';},duration);

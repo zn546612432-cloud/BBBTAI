@@ -139,6 +139,7 @@
         },
         "story.d44-confide": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d43-d44/definition.js","originDays":[44]},
         "story.d46-group": {"state":"wired-day","owner":"story55","kinds":["incoming-text"],"proof":"src/story/d46/group.js","originDays":[46]},
+        "story.d47-family": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d47/definition.js","originDays":[47]},
         "story.d26-d28-fixed-chat": {
           "state": "wired-day",
           "owner": "story55",
@@ -168,6 +169,7 @@
         "story.recognition-call": {"state":"wired-day","owner":"noapp","kinds":["system-notice"],"proof":"src/apps/noapp/voice-call.js","originDays":[33,34,35,36,37,38]},
         "story.ghost-car-models": {"state":"wired-day","owner":"story55","kinds":["link"],"proof":"src/services/story55/ghost-car.js","originDays":[35]},
         "story.d43-paris": {"state":"wired-day","owner":"story55","kinds":["incoming-image","incoming-text","player-send"],"proof":"src/story/d43-d44/definition.js","originDays":[43]},
+        "story.d47-source": {"state":"wired-day","owner":"story55","kinds":["incoming-text","link"],"proof":"src/story/d47/definition.js","originDays":[47]},
         "ai.scripted-message": {
           "state": "adapter-required",
           "owner": "noapp",
@@ -218,6 +220,7 @@
       "module": "src/apps/mirage/index.js",
       "appId": "mirage",
       "capabilities": {
+        "story.d50-deposit": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d47/definition.js","originDays":[47]},
         "story.identity-reveal": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send","link"],"proof":"src/services/story55/runtime.js","originDays":[30]},
         "commission.publish": {
           "state": "adapter-required",
@@ -346,6 +349,7 @@
       "capabilities": {
         "story.identity-deploy": {"state":"wired-day","owner":"story55","kinds":["commission"],"proof":"src/services/story55/projects.js","originDays":[30]},
         "story.archive-reader": {"state":"wired-day","owner":"ghost","kinds":["link"],"proof":"src/apps/ghost/deployment/tear-agent/state.js","originDays":[33,35]},
+        "story.d47-source-deploy": {"state":"wired-day","owner":"ghost","kinds":["link","system-notice"],"proof":"src/apps/ghost/deployment/tear-agent/state.js","originDays":[47]},
         "mission.start-stages": {
           "state": "adapter-required",
           "owner": "ghost",
@@ -441,6 +445,7 @@
       "module": "src/apps/bank/index.js",
       "appId": "bank",
       "capabilities": {
+        "story.d50-deposit-receipt": {"state":"wired-day","owner":"bank","kinds":["system-notice"],"proof":"src/services/bank.js","originDays":[47]},
         "ledger.post": {
           "state": "adapter-required",
           "owner": "bank",
