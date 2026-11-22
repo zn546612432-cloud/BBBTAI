@@ -52,7 +52,7 @@ function createJournal(db,key){
    return entry;
   },
   schedule(raw){
-   if(closed||raw===lastRaw&&!pending)return;
+   if(closed||raw===lastRaw&&!pending&&!active)return;
    pending=raw;
    if(!timer)timer=setTimeout(()=>{timer=null;journal.flush().catch(()=>{});},1000);
   },

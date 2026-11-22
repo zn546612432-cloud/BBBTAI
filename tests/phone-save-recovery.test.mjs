@@ -178,3 +178,12 @@ test('background/freeze/pagehide flush immediately and never alter the story clo
  assert.equal(recovered.get().day,24);
  await recovered.journal.flush();recovered.journal.close();
 });
+
+test('latest primary wins even when the player restores the previous state during an active checkpoint write',async()=>{
+ const journal=await openSaveJournal(fakeIndexedDB().factory,KEY);
+ journal.schedule('original');await journal.flush();
+ journal.schedule('intermediate');const writing=journal.flush();
+ journal.schedule('original');
+ await writing;await journal.flush();
+ assert.equal((await journal.read()).raw,'original');journal.close();
+});
