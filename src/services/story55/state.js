@@ -3,6 +3,8 @@ import {STORY55_CONFIG} from '../../story/story55/catalog.js';
 import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
 import {modelDelivered} from './ghost-car.js';
 import {TIMED_SCRIPTED_CALLS} from '../../story/d34-d42/definition.js';
+import {D45_CALL} from '../../story/d45/definition.js';
+import {fixedSceneTimeline} from './fixed-timeline.js';
 import {isD41Chess,d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
@@ -51,14 +53,18 @@ export function timedStoryEventComplete(s,event){
 // One declarative gate for native scenes and calls; completion remains owned
 // by the actual App action, not by the clock or a second scheduler.
 export function timedStoryEvents(s){
- return [...story55Config(s).nodes,...TIMED_SCRIPTED_CALLS].filter(n=>n.pauseTimeUntilComplete===true&&typeof n.at==='string');
+ return [...story55Config(s).nodes,...TIMED_SCRIPTED_CALLS,D45_CALL].filter(n=>typeof n.at==='string'&&n.pauseTimeUntilComplete===true);
 }
 export function pendingTimedStoryEvent(s){
  if(!isStory55(s)||s.story55.ended)return null;
  return timedStoryEvents(s).filter(n=>n.day===s.day&&!timedStoryEventComplete(s,n))
   .map(n=>({...n,minute:minuteOf(n.at)+(n.afterMidnight?1440:0)})).sort((a,b)=>a.minute-b.minute)[0]||null;
 }
-export function timedStoryPaused(s){const n=pendingTimedStoryEvent(s);return !!n&&storyDayMinute(s)>=n.minute;}
+export function timedStoryPaused(s){
+ const n=pendingTimedStoryEvent(s);if(n&&storyDayMinute(s)>=n.minute)return true;
+ const active=s.story55?.activeScene;
+ return !!active&&fixedSceneTimeline(nodeById(s,active))&&(s.story55.scenes?.[active]?.index||0)>0&&!completed(s,active)&&nodeStatus(s,active).state==='ready';
+}
 export const taiRecognized=s=>isStory55(s)?completed(s,'recognition'):s.day>=56;
 export const final55=s=>isStory55(s)&&!!s.story55.ended;
 export function nodeStatus(s,id){
@@ -74,6 +80,7 @@ export function nodeStatus(s,id){
  if(n.authorizedProject&&!s.story55?.projects?.[n.authorizedProject]?.authorized)return {state:'locked',reason:'等待本地專案部署'};
  if(id==='loan'&&!s.story55?.projects?.base?.batches?.[0]?.complete)return {state:'locked',reason:'等待D14基础框架首次运行报告'};
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
+ if(n.requiresScriptedCall===D45_CALL.id&&!scriptedCallPlayed(s,D45_CALL))return {state:'locked',reason:'等待孤兒院通話結束'};
  if(id==='d29-chess'&&!s.story55.d29ChessOpened)return {state:'locked',reason:'等待打開國際象棋'};
  if(id==='plan'&&!s.story55.d29ChessExited)return {state:'locked',reason:'等待棋局結束'};
  if(id==='questions'&&!identityReplyMode55(s))return {state:'locked',reason:'等待對方回覆'};

@@ -350,6 +350,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
     // Date-jump reconstruction only: historical chess gates do not demand an actual match.
     if(node.id==='d29-chess')s.story55.d29ChessOpened=true;
     if(node.id==='plan')s.story55.d29ChessExited=true;
+    if(node.requiresScriptedCall){s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[node.requiresScriptedCall]=true;}
     if(node.id==='questions'&&!s.story55.identityContact)s.story55.identityContact={count:4,replyDay:day+1};
     if(node.id==='invite'&&completed(s,'photo'))s.story55.identityInviteRequested=true;
     if(node.afterMidnight&&s.day===node.day){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=node.at;}

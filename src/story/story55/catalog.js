@@ -6,6 +6,7 @@ import {applyD26D28Definition} from '../d26-d28/definition.js';
 import {applyD29Definition} from '../d29/definition.js';
 import {applyD34D42Definition} from '../d34-d42/definition.js';
 import {applyD43D44Definition} from '../d43-d44/definition.js';
+import {applyD45Definition} from '../d45/definition.js';
 // Story version and editable definitions; no player progress or provider keys.
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
@@ -1196,3 +1197,4 @@ applyD26D28Definition(STORY55_CONFIG);
 applyD29Definition(STORY55_CONFIG);
 applyD34D42Definition(STORY55_CONFIG);
 applyD43D44Definition(STORY55_CONFIG);
+applyD45Definition(STORY55_CONFIG);

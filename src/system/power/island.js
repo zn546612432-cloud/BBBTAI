@@ -1,9 +1,10 @@
 import {telephonyIsland} from '../../services/telephony/view.js';
 import {batteryPercent,needsCharge,isShortCharging} from './battery.js';
+import {scriptedCallCameraActive} from '../../apps/noapp/voice-call.js';
 
 export function dynamicIsland(s,{expanded=false,page='home'}={}){
  const call=telephonyIsland(s);if(call)return call;
- const remote=!!s.story55?.ghostShare?.remote?.active&&s.story55?.ghostShare?.phase==='controlling';
+ const remote=scriptedCallCameraActive()||!!s.story55?.ghostShare?.remote?.active&&s.story55?.ghostShare?.phase==='controlling';
  const blocked=s.deathPhase==='draining';if(blocked)expanded=true;
  const percent=batteryPercent(s),short=isShortCharging(s),charging=short||['charging','sleeping'].includes(s.powerMode),low=needsCharge(s);
  const select=!blocked&&!charging&&page==='select';
