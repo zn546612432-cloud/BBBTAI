@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "day": 46,
+  "date": "2025-07-03",
+  "title": "D46 狼崽團：眼熟的人",
+  "stage": "approved",
+  "scope": "main",
+  "systems": ["story55", "messaging", "time"],
+  "assets": [],
+  "events": [
+    {"id":"line-00","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"胡枫","thread":"group","text":"我今天出门看到有个很眼熟的人在摆摊，前几天好像也见过，在大街上喝水","trigger":{"type":"day-time","ref":"18:10"},"requires":["node:d45-wang"],"timing":{"day":46,"at":"18:10"},"once":true,"delivery":{"late":"silent","delaySeconds":0}},
+    {"id":"line-01","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"胡枫","thread":"group","text":"我不知道是不是错觉","trigger":{"type":"previous-event","ref":"line-00"},"requires":["line-00"],"timing":{"day":46,"at":"18:10"},"once":true,"delivery":{"late":"silent","delaySeconds":5}},
+    {"id":"line-02","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"阿威","thread":"group","text":"可能是警察","trigger":{"type":"previous-event","ref":"line-01"},"requires":["line-01"],"timing":{"day":46,"at":"18:11"},"once":true,"delivery":{"late":"silent","delaySeconds":3}},
+    {"id":"line-03","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"仔仔","thread":"group","text":"我有点担心干爹，他才回来不久，对街道都不熟悉，他还喜欢自己出来买菜做饭","trigger":{"type":"previous-event","ref":"line-02"},"requires":["line-02"],"timing":{"day":46,"at":"18:11"},"once":true,"delivery":{"late":"silent","delaySeconds":4.5}},
+    {"id":"line-04","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"熙旺","thread":"group","text":"干爹那边我会看着的","trigger":{"type":"previous-event","ref":"line-03"},"requires":["line-03"],"timing":{"day":46,"at":"18:12"},"once":true,"delivery":{"late":"silent","delaySeconds":5.5}},
+    {"id":"line-05","kind":"incoming-text","surface":"wechat","capability":"story.d46-group","owner":"story55","actor":"熙旺","thread":"group","text":"大家这段时间都别出门，再坚持一会，等熙蒙安排","trigger":{"type":"previous-event","ref":"line-04"},"requires":["line-04"],"timing":{"day":46,"at":"18:12"},"once":true,"delivery":{"late":"silent","delaySeconds":3}}
+  ],
+  "acceptance": [
+    {"id":"check-trigger","type":"trigger","verify":"18:10 以前不發送；到點逐條發出六句。"},
+    {"id":"check-duplicate","type":"idempotency","verify":"重複調度和讀取存檔不重發。"},
+    {"id":"check-negative","type":"negative","verify":"前置劇情未完成或未到時間時不提前發送。"},
+    {"id":"check-save","type":"save-restore","verify":"舊存檔只加入一次新節點，不重發歷史。"},
+    {"id":"check-cross-app","type":"cross-app","verify":"走原生微信群聊、通知及既有劇情節點；每日兩單保留。"},
+    {"id":"check-late-entry","type":"late-entry","verify":"舊 D46 存檔可接續，已過 D46 的存檔不重播。"},
+    {"id":"check-assets","type":"assets","verify":"純文字採用既有群成員頭像。"},
+    {"id":"check-date-clock","type":"date-clock","verify":"到點暫停，最後一條發出後恢復。"}
+  ]
+}
