@@ -1,5 +1,23 @@
 [
   {
+    "id": "d03-xiaoxin-15",
+    "channel": "wechat",
+    "chat": "xiaoxin",
+    "from": "小辛",
+    "before": "最好不要超過八千",
+    "text": "最好不要超過一萬",
+    "kind": "text"
+  },
+  {
+    "id": "d05-wang-morning-6",
+    "channel": "wechat",
+    "chat": "wang",
+    "from": "熙旺",
+    "before": "看到了，我晾好了",
+    "text": "看到了，我晚點幫你晾",
+    "kind": "text"
+  },
+  {
     "id": "d02-wang-script-1",
     "channel": "wechat",
     "chat": "wang",

@@ -68,6 +68,8 @@ function createEpisodes(s,now){
  const record=state(s);
  for(const c of s.content?.conversations?.wechat||[]){
   const id=c.id,style=profile(id),old=pending(s,id);
+  const existing=record.episodes[id];
+  if(existing?.status==='open'&&!old.length){existing.status='done';changed=true;}
   if(!style||!old.length||s.day-Math.min(...old.map(x=>x.day))<MISSED_REPLY_POLICY.minDays)continue;
   if(record.episodes[id]?.status!=='done'&&record.episodes[id])continue;
   record.serial++;
@@ -84,7 +86,7 @@ function createEpisodes(s,now){
 export function genericMissedReplyDraft(s,id){
  if(!eligible(s))return null;
  const ep=look(s,id),style=profile(id);
- if(!style||!ep||ep.status!=='open'||s.day<ep.day)return null;
+ if(!style||!ep||ep.status!=='open'||s.day<ep.day||!pending(s,id).length)return null;
  return {text:style.me[ep.variant],stage:'missed:'+ep.serial,source:'generic-missed',day:ep.day,priority:1};
 }
 export function genericMissedReplyBusy(s,id){
@@ -147,6 +149,7 @@ export function genericMissedRepliesDue(s,now=Date.now()){
  const record=s.story55?.genericMissedReplies;
  if(!record)return AUTHORED_CHAT_TRACKS.some(({track})=>(track.pendingCatchup?.(s)||[]).some(x=>s.day-x.day>=MISSED_REPLY_POLICY.minDays));
  if(Object.values(record.episodes).some(ep=>ep.status==='waiting-npc'&&ep.answerAt!=null&&now>=ep.answerAt))return true;
+ if(Object.entries(record.episodes).some(([id,ep])=>ep.status==='open'&&!pending(s,id).length))return true;
  const used=record.nudges?.day===s.day?record.nudges.count:0;
  if(used<MISSED_REPLY_POLICY.maxNudgesPerDay&&Object.values(record.episodes).some(ep=>ep.status==='open'&&!ep.nudged&&now>=ep.nudgeAt))return true;
  return (s.content?.conversations?.wechat||[]).some(c=>!record.episodes[c.id]||record.episodes[c.id].status==='done'

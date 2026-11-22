@@ -4,8 +4,9 @@ import {LATE_REPLIES} from '../../services/messaging/lifecycle/replies.js';
 const scenes=[...D05_GROUP,...D05_PRIVATE].map(scene=>({...scene,
  ...(scene.id==='breakfast'?{lines:s=>scene.lines.map((l,i)=>i===16&&!s.content.conversations.wechat.find(c=>c.id==='wang')?.messages.some(m=>m.storyD05&&m.from==='me')?{...l,text:'粥放桌上了，等他起來吃。'}:l)}:{}),
  replies:LATE_REPLIES.d05[scene.id],
- ...(scene.id==='wang-morning'?{until:'11:00'}:{}),
- ...(scene.id==='zaizai-paris'?{lateDays:7}:{}),
+ ...(scene.id==='wang-morning'?{until:'11:00',expireReply:true}:{}),
+ ...(scene.id==='wang-evening'?{expireReply:true}:{}),
+ ...(scene.id==='zaizai-paris'?{lateDays:7,preserveLate:true}:{}),
 }));
 export const d05Track=createConversationTrack({day:5,prefix:'d05',lockChats:'all',scenes,progress:s=>s.story55.d05Chats??={}});
 function seedNote(s){

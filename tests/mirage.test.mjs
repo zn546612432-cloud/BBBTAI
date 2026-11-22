@@ -71,6 +71,12 @@ test('D06 Flow posts exactly one live message, then Mirage uses the shared singl
   const mail=store.get().content.mail.find(m=>m.id===mailId);
   assert.deepEqual(mail.attachments,['wallet_challenge_0524.enc']);
   assert.match(mail.body,/MIRAGE-D06/);
+  assert.doesNotMatch(mail.body,/請先在 GHOST|完成五項驗證後|完成後請在 MIRAGE/);
+  const oldInstructions='\n\n請先在 GHOST 輸入授權密鑰，依次執行：\n01 破譯 → 02 隱匿 → 03 連結（第一關） → 04 連結（第二關） → 05 竊取。\n\n完成五項驗證後，回到 MIRAGE 手動提交，獎池才會結算。\n\n完成後請在 MIRAGE 手動提交驗收。';
+  const expectedBody=mail.body;
+  store.update(s=>{const old=s.content.mail.find(m=>m.id===mailId);old.body+=oldInstructions;old.read=true;tickStory55(s);});
+  assert.equal(store.get().content.mail.find(m=>m.id===mailId).body,expectedBody);
+  assert.equal(store.get().content.mail.find(m=>m.id===mailId).read,true);
   assert.equal(store.get().content.mail.filter(m=>m.id===mailId).length,1);
   assert.match(renderKira(ctx,{route:'/mail/'+mailId,params:{}}),/kira-open-commission-file/);
   handleKira('kira-open-commission-file',{dataset:{id:mailId}},ctx);

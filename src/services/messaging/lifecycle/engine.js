@@ -101,8 +101,19 @@ export function createConversationTrack(config){
   q.historySettled=true;q.lifecycleVersion=CHAT_LIFECYCLE_POLICY.version;
   return true;
  }
+ // A real player reply in a newer topic closes earlier ordinary conversations.
+ // Mandatory plot and expressly persistent commitments retain their own gates.
+ function superseded(s,d,q){
+  if(d.mandatory||d.preserveLate||d.chat==='group'||d.channel!=='wechat'||!q.historySettled)return false;
+  const cutoff=endMinute(s,d,q);
+  const chat=s.content?.conversations?.wechat?.find(c=>c.id===chatId(s,d));
+  return !!chat?.messages?.some(m=>m.from==='me'&&m.actual===true&&m.lifecycleId!==config.prefix+':'+d.id&&!String(m.id||'').includes('-late-')&&!String(m.id||'').startsWith('missed-')&&
+   !String(m.id||'').startsWith(config.prefix+'-'+d.id+'-')&&Number.isInteger(m.day)&&typeof m.time==='string'&&
+   (m.day-1)*1440+minute(m.time)>=cutoff);
+ }
  function lateChoice(s,d,q){
   if(!q?.historySettled||q.completed||q.skipped||q.lateHandled||q.status==='unstarted'||!d.replies)return null;
+  if(d.expireReply||superseded(s,d,q))return null;
   const gap=s.day-d.day;
   if(gap<0||gap>(d.lateDays??CHAT_LIFECYCLE_POLICY.lateDays)||d.closed?.(s))return null;
   const kind=d.resolved?.(s)?'resolved':gap===0?'sameDay':gap===1?'nextDay':'later';
@@ -134,6 +145,7 @@ export function createConversationTrack(config){
    }
    if(q.completed||q.skipped)continue;
    if(isPast(s,d,q))changed=history(s,d,q)||changed;
+   if(!q.lateHandled&&q.historySettled&&superseded(s,d,q)){q.lateHandled=true;q.status='closed';setDue(q,null);changed=true;}
    if(q.historySettled&&!lateChoice(s,d,q)&&q.status==='waiting-late'){q.status='expired';changed=true;}
   }
   return changed;
@@ -233,6 +245,7 @@ export function createConversationTrack(config){
   if(!supported(s)||s.day<config.day)return false;
   const map=root(s);
   return defs.some(d=>{const q=map[d.id];return !q||(!q.completed&&!q.skipped&&!q.historySettled&&isPast(s,d,q))
+   ||!q.completed&&!q.lateHandled&&!q.lateRun&&superseded(s,d,q)
    ||q.lateRun&&!q.lateHandled&&qDue(q)!=null&&now>=qDue(q)
    ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
  }
@@ -252,10 +265,10 @@ export function createConversationTrack(config){
   if(!supported(s)||s.day<=config.day)return [];
   const map=root(s);
   return defs.filter(d=>{
-   if(d.mandatory||d.chat==='group'||id&&(chatId(s,d)!==id&&d.chat!==id))return false;
+   if(d.mandatory||d.preserveLate||d.chat==='group'||id&&(chatId(s,d)!==id&&d.chat!==id))return false;
    const q=map[d.id];
    if(!q||!q.historySettled||q.completed||q.skipped||q.lateHandled||q.lateRun||q.status==='unstarted')return false;
-   return q.index>0&&s.day>d.day&&lines(s,d,q)[q.index]?.who==='me';
+   return !superseded(s,d,q)&&q.index>0&&s.day>d.day&&lines(s,d,q)[q.index]?.who==='me';
   }).map(d=>({track:config.prefix,id:d.id,day:d.day,conversationId:chatId(s,d)}));
  }
  function settleCatchup(s,id){
