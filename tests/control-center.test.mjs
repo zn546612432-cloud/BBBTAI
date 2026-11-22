@@ -13,6 +13,17 @@ test('one output bus silences active and new audio; restores the chosen volume a
  a.volume=.5;a.listeners.volumechange();assert.equal(a.volume,.3);
  configureAudio({muted:true,volume:.6});configureAudio({muted:false,volume:.6});assert.equal(a.volume,.3);assert.equal(outputLevel(),.6);
 });
+test('iOS-style read-only media volume uses the shared Web Audio gain',()=>{
+ const previous=globalThis.AudioContext,gains=[];let source;
+ class NativeContext{constructor(){this.state='suspended';this.destination={};}resume(){this.state='running';return Promise.resolve();}createGain(){const gain={gain:{value:1},connect(){}};gains.push(gain);return gain;}createMediaElementSource(element){source=element;return {connect(){}};}}
+ try{
+  globalThis.AudioContext=NativeContext;
+  const element={get volume(){return 1;},set volume(v){},muted:false,addEventListener(){}};
+  configureAudio({volume:.3});registerAudio(element);assert.equal(source,element);assert.equal(gains[1].gain.value,.3);
+  configureAudio({volume:.8});assert.equal(gains[1].gain.value,.8);
+  configureAudio({muted:true,volume:.8});assert.equal(gains[1].gain.value,0);assert.equal(element.muted,false);
+ }finally{globalThis.AudioContext=previous;configureAudio({volume:.7});}
+});
 test('right upper swipe opens controls from lock and app; left swipe keeps notifications; upward dismiss stays in controls',()=>{
  const g={dx:2,dy:100,top:true,right:true};assert.equal(classifyGesture({...g,locked:true}),'controls');assert.equal(classifyGesture({...g,locked:false,home:false}),'controls');assert.equal(classifyGesture({...g,right:false,locked:true}),'shade');assert.equal(classifyGesture({dx:1,dy:-100,controls:true,bottom:true,home:true}),'controls');assert.equal(classifyGesture({...g,dx:3,dy:3}),null);
 });

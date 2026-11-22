@@ -34,7 +34,7 @@ export function currentScript55(s,channel,conversationId,now=Date.now()){
   if(n.id==='intro'&&s.day===1&&!s.story55?.previewNode)continue;
    const t=threadForScene55(n.id,s);
   if(t.channel!==channel||t.conversationId!==conversationId)continue;
-  if(n.id==='recognition'&&!s.story55.noappInstalled)continue;
+  if(n.id==='recognition')continue; // The fixed NoApp call owns this dialogue.
   if(nodeStatus(s,n.id).state!=='ready')continue;
   const progress=scene55(s,n.id),lines=sceneLines(s,n.id);
   const index=progress.index||0;

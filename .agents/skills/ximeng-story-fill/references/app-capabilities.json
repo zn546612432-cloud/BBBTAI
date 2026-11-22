@@ -164,6 +164,7 @@
       "module": "src/apps/noapp/index.js",
       "appId": "noapp",
       "capabilities": {
+        "story.recognition-call": {"state":"wired-day","owner":"noapp","kinds":["system-notice"],"proof":"src/apps/noapp/voice-call.js","originDays":[33,34,35,36,37,38]},
         "story.ghost-car-models": {"state":"wired-day","owner":"story55","kinds":["link"],"proof":"src/services/story55/ghost-car.js","originDays":[35]},
         "story.d43-paris": {"state":"wired-day","owner":"story55","kinds":["incoming-image","incoming-text","player-send"],"proof":"src/story/d43-d44/definition.js","originDays":[43]},
         "ai.scripted-message": {

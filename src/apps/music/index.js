@@ -40,7 +40,7 @@ export function handle(a,t,c){
  if(a==='music-library'){view='library';c.refresh();}
  if(a==='music-restart'){if(audio)audio.currentTime=0;sync();}
  if(a==='music-previous'||a==='music-next'){const s=c.store.get();if(a==='music-previous'&&audio?.currentTime>3){audio.currentTime=0;sync();return;}const next=adjacent(s,a==='music-next'?1:-1);if(isPlaying())playTrack(next.id,c);else{loadTrack(next,c);c.store.update(s=>{s.musicTrack=next.id;s.musicPlaying=false;});}sync();}
- if(a==='music-mode'){const mode=modes[(modes.indexOf(c.store.get().musicMode||'sequence')+1)%modes.length];if(audio)audio.loop=mode==='single';c.store.update(s=>s.musicMode=mode);c.toast(modeLabels[mode]);}
+ if(a==='music-mode'){const mode=modes[(modes.indexOf(c.store.get().musicMode||'sequence')+1)%modes.length];if(audio)audio.loop=mode==='single';c.store.update(s=>s.musicMode=mode);}
  if(a==='music-toggle'){if(isPlaying()){playRequest++;audio.pause();c.store.update(s=>s.musicPlaying=false);}else playTrack(trackById(c.store.get().musicTrack).id,c);}
  if(a==='music-share'){const track=trackById(c.store.get().musicTrack);const messageId=sendMessage(c.store,{channel:'noapp',conversationId:'tai',text:'分享音乐：'+track.title,kind:'music',attachment:{trackId:track.id}});c.router.open({appId:'noapp',route:'/chat/tai'});window.dispatchEvent(new CustomEvent('ximeng:noapp-music-sent',{detail:{messageId}}));}
 }

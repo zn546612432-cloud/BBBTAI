@@ -36,3 +36,8 @@ test('Melatonin uses a packaged MP3 with an independent M4A fallback',async()=>{
  assert.equal(state.musicTrack,'melatonin');
  assert.deepEqual(toasts,[]);
 });
+test('music mode cycles silently without a toast',async()=>{
+ const {handle}=await import('../src/apps/music/index.js');
+ const state={musicMode:'sequence'},ctx={store:{get:()=>state,update:fn=>fn(state)},toast(){assert.fail('Playback mode must not toast');}};
+ for(const mode of ['repeat','single','shuffle','sequence']){handle('music-mode',{},ctx);assert.equal(state.musicMode,mode);}
+});

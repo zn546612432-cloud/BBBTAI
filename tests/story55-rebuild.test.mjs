@@ -109,7 +109,15 @@ test('D45 rebuild reconstructs storyline, inbox, wallet, NoApp and phased GHOST'
  assert.equal(s.content.mirage.transactions.filter(t=>t.id==='s55-wallet-10btc').length,1);
  assert.equal(s.content.mail.find(m=>m.id==='code-mail')?.read,true);
  assert.equal(s.content.mail.find(m=>m.id==='invite-mail')?.read,true);
- assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.id==='s55-recognition-0'),true);
+ assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.id==='s55-recognition-call'&&m.kind==='call'),true);
+ const tai=s.content.conversations.noapp.find(c=>c.id==='tai');
+ assert.equal(tai.messages.find(m=>m.id==='s55-d42-operation-3-0').time,'15:05');
+ assert.equal(tai.messages.find(m=>m.id==='s55-d42-operation-4-0').time,'15:50');
+ assert.ok(tai.messages.find(m=>m.id==='s55-d42-operation-3-3').time<'15:50');
+ // Repair a saved developer reconstruction that used one 20:00 timestamp.
+ for(const m of tai.messages.filter(m=>/^s55-d42-operation-[34]-/.test(m.id)))m.time='20:00';
+ for(const id of ['d42-operation-3','target'])delete s.story55.scenes[id].d42TimeRepaired;
+ tickStory55(s);assert.equal(tai.messages.find(m=>m.id==='s55-d42-operation-4-0').time,'15:50');
  assert.equal(ids(s).has('history-2024-0310'),true);
  assert.equal(ids(s).has('author-d48'),true);
  assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.find(m=>m.id==='author-d48').delivery,undefined);

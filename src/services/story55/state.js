@@ -61,11 +61,13 @@ export function pendingTimedStoryEvent(s){
   .map(n=>({...n,minute:minuteOf(n.at)+(n.afterMidnight?1440:0)})).sort((a,b)=>a.minute-b.minute)[0]||null;
 }
 export function timedStoryPaused(s){
+ if(recognitionCallDue(s))return true;
  const n=pendingTimedStoryEvent(s);if(n&&storyDayMinute(s)>=n.minute)return true;
  const active=s.story55?.activeScene;
  return !!active&&fixedSceneTimeline(nodeById(s,active))&&(s.story55.scenes?.[active]?.index||0)>0&&!completed(s,active)&&nodeStatus(s,active).state==='ready';
 }
 export const taiRecognized=s=>isStory55(s)?completed(s,'recognition'):s.day>=56;
+export const recognitionCallDue=s=>isStory55(s)&&!s.story55.ended&&s.story55.noappInstalled===true&&nodeStatus(s,'recognition').state==='ready';
 export const final55=s=>isStory55(s)&&!!s.story55.ended;
 export function nodeStatus(s,id){
  const n=nodeById(s,id);if(!n)return {state:'missing',reason:'不存在的节点'};

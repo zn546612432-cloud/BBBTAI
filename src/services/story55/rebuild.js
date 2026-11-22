@@ -18,6 +18,7 @@ import {rebuildLinkedContractsForDay} from './rebuild-contracts.js';
 import {tickLinkedContracts} from '../../apps/mirage/linked-contract-runtime.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {simulateFlowD03} from './flow-d03.js';
+import {D42_OPERATION_SCENE_IDS} from '../../story/d34-d42/definition.js';
 import {D01_REPAIR,D01_ATTACHMENT,seedD01,deliverD01Opening,claimD01Bank,acceptD01Repair,deliverD01Attachment,revealD01Key,deployD01,finishD01Round,submitD01Attachment,settleD01Repair} from '../../story/d01/runtime.js';
 import {authorize} from '../../apps/ghost/state.js';
 import {rebuildD02} from '../../story/d02/runtime.js';
@@ -354,7 +355,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
     if(node.id==='questions'&&!s.story55.identityContact)s.story55.identityContact={count:4,replyDay:day+1};
     if(node.id==='invite'&&completed(s,'photo'))s.story55.identityInviteRequested=true;
     if(node.afterMidnight&&s.day===node.day){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=node.at;}
-    else if(node.at&&s.day===node.day&&s.clock<node.at)s.clock=node.at;
+    else if(node.at&&s.day===node.day&&(s.clock<node.at||D42_OPERATION_SCENE_IDS.includes(node.id)))s.clock=node.at;
     // The historical mock invitation has no real match or postgame chat.
     // Only the developer replay may settle that synthetic prerequisite.
     const historicalPostgame=node.id==='d23-chess-finish'&&s.story55.scenes?.['d23-chess']?.test===true;

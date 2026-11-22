@@ -9,6 +9,7 @@ import {selectStory55Pin} from '../../apps/maps/features/story55/index.js';
 import {voicePreview} from '../ai/gateway.js';
 import {saveTestSnapshotDurable,getTestSnapshotDurable,restoreTestSnapshotDurable,deleteTestSnapshotDurable,storySourceVersion} from './test-snapshots.js';
 import {rebuildStory55AtDay,prepareStory55NodeAtDay} from './rebuild.js';
+import {maybeStartRecognitionCall} from '../../apps/noapp/voice-call.js';
 const open=(c,appId,route='/',params={})=>c.router.open({appId,route,params});
 async function archiveAndStart(c){const old=c.store.get(),nav=structuredClone(old.nav);if(isStory55(old))await saveTestSnapshotDurable(c.store.storage,old,'创建新周目前 · D'+old.day);else c.store.storage?.setItem('ximeng-phone-before-story55',JSON.stringify(old));c.store.update(s=>{if(isStory55(s))rebuildStory55AtDay(s,1,'08:00');else activateStory55(s);s.nav=nav;s.unlocked=true;});}
 export function previewNode55(s,id){return prepareStory55NodeAtDay(s,id);}
@@ -25,7 +26,7 @@ export async function handleStory55Action(a,t,c){
  if(a==='s55-delete-snapshot'){if(!globalThis.confirm?.('确定只删除这一份测试快照吗？剧情原始数据不会删除。'))return true;await deleteTestSnapshotDurable(c.store.storage,t.dataset.snapshot);c.toast?.('测试快照已删除');return true;}
  if(a==='s55-install-noapp'){
   if(!isStory55(c.store.get())||!c.store.get().content.mail.some(m=>m.id==='invite-mail'))throw Error('請先在 KIRA 收到 NoApp 邀請');
-  c.store.update(s=>{markMail55(s,'invite-mail');s.story55.noappInstalled=true;const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陳熙泰';});open(c,'noapp','/chat/tai');return true;
+  c.store.update(s=>{markMail55(s,'invite-mail');s.story55.noappInstalled=true;const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陳熙泰';});open(c,'noapp','/chat/tai');maybeStartRecognitionCall(c);return true;
  }
  if(a==='s55-select-node'){c.store.update(s=>s.editor.story55Node=id);return true;}
  if(a==='s55-select-project'){c.store.update(s=>s.editor.story55Project=project);return true;}

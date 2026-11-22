@@ -53,6 +53,9 @@ export const D42_CALL={id:'d42-morning-call',day:42,pauseTimeUntilComplete:true,
 ]};
 export const RETIRED_SCENES=['failure','ready'];
 export const TIMED_SCRIPTED_CALLS=[D41_CALL,D42_CALL];
+// Developer historical replay must use these scene starts instead of the
+// generic 20:00 reconstruction clock, which collapsed separate exchanges.
+export const D42_OPERATION_SCENE_IDS=['d42-operation-1','d42-operation-2','d42-operation-3','target','d42-group'];
 export function applyD34D42Definition(c){
  for(const {id,chat,lines,...data} of scenes){
   const n={id,kind:'scene',requires:['plan'],delivery:'queued',channel:'wechat',conversationId:chat,messagePrefix:'s55-'+id,...(data.gateDay?{}:{optional:true,throughDay:data.day}),...data};
