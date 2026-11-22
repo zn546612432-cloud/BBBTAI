@@ -71,6 +71,6 @@ export function applyD46Definition(c){
  const group=c.nodes.find(n=>n.id==='d45-group');
  if(group)group.requires=group.requires.filter(id=>id!==D45_WALLET_SCENE);
  const payment=c.nodes.find(n=>n.id==='mercenary');
- if(payment){payment.day=PRIVATE_PAYMENT_DAY;payment.requires=[...new Set([...payment.requires,D46_CHAT])];payment.cost=1282051.28;payment.quotedAmount=10000000;payment.quotedCurrency='HKD';}
+ if(payment){payment.day=PRIVATE_PAYMENT_DAY;payment.requires=[...new Set([...payment.requires,D46_CHAT])];if(!c.d47Revision){payment.cost=1282051.28;payment.quotedAmount=10000000;payment.quotedCurrency='HKD';}}
  c.d46Revision=2;
 }

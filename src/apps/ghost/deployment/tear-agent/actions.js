@@ -1,4 +1,4 @@
-import {agent,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending,blockedTearText} from './state.js';
+import {agent,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending,blockedTearText,acceptTearTask} from './state.js';
 import {completed} from '../../../../services/story55/state.js';
 import {savePersonalFiles,PERSONAL_FILES_ID} from '../../../files/features/local-library/index.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
@@ -31,8 +31,12 @@ export function handleTearAgent(action,t,ctx){
  ctx.store.update(s=>{const a=ensureAgent(s);
   if(key==='collect'){const id=t.dataset.id;if(tearTaskInfo(s,id)?.complete&&agentFiles(s).some(f=>f.id==='tear-artifact-'+id)){a.collectedArtifacts??={};a.collectedArtifacts[id]=true;}}
   if(key==='task'){a.history=false;a.picking=false;a.documentReading=false;}
-  if(key==='task')a.selectedTask=tearTaskInfo(s,t.dataset.id)?(a.selectedTask===t.dataset.id?null:t.dataset.id):null;
-  if(key==='document-read'){const info=tearTaskInfo(s,t.dataset.id);if(info?.document&&info.complete){a.selectedTask=info.id;a.documentReading=true;a.history=false;a.picking=false;}}
+  if(key==='task'){
+   const id=t.dataset.id,info=tearTaskInfo(s,id);
+   if(info?.complete){acceptTearTask(s,id);a.selectedTask=['identity','personal-files'].includes(id)?id:null;}
+   else a.selectedTask=info?(a.selectedTask===id?null:id):null;
+  }
+  if(key==='document-read'){const info=tearTaskInfo(s,t.dataset.id);if(info?.document&&info.complete){if(!a.acceptedTasks?.[info.id])acceptTearTask(s,info.id);a.selectedTask=info.id;a.documentReading=true;a.history=false;a.picking=false;}}
   if(key==='task-close'){a.selectedTask=null;a.documentReading=false;}
   if(key==='history'){a.history=!a.history;a.selectedTask=null;a.picking=false;}
   if(key==='history-close')a.history=false;

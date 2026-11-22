@@ -35,6 +35,7 @@ function baseView(s,p){
  </div>`;
 }
 export function deploymentView(s,id){
+ if(id==='second')return `<div class="gh-shell gh-deploy-screen">${deploymentHeader(s)}<div class="gh-deploy-meta">SERVER_SOURCE</div><div class="gh-deploy-bottom">${primary('gh-tear-open','啟動 Ouroboros’ Tear')}</div></div>`;
  const p=projectById(s,id);if(!p)return deploymentHome(s);
  if(id==='prep')return `<div class="gh-shell gh-deploy-screen">${deploymentHeader(s)}<div class="gh-deploy-meta">鬼車行動 · ${deploymentPercent(s,id)}%</div><div class="gh-deploy-bottom">${primary('gh-ghost-car-reminder','查看鬼車行動')}</div></div>`;
  if(id==='base')return baseView(s,p);

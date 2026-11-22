@@ -7,6 +7,8 @@ import {blocksAnonymousMirageInput} from '../../../../services/story55/mirage-in
 import {localFileList,localWorkAttachments,personalFileAttachments,saveGeneratedLocalFile} from '../../../files/features/local-library/index.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../../../services/commissions/attachment-flow.js';
 import {archiveFile} from '../../../files/features/local-library/story-archives.js';
+import {SOURCE_FILE,SOURCE_RESULT} from '../../../../story/d47/definition.js';
+import {completeNode} from '../../../../services/story55/state.js';
 
 // All fictional research follows the existing phone clock. No real scanning,
 // external access, code execution, or physical-system control is possible here.
@@ -172,9 +174,9 @@ export function tearTaskInfo(s,id){
    if(!running)elapsedMinutes=Math.max(0,validation.start+TEAR_STAGES.validation.duration-job.start);
   }else{progress=setupProgress;running=true;}
  }else{
-  progress=job.done?1:Math.min(.99,elapsed/definition.duration);
+  progress=job.done?1:Math.min(.99,elapsed/(job.duration||definition.duration));
   running=!job.done;
-  if(job.done)elapsedMinutes=Math.min(elapsed,definition.duration);
+  if(job.done)elapsedMinutes=Math.min(elapsed,job.duration||definition.duration);
  }
  return {
   id,title:definition.title,elapsedMinutes:Math.max(0,Math.floor(elapsedMinutes)),
@@ -231,7 +233,7 @@ export function beginTearChatSession(s){
 
 export function startAgentJob(s,id){
  if(!stageReady(s,id))return false;
- const a=ensureAgent(s),d=TEAR_STAGES[id];a.jobs[id]={start:now(s),shown:0,done:false};
+ const a=ensureAgent(s),d=TEAR_STAGES[id];a.jobs[id]={start:now(s),shown:0,done:false,...(d.nextDay?{duration:(Math.floor(now(s)/1440)+1)*1440+480-now(s),dueDay:s.day+1}:{})};
  tickTearAgent(s);registerTearVisualTask(s,id);return true;
 }
 export function tickTearAgent(s){
@@ -245,18 +247,19 @@ export function tickTearAgent(s){
   if(j.kind==='document-read'){
    if(!j.done&&Date.now()-j.startedAt>=DOCUMENT_READ_MS&&archiveFile(s,id)){
     j.done=true;changed=true;
-    addMessage(s,'assistant','解析成功。',{documentResult:id,job:id});
    }
    continue;
   }
   const d=TEAR_STAGES[id];if(!d||j.done)continue;
   const elapsed=Math.max(0,now(s)-j.start);
-  while(j.shown<d.logs.length&&elapsed>=d.logs[j.shown][0]){
-   addMessage(s,'assistant',d.logs[j.shown][1],{job:id,step:j.shown});j.shown++;changed=true;
+  const duration=j.duration||d.duration;
+  while(j.shown<d.logs.length&&elapsed>=(j.shown===d.logs.length-1?duration:d.logs[j.shown][0])){
+   if(j.shown!==d.logs.length-1||['survey','maintenance'].includes(id))addMessage(s,'assistant',d.logs[j.shown][1],{job:id,step:j.shown});j.shown++;changed=true;
   }
-  if(elapsed>=d.duration){j.done=true;changed=true;
-   if(d.artifact){saveGeneratedLocalFile(s,{id:'tear-artifact-'+id,name:d.artifact,description:d.logs.at(-1)[1]});addMessage(s,'assistant',d.artifact,{artifact:'tear-artifact-'+id,job:id});}
-   if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:id==='archive-password'?'破譯失敗。密碼疑似為由五個大寫英文字母組成的人名。':'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
+  if(elapsed>=duration&&(!j.dueDay||s.day>=j.dueDay)){j.done=true;changed=true;
+   if(d.artifact)saveGeneratedLocalFile(s,{id:'tear-artifact-'+id,name:d.artifact,description:d.logs.at(-1)[1]});
+   if(id==='server-source'&&nodeStatus(s,'second').state==='ready')completeNode(s,'second');
+   if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
   }
  }
  if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
@@ -267,6 +270,21 @@ export function tickTearAgent(s){
  }
  if(syncTearVisualProgress(s))changed=true;
  return changed;
+}
+export function acceptTearTask(s,id){
+ const a=ensureAgent(s),info=tearTaskInfo(s,id),d=TEAR_STAGES[id];
+ if(!info?.complete)return false;
+ a.acceptedTasks??={};a.acceptedTasks[id]=true;
+ // Reopen a result without accumulating duplicate bubbles in the same session.
+ a.messages=a.messages.filter(m=>m.resultFor!==id);
+ if(info.document)addMessage(s,'assistant','解析成功。',{documentResult:id,job:id,resultFor:id});
+ else if(id==='identity')addMessage(s,'assistant','已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true,resultFor:id});
+ else if(id==='personal-files')return true; // Preserve the existing archive save/preview interaction.
+ else if(d){
+  addMessage(s,'assistant',id==='server-source'?SOURCE_RESULT:d.logs.at(-1)[1],{job:id,resultFor:id});
+  if(d.artifact)addMessage(s,'assistant','開啟文件',{artifact:'tear-artifact-'+id,job:id,resultFor:id});
+ }
+ return true;
 }
 export function researchInfo(s){const a=agent(s),j=a.jobs.survey;if(!j)return null;
  const end=a.jobs.validation?Math.min(now(s),a.jobs.validation.start+TEAR_STAGES.validation.duration):now(s);
@@ -280,6 +298,11 @@ export function sendAgent(s,text,fileId){
  if(!value&&!file)return {kind:'empty'};
  if(identityRevealPending(s))return {kind:'busy'};
  if(blockedTearText(s,value))return invalidCommand(s);
+ if(file?.id===SOURCE_FILE.id){
+  addMessage(s,'user',value||file.name,{file:file.name,job:'server-source'});a.selected=null;
+  if(!startAgentJob(s,'server-source'))addMessage(s,'assistant',a.jobs['server-source']?.done?'部署已完成，請查看工程結果。':'部署正在進行。');
+  return {kind:'preset'};
+ }
  if(file?.kind==='story-archive'){
   const doc=archiveFile(s,file.id);if(!doc)return {kind:'empty'};
   addMessage(s,'user',value||doc.name,{file:doc.name,job:doc.id});a.selected=null;

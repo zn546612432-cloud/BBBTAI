@@ -8,6 +8,8 @@ import {WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js'
  */
 import {isStory55,story55Config,completed,nodeStatus,completeNode,date55} from './state.js';
 import {activateStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,tickStory55} from './runtime.js';
+import {transfer} from '../bank.js';
+import {SOURCE_FILE,DEPOSIT_ACCOUNT,DEPOSIT_HKD} from '../../story/d47/definition.js';
 import {deployment,projectCapacity,upgradeHardware,completeDeploymentRun,upgradeBaseFramework,baseUpgradeCost} from './projects.js';
 import {syncGhostCarProgress,modelDelivered} from './ghost-car.js';
 import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
@@ -262,6 +264,10 @@ function simulateNode(s,node){
   // Developer date jump only; don't insert a fake player chat or match.
   completeNode(s,node.id,{test:true});return true;
  }
+ if(node.id==='second'){
+  if(agent(s).jobs['server-source'])return false;
+  sendAgent(s,'',SOURCE_FILE.id);return !!agent(s).jobs['server-source'];
+ }
  if(node.kind==='project')return simulateProjectBatch(s,node);
  if(node.kind==='flow'){simulateFlowD03(s);return true;}
  if(node.kind==='private-contract')return publishPrivateContract(s);
@@ -285,7 +291,8 @@ function simulateNode(s,node){
  }
  else if(node.kind==='payment'){
   funding(s,node.cost,'CONTRACT');
-  payNode55(s,node.id);
+  if(node.id==='mercenary')transfer({get:()=>s,update:fn=>fn(s)},{recipient:'Isolde',account:DEPOSIT_ACCOUNT,amount:DEPOSIT_HKD,currency:'HKD'});
+  else payNode55(s,node.id);
  }
  else throw Error('未支持的剧情节点类型：'+node.kind);
  if(!completed(s,node.id))throw Error('节点重建未完成：'+node.id);

@@ -14,6 +14,9 @@ import {dateParts} from '../src/services/calendar.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {syncDeathNight,chargingBlock} from '../src/system/power/story.js';
 import {installMining,accrueMining,upgradeMining,sellMining} from '../src/services/story55/mining.js';
+import {transfer} from '../src/services/bank.js';
+import {DEPOSIT_ACCOUNT,DEPOSIT_HKD,SOURCE_FILE} from '../src/story/d47/definition.js';
+import {sendAgent,tickTearAgent,agent} from '../src/apps/ghost/deployment/tear-agent/state.js';
 const fixture=()=>{const s=initialState();activateStory55(s);return s;};
 const playScene=(s,id)=>{for(let i=0;i<100&&!completed(s,id);i++)advanceScene55(s,id,{acceptCall:true,disconnect:story55Config(s).scenes[id][s.story55.scenes[id]?.index||0]?.[0]==='disconnect'});assert.ok(completed(s,id));};
 function solveRun(s,id){
@@ -40,7 +43,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
  const nodes=validateStory55Config(story55Config(s)).nodes;
- assert.equal(nodes.length,79);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
+ assert.equal(nodes.length,84);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
  assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
@@ -104,7 +107,7 @@ test('config import rejects cycles, impossible deadlines and wrong completion to
 test('expenses, scene loans, direct commissions and mercenary payments settle once with no negative cash',()=>{
  const s=fixture();previewNode55(s,'loan');const before=s.bankData.balance;playScene(s,'loan');assert.equal(s.bankData.balance,before+1000000);assert.equal(s.story55.liabilities,1000000);playScene(s,'loan');assert.equal(s.story55.liabilities,1000000);
  tickStory55(s);tickStory55(s);assert.equal(new Set(s.story55.expenseDays).size,s.story55.expenseDays.length);
- previewNode55(s,'mercenary');const payment=story55Config(s).nodes.find(n=>n.id==='mercenary');assert.equal(payment.quotedCurrency,'HKD');assert.equal(payment.quotedAmount,10000000);s.bankData.balance=payment.cost-1;assert.throws(()=>payNode55(s,'mercenary'),/不足/);assert.equal(completed(s,'mercenary'),false);s.bankData.balance=payment.cost;payNode55(s,'mercenary');assert.equal(s.bankData.balance,0);assert.throws(()=>payNode55(s,'mercenary'));assert.equal(s.bankData.transactions.filter(x=>x.id==='s55-payment-mercenary').length,1);
+ previewNode55(s,'mercenary');const payment=story55Config(s).nodes.find(n=>n.id==='mercenary');assert.equal(payment.quotedCurrency,'HKD');assert.equal(payment.quotedAmount,5000000);const pay=()=>transfer({get:()=>s,update:fn=>fn(s)},{recipient:'Isolde',account:DEPOSIT_ACCOUNT,amount:DEPOSIT_HKD,currency:'HKD'});s.bankData.balance=payment.cost-1;assert.throws(pay,/不足/);assert.equal(completed(s,'mercenary'),false);s.bankData.balance=payment.cost;pay();assert.equal(s.bankData.balance,0);assert.throws(pay);assert.equal(s.bankData.transactions.filter(x=>x.id==='s55-payment-mercenary').length,1);
 });
 test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits for final audio',()=>{
  const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(chargingBlock(s),'plot');
@@ -114,7 +117,7 @@ test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits
  assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
 });
 test('game-clock mining accrues once, survives backwards inspection and caps at ten upgrade levels',()=>{
- const s=fixture();previewNode55(s,'mercenary');s.bankData.balance=100000000;installMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);accrueMining(s);assert.equal(s.story55.mining.btc,.05);
+ const s=fixture();previewNode55(s,'mercenary');s.clock='20:00';s.bankData.balance=100000000;installMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);accrueMining(s);assert.equal(s.story55.mining.btc,.05);
  s.clock='20:00';accrueMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);
  for(let i=1;i<10;i++)upgradeMining(s);assert.equal(s.story55.mining.level,10);assert.throws(()=>upgradeMining(s));const before=s.bankData.balance;sellMining(s);assert.equal(s.bankData.balance-before,6000);
 });
@@ -143,8 +146,9 @@ test('identity conversation becomes real MIRAGE history and NoApp installation p
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
  assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.kind==='call'&&m.transcript.includes('歡迎回家，nya')));
 });
-test('second program still awards 20 percent only for complete five-game batches',()=>{
- const s=fixture(),id='second';previewNode55(s,id);s.day=49;s.story55.hardware=3;const before=deploymentPercent(s,'prep');authorizeProject(s,id,story55Config(s).projects.find(p=>p.id===id).key);
- for(let i=1;i<=5;i++){runBatch(s,id);assert.equal(deploymentPercent(s,id),i*20);}
- assert.equal(deploymentPercent(s,'prep'),before);assert.ok(completed(s,id));
+test('second program is now deployed by TAI on the next game day',()=>{
+ const s=fixture(),id='second';previewNode55(s,id);const before=deploymentPercent(s,'prep');
+ assert.throws(()=>authorizeProject(s,id,'PARIS-43'),/Ouroboros/);
+ sendAgent(s,'',SOURCE_FILE.id);assert.ok(agent(s).jobs['server-source']);assert.equal(completed(s,id),false);
+ s.day=48;s.clock='08:00';tickTearAgent(s);assert.equal(deploymentPercent(s,'prep'),before);assert.ok(completed(s,id));
 });

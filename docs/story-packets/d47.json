@@ -1,0 +1,902 @@
+{
+  "schemaVersion": 2,
+  "day": 47,
+  "date": "2025-07-04",
+  "title": "D47–D50 家庭、源代碼與私人委託訂金",
+  "stage": "approved",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "messaging",
+    "time",
+    "bank",
+    "ghost"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d47-group-0",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "干爹剛才傳了消息過來。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "fact:d47-group-due"
+      },
+      "requires": [
+        "node:d46-group"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "黃德忠和那個女警察搬到他隔壁了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-group-0"
+      },
+      "requires": [
+        "d47-group-0"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "小辛",
+      "text": "？？？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-group-1"
+      },
+      "requires": [
+        "d47-group-1"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "胡枫",
+      "text": "果然是警察。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-group-2"
+      },
+      "requires": [
+        "d47-group-2"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "仔仔",
+      "text": "那干爹怎麼辦？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-group-3"
+      },
+      "requires": [
+        "d47-group-3"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "阿威",
+      "text": "我們得想辦法把他接出來。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-group-4"
+      },
+      "requires": [
+        "d47-group-4"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "巴黎畫展馬上就要撤展了，到時候我們必須走。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-group-5"
+      },
+      "requires": [
+        "d47-group-5"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "小辛",
+      "text": "那干爹呢？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-group-6"
+      },
+      "requires": [
+        "d47-group-6"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-8",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "換作今天被盯上的是我們，老頭子也會棄卒保帥。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-group-7"
+      },
+      "requires": [
+        "d47-group-7"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-group-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "相信我，聽我的安排。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-group-8"
+      },
+      "requires": [
+        "d47-group-8"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:25"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "group"
+    },
+    {
+      "id": "d47-wang-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "蒙蒙，你打算怎麼做？",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:40"
+      },
+      "requires": [
+        "d47-group-9"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "哥，我知道你狠不下心。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-0"
+      },
+      "requires": [
+        "d47-wang-0"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "警察暫時不會動干爹，他們想順藤摸瓜找到我們。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-1"
+      },
+      "requires": [
+        "d47-wang-1"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "我給你一次機會。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-2"
+      },
+      "requires": [
+        "d47-wang-2"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "明天晚上，你去暗殺黃德忠。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-3"
+      },
+      "requires": [
+        "d47-wang-3"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "如果成功了，我們就趁機救走老頭子。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-4"
+      },
+      "requires": [
+        "d47-wang-4"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "me",
+      "text": "如果失敗了，你就得聽我的。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d47-wang-5"
+      },
+      "requires": [
+        "d47-wang-5"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-wang-6"
+      },
+      "requires": [
+        "d47-wang-6"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-wang-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d47-family",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "謝謝。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-wang-7"
+      },
+      "requires": [
+        "d47-wang-7"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "16:40"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d47-source-0",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d47-source",
+      "owner": "story55",
+      "actor": "tai",
+      "text": "源代碼已經寫好了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:30"
+      },
+      "requires": [
+        "d47-wang-8",
+        "fact:tai-recognized"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "21:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "tai"
+    },
+    {
+      "id": "d47-source-1",
+      "kind": "link",
+      "surface": "noapp",
+      "capability": "story.d47-source",
+      "owner": "story55",
+      "actor": "tai",
+      "text": "SERVER_SOURCE.enc",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-source-0"
+      },
+      "requires": [
+        "d47-source-0",
+        "fact:tai-recognized"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "21:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "tai"
+    },
+    {
+      "id": "d47-source-2",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d47-source",
+      "owner": "story55",
+      "actor": "tai",
+      "text": "交給銜尾蛇之淚，剩下的工作由它完成。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d47-source-1"
+      },
+      "requires": [
+        "d47-source-1",
+        "fact:tai-recognized"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "21:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "tai"
+    },
+    {
+      "id": "source-share",
+      "kind": "link",
+      "surface": "ghost",
+      "capability": "story.d47-source-deploy",
+      "owner": "ghost",
+      "actor": "me",
+      "text": "分享 SERVER_SOURCE.enc 至 Ouroboros’ Tear",
+      "trigger": {
+        "type": "user-action",
+        "ref": "files-local-share-archive"
+      },
+      "requires": [
+        "d47-source-2"
+      ],
+      "timing": {
+        "day": 47,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "source-complete",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "capability": "story.d47-source-deploy",
+      "owner": "ghost",
+      "actor": "TAI",
+      "text": "任務完成，等待驗收",
+      "trigger": {
+        "type": "day-time",
+        "ref": "08:00"
+      },
+      "requires": [
+        "source-share"
+      ],
+      "timing": {
+        "day": 48,
+        "at": "08:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "source-accept",
+      "kind": "system-notice",
+      "surface": "ghost",
+      "capability": "story.d47-source-deploy",
+      "owner": "ghost",
+      "actor": "TAI",
+      "text": "程序已部署完畢，將電腦與入侵伺服器連接即可激活使用。",
+      "trigger": {
+        "type": "user-action",
+        "ref": "gh-tear-task"
+      },
+      "requires": [
+        "source-complete"
+      ],
+      "timing": {
+        "day": 48,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "d50-deposit-request-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "isolde",
+      "text": "人已經安排好了。先付一半訂金。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "10:00"
+      },
+      "requires": [
+        "node:d46-isolde-chat"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "10:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    },
+    {
+      "id": "d50-deposit-request-1",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "isolde",
+      "text": "收款人：Isolde",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d50-deposit-request-0"
+      },
+      "requires": [
+        "d50-deposit-request-0"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "10:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    },
+    {
+      "id": "d50-deposit-request-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "isolde",
+      "text": "銀行帳號：000050004750",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d50-deposit-request-1"
+      },
+      "requires": [
+        "d50-deposit-request-1"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "10:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    },
+    {
+      "id": "d50-deposit-request-3",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "isolde",
+      "text": "五百萬港幣。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d50-deposit-request-2"
+      },
+      "requires": [
+        "d50-deposit-request-2"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "10:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    },
+    {
+      "id": "deposit-posted",
+      "kind": "system-notice",
+      "surface": "bank",
+      "capability": "story.d50-deposit-receipt",
+      "owner": "bank",
+      "actor": "me",
+      "text": "Pacific 轉帳 HKD 5,000,000，美元結算 US$641,025.64",
+      "trigger": {
+        "type": "bank-posted",
+        "ref": "s55-payment-mercenary"
+      },
+      "requires": [
+        "d50-deposit-request-3"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "transfer": {
+        "transactionId": "s55-payment-mercenary",
+        "currency": "HKD",
+        "originalAmount": 5000000,
+        "ledgerAmountUsd": -641025.64
+      }
+    },
+    {
+      "id": "deposit-confirmation",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "isolde",
+      "text": "錢已收到。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "deposit-posted"
+      },
+      "requires": [
+        "deposit-posted"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    },
+    {
+      "id": "deposit-followup",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d50-deposit",
+      "owner": "story55",
+      "actor": "me",
+      "text": "等我通知。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "deposit-confirmation"
+      },
+      "requires": [
+        "deposit-confirmation"
+      ],
+      "timing": {
+        "day": 50,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "mc-isolde-mirage"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-trigger",
+      "type": "trigger",
+      "verify": "D47 16:25、16:40、21:30；D50 10:00，先完成前置。"
+    },
+    {
+      "id": "check-negative",
+      "type": "negative",
+      "verify": "未收到文件不能提交；未收到帳號、錯幣別或不足額不可結算。"
+    },
+    {
+      "id": "check-idempotency",
+      "type": "idempotency",
+      "verify": "重複點擊、重新開啟及重載不重複部署或扣款。"
+    },
+    {
+      "id": "check-save-restore",
+      "type": "save-restore",
+      "verify": "任務與紅金紫驗收狀態保留。"
+    },
+    {
+      "id": "check-cross-app",
+      "type": "cross-app",
+      "verify": "NoApp→Files→TAI；Mirage→Pacific→Mirage。"
+    },
+    {
+      "id": "check-late-entry",
+      "type": "late-entry",
+      "verify": "晚一天查看金星，點擊後才顯示結果。"
+    },
+    {
+      "id": "check-assets",
+      "type": "assets",
+      "verify": "所有附件均為本機的虛構資料記錄。"
+    },
+    {
+      "id": "check-date-clock",
+      "type": "date-clock",
+      "verify": "沿用既有劇情時鐘和訊息節奏。"
+    },
+    {
+      "id": "check-finance",
+      "type": "finance",
+      "verify": "HKD 5,000,000 / 7.8 = USD 641,025.64，唯一流水。"
+    }
+  ]
+}

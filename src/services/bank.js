@@ -1,5 +1,6 @@
 import {dateLabel} from './calendar.js';
-import {isStory55,date55} from './story55/state.js';
+import {isStory55,date55,nodeStatus,completeNode} from './story55/state.js';
+import {DEPOSIT_ID,DEPOSIT_ACCOUNT,DEPOSIT_HKD,DEPOSIT_REPLY} from '../story/d47/definition.js';
 import {historicalBtcUsd,HISTORICAL_BTC_USD_SOURCE} from './finance/historical-btc-usd.js';
 export const openingBank=()=>({balance:1280,rate:1,transactions:[],account:'•• 1846'});
 export function ensureBank(s){
@@ -42,12 +43,21 @@ export function payBankPurchase(s,{id,title,price,metadata={}}){
  return postBankTransaction(s,{id,label:title,amount:-n,metadata});
 }
 
-export function transfer(store,{recipient,account,amount,note=''}){
+export const HKD_PER_USD=7.8;
+export const transferUsd=(amount,currency='USD')=>cents(Number(amount)/(currency==='HKD'?HKD_PER_USD:1))/100;
+export function transfer(store,{recipient,account,amount,note='',currency='USD'}){
  const name=String(recipient||'').trim(),destination=String(account||'').trim(),memo=String(note||'').trim(),value=cents(amount);
  if(!name||!destination)throw Error('请填写收款人和账号');
  if(!/^\d{6,20}$/.test(destination.replace(/[\s-]/g,'')))throw Error('请输入 6–20 位收款账号');
  if(!Number.isSafeInteger(value)||value<=0||Math.abs(value/100-Number(amount))>0.000001)throw Error('请输入有效金额');
- store.update(s=>{ensureBank(s);const b=s.bankData;if(value>cents(b.balance))throw Error('余额不足');b.balance=(cents(b.balance)-value)/100;b.transactions.unshift({id:globalThis.crypto?.randomUUID?.()||String(Date.now()),label:name,account:destination,note:memo,amount:-value/100,time:s.clock,date:dateLabel(s)});});
+ if(!['USD','HKD'].includes(currency))throw Error('幣種無效');
+ store.update(s=>{
+  const deposit=isStory55(s)&&destination.replace(/[\s-]/g,'')===DEPOSIT_ACCOUNT;
+  if(deposit&&(nodeStatus(s,'mercenary').state!=='ready'||currency!=='HKD'||value!==DEPOSIT_HKD*100||name.toLowerCase()!=='isolde'))throw Error('請核對訂金收款資料及金額');
+  const id=deposit?DEPOSIT_ID:globalThis.crypto?.randomUUID?.()||String(Date.now());
+  postBankTransaction(s,{id,label:name,amount:-transferUsd(value/100,currency),metadata:{account:destination,note:memo,currency,originalAmount:value/100,...(currency==='HKD'?{hkdPerUsd:HKD_PER_USD}:{})}});
+  if(deposit){completeNode(s,'mercenary');s.story55.scenes[DEPOSIT_REPLY]??={index:0,accepted:false};s.story55.scenes[DEPOSIT_REPLY].nextAt=Date.now()+3000;}
+ });
 }
 /** Convert MIRAGE's BTC balance into the existing Pacific USD ledger.
  *  One shared finance operation; no phantom balance or independently seeded

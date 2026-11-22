@@ -150,6 +150,7 @@
 .gh-agent-document-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.85;padding:24px 22px;touch-action:pan-y}
 .gh-agent-document>footer{flex:none;text-align:center;padding:14px;border-top:1px solid #ffffff12}
 .gh-agent-task-dot.is-collected>span{background:#918171;box-shadow:0 0 0 2px #d5b88a26}
+.gh-agent-task-dot.is-accepted>span{background:#b98cf5;box-shadow:0 0 0 3px #ae77ef25,0 0 14px #ae77efa0}
 .gh-agent-task-dot:active>span{transform:scale(.76)}
 .gh-agent-task-detail{top:auto;left:0;right:0;bottom:0;transform:none;border-radius:26px 26px 0 0;padding:24px 24px max(24px,env(safe-area-inset-bottom));background:linear-gradient(155deg,#393038bb,#151218eb 60%,#0a090bea);animation:tear-sheet-in .56s cubic-bezier(.22,1,.36,1) both}
 .gh-agent-task-detail::before{content:'';display:block;width:32px;height:3px;margin:-12px auto 16px;border-radius:4px;background:#ffffff45}

@@ -49,14 +49,14 @@ function durationLabel(minutes){
 }
 function taskMarkers(s){
  const a=agent(s);
- const ids=[...Object.keys(TASK_POSITIONS),...Object.keys(a.jobs).filter(id=>a.jobs[id].kind==='document-read')].filter(id=>{
+ const ids=[...new Set([...Object.keys(TASK_POSITIONS),...Object.keys(a.jobs)])].filter(id=>{
   const info=tearTaskInfo(s,id);return info&&!(id==='personal-files'&&info.running)&&!(id==='identity'&&identityRevealPending(s));
  });
- const hasDocuments=ids.some(id=>a.jobs[id]?.kind==='document-read');
+ const hasDocuments=ids.some(id=>!TASK_POSITIONS[id]);
  return ids.map((id,index)=>{
   const info=tearTaskInfo(s,id),angle=-Math.PI/2+index*Math.PI*2/ids.length,pos=hasDocuments?[50+44*Math.cos(angle),50+44*Math.sin(angle)]:TASK_POSITIONS[id];
-  const selected=a.selectedTask===id,cls=info.running?'is-running':'is-complete',collected=!!a.collectedArtifacts?.[id];
-  return `<button type="button" class="gh-agent-task-dot ${cls}${collected?' is-collected':''}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${id}" aria-label="${esc(info.title)}，${info.status}，${info.percent}%${collected?'，已領取':''}" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
+  const selected=a.selectedTask===id,accepted=info.complete&&!!(a.acceptedTasks?.[id]||a.collectedArtifacts?.[id]),cls=info.running?'is-running':accepted?'is-accepted':'is-complete';
+  return `<button type="button" class="gh-agent-task-dot ${cls}${selected?' is-selected':''}" style="left:${pos[0]}%;top:${pos[1]}%" data-action="gh-tear-task" data-id="${esc(id)}" aria-label="${esc(info.title)}，${info.running?'處理中':accepted?'已驗收':'已完成'}，${info.percent}%" aria-pressed="${selected}"><span aria-hidden="true"></span></button>`;
  }).join('');
 }
 function taskDetail(s){
