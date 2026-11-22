@@ -93,7 +93,7 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona=''}={}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona='',callActive=false}={}){
  const seen=visibleTaiMemories((Array.isArray(memories)?memories:[]).filter(m=>!m?.kind),day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
@@ -114,6 +114,8 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
    ?'【实时媒介事实｜最高优先级】现在双方正在 NoApp 实时语音通话。熙蒙本轮输入是此通话里的发言，不是微信或 NoApp 文本消息；你正在通过 MiniMax 发声。不能说「你不是挂电话了吗怎么还能回消息」、不能描述在打字或发送聊天气泡。只有真正挂断后，程序才会切换回文字频道。'
    :effectiveMode==='voice'
     ?'【实时媒介事实｜最高优先级】现在双方没有进行实时电话。你正在录制一条可以在聊天里播放的语音消息；这不是正在接通的电话，不能凭空接听、拒接或挂断。'
+    :channel==='noapp'&&callActive
+     ?'【實時媒介事實｜最高優先級】電話尚未結束，熙蒙在 NoApp 私聊窗口打字。以文字回應，禁止假裝電話已掛斷或再次發起通話。'
     :channel==='noapp'
      ?'【实时媒介事实｜最高优先级】现在双方在 NoApp 私聊窗口用文字发消息，当前没有正在进行的语音通话。即使前一条记录是电话，也已经结束；熙蒙可以马上打字，这是正常行为，不是超自然技能或他还在电话里说话。除非程序真实触发新来电，否则只能继续打字。'
      :'【实时媒介事实】当前是此频道的文字交流，不是实时语音电话。',

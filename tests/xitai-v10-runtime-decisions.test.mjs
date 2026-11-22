@@ -40,7 +40,7 @@ test('an explicit request for an expression of love preserves Tai’s choice; a 
  await withMockDirect('send_text',async calls=>{
   const result=await replyToTaiMessage(store,'u-v10',quick);
   assert.equal(result.status,'replied');assert.equal(result.count,1);
-  assert.equal(chat.messages.at(-1).text,'我爱你，熙蒙。');
+  assert.equal(chat.messages.at(-1).text,'我愛你，熙蒙。');
   assert.equal(calls.length,2,'no extra correction, bubble-count continuation or guided question');
   assert.match(calls[0].system,/已读不回、暂不回应/);
  },{body:'电话断了，但这句话我听见了。\n我爱你，熙蒙。不是勉强承认，是因为你这个人。'});
@@ -117,7 +117,7 @@ test('v10 text decision supplies expression prompt and controls tone without cha
   assert.equal(calls.length,4,'v12 tries one natural continuation and one guided-question repair; duplicate mock lines are never spammed');
   assert.match(calls[1].system,/v10已批准行为/);
   assert.match(calls[1].system,/action=send_text/);
-  assert.equal(chat.messages.at(-1).text,'我听到了');
+  assert.equal(chat.messages.at(-1).text,'我聽到了');
   assert.equal(chat.messages.at(-1).aiTone,'dry');
   assert.equal(chat.messages.at(-1).vocalCue,'small_laugh');
  });
@@ -155,7 +155,7 @@ test('stored deferred action can resume after reload-style poll but cannot defer
   assert.ok(task&&typeof task.then==='function');
   await task;
   assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,1);
-  assert.equal(chat.messages.at(-1).text,'我听到了');
+  assert.equal(chat.messages.at(-1).text,'我聽到了');
   assert.ok(calls.length>=2&&calls.length<=4,'deferred retry uses sampled length and guide; at most one continuation and one grounded-question attempt');
   assert.equal(maybeResumeTaiDeferred(store,{now:()=>1000000}),false);
  });

@@ -12,7 +12,7 @@ test('Pages releases isolate code while all public media URLs survive version ro
   await cp(new URL('../scripts/',import.meta.url),path.join(folder,'scripts'),{recursive:true});
   await put('src/services/public-assets.js',await readFile(new URL('../src/services/public-assets.js',import.meta.url),'utf8'));
   await put('package.json','{"type":"module"}');
-  const source='<!doctype html><html><head><link rel="stylesheet" href="/src/styles/base.css"><script type="importmap">{"imports":{"chess.js":"/vendor/chess.js"}}</script></head><body><script type="module" src="/src/main.js"></script></body></html>';
+  const source='<!doctype html><html><head><link rel="stylesheet" href="/src/styles/base.css"><script type="importmap">{"imports":{"chess.js":"/vendor/chess.js","opencc-js/cn2t":"/vendor/opencc-cn2t.js"}}</script></head><body><script type="module" src="/src/main.js"></script></body></html>';
   await put('index.html',source);
   await put('src/main.js',"import './child.js'; const image='/assets/icon.svg'; const ig='/apps/browser/room404/media/'; const logo='/apps/browser/room404/wordmark.svg'; const photos='/assets/story55/personal-files/'; const photo='/assets/story55/triplets-baby-photo.jpg'; const avatar='/apps/wechat/avatars/new-person.webp'; const wallpaper='/wallpapers/new.png'; const icon='/icons/new.png';");
   await put('src/child.js','export const value=1;');
@@ -24,6 +24,7 @@ test('Pages releases isolate code while all public media URLs survive version ro
   await put('public/'+moment,'fixture: current Moments image');
   for(const item of evidence)await put('public/'+item,'fixture: '+item);
   await put('node_modules/chess.js/dist/esm/chess.js','export class Chess{}');
+  await cp(new URL('../node_modules/opencc-js/',import.meta.url),path.join(folder,'node_modules/opencc-js'),{recursive:true});
   // Copy the real bundled engine, not simulated worker assets.
   for(const name of ['stockfish-19-lite-single.js','stockfish-19-lite-single.wasm']){
    await mkdir(path.join(folder,'node_modules/stockfish/bin'),{recursive:true});

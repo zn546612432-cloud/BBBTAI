@@ -25,7 +25,7 @@ test('failed voice produces one in-character repair without calling an unavailab
  const {s,store}=fixture(),c=s.content.conversations.noapp.find(c=>c.id==='tai');
  c.messages.push({id:'unheard-1',from:'me',kind:'voice',text:'[语音消息 4秒]',voiceCaption:null,recognitionFailed:true,day:64,time:'21:00'});
  const old=globalThis.fetch;globalThis.fetch=()=>{throw Error('AI must not be called');};
- try{const r=await replyToTaiMessage(store,'unheard-1',{wait:async()=>{}});assert.equal(r.count,1);assert.match(c.messages.at(-1).text,/没听清|听不清|断了/);}
+ try{const r=await replyToTaiMessage(store,'unheard-1',{wait:async()=>{}});assert.equal(r.count,1);assert.match(c.messages.at(-1).text,/沒聽清|聽不清|斷了/);}
  finally{globalThis.fetch=old;}
 });
 test('caller direction and silence scenes have separate intentions',()=>{
@@ -53,13 +53,13 @@ test('a blocked call track holds its own caption and cannot release the next sen
  try{
   assert.equal(startIncoming(ctx,'刚看完展览，想说给哥哥听'),true);callAction('tai-accept',ctx);
   await until(()=>callView(s).includes('继续收听'));
-  assert.equal(tts,1);assert.match(callView(s),/刚看完展览/);assert.doesNotMatch(callView(s),/有件衣服/);
+  assert.equal(tts,1);assert.match(callView(s),/剛看完展覽/);assert.doesNotMatch(callView(s),/有件衣服/);
   assert.equal(maybeAdvanceCall(ctx,{now:Date.now()+500000}),false);
   FakeAudio.current.block=false;callAction('tai-play-audio',ctx);await new Promise(r=>setImmediate(r));FakeAudio.current.end();
   // Request start precedes decoding the response and publishing its caption.
   await until(()=>tts>=2&&callView(s).includes('有件衣服'));
-  assert.match(callView(s),/有件衣服/);assert.doesNotMatch(callView(s),/<p class="theirs">刚看完展览/);
-  FakeAudio.current.end();await until(()=>tts===3&&callView(s).includes('回头讲给你听'));FakeAudio.current.end();
+  assert.match(callView(s),/有件衣服/);assert.doesNotMatch(callView(s),/<p class="theirs">剛看完展覽/);
+  FakeAudio.current.end();await until(()=>tts===3&&callView(s).includes('回頭講給你聽'));FakeAudio.current.end();
   await until(()=>!callView(s).includes('<p class="theirs">'));
   callAction('tai-hangup',ctx);assert.equal(callState().state,'ended');
  }finally{callAction('tai-hangup',ctx);globalThis.Audio=oldAudio;globalThis.fetch=oldFetch;globalThis.sessionStorage=oldSession;}

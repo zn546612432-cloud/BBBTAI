@@ -26,5 +26,5 @@ test('v6 dialogue addendum does not enable unreleased voice or read-status proto
 test('v6 retains real phone command without exposing markup in chat',()=>{
  const result=unpackTaiReply({text:JSON.stringify({messages:[{text:'(phone)喂，怎么又催我？',mode:'text'}]})});
  assert.equal(result[0].action,'phone');
- assert.equal(result[0].text,'喂，怎么又催我？');
+ assert.equal(result[0].text,'喂，怎麼又催我？');
 });

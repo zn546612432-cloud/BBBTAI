@@ -1,6 +1,7 @@
 // DeepSeek may return a JSON object, a JSON array, a double-encoded JSON
 // string, or a fenced JSON snippet. None of that syntax is a voice transcript.
 import {humanizeTaiText} from './humanize.js';
+import {traditionalTaiText} from './traditional.js';
 import {safeTaiTranslation} from './portuguese.js';
 import {xitaiSpeechCaption,validateXitaiSpeechDirection} from '../voice/voice-regex.js';
 // Only a leading (phone) is an executable call request; middle-of-sentence
@@ -62,10 +63,10 @@ export function unpackTaiReply(response,channel='noapp'){
   // A phone event is not a voice message; text after the command is the
   // *first phone utterance*, delivered only when the player answers.
   const mode=phone?'text':channel==='call'||channel==='noapp'&&x?.mode==='voice'?'voice':'text';
-  const legacySpeech=humanizeTaiText(cleaned,{stripStage:false});
+  const legacySpeech=traditionalTaiText(humanizeTaiText(cleaned,{stripStage:false}));
   const display=humanizeTaiText(cleanedText(legacySpeech));
   const speechText=mode==='voice'?
-   (validateXitaiSpeechDirection(display,x.speech_text)??legacySpeech):legacySpeech;
+   (validateXitaiSpeechDirection(display,traditionalTaiText(x.speech_text))??legacySpeech):legacySpeech;
   const tone=['dry','playful','soft','serious','neutral','danger','happy','sad','angry','fearful','surprised','disgusted'].includes(x?.tone)?x.tone:'neutral';
   const vocalCue=['small_laugh','sigh','hesitate','tired','whisper'].includes(x?.vocal_cue)?x.vocal_cue:'none';
   if(!display&&!phone)return [];

@@ -105,11 +105,11 @@ export async function askTai(request){
  if(hasBannedTaiConstruction(texts)||hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text)))throw Object.assign(Error('Blocked Tai dialogue after correction'),{code:'TAI_STYLE'});
  return first;
 }
-async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook}){
+async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,callActive=false}){
  const {buildTaiPrompt,visibleTaiMemories}=await import('./tai-profile.js');
  const {assembleTaiMessages,compactWorldbookSnapshot,previewTaiWorldbook}=await import('./worldbook/index.js');
  if(!worldbookSnapshot&&worldbook)worldbookSnapshot=previewTaiWorldbook(worldbook,{channel,day,recognized,messages,outputMode,scenario:scene,worldbookEvents});
- const records=Array.isArray(memories)?memories:[],c=apiConfig(),req={channel,day,messages,profile,memories:[...visibleTaiMemories(records.filter(m=>!m?.kind),day,channel),...(!worldbookSnapshot?visibleTaiMemories(records.filter(m=>m?.kind),day,channel):[])],outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,worldbookEvents,worldbookSnapshot:compactWorldbookSnapshot(worldbookSnapshot),worldbook,model:c.model,parameters:normalizeAiParameters(c)};
+ const records=Array.isArray(memories)?memories:[],c=apiConfig(),req={channel,day,messages,profile,memories:[...visibleTaiMemories(records.filter(m=>!m?.kind),day,channel),...(!worldbookSnapshot?visibleTaiMemories(records.filter(m=>m?.kind),day,channel):[])],outputMode,scene,relationshipContext,behavior,recognized,storyVersion,approvedDecision,turnPlan,allowVoice,callActive,worldbookEvents,worldbookSnapshot:compactWorldbookSnapshot(worldbookSnapshot),worldbook,model:c.model,parameters:normalizeAiParameters(c)};
  if(isTaiCloudHost()){
   const {loadApprovedTaiV8,formatApprovedTaiV8}=await import('./supabase-persona.js');
   const v8=formatApprovedTaiV8(await loadApprovedTaiV8(),{recognized:recognized===true,outputMode});

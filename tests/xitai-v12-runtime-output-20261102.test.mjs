@@ -38,14 +38,14 @@ test('actual NoApp runtime sends 3 distinct bubbles when sampled and saves exact
   assert.equal(result.status,'replied');
   assert.equal(result.count,3);
   assert.deepEqual(conversation.messages.filter(m=>m.replySourceId==='u-v12').map(m=>m.text),
-   ['居然改完了？','拿来让我看看','你动的是加密层还是运行层？']);
+   ['居然改完了？','拿來讓我看看','你動的是加密層還是運行層？']);
   assert.equal(calls.length,3);
   assert.match(calls[1].system,/本轮要表达3条独立聊天气泡/);
   assert.match(calls[1].system,/30%引导型人格已经触发/);
   const event=s.events.filter(e=>e.type==='tai_v12_turn_plan').at(-1);
   assert.equal(event.target,3);assert.equal(event.emitted,3);assert.equal(event.guided,true);
   const html=chatView(s,'noapp','tai');
-  assert.match(html,/你动的是加密层还是运行层/);
+  assert.match(html,/你動的是加密層還是運行層/);
  });
 });
 test('a sampled single-line guide can still ask a real question without fake extra bubbles',async()=>{
@@ -60,8 +60,8 @@ test('a sampled single-line guide can still ask a real question without fake ext
   assert.equal(result.count,1);
   const sent=conversation.messages.filter(m=>m.replySourceId==='u-v12');
   assert.equal(sent.length,1);
-  assert.match(sent[0].text,/真让你做成了/);
-  assert.match(sent[0].text,/你把原来哪一部分重写了？/);
+  assert.match(sent[0].text,/真讓你做成了/);
+  assert.match(sent[0].text,/你把原來哪一部分重寫了？/);
   assert.equal(calls.length,3);
   assert.equal(s.events.filter(e=>e.type==='tai_v12_turn_plan').at(-1).target,1);
  });

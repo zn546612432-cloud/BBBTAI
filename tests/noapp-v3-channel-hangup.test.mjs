@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {taiShouldHangUpCall} from '../src/apps/noapp/call-hangup-intent.js';
 import {callBridgeNote} from '../src/services/ai/humanize.js';
+import {traditionalTaiText} from '../src/services/ai/traditional.js';
 import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 import {DEFAULT_TAI_BEHAVIOR,normalizeTaiBehavior} from '../src/services/ai/behavior.js';
 import {behaviorSettings} from '../src/apps/noapp/settings/behavior.js';
@@ -102,11 +103,11 @@ test('accepted player-requested callback plays exactly one fixed greeting withou
  await withMockCall(['熙蒙，你说。'],async({state,ctx,requests,players,waitFor,send})=>{
   const speech=requests.filter(r=>r.url.includes('t2a_v2'));
   assert.equal(speech.length,1);
-  assert.match(speech[0].body.text,/^(?:怎么(?:了|\(le5\))|喂)[？?]$/);
+  assert.match(speech[0].body.text,/^(?:怎麼(?:了|\(le5\))|喂)[？?]$/);
   assert.equal(requests.filter(r=>r.url.includes('chat/completions')).length,0);
   assert.equal(callState().turnCount,1);
   send('嗯');
-  await waitFor(()=>callView(state).includes('nya，你说。'),'nickname caption');
+  await waitFor(()=>callView(state).includes('nya，你說。'),'nickname caption');
   assert.match(requests.filter(r=>r.url.includes('t2a_v2')).at(-1).body.text,/nya/);
   assert.doesNotMatch(requests.filter(r=>r.url.includes('t2a_v2')).at(-1).body.text,/熙蒙/);
   players[0].finish();
@@ -128,7 +129,7 @@ test('a rejected dialogue draft never becomes speech or a fabricated connection 
 test('player requests Tai to hang up: spoken farewell executes actual hangup after audio completes',async()=>{
  await withMockCall(['好，先挂了。明天再说，别熬得太晚。'],async({state,ctx,players,requests,waitFor,send})=>{
   assert.equal(send('那你挂我电话吧，再见。'),true);
-  await waitFor(()=>callView(state).includes('好，先挂了'),'farewell caption');
+  await waitFor(()=>callView(state).includes('好，先掛了'),'farewell caption');
   assert.equal(callState().state,'connected','should not disconnect before goodbye is heard');
   assert.equal(state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').length,0);
   players[0].finish();
@@ -137,7 +138,7 @@ test('player requests Tai to hang up: spoken farewell executes actual hangup aft
   const entry=state.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.kind==='call').at(-1);
   assert.equal(entry.endedBy,'tai');
   assert.equal(entry.endReason,'player_request');
-  assert.match(entry.transcript,/好，先挂了/);
+  assert.match(entry.transcript,/好，先掛了/);
   assert.match(callBridgeNote(entry,{day:60,clock:'22:31'}),/陈熙泰主动按下挂断键/);
   const modelRequests=requests.filter(x=>x.url.includes('chat/completions'));
   assert.equal(modelRequests.length,1,'player command skips decision-model call and uses one farewell generation');
@@ -215,7 +216,7 @@ test('substantive call can speak four distinct paragraphs in one generation with
  await withMockCall(lines,async({state,players,requests,waitFor,send})=>{
   send('我想跟你仔细聊聊今天出了什么问题，你多说几段。');
   for(let i=0;i<lines.length;i++){
-   await waitFor(()=>callView(state).includes(lines[i]),'segment '+i);
+   await waitFor(()=>callView(state).includes(traditionalTaiText(lines[i])),'segment '+i);
    assert.equal(callState().turnCount,i+2,'only completed previous segments should be stored');
    players[0].finish();
   }
