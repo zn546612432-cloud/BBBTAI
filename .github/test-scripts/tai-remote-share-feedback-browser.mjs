@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {chromium} from 'playwright';
+import {tracePhoneInteractions,capturePhoneFailure} from './tai-remote-browser-diagnostics.mjs';
 import {initialState} from '../../src/services/storage.js';
 import {activateStory55} from '../../src/services/story55/runtime.js';
 const url=process.env.TAI_REMOTE_LOCAL_URL||'http://127.0.0.1:5173/';
@@ -10,7 +11,7 @@ const key='ximeng-phone-story55-v1',output='tai-remote-mobile-results';
 mkdirSync(output,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage'],
  ...(process.env.TAI_REMOTE_CHROMIUM_PATH?{executablePath:process.env.TAI_REMOTE_CHROMIUM_PATH}:{})});
-const errors=[],results=[];
+const errors=[],results=[];let activePage,activeCase;
 function seed(clock,takeovers){
  const s=activateStory55(initialState());s.day=16;s.clock=clock;s.batteryPercent=90;
  s.story55.minutesPerSecond=0;s.story55.activeScene=null;s.story55.d13={phase:'chat'};
@@ -26,7 +27,8 @@ try{
  for(const takeovers of [0,1,2])for(const offline of [false,true]){
   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'});
   await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,state);Math.random=()=>.99;},{key,state:JSON.stringify(seed(offline?'11:00':'08:20',takeovers))});
-  const page=await context.newPage();page.setDefaultTimeout(30000);
+  const page=await context.newPage();page.setDefaultTimeout(30000);activePage=page;activeCase='share-'+takeovers+'-'+(offline?'offline':'online');
+  await tracePhoneInteractions(page,key);
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.locator('#xm-boot-next').click({timeout:45000});
@@ -82,4 +84,7 @@ try{
  }
  assert.deepEqual(errors,[]);writeFileSync(output+'/share-feedback-results.json',JSON.stringify(results,null,2));
  console.log('PASS share confirmation, guaranteed first two, later refusal, offline resume and reply pacing',JSON.stringify(results));
+}catch(error){
+ if(activePage)await capturePhoneFailure(activePage,key,output,'FAILED-'+activeCase);
+ throw error;
 }finally{await browser.close();}
