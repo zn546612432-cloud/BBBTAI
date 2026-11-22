@@ -4,6 +4,7 @@ import {GHOST_CAR_MODEL_FILES} from '../../story/d35-d40/progress.js';
 import {modelDelivered} from './ghost-car.js';
 import {TIMED_SCRIPTED_CALLS} from '../../story/d34-d42/definition.js';
 import {D45_CALL} from '../../story/d45/definition.js';
+import {NATIVE_PHONE_CALLS} from '../../story/phone-calls.js';
 import {fixedSceneTimeline} from './fixed-timeline.js';
 import {isD41Chess,d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 export const isStory55=s=>s?.story55?.version===1;
@@ -53,7 +54,7 @@ export function timedStoryEventComplete(s,event){
 // One declarative gate for native scenes and calls; completion remains owned
 // by the actual App action, not by the clock or a second scheduler.
 export function timedStoryEvents(s){
- return [...story55Config(s).nodes,...TIMED_SCRIPTED_CALLS,D45_CALL].filter(n=>typeof n.at==='string'&&n.pauseTimeUntilComplete===true);
+ return [...story55Config(s).nodes,...TIMED_SCRIPTED_CALLS,D45_CALL,...NATIVE_PHONE_CALLS].filter(n=>typeof n.at==='string'&&n.pauseTimeUntilComplete===true);
 }
 export function pendingTimedStoryEvent(s){
  if(!isStory55(s)||s.story55.ended)return null;

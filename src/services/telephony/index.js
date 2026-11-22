@@ -10,6 +10,7 @@ import {enterD13Chat} from '../../story/d13/runtime.js';
 import {prepareStory55NodeAtDay} from '../story55/rebuild.js';
 import {D13_PREVIEW} from '../storage.js';
 import {errorHaptic} from '../../system/haptics.js';
+import {tickAuthoredPhoneCalls,pauseAuthoredPhoneCall,nativePhoneScript} from './authored.js';
 export {receiveCall,answerCall,endCall,declineCall,outgoingCall};
 const sessions=new WeakMap();
 function session(store){let a=sessions.get(store);if(!a){a={audio:null,running:false,playing:null,greenSeen:false};sessions.set(store,a);}return a;}
@@ -46,6 +47,7 @@ export function tickTelephony(ctx,now=Date.now()){
   if(now>=d.greenStartedAt+3000){ctx.store.update(enterD13Chat);ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});}
   return;
  }
+ if(tickAuthoredPhoneCalls(ctx,a,now))return;
  // Hanging up really ends the call. D13 redials using a new call ID
  // without resetting the dialogue index or duplicating delivered text.
  const previous=s.phoneCall;
@@ -157,7 +159,10 @@ export function mountTelephony(getContext){
  if(ctx.store.get().story55?.d13?.phase==='green'){
   ctx.store.update(enterD13Chat);ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});
  }
- if(activePhoneCall(ctx.store.get())?.state==='connected')ctx.store.update(s=>{s.phoneCall.resumeRequired=true;s.phoneCall.speaking=false;});
+ if(activePhoneCall(ctx.store.get())?.state==='connected'){
+  if(nativePhoneScript(ctx.store.get().phoneCall))pauseAuthoredPhoneCall(ctx,a);
+  else ctx.store.update(s=>{s.phoneCall.resumeRequired=true;s.phoneCall.speaking=false;});
+ }
  const click=e=>{
   const button=e.target.closest?.('[data-action^="tel-"]');if(!button)return;
   e.preventDefault();e.stopImmediatePropagation();
@@ -187,6 +192,8 @@ export function mountTelephony(getContext){
  document.addEventListener('click',click,true);
  const submit=e=>primeAuthoredPhoneSend(getContext(),e.target);
  document.addEventListener('submit',submit,true);
+ const visibility=()=>{if(document.hidden)pauseAuthoredPhoneCall(getContext(),a);};
+ document.addEventListener('visibilitychange',visibility);
  const timer=setInterval(()=>{
   try{
    if(document.hidden)return;
@@ -207,5 +214,5 @@ export function mountTelephony(getContext){
    }
   }catch(error){ctx.toast?.(error.message);}
  },250);
- return ()=>{clearInterval(timer);document.removeEventListener('click',click,true);document.removeEventListener('submit',submit,true);a.audio?.pause();a.playing?.cancel();};
+ return ()=>{clearInterval(timer);document.removeEventListener('click',click,true);document.removeEventListener('submit',submit,true);document.removeEventListener('visibilitychange',visibility);a.audio?.pause();a.playing?.cancel();};
 }

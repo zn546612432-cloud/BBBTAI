@@ -522,6 +522,13 @@
           ],
           "proof": "src/apps/phone/index.js"
         },
+        "call.d53-authored": {
+          "state": "wired-day",
+          "owner": "phone",
+          "kinds": ["system-notice"],
+          "proof": "src/services/telephony/authored.js",
+          "originDays": [53]
+        },
         "call.d13-forced": {
           "state": "wired-day",
           "owner": "phone",

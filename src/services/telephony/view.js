@@ -22,6 +22,7 @@ export function telephonyFullscreen(s){
    :callButton('tel-end',handset,'取消','is-decline');
  return `<section class="power-fullscreen tel-call-screen" role="dialog" aria-modal="true" aria-label="${connected?'通話控制':'來電'}">
   <div class="tel-call-identity"><small>${label}</small><h1>${name}</h1><p>${subtitle}</p></div>
+  ${connected&&c.scriptId?`<div class="tel-call-caption" aria-live="polite">${c.caption?`<small>${esc(c.caption.speaker)} · <time>${esc(c.caption.clock)}</time></small><p>${esc(c.caption.text)}</p>`:''}</div>`:''}
   <div class="tel-call-bottom">
    ${c.resumeRequired?'<button type="button" class="tel-call-resume" data-action="tel-resume">繼續通話</button>':''}
    <div class="tel-call-actions">${actions}</div>
