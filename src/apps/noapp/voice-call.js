@@ -111,21 +111,21 @@ export function minimizedCallView(s){
 }
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
- const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':call.audioReady?'輕點繼續收聽':call.caption?'熙泰正在說話…':call.busy?'熙泰正在回覆…':call.inlineNotice||'通話中'):'通話已結束';
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':call.audioReady?'輕點繼續收聽':call.caption?(call.captionRole==='me'?'熙蒙正在說話…':'熙泰正在說話…'):call.busy?'熙泰正在回覆…':call.inlineNotice||'通話中'):'通話已結束';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
    active?
    phoneButton('tai-mute',call.muted?'取消靜音':'靜音',call.muted?glyph.micOff:glyph.mic,'is-secondary'+(call.muted?' is-selected':''))+
    phoneButton('tai-mic',call.listening?'結束說話':'說話',glyph.mic,'is-mic'+(call.listening?' is-listening':''),!!call.scripted)+
    phoneButton('tai-speaker','揚聲器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-selected':''))+
-   phoneButton('tai-expand','文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
+   phoneButton('tai-expand',call.scripted?.autoPlayerLines?'通話文字':'文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
    phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
  const draft=scriptedCallDraft();
  const composer=call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+(call.scripted?call.turns:call.turns.slice(-9)).map(t=>'<p>'+(t.clock?'<small>'+esc(t.clock)+'</small> ':'')+'<b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(t.content)+'</p>').join('')+'</div>'+composer+'</div>':'';
  const liveCaptions=active?'<div class="tai-live-captions" role="status" aria-live="polite">'+
-  (call.caption?'<p class="theirs">'+esc(call.caption)+'</p>':'')+
+  (call.caption?'<p class="'+(call.captionRole==='me'?'mine':'theirs')+'">'+esc(call.caption)+'</p>':'')+
   (call.audioReady?'<button type="button" data-action="tai-play-audio">▶ 继续收听</button>':'')+'</div>':'';
  return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
   +'<div class="tai-call-ambient" aria-hidden="true"><img src="'+esc(s?.characterAvatars?.['熙泰']||AVATAR)+'" alt=""></div>'
@@ -495,6 +495,18 @@ async function playScriptedOpening(ctx){
   while(current()&&call.scriptIndex<steps.length){
    const [role]=steps[call.scriptIndex];
    if(role==='me'){
+    if(script.autoPlayerLines){
+     // Authored cutscene dialogue, not a simulated click on the live composer.
+     const text=steps[call.scriptIndex][1];
+     call.caption=text;call.captionRole='me';
+     call.turns.push({role:'user',content:text,clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});
+     call.scriptIndex++;ctx.refresh?.();
+     await new Promise(resolve=>setTimeout(resolve,Math.max(2200,Array.from(text).length*180)));
+     if(!current())return;
+     call.caption='';call.captionRole=null;ctx.refresh?.();
+     if(call.scriptIndex<steps.length)await new Promise(resolve=>setTimeout(resolve,script.gapMs));
+     continue;
+    }
     if(script.camera)await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(steps[call.scriptIndex][1],script.gapMs)));
     break;
    }
@@ -528,6 +540,7 @@ async function playScriptedOpening(ctx){
     return outcome;
    }});
    if(!current()||call.scriptIndex===before)break;
+   if(script.autoPlayerLines&&steps[call.scriptIndex]?.[0]==='me')await new Promise(resolve=>setTimeout(resolve,script.gapMs));
   }
  }catch(error){
   if(current()){console.warn('NoApp scripted call connection failed:',error?.message);callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error'});}
@@ -546,7 +559,7 @@ function stampScriptedCallLine(ctx,script,steps,index){
 }
 export function scriptedCallDraft(){
  const step=call.scripted?.steps?.[call.scriptIndex||0];
- return call.state==='connected'&&!call.busy&&step?.[0]==='me'?step[1]:null;
+ return call.state==='connected'&&!call.busy&&!call.scripted?.autoPlayerLines&&step?.[0]==='me'?step[1]:null;
 }
 function startGreeting(ctx){
  if(call.state==='connected'&&!call.greeted){

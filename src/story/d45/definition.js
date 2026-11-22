@@ -15,7 +15,7 @@ export const D45_TAI=[
  ['me','……這種時候就少臭屁了。'],['tai','你現在在哪？打開攝像頭讓我看看。'],
  ['me','你又不是第一次入侵我的手機了，還需要我打開攝像頭嗎？'],['me','我在孤兒院。'],['tai','孤兒院？帶我去看看。']
 ];
-export const D45_CALL={id:'d45-orphanage-call',day:45,at:'16:40',requires:['d45-tai'],pauseTimeUntilComplete:true,triggerKey:'d45CallTriggered',camera:true,gapMs:3000,steps:[
+export const D45_CALL={id:'d45-orphanage-call',day:45,at:'16:40',requires:['d45-tai'],pauseTimeUntilComplete:true,triggerKey:'d45CallTriggered',camera:true,autoPlayerLines:true,gapMs:3000,steps:[
  ['me','這裡是臥房，有點亂，我平時就在這裡做計劃。小時候我和弟弟們也睡在這裡。這一層都是住人的房間，不過我們被遺棄的時候，孤兒院已經快倒閉了，很多房間早就空了。'],
  ['tai','比我想像中要大一些，也很冷清。'],['tai','這裡冬天一定很冷。你小時候應該吃了不少苦頭。'],
  ['me','是很冷。所以一到冬天，我哥就會抱著被子過來跟我一起睡。'],
