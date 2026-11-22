@@ -11,6 +11,7 @@ import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
 import {applyD45Definition} from '../../story/d45/definition.js';
 import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
+import {applyD46Group,D46_GROUP_ID,D46_GROUP_AT} from '../../story/d46/group.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -406,6 +407,7 @@ export function tickStory55(s){
   applyD45Definition(story55Config(s));
   if(s.day>45)for(const id of ['d45-group','d45-tai','d45-wang'])s.story55.completed[id]??={day:45,clock:'23:00',legacySkipped:true};
  }
+ if(applyD46Group(story55Config(s))&&s.day>46)s.story55.completed[D46_GROUP_ID]??={day:46,clock:D46_GROUP_AT,legacySkipped:true};
  if(story55Config(s).d46Revision!==2){
   applyD46Definition(story55Config(s));
   // Keep real completed actions and receipts; only undo artificial skips from
