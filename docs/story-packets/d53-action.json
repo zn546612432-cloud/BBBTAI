@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 2,
+  "day": 53,
+  "date": "2025-07-10",
+  "title": "D53｜熙旺行動",
+  "stage": "review",
+  "scope": "main",
+  "systems": [
+    "story55",
+    "messaging"
+  ],
+  "assets": [],
+  "events": [
+    {
+      "id": "d53-action-start-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "我準備好了。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "20:00"
+      },
+      "requires": [
+        "node:d47-wang"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "20:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-start-1",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "哥，我只給你這一次機會。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-start-0"
+      },
+      "requires": [
+        "d53-action-start-0"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-start-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "警察來了必須要走。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-start-1"
+      },
+      "requires": [
+        "d53-action-start-1"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-start-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "明白。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d53-action-start-2"
+      },
+      "requires": [
+        "d53-action-start-2"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "都怪我。",
+      "trigger": {
+        "type": "day-time",
+        "ref": "23:00"
+      },
+      "requires": [
+        "d53-action-start-3"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "23:00"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "就差一點，我本來可以制服那個警察的。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d53-action-end-0"
+      },
+      "requires": [
+        "d53-action-end-0"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "好了，現在也別復盤了。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-end-1"
+      },
+      "requires": [
+        "d53-action-end-1"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-3",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "天意如此。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-end-2"
+      },
+      "requires": [
+        "d53-action-end-2"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "你跟弟弟們都談過了嗎？",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d53-action-end-3"
+      },
+      "requires": [
+        "d53-action-end-3"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-5",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "嗯。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-end-4"
+      },
+      "requires": [
+        "d53-action-end-4"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "me",
+      "text": "他們相信我。",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d53-action-end-5"
+      },
+      "requires": [
+        "d53-action-end-5"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "好。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d53-action-end-6"
+      },
+      "requires": [
+        "d53-action-end-6"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    },
+    {
+      "id": "d53-action-end-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "story.d53-action",
+      "owner": "story55",
+      "actor": "熙旺",
+      "text": "我們一定會成功的。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d53-action-end-7"
+      },
+      "requires": [
+        "d53-action-end-7"
+      ],
+      "timing": {
+        "day": 53,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      },
+      "thread": "wang"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "check-time",
+      "type": "trigger",
+      "verify": "20:00 與 23:00 分別開始，21:30 原電話不變。"
+    },
+    {
+      "id": "check-player",
+      "type": "negative",
+      "verify": "玩家未按 Send 不自動發熙蒙訊息。"
+    },
+    {
+      "id": "check-save",
+      "type": "save-restore",
+      "verify": "重入不重複觸發；D53 前後時間不倒流。"
+    },
+    {
+      "id":"check-once","type":"idempotency","verify":"完成後不重發訊息。"
+    },
+    {
+      "id":"check-phone","type":"cross-app","verify":"微信前段完成後仍可接聽原生電話，電話結束後繼續微信。"
+    },
+    {
+      "id":"check-late","type":"late-entry","verify":"新舊存檔晚進入均不回撥遊戲日。"
+    },
+    {
+      "id":"check-assets","type":"assets","verify":"純文字，不新增資產。"
+    },
+    {
+      "id":"check-clock","type":"date-clock","verify":"統一時鐘按20:00、21:30、23:00暫停。"
+    }
+  ]
+}

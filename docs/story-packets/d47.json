@@ -385,7 +385,7 @@
       "capability": "story.d47-family",
       "owner": "story55",
       "actor": "me",
-      "text": "明天晚上，你去暗殺黃德忠。",
+      "text": "你去暗殺黃德忠……",
       "trigger": {
         "type": "user-send",
         "ref": "d47-wang-3"

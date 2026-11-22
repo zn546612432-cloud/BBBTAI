@@ -140,6 +140,7 @@
         "story.d44-confide": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d43-d44/definition.js","originDays":[44]},
         "story.d46-group": {"state":"wired-day","owner":"story55","kinds":["incoming-text"],"proof":"src/story/d46/group.js","originDays":[46]},
         "story.d47-family": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d47/definition.js","originDays":[47]},
+        "story.d53-action": {"state":"wired-day","owner":"story55","kinds":["incoming-text","player-send"],"proof":"src/story/d53/definition.js","originDays":[53]},
         "story.d26-d28-fixed-chat": {
           "state": "wired-day",
           "owner": "story55",

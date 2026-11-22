@@ -15,6 +15,7 @@ import {stampFixedLine} from '../src/services/story55/fixed-timeline.js';
 function fixture(day=53,clock='21:30'){
  const s=initialState();activateStory55(s);s.day=day;s.clock=clock;s.unlocked=true;s.batteryPercent=80;
  s.story55.activeScene=null;s.powerMode='normal';s.deathPhase=null;
+ if(day===53)s.story55.completed['d53-action-start']={day:53,clock:'20:00'};
  const entries=new Map(),store=new PhoneStore({getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v)});store.replace(s);
  const ctx={store,refresh(){},toast(){},router:{open(){}}};
  const audio={play(){return Promise.resolve();},pause(){this.paused=true;}};
@@ -60,7 +61,7 @@ test('complete cinematic call waits after recording ends, captions both sides wi
  }
  tickAuthoredPhoneCalls(ctx,a,now);
  assert.equal(store.get().phoneCall.state,'ended');assert.equal(store.get().phoneCall.reason,'scripted_end');
- assert.equal(store.get().story55.scriptedCallCompleted[D53_CALL.id],true);assert.equal(pendingTimedStoryEvent(store.get()),null);
+ assert.equal(store.get().story55.scriptedCallCompleted[D53_CALL.id],true);assert.equal(pendingTimedStoryEvent(store.get()).id,'failure');
  assert.equal(store.get().clock,'21:33');assert.equal(new Set(stamps).size,10);assert.equal(stamps[0],'21:30:00');assert.equal(stamps.at(-1),'21:33:20');
  const logs=store.get().content.phone.calls.filter(c=>c.id===id);assert.equal(logs.length,1);assert.equal(logs[0].transcript.length,10);
  assert.deepEqual(playerMessages(),originalPlayerMessages,'cinematic captions must not send player chat messages');
