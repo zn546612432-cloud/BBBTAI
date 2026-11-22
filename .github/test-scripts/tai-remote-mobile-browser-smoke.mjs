@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync} from 'node:fs';
 import {chromium} from 'playwright';
+import {tracePhoneInteractions,capturePhoneFailure} from './tai-remote-browser-diagnostics.mjs';
 import {initialState} from '../../src/services/storage.js';
 import {activateStory55} from '../../src/services/story55/runtime.js';
 import {seedD04Contracts,acceptD04Contract,markD04AttachmentOpened,armD04Ghost} from '../../src/story/d04/contract.js';
@@ -44,6 +45,7 @@ const context=await browser.newContext({
  locale:'zh-TW',reducedMotion:'reduce'
 });
 let page=await context.newPage();
+await tracePhoneInteractions(page,key);
 page.setDefaultTimeout(30000);
 const errors=[];
 page.on('pageerror',e=>errors.push('pageerror: '+e.message));
@@ -67,6 +69,7 @@ async function resetPage(nextSeed){
  const clean=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
   isMobile:true,hasTouch:true,locale:'zh-TW',reducedMotion:'reduce'});
  page=await clean.newPage();page.setDefaultTimeout(30000);
+ await tracePhoneInteractions(page,key);
  page.on('pageerror',e=>errors.push('pageerror: '+e.message));
  page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
  await page.addInitScript(({key,seed})=>{
@@ -663,6 +666,7 @@ try{
  console.log('ALL TAI REMOTE MOBILE BROWSER TESTS PASSED');
 }catch(error){
  console.error('TAI REMOTE MOBILE BROWSER FAILED:',error.stack||error);
+ await capturePhoneFailure(page,key,path,'FAILED-interactions');
  try{
   await screenshot('FAILED-browser-state');
   const ui=await page.evaluate(()=>{
