@@ -66,7 +66,7 @@ try{
   for(let day=35;day<=39;day++)await live.locator(`[data-action=diary-open-day][data-day="${day}"]`).waitFor();
   assert.equal(await live.locator('[data-action=diary-open-day][data-day="40"]').count(),0);
   await live.locator('[data-action=diary-open-day][data-day="39"]').click();
-  assert.match(await live.locator('.diary-prose').innerText(),/收到陳熙泰交付的資產了。/);
+  assert.match(await live.locator('.diary-prose').innerText(),/收到熙泰交付的資產了。/);
   await page.screenshot({path:`${out}/390-journal-d39.png`});
   await goHome();
   await live.locator('[data-action=page][data-page="2"]').click();

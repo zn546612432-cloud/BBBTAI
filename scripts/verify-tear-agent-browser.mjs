@@ -125,11 +125,12 @@ try{
  assert.equal(after.story55.tearAgent.jobs.staff.start,before.story55.tearAgent.jobs.staff.start);
  assert.equal(await live.locator('.gh-agent-task-dot.is-complete').count(),2);
  await page.clock.runFor(2500);await page.screenshot({path:`${out}/${width}-gold.png`});
- const receipts=live.locator('.gh-agent-file-receipt');assert.equal(await receipts.count(),2);
- assert.match(await receipts.first().evaluate(el=>getComputedStyle(el).backdropFilter),/blur/);
+ const receipts=live.locator('.gh-agent-file-receipt');assert.equal(await receipts.count(),0);
  await live.locator('[data-action=gh-tear-task][data-id=staff]').click();
+ await live.locator('.gh-agent-task-dot.is-accepted[data-id=staff]').waitFor();
+ assert.equal(await receipts.count(),1);
+ assert.match(await receipts.first().evaluate(el=>getComputedStyle(el).backdropFilter),/blur/);
  await page.screenshot({path:`${out}/${width}-completed-glass.png`});
- await live.locator('[data-action=gh-tear-task-close]').last().click();
  const files=JSON.stringify(after.content.localFiles);
  await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
  assert.equal(await live.locator('xm-tear-orbit').getAttribute('progress'),'0');
