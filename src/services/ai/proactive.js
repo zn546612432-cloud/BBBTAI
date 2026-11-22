@@ -8,6 +8,7 @@ import {unpackTaiReply} from './format.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
 import {isTaiReplyPending} from './live-chat.js';
 import {prepareTaiVoice} from './voice-delivery.js';
+import {taiSocialEnergy,canTaiCall,socialEnergyPrompt} from './social-energy.js';
 import {hasBannedTaiConstruction} from './expression-style.js';
 import {taiDisplayName} from '../../apps/noapp/contact.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
@@ -86,7 +87,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
  inFlight.add(store);
  try{
   const status=await aiStatus();if(!status.deepseek)throw Error('DeepSeek 未连接');
-  const allowVoice=!afterCall&&!!status.minimax&&c.autonomousVoice;
+  const allowVoice=!afterCall&&!!status.minimax&&c.autonomousVoice&&taiSocialEnergy(initial,'message').stage==='normal';
   const messages=history(initial).slice(-12).map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.voiceCaption||m.text).slice(0,1200)}));
   let scene=afterCall?'【真實通話回執】熙蒙親自按下掛斷鍵。實際聽見的通話如下：\n'+String(postCall.transcript||'（沒有已播放對白）').slice(0,900)+'\n判斷是否正常告別或突然中斷，若正常則不發；若確有話沒說完、對方突然終止或自己說重了，可以發一至三條實際文字，語氣符合此刻的心情。不能把按鍵者直接等同於過錯者。不發語音、不另撥電話。':followup
    ?`你上次发给熙蒙的消息是「${source.text.slice(0,200)}」。已经等了${Math.floor(elapsed(initial,source,c,now()))}分钟（${c.triggerClock==='real'?'现实':'游戏'}），他还没回复。可以选择不发、适度关心，或补充真正没说完的内容；不要报备自己的行程，也不要机械催促。这次最多跟进一次。`
@@ -99,14 +100,15 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    random,now
   }):null;
   if(phoneEvidence&&eligible(store.get())&&store.get().day===initial.day)scene+='\\n'+phoneEvidence;
+  scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),scene].filter(Boolean).join('\n');
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
-  const worldbookEvents=afterCall?['call_ended_player']:['proactive'];
+  const worldbookEvents=afterCall?['call_ended_player','social_energy']:['proactive','social_energy'];
   const turnId=afterCall?'postcall:'+postCall.id:`proactive:${initial.day}:${initial.clock}:${history(initial).at(-1)?.id||''}`;
   const worldbookSnapshot=captureTaiWorldbook(store,{channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scenario:scene,worldbookEvents,trigger:'quiet',turnId,messageIndex:history(initial).length});
   const decision=await chooseTaiAction({channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scene,worldbookEvents,worldbookSnapshot,
    relationshipContext,sourceMessageId:afterCall?postCall.id:'',hasIncoming:false,allowDefer:false,allowVoice,
-   allowCall:!afterCall&&!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
+   allowCall:!afterCall&&canTaiCall(initial)&&!!status.minimax&&!['ringing','dialing','connected'].includes(callState().state)});
   if(afterCall){if(!decision||chat(store.get())?.messages.at(-1)?.id!==postCall.id||isTaiReplyPending(store)||['ringing','dialing','connected'].includes(callState().state))return false;store.update(s=>{s.events.push({type:'tai_postcall_handled',sourceId:postCall.id,day:s.day,clock:s.clock,responsibility:decision.call_responsibility,reason:decision.call_reason});});}
   if(decision&&eligible(store.get())&&history(store.get()).at(-1)?.id===history(initial).at(-1)?.id)rememberTaiMood(store,decision,turnId,{evidence:afterCall?postCall.transcript:''});
   if(decision?.action==='end_session'){

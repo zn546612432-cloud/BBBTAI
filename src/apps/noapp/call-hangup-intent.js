@@ -20,3 +20,13 @@ export function taiShouldHangUpCall(text){
  if(/^(?:好(?:了)?|那(?:就)?|行(?:了)?|嗯)?(?:不聊了|先不聊了|下次聊|晚[点點]聊|我(?:要|先|去)睡了|你先忙(?:吧|去吧)?)(?:88|拜拜|再[见見]|bye|晚安)?$/i.test(s))return true;
  return false;
 }
+
+// A spoken self-directed goodbye is executable; conditional warnings are not.
+export function taiCallFarewellIntent(text){
+ const s=String(text||'').trim().replace(/掛/g,'挂').replace(/斷/g,'断').replace(/電/g,'电').replace(/話/g,'话').replace(/點/g,'点').replace(/見/g,'见').replace(/說/g,'说').replace(/這/g,'这').replace(/裡/g,'里');
+ if(/(?:再不|如果|要是|你不).{0,18}(?:说[话話]|出声|出聲|回應|回[话話]|回答|理我|開口|开口|繼續沉默|继续沉默).{0,12}(?:就|可要|要|会|會).{0,5}挂/.test(s))return 'warn';
+ if(/[「『“”」』]|(?:不要|不想|不會|不会|不能|别|別|不舍得|捨不得|你說|你说|剛才|刚才).{0,8}挂/.test(s))return '';
+ if(/(?:^|[，。！？、,；;\s])(?:我|那我|好那我|那就|好|嗯)?(?:先挂(?:电话|断)?(?:了|吧)?|我挂(?:了|电话)|我要挂(?:了|电话))(?:[。！？!，,；;\s]|$)/.test(s))return 'end';
+ if(/(?:^|[，。！？、,；;\s])(?:那就|那|好(?:了)?|嗯|行(?:了)?|我)?(?:先挂(?:电话|断)?(?:了|吧)?|要挂(?:了|电话)|我挂(?:了|电话)|先聊到这里(?:吧)?|聊到这里(?:吧)?|晚安|再见|拜拜|下次聊|晚点再聊|先这样)(?:[。！？!，,；;\s]*)(?:晚安|再见|拜拜)?[。！？!\s]*$/.test(s))return 'end';
+ return '';
+}

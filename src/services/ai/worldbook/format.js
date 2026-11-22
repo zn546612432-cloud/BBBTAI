@@ -62,8 +62,8 @@ function migrateTone(world){
  return {...world,books,runtime};
 }
 export function readWorldbook(s){const w=s?.aiDraft?.worldbook;if(w?.version!==WORLD_INFO_VERSION||!Array.isArray(w.books))return defaultWorldbook();
- const migrated=migrateTone(w),entry=defaultWorldbook().books[0].entries.find(e=>e.id==='incoming-message-batch');
- return {...migrated,books:migrated.books.map(b=>b.id==='xitai'&&!b.entries.some(e=>e.id===entry.id)?{...b,entries:[...b.entries,entry]}:b)};
+ const migrated=migrateTone(w),entries=defaultWorldbook().books[0].entries.filter(e=>['incoming-message-batch','private-social-energy'].includes(e.id));
+ return {...migrated,books:migrated.books.map(b=>b.id==='xitai'?{...b,entries:[...b.entries,...entries.filter(entry=>!b.entries.some(e=>e.id===entry.id))]}:b)};
 }
 export function ensureWorldbook(s){s.aiDraft??={};s.aiDraft.worldbook=readWorldbook(s);return s.aiDraft.worldbook;}
 

@@ -1,5 +1,6 @@
 // NoApp V2: deterministic guards around an otherwise autonomous call.
 // This module is intentionally pure so provider failures cannot reset its rules.
+import {taiCallFarewellIntent} from './call-hangup-intent.js';
 const clean=value=>String(value||'').replace(/[\s，。！？!?、：:；;,.…"“”‘’（）()\-]/g,'').toLowerCase();
 const grams=s=>{const result=new Set();for(let i=0;i<s.length-1;i++)result.add(s.slice(i,i+2));return result;};
 const comfort=text=>/(?:累|休息|缓过来|别说话|不想说话|没力气)/.test(text)&&/(?:陪|听你|先别|别费劲|放着|缓过来)/.test(text);
@@ -97,16 +98,17 @@ export function finalizeCallSegments(entries,{close=false,closingLine='好了，
  if(!endAfter)return {segments:entries,endAfter:false};
  const limit=maxSegments;
  const selected=entries.slice(0,limit);
- if(selected.length&&farewell.test(selected.at(-1).text))return {segments:selected,endAfter:true};
+ if(selected.length&&farewell.test(selected.at(-1).text)&&taiCallFarewellIntent(selected.at(-1).text)!=='warn')return {segments:selected,endAfter:true};
  // Reserve the final playable segment. Never cut away the actual goodbye.
  return {segments:[...selected.slice(0,Math.max(0,limit-1)),{text:closingLine,tone:'neutral',mode:'voice'}],endAfter:true};
 }
 export function nextNaturalCallIdleEvent(snapshot,now=Date.now(),settings={}){
- if(snapshot.state!=='connected'||snapshot.busy||snapshot.listening||snapshot.requestingMic||snapshot.transcribing||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
+ if(snapshot.state!=='connected'||snapshot.closingPending||snapshot.busy||snapshot.listening||snapshot.requestingMic||snapshot.transcribing||snapshot.audioReady||!snapshot.lastTaiEndAt)return '';
  if(snapshot.quietUntil&&now<snapshot.quietUntil)return '';
  const mode=settings.callIdleMode||'natural';
  const scale=mode==='active'?0.65:mode==='quiet'?2:1;
  const elapsed=now-snapshot.lastTaiEndAt;
+ if(snapshot.warnedAt&&now-snapshot.warnedAt>=15000)return 'closing';
  if(snapshot.nudgeCount===0&&elapsed>=Math.max(10000,Number(settings.callNudgeSeconds||10)*1000*scale))return 'nudge';
  if(snapshot.nudgeCount===1&&elapsed>=Math.max(20000,Number(settings.callCloseSeconds||125)*1000*scale))return 'closing';
  return '';
