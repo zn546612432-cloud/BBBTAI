@@ -58,6 +58,7 @@ function nextAlarm(s,from,end){
 }
 export function advanceGameMinutes(s,requested){
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
+ if(timedStoryPaused(s))return {minutes:0,event:'timed-story-hold'};
  syncDeathNight(s);
  if(['off','passcode'].includes(s.deathPhase)||s.dayChargeRemainingMs>0||s.emergencyCharge||s.poweredOff)return {minutes:0};
  const checkpoint=pendingTimedStoryEvent(s);

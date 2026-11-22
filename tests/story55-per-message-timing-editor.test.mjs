@@ -93,11 +93,13 @@ test('Story55 queued node waits for each edited clock, without impersonating pla
  assert.equal(old.length,1);
  assert.equal(old[0].time,'08:45');
  assert.equal(group.some(x=>x.id==='s55-intro-1'),false);
- assert.equal(currentScript55(s,'wechat','group'),null);
- s.clock='08:50';
  const draft=currentScript55(s,'wechat','group');
  assert.equal(draft?.kind,'me');
  assert.equal(group.some(x=>x.id==='s55-intro-1'),false);
+ assert.equal(s.clock,'08:45');
+ advanceScene55(s,'intro');
+ assert.equal(s.clock,'08:50');
+ assert.equal(group.find(x=>x.id==='s55-intro-1').time,'08:50');
 });
 
 test('time controls are visible per bubble and portable JSON restores every kind',()=>{

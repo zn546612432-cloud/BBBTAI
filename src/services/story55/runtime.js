@@ -8,6 +8,8 @@ import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
 import {applyD34D42Definition,RETIRED_SCENES} from '../../story/d34-d42/definition.js';
 import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
+import {applyD45Definition} from '../../story/d45/definition.js';
+import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
@@ -88,10 +90,13 @@ export function plannedSceneLineClock55(s,id,index){
 // Restore the single existing lifecycle cadence; no special slow D23 timer.
 export function scene55ReplyDelay(s,id,index,{initial=false}={}){
  const n=nodeById(s,id);
- return initial?(n?.initialDelayMs??CHAT_LIFECYCLE_POLICY.initialDelayMs)
-  :(n?.lineDelayMs?.[index]??n?.pauseMs??CHAT_LIFECYCLE_POLICY.pauseMs);
+ if(initial)return n?.initialDelayMs??CHAT_LIFECYCLE_POLICY.initialDelayMs;
+ if(Number.isFinite(n?.lineDelayMs?.[index]))return n.lineDelayMs[index];
+ const base=n?.pauseMs??CHAT_LIFECYCLE_POLICY.pauseMs;
+ return fixedSceneTimeline(n)?presetReplyDelay(sceneLines(s,id)[index]?.[1],base):base;
 }
 export const explicitlyPacedScene55=(s,id)=>Number.isFinite(nodeById(s,id)?.pauseMs);
+export const heartbeatPacedScene55=(s,id)=>explicitlyPacedScene55(s,id)||fixedSceneTimeline(nodeById(s,id));
 export function scene55(s,id){return s.story55?.scenes?.[id]||{index:0,accepted:false};}
 export function sceneLines(s,id){
  const lines=story55Config(s).scenes[id]||[],a=s.story55?.tearAgent;
@@ -168,9 +173,10 @@ function creditScene55(s,n){
  const lines=sceneLines(s,id);
  const line=lines[r.index];if(!line)return finishScene55(s,id);
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
- if(planned&&s.clock<planned&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
+ if(planned&&s.clock<planned&&(!fixedSceneTimeline(n)||r.index===0&&!n.pauseTimeUntilComplete)&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
+ const fixedTime=fixedSceneTimeline(n)?stampFixedLine(s,r,lines,r.index,{at:n.at,explicit:planned,afterMidnight:n.afterMidnight,day:n.day}):null;
  if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
- const authoredTime=id==='ending'?stampEnding55(s,r.index):null;
+ const authoredTime=id==='ending'?stampEnding55(s,r.index):fixedTime;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
  if(line[0]==='disconnect'&&!disconnect)throw Error('請先切斷連線');
  if(line[0]==='camera')s.story55.sceneCamera={node:id,active:true,disconnected:false};
@@ -285,7 +291,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(['me','disconnect','call'].includes(next[0]))continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
-  if(planned&&s.clock<planned&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue;
+  if(planned&&s.clock<planned&&(!fixedSceneTimeline(n)||q.index===0&&!n.pauseTimeUntilComplete)&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue;
   if(!Number.isFinite(q.nextAt)){
    q.nextAt=now+scene55ReplyDelay(s,n.id,q.index,{initial:true});
    return true;
@@ -301,10 +307,13 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
 export function pacedStorySceneDue55(s,now=Date.now()){
  if(!isStory55(s)||s.story55.ended)return false;
  return story55Config(s).nodes.some(n=>{
-  if(!explicitlyPacedScene55(s,n.id)||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready'||s.story55.activeScene&&s.story55.activeScene!==n.id)return false;
+  if(n.id==='d23-chess-finish'&&!(s.nav?.current?.appId==='mirage'&&s.nav.current.route==='/chat/s55-ouroboros'))return false;
+  if(!explicitlyPacedScene55(s,n.id)&&!fixedSceneTimeline(n)||n.delivery!=='queued'||nodeStatus(s,n.id).state!=='ready'||s.story55.activeScene&&s.story55.activeScene!==n.id)return false;
   const q=scene55(s,n.id),next=sceneLines(s,n.id)[q.index];
+  const planned=plannedSceneLineClock55(s,n.id,q.index);
+  if(q.index===0&&!n.pauseTimeUntilComplete&&planned&&s.clock<planned&&!overnightSceneNight55(s)&&!s.story55?.d23?.nightAfterMidnight)return false;
   if(!next||['call','disconnect'].includes(next[0]))return false;
-  if(next[0]==='me')return Number.isFinite(q.nextAt)&&now>=q.nextAt;
+  if(next[0]==='me')return explicitlyPacedScene55(s,n.id)&&Number.isFinite(q.nextAt)&&now>=q.nextAt;
   return !Number.isFinite(q.nextAt)||now>=q.nextAt;
  });
 }
@@ -372,6 +381,10 @@ export function tickStory55(s){
    if(s.story55.activeScene===id)s.story55.activeScene=null;
   }
   applyD43D44Definition(story55Config(s));
+ }
+ if(!story55Config(s).d45Revision){
+  applyD45Definition(story55Config(s));
+  if(s.day>45)for(const id of ['d45-group','d45-tai','d45-wang'])s.story55.completed[id]??={day:45,clock:'23:00',legacySkipped:true};
  }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.

@@ -7,6 +7,7 @@ import {FLOW_CONTACT,flowDraft,sendFlowReply} from './flow-d03.js';
 import {ghostShareScriptLine,sendGhostShareDraft} from './ghost-share.js';
 import {isTearShare} from '../../story/d14-d24/tear-dialogue.js';
 import {endingReplyDue55} from './finale.js';
+import {fixedSceneTimeline} from './fixed-timeline.js';
 
 const WECHAT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const NOAPP=new Set(['recognition','paris','ending']);
@@ -43,7 +44,7 @@ export function currentScript55(s,channel,conversationId,now=Date.now()){
   if(kind==='me'&&explicitlyPacedScene55(s,n.id)&&Number.isFinite(progress.nextAt)&&now<progress.nextAt)
    return {id:n.id,index,kind:'waiting',text:'',channel,conversationId,managed:true};
   const clock=n.delivery==='queued'&&kind==='me'?plannedSceneLineClock55(s,n.id,index):null;
-  if(clock&&s.clock<clock&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue; // Only offer the native player draft once it is due.
+  if(clock&&s.clock<clock&&(!fixedSceneTimeline(n)||index===0&&!n.pauseTimeUntilComplete)&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue; // Fixed scenes use their own authored timeline after opening.
   return {id:n.id,index,kind,text,channel,conversationId,managed:!!n.call&&(kind==='call'||progress.accepted===true)};
  }
  if(channel==='mirage'&&conversationId==='s55-ouroboros')return ghostShareScriptLine(s);

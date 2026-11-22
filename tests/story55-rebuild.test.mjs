@@ -23,7 +23,7 @@ const ids=s=>new Set((s.content.conversations.wechat.find(c=>c.id==='group')?.me
 test('developer D30 completes synthetic historical D23 farewell and permits both charge modes',()=>{
  const s=phone();
  rebuildStory55AtDay(s,30,'08:00');
- assert.deepEqual(s.story55.completed['d23-chess-finish'],{day:23,clock:'22:16',test:true});
+ assert.deepEqual(s.story55.completed['d23-chess-finish'],{day:23,clock:'22:25',test:true});
  assert.equal(s.matches.some(m=>m.invitationId==='s55-d23-chess-invite'),false);
  assert.equal(completed(s,'identity'),false);
  assert.equal(canShortCharge(s),true);

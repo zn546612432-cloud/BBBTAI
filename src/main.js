@@ -9,7 +9,7 @@ import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
-import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55,identityRevealDue55,explicitlyPacedScene55,pacedStorySceneDue55} from './services/story55/runtime.js';
+import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55,identityRevealDue55,heartbeatPacedScene55,pacedStorySceneDue55} from './services/story55/runtime.js';
 import {chessLessonDue,tickD23ChessLesson} from './services/chess-lesson.js';
 import {d23MiragePostgameDue} from './services/story55/d23-postgame.js';
 import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
@@ -25,7 +25,7 @@ import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartD41Call,maybeStartD42Call} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartD41Call,maybeStartD42Call,maybeStartD45Call} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -283,7 +283,7 @@ function mountStory55Incoming(){
  const s=store.get(),loc=s.nav.current,channel=loc.appId;
  const conversationId=loc.route.startsWith('/chat/')?loc.route.slice(6):null;
  const line=s.unlocked&&conversationId?currentScript55(s,channel,conversationId):null;
- if(!line||line.id==='ghost-share'||line.managed||line.kind==='me'||line.kind==='watch'||explicitlyPacedScene55(s,line.id)){
+ if(!line||line.id==='ghost-share'||line.managed||line.kind==='me'||line.kind==='watch'||heartbeatPacedScene55(s,line.id)){
   if(pendingStory55Incoming){clearTimeout(pendingStory55Incoming.timer);pendingStory55Incoming=null;}
   return;
  }
@@ -497,7 +497,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
- if(!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
+ if(!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));

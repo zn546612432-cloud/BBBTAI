@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55,scene55,tickStory55,tickQueuedStoryScenes55,pacedStorySceneDue55} from '../src/services/story55/runtime.js';
+import {activateStory55,scene55,scene55ReplyDelay,tickStory55,tickQueuedStoryScenes55,pacedStorySceneDue55} from '../src/services/story55/runtime.js';
 import {completed,nodeStatus,timedStoryPaused} from '../src/services/story55/state.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {currentScript55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
@@ -20,7 +20,7 @@ function phone(day,clock){
 const messages=(s,channel,chat,prefix)=>s.content.conversations[channel].find(c=>c.id===chat)?.messages.filter(m=>m.id.startsWith(prefix))||[];
 function play(s,id,channel,chat,lines,now){
  for(let i=0;i<lines.length;i++){
-  const q=scene55(s,id),delay=i===0?0:id==='paris'?(i===9?10000:3000):1900;
+  const q=scene55(s,id),delay=i===0?0:scene55ReplyDelay(s,id,i);
   assert.equal(q.index,i);
   if(i===0){assert.equal(pacedStorySceneDue55(s,now),true);tickQueuedStoryScenes55(s,now);}
   if(i>0){assert.equal(q.nextAt,now+delay);assert.equal(pacedStorySceneDue55(s,now+delay-1),false);}
