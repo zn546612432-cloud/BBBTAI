@@ -1,4 +1,6 @@
 import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../../story/d13/runtime.js';
+import {publishPrivateContract} from '../../story/d46/runtime.js';
+import {WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 /**
  * Reconstruct a developer test phone by replaying completed days from D01.
  * Nothing here changes the authored source config or any saved test snapshot.
@@ -262,6 +264,7 @@ function simulateNode(s,node){
  }
  if(node.kind==='project')return simulateProjectBatch(s,node);
  if(node.kind==='flow'){simulateFlowD03(s);return true;}
+ if(node.kind==='private-contract')return publishPrivateContract(s);
  if(node.kind==='scene')simulateScene(s,node);
  else if(node.kind==='mail'){
   tickStory55(s);
@@ -337,7 +340,7 @@ export function rebuildStory55AtDay(s,targetDay,clock='08:00',{preservePlayerCha
  restoreAuthoring(s,author);
  const nodes=story55Config(s).nodes;
  for(let day=1;day<targetDay;day++){
-  s.day=day;s.clock='20:00';
+  s.day=day;s.clock=[45,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY].includes(day)?'08:00':'20:00';
   tickStory55(s);
   // Multiple passes handle same-day nodes whose prerequisites occur later
   // in the catalog, without prematurely completing multi-day deployments.

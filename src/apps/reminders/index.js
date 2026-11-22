@@ -56,6 +56,7 @@ export function render({store},loc){
  return '<div class="reminders-app" data-native-scroll="reminders">'+body+'</div>'+wishPurchaseOverlay(s);
 }
 export function handle(a,t,c){
+ if(a==='reminder-private-contract')return c.router.open({appId:'mirage',route:'/private-contract'});
  if(a==='reminder-project-open'){if(reminders(c.store.get()).some(r=>r.id==='ghost-car-plan'))c.router.open({appId:'reminders',route:'/project/ghost-car-plan'});return;}
  if(a==='reminder-project-file'){const f=reminders(c.store.get()).find(r=>r.id==='ghost-car-plan')?.children?.find(tk=>tk.file===t.dataset.id&&tk.delivered);if(f)c.router.open({appId:'files',route:'/item/'+encodeURIComponent(f.file)});return;}
  if(a==='reminder-wish-open'){openWishPurchase(t.dataset.id,c);return;}

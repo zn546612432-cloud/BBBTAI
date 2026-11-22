@@ -1,5 +1,8 @@
 import {blocksAnonymousMirageInput} from '../../services/story55/mirage-input.js';
 import {walletPage} from './features/wallet/index.js';
+import {privateContractEntry,privateContractPage} from './features/private-contract/index.js';
+import {publishPrivateContract,transferD45Wallet} from '../../story/d46/runtime.js';
+import {PRIVATE_ORDER} from '../../story/d46/definition.js';
 import {bindD13Wallet,transferD13Wallet,D13_WALLET_ID} from '../../story/d13/runtime.js';
 import {exchange} from '../../services/bank.js';
 import {storySessionControls} from './features/story-controls/index.js';
@@ -94,7 +97,7 @@ function bountyPage(s,hall=false){
         &&(!o.deadlineDay||s.day<o.deadlineDay||s.day===o.deadlineDay&&s.clock<=String(o.deadlineClock||'23:59')))
    :all.filter(o=>o.status==='OPEN'&&linkedMissionVisible(s,o.id));
  if(hall)return `${header('CONTRACT BOARD','',true)}<div class="mc-scroll mc-board"><div class="mc-board-label"><span>OPEN CONTRACTS (${list.length})</span></div>${list.map(orderRow).join('')||'<div class="mc-empty">NO CONTRACTS AVAILABLE</div>'}</div>${tabs('/bounties',s)}`;
- return `${header('BOUNTY EXCHANGE')}<div class="mc-scroll mc-board"><button class="mc-wallet-summary" data-action="mc-wallet"><span>AVAILABLE FUNDS <small>USD</small></span><strong>$ ${money(s.bankData?.balance||0)}</strong><span>VIEW LEDGER <b>↗</b></span></button>${btn('mc-my-orders','MY ORDERS · 我的訂單　›','mc-my-orders')}${btn('mc-contract-board','CONTRACT BOARD · 訂單大廳　›','mc-my-orders mc-contract-board')}</div>${tabs('/bounties',s)}`;
+ return `${header('BOUNTY EXCHANGE')}<div class="mc-scroll mc-board"><button class="mc-wallet-summary" data-action="mc-wallet"><span>AVAILABLE FUNDS <small>USD</small></span><strong>$ ${money(s.bankData?.balance||0)}</strong><span>VIEW LEDGER <b>↗</b></span></button>${privateContractEntry(s)}${btn('mc-my-orders','MY ORDERS · 我的訂單　›','mc-my-orders')}${btn('mc-contract-board','CONTRACT BOARD · 訂單大廳　›','mc-my-orders mc-contract-board')}</div>${tabs('/bounties',s)}`;
 }
 function myOrdersPage(s,view='active'){
  const all=(s.content.orders||[]).filter(o=>!o.marketRestricted&&linkedMissionVisible(s,o.id));
@@ -144,7 +147,7 @@ function product(s,id){const p=mirageData(s).products.find(p=>p.id===id);if(!p)r
 function cart(s){const d=mirageData(s),rows=d.cart.map(row=>({row,p:d.products.find(p=>p.id===row.id)})).filter(x=>x.p),total=rows.reduce((a,{p,row})=>a+p.price*row.qty,0);return `${header('SHOPPING CART','',true)}<div class="mc-scroll mc-detail">${rows.map(({p,row})=>`<div class="mc-cart-row"><div>${productArt(p.art)}</div><section><strong>${esc(p.name)}</strong><span>$ ${money(p.price)}</span><div class="mc-qty">${btn('mc-cart-minus','−','',`data-id="${esc(p.id)}" aria-label="Decrease ${esc(p.name)}"`)}<b>${row.qty}</b>${btn('mc-add-cart','+','',`data-id="${esc(p.id)}" aria-label="Increase ${esc(p.name)}"`)}</div></section>${at('mc-cart-remove','REMOVE ITEM','trash',`data-id="${esc(p.id)}"`)}</div>`).join('')||'<div class="mc-empty">YOUR CART IS EMPTY</div>'}<div class="mc-total"><span>TOTAL / USD</span><strong>$ ${money(total)}</strong></div><p class="mc-cart-balance">AVAILABLE FUNDS / $ ${money(d.balance)}</p>${btn('mc-checkout','CONFIRM PURCHASE','mc-primary',rows.length?'':'disabled')}${d.assets.length?`<div class="mc-board-label">OWNED ASSETS (${d.assets.length})</div>${d.assets.map(a=>`<div class="mc-asset-row"><span>${esc(a.name)}</span><b>×${a.quantity}</b></div>`).join('')}`:''}</div>${tabs('/market',s)}`;}
 function newMailOverlay(){return newMailNotice?`<div class="mc-overlay" role="dialog" aria-modal="true" aria-label="收到一条邮件"><section class="mc-dialog mc-mail-notice"><header>NEW MESSAGE ${at('mc-close-mail-notice','CLOSE','close')}</header><p>收到一条邮件</p><strong>【mirage】新订单</strong><div class="mc-dialog-buttons">${btn('mc-close-mail-notice','稍后查看','mc-secondary')}${btn('mc-open-kira-mail','打开 KIRA 邮件','mc-primary')}</div></section></div>`:'';}
 
-export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);/* Original MIRAGE terminal, contacts, bounties, and market stay visible in every story version. */let body;if(loc.route.startsWith('/chat/')){
+export function render({store},loc){const s=store.get();if(!isMirageAuthenticated())return login(s);/* Original MIRAGE terminal, contacts, bounties, and market stay visible in every story version. */let body;if(loc.route==='/private-contract'||loc.route==='/order/'+PRIVATE_ORDER)body=privateContractPage(s,header,tabs);else if(loc.route.startsWith('/chat/')){
   const postgame=loc.route==='/chat/s55-ouroboros'&&d23MiragePostgame(s);
   if(postgame&&!postgame.replyFailed&&['intro','awaiting'].includes(postgame.phase))
    void replyToD23Mirage(store).catch(()=>{});
@@ -198,7 +201,9 @@ export function handle(action,t,ctx,loc){
  if(action==='mc-my-orders')route(ctx,'/my-orders/active');
  if(action==='mc-contract-board')route(ctx,'/bounties/hall');
  if(action==='mc-order-view')goTab(ctx,'/my-orders/'+t.dataset.view);
- if(action==='mc-open-bounty')route(ctx,'/order/'+id);
+ if(action==='mc-open-bounty')route(ctx,id===PRIVATE_ORDER?'/private-contract':'/order/'+id);
+ if(action==='mc-private-contract')return route(ctx,'/private-contract');
+ if(action==='mc-publish-private-contract'){ctx.store.update(s=>{if(!publishPrivateContract(s))throw Error('委託尚未解鎖或已發佈');});return;}
  if(action==='mc-open-d01-mail')return ctx.router.open({appId:'kira',route:'/mail/d01-mirage001-attachment',params:{}});
  if(action==='mc-open-wallet-d06-mail')return ctx.router.open({appId:'kira',route:'/mail/'+STORY55_WALLET_MAIL_ID,params:{}});
  if(action==='mc-open-linked-kira')return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
@@ -279,6 +284,7 @@ export function handle(action,t,ctx,loc){
  if(action==='mc-wallet-detail')return route(ctx,'/wallet/'+D13_WALLET_ID);
  if(action==='mc-wallet-transfer')return route(ctx,'/wallet/'+D13_WALLET_ID,{confirm:'yes'});
  if(action==='mc-wallet-transfer-confirm'){
+  if(ctx.store.get().story55?.d45WalletReleased){ctx.store.update(s=>{if(!transferD45Wallet(s))throw Error('轉帳尚未完成');});return;}
   const status=nodeStatus(ctx.store.get(),'d13-wallet-transfer');
   if(status.state!=='ready')throw Error(status.reason);
   ctx.store.update(n=>{if(!transferD13Wallet(n))throw Error('轉帳尚未完成');});
@@ -294,7 +300,7 @@ export function handle(action,t,ctx,loc){
 }
 
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
- if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/wallet'))?loc.route:'/');return;}
+ if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract')?loc.route:'/');return;}
  if(!isMirageAuthenticated())return;
  if(f==='mc-send'){
   const text=val('text'),id=form.dataset.id;

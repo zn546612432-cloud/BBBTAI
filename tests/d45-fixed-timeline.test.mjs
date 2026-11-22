@@ -51,7 +51,7 @@ test('explicit per-message time anchors subsequent stamps; longer messages are s
 });
 test('older saves beyond D45 do not replay new historical conversations',()=>{
  const s=phone();s.day=46;delete s.story55.config.d45Revision;
- s.story55.config.nodes=s.story55.config.nodes.filter(n=>!n.id.startsWith('d45-'));
+ s.story55.config.nodes=s.story55.config.nodes.filter(n=>!['d45-group','d45-tai','d45-wang'].includes(n.id));
  tickStory55(s);assert.ok(s.story55.completed['d45-wang'].legacySkipped);
 });
 test('D45 full scripted call plays both sides automatically with reading pauses, timestamps, camera, and hangup',async()=>{

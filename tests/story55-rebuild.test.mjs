@@ -100,7 +100,7 @@ test('D45 rebuild reconstructs storyline, inbox, wallet, NoApp and phased GHOST'
  assert.equal(completed(s,'recognition'),true);
  assert.equal(s.story55.noappInstalled,true);
  assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').name,'陈熙泰');
- assert.equal(completed(s,'mercenary'),true);
+ assert.equal(completed(s,'mercenary'),false);
  assert.equal(completed(s,'second'),false); // D43-D47 deployment cannot finish at D44
  assert.equal(s.story55.projects.second.batches.length,2);
  assert.equal(s.story55.projects.base.batches.length,11);
