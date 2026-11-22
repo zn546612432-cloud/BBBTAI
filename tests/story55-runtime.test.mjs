@@ -141,7 +141,7 @@ test('identity conversation becomes real MIRAGE history and NoApp installation p
  playScene(s,'questions');
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');assert.equal(chat.messages.filter(m=>m.id.startsWith('s55-identity-reveal-')).length,22);assert.equal(chat.messages.at(-1).text,'或者問問銜尾蛇之淚。');assert.throws(()=>sendQuestion55(s));
  previewNode55(s,'recognition');assert.equal(taiRecognized(s),false);s.story55.noappInstalled=true;assert.ok(installed(s).some(m=>m.id==='noapp'));playScene(s,'recognition');assert.equal(taiRecognized(s),true);
- assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.text.includes('欢迎回家')));
+ assert.ok(s.content.conversations.noapp.find(c=>c.id==='tai').messages.some(m=>m.kind==='call'&&m.transcript.includes('歡迎回家，nya')));
 });
 test('second program still awards 20 percent only for complete five-game batches',()=>{
  const s=fixture(),id='second';previewNode55(s,id);s.day=49;s.story55.hardware=3;const before=deploymentPercent(s,'prep');authorizeProject(s,id,story55Config(s).projects.find(p=>p.id===id).key);

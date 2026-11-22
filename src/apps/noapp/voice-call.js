@@ -1,4 +1,6 @@
-import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlayed} from '../../services/story55/state.js';
+import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlayed,recognitionCallDue} from '../../services/story55/state.js';
+import {RECOGNITION_CALL} from '../../story/d29/recognition-call.js';
+import {finishScene55} from '../../services/story55/runtime.js';
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {D45_CALL} from '../../story/d45/definition.js';
 import {stampFixedLine,presetReplyDelay} from '../../services/story55/fixed-timeline.js';
@@ -60,7 +62,7 @@ function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReaso
  return entry;
 }
 export function incomingCallBanner(s){
- if(call.state!=='ringing'||!s.unlocked||!taiRecognized(s))return '';
+ if(call.state!=='ringing'||!s.unlocked||!taiRecognized(s)&&call.scripted?.id!==RECOGNITION_CALL.id)return '';
  return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
    '<img class="tai-banner-avatar" src="'+esc(s.characterAvatars?.['熙泰']||AVATAR)+'" alt="">'+
    '<div class="tai-banner-info"><strong>'+esc(taiDisplayName(s))+'</strong><small>NoApp · 语音来电</small></div>'+
@@ -137,11 +139,11 @@ export function callView(s){
    '</section>';
 }
 export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason='',openingText='',requestedByPlayer=false,scripted=null}={}){
- if(!taiRecognized(ctx.store.get())||!scripted&&(!taiPresence(ctx.store.get()).contactable||!canTaiCall(ctx.store.get()))||['ringing','dialing','connected'].includes(call.state))return false;
+ if(!taiRecognized(ctx.store.get())&&!(scripted?.id===RECOGNITION_CALL.id&&recognitionCallDue(ctx.store.get()))||!scripted&&(!taiPresence(ctx.store.get()).contactable||!canTaiCall(ctx.store.get()))||['ringing','dialing','connected'].includes(call.state))return false;
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
  call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,requestedByPlayer,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
  call.scripted=scripted;
- if(scripted)preloadScriptedVoice(scripted.day);
+ if(scripted)preloadScriptedVoice(scripted.id===RECOGNITION_CALL.id?33:scripted.day);
  ctx.store.update(s=>{if(scripted)s.story55[scripted.triggerKey||'d42CallTriggered']=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',...(scripted?{scriptedCallId:scripted.id}:{}),link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
@@ -165,6 +167,10 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
 }
 export function d42CallDue(s){
  return isStory55(s)&&!s.story55.ended&&s.day===D42_CALL.day&&s.clock>=D42_CALL.at&&completed(s,'show')&&taiRecognized(s)&&!scriptedCallPlayed(s,D42_CALL);
+}
+export function maybeStartRecognitionCall(ctx){
+ const s=ctx.store.get();
+ return startTimedScriptedCall(ctx,{...RECOGNITION_CALL,day:s.day,at:s.clock},recognitionCallDue);
 }
 export function maybeStartD42Call(ctx){
  if(ctx.store.get().day===42)preloadScriptedVoice(42);
@@ -530,7 +536,7 @@ async function playScriptedOpening(ctx){
     }
     // Do not create a separate troubleshooting flow inside the story.
     if(outcome==='failed'&&current()){
-     if(script.camera){await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(text,script.gapMs)));if(!current())return 'interrupted';}
+     if(script.camera||script.autoPlayerLines){await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(text,script.gapMs)));if(!current())return 'interrupted';}
      call.turns.push({role:'assistant',content:text,voiceUnavailable:true,clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;call.audioReady=false;call.caption='';
      ctx.refresh?.();return 'completed';
     }
@@ -548,7 +554,7 @@ async function playScriptedOpening(ctx){
   call.busy=false;call.lastTaiEndAt=Date.now();
   const count=script.steps?.length||script.lines.length;
   if(call.scriptIndex>=count){
-   ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;});
+   if(script.id!==RECOGNITION_CALL.id)ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;});
    if(!script.completionMatch){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'scripted_end'});return;}
   }
   if(scriptedCallDraft())call.expanded=true;ctx.refresh?.();
@@ -620,6 +626,12 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
     durationSeconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
    endedRecord=recordCall(s,{direction:previous.direction,status:outcome,turns:previous.turns,endedBy:outcome==='declined'||outcome==='missed'?endedBy:call.endedBy,endReason,
     seconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
+   if(previous.scripted?.id===RECOGNITION_CALL.id&&endReason==='scripted_end'&&previous.scriptIndex>=previous.scripted.steps.length&&endedRecord?.callStatus==='ended'){
+    endedRecord.id='s55-recognition-call';endedRecord.story55=true;
+    s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[RECOGNITION_CALL.id]=true;
+    s.story55.scenes.recognition={index:previous.scripted.steps.length,accepted:true};
+    finishScene55(s,'recognition');
+   }
    if(endedRecord?.callStatus==='ended')rememberTaiCall(s,endedRecord);
    if(['connection_error','tai'].includes(endedBy)&&fallback){
     const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');

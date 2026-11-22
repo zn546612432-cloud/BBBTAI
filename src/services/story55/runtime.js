@@ -6,10 +6,11 @@ import {applyD17Definition} from '../../story/d17/definition.js';
 import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
-import {applyD34D42Definition,RETIRED_SCENES} from '../../story/d34-d42/definition.js';
+import {applyD34D42Definition,RETIRED_SCENES,D42_OPERATION_SCENE_IDS} from '../../story/d34-d42/definition.js';
 import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
 import {applyD45Definition} from '../../story/d45/definition.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
+import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
 import {tickTearAgent} from '../../apps/ghost/deployment/tear-agent/state.js';
 import {syncD10D13Content} from '../../story/d10-d13/continuity.js';
@@ -115,6 +116,7 @@ export function finishScene55(s,id){
  const n=nodeById(s,id),r=scene55(s,id);
  if(!n||n.kind!=='scene'||r.index<sceneLines(s,id).length)throw Error('请先完成本场对话');
  if(id==='ending'&&!s.story55.finalAudioHeard)throw Error('最后的语音尚未同步；请先配置并播放终局音频');
+ if(id==='recognition')recognitionHistory(s,{advanceClock:true}); // Historical rebuild only; live call already marked complete.
  if(!completeNode(s,id))return false;
  if(s.story55.activeScene===id)s.story55.activeScene=null;
  if(n.credit)creditScene55(s,n);
@@ -208,6 +210,7 @@ function creditScene55(s,n){
  return r;
 }
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
+ if(id==='recognition')return; // Recognition is one call record, not chat bubbles.
  const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
  if(id==='intrusion'&&line[0]==='system'&&(index===15||index===19)){
   appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:`s55-intrusion-v2-${index}`,from:'system',text:line[1],kind:'terminal-status',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
@@ -372,6 +375,18 @@ export function tickStory55(s){
  applyD26D28Definition(story55Config(s));
  applyD29Definition(story55Config(s));
  applyD34D42Definition(story55Config(s));
+ // Repair only test-reconstructed D42 history, not real late-delivered
+ // conversations or author-adjusted message timestamps.
+ for(const id of D42_OPERATION_SCENE_IDS){
+  const progress=s.story55.scenes?.[id],node=nodeById(s,id);
+  if(!progress?.test||progress.d42TimeRepaired||s.story55.chatSceneEdits?.['node:'+id]?.lineTimes)continue;
+  const chat=s.content.conversations[node.channel]?.find(c=>c.id===node.conversationId),lines=sceneLines(s,id),timeline={},clockState={day:42,clock:node.at,story55:{}};
+  for(let i=0;i<lines.length;i++){
+   const time=stampFixedLine(clockState,timeline,lines,i,{at:node.at,day:42}),m=chat?.messages.find(m=>m.id===`${node.messagePrefix}-${i}`);
+   if(m&&m.day===42&&m.time>time)m.time=time;
+  }
+  progress.d42TimeRepaired=true;
+ }
  if(!story55Config(s).d43D44Revision){
   // Older saves may have partially read the superseded test conversation.
   // Keep actual past bubbles and completed nodes, but never map its line
@@ -453,6 +468,7 @@ export function tickStory55(s){
  // The existing story tick silently rehydrates saved real chats as game time
  // reaches their original timestamps. No extra event queue or notifications.
  restoreDeveloperChatArchive(s);
+ migrateRecognitionHistory(s);
  // Repair the newly authored final bubble in completed saves, without
  // replaying the scene or altering the original message timestamps.
  if(completed(s,'questions')){

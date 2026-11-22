@@ -1,3 +1,4 @@
+import {RECOGNITION_STEPS} from './recognition-call.js';
 // Fixed D29 story; shared Story55 queue and existing chess match own delivery.
 // Authored story token, never a network destination.
 export const D29_IP='195.22.28.198';
@@ -65,4 +66,5 @@ export function applyD29Definition(c){
  }
  const mail=c.mails.find(m=>m.id==='invite-mail');
  if(mail)Object.assign(mail,{from:'Dr Ouroboros',subject:'NoApp / PRIVATE BETA',body:'內測邀請僅供你本人使用。'});
+ if(!c.recognitionCallRevision){c.scenes.recognition=structuredClone(RECOGNITION_STEPS);c.recognitionCallRevision=1;}
 }

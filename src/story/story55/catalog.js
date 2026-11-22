@@ -4,6 +4,7 @@ import {applyD17Definition} from '../d17/definition.js';
 import {applyD25Definition} from '../d25/definition.js';
 import {applyD26D28Definition} from '../d26-d28/definition.js';
 import {applyD29Definition} from '../d29/definition.js';
+import {RECOGNITION_STEPS} from '../d29/recognition-call.js';
 import {applyD34D42Definition} from '../d34-d42/definition.js';
 import {applyD43D44Definition} from '../d43-d44/definition.js';
 import {applyD45Definition} from '../d45/definition.js';
@@ -679,28 +680,7 @@ export const STORY55_CONFIG={
         "我很期待你的侵入，希望这一次，你能给我一些值得等待的结果。"
       ]
     ],
-    "recognition": [
-      [
-        "tai",
-        "欢迎回家，熙蒙。或者说……欢迎回家，哥哥。"
-      ],
-      [
-        "me",
-        "我真不敢相信……熙泰……这是你的中文名吗？"
-      ],
-      [
-        "tai",
-        "我的养母一直让我记住这个名字，她说以后回中国找兄弟会容易一些；直到看到你和熙旺的名字，我才知道这个安排为什么有用。"
-      ],
-      [
-        "me",
-        "你从那个钱包开始，就已经知道我的身份了？"
-      ],
-      [
-        "tai",
-        "还要更早，从我发现那份孤儿院档案开始；你能自学到这个程度，确实值得我花一些时间，而现在，你终于知道我为什么一直没有离开。"
-      ]
-    ],
+    "recognition": RECOGNITION_STEPS,
     "target": [],
     "paris": [
       [

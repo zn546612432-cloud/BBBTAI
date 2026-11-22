@@ -121,7 +121,7 @@ export function render({store},loc){
  '</nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
  if(id==='tai')taiFeedback=currentTaiFeedback(s,taiFeedback);
- return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'&&taiFeedback.includes('正在输入')?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:true}):chatList(s,'noapp'))+'</div>';
+ return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'&&taiFeedback.includes('正在输入')?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:!isStory55(s)||taiRecognized(s)}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
  const id=target.dataset.id;

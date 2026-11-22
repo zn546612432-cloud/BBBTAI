@@ -54,23 +54,18 @@ test('original MIRAGE private channel shows the incoming message and the own rep
  assert.equal(chat.messages.at(-1).text,step.text);
  setMirageAuthenticated(false);
 });
-test('D30 recognition is a real NoApp conversation with send button, no theatrical dialogue panel',()=>{
+test('Recognition never exposes player text drafts in NoApp; the preset call owns both sides',()=>{
  const s=state();previewNode55(s,'recognition');s.story55.noappInstalled=true;
  const route=nodeLink55(s,'recognition');
  assert.equal(route.appId,'noapp');
  assert.equal(route.route,'/chat/tai');
- advanceScene55(s,'recognition');
  const authored=scriptedDraft55(s,'noapp','tai');
- assert.equal(authored.kind,'me');
+ assert.equal(authored,null);
  const html=registry.get('noapp').render({store:{get:()=>s}},{route:'/chat/tai',params:{}});
- assert.match(html,/data-form="send-chat"/);
- assert.match(html,/data-story-scene="recognition"/);
- assert.match(html,/data-story-type="/);
+ assert.doesNotMatch(html,/data-form="send-chat"|data-story-scene="recognition"|data-story-type="/);
  assert.doesNotMatch(html,/noapp-story55-step|s55-scene-next|查看新消息/);
  const chat=s.content.conversations.noapp.find(c=>c.id==='tai');
  assert.equal(chat.messages.filter(m=>m.from==='me').length,0);
- sendScriptedDraft55(s,'noapp','tai',authored.text);
- assert.equal(chat.messages.at(-1).from,'me');
 });
 test('D55 final voice is an in-chat sound bubble, not a Next-button card',()=>{
  const s=state();previewNode55(s,'ending');s.story55.noappInstalled=true;

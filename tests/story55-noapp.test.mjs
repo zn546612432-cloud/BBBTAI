@@ -7,6 +7,9 @@ import {activateStory55,advanceScene55,nodeLink55,sceneLines,scene55} from '../s
 import {completed,story55Config} from '../src/services/story55/state.js';
 import {previewNode55,handleStory55Action} from '../src/services/story55/controller.js';
 import {installed,appUnlocked,registry} from '../src/system/registry.js';
+import {callAction,callState,callView,incomingCallBanner,scriptedCallDraft} from '../src/apps/noapp/voice-call.js';
+import {RECOGNITION_STEPS} from '../src/story/d29/recognition-call.js';
+import {timedStoryPaused} from '../src/services/story55/state.js';
 
 const make=()=>{const s=initialState();activateStory55(s);return s;};
 const show=(s,route='/chat/tai')=>registry.get('noapp').render({store:{get:()=>s}},{route,params:{}});
@@ -18,28 +21,41 @@ test('NoApp is hidden at D01 until invitation installation',()=>{
  assert.match(show(s,'/'),/尚未收到私人频道的内测邀请/);
  assert.doesNotMatch(show(s,'/'),/class="composer"/);
 });
-test('D30 invite installs NoApp and recognition is visible in real chat bubbles',async()=>{
+test('NoApp installation rings immediately; recognition is an automatic preset call, not chat bubbles',async()=>{
  const s=make();previewNode55(s,'recognition');
  assert.equal(completed(s,'invite'),true);
  assert.equal(completed(s,'recognition'),false);
  assert.equal(s.story55.noappInstalled,undefined);
  assert.match(show(s),/安装并打开 NoApp/);
- const ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:link=>{s.nav.current=link;}}};
+ const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open:link=>{s.nav.current=link;}}};
+ const old={Audio:globalThis.Audio,fetch:globalThis.fetch,setTimeout:globalThis.setTimeout};let audio;
+ class FakeAudio{constructor(){audio=this;this.src='';this.paused=true;this.listeners=new Map();}addEventListener(n,cb){const a=this.listeners.get(n)||new Set();a.add(cb);this.listeners.set(n,a);}removeEventListener(n,cb){this.listeners.get(n)?.delete(cb);}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}finish(){this.paused=true;for(const cb of [...(this.listeners.get('ended')||[])])cb();}}
+ const waitFor=async pred=>{for(let i=0;i<500;i++){if(pred())return;await new Promise(r=>old.setTimeout(r,2));}throw Error('Recognition call timed out');};
+ try{
+ globalThis.Audio=FakeAudio;globalThis.fetch=async url=>{assert.match(String(url),/d33\/d33-recognition-\d+\.mp3$/);return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
+ globalThis.setTimeout=(fn,ms,...args)=>old.setTimeout(fn,ms>=2200&&ms<=30000?2:ms,...args);
  await handleStory55Action('s55-install-noapp',{dataset:{}},ctx);
  assert.equal(s.story55.noappInstalled,true);
  assert.equal(s.nav.current.appId,'noapp');
  assert.equal(s.nav.current.route,'/chat/tai');
  assert.deepEqual(nodeLink55(s,'recognition'),{appId:'noapp',route:'/chat/tai',params:{node:'recognition'}});
- assert.match(show(s),/class="composer"/);
+ assert.doesNotMatch(show(s),/class="composer"/);
  assert.match(show(s),/tai-portrait\.webp/);
  assert.match(show(s),/私人頻道/);
  assert.doesNotMatch(show(s),/尚未相[认認]/);
  assert.doesNotMatch(show(s),/data-action="s55-scene-next"/);
- advanceScene55(s,'recognition');
- assert.match(show(s),/欢迎回家/);
- while(!completed(s,'recognition'))advanceScene55(s,'recognition');
- assert.match(show(s),/陈熙泰/);
+ assert.equal(callState().state,'ringing');assert.match(incomingCallBanner(s),/接听来电/);assert.equal(timedStoryPaused(s),true);
+ callAction('tai-accept',ctx);assert.equal(scriptedCallDraft(),null);
+ for(const [i,[role]] of RECOGNITION_STEPS.entries()){
+  if(role==='tai'){await waitFor(()=>audio?.src?.startsWith('blob:')&&!audio.paused);audio.finish();}
+  await waitFor(()=>callState().turnCount>=i+1||completed(s,'recognition'));
+ }
+ await waitFor(()=>completed(s,'recognition')&&callState().state==='ended');assert.equal(timedStoryPaused(s),false);
+ const messages=s.content.conversations.noapp.find(c=>c.id==='tai').messages;
+ assert.equal(messages.filter(m=>m.kind==='call').length,1);assert.equal(messages.filter(m=>m.id.startsWith('s55-recognition-')&&m.kind==='text').length,0);
+ assert.deepEqual(messages.find(m=>m.kind==='call').transcript.split('\n').map(line=>line.slice(8)),RECOGNITION_STEPS.map(([role,text])=>(role==='me'?'熙蒙':'熙泰')+'：'+text));
  assert.match(show(s),/class="composer"/);
+ }finally{callAction('tai-hangup',ctx);Object.assign(globalThis,old);}
 });
 test('D55 final recording is prompted and persisted inside NoApp, not Calendar',()=>{
  const s=make();previewNode55(s,'ending');
