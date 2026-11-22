@@ -22,9 +22,9 @@ function mockResponse(reply,func){
 }
 test('(phone) plus opening line is an action, never a message bubble or a spoken tag',()=>{
  const a=unpackTaiReply({text:JSON.stringify({messages:[{text:'(phone)喂，怎么催得这么急？',mode:'text'}]})});
- assert.deepEqual(a.map(x=>({action:x.action,text:x.text,mode:x.mode})),[{action:'phone',text:'喂，怎么催得这么急？',mode:'text'}]);
+ assert.deepEqual(a.map(x=>({action:x.action,text:x.text,mode:x.mode})),[{action:'phone',text:'喂，怎麼催得這麼急？',mode:'text'}]);
  assert.doesNotMatch(a[0].text,/phone/);
- assert.equal(unpackTaiReply({text:'{"messages":[{"text":"（phone）+听得到吗？"}]}'})[0].text,'听得到吗？');
+ assert.equal(unpackTaiReply({text:'{"messages":[{"text":"（phone）+听得到吗？"}]}'})[0].text,'聽得到嗎？');
  const empty=unpackTaiReply({text:'{"messages":[{"text":"(phone)"}]}'})[0];
  assert.equal(empty.action,'phone');assert.equal(empty.text,'');
  const mirage=unpackTaiReply({text:'{"messages":[{"text":"(phone)你好"}]}'},'mirage')[0];

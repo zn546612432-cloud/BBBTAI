@@ -60,6 +60,15 @@ export function isRecentTaiCall(entry,current={}){
  const age=minutes(current)-minutes(entry);
  return Number.isFinite(age)&&age>=0&&age<=15;
 }
+// A request for a new call is not a request to revisit an earlier call.
+export function shouldRecallTaiCall(entry,current={},text=''){
+ if(!entry)return false;
+ const t=String(text);
+ if(/(?:剛才|刚才|剛剛|刚刚|之前|上次|下午|那通|那次|上一通).{0,16}(?:電話|电话|通話|通话|說|说|掛|挂)|(?:還|还)(?:記|记)得|(?:為|为)什[麼么](?:掛|挂)/.test(t))return true;
+ if(/孤[兒儿]院/.test(t)&&/孤[兒儿]院/.test(entry.transcript||''))return true;
+ // Immediately following a real hangup, the conversation remains available as background.
+ return isRecentTaiCall(entry,current);
+}
 export function callBridgeNote(entry,current={}){
  if(entry?.kind!=='call')return '';
  const transcript=typeof entry.transcript==='string'?entry.transcript.trim():'';
@@ -71,5 +80,5 @@ export function callBridgeNote(entry,current={}){
   entry.endReason==='idle'?'因长时间沉默，熙泰告别后结束电话。':'';
  return '[系统可信通话回执：'+when+'。'+endedBy+'。'+ending+
   (transcript?'\n通话内容（双方实际上说过的话）：\n'+transcript.slice(0,900):'\n本次没有已确认播放完毕的语音对白，不要猜测没听到的话。')+
-  '\n【当前频道事实】这通电话已经真正断开。现在熙蒙通过 NoApp 文字聊天框打字，你只能以文字聊天回复，不能说「你挂了怎么还能回消息」或假装还在听电话。可以依据当下语境自然回应对方刚才为何挂断，但不能随意指责他在玩弄电话。]';
+  '\n【历史通话事实】这通电话已经真正断开，不代表现在没有另一通电话。熙蒙可以正常通过文字聊天框打字。以当前系统状态为准。只在当前话题相关时引用通话内容，不要为了证明记忆主动复述。不能说「你挂了怎么还能回消息」或假装还在听这通已结束的电话。]';
 }

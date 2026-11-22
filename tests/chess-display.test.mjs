@@ -71,6 +71,6 @@ test('Tai match renders its own persisted chat and AI replies without NoApp audi
   postMatchMessage(store,'tai-match','等你落子');
   assert.equal(await replyToMatch(store,'tai-match'),true);
   const html=render({store},{route:'/match/tai-match'});
-  assert.match(html,/chess-chat-form/);assert.match(html,/等你落子/);assert.match(html,/轮到你了/);assert.doesNotMatch(html,/data-app="noapp"/);
+  assert.match(html,/chess-chat-form/);assert.match(html,/等你落子/);assert.match(html,/輪到你了/);assert.doesNotMatch(html,/data-app="noapp"/);
  }finally{globalThis.fetch=prior;}
 });

@@ -13,12 +13,12 @@ import {aiStatus,askTai,chooseTaiAction,apiConfig} from './gateway.js';
 import {prepareTaiVoice,waitForTaiVoiceQueue,voiceFailureLine} from './voice-delivery.js';
 import {taiSocialEnergy,canTaiCall,socialEnergyPrompt} from './social-energy.js';
 import {unpackTaiReply} from './format.js';
-import {callBridgeNote,isRecentTaiCall} from './humanize.js';
+import {callBridgeNote,isRecentTaiCall,shouldRecallTaiCall} from './humanize.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
 import {rememberTaiConversation,rememberTaiDelivered} from './memory.js';
 import {taiBehavior,replyDelayMs} from './behavior.js';
-import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText,taiCallAvailabilityQuestion,taiShortCallBoundaryPrompt,shortTaiCallReply} from './call-intent.js';
+import {taiPlayerRequestedCall,taiPlayerDeclinedCall,taiShouldCallAfterText,taiCallAvailabilityQuestion,taiShortCallBoundaryPrompt,shortTaiCallReply,taiExistingCallReply} from './call-intent.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
@@ -89,10 +89,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  const batch=incomingTaiBatch(history,sourceMessageId);
  // A bare share is an ordinary acknowledgment, not an invitation to quiz the
  // sender. Persist delivery through the same receipt/notification path.
- if(pendingSource?.kind==='music'&&batch.every(m=>m.kind==='music')){
+ const activeReply=taiExistingCallReply(pendingSource?.voiceCaption||pendingSource?.text,callState().state);
+ if(activeReply||pendingSource?.kind==='music'&&batch.every(m=>m.kind==='music')){
   pendingRequests.add(store);
   try{
-   const text=presence.status==='busy'?'等會聽':'好';
+   const text=activeReply||(presence.status==='busy'?'等會聽':'好');
    await wait(replyDelayMs(text,taiBehavior(initial),{first:true,random}));
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    const id=uid();store.update(s=>{const target=conversation(s);if(!target)return;
@@ -103,7 +104,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   }finally{pendingRequests.delete(store);}
  }
  if(pendingSource?.kind==='image'){store.update(s=>{markTaiRead(s,sourceMessageId,now());const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiHandledAction='read_no_reply';});return {status:'read_no_reply',count:0};}
- const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day)
+ const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day&&(m.kind!=='call'||shouldRecallTaiCall(m,initial,pendingSource?.voiceCaption||pendingSource?.text)))
   .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};
  pendingRequests.add(store);
@@ -127,15 +128,16 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const lastCallIndex=c.messages.findLastIndex(m=>m.kind==='call'&&m.callStatus==='ended');
   const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
   const messagesAfterCall=lastCallIndex<0?[]:c.messages.slice(lastCallIndex+1).filter(m=>m.from==='me'&&m.actual!==false);
-  const firstTextAfterCall=!!lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)&&messagesAfterCall[0]?.id===sourceMessageId;
+  const callActive=['connected','ringing','dialing'].includes(callState().state);
+  const firstTextAfterCall=!callActive&&!!lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)&&messagesAfterCall[0]?.id===sourceMessageId;
   const worldbookEvents=[batch.length>1?'incoming_batch':null,musicContext?'music_context':null,voiceRequested?'voice_requested':null,requestedCall?'call_requested':null,
    firstTextAfterCall?({player:'call_ended_player',tai:'call_ended_tai',connection_error:'call_ended_error'}[lastEndedCall.endedBy]):null,'social_energy'].filter(Boolean);
   // After a real hangup, the first new line is TEXT unless the player
   // explicitly asks for a fresh voice note or another phone call.
   const voiceAvailable=!!status.minimax&&voiceEnergy.remaining>0;
-  const allowVoice=!directAffection&&!shortCallReply&&voiceAvailable&&(voiceRequested||behavior.autonomousVoice&&voiceEnergy.stage==='normal')&&(!firstTextAfterCall||voiceRequested);
-  const voiceTurn=unheard?!!apiConfig().minimax&&voiceEnergy.remaining>0:voiceAvailable&&voiceRequested;
-  const postCallTextContext=lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
+  const allowVoice=!callActive&&!directAffection&&!shortCallReply&&voiceAvailable&&(voiceRequested||behavior.autonomousVoice&&voiceEnergy.stage==='normal')&&(!firstTextAfterCall||voiceRequested);
+  const voiceTurn=!callActive&&(unheard?!!apiConfig().minimax&&voiceEnergy.remaining>0:voiceAvailable&&voiceRequested);
+  const postCallTextContext=callActive?'【當前真實狀態】NoApp 電話尚未結束，熙蒙切回聊天框打字。以文字回答，不要假裝電話已結束、拒絕已接通的電話或承諾另撥。不相關的舊通話不必提起。':lastEndedCall&&isRecentTaiCall(lastEndedCall,initial)?
    '【当前媒介核验】刚刚的 NoApp 电话已经真正结束。'+
    (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':lastEndedCall.endedBy==='connection_error'?'连接异常导致电话断开，不是任何一方主动挂断。':'系统已结束电话。')+
    '熙蒙现在是在 NoApp 私聊框打字，而不是在电话里继续说话，更不是挂断后还能传输电话语音。你只通过文字回复，不要把通话中未听到的内容当作真实发言。':
@@ -143,7 +145,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,worldbookEvents,
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
-   relationshipContext:xitaiRelationshipContext(initial,{mode:'text'}),
+   callActive,relationshipContext:xitaiRelationshipContext(initial,{mode:'text',callActive}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
   request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
   request.scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
@@ -199,7 +201,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
   store.update(s=>markTaiRead(s,sourceMessageId,now(),{keepPending:true}));
   if(!unheard)onTyping();
-  const result=unheard||socialRefusal?null:await askTai({...request,relationshipContext:xitaiRelationshipContext(store.get(),{mode:'text'})});
+  const result=unheard||socialRefusal?null:await askTai({...request,relationshipContext:xitaiRelationshipContext(store.get(),{mode:'text',callActive})});
   if(directAffection){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(!result?.directAffectionAccepted)return finishSilentTaiTurn(store,sourceMessageId,now);

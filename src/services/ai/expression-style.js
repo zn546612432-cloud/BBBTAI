@@ -31,7 +31,7 @@ export const XITAI_STYLE_REPAIR='【上一稿語法修正】剛才擬好的台�
 
 // This is a narrow, explicit request after recognition; it is not a general
 // romance/affection keyword and never forces a declaration on the character.
-export const TAI_DIRECT_AFFECTION_LINE='我爱你，熙蒙。';
+export const TAI_DIRECT_AFFECTION_LINE='我愛你，熙蒙。';
 export const TAI_DIRECT_AFFECTION_PROMPT='【本轮重点】熙蒙明确请你说爱他。你可以按自己此刻的心意选择已读不回、暂不回应；若确实愿意说，只发一条完整文字：「我爱你，熙蒙。」说完即止。不要解释、辩白、重复电话记录、追问或另发消息；不为迎合他强行表态。';
 export function isTaiDirectAffectionRequest(value){
  const text=String(value||'').trim().replace(/\s+/g,'').replace(/[。！？!?，,]+$/g,'');

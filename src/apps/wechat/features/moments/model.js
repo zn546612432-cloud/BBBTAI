@@ -17,6 +17,10 @@ export function allMoments(s){
  // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
  return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>{
    const post=m.editedPosts?.[p.id]||p;
+   if(post.id==='xm-d44'&&post.text==='西湖醋鱼吃完了。下次别点。'){
+    const oldComments=(post.comments||[]).length===2&&post.comments[0].by==='胡枫'&&post.comments[0].text==='我就说你不爱吃'&&post.comments[1].by==='熙旺'&&post.comments[1].text==='回去给你买烧腊';
+    return {...post,text:p.text,...(oldComments?{comments:p.comments}:{}),likes:[...new Set([...(post.likes||[]),...p.likes])]};
+   }
    if(post.id!=='xw-0519')return post;
    const legacy=(post.likes||[]).length===1&&post.likes[0]==='熙蒙'&&(post.comments||[]).some(c=>c.by==='熙蒙'&&c.text==='哥哥早安');
    return {...post,...(post.text==='早上好。今天的云很好看。'?{text:p.text}:{}),...(legacy?{likes:p.likes,comments:p.comments}:{})};

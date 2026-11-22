@@ -60,6 +60,6 @@ test('decision prompt has JSON-only actions while expression prompt has no (phon
 test('emotion and vocal cues stay in metadata; never become spoken phone tags',()=>{
  const a=unpackTaiReply({text:JSON.stringify({messages:[{text:'你到底改了哪里？',mode:'voice',tone:'playful',vocal_cue:'small_laugh'}]})},'call');
  assert.equal(a.length,1);assert.equal(a[0].tone,'playful');assert.equal(a[0].vocalCue,'small_laugh');
- assert.equal(a[0].text,'你到底改了哪里？');
+ assert.equal(a[0].text,'你到底改了哪裡？');
  assert.doesNotMatch(a[0].text,/small_laugh|playful|emotion|vocal_cue/);
 });

@@ -50,9 +50,12 @@ test('an older call remains dated memory instead of pretending it just ended',()
  const c=s.content.conversations.noapp.find(x=>x.id==='tai');
  c.messages=[];
  c.messages.push({id:'old-call',from:'tai',kind:'call',callStatus:'ended',text:'语音通话 · 01:20',transcript:'熙泰：刚训练完。',day:60,time:'20:00',actual:true});
+ c.messages.push({id:'why',from:'me',kind:'text',text:'为什么',day:64,time:'22:30',actual:true});
  const ctx=xitaiRelationshipContext(s);
  assert.doesNotMatch(ctx,/刚打过的电话|刚结束一通语音电话/);
- assert.match(ctx,/D60/);
+ assert.doesNotMatch(ctx,/D60|刚训练完/);
+ c.messages.push({id:'recall',from:'me',kind:'text',text:'你还记得上次电话说什么吗',day:64,time:'22:31',actual:true});
+ assert.match(xitaiRelationshipContext(s),/D60/);
 });
 
 test('system event text must not masquerade as a player technical topic',()=>{

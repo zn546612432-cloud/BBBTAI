@@ -7,15 +7,15 @@ import {taiHumanPrompt} from '../src/services/ai/humanize.js';
 test('JSON voice ARRAY is three real messages; structural data never spoken',()=>{
  const json='[{"text":"还在酒店，没起床。","mode":"voice","tone":"soft"},{"text":"正犹豫要不要出去喝那杯咖啡。","mode":"voice","tone":"neutral"},{"text":"哥，你现在方便说话？","mode":"voice","tone":"neutral"}]';
  const r=unpackTaiReply({text:json},'noapp');
- assert.equal(r.length,3);assert.deepEqual(r.map(m=>m.text),['还在酒店，没起床。','正犹豫要不要出去喝那杯咖啡。','哥，你现在方便说话？']);
+ assert.equal(r.length,3);assert.deepEqual(r.map(m=>m.text),['還在酒店，沒起床。','正猶豫要不要出去喝那杯咖啡。','哥，你現在方便說話？']);
  assert.ok(r.every(m=>m.mode==='voice'));
  assert.doesNotMatch(readableTaiVoiceText(json),/mode|tone|text|\[|\{|\}/);
 });
 test('supports JSON nested strings, fenced replies, and legacy corrupt voice captions',()=>{
  const nested=JSON.stringify(JSON.stringify({messages:[{text:'葡语？Claro.','mode':'voice'}]}));
- assert.equal(unpackTaiReply(nested,'noapp')[0].text,'葡语？Claro.');
+ assert.equal(unpackTaiReply(nested,'noapp')[0].text,'葡語？Claro.');
  assert.equal(unpackTaiReply('```json\n[{"text":"好。","mode":"voice"}]\n```','noapp')[0].text,'好。');
- assert.equal(readableTaiVoiceText('[{"text":"昨晚没睡好。","mode":"voice"}]'),'昨晚没睡好。');
+ assert.equal(readableTaiVoiceText('[{"text":"昨晚没睡好。","mode":"voice"}]'),'昨晚沒睡好。');
 });
 test('broken JSON-looking strings cannot leak into audio captions',()=>{
  assert.throws(()=>unpackTaiReply('[{"text":"speak","mode":"voice"}','noapp'),/解析|结构化/);

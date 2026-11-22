@@ -81,7 +81,7 @@ export async function handleAIGateway(req,res,pathname) {
       const recognized=typeof payload.recognized==='boolean'?payload.recognized:undefined;
       const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{
         ...deepseekModelOptions(channel==='tear'?TEAR_DEEPSEEK_MODEL:payload.model??process.env.DEEPSEEK_MODEL,payload.parameters),
-        messages:assembleTaiMessages(channel==='tear'?buildTearPrompt(scene):buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,worldbookEvents:payload.worldbookEvents,worldbookSnapshot:payload.worldbookSnapshot,worldbook:payload.worldbook,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY}),messages,channel==='tear'?null:payload.worldbookSnapshot),
+        messages:assembleTaiMessages(channel==='tear'?buildTearPrompt(scene):buildTaiPrompt({day,channel,profile,memories,outputMode,scene,relationshipContext,behavior,messages,recognized,callActive:payload.callActive===true,worldbookEvents:payload.worldbookEvents,worldbookSnapshot:payload.worldbookSnapshot,worldbook:payload.worldbook,allowVoice:payload.allowVoice===true&&!!process.env.MINIMAX_API_KEY}),messages,channel==='tear'?null:payload.worldbookSnapshot),
         stream:false,max_tokens:normalizeAiParameters(payload.parameters).maxTokens,response_format:{type:'json_object'}
       });
       const text=data.choices?.[0]?.message?.content;

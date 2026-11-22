@@ -40,7 +40,7 @@ test('40% branch: one DeepSeek JSON text containing semicolons becomes three sep
   assert.equal(result.status,'replied');
   assert.equal(result.count,3);
   assert.deepEqual(chat.messages.filter(m=>m.replySourceId==='u13').map(m=>m.text),[
-   '哈佛，计算机博士','早就不用去教室了','怎么，你这么关心我的课表？'
+   '哈佛，計算機博士','早就不用去教室了','怎麼，你這麼關心我的課表？'
   ]);
   assert.equal(calls.length,2,'single expression call suffices once semicolon text is split');
   assert.match(calls[1].system,/40%分号连发模式已触发/);
@@ -58,13 +58,13 @@ test('old screenshot: continuation repeats Harvard facts but only new question i
   assert.equal(result.count,2);
   assert.equal(calls.length,3,'one natural continuation retry');
   assert.deepEqual(chat.messages.filter(m=>m.replySourceId==='u13').map(m=>m.text),[
-   '哈佛，计算机博士，早不上教室了','你对我上不上学很在意？'
+   '哈佛，計算機博士，早不上教室了','你對我上不上學很在意？'
   ]);
  });
 });
 test('format parser supports Chinese and English semicolons; voice calls are not split into text bubbles',()=>{
  const data={text:JSON.stringify({messages:[{text:'一句；两句;三句',mode:'text'}]})};
- assert.deepEqual(unpackTaiReply(data,'noapp').map(x=>x.text),['一句','两句','三句']);
+ assert.deepEqual(unpackTaiReply(data,'noapp').map(x=>x.text),['一句','兩句','三句']);
  const voice={text:JSON.stringify({messages:[{text:'先说一段；然后再说。',mode:'voice'}]})};
- assert.deepEqual(unpackTaiReply(voice,'call').map(x=>x.text),['先说一段；然后再说。']);
+ assert.deepEqual(unpackTaiReply(voice,'call').map(x=>x.text),['先說一段；然後再說。']);
 });

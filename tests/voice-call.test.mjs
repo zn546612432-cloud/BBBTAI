@@ -12,7 +12,7 @@ test('DeepSeek can send multiple messages or one long reply without forcing tiny
  const noapp=unpackTaiReply({text:json},'noapp');
  assert.equal(noapp.length,2);
  assert.equal(noapp[0].mode,'voice');
- assert.equal(noapp[1].text,long);
+ assert.equal(noapp[1].text,'AI編程'.repeat(200));
  assert.equal(unpackTaiReply({text:json},'chess')[0].mode,'text');
  assert.equal(unpackTaiReply({text:json},'mirage')[0].mode,'text');
 });

@@ -8,6 +8,10 @@ const traditional='給個電話過來撥語別準發條錄聲聽現幾分鐘會�
 const simplified='给个电话过来拨语别准发条录声听现几分钟会点后这';
 export const normalizeTaiPhoneRequest=text=>String(text||'').replace(/[給個電話過來撥語別準發條錄聲聽現幾分鐘會點後這]/g,char=>simplified[traditional.indexOf(char)]);
 export const taiPlayerRequestedCall=text=>request.test(normalizeTaiPhoneRequest(text))&&!withdraw.test(normalizeTaiPhoneRequest(text));
+export function taiExistingCallReply(text,state){
+ if(!taiPlayerRequestedCall(text)&&!taiCallAvailabilityQuestion(text))return '';
+ return state==='connected'?'我還沒掛電話，回來說。':state==='ringing'||state==='dialing'?'電話還在響。':'';
+}
 // Only current availability or a refusal, not general conversation about phones.
 export function taiCallAvailabilityQuestion(text){
  const x=normalizeTaiPhoneRequest(text).replace(/[為麼甚沒開掛斷]/g,c=>({'為':'为','麼':'么','甚':'什','沒':'没','開':'开','掛':'挂','斷':'断'}[c]));

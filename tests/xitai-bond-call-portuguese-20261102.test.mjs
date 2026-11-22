@@ -39,9 +39,9 @@ test('unrecognized Ouroboros remains dominant regardless of saved bond',()=>{
 });
 test('text bubbles can be informal; serious text and voice keep punctuation',()=>{
  const text=unpackTaiReply({text:JSON.stringify({messages:[{text:'行，我现在打。',mode:'text',tone:'dry'},{text:'哦？',mode:'text',tone:'playful'},{text:'等我几分钟。',mode:'text',tone:'soft'},{text:'这件事情还是先解释清楚，资料涉及到三组不同的变量，需要分开处理。',mode:'text',tone:'serious'}]})});
- assert.deepEqual(text.map(x=>x.text),['行，我现在打','哦？','等我几分钟','这件事情还是先解释清楚，资料涉及到三组不同的变量，需要分开处理。']);
+ assert.deepEqual(text.map(x=>x.text),['行，我現在打','哦？','等我幾分鐘','這件事情還是先解釋清楚，資料涉及到三組不同的變量，需要分開處理。']);
  const voice=unpackTaiReply({text:'{"messages":[{"text":"等我几分钟。","mode":"voice"}]}'},'noapp');
- assert.equal(voice[0].text,'等我几分钟。');
+ assert.equal(voice[0].text,'等我幾分鐘。');
  assert.match(voice[0].speechText,/。$/);
 });
 test('only explicit current call request + immediate commitment rings; future and no are not commitments',()=>{
@@ -83,7 +83,7 @@ test('AI commitment after typed call request triggers a real ringing NoApp call'
  try{
   const response=await replyToTaiMessage(store,'call-req-demo',{wait:async()=>{}});
   assert.equal(response.status,'called');
-  assert.equal(chat.messages.at(-1).text,'行，我现在打');
+  assert.equal(chat.messages.at(-1).text,'行，我現在打');
   assert.equal(callState().state,'ringing');
   assert.equal(state.events.filter(e=>e.type==='tai_text_call_trigger').length,1);
   const ctx={store,refresh:()=>{},toast:()=>{},router:{open:()=>{}}};
@@ -109,7 +109,7 @@ test('pure hi mirror is repaired once by DeepSeek instead of saving an echo',asy
   const result=await replyToTaiMessage(store,'hello-demo',{wait:async()=>{}});
   assert.equal(result.status,'replied');
   assert.equal(calls,2);
-  assert.equal(c.messages.at(-1).text,'你怎么突然想起我了？');
+  assert.equal(c.messages.at(-1).text,'你怎麼突然想起我了？');
  }finally{globalThis.fetch=oldFetch;if(oldSession===undefined)delete globalThis.sessionStorage;else globalThis.sessionStorage=oldSession;}
 });
 test('everyday non-keyword conversations grow slow familiarity after eight meaningful turns',()=>{
