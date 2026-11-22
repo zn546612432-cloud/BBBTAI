@@ -1,0 +1,42 @@
+name: Record fixed recognition call
+on:
+  push:
+    branches: [fix/recognition-recorded-dialogue]
+    paths: ['.github/workflows/d33-recognition-voice.yml', 'src/story/d29/recognition-call.js', 'scripts/generate-d41-d42-voice.mjs']
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Prepare audio decoder
+        run: |
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y ffmpeg
+          fi
+      - name: Record the twelve approved lines
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_REGION: cn
+          SCRIPTED_VOICE_DAY: 33
+        run: node scripts/generate-d41-d42-voice.mjs
+      - name: Validate recordings and manifest
+        run: |
+          node --test tests/recognition-recordings.test.mjs
+          for clip in public/assets/story55/d33/*.mp3; do
+            ffmpeg -v error -i "$clip" -f null -
+          done
+      - name: Commit verified recordings
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f public/assets/story55/d33/
+          git commit -m 'assets: archive twelve recognition call recordings'
+          git push origin HEAD:refs/heads/${GITHUB_REF_NAME}

@@ -66,5 +66,5 @@ export function applyD29Definition(c){
  }
  const mail=c.mails.find(m=>m.id==='invite-mail');
  if(mail)Object.assign(mail,{from:'Dr Ouroboros',subject:'NoApp / PRIVATE BETA',body:'內測邀請僅供你本人使用。'});
- if(!c.recognitionCallRevision){c.scenes.recognition=structuredClone(RECOGNITION_STEPS);c.recognitionCallRevision=1;}
+ if((c.recognitionCallRevision||0)<2){c.scenes.recognition=structuredClone(RECOGNITION_STEPS);c.recognitionCallRevision=2;}
 }

@@ -1,0 +1,115 @@
+{
+  "voice": "moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4",
+  "region": "cn",
+  "model": "speech-2.8-hd",
+  "clips": [
+    {
+      "id": "d33-recognition-0",
+      "text": "歡迎回家，nya。……現在可以叫你熙蒙了吧？",
+      "path": "/assets/story55/d33/d33-recognition-0.mp3",
+      "bundledOnly": true,
+      "textHash": "a16f9cfada56513c2801fe5e2ae8b884caac3b7d00ebb01a7d43109a7dc81efb",
+      "audioHash": "85f64f35958e5fe963ee12ca2ce67fe37bcf5629c2e63c9ec4190db6dfe77284",
+      "size": 13914
+    },
+    {
+      "id": "d33-recognition-2",
+      "text": "嗯。我養母一直讓我記住自己的中文名字，說將來要是想找回親生兄弟，也能多一條線索。",
+      "path": "/assets/story55/d33/d33-recognition-2.mp3",
+      "bundledOnly": true,
+      "textHash": "2088f5090b8c23722865e7931c559d9bd4420bf8a44e0b8cbc9fa34bb66112ec",
+      "audioHash": "8ef60fa723d93cab653260347b811c48559929bac63375a7aabb4c253151095e",
+      "size": 27785
+    },
+    {
+      "id": "d33-recognition-4",
+      "text": "還要更早一些。我查過孤兒院的檔案。知道你也是個黑客的時候，我倒是挺意外的。你能靠自學做到這個程度，確實讓我對你很感興趣。",
+      "path": "/assets/story55/d33/d33-recognition-4.mp3",
+      "bundledOnly": true,
+      "textHash": "2b55100b69f9ce23262b9bba45dbbbc603af9a59587021c91800638c4f0c590d",
+      "audioHash": "f2c91544b2e0f6513cf72951d19f16c945119749c7e8219eac2486eb6c9d7c6b",
+      "size": 37189
+    },
+    {
+      "id": "d33-recognition-6",
+      "text": "如果我一開始就告訴你，我是你失散多年的親兄弟，你會相信嗎？",
+      "path": "/assets/story55/d33/d33-recognition-6.mp3",
+      "bundledOnly": true,
+      "textHash": "9229c50ce0956ba35f2569a6600bd625c9fe8eef0a0d30a00dfac946d8cff37a",
+      "audioHash": "899b590fbe4d44d60aa2972e046dc393d1db0e23edd8f4859223a7e7f06dc68e",
+      "size": 19165
+    },
+    {
+      "id": "d33-recognition-8",
+      "text": "你和我有很多的相似點，我們都不是會輕易信任別人的人，所以我才讓你自己去找答案。",
+      "path": "/assets/story55/d33/d33-recognition-8.mp3",
+      "bundledOnly": true,
+      "textHash": "af59e4181751697521390990abdac954e75e1ff0dd2069aa043506a1ac2cda07",
+      "audioHash": "7dd7b044ebe9c9a949f5a10677a2d86ec15bc946a0ba66c07c623d881428859b",
+      "size": 25121
+    },
+    {
+      "id": "d33-recognition-10",
+      "text": "特別加密的軟件，以後有事就在這裡聯繫我。",
+      "path": "/assets/story55/d33/d33-recognition-10.mp3",
+      "bundledOnly": true,
+      "textHash": "3f3fe91e07b0517039bb32c8a5f81a9641f996428db2adebb0bdb2ab205aa4d8",
+      "audioHash": "d67dd0d0fd7554c46669fc900d8ac31fb213a44bed1e90bc5e833dc297f52d08",
+      "size": 14306
+    },
+    {
+      "id": "d33-recognition-12",
+      "text": "我的代號有很多，你喜歡叫什麼就叫什麼。不管哪一個都是我，這才是這些名字真正的分量。",
+      "path": "/assets/story55/d33/d33-recognition-12.mp3",
+      "bundledOnly": true,
+      "textHash": "d8233076cfde250f875a5f176e048cfbe25070986155ecedd881d44f602477c0",
+      "audioHash": "3a222ce438bc2f8f616ae392b4f68aa97ff356909728640434e3d89e1d5ed3b6",
+      "size": 29352
+    },
+    {
+      "id": "d33-recognition-15",
+      "text": "……其實你是第一個這樣叫我的人。",
+      "path": "/assets/story55/d33/d33-recognition-15.mp3",
+      "bundledOnly": true,
+      "textHash": "028525645b368e098bcca3ae5ee9c19e2c5cff055071a838f40d51c564cac713",
+      "audioHash": "2811ab0da20522adc2573090f1201f711b82351887e0c55d7a6ca552f43b692b",
+      "size": 9369
+    },
+    {
+      "id": "d33-recognition-16",
+      "text": "聽起來也還不錯。",
+      "path": "/assets/story55/d33/d33-recognition-16.mp3",
+      "bundledOnly": true,
+      "textHash": "d1f6710d77e2fb787b7df60daa5cbdf928606d693f3a6436f0e8576de1ae1e40",
+      "audioHash": "7aab0761ca869dc2b6283b9c1f5a3bf61bfeb5742dc417a6ffdd15d26e7d5dcf",
+      "size": 7018
+    },
+    {
+      "id": "d33-recognition-18",
+      "text": "……隨你喜歡。",
+      "path": "/assets/story55/d33/d33-recognition-18.mp3",
+      "bundledOnly": true,
+      "textHash": "6cf55738c5732cbd25717f0fa359526dee13d2c68b4d633357b8f0937ac4501f",
+      "audioHash": "4c74cd2b2f9d54b69eae2acfff8f35532ee62fc3c46010080bbc220f8f50b3cd",
+      "size": 5921
+    },
+    {
+      "id": "d33-recognition-19",
+      "text": "我還有事，先掛了。",
+      "path": "/assets/story55/d33/d33-recognition-19.mp3",
+      "bundledOnly": true,
+      "textHash": "772a689a23a85a4b013a28dc777427874c39fa58204b1ccaab3d5932a442f93c",
+      "audioHash": "6dbff504519b03df78da893e40a2562a9b7bdf2683ff76b766778155fa6ca3cc",
+      "size": 7958
+    },
+    {
+      "id": "d33-recognition-21",
+      "text": "再見，熙蒙。",
+      "path": "/assets/story55/d33/d33-recognition-21.mp3",
+      "bundledOnly": true,
+      "textHash": "280d82b68d3a287d79a9de37496f2edd2c4e614824bdf08fb912447d99860aa6",
+      "audioHash": "10f791512b2f72bb4515f6167f054f9edb5aec41e63afc868cb0d9fddbb94896",
+      "size": 7645
+    }
+  ]
+}
