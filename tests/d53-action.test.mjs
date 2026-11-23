@@ -56,6 +56,7 @@ test('D53 advances through native Send, the original phone checkpoint, then the 
  assert.equal(pendingTimedStoryEvent(s).id,D53_CALL.id);
  s.story55.scriptedCallCompleted={[D53_CALL.id]:true};
  assert.equal(pendingTimedStoryEvent(s).id,D53_ISOLDE_DEAL);
+ advanceGameMinutes(s,180);assert.equal(s.clock,'21:31','the deal checkpoint follows the 21:30 call');
  assert.equal(advanceGameMinutes(s,180).minutes,0,'do not jump to 23:00 before the deal');
  finish(D53_ISOLDE_DEAL,D53_DEAL_LINES,'mirage','mc-isolde-mirage');
  advanceGameMinutes(s,180);assert.equal(s.clock,'23:00');
