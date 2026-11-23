@@ -85,7 +85,10 @@ test('NoApp continuation uses exactly one bounded DeepSeek generation, not force
  saveApiConfig({deepseek:'test-private-key',minimax:'',model:'deepseek-flash'});
  let calls=0;
  globalThis.fetch=async(url,init)=>{
-  calls++;
+  // Character-bible GET is a separate optional read; count only actual
+  // DeepSeek content generations, not supporting network lookups.
+  if(String(url).includes('/tai-v8-persona'))return Response.json({},{status:404});
+  if(String(url).includes('api.deepseek.com/chat/completions'))calls++;
   const req=JSON.parse(init.body);
   assert.match(req.messages[0].content,/雙人對話/);
   return Response.json({choices:[{message:{content:JSON.stringify({messages:[{text:'我聽到了。',mode:'text',tone:'neutral'}]})}}]});
