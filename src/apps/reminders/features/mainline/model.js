@@ -3,7 +3,8 @@
 import {isStory55,story55Config,nodeStatus,completed,date55,storyDayMinute} from '../../../../services/story55/state.js';
 import {nodeLink55,scene55,sceneLines} from '../../../../services/story55/runtime.js';
 import {D01_OPENING,D01_REPAIR,D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
-import {d02CompleteBuild} from '../../../../story/d02/runtime.js';
+import {d02CompleteBuild,D02_AODONG_CHAT_ID} from '../../../../story/d02/runtime.js';
+import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {D06_ORDER_ID,D06_FLOW_AT} from '../../../../story/d06/commission.js';
 import {STORY55_WALLET_MAIL_ID} from '../../../mirage/data.js';
 import {FLOW_CONTACT,flowState} from '../../../../services/story55/flow-d03.js';
@@ -138,8 +139,10 @@ function researchTasks(s){
 export function mainlineTasks(s){
  if(!isStory55(s)||s.story55?.ended)return [];
  const items=d01Tasks(s);
- if(s.day>=2&&s.day<=14&&(s.day>2||s.clock>='09:00')&&!d02CompleteBuild(s))
-  items.push(task('workstation','準備工作站配件',destination('aomi','/'),'澳東商城 · 購齊所需設備'));
+ const aodongChat=s.content.conversations.messages?.find(c=>c.id===D02_AODONG_CHAT_ID);
+ const aodongSmsReady=visibleMessages(aodongChat,s).some(m=>m.id==='d02-aodong-sale');
+ if(s.day>=2&&s.day<=14&&aodongSmsReady&&!d02CompleteBuild(s))
+  items.push(task('workstation','準備工作站配件',destination('messages','/chat/'+D02_AODONG_CHAT_ID),'短信 · 澳東商城優惠資訊'));
  const required=mandatoryIds(s);
  for(const n of story55Config(s).nodes){
   if(!required.has(n.id)||n.day>s.day||!hasReached(s,n))continue;
