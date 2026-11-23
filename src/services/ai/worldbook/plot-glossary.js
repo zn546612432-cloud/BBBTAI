@@ -97,8 +97,8 @@ export function projectTaiPlotGlossary(s,context={}){
 // Only an ordinary, explicit "what is this program?" question gets one
 // source-grounded, authored short reply. Other technical follow-ups use lore.
 export function taiDirectTearDefinition(s,input){
- if(!supported(s))return null;
- const query=t(input).replace(/[\s，,。！？!?、：:；;「」『』“”"']/g,'').replace(/^(?:熙泰|陳熙泰|陈熙泰|nya)/i,'');
+ if(!supported(s)||!s.story55?.completed?.recognition)return null;
+ const query=t(input).replace(/[\s，,。！？!?、：:；;「」『』“”"'’]/g,'').replace(/^(?:熙泰|陳熙泰|陈熙泰|nya)/i,'');
  const name='(?:[銜衔]尾蛇之[淚泪]|ouroborostear)';
  const pattern=new RegExp('^(?:(?:你)?(?:知[道唔]|記得|记得|說說|说说|告訴我|告诉我|解釋一下|解释一下))?'+name+'(?:是什[麼么]|是啥|是什[麼么]東西|是什[麼么]程序|(?:是)?做什[麼么]的|幹嘛的|干嘛的|有什[麼么]用|有什[麼么]作用)(?:嗎|吗)?$','i');
  if(!pattern.test(query))return null;
