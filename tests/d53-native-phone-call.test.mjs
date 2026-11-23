@@ -61,7 +61,7 @@ test('complete cinematic call waits after recording ends, captions both sides wi
  }
  tickAuthoredPhoneCalls(ctx,a,now);
  assert.equal(store.get().phoneCall.state,'ended');assert.equal(store.get().phoneCall.reason,'scripted_end');
- assert.equal(store.get().story55.scriptedCallCompleted[D53_CALL.id],true);assert.equal(pendingTimedStoryEvent(store.get()).id,'failure');
+ assert.equal(store.get().story55.scriptedCallCompleted[D53_CALL.id],true);assert.equal(pendingTimedStoryEvent(store.get()).id,'d53-isolde-deal');
  assert.equal(store.get().clock,'21:33');assert.equal(new Set(stamps).size,10);assert.equal(stamps[0],'21:30:00');assert.equal(stamps.at(-1),'21:33:20');
  const logs=store.get().content.phone.calls.filter(c=>c.id===id);assert.equal(logs.length,1);assert.equal(logs[0].transcript.length,10);
  assert.deepEqual(playerMessages(),originalPlayerMessages,'cinematic captions must not send player chat messages');

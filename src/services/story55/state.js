@@ -84,6 +84,8 @@ export function nodeStatus(s,id){
  if(id==='loan'&&!s.story55?.projects?.base?.batches?.[0]?.complete)return {state:'locked',reason:'等待D14基础框架首次运行报告'};
  if(n.requiresContact&&!s.content?.conversations?.[n.channel]?.some(c=>c.id===n.conversationId))return {state:'locked',reason:'聯絡人尚未解鎖'};
  if(n.requiresScriptedCall===D45_CALL.id&&!scriptedCallPlayed(s,D45_CALL))return {state:'locked',reason:'等待孤兒院通話結束'};
+ const nativeCall=NATIVE_PHONE_CALLS.find(call=>call.id===n.requiresScriptedCall);
+ if(nativeCall&&!scriptedCallPlayed(s,nativeCall))return {state:'locked',reason:'等待通話結束'};
  if(id==='d29-chess'&&!s.story55.d29ChessOpened)return {state:'locked',reason:'等待打開國際象棋'};
  if(id==='plan'&&!s.story55.d29ChessExited)return {state:'locked',reason:'等待棋局結束'};
  if(id==='questions'&&!identityReplyMode55(s))return {state:'locked',reason:'等待對方回覆'};

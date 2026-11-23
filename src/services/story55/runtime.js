@@ -13,7 +13,8 @@ import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALL
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {applyD46Group,D46_GROUP_ID,D46_GROUP_AT} from '../../story/d46/group.js';
 import {applyD47Definition,migrateD47TimelineHistory,SOURCE_SCENE,DEPOSIT_SCENE,DEPOSIT_REPLY} from '../../story/d47/definition.js';
-import {applyD53Definition,D53_ACTION_START,D53_ACTION_END} from '../../story/d53/definition.js';
+import {applyD53Definition,D53_ACTION_START,D53_ACTION_END,D53_ISOLDE_DEAL,D53_TAI_NIGHT} from '../../story/d53/definition.js';
+import {syncD53DealReminder} from '../../story/d53/reminders.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -433,9 +434,13 @@ export function tickStory55(s){
   if(s.day>47)for(const id of ['d47-group','d47-wang',SOURCE_SCENE])s.story55.completed[id]??={day:47,clock:'21:30',legacySkipped:true};
   if(completed(s,'mercenary'))for(const id of [DEPOSIT_SCENE,DEPOSIT_REPLY])s.story55.completed[id]??={day:50,clock:'10:00',legacySkipped:true};
  }
- if(applyD53Definition(story55Config(s))&&s.day>53){
-  for(const [id,clock] of [[D53_ACTION_START,'20:00'],[D53_ACTION_END,'23:00']])s.story55.completed[id]??={day:53,clock,legacySkipped:true};
+ const updatedD53=applyD53Definition(story55Config(s));
+ if(updatedD53&&s.day>53){
+  for(const [id,clock] of [[D53_ACTION_START,'20:00'],[D53_ISOLDE_DEAL,'21:30'],[D53_ACTION_END,'23:00'],[D53_TAI_NIGHT,'23:30']])s.story55.completed[id]??={day:53,clock,legacySkipped:true};
  }
+ if(updatedD53&&s.day===53&&completed(s,D53_ACTION_END)&&!completed(s,D53_ISOLDE_DEAL))
+  s.story55.completed[D53_ISOLDE_DEAL]={day:53,clock:'21:30',legacySkipped:true};
+ syncD53DealReminder(s);
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);
