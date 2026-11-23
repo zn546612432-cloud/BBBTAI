@@ -3,6 +3,13 @@
 import {taiCallFarewellIntent} from './call-hangup-intent.js';
 const clean=value=>String(value||'').replace(/[\s，。！？!?、：:；;,.…"“”‘’（）()\-]/g,'').toLowerCase();
 const grams=s=>{const result=new Set();for(let i=0;i<s.length-1;i++)result.add(s.slice(i,i+2));return result;};
+export function taiCallReplyStatus(snapshot={},caption=''){
+ if(snapshot.state!=='connected'||snapshot.scripted||caption||snapshot.audioReady||
+    snapshot.listening||snapshot.transcribing||snapshot.requestingMic)return '';
+ if(snapshot.replyPhase==='thinking')return '熙泰正在回覆…';
+ if(snapshot.replyPhase==='voice')return '熙泰正在準備語音…';
+ return '';
+}
 const comfort=text=>/(?:累|休息|缓过来|别说话|不想说话|没力气)/.test(text)&&/(?:陪|听你|先别|别费劲|放着|缓过来)/.test(text);
 const promise=text=>/(?:等.{0,5}(?:事|事情).{0,4}(?:结|完)|等我见到|事情结束)/.test(text)&&/(?:见|找|抱|去|结束|完)/.test(text);
 export function sameCallMeaning(a,b){

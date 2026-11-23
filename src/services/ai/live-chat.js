@@ -25,6 +25,7 @@ import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} fr
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
+import {selectTaiMemoryPreset,alreadyRecentlyUsedTaiPreset} from '../../apps/noapp/memory-replies.js';
 import {musicListeningContext} from '../../apps/music/features/shared/listening.js';
 
 const conversation=s=>s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -105,6 +106,26 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   }finally{pendingRequests.delete(store);}
  }
  if(pendingSource?.kind==='image'){store.update(s=>{markTaiRead(s,sourceMessageId,now());const m=conversation(s)?.messages.find(x=>x.id===sourceMessageId);if(m)m.taiHandledAction='read_no_reply';});return {status:'read_no_reply',count:0};}
+ // Only author-confirmed facts already unlocked by the real Story55 scenes
+ // bypass DeepSeek. No action/voice/call requests can be handled by this path.
+ const memoryPreset=batch.length<=1&&pendingSource?.kind!=='voice'
+  ?selectTaiMemoryPreset(initial,pendingSource?.text):null;
+ if(memoryPreset&&!alreadyRecentlyUsedTaiPreset(history,memoryPreset.id)&&!['connected','ringing','dialing'].includes(callState().state)){
+  pendingRequests.add(store);
+  try{
+   await wait(280);
+   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
+   const id=uid(),text=memoryPreset.text;
+   store.update(s=>{
+    const target=conversation(s);if(!target)return;
+    markTaiRead(s,sourceMessageId,now());
+    target.messages.push({id,from:'tai',text,kind:'text',actual:true,aiPresetId:memoryPreset.id,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
+    rememberTaiDelivered(s,text,{sourceId:id});
+    if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+   });
+   return {status:'replied',count:1,text,presetId:memoryPreset.id};
+  }finally{pendingRequests.delete(store);}
+ }
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day&&(m.kind!=='call'||shouldRecallTaiCall(m,initial,pendingSource?.voiceCaption||pendingSource?.text)))
   .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};

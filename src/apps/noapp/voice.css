@@ -309,6 +309,13 @@
 .app-noapp .tai-native-call .tai-call-avatar{width:clamp(88px,27vw,116px);height:clamp(88px,27vw,116px);box-shadow:0 8px 30px #0003}
 .app-noapp .tai-native-call .tai-call-identity h1{font-size:clamp(27px,8vw,34px);font-weight:600;letter-spacing:-.7px;line-height:1.2;margin:16px 0 7px}
 .app-noapp .tai-native-call .tai-call-identity p{font-size:14px;color:#e7e7e9;font-weight:400;min-height:22px}
+/* A subtle live acknowledgement while a real NoApp reply is being prepared.
+   Spoken captions keep their existing layout and are never replaced. */
+.app-noapp .tai-native-call .tai-call-identity p.tai-call-replying{display:flex;align-items:center;justify-content:center;gap:9px;color:#d8e5ed;letter-spacing:.1px}
+.app-noapp .tai-native-call .tai-call-identity p.tai-call-replying::before{content:"";width:6px;height:6px;border-radius:50%;background:#89c9e9;box-shadow:0 0 0 3px #89c9e91a;flex:0 0 auto;animation:tai-reply-pulse 1.65s ease-in-out infinite}
+@keyframes tai-reply-pulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+@media(prefers-reduced-motion:reduce){.app-noapp .tai-native-call .tai-call-identity p.tai-call-replying::before{animation:none}}
+
 .app-noapp .tai-native-call .tai-call-identity .tai-call-spoken-caption{width:100%;max-width:33ch;max-height:min(24vh,9em);overflow:auto;overflow-wrap:anywhere;font-size:clamp(15px,4.2vw,17px);line-height:1.55;color:#f5f5f7;margin:6px 0 8px;scrollbar-width:none}
 .app-noapp .tai-native-call .tai-call-identity .tai-call-spoken-caption.mine{color:#c7d5da;font-style:italic}
 .app-noapp .tai-native-call.is-expanded .tai-call-identity .tai-call-spoken-caption{max-height:5.5em}
