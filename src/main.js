@@ -48,7 +48,7 @@ import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
 import {renderPhoneScreen,activePhoneScreen} from './system/screen.js';
-import {beginCompleteGamePreload} from './system/startup/full-preload.js';
+import {beginLockscreenPreload} from './system/preload.js';
 import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
@@ -67,7 +67,7 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
-// The splash waits for App essentials; the rest of the package downloads during play.
+// Startup warms current-screen artwork only; game resources load on demand.
 // Stop the old 12-second splash watchdog once executable code is running.
 globalThis.__xmBootStarted?.();
 let store;
@@ -112,6 +112,8 @@ const boundedBootTask=async(task,label,limit=7000)=>{
 };
 // Hydrate authored history once essential JSON is on disk, before App readiness.
 // It is part of startup readiness, not an unbounded invisible 0% prerequisite.
+
+await boundedBootTask(()=>hydrateBuiltInPresets(store),'內置劇情載入失敗',5000);
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
 if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
@@ -443,58 +445,29 @@ store.subscribe(()=>{
  globalThis.__xmBootStarted?.();
  if(RECOGNITION_PREVIEW||D45D46_PREVIEW)closeBoot();
  else{
-  lockAssets=beginCompleteGamePreload({
+  lockAssets=beginLockscreenPreload({
    state:store.get(),
-   prepareState:async bundledFetch=>{
-    let hydrateTimer;
-    try{
-     await Promise.race([
-      hydrateBuiltInPresets(store,bundledFetch),
-      new Promise((_,reject)=>{hydrateTimer=setTimeout(()=>reject(new Error('劇情資料初始化超時，請重試')),20000);})
-     ]);
-    }finally{clearTimeout(hydrateTimer);}
-    return store.get();
-   },
-   onProgress:({packageFinished:finished,packageTotal:total,failed,phase})=>{
+   wallpaper:store.get().wallpaper,
+   // Never trap a player behind missing optional artwork or a slow map.
+   deadlineMs:10000,
+   onProgress:({finished,total,failed})=>{
     const percent=Math.floor(finished/Math.max(1,total)*100);
     const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
-    const preparing=phase==='manifest'||phase==='cache';
-    const stageLabel={
-     manifest:'正在讀取資源清單',
-     cache:'正在檢查本機快取',
-     history:'正在載入聊天記錄',
-     assets:'正在準備所有 App',
-     decoding:'正在準備主畫面',
-     map:'正在啟動離線地圖',
-     ready:'App 已準備就緒',
-     background:'正在下載其他資源',
-     complete:'載入完成'
-    }[phase]||'正在載入';
-    if(number)number.textContent=preparing?'…':percent+'%';
-    if(bar)bar.style.width=preparing?'0%':percent+'%';
-    if(label)label.textContent=failed?'有資源未能載入':stageLabel+(['assets','background'].includes(phase)?' · '+finished+'/'+total:'');
+    if(number)number.textContent=percent+'%';
+    if(bar)bar.style.width=percent+'%';
+    if(label)label.textContent=failed?'部分素材稍後重試':finished===total?'主畫面已準備就緒':'正在準備主畫面';
    }
   });
-  void lockAssets.complete.then(()=>{
-   if(bootActive)globalThis.__xmBootIntroReady?.(closeBoot,'遊戲資源已全部下載。');
-  }).catch(()=>{});
-  lockAssets.ready.then(()=>{
+  lockAssets.ready.then(({reason,failed})=>{
+   const status=reason==='timeout'?'其餘素材將在使用時載入。':failed?'部分素材將在使用時重試。':'';
    const message=$('#xm-boot-message');
-   if(message)message.textContent='App 已準備就緒，其他資源繼續下載。';
-   if(globalThis.__xmBootIntroReady){
-    globalThis.__xmBootIntroReady(closeBoot,'App 已準備就緒，其他資源繼續下載。','提前進入');
-   }else closeBoot();
+   if(message)message.textContent=status;
+   if(globalThis.__xmBootIntroReady)globalThis.__xmBootIntroReady(closeBoot,status);
+   else closeBoot();
   }).catch(error=>{
-   console.error('啟動資源未完整載入',error);
-   const reason='資源尚未載入完成。'+String(error?.message||'請檢查網路。').slice(0,160);
-   const retry=()=>globalThis.location.reload();
-   const message=$('#xm-boot-message');
-   if(message)message.textContent=reason;
-   if(globalThis.__xmBootIntroFailed)globalThis.__xmBootIntroFailed(retry,reason);
-   else{
-    const next=$('#xm-boot-next');
-    if(next){next.hidden=false;next.textContent='重新載入';next.onclick=retry;}
-   }
+   console.warn('非必要預載失敗，允許進入',error);
+   if(globalThis.__xmBootIntroReady)globalThis.__xmBootIntroReady(closeBoot,'部分素材將在使用時重試。');
+   else closeBoot();
   });
  }
 
