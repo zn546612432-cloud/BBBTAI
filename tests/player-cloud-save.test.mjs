@@ -162,6 +162,10 @@ test('manual sync reports an unconfirmed upload and then confirms a successful r
  store.cloud.flush=async()=>true;
  await act();
  assert.match(cloudSaveView(store),/已確認同步至雲端/);
+ store.cloud.status={phase:'pending'};
+ assert.doesNotMatch(cloudSaveView(store),/已確認同步至雲端/);
+ store.cloud.status={phase:'offline',message:'最新請求已失敗'};
+ assert.match(cloudSaveView(store),/最新請求已失敗/);
 });
 test('offline failure cause is visible before a manual retry',()=>{
  const store={get:()=>state(11),cloud:{enabled:true,status:{phase:'offline',message:'身份更新失敗'}}};
