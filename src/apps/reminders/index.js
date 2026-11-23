@@ -4,6 +4,8 @@ import {objectives55} from '../../services/story55/views.js';
 import {btn,esc} from '../../system/ui.js';
 import {reminders,toggleReminder,addReminder,reminderDestination} from '../../services/reminders.js';
 import {listHome,listDetail} from './features/lists/index.js';
+import {mainlineTask} from './features/mainline/model.js';
+import {renderMainline} from './features/mainline/view.js';
 import {ghostCarDetail} from './features/project/index.js';
 import {wishDefinition} from '../../services/wishes/catalog.js';
 import {getWish,purchaseWish,wishExpired} from '../../services/wishes/index.js';
@@ -52,11 +54,20 @@ export function wishPurchaseOverlay(s){
 }
 export function render({store},loc){
  const s=store.get(),items=reminders(s).filter(r=>r.title.toLowerCase().includes(search.toLowerCase()));
- const body=loc.route==='/project/ghost-car-plan'?ghostCarDetail(s,reminders(s).find(r=>r.id==='ghost-car-plan')):loc.route==='/completed'?listDetail(items.filter(x=>x.done),'已完成'):loc.route==='/all'?listDetail(items,'全部'):listHome(items,search);
+ const body=loc.route==='/project/ghost-car-plan'?ghostCarDetail(s,reminders(s).find(r=>r.id==='ghost-car-plan')):
+  isStory55(s)&&loc.route==='/personal'?listDetail(items.filter(r=>!r.storyNode&&!r.storyD01&&!r.storyD02Order&&!r.storyProject),'個人事項'):
+  isStory55(s)?renderMainline(s,loc.route):loc.route==='/completed'?listDetail(items.filter(x=>x.done),'已完成'):loc.route==='/all'?listDetail(items,'全部'):listHome(items,search);
  return '<div class="reminders-app" data-native-scroll="reminders">'+body+'</div>'+wishPurchaseOverlay(s);
 }
 export function openReminderTask(id,c){
- const s=c.store.get(),r=reminders(s).find(r=>r.id===id);
+ const s=c.store.get();
+ if(id.startsWith('mainline:')){
+  const t=mainlineTask(s,id);
+  if(!t||t.done)return false;
+  if(!t.link){c.toast?.('目前正在處理，稍後查看');return false;}
+  c.router.open({...t.link,params:t.link.params||{}});return true;
+ }
+ const r=reminders(s).find(r=>r.id===id);
  if(!r)return false;
  const destination=reminderDestination(s,r);
  if(destination?.kind==='wish')return openWishPurchase(destination.id,c);
@@ -67,9 +78,11 @@ export function openReminderTask(id,c){
  return false;
 }
 export function handle(a,t,c){
- if(a==='reminder-follow'){openReminderTask(t.dataset.id,c);return;}
+ if(a==='reminder-follow'||a==='reminder-mainline'){openReminderTask(t.dataset.id,c);return;}
  if(a==='reminder-private-contract')return c.router.open({appId:'mirage',route:'/private-contract'});
- if(a==='reminder-project-open'){if(reminders(c.store.get()).some(r=>r.id==='ghost-car-plan'))c.router.open({appId:'reminders',route:'/project/ghost-car-plan'});return;}
+ if(a==='reminder-project-open'){if(reminders(c.store.get()).some(r=>r.id==='ghost-car-plan')||
+  isStory55(c.store.get())&&mainlineTask(c.store.get(),'mainline:prep'))
+   c.router.open({appId:'reminders',route:'/project/ghost-car-plan'});return;}
  if(a==='reminder-project-file'){const f=reminders(c.store.get()).find(r=>r.id==='ghost-car-plan')?.children?.find(tk=>tk.file===t.dataset.id&&tk.delivered);if(f)c.router.open({appId:'files',route:'/item/'+encodeURIComponent(f.file)});return;}
  if(a==='reminder-wish-open'){openWishPurchase(t.dataset.id,c);return;}
  if(a==='reminder-wish-cancel'||a==='reminder-wish-finish'){pendingPurchase=null;recentPurchase=null;c.refresh();return;}
