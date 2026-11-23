@@ -120,7 +120,7 @@ export function createConversationTrack(config){
   const text=value(d.replies[kind]??d.replies.later,s,q);
   return text?.length?{kind,lines:text}:null;
  }
- function isPast(s,d,q){return !d.mandatory&&(!!d.endWhen?.(s)||conversationMinute(s)>=endMinute(s,d,q));}
+ function isPast(s,d,q){return !!d.endWhen?.(s)||!d.mandatory&&conversationMinute(s)>=endMinute(s,d,q);}
  function reconcile(s,now){
   if(!supported(s)||s.day<config.day)return false;
   const map=ensure(s);let changed=false;
@@ -133,6 +133,9 @@ export function createConversationTrack(config){
   }
   for(const d of defs){
    const q=map[d.id];
+   if(d.endWhen?.(s)&&s.drafts&&lines(s,d,q).some(l=>l.who==='me'&&l.text===s.drafts[chatId(s,d)])){
+    delete s.drafts[chatId(s,d)];changed=true;
+   }
    if(q.lateRun&&!q.lateHandled){
     const run=q.lateRun;
     if(s.day>run.day||conversationMinute(s)>=run.validUntil){

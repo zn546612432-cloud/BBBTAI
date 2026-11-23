@@ -9,6 +9,7 @@ import {stampFixedLine,presetReplyDelay} from '../../services/story55/fixed-time
 import {phoneBlocked} from '../../system/power/story.js';
 import {offerD41ChessInvitation,D41_CHESS_INVITATION} from '../../services/invitations.js';
 import {loadScriptedVoice,preloadScriptedVoice} from '../../services/voice/scripted-voice.js';
+import {recoverD55SilentVoice} from '../../story/d55/voice-progress.js';
 import {d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
 import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voice/asset-url.js';
 import {unheardReply} from '../../services/voice/unheard.js';
@@ -484,8 +485,12 @@ function beginD55Script(ctx,script,phase){
  void playScriptedOpening(ctx);ctx.refresh?.();return true;
 }
 export function tickD55NoApp(ctx,{now=Date.now()}={}){
- const s=ctx.store.get(),story=s.story55;
- if(!isStory55(s)||story?.ended)return false;
+ let s=ctx.store.get();
+ if(!isStory55(s)||s.story55?.ended)return false;
+ if(s.day===55&&!(s.story55.d55RecordedVoiceRevision>=1)){
+  ctx.store.update(recoverD55SilentVoice);s=ctx.store.get();
+ }
+ const story=s.story55;
  // Pre-render approved fixed dialogue at the preceding day's close or early
  // D55. Actual phone playback only reads cached or bundled recordings.
  if((s.day===54&&completed(s,'d54-tai')||s.day===55&&s.clock>='09:50')
@@ -577,6 +582,9 @@ async function playScriptedOpening(ctx){
   while(current()&&call.scriptIndex<steps.length){
    const [role]=steps[call.scriptIndex];
    if(role==='me'){
+    if(call.scriptIndex<(ctx.store.get().story55?.d55VoiceRecoveryThrough?.[script.id]||0)){
+     call.scriptIndex++;saveD55CallProgress(ctx,script);continue;
+    }
     if(script.autoPlayerLines){
      // Authored cutscene dialogue, not a simulated click on the live composer.
      const text=steps[call.scriptIndex][1];
@@ -603,16 +611,17 @@ async function playScriptedOpening(ctx){
    }
    const lines=[];for(let i=call.scriptIndex;i<steps.length&&steps[i][0]==='tai';i++)lines.push(steps[i][1]);
    const before=call.scriptIndex;
+   const requireRecording=script.id===D41_CALL.id||script.id.startsWith('d55-');
    await playScriptedCallSequence({...script,lines},{current,
    synthesize:async text=>{
-    if(script.id!==D41_CALL.id)return loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)).catch(()=>null);
-    while(current()){try{return await loadScriptedVoice(text);}catch{await new Promise(resolve=>setTimeout(resolve,1800));}}
+    if(!requireRecording)return loadScriptedVoice(text).catch(()=>loadScriptedVoice(text)).catch(()=>null);
+    while(current()){try{const blob=await loadScriptedVoice(text);call.connectionIssue=false;return blob;}catch{call.connectionIssue=true;ctx.refresh?.();await new Promise(resolve=>setTimeout(resolve,1800));}}
     return null;
    },
    play:async(blob,text)=>{
     call.caption=text;call.lastSpeech=text;ctx.refresh?.();
     let outcome=blob?await playCallAudio(ctx,blob,sessionId,revision):'failed';
-    while(script.id===D41_CALL.id&&outcome==='failed'&&current()){
+    while(requireRecording&&outcome==='failed'&&current()){
      await new Promise(resolve=>setTimeout(resolve,1800));
      if(current())outcome=await playCallAudio(ctx,blob,sessionId,revision);
     }

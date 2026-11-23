@@ -11,6 +11,7 @@ import {tickD55NoApp,callState,callAction,scriptedCallDraft,startIncoming,incomi
 import {nativePhoneCallDue,tickAuthoredPhoneCalls} from '../src/services/telephony/authored.js';
 import {telephonyFullscreen,telephonyIncomingBanner} from '../src/services/telephony/view.js';
 import {SCRIPTED_VOICE_CLIPS} from '../src/story/d34-d42/voice-assets.js';
+import {recoverD55SilentVoice} from '../src/story/d55/voice-progress.js';
 
 const fixture=()=>{
  const s=initialState();activateStory55(s);previewNode55(s,'ending');
@@ -86,6 +87,22 @@ test('D55 fixed Tai dialogue has prerecording preparation and old shouted finale
  const d55=SCRIPTED_VOICE_CLIPS.filter(x=>x.id.startsWith('d55-'));
  assert.ok(d55.length>=12);
  assert.ok(d55.every(x=>x.prewarmRequired));
+ assert.ok(d55.every(x=>x.bundledOnly));
+ for(const clip of d55)assert.ok(existsSync(new URL('../public'+clip.path,import.meta.url)),clip.path);
  assert.equal(D55_FINAL_CALL.steps.some(x=>x[1]==='熙蒙！熙蒙！'),false);
  assert.equal(D55_FINAL_CALL.steps.some(x=>x[1]==='熙蒙？'),false);
+});
+
+test('an old silent D55 opening resumes unheard speech without resending player lines or rewinding time',()=>{
+ const s={day:55,clock:'22:18',story55:{d55CallStage:'free',d55CallProgress:{[D55_OPENING_CALL.id]:12},scriptedCallCompleted:{[D55_OPENING_CALL.id]:true}}};
+ assert.equal(recoverD55SilentVoice(s),true);
+ assert.equal(s.clock,'22:18');assert.equal(s.story55.d55CallProgress[D55_OPENING_CALL.id],4);
+ assert.equal(s.story55.scriptedCallCompleted[D55_OPENING_CALL.id],undefined);
+ assert.equal(s.story55.d55VoiceRecoveryThrough[D55_OPENING_CALL.id],12);
+ s.story55.d55CallProgress[D55_OPENING_CALL.id]=10;
+ assert.equal(recoverD55SilentVoice(s),false);assert.equal(s.story55.d55CallProgress[D55_OPENING_CALL.id],10);
+ const finished={day:55,clock:'22:46',story55:{d55Disconnected:true,d55CallProgress:{[D55_FINAL_CALL.id]:22}}};
+ recoverD55SilentVoice(finished);assert.equal(finished.story55.d55CallProgress[D55_FINAL_CALL.id],22);
+ const held={day:55,clock:'22:30',story55:{d55FatherReady:true,d55CallProgress:{[D55_WARNING_CALL.id]:4}}};
+ recoverD55SilentVoice(held);assert.equal(held.story55.d55CallProgress[D55_WARNING_CALL.id],4);
 });
