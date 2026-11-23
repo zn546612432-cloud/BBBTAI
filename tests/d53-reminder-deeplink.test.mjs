@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {D53_CALL} from '../src/story/d53/call.js';
+import {D51_PRIVATE_MAIL} from '../src/story/d51/definition.js';
 import {D53_ACTION_START,D53_ISOLDE_DEAL,D53_DEAL_LINES} from '../src/story/d53/definition.js';
 import {D46_CONTACT} from '../src/story/d46/definition.js';
 import {d53DealReminderDue,syncD53DealReminder,D53_REMINDER_ID} from '../src/story/d53/reminders.js';
@@ -17,6 +18,7 @@ function fixture(){
  const s=activateStory55(initialState());
  s.day=53;s.clock='21:33';
  s.story55.completed[D53_ACTION_START]={day:53,clock:'20:00'};
+ s.story55.completed[D51_PRIVATE_MAIL]={day:51,clock:'19:15'};
  s.story55.scriptedCallCompleted={[D53_CALL.id]:true};
  s.story55.d53DealPromptAt=5000;
  if(!s.content.conversations.mirage.some(c=>c.id===D46_CONTACT))
