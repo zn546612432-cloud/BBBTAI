@@ -12,7 +12,8 @@ import {applyD45Definition} from '../../story/d45/definition.js';
 import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {applyD46Group,D46_GROUP_ID,D46_GROUP_AT} from '../../story/d46/group.js';
-import {applyD47Definition,SOURCE_SCENE,DEPOSIT_SCENE,DEPOSIT_REPLY} from '../../story/d47/definition.js';
+import {applyD47Definition,migrateD47TimelineHistory,SOURCE_SCENE,DEPOSIT_SCENE,DEPOSIT_REPLY} from '../../story/d47/definition.js';
+import {applyD53Definition,D53_ACTION_START,D53_ACTION_END} from '../../story/d53/definition.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -426,10 +427,14 @@ export function tickStory55(s){
    for(const id of [D45_PUBLISH,D46_ACCEPT,D46_CHAT])s.story55.completed[id]??={day:id===D45_PUBLISH?WALLET_GIFT_DAY:PRIVATE_ACCEPT_DAY,clock:'14:23',legacySkipped:true};
   }
  }
+ migrateD47TimelineHistory(s);
  if(applyD47Definition(story55Config(s))){
   // Do not replay newly authored scenes from past days in already-progressed saves.
   if(s.day>47)for(const id of ['d47-group','d47-wang',SOURCE_SCENE])s.story55.completed[id]??={day:47,clock:'21:30',legacySkipped:true};
   if(completed(s,'mercenary'))for(const id of [DEPOSIT_SCENE,DEPOSIT_REPLY])s.story55.completed[id]??={day:50,clock:'10:00',legacySkipped:true};
+ }
+ if(applyD53Definition(story55Config(s))&&s.day>53){
+  for(const [id,clock] of [[D53_ACTION_START,'20:00'],[D53_ACTION_END,'23:00']])s.story55.completed[id]??={day:53,clock,legacySkipped:true};
  }
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.

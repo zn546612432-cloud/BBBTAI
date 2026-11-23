@@ -25,12 +25,15 @@ const locate=(s,id)=>{
  if(chosen&&(chosen.draft.priority??2)===0&&providers.some(p=>p.busy?.(s,id)))return null;
  return chosen||null;
 };
+// Keep today's authored track priority, while an older mandatory reply must
+// yield to a currently available Story55 scene in the same thread.
+const preferTrack=(s,chosen,line)=>chosen&&(chosen.draft.priority??2)>0&&(!line||(chosen.draft.day??s.day)>=s.day);
 // Today's live script always outranks missed-message acknowledgements.
 // A multi-day backlog is acknowledged once, never by sending individual old
 // 'late' player lines from D03/D04/D05 in succession.
 export function nativeWeChatComposer(s,id){
  const chosen=locate(s,id),line=currentScript55(s,'wechat',id);
- const isCurrent=chosen&&(chosen.draft.priority??2)>0;
+ const isCurrent=preferTrack(s,chosen,line);
  if(isCurrent)return {
   text:chosen.draft.text,stage:chosen.draft.stage,
   source:chosen.provider.name,disabled:false
@@ -56,7 +59,7 @@ export function nativeWeChatComposer(s,id){
 // Authored player messages are only written from this path on a real submit.
 export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  const s=store.get(),chosen=locate(s,id),line=currentScript55(s,'wechat',id);
- if(chosen&&(chosen.draft.priority??2)>0)return chosen.provider.send(store,id,text,now);
+ if(preferTrack(s,chosen,line))return chosen.provider.send(store,id,text,now);
  if(line?.kind==='me'){
   if(String(text||'').trim()!==line.text.trim())
    return {handled:true,reason:'請發送輸入框裡完整的預設台詞'};

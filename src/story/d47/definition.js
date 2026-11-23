@@ -10,8 +10,25 @@ export const DEPOSIT_HKD=5000000;
 export const DEPOSIT_ID='s55-payment-mercenary';
 export const DEPOSIT_USD=641025.64;
 
+export function migrateD47TimelineHistory(s){
+ if(s.story55?.d47TimelineHistoryRevision)return;
+ const correct=message=>{
+  if(message?.id==='s55-d47-wang-4'&&message.text==='明天晚上，你去暗殺黃德忠。')message.text='你去暗殺黃德忠……';
+ };
+ for(const chat of s.content.conversations.wechat||[])for(const message of chat.messages||[])correct(message);
+ for(const entry of s.story55?.developerChatArchive||[])correct(entry.message);
+ s.story55.d47TimelineHistoryRevision=1;
+}
+
 export function applyD47Definition(c){
- if(c.d47Revision)return false;
+ if(c.d47Revision){
+  if(c.d47Revision===1){
+   const line=c.scenes['d47-wang']?.[4];
+   if(line?.[1]==='明天晚上，你去暗殺黃德忠。')line[1]='你去暗殺黃德忠……';
+   c.d47Revision=2;
+  }
+  return false;
+ }
  const scene=(id,day,at,title,channel,conversationId,requires,lines,extra={})=>{
   c.nodes.push({id,day,at,title,channel,conversationId,requires,kind:'scene',delivery:'queued',gateDay:day,pauseTimeUntilComplete:true,messagePrefix:'s55-'+id,initialDelayMs:0,pauseMs:3000,...extra});
   c.scenes[id]=lines;
@@ -25,7 +42,7 @@ export function applyD47Definition(c){
  scene('d47-wang',47,'16:40','一次機會','wechat','wang',['d47-group'],[
   ['熙旺','蒙蒙，你打算怎麼做？'],['me','哥，我知道你狠不下心。'],
   ['me','警察暫時不會動干爹，他們想順藤摸瓜找到我們。'],['me','我給你一次機會。'],
-  ['me','明天晚上，你去暗殺黃德忠。'],['me','如果成功了，我們就趁機救走老頭子。'],
+  ['me','你去暗殺黃德忠……'],['me','如果成功了，我們就趁機救走老頭子。'],
   ['me','如果失敗了，你就得聽我的。'],['熙旺','好。'],['熙旺','謝謝。']
  ]);
  scene(SOURCE_SCENE,47,'21:30','源代碼','noapp','tai',['recognition','d47-wang'],[
@@ -42,6 +59,6 @@ export function applyD47Definition(c){
  const second=c.nodes.find(n=>n.id==='second');
  if(second){second.day=47;second.requires=[SOURCE_SCENE];}
  const project=c.projects.find(p=>p.id==='second');if(project)project.day=47;
- c.d47Revision=1;
+ c.d47Revision=2;
  return true;
 }
