@@ -14,6 +14,7 @@ import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
 import {applyD46Group,D46_GROUP_ID,D46_GROUP_AT} from '../../story/d46/group.js';
 import {applyD47Definition,migrateD47TimelineHistory,SOURCE_SCENE,DEPOSIT_SCENE,DEPOSIT_REPLY} from '../../story/d47/definition.js';
 import {applyD53Definition,D53_ACTION_START,D53_ACTION_END,D53_ISOLDE_DEAL,D53_TAI_NIGHT} from '../../story/d53/definition.js';
+import {applyD51Definition,D51_ISOLDE_CHAT,D51_PRIVATE_MAIL,syncD51MailReminder} from '../../story/d51/definition.js';
 import {syncD53DealReminder} from '../../story/d53/reminders.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
@@ -440,6 +441,13 @@ export function tickStory55(s){
  }
  if(updatedD53&&s.day===53&&completed(s,D53_ACTION_END)&&!completed(s,D53_ISOLDE_DEAL))
   s.story55.completed[D53_ISOLDE_DEAL]={day:53,clock:'21:30',legacySkipped:true};
+ const introducedD51=applyD51Definition(story55Config(s));
+ // Save migration does not rewind already-played dates or forge a sent email.
+ if(introducedD51&&s.day>51){
+  for(const [id,clock] of [[D51_ISOLDE_CHAT,'19:00'],[D51_PRIVATE_MAIL,'19:00']])
+   s.story55.completed[id]??={day:51,clock,legacySkipped:true};
+ }
+ syncD51MailReminder(s);
  syncD53DealReminder(s);
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.

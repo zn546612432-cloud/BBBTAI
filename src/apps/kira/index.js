@@ -14,12 +14,16 @@ import {kiraInbox} from './features/inbox/index.js';
 import {kiraDetail} from './features/detail/index.js';
 import {commissionAttachment,commissionPreviewAvailable} from '../../services/commissions/attachment-flow.js';
 import {composeMission} from './features/mission/index.js';
+import {kiraD51Compose,kiraD51Sent} from './features/private-contract/index.js';
+import {D51_SENT_ID,sendD51PrivateMail} from '../../story/d51/definition.js';
+import {tickStory55} from '../../services/story55/runtime.js';
 export const manifest={id:'kira',name:'KIRA',icon:10,defaultRoute:'/',supportsDeepLink:true,kicker:'ENCRYPTED MAIL'};
 export function render({store},loc){
  const s=store.get();
+ if(loc.route==='/compose/private-contract')return kiraD51Compose(s);
  if(loc.route==='/compose/'+HACKER_BOUNTY_ID)return composeMission(s);
  if(loc.route.startsWith('/compose/linked/'))return linkedComposeView(s,decodeURIComponent(loc.route.slice('/compose/linked/'.length)));
- if(loc.route==='/sent')return '<div class="kira-inbox"><div class="kira-top">'+btn('kira-back','‹　收件箱')+'</div><h1>已发送</h1><div class="kira-mail-list">'+s.content.mail.filter(m=>m.linkedDelivery).map(m=>btn('kira-mail','<span class="kira-unread"></span><span><strong>'+esc(m.to)+'</strong><b>'+esc(m.subject)+'</b><small>'+esc(m.body)+'</small></span><time>D'+esc(m.day)+'</time>','kira-mail-row','data-id="'+esc(m.id)+'"')).join('')+'</div></div>';
+ if(loc.route==='/sent')return '<div class="kira-inbox"><div class="kira-top">'+btn('kira-back','‹　收件箱')+'</div><h1>已发送</h1><div class="kira-mail-list">'+s.content.mail.filter(m=>m.linkedDelivery||m.storyD51Sent).map(m=>btn('kira-mail','<span class="kira-unread"></span><span><strong>'+esc(m.to)+'</strong><b>'+esc(m.subject)+'</b><small>'+esc(m.body)+'</small></span><time>D'+esc(m.day)+'</time>','kira-mail-row','data-id="'+esc(m.id)+'"')).join('')+'</div></div>';
  if(loc.route.startsWith('/mail/')){
   const mailId=loc.route.slice(6),mail=s.content.mail.find(m=>m.id===mailId);
   if(mailId===STORY55_WALLET_MAIL_ID&&mail){
@@ -32,6 +36,7 @@ export function render({store},loc){
     '<button type="button" class="s55-button" data-action="kira-wallet-d06-ghost">'+
     (done?'查看 GHOST 已完成项目':'打开 GHOST · WALLET CHALLENGE')+'</button></div>';
   }
+  if(mailId===D51_SENT_ID)return kiraD51Sent(s);
   if(mail?.id===D13_MAIL_ID||mail?.id==='code-mail')return kiraDetail(s,mailId);
   if(mail?.story55&&mail.id!=='flow-d03-reward')return mail55(s,mail);
   return mail?.linkedReceipt?linkedReceiptView(s,mailId):mail?.linkedDelivery?linkedSentView(s,mailId):mail?.linkedContract&&linkedMission(s,mail.orderId)?linkedMailView(s,mail.orderId):kiraDetail(s,mailId);
@@ -123,6 +128,17 @@ export function handle(a,t,c){
 }
 
 export function submitFormLinked(form,c){
+ if(form.dataset.form==='kira-d51-private-send'){
+  const values=new FormData(form);
+  const fields={
+   to:String(values.get('to')||''),subject:String(values.get('subject')||''),
+   body:String(values.get('body')||''),attachment:String(values.get('attachment')||'')
+  };
+  let sent=false;
+  c.store.update(s=>{sent=sendD51PrivateMail(s,fields);if(sent)tickStory55(s);});
+  if(sent){c.toast?.('郵件已發送');c.router.open({appId:'kira',route:'/mail/'+D51_SENT_ID,params:{}});}
+  return true;
+ }
  if(form.dataset.form!=='kira-linked-deliver')return false;
  const id=form.dataset.order,values=new FormData(form);
  const attachment=String(values.get('attachment')||''),note=String(values.get('note')||'');

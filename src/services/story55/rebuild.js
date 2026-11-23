@@ -1,5 +1,6 @@
 import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../../story/d13/runtime.js';
 import {publishPrivateContract} from '../../story/d46/runtime.js';
+import {D51_PRIVATE_MAIL,D51_FIXED_MAIL,sendD51PrivateMail} from '../../story/d51/definition.js';
 import {WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 /**
  * Reconstruct a developer test phone by replaying completed days from D01.
@@ -271,6 +272,7 @@ function simulateNode(s,node){
  if(node.kind==='project')return simulateProjectBatch(s,node);
  if(node.kind==='flow'){simulateFlowD03(s);return true;}
  if(node.kind==='private-contract')return publishPrivateContract(s);
+ if(node.id===D51_PRIVATE_MAIL)return sendD51PrivateMail(s,D51_FIXED_MAIL,{test:true});
  if(node.kind==='scene')simulateScene(s,node);
  else if(node.kind==='mail'){
   tickStory55(s);

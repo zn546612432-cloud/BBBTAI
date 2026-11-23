@@ -74,3 +74,23 @@
 .app-kira .kira-d13-mail .kira-mail-body{background:transparent!important;box-shadow:none!important;border:0!important;margin:0!important;padding:27px 0 45px!important;color:#273541!important;font-size:16px!important;line-height:2.05!important;white-space:normal;overflow-wrap:anywhere}
 .app-kira .kira-d13-mail .kira-mail-body .kira-d01-inline-link{font-size:inherit!important;color:#087cc4!important;-webkit-text-fill-color:#087cc4!important;min-height:0!important;min-width:0!important;display:inline!important}
 @media(max-width:375px){.app-kira .kira-d13-mail{padding-left:16px;padding-right:16px}.app-kira .kira-d13-mail .kira-mail-body{font-size:15px!important}}
+
+/* D51 manual KIRA draft shares the existing mail and attachment visual language. */
+.app-kira .kira-private-compose{background:#fff;min-height:100%;box-sizing:border-box;color:#263341;padding:0 20px 42px}
+.app-kira .kira-private-compose .kira-mail-toolbar{display:flex;align-items:center;min-height:55px;border-bottom:1px solid #e8edf1}
+.app-kira .kira-private-compose .kira-mail-toolbar button{background:transparent;border:0;color:#087cc4;font-size:15px;min-height:44px}
+.app-kira .kira-private-compose .kira-detail-head{padding:22px 0;border-bottom:1px solid #edf0f3}
+.app-kira .kira-private-compose .kira-detail-head h2{font-size:25px;font-weight:700;letter-spacing:-.4px;margin:0 0 8px}
+.app-kira .kira-private-compose .kira-detail-head p{font-size:12px;color:#697f8e;margin:0}
+.app-kira .kira-private-form{display:flex;flex-direction:column;gap:0;padding:10px 0 0}
+.app-kira .kira-private-form label{display:flex;flex-direction:column;gap:7px;padding:13px 0;color:#748492;font-size:12px;border-bottom:1px solid #e9edf0}
+.app-kira .kira-private-form input,.app-kira .kira-private-form textarea{border:0;background:transparent;box-shadow:none;outline:none;resize:none;font:inherit;font-size:15px;color:#263341;padding:2px 0;width:100%;line-height:1.7}
+.app-kira .kira-private-form textarea{min-height:65px}
+.app-kira .kira-private-form input[readonly],.app-kira .kira-private-form textarea[readonly]{opacity:1}
+.app-kira .kira-private-attachment{display:flex;align-items:center;min-height:58px;padding:10px 12px;gap:11px;border-radius:12px;background:#f5f7fa;box-sizing:border-box}
+.app-kira .kira-private-attachment .kira-d01-attachment-copy{flex:1}
+.app-kira .kira-private-lock{font-size:22px;color:#a5adb7}
+.app-kira .kira-private-form>button[type=submit]{margin-top:26px;min-height:48px}
+.app-kira .kira-private-compose .kira-mail-body{padding:25px 0;color:#273541;line-height:1.75}
+.app-kira .kira-private-sent,.app-kira .kira-private-locked{font-size:13px;color:#7b8b99;padding:12px 0}
+@media(max-width:375px){.app-kira .kira-private-compose{padding-left:16px;padding-right:16px}}
