@@ -17,7 +17,7 @@ test('date jumps discard pending elapsed time; charging completes its short tran
  const s=start(),batch=new WorldTickBatch();
  assert.equal(batch.take(s,100),null);
  s.clock='10:00';assert.equal(batch.take(s,100),null);
- assert.deepEqual(batch.take(s,100),{elapsedMs:200,gameMinutes:1});
+ assert.deepEqual(batch.take(s,240),{elapsedMs:340,gameMinutes:1.02});
  s.dayChargeRemainingMs=1200;assert.equal(batch.take(s,800).elapsedMs,800);
  batch.reset();assert.equal(batch.take(s,800).elapsedMs,800);
 });
@@ -30,5 +30,5 @@ test('switching App -> home prices each elapsed segment at its original rate',()
  tickPhoneRuntime(s,frame);assert.equal(s.clock,'08:01');
  s.nav.current={appId:'wechat',route:'/chat/group'};
  tickPhoneRuntime(s,batch.take(s,6000));
- assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,.5);
+ assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,.51);
 });

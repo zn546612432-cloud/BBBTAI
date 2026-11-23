@@ -141,6 +141,9 @@ const D13_WAITING_NODES=new Set(['exhibition','d13-wallet-mail','d13-wallet-bind
 export function story55ShortChargeGate(s){
  if(!isStory55(s))return story55ChargeGate(s);
  if(d01Gate(s)||timedStoryPaused(s)||s.story55?.activeScene)return 'plot';
+ // D23's compulsory chess and Mirage postgame remain unskippable even if
+ // an older save advances to a later day before closing the scene.
+ if(s.day>=23&&!completed(s,'d23-chess-finish'))return 'plot';
  // Waiting for a future scene is exactly why short charging exists.
  return story55Config(s).nodes.some(n=>
   Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)

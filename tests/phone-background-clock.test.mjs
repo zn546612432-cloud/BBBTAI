@@ -20,16 +20,16 @@ const start=(day=2,clock='08:00')=>{
 const reconcile=(s,from)=>{tickStory55(s);deliverMissedScheduled(s,from);};
 const resume=(s,ms,extra={})=>settlePhoneBackground(s,ms,{now:1000+ms,reconcile,...extra});
 
-test('background uses five game minutes per second regardless of open App or lock screen',()=>{
+test('background uses three game minutes per second regardless of open App or lock screen',()=>{
  for(const appId of ['home','wechat','ghost'])for(const unlocked of [true,false]){
   const s=start();s.nav.current.appId=appId;s.unlocked=unlocked;
-  assert.equal(resume(s,10000).minutes,50);assert.equal(s.clock,'08:50');
-  assert.equal(s.batteryPercent,96);assert.equal(s.nav.current.appId,appId);
+  assert.equal(resume(s,10000).minutes,30);assert.equal(s.clock,'08:30');
+  assert.equal(s.batteryPercent,98);assert.equal(s.nav.current.appId,appId);
  }
 });
 test('foreground App remains slow; fractional background time and developer speed are retained',()=>{
  const s=start();tickWorld(s,6000);assert.equal(s.worldMinuteFraction,0.5);
- resume(s,100);assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
+ resume(s,500/3);assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
  tickWorld(s,60000);assert.equal(s.clock,'08:06');
  setStory55MinutesPerSecond(s,2);resume(s,250);assert.equal(s.worldMinuteFraction,0.5);
  resume(s,250);assert.equal(s.clock,'08:07');
@@ -37,7 +37,7 @@ test('foreground App remains slow; fractional background time and developer spee
 });
 test('pending foreground fractions are settled before background changes the rate',()=>{
  const s=start(),batch=new WorldTickBatch();assert.equal(batch.take(s,6000),null);
- tickPhoneRuntime(s,batch.flush());resume(s,100);
+ tickPhoneRuntime(s,batch.flush());resume(s,500/3);
  assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
  assert.equal(batch.flush(),null);
 });

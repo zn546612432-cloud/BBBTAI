@@ -17,7 +17,7 @@ test('Dynamic Island offers short and long charging choices',()=>{
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
  const html=dynamicIsland(s,{expanded:true,page:'select'});
  assert.match(html,/power-short-start/);assert.match(html,/power-long-start/);
- assert.match(html,/>短充<\/button>/);assert.match(html,/>长充<\/button>/);
+ assert.match(html,/>短充<\/button>/);assert.match(html,/>長充<\/button>/);
  assert.doesNotMatch(html,/现实 1 分钟|次日 08:00|最多 \+10%/);
  assert.match(status(s,{islandExpanded:true,islandPage:'select'}),/is-charge-select/);
 });

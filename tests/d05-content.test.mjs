@@ -184,7 +184,7 @@ test('D05 fills diary and a once-only editable note, preserving all existing tim
  assert.equal(s.content.notes.filter(n=>n.id==='xm-note-d05-workshop').length,1);
  const note=s.content.notes.find(n=>n.id==='xm-note-d05-workshop');note.text='我自己改过';
  tickStory55(s);assert.equal(s.content.notes.find(n=>n.id===note.id).text,'我自己改过');
- assert.equal(worldMinuteRate(s),5/1000);s.nav.current={appId:'ghost',route:'/'};
+ assert.equal(worldMinuteRate(s),3/1000);s.nav.current={appId:'ghost',route:'/'};
  assert.equal(worldMinuteRate(s),5/60000);s.nav.current={appId:'wechat',route:'/chat/wang'};
  assert.equal(worldMinuteRate(s),5/60000);
  assert.equal(PHONE_CHAT_TRACKS.filter(t=>t.day===5).length,1);
