@@ -6,6 +6,7 @@ import {profiles,authoredMoments,visibleMoments,momentReactionsAt} from './data.
 import {allMoments,findMoment,momentProfiles,addGameMomentComment} from './model.js';
 import {momentIcons} from './icons.js';
 import {wxIcon} from '../../components/icons.js';
+import {handle as handleMusic} from '../../../music/index.js';
 let openActions=null,replyTo=null,replyToName=null,replyDraft='';
 const heart=momentIcons.heart;
 
@@ -55,7 +56,10 @@ function pictureGrid(post){
 }
 function postContent(post){
  if(post.kind==='article')return '<button type="button" class="wx-moments-article" data-action="wx-moment-article" data-id="'+esc(post.id)+'"><span class="wx-moments-article-logo">📖</span><span><strong>'+esc(post.article.title)+'</strong><small>'+esc(post.article.publisher)+'</small></span></button>';
- if(post.kind==='music')return '<div class="wx-moments-music" role="group" aria-label="分享音乐"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+' · '+esc(post.music.album)+'</small></span><span class="wx-moments-music-note">♫</span></div>';
+ if(post.kind==='music'){
+  const playable=!!post.music.trackId;
+  return '<'+(playable?'button type="button" data-action="wx-moment-music" data-id="'+esc(post.id)+'"':'div role="group"')+' class="wx-moments-music" aria-label="'+(playable?'播放':'分享音乐 ')+esc(post.music.title)+'"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+(post.music.album?' · '+esc(post.music.album):'')+'</small></span><span class="wx-moments-music-note">'+(playable?'▶':'♫')+'</span></'+(playable?'button':'div')+'>';
+ }
  return pictureGrid(post);
 }
 function postCard(post,s){
@@ -152,6 +156,11 @@ export function renderMoments(s,route){
 }
 export function handleMoment(action,target,ctx){
  const id=target.dataset.id,route=path=>{openActions=null;replyTo=null;replyToName=null;replyDraft='';ctx.router.open({appId:'wechat',route:'/moments'+path});};
+ if(action==='wx-moment-music'){
+  const post=findMoment(ctx.store.get(),id);
+  if(post?.music?.trackId){handleMusic('music-play-track',{dataset:{track:post.music.trackId}},ctx);ctx.router.open({appId:'music',route:'/'});}
+  return true;
+ }
  if(action==='wx-moment-profile'){route('/profile/'+encodeURIComponent(target.dataset.name));return true;}
  if(action==='wx-moment-compose'){route('/compose');return true;}
  if(action==='wx-moment-focus'){const post=allPosts(ctx.store.get()).find(p=>p.id===id);if(post)route('/comment/'+post.id);return true;}

@@ -81,3 +81,5 @@
 #phone:has(.music-full-player) #status-layer{color:#fff}
 #phone:has(.music-full-player) #homebar span{background:#fff}
 @media(max-height:760px){.music-art{width:min(100%,35dvh);margin-bottom:18px}.music-player{padding-left:23px;padding-right:23px}.music-big-controls{margin:12px 0 9px}}
+
+.music-playlist-button{padding:10px 18px;border-radius:24px;background:#ffffff20;color:#fff;font-size:15px}
