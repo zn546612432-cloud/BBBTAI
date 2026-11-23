@@ -385,7 +385,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
-    relationshipPlan:taiRelationshipDirector(ctx.store.get(),{input:text}),
+    relationshipPlan:taiRelationshipDirector(ctx.store.get(),{input:text,callTurns:call.turns}),
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
