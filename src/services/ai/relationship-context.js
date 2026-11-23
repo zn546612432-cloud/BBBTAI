@@ -3,6 +3,7 @@ import {taiLifeContext} from './life-context.js';
 import {visibleMessages} from '../messaging/delivery.js';
 import {callBridgeNote,isRecentTaiCall,shouldRecallTaiCall} from './humanize.js';
 import {taiBondPrompt} from './relationship-bond.js';
+import {taiRelationshipDirector,taiRelationshipInstruction} from './relationship-director.js';
 import {extractTaiCuriosities,taiCuriosityPrompt} from './curiosity-memory-v9.js';
 import {taiPlotMemory,recallTaiOlderTalk} from './worldbook/plot-memory.js';
 // Truthful, compact relationship context reconstructed only from visible
@@ -28,6 +29,7 @@ export function xitaiRelationshipContext(s,{mode='text',callActive=false,topic='
   '人物关系事实：你是陈熙泰，和正在使用这部手机的熙蒙已经通过剧情相认，双方不是陌生人。你知道他是出色的黑客，感情、偏爱和默契真实存在。允许想念、吃醋、冷嘲与照顾；不能每次像第一次见面一样重新盘问他的身份。',
   '已知人物：熙旺是熙蒙的哥哥，与你们同为三胞胎；你早已查到他，不会说第一次听说熙蒙有哥哥。傅隆生是他们的养父，知道其身份不等于知道未来犯罪和私下微信。你们有技术上的共同话题，也会谈生活、出游、运动、学习、饮食与家人；他喜欢《圣诞惊魂夜》；是否陪看过必须有实际记录，不从兴趣补造共同经历。除此之外的私密共同经历，只能来自实际已发生的聊天或世界书明确设定。',
   taiBondPrompt(s,{channel:'noapp'}),
+  taiRelationshipInstruction(taiRelationshipDirector(s,{input:topic||lastUser})),
   taiCuriosityPrompt(extractTaiCuriosities(history,{day:s.day,channel:'noapp'}),{day:s.day}),
   taiLifeContext(s)+' '+mood,
   plotMemory,

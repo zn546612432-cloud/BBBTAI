@@ -14,6 +14,17 @@ function setup(input='在吗？'){
  chat.messages.push({id:'u-v10',kind:'text',from:'me',text:input,day:56,time:'21:30',actual:true});
  return {state,chat,store:{get:()=>state,update:fn=>fn(state)}};
 }
+function addVerifiedMutualRomance(state,chat){
+ state.aiDraft??={};
+ state.aiDraft.taiBond={score:95,signals:{affection:4},meaningfulTurns:30};
+ const recorded=[];
+ for(const day of [51,52,53]){
+  recorded.push({id:'p-romance-'+day,kind:'text',from:'me',text:'我喜歡你',day,actual:true});
+  recorded.push({id:'t-romance-'+day,kind:'text',from:'tai',text:'我也喜歡你',day,actual:true});
+ }
+ chat.messages.unshift(...recorded);
+}
+
 async function withMockDirect(action,run,{minimax=false,body='我听到了'}={}){
  const oldFetch=globalThis.fetch,oldSession=globalThis.sessionStorage;
  const storage=new Map();
@@ -36,7 +47,8 @@ const quick={wait:async()=>{},random:()=>0,now:()=>1000000};
 const close=store=>callAction('tai-decline',{store,refresh:()=>{},toast:()=>{},router:{open:()=>{}}});
 
 test('an explicit request for an expression of love preserves Tai’s choice; a declaration ends after one exact line',async()=>{
- const {chat,store}=setup('说爱我');
+ const {state,chat,store}=setup('说爱我');
+ addVerifiedMutualRomance(state,chat);
  await withMockDirect('send_text',async calls=>{
   const result=await replyToTaiMessage(store,'u-v10',quick);
   assert.equal(result.status,'replied');assert.equal(result.count,1);
@@ -47,7 +59,8 @@ test('an explicit request for an expression of love preserves Tai’s choice; a 
 });
 test('a direct affection request never manufactures a declaration from a refusal or quotation',async()=>{
  for(const body of ['我不想说。','你想让我说“我爱你”？','我爱你，才怪。','我爱你。\n才怪。']){
-  const {chat,store}=setup('說愛我');
+  const {state,chat,store}=setup('說愛我');
+  addVerifiedMutualRomance(state,chat);
   await withMockDirect('send_text',async calls=>{
    const result=await replyToTaiMessage(store,'u-v10',quick);
    assert.equal(result.status,'read_no_reply');assert.equal(result.count,0);
@@ -55,7 +68,8 @@ test('a direct affection request never manufactures a declaration from a refusal
    assert.equal(chat.messages.at(-1).taiHandledAction,'read_no_reply');assert.equal(calls.length,2);
   },{body});
  }
- const {store,chat}=setup('说爱我');
+ const {store,chat,state}=setup('说爱我');
+ addVerifiedMutualRomance(state,chat);
  await withMockDirect('read_no_reply',async calls=>{
   assert.equal((await replyToTaiMessage(store,'u-v10',quick)).status,'read_no_reply');
   assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,0);assert.equal(calls.length,1);
@@ -159,4 +173,26 @@ test('stored deferred action can resume after reload-style poll but cannot defer
   assert.ok(calls.length>=2&&calls.length<=4,'deferred retry uses sampled length and guide; at most one continuation and one grounded-question attempt');
   assert.equal(maybeResumeTaiDeferred(store,{now:()=>1000000}),false);
  });
+});
+
+
+test('a high trust score with no reciprocal romance cannot force a declaration',async()=>{
+ const {state,chat,store}=setup('说爱我');
+ state.aiDraft.taiBond={score:100,signals:{affection:99}};
+ await withMockDirect('send_text',async calls=>{
+  const result=await replyToTaiMessage(store,'u-v10',quick);
+  assert.equal(result.status,'replied');
+  assert.equal(chat.messages.at(-1).text,'你怎麼突然問這個？');
+  assert.doesNotMatch(chat.messages.at(-1).text,/我[愛爱]你/);
+  assert.equal(calls.length,2,'no extra model roundtrip for a permitted guarded reply');
+ },{body:'你怎麼突然問這個？'});
+});
+test('repeated forbidden love generation never reaches user or MiniMax',async()=>{
+ const {chat,store}=setup('說愛我');
+ await withMockDirect('send_text',async calls=>{
+  const result=await replyToTaiMessage(store,'u-v10',quick);
+  assert.equal(result.status,'read_no_reply');
+  assert.equal(chat.messages.filter(m=>m.replySourceId==='u-v10').length,0);
+  assert.equal(calls.length,3,'one decision, first draft and one bounded repair');
+ },{body:'我愛你，熙蒙。'});
 });

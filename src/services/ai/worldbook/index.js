@@ -3,6 +3,7 @@ import {normalizeEntry,readWorldbook,ensureWorldbook,worldEntries} from './forma
 import {evaluateWorldbook} from './engine.js';
 import {taiMoodPrompt,readTaiMood} from './mood.js';
 import {selectTaiLongMemories,taiLongMemoryPrompt} from '../memory.js';
+import {taiCanonicalMilestones} from './plot-memory.js';
 
 export const TAI_WORLDBOOK_BUDGET=1800;
 // Legacy diagnostic signature still uses the same engine.
@@ -25,7 +26,7 @@ export function captureTaiWorldbook(store,context={}){
  const cursor=Math.max((existing?.cursor??0)+1,Number(context.messageIndex)||0);
  const state=store.get(),privateContext=scope==='noapp'&&context.recognized===true;
  const snapshot={...previewTaiWorldbook(world,{...context,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}}),
-  mood:privateContext?readTaiMood(state):null,longMemory:privateContext?selectTaiLongMemories((state.aiDraft?.memories||[]).filter(m=>m.kind),{day:state.day,channel:scope,recognized:true,messages:context.messages||[]}):[]};
+  mood:privateContext?readTaiMood(state):null,longMemory:privateContext?selectTaiLongMemories([...(state.aiDraft?.memories||[]).filter(m=>m.kind),...taiCanonicalMilestones(state)],{day:state.day,channel:scope,recognized:true,messages:context.messages||[]}):[]};
  store.update(s=>{
   const w=ensureWorldbook(s);w.runtime??={};w.runtime[scope]={cursor,lastId:id,effects:snapshot.effects,snapshot};
  });

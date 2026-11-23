@@ -15,6 +15,7 @@ import {resolvePhoneAudioPath,canonicalPhoneAudioPath} from '../../services/voic
 import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
+import {taiRelationshipDirector} from '../../services/ai/relationship-director.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
 import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
@@ -384,6 +385,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
+    relationshipPlan:taiRelationshipDirector(ctx.store.get(),{input:text,callTurns:call.turns}),
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
@@ -467,7 +469,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
-  if(error?.code==='TAI_STYLE'){endAfter=false;return;} // stay connected; an expression veto is not a network failure
+  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code)){endAfter=false;return;} // stay connected; a veto is not a network failure
   if(error?.code==='TAI_SOCIAL_REST'){if(current())callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'resting',fallback:closingLine});return;}
   if(current()){
    console.warn('NoApp call connection failed:',error?.message);

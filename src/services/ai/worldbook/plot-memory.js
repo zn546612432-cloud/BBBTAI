@@ -5,9 +5,31 @@ const d53Line=/^s55-d53-tai-night-\d+$/;
 const d53Relevant=/逃不掉|計劃失敗|傅隆生|兩百個人|炸彈|警察|救出來|只要你還活著|活著/;
 const actual=m=>m&&m.actual!==false&&!m.demo&&!m.authoredPending&&hasText(m.text);
 
+// Source-linked, read-only long-memory milestones. An authored line unlocks
+// only when the matching NoApp message has actually been delivered.
+export function taiCanonicalMilestones(s,history){
+ if(s?.story55?.version!==1)return [];
+ const messages=history||s?.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||[];
+ const facts=[
+  {id:'story55-paris-promise',day:43,pattern:/^s55-paris-\d+$/,text:'所以別讓我失望，熙蒙。我們巴黎見。',topic:'巴黎約定'},
+  {id:'story55-rescue-promise',day:53,pattern:/^s55-d53-tai-night-\d+$/,text:'就算被抓了也沒關係，只要你還活著，我就有辦法把你救出來。',topic:'救援承諾'}
+ ];
+ return facts.flatMap(f=>{
+  const m=messages.find(x=>actual(x)&&x.from==='tai'&&x.day===f.day&&x.day<=s.day&&
+    f.pattern.test(String(x.id||''))&&x.text===f.text);
+  return m?[{id:f.id,kind:'milestone',category:'commitment',speaker:'tai',
+   source:'NoApp 已送達的固定劇情',sourceId:m.id,day:m.day,visibility:'noapp',
+   text:m.text,status:'unfulfilled',topic:f.topic,enabled:true}]:[];
+ });
+}
+
+
 export function taiPlotMemory(s,history=[]){
  if(s?.story55?.version!==1)return '';
  const lines=[];
+ const canonical=taiCanonicalMilestones(s,history);
+ if(canonical.length)lines.push('已說出口、尚未確認兌現的重要約定：\n'+
+  canonical.map(m=>'D'+m.day+' '+m.topic+'（消息 '+m.sourceId+'）：「'+m.text+'」').join('\n'));
  // D53 is a real NoApp exchange. Never include later lines merely because
  // the game date has advanced: the player may still be midway through it.
  const shared=history.filter(m=>actual(m)&&d53Line.test(String(m.id||''))&&d53Relevant.test(m.text));
