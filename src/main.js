@@ -455,7 +455,7 @@ store.subscribe(()=>{
     }finally{clearTimeout(hydrateTimer);}
     return store.get();
    },
-   onProgress:({finished,total,failed,phase})=>{
+   onProgress:({packageFinished:finished,packageTotal:total,failed,phase})=>{
     const percent=Math.floor(finished/Math.max(1,total)*100);
     const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
     const preparing=phase==='manifest'||phase==='cache';
@@ -466,18 +466,23 @@ store.subscribe(()=>{
      assets:'正在準備所有 App',
      decoding:'正在準備主畫面',
      map:'正在啟動離線地圖',
+     ready:'App 已準備就緒',
+     background:'正在下載其他資源',
      complete:'載入完成'
     }[phase]||'正在載入';
     if(number)number.textContent=preparing?'…':percent+'%';
     if(bar)bar.style.width=preparing?'0%':percent+'%';
-    if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
+    if(label)label.textContent=failed?'有資源未能載入':stageLabel+(['assets','background'].includes(phase)?' · '+finished+'/'+total:'');
    }
   });
+  void lockAssets.complete.then(()=>{
+   if(bootActive)globalThis.__xmBootIntroReady?.(closeBoot,'遊戲資源已全部下載。');
+  }).catch(()=>{});
   lockAssets.ready.then(()=>{
    const message=$('#xm-boot-message');
-   if(message)message.textContent='已準備就緒。';
+   if(message)message.textContent='App 已準備就緒，其他資源繼續下載。';
    if(globalThis.__xmBootIntroReady){
-    globalThis.__xmBootIntroReady(closeBoot,'已準備就緒。');
+    globalThis.__xmBootIntroReady(closeBoot,'App 已準備就緒，其他資源繼續下載。','提前進入');
    }else closeBoot();
   }).catch(error=>{
    console.error('啟動資源未完整載入',error);

@@ -29,18 +29,20 @@ const status=assets=>({done:assets.length,total:assets.length,failed:0,errors:[]
 
 test('all App essentials finish before entry; a held future asset cannot block play',()=>withCache(async()=>{
  let release;const gate=new Promise(resolve=>release=resolve),seen=[],reports=[];
- const preload=beginCompleteGamePreload({...options,onProgress:p=>reports.push(p),fetchAssets:async({manifest,onProgress,concurrency,priority})=>{
-  seen.push({paths:manifest.assets.map(x=>x.path),concurrency,priority});
+ const preload=beginCompleteGamePreload({...options,onProgress:p=>reports.push(p),fetchAssets:async({manifest,onProgress,downloadPolicy,priority})=>{
+  seen.push({paths:manifest.assets.map(x=>x.path),concurrency:downloadPolicy.concurrency(priority),priority});
   if(priority==='low')await gate;
   onProgress({finished:manifest.assets.length,failed:0});return status(manifest.assets);
  }});
  await preload.ready;
  assert.ok(preload.isReady());assert.equal(preload.progress().finished,preload.progress().total);
+ assert.ok(reports.some(p=>p.ready&&p.packageFinished<p.packageTotal),'entry is ready while the overall package is still downloading');
  assert.deepEqual(seen[0].paths,['icons/a.png']);assert.deepEqual(seen[1].paths,['assets/story55/d55/future.mp3']);
- assert.equal(seen[1].concurrency,2);assert.equal(seen[1].priority,'low');
+ assert.equal(seen[1].concurrency,4);assert.equal(seen[1].priority,'low');
  let complete=false;void preload.complete.then(()=>complete=true);
  await new Promise(resolve=>setImmediate(resolve));assert.equal(complete,false);
  release();await preload.complete;assert.equal(reports.at(-1).phase,'complete');
+ assert.equal(reports.at(-1).packageFinished,reports.at(-1).packageTotal);
 }));
 
 test('failed essential art prevents entry and never starts the optional queue',()=>withCache(async()=>{

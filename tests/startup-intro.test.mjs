@@ -33,3 +33,18 @@ test('blocked autoplay or reduced motion still show artwork and allow entry',asy
 test('startup error can reveal static artwork without incorrectly allowing entry',()=>{
  const s=start();s.window.__xmBootIntroError();assert.ok(s.classes.has('intro-finished'));assert.equal(s.next.hidden,true);
 });
+
+test('App readiness exposes early entry before the remaining download completes',()=>{
+ const s=start({seen:true});let entered=0;
+ s.skip.onclick();
+ s.window.__xmBootIntroReady(()=>entered++,'App 已準備就緒，其他資源繼續下載。','提前進入');
+ assert.equal(s.next.hidden,false);assert.equal(s.next.textContent,'提前進入');
+ s.next.onclick();assert.equal(entered,1);
+});
+
+test('a player who waits sees normal entry after the complete package finishes',()=>{
+ const s=start({seen:true});s.skip.onclick();
+ s.window.__xmBootIntroReady(()=>{},'App 已準備就緒','提前進入');
+ s.window.__xmBootIntroReady(()=>{},'遊戲資源已全部下載。');
+ assert.equal(s.next.hidden,false);assert.equal(s.next.textContent,'點擊進入');
+});
