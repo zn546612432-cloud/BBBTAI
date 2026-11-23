@@ -487,7 +487,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
-  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code)){endAfter=false;return;} // stay connected; a veto is not a network failure
+  if(['TAI_STYLE','TAI_ROMANCE_GATE','TAI_TIME'].includes(error?.code)){endAfter=false;return;} // stay connected; a veto is not a network failure
   if(error?.code==='TAI_SOCIAL_REST'){if(current())callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'resting',fallback:closingLine});return;}
   if(current()){
    console.warn('NoApp call connection failed:',error?.message);
