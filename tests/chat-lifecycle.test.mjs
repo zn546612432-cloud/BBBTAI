@@ -6,6 +6,7 @@ import {tickPhoneStoryMessages,phoneStoryMessagesDue} from '../src/services/mess
 import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
 import {d04Track} from '../src/story/d04/wechat.js';
 import {d03Track} from '../src/story/d03/wechat.js';
+import {d02Track} from '../src/story/d02/wechat.js';
 import {d05Track} from '../src/story/d05/wechat.js';
 import {createConversationTrack} from '../src/services/messaging/lifecycle/engine.js';
 import {IncomingBannerQueue} from '../src/services/messaging/incoming-banner-queue.js';
@@ -50,9 +51,11 @@ test('same-day topic transition reconciles the old group and paces only the new 
 test('non-expired topics retain time-aware alternatives; the missed dinner expires',()=>{
  const s=fresh(4,'08:00');tickPhoneStoryMessages(s,0);
  assert.equal(nativeWeChatComposer(s,'hufeng').text,null,'deleted repair thread never comes back');
- assert.match(d03Track.draft(s,'xiaoxin').text,/昨天那台/);
+ assert.equal(d03Track.draft(s,'xiaoxin').text,'抱歉，忘記回你了。');
+ assert.match(d03Track.draft(s,'xiaoxin').stage,/late-nextDay/);
  s.day=5;tickPhoneStoryMessages(s,1000);
- assert.match(d03Track.draft(s,'xiaoxin').text,/電腦買了沒有/);
+ assert.equal(d03Track.draft(s,'xiaoxin').text,'抱歉，忘記回你了。');
+ assert.match(d03Track.draft(s,'xiaoxin').stage,/late-later/);
  assert.equal(d04Track.draft(s,'wang'),null);
  s.day=8;tickPhoneStoryMessages(s,2000);
  assert.equal(d04Track.draft(s,'wang'),null,'expired invitation has no indefinite draft');
@@ -205,4 +208,62 @@ test('breakfast group never claims an unsent player reply happened',()=>{
  const s=fresh(5,'08:15');advance(s,0,30);
  assert.ok(messages(s,'group','d05-breakfast-').some(m=>m.text==='粥放桌上了，等他起來吃。'));
  assert.equal(messages(s,'group','d05-breakfast-').some(m=>m.text==='醒了，剛回我'),false);
+});
+
+
+test('missed D02 Xiao Xin computer chatter needs only one apology, without auto-send or shopping decisions',()=>{
+ const s=fresh(2,'16:08'),c=cv(s,'xiaoxin');
+ d02Track.tick(s,0);
+ assert.ok(messages(s,'xiaoxin','d02-xin-script-0').length===1);
+ assert.match(d02Track.draft(s,'xiaoxin').text,/促銷短信/,'original same-day dialogue is intact');
+ s.day=3;s.clock='01:04';
+ tickPhoneStoryMessages(s,1000);
+ const draft=nativeWeChatComposer(s,'xiaoxin');
+ assert.equal(draft.text,'抱歉，忘記回你了。');
+ assert.equal(messages(s,'xiaoxin','d02-xin-late-nextDay-').length,0,'the player must press Send');
+ assert.ok(sendNativeWeChatPreset(store(s),'xiaoxin',draft.text,2000).messageId);
+ tickPhoneStoryMessages(s,5000);tickPhoneStoryMessages(s,10000);
+ const late=messages(s,'xiaoxin','d02-xin-late-nextDay-');
+ assert.deepEqual(late.map(m=>[m.from,m.text]),[['me','抱歉，忘記回你了。']]);
+ assert.equal(late[0].day,3);
+ assert.equal(c.messages.some(m=>m.text==='行，我先不下單。'),false);
+ assert.equal(s.story55.d02.wechat.xin.lateHandled,true);
+});
+
+test('missed D03 Xiao Xin shopping chat uses the same single apology, without resurrecting old advice',()=>{
+ const s=fresh(4,'08:00');
+ tickPhoneStoryMessages(s,1000);
+ const draft=d03Track.draft(s,'xiaoxin');
+ assert.equal(draft.text,'抱歉，忘記回你了。');
+ assert.ok(d03Track.send(store(s),'xiaoxin',draft.text,2000).messageId);
+ tickPhoneStoryMessages(s,5000);
+ assert.deepEqual(messages(s,'xiaoxin','d03-xiaoxin-late-nextDay-').map(m=>[m.from,m.text]),[['me','抱歉，忘記回你了。']]);
+});
+
+test('old saved computer-purchase late replies are repaired exactly once without duplicating or rewriting custom messages',()=>{
+ const s=fresh(3,'01:04');tickPhoneStoryMessages(s,1000);
+ const c=cv(s,'xiaoxin'),q=s.story55.d02.wechat.xin;
+ const old='昨天沒顧上回。那台先別買，配置再看看。';
+ const npc='行，我先不下單。';
+ c.messages.push(
+  {id:'d02-xin-late-nextDay-0',from:'me',text:old,day:3,time:'01:04',actual:true},
+  {id:'d02-xin-late-nextDay-1',from:'小辛',text:npc,day:3,time:'01:04',actual:true},
+  {id:'custom-untouched',from:'me',text:'我是自己發的',day:3,time:'01:05',actual:true}
+ );
+ s.notifications.push({id:'late-notice',conversationId:'xiaoxin',messageId:'d02-xin-late-nextDay-1'});
+ s.events.push({channel:'wechat',conversationId:'xiaoxin',messageId:'d02-xin-late-nextDay-1'});
+ c.unread=1;
+ q.lateRun={kind:'nextDay',lines:[{who:'me',text:old},{who:'小辛',text:npc}],index:1,day:3,clock:'01:04',validUntil:9999};
+ q.lateHandled=false;q.status='late-live';q.nextAt=5000;q.dueAt=5000;
+ delete s.story55.missedComputerCopyRevision;
+ tickPhoneStoryMessages(s,3000);
+ assert.equal(c.messages.find(m=>m.id==='d02-xin-late-nextDay-0').text,'抱歉，忘記回你了。');
+ assert.equal(c.messages.find(m=>m.id==='d02-xin-late-nextDay-1'),undefined);
+ assert.equal(c.messages.find(m=>m.id==='custom-untouched').text,'我是自己發的');
+ assert.equal(s.notifications.some(n=>n.id==='late-notice'),false);
+ assert.equal(c.unread,0);
+ assert.equal(q.lateHandled,true);
+ const copy=JSON.stringify(c.messages);
+ tickPhoneStoryMessages(s,10000);
+ assert.equal(JSON.stringify(c.messages),copy,'migration is idempotent');
 });

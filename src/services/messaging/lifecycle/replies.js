@@ -3,10 +3,11 @@ export const reply=(me,who,...npc)=>[{who:'me',text:me},...npc.map(text=>({who,t
 export const LATE_REPLIES={
  d02:{
   wang:{sameDay:reply('配件的事我再看看，錢你先給自己留著。','熙旺','好，有需要再跟我說。'),nextDay:reply('昨天配件的事忘了回，錢你自己留著吧。','熙旺','知道了，別自己硬撐。'),later:reply('配件我還在看，有需要再找你，哥。','熙旺','好。'),resolved:reply('配件已經下單了，哥，你給自己留點錢。','熙旺','好，到了跟我說。')},
-  xin:{nextDay:reply('昨天沒顧上回。那台先別買，配置再看看。','小辛','行，我先不下單。'),later:reply('電腦的事還要我幫你看嗎？','小辛','要啊哥，我還沒決定。')}
+  // If yesterday's optional shopping chat was missed, acknowledge it without making a purchase decision.
+  xin:{nextDay:reply('抱歉，忘記回你了。','小辛'),later:reply('抱歉，忘記回你了。','小辛')}
  },
  d03:{
-  xiaoxin:{nextDay:reply('昨天那台先別買，別光看燈。','小辛','知道啦，等你幫我看配置。'),later:reply('電腦買了沒有？沒買的話先把配置發我。','小辛','還沒，我找找。')},
+  xiaoxin:{nextDay:reply('抱歉，忘記回你了。','小辛'),later:reply('抱歉，忘記回你了。','小辛')},
   wang:{nextDay:reply('昨天衣服的事忘了回，我自己收拾一下，哥。','熙旺','好，洗了記得晾。'),later:reply('衣服我自己收拾，哥你別操心了。','熙旺','行，有事叫我。'),resolved:reply('衣服晾好了，謝謝哥。','熙旺','不客氣，別又堆一洗衣機。')}
  },
  d04:{

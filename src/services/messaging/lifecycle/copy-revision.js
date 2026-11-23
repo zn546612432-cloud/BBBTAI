@@ -29,3 +29,45 @@ export function reviseDeliveredStoryCopy(s){
  s.story55.copyRevisionD01D09=4;
  return true;
 }
+
+
+// Older saves can contain two obsolete lines from Xiao Xin's missed computer chats.
+// Revise only the exact built-in preset IDs/text, preserving player timestamps, real
+// manual messages, progress and all other conversations. Never fabricate a Send.
+const COMPUTER_APOLOGY='抱歉，忘記回你了。';
+const obsoleteComputerReplies=[
+ {track:'d02',scene:'xin',kind:'nextDay',me:'昨天沒顧上回。那台先別買，配置再看看。',npc:'行，我先不下單。'},
+ {track:'d02',scene:'xin',kind:'later',me:'電腦的事還要我幫你看嗎？',npc:'要啊哥，我還沒決定。'},
+ {track:'d03',scene:'xiaoxin',kind:'nextDay',me:'昨天那台先別買，別光看燈。',npc:'知道啦，等你幫我看配置。'},
+ {track:'d03',scene:'xiaoxin',kind:'later',me:'電腦買了沒有？沒買的話先把配置發我。',npc:'還沒，我找找。'}
+];
+export function reviseMissedComputerCopy(s){
+ if(s.story55?.version!==1||s.story55.missedComputerCopyRevision===1)return false;
+ const c=s.content?.conversations?.wechat?.find(c=>c.id==='xiaoxin'||c.id==='xin'||c.name==='小辛');
+ if(c){
+  const removed=new Set();
+  for(const spec of obsoleteComputerReplies){
+   const prefix=spec.track+'-'+spec.scene+'-late-'+spec.kind+'-';
+   const sent=c.messages?.find(m=>m.id===prefix+'0'&&m.from==='me'&&m.text===spec.me);
+   if(sent)sent.text=COMPUTER_APOLOGY;
+   const npc=c.messages?.find(m=>m.id===prefix+'1'&&m.from==='小辛'&&m.text===spec.npc);
+   if(npc)removed.add(npc.id);
+   const q=spec.track==='d02'?s.story55.d02?.wechat?.xin:s.story55.d03Chats?.xiaoxin;
+   const run=q?.lateRun;
+   if(run?.kind===spec.kind&&run.index>=1&&run.lines?.[0]?.text===spec.me&&run.lines?.[1]?.text===spec.npc){
+    run.lines=[{who:'me',text:COMPUTER_APOLOGY}];run.index=1;
+    q.lateHandled=true;q.status='closed';q.nextAt=null;q.dueAt=null;q.awaitingPlayer=false;
+   }
+   if(s.drafts?.[c.id]===spec.me)delete s.drafts[c.id];
+  }
+  if(removed.size){
+   c.messages=c.messages.filter(m=>!removed.has(m.id));
+   const pending=(s.notifications||[]).filter(n=>n.conversationId===c.id&&removed.has(n.messageId)).length;
+   c.unread=Math.max(0,(Number(c.unread)||0)-pending);
+   s.notifications=(s.notifications||[]).filter(n=>!(n.conversationId===c.id&&removed.has(n.messageId)));
+   s.events=(s.events||[]).filter(e=>!(e.channel==='wechat'&&e.conversationId===c.id&&removed.has(e.messageId)));
+  }
+ }
+ s.story55.missedComputerCopyRevision=1;
+ return true;
+}
