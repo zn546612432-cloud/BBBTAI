@@ -15,6 +15,7 @@ export const D02_TALIA='mc-talia-d02';
 export const D02_NOTE='d02-new-workstation-note';
 export const D02_REMINDER='d02-pc-build-reminder';
 export const D02_AODONG_URL='https://aodong.shop';
+export const D02_AODONG_CHAT_ID='sms-aodong-2025';
 export const D02_AODONG_SMS='【澳東商城】五月數碼優惠月！\n\n電腦配件專場八折，顯卡、處理器、記憶體及工作站設備限時優惠。\n\n選購請前往：\n'+D02_AODONG_URL;
 export const D02_REWARDS={ [D02_S]:12000,[D02_A]:4500 };
 export const D02_STAGES={
@@ -106,8 +107,8 @@ export function seedD02(s){
  if(hardwareReminder)hardwareReminder.title='机房升级：购齐工作站配置清单中的设备';
  // The Aodong advertisement remains a genuine scheduled incoming SMS.
  const sms=s.content.conversations.messages??(s.content.conversations.messages=[]);
- let shop=sms.find(c=>c.id==='sms-aodong-2025');
- if(!shop){shop={id:'sms-aodong-2025',name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
+ let shop=sms.find(c=>c.id===D02_AODONG_CHAT_ID);
+ if(!shop){shop={id:D02_AODONG_CHAT_ID,name:'澳东商城',unread:0,messages:[]};sms.push(shop);}
  if(!shop.messages.some(m=>m.id==='d02-aodong-sale'))
   shop.messages.push({...msg('d02-aodong-sale','aodong',D02_AODONG_SMS,'09:00'),schedule:{mode:'game-time',day:2,clock:'09:00'}});
   // Repair the one existing D02 promo bubble in older saves; never append duplicates.
