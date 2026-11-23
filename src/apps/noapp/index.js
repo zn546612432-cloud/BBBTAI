@@ -1,4 +1,5 @@
 import {aiParameterFields,ttsParameterFields,readAiForm,readTtsForm} from './settings/parameters.js';
+import {isFriendsTest} from '../../system/runtime/friends-test.js';
 import {s55Button} from '../../services/story55/views.js';
 import {currentScript55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {finalVoiceBubble} from './final-voice.js';
@@ -112,6 +113,7 @@ function finalAudioBubble(s,line){
  '<div class="message-body">'+finalVoiceBubble(s)+'</div></div>';
 }
 export function render({store},loc){
+ if(isFriendsTest&&loc.route==='/settings-ai')loc={...loc,route:'/chat/tai'};
  const s=store.get();
   if(loc.route==='/settings-ai')return setting(s);
   if(loc.route==='/contact/tai'&&taiRecognized(s))return `<div class="tai-contact-page"><div class="tai-contact-card"><img src="${esc(s.characterAvatars?.['熙泰']||TAI_PORTRAIT)}" alt=""><div><strong>${esc(taiDisplayName(s))}</strong><small>NoApp ID：${TAI_ID}</small></div></div><form data-form="tai-save-remark" class="tai-contact-remark"><label for="tai-remark">設定備註</label><input id="tai-remark" name="remark" maxlength="32" placeholder="未設定" value="${esc(s.aiDraft?.taiRemark||'')}"><button type="submit">儲存</button></form><button class="tai-contact-call" data-action="tai-outgoing">語音通話 <span>›</span></button></div>`;
@@ -125,13 +127,14 @@ export function render({store},loc){
  const settingsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.5 1.5 0 0 0 .3 1.7l.1.1-2.2 2.2-.1-.1a1.5 1.5 0 0 0-1.7-.3l-.7.3a1.5 1.5 0 0 0-.9 1.4v.2H11v-.2a1.5 1.5 0 0 0-.9-1.4l-.7-.3a1.5 1.5 0 0 0-1.7.3l-.1.1-2.2-2.2.1-.1a1.5 1.5 0 0 0 .3-1.7l-.3-.7a1.5 1.5 0 0 0-1.4-.9H4v-3.2h.2a1.5 1.5 0 0 0 1.4-.9l.3-.7a1.5 1.5 0 0 0-.3-1.7l-.1-.1 2.2-2.2.1.1a1.5 1.5 0 0 0 1.7.3l.7-.3a1.5 1.5 0 0 0 .9-1.4V4h3.2v.2a1.5 1.5 0 0 0 .9 1.4l.7.3a1.5 1.5 0 0 0 1.7-.3l.1-.1 2.2 2.2-.1.1a1.5 1.5 0 0 0-.3 1.7l.3.7a1.5 1.5 0 0 0 1.4.9h.2v3.2h-.2a1.5 1.5 0 0 0-1.4.9Z"/></svg>';
  const toolbar=taiRecognized(s)&&id==='tai'?'<nav class="noapp-mini-toolbar" aria-label="对话操作">'+
  (id==='tai'?'<button type="button" data-action="tai-outgoing" aria-label="给熙泰打电话">'+phoneIcon+'</button>':'')+
- '<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button>'+
+ (isFriendsTest?'':'<button type="button" data-action="tai-api-settings" aria-label="AI 设置">'+settingsIcon+'</button>')+
  '</nav>':'';
  const overlay=id==='tai'?'<div class="noapp-record-overlay" aria-hidden="true"><div class="noapp-record-heading">正在录音</div><div class="noapp-record-waves">'+Array.from({length:17},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><small>上滑取消 · 松开发送</small></div>':'';
  if(id==='tai')taiFeedback=currentTaiFeedback(s,taiFeedback);
  return '<div class="noapp-shell'+(currentStory?' noapp-story55-active':'')+'">'+toolbar+overlay+(id?chatView(s,'noapp',id,{feedback:id==='tai'&&taiFeedback.includes('正在输入')?taiFeedback:'',interlude:finalAudioBubble(s,currentStory),composerEnabled:!isStory55(s)||taiRecognized(s)}):chatList(s,'noapp'))+'</div>';
 }
 export async function handle(action,target,ctx){
+ if(isFriendsTest&&['tai-api-settings','tai-clear-ai','tai-check-persona','tai-check-minimax','tai-force-online','tai-test-outreach','tai-test-followup','tai-test-voice','tai-test-incoming'].includes(action))return;
  const id=target.dataset.id;
  if(action==='noapp-play-music'){if(isPlaying()&&ctx.store.get().musicTrack===target.dataset.track)musicAction('music-toggle',target,ctx);else playTrack(target.dataset.track,ctx);return;}
  if(action==='tai-story-archive'){if(modelDelivered(ctx.store.get(),id))ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(id)});return;}
@@ -194,6 +197,7 @@ export async function handle(action,target,ctx){
  if(callAction(action,ctx))return;
 }
 export const submit=(form,ctx)=>{
+ if(isFriendsTest&&['tai-save-ai','tai-save-behavior'].includes(form.dataset.form))return;
  if(form.dataset.form==='tai-save-remark'){const remark=String(new FormData(form).get('remark')||'').trim().slice(0,32);ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.taiRemark=remark;});ctx.router.open({appId:'noapp',route:'/chat/tai'});return;}
  if(form.dataset.form==='send-chat'){
   // Scripted NoApp turns use native Send, never free AI dispatch.
