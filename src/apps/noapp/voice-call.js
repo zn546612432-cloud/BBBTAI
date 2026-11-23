@@ -312,7 +312,7 @@ function interruptCallTurn(ctx,source='player'){
  call.revision=(call.revision||0)+1;
  playback?.pause();
  finishSegment?.('interrupted');
- call.caption='';call.audioReady=false;call.busy=false;call.transcribing=false;
+ call.caption='';call.audioReady=false;call.busy=false;call.replyPhase=null;call.transcribing=false;
  call.lastTaiEndAt=Date.now();call.nudgeCount=0;
  ctx.store.update(s=>{
   s.events??=[];
@@ -388,8 +388,9 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   };
   // Only explicit questions about facts already heard take the zero-LLM route.
   // D55 authored calls and unrecognised events retain the existing pipeline.
-  const memoryPreset=!opening&&!event&&!presetText&&!shouldClose&&!call.scripted&&!call.d55Story
+  const candidate=!opening&&!event&&!presetText&&!shouldClose&&!call.scripted&&!call.d55Story
    ?selectTaiMemoryPreset(ctx.store.get(),text):null;
+  const memoryPreset=candidate&&!call.turns.filter(t=>t.role==='assistant').slice(-8).some(t=>t.content===candidate.text)?candidate:null;
   let data=memoryPreset?{text:JSON.stringify({messages:[{text:memoryPreset.text,mode:'voice',tone:'neutral'}]})}:
    presetText&&!shouldClose?{text:JSON.stringify({messages:(Array.isArray(presetText)?presetText:[presetText]).map(text=>({text,mode:'voice',tone:'neutral'}))})}:
    event==='unheard'&&!shouldClose?null:await askTai(request);
@@ -490,7 +491,7 @@ function beginD55Script(ctx,script,phase){
  if(call.state!=='connected'||!call.d55Story)return false;
  call.revision=(call.revision||0)+1;
  playback?.pause();finishSegment?.('interrupted');
- call.busy=false;call.audioReady=false;call.caption='';call.captionRole=null;
+ call.busy=false;call.replyPhase=null;call.audioReady=false;call.caption='';call.captionRole=null;
  call.scripted=script;call.scriptIndex=ctx.store.get().story55?.d55CallProgress?.[script.id]||0;
  call.d55Phase=phase;call.d55Held=false;call.expanded=false;
  ctx.store.update(s=>{s.story55.d55CallStage=phase;s.story55[script.triggerKey]=true;});
