@@ -8,10 +8,11 @@ const button=(action,label,attrs='')=>`<button type="button" class="settings-row
 export function cloudSaveView(store){
  const cloud=store.cloud,state=local(store),status=cloud?.status||{phase:'local'},conflict=status.conflict;
  const player=status.player,email=player?.email_confirmed_at&&!player?.is_anonymous?player.email:null;
+ const message=status.phase==='offline'&&status.message?status.message:state.message==='已確認同步至雲端。'&&status.phase!=='synced'?'':state.message;
  const header='<button class="settings-back" data-action="settings-back">‹ 设置</button><h1>存檔與備份</h1>';
  const emailForm=(recover=false)=>`<form data-form="cloud-email" class="cloud-save-form"><input type="hidden" name="recover" value="${recover?'1':'0'}"><label>郵箱<input name="email" type="email" autocomplete="email" required placeholder="你的郵箱"></label><button class="button-primary" ${state.busy?'disabled':''}>${recover?'發送找回郵件':'綁定郵箱'}</button></form>`;
  return `<div class="settings-page settings-detail cloud-save-page">${header}<section><div class="settings-row"><strong>${esc(stamp(store.get()))}</strong><small role="status">${esc(labels[status.phase]||labels.offline)}</small></div>${email?`<div class="settings-row"><strong>已綁定</strong><small>${esc(email)}</small></div>`:''}${cloud?.enabled?button('sync','立即同步'):''}</section>
- ${(state.message||status.phase==='offline'&&status.message)?`<p class="settings-caption" role="status">${esc(state.message||status.message)}</p>`:''}
+ ${message?`<p class="settings-caption" role="status">${esc(message)}</p>`:''}
  ${!cloud?.enabled?'<p class="settings-caption">此預覽的進度只保存在本機。</p>':`
  ${conflict?`<section><p class="settings-caption">本機：${esc(stamp(conflict.local))}<br>雲端：${esc(conflict.remote?stamp(conflict.remote.game_state):'尚無存檔')}</p>${button('choose-local','保留本機進度，更新雲端')}${conflict.remote?button('choose-remote','使用雲端進度'):''}</section>`:''}
  ${state.verification?`<section><p class="settings-caption">輸入驗證碼，或貼上郵件中的驗證連結。</p><form data-form="cloud-verify" class="cloud-save-form"><label>驗證碼或連結<input name="token" type="text" autocomplete="one-time-code" required></label><button class="button-primary" ${state.busy?'disabled':''}>驗證並繼續</button></form></section>`:''}
