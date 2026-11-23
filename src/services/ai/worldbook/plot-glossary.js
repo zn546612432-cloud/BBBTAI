@@ -13,7 +13,10 @@ const noappLines=s=>s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.mess
 const heard=(s,id,part)=>noappLines(s).some(m=>actual(m)&&m.from==='tai'&&m.day<=s.day&&
   new RegExp('^s55-'+id+'-\\d+$').test(String(m.id||''))&&String(m.text||'').includes(part));
 const said=(s,id,part)=>noappLines(s).some(m=>actual(m)&&m.day<=s.day&&
-  new RegExp('^s55-'+id+'-\\d+
+  new RegExp('^s55-'+id+'-\\d+$').test(String(m.id||''))&&String(m.text||'').includes(part));
+const wynnBriefed=s=>s.day>=55&&
+ (Number(s.story55?.scenes?.['d55-briefing']?.index)>=5||played(s,'d55-briefing'));
+const readQuery=messages=>{
  const last=[...(Array.isArray(messages)?messages:[])].reverse().find(m=>m?.role==='user');
  const text=String(last?.content||'').slice(0,380);
  return /^\s*\[(?:游戏系统事件|遊戲系統事件|电话系统事件|電話系統事件)/.test(text)?'':text;
