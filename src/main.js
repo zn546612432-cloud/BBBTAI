@@ -109,7 +109,8 @@ const boundedBootTask=async(task,label,limit=7000)=>{
   if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
  }finally{clearTimeout(timer);}
 };
-try{await hydrateBuiltInPresets(store);}catch(error){window.__xmBootError?.('內置劇情載入失敗：'+error.message);throw error;}
+// Hydrate the authored history only after the complete game package is on disk.
+// It is part of startup readiness, not an unbounded invisible 0% prerequisite.
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
 if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
@@ -460,7 +461,17 @@ store.subscribe(()=>{
     if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
    }
   });
-  lockAssets.ready.then(()=>{
+  lockAssets.ready.then(async()=>{
+   const loadingLabel=$('#xm-boot-loading-label');
+   const loadingNumber=$('#xm-boot-percent');
+   const loadingBar=$('#xm-boot-progress span');
+   if(loadingLabel)loadingLabel.textContent='正在載入劇情與聊天記錄';
+   if(loadingNumber)loadingNumber.textContent='99%';
+   if(loadingBar)loadingBar.style.width='99%';
+   await hydrateBuiltInPresets(store);
+   if(loadingLabel)loadingLabel.textContent='載入完成';
+   if(loadingNumber)loadingNumber.textContent='100%';
+   if(loadingBar)loadingBar.style.width='100%';
    const message=$('#xm-boot-message');
    if(message)message.textContent='遊戲資源已全部載入。';
    if(globalThis.__xmBootIntroReady){
