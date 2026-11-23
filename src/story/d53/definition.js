@@ -74,7 +74,7 @@ export function applyD53Definition(c){
   c.scenes[id]=structuredClone(lines);
  };
  scene(D53_ACTION_START,'20:00','行動前','wechat','wang',['d47-wang'],D53_START_LINES);
- scene(D53_ISOLDE_DEAL,'21:30','Isolde｜確認第二筆委託','mirage',D46_CONTACT,[D53_ACTION_START],D53_DEAL_LINES,{
+ scene(D53_ISOLDE_DEAL,'21:31','Isolde｜確認第二筆委託','mirage',D46_CONTACT,[D53_ACTION_START],D53_DEAL_LINES,{
   requiresContact:true,requiresScriptedCall:D53_CALL.id,lineDelayMs:{4:3000}
  });
  scene(D53_ACTION_END,'23:00','行動失敗','wechat','wang',['confide','second','mercenary',D53_ACTION_START,D53_ISOLDE_DEAL],D53_END_LINES);
