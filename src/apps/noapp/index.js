@@ -8,6 +8,7 @@ import {chatList,chatView,sendChat,attachChat} from '../../components/chat.js';
 import {receiveInvitation,deferInvitation,startAcceptedInvitation,maybeInviteFromTaiChat,D41_CHESS_INVITATION} from '../../services/invitations.js';
 import {unlockD41Voice} from '../chess/scripted-match.js';
 import {replyToTaiMessage} from '../../services/ai/live-chat.js';
+import {selectTaiMemoryPreset,alreadyRecentlyUsedTaiPreset} from './memory-replies.js';
 import {TAI_INCOMING_QUIET_MS} from '../../services/ai/incoming-turn.js';
 import {taiBond,updateTaiBond} from '../../services/ai/relationship-bond.js';
 import {taiBehavior,normalizeTaiBehavior} from '../../services/ai/behavior.js';
@@ -62,7 +63,13 @@ function queueTaiReply(ctx,messageId){
      result.status==='offline'?'暫時不在線':result.status==='unavailable'?'已送達':'');
   }catch(error){console.warn('NoApp text reply failed:',error?.message);if(version===replyVersion)showFeedback(ctx,'已送達');}
  };
- pendingTai=setTimeout(run,TAI_INCOMING_QUIET_MS);
+ const state=ctx.store.get(),chat=state.content.conversations.noapp?.find(c=>c.id==='tai');
+ const text=chat?.messages.find(m=>m.id===messageId)?.text||'';
+ const candidate=selectTaiMemoryPreset(state,text);
+ // Keep the 2.2s quiet window for ordinary multi-bubble chat; for a clear
+ // factual recall question, there is no need to queue a costly model turn.
+ const quick=candidate&&!alreadyRecentlyUsedTaiPreset(chat?.messages||[],candidate.id);
+ pendingTai=setTimeout(run,quick?280:TAI_INCOMING_QUIET_MS);
 }
 const setting=(s)=>{
  const c={...apiConfig(),...settingsDraft},cloud=isTaiCloudHost();
