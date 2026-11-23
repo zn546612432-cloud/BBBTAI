@@ -22,6 +22,7 @@ import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {taiLife} from '../../services/ai/life-context.js';
 import {synthesizeTaiVoice} from '../../services/ai/voice-synthesis.js';
+import {selectTaiMemoryPreset} from './memory-replies.js';
 import {taiSocialEnergy,canTaiCall,taiCallCooling,markTaiCallRest,socialEnergyPrompt} from '../../services/ai/social-energy.js';
 import {hasBannedTaiConstruction} from '../../services/ai/expression-style.js';
 import {taiDisplayName} from './contact.js';
@@ -49,7 +50,7 @@ let call={state:'idle',direction:'incoming',muted:false,speaker:true,turns:[],st
 let recording=null;
 let callSerial=0;
 let activeRecognition=null;
-export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length,endedBy:call.endedBy||null,busy:!!call.busy};}
+export function callState(){return {state:call.state,direction:call.direction,sessionId:call.sessionId,turnCount:call.turns.length,endedBy:call.endedBy||null,busy:!!call.busy,replyPhase:call.replyPhase||null};}
 export const scriptedCallCameraActive=()=>call.state==='connected'&&!!call.scripted?.camera;
 function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReason=''}){
  const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');
@@ -109,7 +110,7 @@ function duration(){
 export function minimizedCallView(s){
  if(!s.unlocked||isNoAppCallRoute(s.nav.current)||!['dialing','connected'].includes(call.state))return '';
  const dialing=call.state==='dialing',listening=!!call.listening;
- const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':call.muted?'已靜音':'通話中';
+ const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':call.replyPhase==='thinking'?'熙泰回覆中':call.replyPhase==='voice'?'準備語音中':call.muted?'已靜音':'通話中';
  const action=call.audioReady?'tai-play-audio':dialing||call.scripted?'tai-resume-call':'tai-mic';
  const disabled=!dialing&&(call.requestingMic||call.transcribing);
  return '<aside class="tai-mini-call'+(listening?' is-recording':'')+'" aria-label="NoApp 通話">'+
@@ -122,8 +123,9 @@ const displayedCallText=(text,isTai)=>isTai?String(text||'').replace(/…+|\.{3,
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
  const caption=active?displayedCallText(call.caption,call.captionRole!=='me'):'';
- const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':call.inlineNotice||'通話中')):'通話已結束';
- const captionClass=caption&&subtitle===caption?' class="tai-call-spoken-caption '+(call.captionRole==='me'?'mine':'theirs')+'"':'';
+ const replying=active&&!call.scripted&&!caption&&!call.audioReady&&!call.transcribing&&!call.requestingMic&&!call.listening&&['thinking','voice'].includes(call.replyPhase);
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':replying?(call.replyPhase==='voice'?'熙泰正在準備語音…':'熙泰正在回覆…'):call.inlineNotice||'通話中')):'通話已結束';
+ const captionClass=caption&&subtitle===caption?' class="tai-call-spoken-caption '+(call.captionRole==='me'?'mine':'theirs')+'"':replying?' class="tai-call-replying"':'';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline',!!call.scripted?.unanswerable)+phoneButton('tai-accept','接听',glyph.answer,'is-accept',!!call.scripted?.unanswerable):
    active?
@@ -346,7 +348,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   call.lastPlayerAt=Date.now();call.nudgeCount=0;call.warnedAt=0;
   call.quietUntil=isQuietCallRequest(playerText)?Date.now()+taiBehavior(ctx.store.get()).callQuietSeconds*1000:0;
  }
- call.inlineNotice='';call.busy=true;
+ call.inlineNotice='';call.busy=true;call.replyPhase='thinking';
  call.generationId=(call.generationId||0)+1;
  const generationId=call.generationId;
  const turnId='call:'+call.started+':'+sessionId+':'+generationId;
@@ -382,9 +384,15 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
-  let data=presetText&&!shouldClose?{text:JSON.stringify({messages:(Array.isArray(presetText)?presetText:[presetText]).map(text=>({text,mode:'voice',tone:'neutral'}))})}:
+  // Only explicit questions about facts already heard take the zero-LLM route.
+  // D55 authored calls and unrecognised events retain the existing pipeline.
+  const memoryPreset=!opening&&!event&&!presetText&&!shouldClose&&!call.scripted&&!call.d55Story
+   ?selectTaiMemoryPreset(ctx.store.get(),text):null;
+  let data=memoryPreset?{text:JSON.stringify({messages:[{text:memoryPreset.text,mode:'voice',tone:'neutral'}]})}:
+   presetText&&!shouldClose?{text:JSON.stringify({messages:(Array.isArray(presetText)?presetText:[presetText]).map(text=>({text,mode:'voice',tone:'neutral'}))})}:
    event==='unheard'&&!shouldClose?null:await askTai(request);
   if(!current())return;
+  call.replyPhase='voice';ctx.refresh?.();
   const readDecision=value=>validateTaiAction(value,{mode:'call',channel:'noapp',recognized:request.recognized,callConnected:current(),hasIncoming:!opening&&!event&&!!text}).decision;
   if(!decision&&!presetText&&event!=='unheard')decision=readDecision(data);
   if(decision?.action==='listen'&&!shouldClose){rememberTaiMood(ctx.store,decision,turnId);call.lastTaiEndAt=Date.now();return;}
@@ -402,7 +410,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    recent:call.turns.filter(t=>t.role==='assistant').slice(-2).map(t=>t.content)
   });
   let {segments,blocked}=select(raw);
-  if(!endAfter&&!presetText&&energy.stage==='normal'&&!raw.some(r=>taiCallFarewellIntent(r.text)==='warn')&&needsCallContinuation(segments,plan)){
+  if(!endAfter&&!presetText&&!memoryPreset&&energy.stage==='normal'&&!raw.some(r=>taiCallFarewellIntent(r.text)==='warn')&&needsCallContinuation(segments,plan)){
    // Retain the first response; one bounded continuation for meaningful speech.
    try{
     const revised=await askTai({...request,scene:scene+' 【多段语音补足】已经拟好且会保留的台词：'+segments.map(r=>r.text).join(' / ')+'。只生成接下来'+(plan.minSegments-segments.length)+'至'+(plan.maxSegments-segments.length)+'段不同且有实质内容的 messages，不要重述已有台词。若确实没有更多内容、想安静或不愿披露私事，可选择 listen；若准备挂断，请输出自然告别并选择 hang_up。'});
@@ -443,7 +451,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(prepared.error)throw prepared.error;
    const blob=prepared.blob;
    pending=null;
-   call.caption=r.text;call.lastSpeech=r.text;ctx.refresh?.();
+   call.caption=r.text;call.lastSpeech=r.text;call.replyPhase='speaking';ctx.refresh?.();
    const outcome=await playCallAudio(ctx,blob,sessionId,revision,()=>{if(current()&&i+1<segments.length)pending=synth(segments[i+1]);});
    if(outcome==='failed')throw Error('Call audio playback failed');
    if(!current()||outcome!=='completed')break;
@@ -451,7 +459,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now()});
    if(event==='nudge'&&taiCallFarewellIntent(r.text)==='warn')call.warnedAt=Date.now();
    if(!presetText&&event!=='unheard')ctx.store.update(s=>rememberTaiDelivered(s,r.text,{sourceId:turnId+':played:'+call.turns.length}));
-   call.caption='';call.audioReady=false;ctx.refresh?.();
+   call.caption='';call.audioReady=false;call.replyPhase='voice';ctx.refresh?.();
    if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
@@ -466,7 +474,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  }
  finally{
   if(current()){
-   call.busy=false;call.lastTaiEndAt=Date.now();
+   call.busy=false;call.replyPhase=null;call.lastTaiEndAt=Date.now();
    if(endAfter){
     const finish=()=>{if(call.sessionId===sessionId&&call.state==='connected')callAction('tai-hangup',ctx,{endedBy:'tai',endReason:forceHangUp?'player_request':event==='closing'?'idle':'autonomous'});};
     if(forceHangUp)finish();else{call.closingPending=true;call.closeTimer=setTimeout(finish,2500);call.closeTimer.unref?.();ctx.refresh?.();}
