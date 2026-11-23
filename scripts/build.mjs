@@ -47,7 +47,7 @@ async function inventory(dir,prefix=''){
   else if(GAME_EXT.test(name)){
    const content=await readFile(dir+'/'+entry.name);
    packageHash.update(name).update('\0').update(content).update('\0');
-   packageAssets.push({path:name,bytes:content.length});
+   packageAssets.push({path:name,bytes:content.length,hash:createHash('sha256').update(content).digest('hex').slice(0,20)});
   }
  }
 }
