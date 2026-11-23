@@ -1,5 +1,6 @@
 import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
 import {LATE_REPLIES} from '../../services/messaging/lifecycle/replies.js';
+import {appendAuthoredPhoneMessage} from '../../services/messaging/phone-messages.js';
 import {D02_DIALOGUES,D02_BUILD_DIALOGUE} from './dialogue.js';
 const DAY=2;
 const gameMinute=s=>s.day*1440+Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3));
@@ -37,8 +38,43 @@ export function seedD02Wechat(s){
  return true;
 }
 
+// The nine approved Xiao Xin bubbles are a single player-driven exchange.
+// Keep the original unsent turns playable after midnight instead of converting
+// them into the short late-reply branch. This also repairs older save states.
+function restoreXiaoXinDialogue(s,q){
+ if(s.day<=2||q.completed)return;
+ const c=chat(s,'xin');
+ if(!c)return;
+ if(q.historySettled){
+  // Never interrupt an already-sent late reply's pending NPC response.
+  if(q.lateRun&&!q.lateHandled)return;
+  q.historySettled=false;q.lateHandled=false;q.skipped=false;
+  delete q.lateRun;
+  q.nextAt=null;q.dueAt=null;q.awaitingPlayer=true;
+  q.status='waiting';
+  q.originalDialogueRestored=true;
+ }
+ if(q.started)return;
+ // A fast-forwarded D02 should retain the actual 16:08 incoming message,
+ // not deliver it as a new D03 text. Never manufacture a player bubble.
+ if(!c.messages?.some(m=>m.id==='d02-xin-script-0')){
+  appendAuthoredPhoneMessage(s,{
+   channel:'wechat',conversationId:c.id,messageId:'d02-xin-script-0',
+   from:'小辛',text:D02_DIALOGUES.xin[0][1],day:2,clock:'16:08',
+   sentDate:'2025-05-20',storyTag:'storyD02',lifecycleId:'d02:xin',
+   silent:true,notify:false
+  });
+ }
+ q.started=true;q.startedClock='16:08';q.initialSent=true;
+ q.index=Math.max(1,q.index||0);
+ q.nextAt=null;q.dueAt=null;q.awaitingPlayer=true;q.status='waiting';
+}
+
 const specs=['wang','xin'].map(key=>({id:key,chat:key,
  at:(s,q)=>q?.startedClock|| (key==='wang'?(s.day===2&&Number.isFinite(s.story55?.d02?.wechat?.earlyAt)?s.clock:'12:16'):s.day===2&&Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15?s.clock:'16:08'),
+ // Xiao Xin's optional shopping advice is still a required *conversation* once
+ // his opening text exists; only the player may send the three protagonist lines.
+ ...(key==='xin'?{mandatory:true,migrate:restoreXiaoXinDialogue}:{}),
  initialDelayMs:key==='xin'?0:450,
  pauseMs:(s,q)=>q.index>0&&D02_DIALOGUES[key][q.index-1]?.[0]!=='me'?2200:1800,
  enabled:s=>key==='wang'||s.day>2||s.clock>='16:08'||Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15,
