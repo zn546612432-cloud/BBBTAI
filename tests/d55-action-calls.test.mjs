@@ -14,6 +14,15 @@ import {SCRIPTED_VOICE_CLIPS} from '../src/story/d34-d42/voice-assets.js';
 
 const fixture=()=>{
  const s=initialState();activateStory55(s);previewNode55(s,'ending');
+ // An ending-only developer preview intentionally skips the preceding calls.
+ // These tests deliberately rewind to the first incoming call, so reset only
+ // the phone completion markers, not the authored D55 WeChat milestones.
+ for(const id of [D55_OPENING_CALL.id,D55_FATHER_CALL.id,D55_FINAL_CALL.id])
+  delete s.story55.scriptedCallCompleted?.[id];
+ s.story55.d55Disconnected=false;
+ delete s.story55.d55FatherReady;
+ delete s.story55.d55FatherTakeover;
+ delete s.story55.d55FatherEndedAt;
  s.unlocked=true;s.batteryPercent=90;s.deathPhase=null;s.powerMode='idle';
  const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open(){}},toast(){}};
  return {s,ctx};
