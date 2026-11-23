@@ -24,6 +24,18 @@ export const readCloudSave=async(slot=1,player)=>{
 };
 export const writeCloudSave=async({slot=1,revision,writeId,state,player})=>await (await cloudRequest('/rest/v1/rpc/sync_phone_save',{
  method:'POST',body:{p_slot:slot,p_expected_revision:revision,p_write_id:writeId,p_state:state},timeout:20000,expectedPlayer:player})).json();
+// 0000 is a destructive new-game command, never an ordinary save conflict.
+// RLS limits DELETE to the authenticated owner; FKs cascade to backup rows.
+export const eraseCloudSave=async({slot=1,player,id})=>{
+ if(!Number.isInteger(slot)||slot<1||slot>2||!player||!id)throw Error('缺少要刪除的雲端存檔身份。');
+ const query='slot=eq.'+slot+'&user_id=eq.'+encodeURIComponent(player)+'&id=eq.'+encodeURIComponent(id)+'&select=id';
+ const response=await cloudRequest('/rest/v1/game_saves?'+query,{
+  method:'DELETE',expectedPlayer:player,timeout:20000,headers:{Prefer:'return=representation'}
+ });
+ const rows=await response.json();
+ if(!Array.isArray(rows)||rows.length>1)throw Error('雲端刪除結果異常，未開始新存檔。');
+ return {status:rows.length?'deleted':'conflict'};
+};
 export const cloudBackups=async(id,player)=>await (await cloudRequest('/rest/v1/game_save_backups?save_id=eq.'+encodeURIComponent(id)+'&select=revision,game_state,saved_at&order=revision.desc&limit=3',{expectedPlayer:player})).json();
 
 export async function sendSaveEmail(email,{recover=false}={}){

@@ -16,6 +16,7 @@ import {tickFlowD03,flushFlowReply} from './services/story55/flow-d03.js';
 import {endingReplyDue55,finaleInProgress55,secondView55,tickFinale55,startSecondCharge55,syncSecondClock55,endingVoiceRevealDue55,revealEndingVoice55,endingAwaitingVoice55} from './services/story55/finale.js';
 import {openAvatarCropper} from './features/avatar-cropper/index.js';
 import {restartState} from './system/restart/index.js';
+import {purgeRestartBackups} from './system/restart/cleanup.js';
 import {advanceGhost,needsWorldTick} from './apps/ghost/state.js';
 import {openPhoneStore,isPreview,RECOGNITION_PREVIEW,D45D46_PREVIEW} from './services/storage.js';
 import {prepareD45D46Preview} from './story/d46/preview.js';
@@ -141,6 +142,7 @@ const tasks=createTaskSwitcher({router,registry});
 if(store.get().unlocked&&!story55Review&&!taiV10MobileReview&&!noappV2Review&&!noappV3Review&&!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)store.update(s=>{s.unlocked=false;});
 const $=q=>document.querySelector(q);
 let noticeSwipeAnimating=false;
+let restartInProgress=false;
 let shortChargeNoticePausedUntil=0;
 let seenNotices=new Set(store.get().notifications.map(n=>n.id));
 let suppressNotificationClickUntil=0;
@@ -587,7 +589,20 @@ $('#root').addEventListener('click',async e=>{
   if(action==='kira-d01-bank')e.preventDefault(); // In-app mail link must not navigate to #.
   try{
     if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
-    if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.cloud?.markExplicitRestart?.();store.storage.setItem(phoneSaveKey+':explicit-restart','1');store.replace(restartState(store.get()));location.reload();return;}
+    if(action==='restart-confirm'&&lockscreen.stage==='restart'){
+     if(restartInProgress)return;
+     restartInProgress=true;
+     presets.dispose();delivery.waiting.clear();stopAlarmSound();
+     store.cloud?.markExplicitRestart?.();
+     store.storage.setItem(phoneSaveKey+':explicit-restart','1');
+     store.replace(restartState(store.get()));
+     // Erase the previous local checkpoint before reloading. Cloud deletion
+     // resumes from its owner-bound marker on the next boot, even if offline.
+     void purgeRestartBackups(store,{key:phoneSaveKey})
+      .catch(error=>console.warn('舊存檔清理待重試',error))
+      .finally(()=>location.reload());
+     return;
+    }
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}

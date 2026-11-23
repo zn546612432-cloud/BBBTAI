@@ -70,6 +70,24 @@ function createJournal(db,key){
    }).then(()=>{lastRaw=raw;},error=>{if(!pending)pending=raw;throw error;}).finally(()=>{active=null;});
    return active;
   },
+  // Replace the run atomically and discard the older recovery snapshot.
+  // Ordinary autosaves still retain a previous checkpoint.
+  async reset(raw){
+   if(closed)throw saveReadError();
+   clearTimeout(timer);timer=null;
+   if(active)try{await active;}catch{}
+   pending=null;
+   await transact('readwrite',table=>{table.put({key,raw,previous:null,savedAt:Date.now()});});
+   lastRaw=raw;
+  },
+  async clear(){
+   if(closed)throw saveReadError();
+   clearTimeout(timer);timer=null;
+   if(active)try{await active;}catch{}
+   pending=null;
+   await transact('readwrite',table=>{table.delete(key);});
+   lastRaw=null;
+  },
   close(){closed=true;clearTimeout(timer);db.close();}
  };
  db.onversionchange=()=>journal.close();

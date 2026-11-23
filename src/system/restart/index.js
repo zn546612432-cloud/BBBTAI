@@ -27,4 +27,4 @@ export function restartState(previous){
  if(previous.ghost?.config)next.ghost={config:clone(previous.ghost.config),orders:{},history:[],balance:0};
  return next;
 }
-export const restartDialog=()=>`<div class="lock-screen lock-passcode"><section class="restart-dialog" role="alertdialog" aria-modal="true" aria-labelledby="restart-title"><h2 id="restart-title">抹掉所有内容与设置？</h2><p>当前周目的消息和任务进度将重置；已编写剧情、D01之前历史聊天和独立测试快照继续保留。</p><div><button data-action="restart-cancel">取消</button><button data-action="restart-confirm">抹掉</button></div></section></div>`;
+export const restartDialog=()=>`<div class="lock-screen lock-passcode"><section class="restart-dialog" role="alertdialog" aria-modal="true" aria-labelledby="restart-title"><h2 id="restart-title">刪除存檔並重新開始？</h2><p>本機及雲端的本周目存檔、歷史備份將永久刪除。</p><div><button data-action="restart-cancel">取消</button><button data-action="restart-confirm">抹掉</button></div></section></div>`;

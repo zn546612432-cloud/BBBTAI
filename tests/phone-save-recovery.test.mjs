@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PhoneStore,openPhoneStore,KEY,initialState} from '../src/services/storage.js';
 import {openSaveJournal,mountSaveLifecycle} from '../src/services/storage/recovery.js';
+import {purgeRestartBackups} from '../src/system/restart/cleanup.js';
 
 function memoryStorage(){
  const data=new Map();
@@ -149,6 +150,32 @@ test('confirmed D01 restart is not mistaken for a stale local save',async()=>{
  again.update(current=>{current.day=2;current.clock='10:00';});
  assert.equal(storage.getItem(KEY+':explicit-restart'),null);
  await again.journal.flush();again.journal.close();
+});
+
+test('0000 clears previous local backup and pre-cloud shadow but keeps the new D01 save',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();
+ const key=KEY+':before-cloud-restore:player-a';
+ storage.setItem(KEY+':cloud-owner','player-a');
+ storage.setItem(KEY+':before-checkpoint-recovery',JSON.stringify(store.get()));
+ storage.setItem(KEY+':explicit-restart','1');
+ storage.setItem(key,JSON.stringify(store.get()));
+ const shadow=await openSaveJournal(idb.factory,key);
+ shadow.schedule(JSON.stringify(store.get()));await shadow.flush();shadow.close();
+ store.replace({...initialState(),day:1,clock:'08:00'});
+ await purgeRestartBackups(store,{key:KEY,factory:idb.factory});
+ const latest=await store.journal.read();
+ assert.equal(JSON.parse(latest.raw).day,1);
+ assert.equal(latest.previous,null,'deleted run cannot resurrect via previous checkpoint');
+ const old=await openSaveJournal(idb.factory,key);
+ assert.equal(await old.read(),undefined);old.close();
+ assert.equal(storage.getItem(key),null);
+ assert.equal(storage.getItem(KEY+':before-checkpoint-recovery'),null);
+ assert.equal(storage.getItem(KEY+':explicit-restart'),null);
+ await store.journal.flush();store.journal.close();
+ const restarted=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(restarted.get().day,1);
+ await restarted.journal.flush();restarted.journal.close();
 });
 
 test('unreadable existing save is preserved byte for byte instead of replaced with D01',async()=>{
