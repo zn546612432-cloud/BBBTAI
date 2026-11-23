@@ -3,6 +3,7 @@ import {unheardReply} from '../voice/unheard.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {uid} from '../id.js';
 import {dateParts} from '../calendar.js';
+import {taiLife,taiLifeContext} from './life-context.js';
 import {absoluteMinute} from '../../system/time/clock.js';
 import {hasBannedTaiConstruction,isTaiDirectAffectionRequest,TAI_DIRECT_AFFECTION_LINE,TAI_DIRECT_AFFECTION_PROMPT} from './expression-style.js';
 import {taiDisplayName,markTaiRead} from '../../apps/noapp/contact.js';
@@ -179,14 +180,14 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    (lastEndedCall.endedBy==='player'?'是熙蒙自己按了挂断键。':lastEndedCall.endedBy==='tai'?'是你陈熙泰自己按了挂断键。':lastEndedCall.endedBy==='connection_error'?'连接异常导致电话断开，不是任何一方主动挂断。':'系统已结束电话。')+
    '熙蒙现在是在 NoApp 私聊框打字，而不是在电话里继续说话，更不是挂断后还能传输电话语音。你只通过文字回复，不要把通话中未听到的内容当作真实发言。':
    '【当前媒介核验】现在是 NoApp 文字聊天，不是电话。';
-  const request={day:initial.day,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
+  const request={day:initial.day,macauClock:initial.clock,londonClock:taiLife(initial).local,channel:'noapp',storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,outputMode:voiceTurn?'voice':'text',
    behavior,allowVoice,worldbookEvents,
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    callActive,relationshipContext:xitaiRelationshipContext(initial,{mode:'text',callActive}),
    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,
    relationshipPlan:bridgeRelationshipPermissions(relationshipPlan,romanceBeat)};
   request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
-  request.scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
+  request.scene=[taiLifeContext(initial),socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
   if(romanceBeat?.mode==='continue')request.scene+='\n'+romanceBeat.prompt;
