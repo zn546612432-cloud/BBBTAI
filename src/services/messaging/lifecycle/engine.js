@@ -262,7 +262,7 @@ export function createConversationTrack(config){
    const q=map[d.id]||{index:0,started:false};
    if(q.completed||q.skipped||q.historySettled||q.lateHandled||q.lateRun||d.endWhen?.(s))continue;
    const index=q.index||0,line=lines(s,d,q)[index];
-   if(!line||!q.started&&line.who==='me')continue; // Player-led scenes have no incoming trigger.
+   if(!line)continue;
    const at=startMinute(s,d,q),limit=endMinute(s,d,q);
    const planned=plannedClock(s,d,index);
    const when=Math.max(at,planned?(d.day-1)*1440+minute(planned):at);
@@ -272,7 +272,7 @@ export function createConversationTrack(config){
    if(!q.started&&(when>=limit||now>=limit))continue;
    if(q.started&&isPast(s,d,q))continue;
    const item={channel:d.channel,conversationId:chatId(s,d),sceneId:d.id,track:config.prefix};
-   if(q.started&&line.who==='me'&&lineIsDue(s,d,index)){
+   if(line.who==='me'&&when<=now&&lineIsDue(s,d,index)){
     pending??={...item,kind:'reply'};continue;
    }
    if(when>now){
