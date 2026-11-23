@@ -107,3 +107,31 @@ test('existing worldbook reads completed canonical moments without second storag
  assert(snapshot.longMemory.some(m=>m.id==='story55-rescue-promise'));
  assert.equal(snapshot.longMemory.find(m=>m.id==='story55-rescue-promise').sourceId,'s55-d53-tai-night-22');
 });
+
+test('live free call recognizes current heard confession and excludes unplayed Tai plans',()=>{
+ const s=make(90);
+ const live=[{role:'user',content:'我喜歡你'},{role:'assistant',content:'我也喜歡你'}];
+ let v=taiRelationshipDirector(s,{input:'我喜歡你',callTurns:live});
+ assert.equal(v.playerAffectionDays,1);
+ assert.equal(v.taiAffectionDays,0,'speech awaiting MiniMax playback is not yet real evidence');
+ live[1].playedAt=123456;
+ v=taiRelationshipDirector(s,{input:'我喜歡你',callTurns:live});
+ assert.equal(v.taiAffectionDays,1);
+});
+test('an earlier ended call cannot override a more recent explicit rejection',()=>{
+ const s=make(100);
+ for(let d=43;d<=45;d++)add(s,'player'+d,'me','我喜歡你',d);
+ messages(s).push({id:'oldcall',kind:'call',callStatus:'ended',day:47,actual:true,
+  transcript:'熙蒙：我喜歡你\n熙泰：我也喜歡你'});
+ add(s,'reject','me','我不喜歡你',55);
+ assert.equal(taiRelationshipDirector(s).rejected,true);
+});
+test('proactive confession is vetoed during a verified D55 crisis',()=>{
+ const s=make(100);
+ for(let d=43;d<=45;d++){add(s,'player'+d,'me','我喜歡你',d);add(s,'tai'+d,'tai','我也喜歡你',d);}
+ s.story55.scenes['d55-xiaoxin']={index:5};
+ const v=taiRelationshipDirector(s,{initiative:true});
+ assert.equal(v.canDeclareLove,true);
+ assert.equal(v.canInitiateLike,false);
+ assert.deepEqual(taiRomanticViolations(v,[{text:'我愛你。'}]),['love']);
+});
