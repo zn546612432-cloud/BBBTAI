@@ -21,6 +21,17 @@ export function allMoments(s){
     return {...post,text:post.text==='今天這張我先發了。別又說我相冊全是自己。'?p.text:post.text,
      comments:(post.comments||[]).map(c=>c.by==='胡枫'&&c.text==='你自己先說的'?{...c,text:p.comments[0].text}:c)};
    }
+   // Migrate only the old built-in HYQ defaults; keep genuinely customized posts.
+   if(post.id==='xw-d35'&&post.text==='石排湾看熊猫。阿蒙在馆里站得比熊猫还久。')
+    return {...post,text:p.text};
+   if(post.id==='xs-d51'&&post.text==='爱上你 是命是病 是明知得不到的回应 我最亲爱的炸鸡')
+    return {...post,text:p.text};
+   if(post.id==='xw-d49'&&post.text==='路过公园，看见它们坐得很认真。')
+    return {...post,text:p.text,media:p.media,comments:p.comments,likes:p.likes,kind:p.kind,music:p.music};
+   if(post.id==='xs-d25'&&post.media?.length===1&&post.media[0]==='xiaoxinMirror')
+    return {...post,media:p.media};
+   if(post.id==='aw-d17'&&post.media?.length===1&&post.media[0]==='gymGear')
+    return {...post,media:p.media};
    if(post.id==='xm-d44'&&post.text==='西湖醋鱼吃完了。下次别点。'){
     const oldComments=(post.comments||[]).length===2&&post.comments[0].by==='胡枫'&&post.comments[0].text==='我就说你不爱吃'&&post.comments[1].by==='熙旺'&&post.comments[1].text==='回去给你买烧腊';
     return {...post,text:p.text,...(oldComments?{comments:p.comments}:{}),likes:[...new Set([...(post.likes||[]),...p.likes])]};
@@ -29,7 +40,7 @@ export function allMoments(s){
    const legacy=(post.likes||[]).length===1&&post.likes[0]==='熙蒙'&&(post.comments||[]).some(c=>c.by==='熙蒙'&&c.text==='哥哥早安');
    return {...post,...(post.text==='早上好。今天的云很好看。'?{text:p.text}:{}),...(legacy?{likes:p.likes,comments:p.comments}:{})};
   }),...(m.posts||[])]
-  .filter(p=>p&&p.id&&!['xm-d41','aw-d53','aw-d69','xs-d47'].includes(p.id)&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
+  .filter(p=>p&&p.id&&!['xm-d41','aw-d53','aw-d69','xs-d47','xs-d55'].includes(p.id)&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
    &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);

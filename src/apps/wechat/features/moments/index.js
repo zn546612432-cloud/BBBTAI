@@ -7,6 +7,7 @@ import {allMoments,findMoment,momentProfiles,addGameMomentComment} from './model
 import {momentIcons} from './icons.js';
 import {wxIcon} from '../../components/icons.js';
 import {handle as handleMusic} from '../../../music/index.js';
+import {tracks} from '../../../music/features/shared/catalog.js';
 let openActions=null,replyTo=null,replyToName=null,replyDraft='';
 const heart=momentIcons.heart;
 
@@ -17,6 +18,8 @@ photos.hufengCover='hufeng-moments-cover.webp';
 photos.xiaoxinSunsetCover='d06-xiaoxin-sunset-cover.webp';
 photos.xiaoxinSunsetVideo='d06-xiaoxin-sunset.mp4';
 photos.d41GoodShow='d41-hufeng-good-show.jpeg';
+photos.xiaoxinD25Selfie='d25-xiaoxin-selfie.webp';
+photos.d49Moon='d49-xiwang-moon.webp';
 Object.assign(photos,{aweiTraining:'awei-d05-training.webp',aweiStyle:'awei-d24-style.webp',aweiFriends:'awei-d29-friends.webp',aweiFountainFront:'awei-d39-fountain-front.webp',aweiFountainBack:'awei-d39-fountain-back.webp'});
 // Avatar map already carries the build's base path. Never resolve it twice.
 export const avatarUrl=name=>wechatAvatars[name]||wechatAvatars['熙蒙'];
@@ -40,7 +43,7 @@ export function momentImageUrls(s){
  const posts=visibleMoments(allPosts(s),nowDate(s),{clock:s.clock});
  return [...new Set([
   ...Object.entries(profiles).flatMap(([name,profile])=>[momentImage(profile.cover),resolveWeChatAvatar(name,profile.avatar)]),
-  ...posts.flatMap(post=>(post.media||[]).map(src=>momentImage(src)))
+  ...posts.flatMap(post=>[...(post.media||[]).map(src=>momentImage(src)),...(post.music?.trackId?[tracks.find(t=>t.id===post.music.trackId)?.cover]:[])])
  ].filter(src=>src&&!/\.(?:mp4|webm)(?:[?#]|$)/i.test(src)))];
 }
 const clockLabel=(date,now)=>date.slice(0,10)===now?'今天 '+date.slice(11):date.slice(5,7).replace(/^0/,'')+'月'+Number(date.slice(8,10))+'日 '+date.slice(11);
@@ -59,7 +62,10 @@ function postContent(post,s){
  if(post.kind==='music'){
   const playable=!!post.music.trackId;
   const playing=playable&&s.musicPlaying&&s.musicTrack===post.music.trackId;
-  return '<'+(playable?'button type="button" data-action="wx-moment-music" data-id="'+esc(post.id)+'" aria-pressed="'+!!playing+'"':'div role="group"')+' class="wx-moments-music" aria-label="'+(playable?(playing?'暂停':'播放'):'分享音乐 ')+esc(post.music.title)+'"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+(post.music.album?' · '+esc(post.music.album):'')+'</small></span><span class="wx-moments-music-note" aria-hidden="true">'+(playable?(playing?'Ⅱ':'▶'):'♫')+'</span></'+(playable?'button':'div')+'>';
+  const albumArt=tracks.find(track=>track.id===post.music.trackId)?.cover;
+  const art=albumArt?'<img class="wx-moments-music-cover" src="'+esc(albumArt)+'" alt="'+esc(post.music.title)+' 封面" loading="eager" decoding="async">':'<span class="wx-moments-music-art">♫</span>';
+  const card='<'+(playable?'button type="button" data-action="wx-moment-music" data-id="'+esc(post.id)+'" aria-pressed="'+!!playing+'"':'div role="group"')+' class="wx-moments-music" aria-label="'+(playable?(playing?'暂停':'播放'):'分享音乐 ')+esc(post.music.title)+'">'+art+'<span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+(post.music.album?' · '+esc(post.music.album):'')+'</small></span><span class="wx-moments-music-note" aria-hidden="true">'+(playable?(playing?'Ⅱ':'▶'):'♫')+'</span></'+(playable?'button':'div')+'>';
+  return pictureGrid(post)+card;
  }
  return pictureGrid(post);
 }
