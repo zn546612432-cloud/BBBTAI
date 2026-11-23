@@ -1,7 +1,7 @@
 // Preload the complete published game package before showing the phone.
 // CacheStorage stores compressed responses on disk; only visible critical art
 // gets decoded in RAM, avoiding large iOS Safari image-memory spikes.
-import {publicAssetBase,publicAssetPath,isStablePublicPath,rebaseBundledPublicAsset} from '../../services/public-assets.js';
+import {publicAssetBase,stablePublicAssetBase,publicAssetPath,isStablePublicPath,rebaseBundledPublicAsset} from '../../services/public-assets.js';
 import {initialLockscreenImageUrls} from '../preload.js';
 
 const PARALLEL=4;
@@ -20,7 +20,7 @@ const decodeImage=url=>new Promise(resolve=>{
 
 async function registerWorker(){
  if(!globalThis.navigator?.serviceWorker||!globalThis.caches)throw Error('瀏覽器無法使用持久離線快取。');
- await navigator.serviceWorker.register(publicAssetPath('sw.js').replace('/assets/sw.js','/sw.js'),{scope:publicAssetBase().replace(/releases\/[^/]+\/$/,'')});
+ await navigator.serviceWorker.register(stablePublicAssetBase()+'sw.js',{scope:stablePublicAssetBase()});
  await navigator.serviceWorker.ready;
  if(navigator.serviceWorker.controller)return;
  await new Promise((resolve,reject)=>{
@@ -68,8 +68,8 @@ async function loadAssets({manifest,cache,onProgress}){
  await Promise.all(Array.from({length:Math.min(PARALLEL,total)},worker));
  return {done,total,failed,errors};
 }
-async function trimOldCaches(name){
- const all=(await caches.keys()).filter(k=>k.startsWith(CACHE_PREFIX));
+async function trimOldCaches(name,namespace){
+ const all=(await caches.keys()).filter(k=>k.startsWith(namespace));
  // Retain the latest previous package for any tab still open on an older release.
  for(const old of all.filter(k=>k!==name).slice(0,-1))await caches.delete(old);
 }
@@ -79,8 +79,11 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
  const result=(async()=>{
   await register();
   const manifest=await loadManifest();
-  const name=CACHE_PREFIX+manifest.version;
+  const site=stablePublicAssetBase().replace(/[^a-z0-9]/gi,'_');
+  const namespace=CACHE_PREFIX+site+'-';
+  const name=namespace+manifest.version;
   const cache=await openCache(name);
+  await cache.put(manifestUrl(),new Response(JSON.stringify(manifest),{headers:{'Content-Type':'application/json'}}));
   total=manifest.assets.length+1;report();
   const status=await fetchAssets({manifest,cache,onProgress:p=>{finished=p.finished;failed=p.failed;report();}});
   if(status.failed)throw Error('有 '+status.failed+' 項素材未能載入：'+status.errors.join('；'));
