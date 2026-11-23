@@ -51,6 +51,10 @@
   if(remember)try{localStorage.setItem(seenKey,'1');}catch{}
   boot.classList.add('intro-finished');showTip();tipTimer=setInterval(showTip,3000);revealEntry();
  };
+ window.__xmBootIntroFailed=(retry,status='')=>{
+  failed=true;finish(false);if(message)message.textContent=status;
+  next.hidden=false;next.textContent='重新載入';next.onclick=retry;
+ };
  window.__xmBootIntroFinish=()=>finish(false);
  window.__xmBootIntroError=()=>{failed=true;finish(false);};
  window.__xmBootIntroReady=(close,status='')=>{
