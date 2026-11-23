@@ -2,6 +2,7 @@
 // This is a read-only view of NoApp story messages and the existing Story55 gate.
 // Do not add generic romance, tactical advice, unseen events or future outcomes here.
 import {isStory55,taiRecognized} from '../../services/story55/state.js';
+import {taiDirectTearDefinition} from '../../services/ai/worldbook/plot-glossary.js';
 
 const normalize=value=>String(value||'').normalize('NFKC').replace(/[\s，,。！？!?、：:；;“”「」『』]/g,'').toLowerCase();
 const existingLine=(messages,phrase,speaker='tai')=>messages.find(m=>
@@ -14,6 +15,10 @@ export function selectTaiMemoryPreset(s,input,{history=null}={}){
  const raw=String(input||'').trim();
  if(!raw||raw.length>110||/[\n\r]/.test(raw))return null;
  const text=normalize(raw);
+ // Unambiguous question about a named, canonically defined program: do not
+ // depend on DeepSeek recalling the title or confusing TAI with Xi Tai.
+ const programFact=taiDirectTearDefinition(s,raw);
+ if(programFact)return programFact;
  const messages=history||s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||[];
  // A direct question about a past fact is safe to answer verbatim. General
  // questions ("what now?", "what happened?") still need live reasoning.
