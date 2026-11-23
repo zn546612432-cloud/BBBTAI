@@ -64,8 +64,8 @@ function flowDestination(s){
 function nodeTask(s,n){
  const done=completed(s,n.id),status=nodeStatus(s,n.id);
  if(n.id==='intro')return null;
- if(n.id==='ending'&&(!s.story55?.d55Disconnected||!s.story55?.endingVoiceAvailable))return null;
- if(n.id==='ending'&&s.story55?.finalAudioHeard)return null;
+ // The last recording is delivered by NoApp, not by the to-do list.
+ if(n.id==='ending')return null;
  if(!done&&status.state!=='ready'&&!['d29-chess','d23-chess-finish','plan'].includes(n.id))return null;
  let link=done?null:nodeLink55(s,n.id);
  let title=n.title,detail=link?(appLabel[link.appId]||link.appId):'已完成';
@@ -103,7 +103,7 @@ function nodeTask(s,n){
  if(n.id==='d29-chess'&&status.state==='locked'){link=destination('chess','/');title='打開國際象棋';detail='國際象棋 · 完成棋局';}
  if(n.id==='d23-chess-finish'&&status.state==='locked'){title='完成棋局後的對話';detail='MIRAGE · Dr Ouroboros';link=destination('mirage','/chat/s55-ouroboros');}
  if(n.id==='plan'&&status.state==='locked'){title='完成國際象棋';detail='國際象棋';link=destination('chess','/');}
- if(n.id==='ending'){title='收聽最後的語音';detail='NoApp · 熙泰';}
+
  if(n.id==='base'&&s.day>=14&&s.day<=24){
   const batch=s.story55?.projects?.base?.batches?.[s.day-14];
   title='完成今日程序部署';

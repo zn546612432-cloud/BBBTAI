@@ -673,11 +673,14 @@ async function playScriptedOpening(ctx){
    if(script.disconnectOnComplete){
     ctx.store.update(s=>{
      s.story55.d55Disconnected=true;s.story55.d55CallStage='disconnected';
-     if(s.clock<'22:43')s.clock='22:43';
+     // The next beat belongs to the 22:46 NoApp chat.
+     if(s.clock<'22:46')s.clock='22:46';
     });
     callAction('tai-hangup',ctx,{endedBy:'system',endReason:'d55_disconnect'});
     ctx.store.update(s=>{
      const c=s.content.conversations.noapp?.find(c=>c.id==='tai');
+     // The next voice appears three real seconds after this message.
+     if(!s.story55.endingVoiceAvailable)s.story55.endingVoiceQueuedAt=Date.now();
      if(c&&!c.messages.some(m=>m.id==='s55-d55-xitai-last-text')){
       c.messages.push({id:'s55-d55-xitai-last-text',from:'tai',text:'熙蒙？',kind:'text',
        day:55,time:s.clock,actual:true,story55:true});
@@ -686,6 +689,8 @@ async function playScriptedOpening(ctx){
         link:{appId:'noapp',route:'/chat/tai',params:{}}});}
      }
     });
+    // Phone teardown can restore Home; always show the NoApp conversation.
+    ctx.router.open({appId:'noapp',route:'/chat/tai',params:{}});
     ctx.refresh?.();return;
    }
    if(!script.completionMatch){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'scripted_end'});return;}

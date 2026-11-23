@@ -67,6 +67,24 @@ test('changes made during an upload remain queued for the next save',async t=>{
  const saving=cloud.flush();await new Promise(r=>setImmediate(r));cloud.store.advance(17);release();await saving;
  cloud.api.write=write;await cloud.flush();assert.equal(backend.row.game_state.day,17);
 });
+test('a second flush during an in-flight upload saves its newer edit rather than reporting the old upload as complete',async t=>{
+ const backend=server(),cloud=client(t,backend);await cloud.start();await cloud.flush();
+ const write=cloud.api.write;
+ let allowWrite,signalWrite;
+ const gate=new Promise(resolve=>allowWrite=resolve);
+ const entered=new Promise(resolve=>signalWrite=resolve);
+ cloud.api.write=async args=>{signalWrite();await gate;return write(args);};
+ cloud.store.advance(9);
+ const first=cloud.flush();await entered;
+ cloud.store.advance(10);
+ const second=cloud.flush();
+ allowWrite();
+ assert.equal(await first,true);
+ assert.equal(await second,true);
+ assert.equal(backend.row.game_state.day,10);
+ assert.equal(backend.row.revision,3);
+});
+
 test('a clean device restores newer cloud progress, but a dirty device does not',async t=>{
  const backend=server(),a=client(t,backend);await a.start();await a.flush();
  const copied=memory();for(const k of ['phone:cloud-owner','phone:cloud:player-a:1'])copied.setItem(k,a.store.storage.getItem(k));
