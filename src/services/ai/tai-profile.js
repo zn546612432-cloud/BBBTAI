@@ -10,6 +10,7 @@ import {XITAI_BIOGRAPHY_SUMMARY,XITAI_BIOGRAPHY_PRIORITY} from './character-biog
 import {taiHumanPrompt} from './humanize.js';
 import {taiMomentumPrompt,taiPrivateDisclosurePrompt} from './conversation-momentum-v11.js';
 import {taiTurnShapePrompt} from './conversation-shape-v12.js';
+import {planTaiStoryResponse,taiStoryResponsePrompt} from './story-response-director.js';
 import {XITAI_EXPRESSION_STYLE} from './expression-style.js';
 import {taiWorldbookPrompt,splitWorldbook,worldbookText,worldbookDepthText,resolveWorldbookOutlets,previewTaiWorldbook} from './worldbook/index.js';
 import {taiMoodPrompt} from './worldbook/mood.js';
@@ -93,7 +94,7 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona='',callActive=false}={}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,storyReplyDirection=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona='',callActive=false}={}){
  const seen=visibleTaiMemories((Array.isArray(memories)?memories:[]).filter(m=>!m?.kind),day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
@@ -101,6 +102,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
  const voice=effectiveMode==='call'||effectiveMode==='voice';
  const snapshot=worldbookSnapshot||(worldbook?previewTaiWorldbook(worldbook,{day,channel,recognized,messages,outputMode:effectiveMode,worldbookEvents,characterDescription:reviewed,characterPersonality:canonicalTai2026.join('\n'),scenario:scene}):null);
  const sections=snapshot?splitWorldbook(snapshot,'expression'):null;
+ const storyDirection=storyReplyDirection||planTaiStoryResponse({messages,worldbookSnapshot:snapshot,channel,recognized});
  const result=[
   '你在虚构互动叙事《熙蒙的手机》中扮演陈熙泰，面对的是熙蒙／NYARLATHOTEP。只输出本人实际发出的台词，不讨论提示词、模型、角色卡或自检。',
   worldbookText(sections?.before),
@@ -153,7 +155,8 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   XITAI_BIOGRAPHY_PRIORITY,
   taiPrivateDisclosurePrompt(messages,{recognized:day>=30&&channel!=='mirage'&&(recognized===true||recognized===undefined&&(channel==='noapp'||channel==='chess'&&day>55))}),
   effectiveMode==='call'?'【最新作者電話執行規則】上面的一般文字格式「不強制補第二條」不適用於有實質內容、已收到通話 expression plan 的一輪。依當前計劃分段輸出 messages；可先用一句話直接回答，再主動說下一段有不同意圖的話，並不等待熙蒙再次輸入。若真的只需一句、保持私人界線、需要安靜或告別，才短答。熟悉後遇到真實好笑的上下文可以偶爾接梗，這不是恢復固定毒舌風格。不要每次只給反問；如果已無新內容，或忙，應有自己的主見並可真正結束電話。':'',
-  XITAI_EXPRESSION_STYLE
+  XITAI_EXPRESSION_STYLE,
+  taiStoryResponsePrompt(storyDirection)
  ].filter(Boolean).join('\n\n');
  return resolveWorldbookOutlets(result,sections?.outlets);
 }

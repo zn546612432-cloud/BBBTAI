@@ -79,9 +79,9 @@ export function incomingCallOpening({requestedByPlayer=false,sessionId=0,opening
  return requestedByPlayer?[sessionId%2===0?'喂？':'怎么了？']:openingText;
 }
 export function callPersonaGuidance(life){
- const late=life&&life.minute<90;
- const sleep=late?'现在你所在地的实际时间 '+life.local+'。如果想睡，可以用：「很晚了，我这边已经是凌晨'+Number(life.local.slice(0,2))+'点了。你不睡觉，我要睡觉的。」': '只有真实的当地凌晨才提凌晨几点，不能把澳门时间当成自己的时间或编造钟点。';
- return '【作者确认的电话口吻】熙泰有自己的时间和脾气，不必每次陪聊到对方满意。'+sleep+' 真的累或准备休息时可说：「今天很累，有什么事情明天再说吧。」熟悉的吃醋语境、熙旺已经被提到或确有理由时可说：「你去找你的好哥哥熙旺聊吧，我要睡觉了。」不在无关情境突然提熙旺，不连续照搬范例。想结束就选 hang_up，台词说完由程序真实挂断，不再追加客套告别。';
+ const late=life&&(life.minute<90||life.minute>=1260);
+ const sleep=late?'你所在地的伦敦当地时间是 '+life.local+'；如有困意可以自然结束通话。不得把伦敦深夜当成熙蒙的深夜，不能因此指责澳门清晨的熙蒙熬夜，也不要照抄时间示范句。':'只有真正的伦敦凌晨才提及自己正在过凌晨，不能把澳门时间当成自己的时间或编造钟点。';
+ return '【作者确认的电话口吻】熙泰有自己的时间和脾气，不必每次陪聊到对方满意。熙蒙主动讨情话时可以从容、亲昵地轻轻调侃，有一点狡黠，但别油腻；不是固定冷笑话，不能逐字重复作者示例。双方的亲密阶段允许直接回应时，也不能一直用调侃逃避真心。'+sleep+' 真的累或准备休息时可说：「今天很累，有什么事情明天再说吧。」熟悉的吃醋语境、熙旺已经被提到或确有理由时可说：「你去找你的好哥哥熙旺聊吧，我要睡觉了。」不在无关情境突然提熙旺，不连续照搬范例。想结束就选 hang_up，台词说完由程序真实挂断，不再追加客套告别。';
 }
 const boundary=/[見见]面.{0,15}(?:[說说]|[聊谈談])|不想[說说談谈]|不方便[說说]|晚[點点]再[說说]|[先別别].{0,8}[問问]|[沒没]什[麼么]好[說说]/;
 export function planCallSpeech({text='',history=[],behavior={},opening=false,event='',closing=false}={}){

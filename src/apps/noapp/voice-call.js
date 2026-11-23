@@ -22,7 +22,7 @@ import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../.
 import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
-import {taiLife} from '../../services/ai/life-context.js';
+import {taiLife,taiLifeContext} from '../../services/ai/life-context.js';
 import {synthesizeTaiVoice} from '../../services/ai/voice-synthesis.js';
 import {selectTaiMemoryPreset} from './memory-replies.js';
 import {taiSocialEnergy,canTaiCall,taiCallCooling,markTaiCallRest,socialEnergyPrompt} from '../../services/ai/social-energy.js';
@@ -380,9 +380,10 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    (shouldClose?'本轮结束电话。可先回应眼前的话，然后亲口说自然告别；最后一段必须是告别，之后程序实际挂断，不提额限。':
     'messages 数组按计划分开输出完整的口语意群，每段1至3句；先直接回应，再顺着真实话题补充想法、细节、下一句或自然转题。不要把一句话拆成碎片或同义重复。简单招呼、明确拒绝、私事界线、真正的简短回答可以短；其余有内容的对话不要仅输出一个短句。')+
    (plan.smallTalk&&!shouldClose?' 熙蒙已经连续问了几轮短问题。判断这些话是否有意义；如果他只是想闲聊，你可以接着聊、自然逗他一句，或者直接询问还有什么正事；若现在确实忙或不想继续，说明一句并选择 hang_up，不需要迎合每一个无意义的问题。':'');
-  const scene=socialEnergyPrompt(ctx.store.get(),'call',{connected:true})+' '+callScene({opening,event,direction:call.direction,reason:call.reason})+
+  const currentState=ctx.store.get(),currentLife=taiLife(currentState);
+  const scene=taiLifeContext(currentState)+' '+socialEnergyPrompt(currentState,'call',{connected:true})+' '+callScene({opening,event,direction:call.direction,reason:call.reason})+
    ' 【NoApp V3｜真人电话】这轮只调用一次台词生成。你现在仍在真实通话里。'+speechDepth+
-   callPersonaGuidance(taiLife(ctx.store.get()))+
+   callPersonaGuidance(currentLife)+
    ' 通话开场不喊对方名字；需要称呼时只叫 nya（奈亚），不要念熙蒙、陈熙蒙。允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
    taiMomentumPrompt(history,{mode:'call'})+
@@ -394,7 +395,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   // messages together. Ringing and text still use their existing decisions.
   let decision=shouldClose?{schema_version:10,action:'hang_up',strategy:'answer_directly',intensity:'low',tone:'neutral',vocal_cue:'none',intent:'自然告别，然后由程序真正挂断。'}:null;
   const request={
-    channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
+    channel:'noapp',day,macauClock:currentState.clock,londonClock:currentLife.local,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
     relationshipPlan:bridgeRelationshipPermissions(relationshipPlan,romanceBeat),
@@ -486,7 +487,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(!endAfter||i+1<segments.length)await new Promise(resolve=>setTimeout(resolve,Math.min(behavior.callPause,.65)*1000));
   }
  }catch(error){
-  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code)){endAfter=false;return;} // stay connected; a veto is not a network failure
+  if(['TAI_STYLE','TAI_ROMANCE_GATE','TAI_TIME'].includes(error?.code)){endAfter=false;return;} // stay connected; a veto is not a network failure
   if(error?.code==='TAI_SOCIAL_REST'){if(current())callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'resting',fallback:closingLine});return;}
   if(current()){
    console.warn('NoApp call connection failed:',error?.message);
