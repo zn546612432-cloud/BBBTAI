@@ -4,6 +4,7 @@ import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-per
 import {containsPortuguese} from './portuguese.js';
 import {readableTaiVoiceText,unpackTaiReply} from './format.js';
 import {hasBannedTaiConstruction,hasTaiDirectAffectionDeclaration,XITAI_STYLE_REPAIR} from './expression-style.js';
+import {taiRomanticViolations,taiRelationshipInstruction} from './relationship-director.js';
 import {applyTaiPrivacyDecision,hasPrematureTaiDisclosure} from './conversation-momentum-v11.js';
 import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
@@ -78,23 +79,26 @@ export async function askTear({day,messages,scene=''}){
  return {text:String(result.choices?.[0]?.message?.content||'')};
 }
 export async function askTai(request){
- request={...request,approvedDecision:applyTaiPrivacyDecision(request.approvedDecision,request)};
+ request={...request,approvedDecision:applyTaiPrivacyDecision(request.approvedDecision,request),
+  scene:[request.scene,taiRelationshipInstruction(request.relationshipPlan)].filter(Boolean).join('\n')};
  const first=await askTaiOnce(request);
  let entries;
  try{entries=unpackTaiReply(first,request.outputMode==='call'?'call':request.channel);}catch{return request.directAffection?{...first,directAffectionAccepted:false}:first;}
  // The character is free to decline. If a genuine declaration was chosen,
  // the caller delivers only the author's exact line, without a second draft.
- if(request.directAffection)return {...first,directAffectionAccepted:hasTaiDirectAffectionDeclaration(entries)};
+ const firstRomance=taiRomanticViolations(request.relationshipPlan,entries);
+ if(request.directAffection&&!firstRomance.length)return {...first,directAffectionAccepted:hasTaiDirectAffectionDeclaration(entries)};
  const texts=entries.map(e=>e.text),privateLeak=hasPrematureTaiDisclosure(texts,request);
- if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))&&!privateLeak)return first;
+ if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))&&!privateLeak&&!firstRomance.length)return first;
  // Only the offending generation gets one corrective attempt. Preserve the
  // original approved action. A rejected first draft must never leak on retry failure.
  try{
   const privacyRepair=privateLeak?'【私事披露修正】上一稿提前說出未共享的個人履歷。這時不該交代出生、國籍、領養、教育或家庭細節。重新回應熙蒙的好奇，保留到見面，不提供新履歷。\n':'';
-  const corrected=await askTaiOnce({...request,scene:privacyRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
+  const romanceRepair=firstRomance.length?'【系統關係校驗】上一稿越過了已確認的感情階段。不能說愛或表白未獲准的感情，可以自然回答、拒絕或保留態度；不得把玩家要求說愛當成他已示好。\n':'';
+  const corrected=await askTaiOnce({...request,scene:privacyRepair+romanceRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
   const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
   const revised=lines.map(e=>e.text);
-  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request))return corrected;
+  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request)&&!taiRomanticViolations(request.relationshipPlan,lines).length)return corrected;
  }catch{}
  // A mistaken early revelation cannot be unsent. In the exceptional case
  // both drafts leak, use the author's own privacy-boundary line, not a fact.
@@ -102,6 +106,7 @@ export async function askTai(request){
   const mode=request.outputMode==='call'||request.outputMode==='voice'||request.approvedDecision?.action==='send_voice'?'voice':'text';
   return {...first,text:JSON.stringify({messages:[{text:'等到我們見面的時候，說不定我會跟你說。',mode,tone:'neutral'}]})};
  }
+ if(firstRomance.length)throw Object.assign(Error('Unapproved Tai romantic declaration blocked'),{code:'TAI_ROMANCE_GATE'});
  if(hasBannedTaiConstruction(texts)||hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text)))throw Object.assign(Error('Blocked Tai dialogue after correction'),{code:'TAI_STYLE'});
  return first;
 }
