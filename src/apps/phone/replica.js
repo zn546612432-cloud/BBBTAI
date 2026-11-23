@@ -1,6 +1,7 @@
 import {outgoingCall} from '../../services/telephony/store.js';
 import {btn,esc} from '../../system/ui.js';
 import {defaultPhoneData,phoneData} from '../../services/phone-data.js';
+import {dateParts} from '../../services/calendar.js';
 
 export const manifest={id:'phone',name:'电话',icon:7,defaultRoute:'/',kicker:'CALLS'};
 
@@ -21,7 +22,7 @@ const paths={
 };
 const icon=(name,size=24)=>`<svg class="ios-icon ios-icon-${name}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
 
-let selected='recent',filter='all',digits='',search='',personId=null;
+let selected='recent',filter='all',digits='',search='',personId=null,callId=null;
 
 function tabs(){
   const items=selected==='keypad'?
@@ -54,14 +55,35 @@ function keypad(data){
   <div class="ios-digit-grid">${keys.map(([n,letters])=>btn('phone-digit',`<span>${n}</span>${letters?`<small>${letters}</small>`:n==='0'?'<small>+</small>':'<small>&nbsp;</small>'}`,'ios-digit',`data-digit="${n}" aria-label="数字${n}"`)).join('')}</div>
   <div class="ios-call-zone">${btn('phone-call',icon('call',34),'ios-green-call',`aria-label="拨打电话"`)}${digits?btn('phone-erase',icon('erase',23),'ios-erase',`aria-label="删除数字"`):''}</div>${tabs()}</div>`;
 }
-function recents(data){
+function recents(data,s){
   const list=data.calls.filter(x=>(filter==='all'||x.missed)&&(!search||`${x.name||''} ${x.number} ${x.place}`.toLowerCase().includes(search.toLowerCase())));
   return `<div class="ios-phone-page ios-recents-page"><header class="ios-recent-toolbar">${btn('phone-edit','编辑','ios-glass-button')}<span class="ios-filter">${btn('phone-filter','所有',filter==='all'?'active':'',`data-filter="all"`)}${btn('phone-filter','未接来电',filter==='missed'?'active':'',`data-filter="missed"`)}</span>${btn('phone-menu','☰','ios-round')}</header><h1>最近通话</h1>
   <label class="ios-contact-search">${icon('search',23)}<input name="phone-search" placeholder="搜索通话" value="${esc(search)}" aria-label="搜索通话">${icon('mic',22)}</label>
-  <div class="ios-recent-scroll">${list.map(x=>`<div class="ios-recent-row">${contactAvatar(x.name||x.number)}<span><strong class="${x.missed?'missed':''}">${esc(x.name||x.number)}</strong><small>${esc(x.place||data.self.region)}${x.name?' · '+esc(x.number):''}</small></span><time>${esc(x.day)}</time>${btn('phone-info',icon('info',22),'ios-info',`data-id="${esc(x.id)}"`)}</div>`).join('')||'<p class="ios-no-results">没有通话记录</p>'}</div>${tabs()}</div>`;
+  <div class="ios-recent-scroll">${list.map(x=>`<div class="ios-recent-row">${contactAvatar(x.name||x.number)}<span><strong class="${x.missed?'missed':''}">${esc(x.name||x.number)}</strong><small>${esc(x.missed?'未接来电':x.direction==='outgoing'?'拨出':'来电')} · ${esc(x.place||data.self.region)}${x.name?' · '+esc(x.number):''}</small></span><time>${esc(recentWhen(x,s))}</time>${btn('phone-info',icon('info',22),'ios-info',`data-id="${esc(x.id)}"`)}</div>`).join('')||'<p class="ios-no-results">没有通话记录</p>'}</div>${tabs()}</div>`;
+}
+function recentWhen(entry,state){
+ if(!Number.isInteger(entry.day)||!state)return entry.day||'';
+ if(entry.day===state.day)return entry.time||'今天';
+ if(entry.day===state.day-1)return '昨天';
+ return dateParts({...state,day:entry.day}).iso.slice(5).replace('-','/');
+}
+function callDetails(data,state){
+ const entry=data.calls.find(x=>x.id===callId);
+ if(!entry){selected='recent';return recents(data,state);}
+ const label=entry.name||entry.number;
+ const status=entry.missed?'未接来电':entry.direction==='outgoing'?'拨出电话':'已接来电';
+ const date=Number.isInteger(entry.day)&&state?dateParts({...state,day:entry.day}).iso:String(entry.day||'');
+ const when=[date,entry.time||''].filter(Boolean).join(' ');
+ const duration=Number.isFinite(entry.duration)&&entry.connected?Math.floor(entry.duration/60)+' 分 '+String(entry.duration%60).padStart(2,'0')+' 秒':'';
+ return '<div class="ios-phone-page ios-person-page"><header class="ios-person-toolbar">'+
+  btn('phone-tab',icon('back',19)+' 最近通话','', 'data-tab="recent"')+
+  '</header><div class="ios-person-profile">'+contactAvatar(label,true)+'<h1>'+esc(label)+'</h1><p>'+esc(entry.place||data.self.region)+'</p></div>'+
+  '<div class="ios-person-detail"><small>电话号码</small><strong>'+esc(entry.number||'未知号码')+'</strong></div>'+
+  '<div class="ios-person-detail"><small>'+esc(status)+'</small><strong>'+esc(when||'时间未记录')+'</strong>'+
+  (duration?'<small>通话时长 '+esc(duration)+'</small>':'')+'</div>'+tabs()+'</div>';
 }
 function blankTab(){return `<div class="ios-phone-page ios-placeholder-tab"><header><h1>${selected==='favorite'?'个人收藏':'语音留言'}</h1></header><p>暂无记录</p>${tabs()}</div>`;}
-export function render(ctx){const data=ctx?.store?phoneData(ctx.store.get()):defaultPhoneData();return selected==='keypad'?keypad(data):selected==='contacts'?contacts(data):selected==='person'?contactDetails(data):selected==='recent'?recents(data):blankTab();}
+export function render(ctx){const data=ctx?.store?phoneData(ctx.store.get()):defaultPhoneData();return selected==='keypad'?keypad(data):selected==='contacts'?contacts(data):selected==='person'?contactDetails(data):selected==='recent'?recents(data,ctx?.store?.get()):selected==='call-detail'?callDetails(data,ctx?.store?.get()):blankTab();}
 export function handle(a,t,c){
   if(a==='phone-tab'){selected=t.dataset.tab;personId=null;search='';c.refresh();}
   if(a==='phone-filter'){filter=t.dataset.filter;c.refresh();}
@@ -70,7 +92,8 @@ export function handle(a,t,c){
   if(a==='phone-region')return;
   if(a==='phone-call'){if(digits)outgoingCall(c.store,digits);return;}
   if(a==='phone-person'){personId=t.dataset.id;selected='person';c.refresh();}
+  if(a==='phone-info'){callId=t.dataset.id;selected='call-detail';c.refresh();}
   if(a==='phone-use-number'){const person=phoneData(c.store.get()).contacts.find(x=>x.id===t.dataset.id);if(person?.number){digits=person.number.replace(/[^\d+]/g,'');outgoingCall(c.store,digits);}}
-  if(['phone-add','phone-edit','phone-menu','phone-info'].includes(a))return;
+  if(['phone-add','phone-edit','phone-menu'].includes(a))return;
 }
 export function input(el,c){if(el.name==='phone-search'){search=el.value;c.refresh();}}
