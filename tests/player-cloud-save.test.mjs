@@ -99,12 +99,59 @@ test('fresh device can restore cloud, and backup failure cannot overwrite local 
  const c=client(t,backend,phone(30));await c.start();assert.equal(c.status.phase,'conflict');
  c.backupLocal=async()=>{throw Error('quota');};await assert.rejects(c.resolve('remote'),/quota/);assert.equal(c.store.get().day,30);
 });
+test('refresh to D01 restores newer owned cloud checkpoint without overwriting it',async t=>{
+ const backend=server(),first=client(t,backend,phone(28));
+ await first.start();await first.flush();
+ const storage=memory();for(const k of ['phone:cloud-owner','phone:cloud:player-a:1'])storage.setItem(k,first.store.storage.getItem(k));
+ const reboot=client(t,backend,phone(1,{storage}));
+ assert.equal(await reboot.start(),true);
+ assert.equal(reboot.store.get().day,28);
+ assert.equal(backend.row.game_state.day,28);
+ const writes=backend.writes;await reboot.flush();assert.equal(backend.writes,writes);
+});
+test('an accidental day rewind cannot silently overwrite a newer cloud checkpoint',async t=>{
+ const backend=server(),cloud=client(t,backend,phone(23));
+ await cloud.start();await cloud.flush();
+ cloud.store.advance(1);
+ assert.equal(await cloud.flush(),false);
+ assert.equal(cloud.status.phase,'conflict');
+ assert.equal(backend.row.game_state.day,23);
+ // Explicit selection is still supported after the old cloud state is archived.
+ assert.equal(await cloud.resolve('local'),true);
+ assert.equal(backend.row.game_state.day,1);
+ assert.equal(backend.backups.at(-1).game_state.day,23);
+});
+test('confirmed erase-all restart remains D01 after reload and archives old cloud progress',async t=>{
+ const backend=server(),first=client(t,backend,phone(42));
+ await first.start();await first.flush();
+ first.markExplicitRestart();
+ first.store.advance(1);
+ const reboot=client(t,backend,phone(1,{storage:first.store.storage}));
+ assert.equal(await reboot.start(),true);
+ assert.equal(reboot.store.get().day,1);
+ assert.equal(await reboot.flush(),true);
+ assert.equal(backend.row.game_state.day,1);
+ assert.equal(backend.backups.at(-1).game_state.day,42);
+});
 test('a late cloud read cannot replace gameplay started while the connection was slow',async t=>{
  const backend=server(),a=client(t,backend);await a.start();await a.flush();
  const b=client(t,backend,phone(1,{existing:false}));let release;
  b.api.read=()=>new Promise(r=>{release=()=>r(backend.row);});
  const starting=b.start();await new Promise(r=>setImmediate(r));b.store.advance(2);release();await starting;
  assert.equal(b.status.phase,'conflict');assert.equal(b.store.get().day,2);
+});
+test('late cloud response cannot erase a fresh D01 edit',async t=>{
+ const backend=server(),first=client(t,backend,phone(19));
+ await first.start();await first.flush();
+ const second=client(t,backend,phone(1,{existing:true}));
+ let release;second.api.read=()=>new Promise(resolve=>{release=()=>resolve(backend.row);});
+ const connecting=second.start();await new Promise(resolve=>setImmediate(resolve));
+ second.store.replace({...second.store.get(),clock:'19:00'});
+ release();await connecting;
+ assert.equal(second.store.get().day,1);
+ assert.equal(second.store.get().clock,'19:00');
+ assert.equal(second.status.phase,'conflict');
+ assert.equal(backend.row.game_state.day,19);
 });
 test('an unrelated account cannot silently upload existing local history; deleted cloud saves are not recreated',async t=>{
  const backend=server(),storage=memory();storage.setItem('phone:cloud-owner','another-player');
@@ -119,6 +166,43 @@ test('preview saves are disabled by default; explicit preview QA uses an isolate
   const cloud=await connectPlayerSave(phone(),{key:'phone',validate,api:backend.api,factory:null,location:{hostname,search},preview});
   t.after(()=>cloud.close());assert.equal(cloud.enabled,enabled);assert.equal(cloud.slot,slot);
  }
+});
+test('anonymous cloud identity survives localStorage eviction using the existing IndexedDB journal',async()=>{
+ const previous={fetch:globalThis.fetch,localStorage:globalThis.localStorage,indexedDB:globalThis.indexedDB};
+ const storage=memory(),records=new Map();let created=false,signupCalls=0;
+ const db={
+  objectStoreNames:{contains:()=>created},
+  createObjectStore(){created=true;},
+  close(){},
+  transaction(){
+   let complete=false;const tx={objectStore:()=>({
+    get(key){const req={};queueMicrotask(()=>{
+     req.result=records.get(key);req.onsuccess?.();
+     if(!complete){complete=true;queueMicrotask(()=>tx.oncomplete?.());}
+    });return req;},
+    put(value){records.set(value.key,structuredClone(value));}
+   })};return tx;
+  }
+ };
+ const indexedDB={open(){const req={};queueMicrotask(()=>{
+  req.result=db;if(!created)req.onupgradeneeded?.();req.onsuccess?.();
+ });return req;}};
+ globalThis.localStorage=storage;globalThis.indexedDB=indexedDB;
+ globalThis.fetch=async url=>{
+  assert.match(String(url),/\/auth\/v1\/signup/);signupCalls++;
+  return Response.json({access_token:'saved-access',refresh_token:'saved-refresh',
+   expires_in:3600,user:{id:'same-player'}});
+ };
+ try{
+  const first=await taiCloudSession();
+  assert.equal(first.user.id,'same-player');
+  assert.equal(signupCalls,1);
+  storage.removeItem(SESSION_KEY);
+  const restored=await taiCloudSession();
+  assert.equal(restored.user.id,'same-player');
+  assert.equal(signupCalls,1,'must not sign up a second anonymous player');
+  assert.equal(JSON.parse(storage.getItem(SESSION_KEY)).refresh_token,'saved-refresh');
+ }finally{Object.assign(globalThis,previous);}
 });
 test('expired identity refresh failure keeps the original session instead of creating a new player',async()=>{
  const previous={fetch:globalThis.fetch,localStorage:globalThis.localStorage};const storage=memory();globalThis.localStorage=storage;

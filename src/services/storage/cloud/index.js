@@ -6,6 +6,12 @@ import {snapshotVoiceMedia,useCloudVoiceMedia} from './media.js';
 const hash=async raw=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,'0')).join('');
 const parse=value=>{try{return JSON.parse(value||'null');}catch{return null;}};
 const snapshot=row=>{const s=structuredClone(row.game_state);delete s._cloudMedia;delete s._cloudWriteId;return s;};
+// Day and clock form a monotonic progress checkpoint. A fresh D01 bootstrap
+// must never be able to replace a later cloud save without an explicit choice.
+const progressOf=s=>{
+ const day=Number(s?.day)||1,match=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(s?.clock||'');
+ return day*1440+(match?Number(match[1])*60+Number(match[2]):0);
+};
 export class PlayerCloudSave{
  constructor(store,{key,validate,slot=1,enabled=true,api={},factory=globalThis.indexedDB,delay=15000,now=Date.now}={}){
   this.store=store;this.key=key;this.validate=validate;this.slot=slot;this.enabled=enabled;this.factory=factory;this.delay=delay;this.now=now;
@@ -15,6 +21,14 @@ export class PlayerCloudSave{
  publish(patch){Object.assign(this.status,patch);for(const fn of this.listeners)fn(this.status);}
  subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}
  get ownerKey(){return this.key+':cloud-owner';}
+ get restartKey(){return this.key+':cloud-explicit-restart';}
+ // Called only after the player's existing erase-all confirmation.
+ markExplicitRestart(){
+  const owner=this.player?.id||this.store.storage.getItem(this.ownerKey);
+  if(!this.enabled||!owner)return;
+  this.store.storage.setItem(this.restartKey,JSON.stringify({owner,at:this.now()}));
+  this.allowRollback=true;
+ }
  get metaKey(){return this.key+':cloud:'+this.player.id+':'+this.slot;}
  saveMeta(patch){Object.assign(this.meta,patch);this.store.storage.setItem(this.metaKey,JSON.stringify(this.meta));}
  timerAfter(ms=this.delay){if(this.timer||this.closed||!this.enabled||this.status.conflict)return;this.timer=setTimeout(()=>{this.timer=null;void this.flush();},ms);this.timer.unref?.();}
@@ -31,9 +45,10 @@ export class PlayerCloudSave{
   this.applying=true;try{this.store.replace(next);}finally{this.applying=false;}
   this.media=row.game_state._cloudMedia||{};this.api.useMedia(this.player.id,this.media);
   this.pending=JSON.stringify(this.store.get());
-  this.revision=row.revision;this.rowId=row.id;
+  this.revision=row.revision;this.rowId=row.id;this.remoteProgress=progressOf(next);this.remoteRow=row;
   this.store.storage.setItem(this.ownerKey,this.player.id);
   this.saveMeta({revision:row.revision,id:row.id,hash:await hash(this.pending),pending:null,lastSaved:row.updated_at});
+  this.store.storage.removeItem(this.restartKey);this.allowRollback=false;
   this.publish({phase:'synced',lastSaved:row.updated_at,conflict:null});
   return true;
  }
@@ -46,6 +61,8 @@ export class PlayerCloudSave{
     this.publish({phase:'connecting'});const player=await this.api.player();
     if(!player?.id)throw Error('無法確認雲端身份。');
     this.player=player;this.publish({player});
+    const intentionalRestart=parse(this.store.storage.getItem(this.restartKey));
+    this.allowRollback=intentionalRestart?.owner===player.id;
     const owner=this.store.storage.getItem(this.ownerKey);
     this.meta=parse(this.store.storage.getItem(this.metaKey))||{};
     const initialRaw=JSON.stringify(this.store.get());
@@ -57,10 +74,17 @@ export class PlayerCloudSave{
      this.conflict(row);return false;
     }
     if(row){
-     this.validate(snapshot(row));this.rowId=row.id;
+     this.validate(snapshot(row));this.rowId=row.id;this.remoteProgress=progressOf(snapshot(row));this.remoteRow=row;
      this.media=row.game_state._cloudMedia||{};this.api.useMedia(player.id,this.media);
      const localHash=await hash(raw),sameLineage=this.meta.id===row.id;
      if((!this.store.hasExistingSave&&raw===initialRaw)||(switchAccount&&!owner))return await this.restore(row,{expectedRaw:raw});
+     // If an earlier boot wrote a D01 placeholder, recover the later cloud
+     // checkpoint instead of treating that placeholder as the current game.
+     // For a nonempty older local game, preserve both and ask the player.
+     if(!this.allowRollback&&this.remoteProgress>progressOf(this.store.get())){
+      if((sameLineage&&localHash===this.meta.hash)||this.store.get().day===1&&raw===initialRaw)return await this.restore(row,{expectedRaw:raw});
+      this.conflict(row);return false;
+     }
      if((sameLineage&&this.meta.revision===row.revision)||(this.meta.pending?.id&&row.client_write_id===this.meta.pending.id)){
       this.revision=row.revision;
       if(row.client_write_id===this.meta.pending?.id)this.saveMeta({id:row.id,revision:row.revision,hash:this.meta.pending.hash,pending:null,lastSaved:row.updated_at});
@@ -70,7 +94,7 @@ export class PlayerCloudSave{
      // A missing remote row is not permission to recreate a deleted save or
      // upload another account's local history.
      if(this.meta.revision){this.conflict(null);return false;}
-     this.revision=0;
+     this.revision=0;this.remoteProgress=0;this.remoteRow=null;
     }
     this.store.storage.setItem(this.ownerKey,player.id);
     this.publish({phase:'pending',conflict:null,lastSaved:this.meta.lastSaved||null});
@@ -95,6 +119,10 @@ export class PlayerCloudSave{
   clearTimeout(this.timer);this.timer=null;
   this.saving=(async()=>{
    const raw=this.pending||JSON.stringify(this.store.get()),fingerprint=await hash(raw);
+   if(!this.allowRollback&&this.remoteProgress>progressOf(JSON.parse(raw))){
+    this.conflict(this.remoteRow||null);
+    return false;
+   }
    if(fingerprint===this.meta.hash&&!this.meta.missingMedia){this.publish({phase:'synced'});return true;}
    const previous=this.meta.pending;
    const write={id:previous?.hash===fingerprint?previous.id:crypto.randomUUID(),hash:fingerprint};
@@ -112,9 +140,11 @@ export class PlayerCloudSave{
     }
     if(result.status!=='saved'||!Number.isSafeInteger(result.revision))throw Error('雲端未確認存檔成功。');
     this.revision=result.revision;this.rowId=result.id;this.media=media.media;
+    this.remoteProgress=progressOf(state);this.remoteRow={...result,game_state:state};
     this.api.useMedia(this.player.id,this.media);
     this.saveMeta({id:result.id,revision:result.revision,hash:fingerprint,pending:null,lastSaved:result.updated_at,missingMedia:media.missing||0});
     this.store.hasExistingSave=true;
+    this.store.storage.removeItem(this.restartKey);this.allowRollback=false;
     this.publish({phase:media.missing?'media-pending':'synced',lastSaved:result.updated_at});
     if(this.pending!==raw)this.timerAfter();return true;
    }catch(error){this.publish({phase:'offline',message:error.message});this.timerAfter(30000);return false;}
@@ -132,7 +162,7 @@ export class PlayerCloudSave{
   this.store.storage.setItem(this.ownerKey,this.player.id);
   this.meta={revision:this.revision,id:this.rowId};this.saveMeta({});
   this.pending=JSON.stringify(this.store.get());this.publish({phase:'pending',conflict:null});
-  return this.flush();
+  this.allowRollback=true;try{return await this.flush();}finally{this.allowRollback=false;}
  }
  async acceptSession(session){
   if(!session?.access_token||!session?.refresh_token)throw Error('郵箱尚未完成驗證，原進度已保留。');
@@ -152,7 +182,7 @@ export class PlayerCloudSave{
   this.applying=true;try{this.store.replace(snapshot(row));}finally{this.applying=false;}
   this.media=row.game_state._cloudMedia||{};this.api.useMedia(this.player.id,this.media);
   this.pending=JSON.stringify(this.store.get());this.publish({phase:'pending',conflict:null});
-  return this.flush();
+  this.allowRollback=true;try{return await this.flush();}finally{this.allowRollback=false;}
  }
  close(){this.closed=true;clearTimeout(this.timer);}
 }

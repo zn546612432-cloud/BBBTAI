@@ -1,3 +1,5 @@
+import {openSaveJournal} from '../storage/recovery.js';
+
 // Public Supabase publishable key ONLY. Never place DEEPSEEK_API_KEY,
 // MINIMAX_API_KEY or a service-role key in client bundles.
 // The same anonymous Supabase auth session is reused across Mirage/NoApp/phone
@@ -6,7 +8,39 @@ export const TAI_CLOUD_URL='https://zmnufhswpnreeseyamlv.supabase.co';
 export const TAI_PUBLIC_KEY="sb_publishable_g5uRIZdBaY36VqtoZXAS_A_3exgtfs9";
 export const TAI_PROVIDER_ENDPOINT=TAI_CLOUD_URL+'/functions/v1/tai-provider-gateway';
 export const SESSION_KEY='ximeng-tai-gateway-auth-v1';
-let flight=null;
+let flight=null,sessionCheckpoint=Promise.resolve(),backedRefreshToken=null;
+const SESSION_CHECKPOINT_KEY=SESSION_KEY+':durable-session';
+// Mirror the existing auth identity in the same IndexedDB journal as phone
+// saves. Without this, an iOS localStorage eviction creates a new anonymous
+// player even while the game-state checkpoint survives.
+const checkpointSession=value=>{
+ if(!globalThis.indexedDB?.open)return Promise.resolve();
+ sessionCheckpoint=sessionCheckpoint.catch(()=>{}).then(async()=>{
+  const journal=await openSaveJournal(globalThis.indexedDB,SESSION_CHECKPOINT_KEY);
+  if(!journal)return;
+  try{journal.schedule(JSON.stringify(value));await journal.flush();backedRefreshToken=value.refresh_token;}
+  finally{journal.close();}
+ }).catch(error=>console.warn('雲端身份備份暫時不可用',error));
+ return sessionCheckpoint;
+};
+async function recoverStoredSession(){
+ const existing=stored();
+ if(existing?.access_token&&existing?.refresh_token)return existing;
+ if(!globalThis.indexedDB?.open)return existing;
+ let journal;
+ try{
+  journal=await openSaveJournal(globalThis.indexedDB,SESSION_CHECKPOINT_KEY);
+  const entry=await journal?.read();
+  for(const raw of [entry?.raw,entry?.previous]){
+   let session;try{session=JSON.parse(raw||'null');}catch{}
+   if(!session?.access_token||!session?.refresh_token)continue;
+   try{globalThis.localStorage?.setItem(SESSION_KEY,JSON.stringify(session));}catch{}
+   return session;
+  }
+ }catch(error){console.warn('雲端身份恢復暫時不可用',error);}
+ finally{journal?.close();}
+ return existing;
+}
 export const isTaiCloudHost=(hostname=globalThis.location?.hostname)=>hostname==='zn546612432-cloud.github.io'
  ||hostname==='bbbtai.pages.dev'||/^[a-z0-9-]+\.bbbtai\.pages\.dev$/.test(hostname||'');
 const stored=()=>{try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch{return null;}};
@@ -15,6 +49,7 @@ export const saveTaiCloudSession=session=>{
   expires_at:session.expires_at||Math.floor(Date.now()/1000)+Number(session.expires_in||3600),
   ...(session.user?{user:session.user}:{})};
  try{localStorage.setItem(SESSION_KEY,JSON.stringify(value));}catch{}
+ void checkpointSession(value);
  return value;
 };
 const fetchAuth=async(url,body)=>{
@@ -27,21 +62,22 @@ const fetchAuth=async(url,body)=>{
  return json;
 };
 export async function taiCloudSession(){
- const current=stored();
+ const current=await recoverStoredSession();
+ if(current?.refresh_token&&backedRefreshToken!==current.refresh_token)void checkpointSession(current);
  if(current?.access_token&&current.expires_at>Date.now()/1000+90)return current;
  if(flight)return flight;
  flight=(async()=>{
   if(current?.refresh_token){
    try{
     const refreshed=await fetchAuth('/auth/v1/token?grant_type=refresh_token',{refresh_token:current.refresh_token});
-    if(refreshed?.access_token)return saveTaiCloudSession(refreshed);
+    if(refreshed?.access_token){const session=saveTaiCloudSession(refreshed);await sessionCheckpoint;return session;}
    }catch{throw Error('雲端身份暫時無法恢復，已保留本機進度與登入資料。');}
    throw Error('雲端身份更新失敗，已保留原身份。');
   }
   const result=await fetchAuth('/auth/v1/signup',{data:{},gotrue_meta_security:{}});
   const session=result.session||result;
   if(!session.access_token||!session.refresh_token)throw Error('云端匿名登录尚未开启，请在 Supabase Auth 设置中启用匿名登录');
-  return saveTaiCloudSession(session);
+  const saved=saveTaiCloudSession(session);await sessionCheckpoint;return saved;
  })().finally(()=>{flight=null;});
  return flight;
 }

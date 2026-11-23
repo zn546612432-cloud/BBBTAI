@@ -5,7 +5,7 @@ import {openSaveJournal,mountSaveLifecycle} from '../src/services/storage/recove
 
 function memoryStorage(){
  const data=new Map();
- return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value)};
+ return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};
 }
 function fakeIndexedDB(){
  const stores=new Map();
@@ -109,6 +109,46 @@ test('missing or corrupt primary recovers the latest durable progress before con
   assert.equal(JSON.parse(storage.getItem(KEY)).day,24);
   await recovered.journal.flush();recovered.journal.close();
  }
+});
+
+test('stale D01 primary restores later IndexedDB checkpoint without losing the original primary',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();store.journal.close();
+ const day1={...initialState(),day:1,clock:'08:00'};storage.setItem(KEY,JSON.stringify(day1));
+ const recovered=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(recovered.get().day,24);
+ assert.equal(recovered.get().clock,'22:16');
+ assert.equal(JSON.parse(storage.getItem(KEY+':before-checkpoint-recovery')).day,1);
+ assert.equal(JSON.parse(storage.getItem(KEY)).day,24);
+ await recovered.journal.flush();recovered.journal.close();
+});
+
+test('an accidentally journaled D01 recovers its last advanced previous checkpoint',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();
+ store.journal.schedule(JSON.stringify({...initialState(),day:1,clock:'08:00'}));
+ await store.journal.flush();store.journal.close();
+ storage.setItem(KEY,JSON.stringify({...initialState(),day:1,clock:'08:00'}));
+ const recovered=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(recovered.get().day,24);
+ assert.equal(recovered.get().clock,'22:16');
+ await recovered.journal.flush();recovered.journal.close();
+});
+
+test('confirmed D01 restart is not mistaken for a stale local save',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();store.journal.close();
+ storage.setItem(KEY+':explicit-restart','1');
+ storage.setItem(KEY,JSON.stringify({...initialState(),day:1,clock:'08:00'}));
+ const reboot=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(reboot.get().day,1);
+ await reboot.journal.flush();reboot.journal.close();
+ assert.equal(storage.getItem(KEY+':explicit-restart'),'1');
+ const again=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(again.get().day,1);
+ again.update(current=>{current.day=2;current.clock='10:00';});
+ assert.equal(storage.getItem(KEY+':explicit-restart'),null);
+ await again.journal.flush();again.journal.close();
 });
 
 test('unreadable existing save is preserved byte for byte instead of replaced with D01',async()=>{
