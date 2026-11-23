@@ -1,6 +1,6 @@
-import {isTaiCloudHost,saveTaiCloudSession} from '../../ai/supabase-gateway.js';
+import {isTaiCloudHost,saveTaiCloudSession,SESSION_KEY} from '../../ai/supabase-gateway.js';
 import {openSaveJournal} from '../recovery.js';
-import {currentCloudPlayer,readCloudSave,writeCloudSave,cloudBackups,takeEmailCallback} from './api.js';
+import {currentCloudPlayer,readCloudSave,writeCloudSave,eraseCloudSave,cloudBackups,takeEmailCallback} from './api.js';
 import {snapshotVoiceMedia,useCloudVoiceMedia} from './media.js';
 
 const hash=async raw=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,'0')).join('');
@@ -15,24 +15,28 @@ const progressOf=s=>{
 export class PlayerCloudSave{
  constructor(store,{key,validate,slot=1,enabled=true,api={},factory=globalThis.indexedDB,delay=15000,now=Date.now}={}){
   this.store=store;this.key=key;this.validate=validate;this.slot=slot;this.enabled=enabled;this.factory=factory;this.delay=delay;this.now=now;
-  this.api={player:currentCloudPlayer,read:readCloudSave,write:writeCloudSave,backups:cloudBackups,media:snapshotVoiceMedia,useMedia:useCloudVoiceMedia,...api};
+  this.api={player:currentCloudPlayer,read:readCloudSave,write:writeCloudSave,erase:eraseCloudSave,backups:cloudBackups,media:snapshotVoiceMedia,useMedia:useCloudVoiceMedia,...api};
   this.status={phase:enabled?'connecting':'local',player:null,lastSaved:null,conflict:null};this.meta={};this.revision=null;this.media={};this.listeners=new Set();
  }
  publish(patch){Object.assign(this.status,patch);for(const fn of this.listeners)fn(this.status);}
  subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}
  get ownerKey(){return this.key+':cloud-owner';}
  get restartKey(){return this.key+':cloud-explicit-restart';}
- // Called only after the player's existing erase-all confirmation.
+ // 0000 + confirmation intentionally erases this player's existing run.
+ // The marker is durable until DELETE and the fresh D01 upload both succeed.
  markExplicitRestart(){
-  const owner=this.player?.id||this.store.storage.getItem(this.ownerKey);
-  if(!this.enabled||!owner)return;
-  this.store.storage.setItem(this.restartKey,JSON.stringify({owner,at:this.now()}));
-  this.allowRollback=true;
+  if(!this.enabled)return;
+  let owner=this.player?.id||this.store.storage.getItem(this.ownerKey);
+  if(!owner)try{owner=parse(this.store.storage.getItem(SESSION_KEY))?.user?.id;}catch{}
+  this.store.storage.setItem(this.restartKey,JSON.stringify({owner:owner||null,at:this.now(),erase:true}));
+  this.erasing=true;this.allowRollback=true;
+  clearTimeout(this.timer);this.timer=null;
+  this.publish({phase:'pending',conflict:null,message:''});
  }
  get metaKey(){return this.key+':cloud:'+this.player.id+':'+this.slot;}
  saveMeta(patch){Object.assign(this.meta,patch);this.store.storage.setItem(this.metaKey,JSON.stringify(this.meta));}
  timerAfter(ms=this.delay){if(this.timer||this.closed||!this.enabled||this.status.conflict)return;this.timer=setTimeout(()=>{this.timer=null;void this.flush();},ms);this.timer.unref?.();}
- schedule(raw){if(!this.enabled||this.applying||this.closed)return;this.pending=raw;if(!this.switching)this.timerAfter();}
+ schedule(raw){if(!this.enabled||this.applying||this.closed)return;this.pending=raw;if(!this.switching&&!this.erasing)this.timerAfter();}
  async backupLocal(){
   const raw=JSON.stringify(this.store.get()),owner=this.store.storage.getItem(this.ownerKey)||'unbound';
   const journal=await openSaveJournal(this.factory,this.key+':before-cloud-restore:'+owner);
@@ -40,7 +44,9 @@ export class PlayerCloudSave{
   else this.store.storage.setItem(this.key+':before-cloud-restore:'+owner,raw);
  }
  async restore(row,{expectedRaw}={}){
+  if(this.erasing)return false;
   const next=this.validate(snapshot(row));await this.backupLocal();
+  if(this.erasing)return false;
   if(expectedRaw!==undefined&&JSON.stringify(this.store.get())!==expectedRaw){this.conflict(row);return false;}
   this.applying=true;try{this.store.replace(next);}finally{this.applying=false;}
   this.media=row.game_state._cloudMedia||{};this.api.useMedia(this.player.id,this.media);
@@ -62,13 +68,32 @@ export class PlayerCloudSave{
     if(!player?.id)throw Error('無法確認雲端身份。');
     this.player=player;this.publish({player});
     const intentionalRestart=parse(this.store.storage.getItem(this.restartKey));
-    this.allowRollback=intentionalRestart?.owner===player.id;
+    // Unknown / switched owners must never lose another account's save.
+    if(intentionalRestart&&intentionalRestart.owner!==player.id){
+     this.conflict(null);return false;
+    }
+    this.erasing=Boolean(intentionalRestart&&intentionalRestart.owner===player.id);
+    this.allowRollback=this.erasing;
     const owner=this.store.storage.getItem(this.ownerKey);
     this.meta=parse(this.store.storage.getItem(this.metaKey))||{};
     const initialRaw=JSON.stringify(this.store.get());
     const row=await this.api.read(this.slot,this.player.id);
     if(this.closed)return false;
     const raw=JSON.stringify(this.store.get());this.pending=raw;
+    if(this.erasing){
+     // DELETE the owned save by ID and slot; PostgreSQL cascades its 3 backup
+     // snapshots and TAI data. This is the only code path that destroys them.
+     if(row){
+      const result=await this.api.erase({slot:this.slot,player:player.id,id:row.id});
+      if(result?.status!=='deleted')throw Error('雲端存檔已變更，未清除其他進度。請重試。');
+     }
+     this.revision=0;this.rowId=null;this.remoteProgress=0;this.remoteRow=null;this.media={};
+     this.meta={};this.saveMeta({id:null,revision:0,hash:null,pending:null,lastSaved:null,missingMedia:0});
+     this.store.storage.setItem(this.ownerKey,player.id);
+     this.erasing=false;
+     this.publish({phase:'pending',conflict:null,lastSaved:null,message:''});
+     this.timerAfter(0);return true;
+    }
     if(owner&&owner!==player.id){
      if(switchAccount&&row)return await this.restore(row);
      this.conflict(row);return false;
@@ -105,6 +130,7 @@ export class PlayerCloudSave{
  }
  async flush(){
   if(!this.enabled||this.closed||this.applying||this.switching||this.status.conflict)return false;
+  if(this.erasing){await this.start();return false;}
   if(this.saving){
    // A second device edit may arrive while the startup save is in flight.
    // Do not report the first (stale) upload as success for the newer snapshot:
@@ -144,7 +170,7 @@ export class PlayerCloudSave{
     this.api.useMedia(this.player.id,this.media);
     this.saveMeta({id:result.id,revision:result.revision,hash:fingerprint,pending:null,lastSaved:result.updated_at,missingMedia:media.missing||0});
     this.store.hasExistingSave=true;
-    this.store.storage.removeItem(this.restartKey);this.allowRollback=false;
+    if(!this.erasing){this.store.storage.removeItem(this.restartKey);this.allowRollback=false;}
     this.publish({phase:media.missing?'media-pending':'synced',lastSaved:result.updated_at});
     if(this.pending!==raw)this.timerAfter();return true;
    }catch(error){this.publish({phase:'offline',message:error.message});this.timerAfter(30000);return false;}
