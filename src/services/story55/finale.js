@@ -8,7 +8,7 @@ export const FAST_FORWARD_MS=12000;
 export const ONE_PERCENT_MS=4000;
 export const ZERO_PERCENT_MS=1000;
 export const RECHARGE_MS=4000;
-export const ENDING_VOICE_APPEAR_DELAY_MS=4000;
+export const ENDING_VOICE_APPEAR_DELAY_MS=3000;
 
 // The watch recording is only available when the actual 22:46 node unlocks.
 // The clock pauses during playback, then resumes at 3 real seconds/minute.

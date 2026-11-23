@@ -5,6 +5,7 @@ import {activateStory55} from '../src/services/story55/runtime.js';
 import {mainlineTasks,mainlineTask} from '../src/apps/reminders/features/mainline/model.js';
 import {render,openReminderTask} from '../src/apps/reminders/index.js';
 import {reminderWidget} from '../src/system/shell.js';
+import {syncD55Reminders} from '../src/story/d55/reminders.js';
 import {seedD01,deliverD01Opening,acceptD01Repair,deliverD01Attachment,revealD01Key} from '../src/story/d01/runtime.js';
 import {D06_ORDER_ID} from '../src/story/d06/commission.js';
 import {STORY55_WALLET_MAIL_ID} from '../src/apps/mirage/data.js';
@@ -92,7 +93,7 @@ test('legacy personal reminders and purchased wishes still have a separate list'
  assert.match(reminderWidget(s),/home-reminder-wish/);
  assert.match(reminderWidget(s),/home-reminder-toggle/);
 });
-test('D55 final entry is revealed only after disconnection and the actual recording arrives',()=>{
+test('D55 ending is automatic in NoApp and never becomes a mainline reminder',()=>{
  const s=at(55,'22:46');
  s.story55.completed['d55-briefing']={day:55,clock:'09:50'};
  s.story55.completed['d55-departure']={day:55,clock:'18:00'};
@@ -102,6 +103,21 @@ test('D55 final entry is revealed only after disconnection and the actual record
  s.story55.d55Disconnected=true;
  assert.equal(find(s,'ending'),undefined);
  s.story55.endingVoiceAvailable=true;
- assert.equal(find(s,'ending')?.link.route,'/chat/tai');
- assert.equal(mainlineTask(s,'mainline:ending')?.title,'收聽最後的語音');
+ assert.equal(find(s,'ending'),undefined);
+ assert.equal(mainlineTask(s,'mainline:ending'),null);
+ assert.doesNotMatch(reminderWidget(s),/收聽最後的語音/);
+});
+
+test('D55 cleans the D41 23:00 operation reminder from old saves without deleting personal tasks',()=>{
+ const s=at(55,'22:46');
+ s.content.reminders.push({id:'s55-d41-operation-reminder',title:'23:00 行动开始',done:false});
+ s.content.reminders.push({id:'custom',title:'買奶茶',done:false});
+ s.notifications.push({id:'s55-d41-operation-reminder-notice',title:'提醒事項',body:'23:00 行动开始'});
+ assert.match(reminderWidget(s),/23:00 行动开始/);
+ assert.equal(syncD55Reminders(s),true);
+ assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
+ assert.equal(s.notifications.some(n=>n.id==='s55-d41-operation-reminder-notice'),false);
+ assert.doesNotMatch(reminderWidget(s),/23:00 行动开始/);
+ assert.match(reminderWidget(s),/買奶茶/);
+ assert.equal(syncD55Reminders(s),false,'cleanup is idempotent after removal');
 });
