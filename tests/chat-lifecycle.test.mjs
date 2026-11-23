@@ -239,6 +239,7 @@ test('D02 Xiao Xin keeps all nine approved turns across midnight without auto-se
 
 test('D02 Xiao Xin late-branch saves retain actual sent messages and restore remaining original turns',()=>{
  const s=fresh(3,'08:04'),c=cv(s,'xiaoxin');
+ s.story55.d02??={};s.story55.d02.wechat??={version:2};
  const q=s.story55.d02.wechat.xin={started:true,index:1,historySettled:true,
   lateHandled:true,status:'closed',lateRun:{kind:'nextDay',index:2}};
  c.messages.push({id:'d02-xin-script-0',from:'小辛',text:D02_DIALOGUES.xin[0][1],actual:true,day:2,time:'16:08',sentDate:'2025-05-20'});
