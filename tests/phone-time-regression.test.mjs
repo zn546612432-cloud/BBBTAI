@@ -54,6 +54,13 @@ test('only witnessed completed calls are recovered; never preview-only progress'
  assert.equal(s.content.phone.calls.filter(c=>c.scriptId==='d53-fulongsheng-call').length,1);
 });
 
+test('legacy completed calls with a real incoming trigger recover without a transcript',()=>{
+ const s=state();
+ s.story55.d53FuCallTriggered=true;
+ assert.equal(restoreRecordedPhoneCalls(s),true);
+ assert.equal(s.content.phone.calls[0].name,'傅隆生');
+});
+
 test('time correction rejects misplaced late-night claims, not natural teasing',()=>{
  const clocks={macauClock:'08:13',londonClock:'01:13'};
  assert.equal(taiTimeContradiction(['你半夜不睡，就為了這個？'],clocks),true);
