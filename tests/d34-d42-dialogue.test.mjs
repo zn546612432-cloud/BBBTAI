@@ -64,11 +64,11 @@ test('D41 23:30 and next calendar day 02:00 use native send and shared overnight
  assert.equal(messages[5].kind,'image');assert.equal(messages[5].from,'me');
  assert.equal(story55ChargeGate(s),null);
 });
-test('D42 morning call is due once at 09:25 and unconfirmed later scenes have no copy',()=>{
+test('D42 morning call is due once at 09:25 while authored D54 remains locked',()=>{
  const s=phone(42,'09:24');assert.equal(completed(s,'show'),true);assert.equal(d42CallDue(s),false);
  s.clock='09:25';assert.equal(d42CallDue(s),true);s.story55.d42CallTriggered=true;assert.equal(d42CallDue(s),true);
  s.story55.scriptedCallCompleted={[D42_CALL.id]:true};assert.equal(d42CallDue(s),false);
- for(const id of RETIRED_SCENES){if(id!=='failure')assert.equal(sceneLines(s,id).length,0);assert.equal(nodeStatus(s,id).state,'locked');}
+ for(const id of RETIRED_SCENES){if(id!=='failure'&&id!=='ready')assert.equal(sceneLines(s,id).length,0);assert.equal(nodeStatus(s,id).state,'locked');}
 });
 test('D42 preset plays the three exact lines in order with two 2500ms post-playback gaps; hangup cancels',async()=>{
  const events=[];let active=true;
