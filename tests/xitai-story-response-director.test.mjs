@@ -39,7 +39,7 @@ test('program leaves unearned facts out; the existing canonical worldbook remain
  assert.match(before,/背行動清單|逐條復述資料/);
  assert.doesNotMatch(before,/熙蒙親口告訴熙泰，自己安排了兩百/);
  const c=s.content.conversations.noapp.find(x=>x.id==='tai');
- c.messages.push({id:'s55-d53-tai-night-26',from:'me',day:53,kind:'text',actual:true,text:'兩百個人，還有一枚足以炸掉整棟樓的炸彈。'});
+ c.messages.push({id:'s55-d53-tai-night-25',from:'me',day:53,kind:'text',actual:true,text:'兩百個人，還有一枚足以炸掉整棟樓的炸彈。'});
  context={...context,turnId:'scene:after'};
  snap=captureTaiWorldbook(store,context);
  assert.match(buildTaiPrompt({...context,worldbookSnapshot:snap}),/兩百個人/);
