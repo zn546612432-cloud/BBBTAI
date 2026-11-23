@@ -31,7 +31,7 @@ self.addEventListener('fetch',event=>{
  const url=new URL(request.url),scope=new URL(self.registration.scope);
  if(url.origin!==scope.origin||!url.pathname.startsWith(scope.pathname))return;
  // The manifest itself always checks the latest published version.
- if(url.pathname.endsWith('/assets/startup/full-assets.json'))return;
+ if(url.pathname.endsWith('/assets/startup/full-assets.json')||url.searchParams.has('__xm_package'))return;
  event.respondWith((async()=>{
   const cached=await fromDisk(request);
   if(cached)return request.headers.has('range')?ranged(request,cached):cached;
