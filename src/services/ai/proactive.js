@@ -1,5 +1,6 @@
 import {isStory55,taiRecognized,final55} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
+import {taiRelationshipDirector} from './relationship-director.js';
 import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
@@ -103,6 +104,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
   scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),scene].filter(Boolean).join('\n');
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
+  const relationshipPlan=taiRelationshipDirector(initial,{initiative:true});
   const worldbookEvents=afterCall?['call_ended_player','social_energy']:['proactive','social_energy'];
   const turnId=afterCall?'postcall:'+postCall.id:`proactive:${initial.day}:${initial.clock}:${history(initial).at(-1)?.id||''}`;
   const worldbookSnapshot=captureTaiWorldbook(store,{channel:'noapp',day:initial.day,recognized:taiRecognized(initial),messages,outputMode:'text',scenario:scene,worldbookEvents,trigger:'quiet',turnId,messageIndex:history(initial).length});
@@ -129,7 +131,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    mode:approvedDecision?.action==='send_voice'?'voice':'text'});
   const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
    outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,allowVoice,approvedDecision,turnPlan,worldbookEvents,worldbookSnapshot,
-   relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+   relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan});
   let items=dedupeTaiTurnEntries(unpackTaiReply(r,'noapp'),turnPlan.target);
   if(!afterCall&&taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
    action:approvedDecision?.action==='send_voice'?'send_voice':'send_text'})){
@@ -137,7 +139,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
     behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,
-    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan});
    items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
   }
   if(!afterCall&&taiGuidanceNeedsRepair({plan:turnPlan,entries:items,messages:visibleHistory})){
@@ -145,7 +147,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',
     scene:scene+' 【本轮引导已触发】现有台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。只补一条对熙蒙已有事实具体好奇的自然问句，用问号结尾；不要空问“还在吗”“在干嘛”，不要突然谈棋局或自我报备。',
     behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,
-    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories});
+    profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan});
    const candidate=unpackTaiReply(r3,'noapp').find(x=>/[？?]/.test(x.text));
    if(candidate)items=taiIntegrateGuidingQuestion(items,candidate,turnPlan.target);
   }
