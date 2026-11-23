@@ -77,6 +77,14 @@ test('undelivered Paris reference, unmet D54 prerequisite, day 55 and explicit r
 });
 test('queued NPC speaks in real NoApp; player lines still require their own native Send',()=>{
  const {s,chat}=setup();
+ // This isolated fixture has not played the other 54 days. Mark their
+ // earlier queued scenes done so the single shared scheduler can reach
+ // the optional R5 bonus without changing its real production priority.
+ for(const node of s.story55.config.nodes){
+  if(node.kind==='scene'&&node.day<=54&&node.id!==D54_PARIS_FUTURE)
+   s.story55.completed[node.id]??={day:node.day,clock:'19:00'};
+ }
+ s.story55.activeScene=null;
  const initial=chat.messages.length;
  const now=10000;
  // The first tick sets the normal delivery deadline; it never sends every line at once.
