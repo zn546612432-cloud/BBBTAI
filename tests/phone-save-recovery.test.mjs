@@ -114,7 +114,7 @@ test('missing or corrupt primary recovers the latest durable progress before con
 test('stale D01 primary restores later IndexedDB checkpoint without losing the original primary',async()=>{
  const {storage,idb,store}=await setup();changeProgress(store);
  await store.journal.flush();store.journal.close();
- const day1=initialState();storage.setItem(KEY,JSON.stringify(day1));
+ const day1={...initialState(),day:1,clock:'08:00'};storage.setItem(KEY,JSON.stringify(day1));
  const recovered=await openPhoneStore({storage,factory:idb.factory});
  assert.equal(recovered.get().day,24);
  assert.equal(recovered.get().clock,'22:16');
@@ -126,9 +126,9 @@ test('stale D01 primary restores later IndexedDB checkpoint without losing the o
 test('an accidentally journaled D01 recovers its last advanced previous checkpoint',async()=>{
  const {storage,idb,store}=await setup();changeProgress(store);
  await store.journal.flush();
- store.journal.schedule(JSON.stringify(initialState()));
+ store.journal.schedule(JSON.stringify({...initialState(),day:1,clock:'08:00'}));
  await store.journal.flush();store.journal.close();
- storage.setItem(KEY,JSON.stringify(initialState()));
+ storage.setItem(KEY,JSON.stringify({...initialState(),day:1,clock:'08:00'}));
  const recovered=await openPhoneStore({storage,factory:idb.factory});
  assert.equal(recovered.get().day,24);
  assert.equal(recovered.get().clock,'22:16');
@@ -139,7 +139,7 @@ test('confirmed D01 restart is not mistaken for a stale local save',async()=>{
  const {storage,idb,store}=await setup();changeProgress(store);
  await store.journal.flush();store.journal.close();
  storage.setItem(KEY+':explicit-restart','1');
- storage.setItem(KEY,JSON.stringify(initialState()));
+ storage.setItem(KEY,JSON.stringify({...initialState(),day:1,clock:'08:00'}));
  const reboot=await openPhoneStore({storage,factory:idb.factory});
  assert.equal(reboot.get().day,1);
  await reboot.journal.flush();reboot.journal.close();
