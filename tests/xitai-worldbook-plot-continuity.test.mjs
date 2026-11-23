@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {taiPlotMemory,recallTaiOlderTalk} from '../src/services/ai/worldbook/plot-memory.js';
 import {absorbPendingTaiTextsForCall} from '../src/services/ai/incoming-turn.js';
 import {replyToTaiMessage} from '../src/services/ai/live-chat.js';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {xitaiRelationshipContext} from '../src/services/ai/relationship-context.js';
 
 const state=()=>({day:55,clock:'20:00',events:[],story55:{version:1,scenes:{'d55-briefing':{index:0}},completed:{}},content:{conversations:{noapp:[{id:'tai',messages:[]}]}},poweredOff:false,powerMode:'idle'});
 const chat=s=>s.content.conversations.noapp[0];
@@ -62,4 +65,18 @@ test('call takeover does not rewrite already answered text or yesterday messages
  chat(s).messages.push({...line('answer','早','tai',55),replySourceId:'answered'});
  assert.equal(absorbPendingTaiTextsForCall(s),0);
  assert.equal(chat(s).messages[1].taiHandledAction,undefined);
+});
+
+test('the same already-lived plot memory enters both NoApp text and call prompts',()=>{
+ const s=activateStory55(initialState());
+ s.day=55;s.clock='22:05';s.story55.completed.recognition={day:33,clock:'08:00'};
+ s.story55.scenes['d55-briefing']={index:5};
+ const messages=s.content.conversations.noapp.find(c=>c.id==='tai').messages;
+ messages.push(line('s55-d53-tai-night-25','兩百個人，還有一枚足以炸掉整棟樓的炸彈。'));
+ for(const mode of ['text','call']){
+  const context=xitaiRelationshipContext(s,{mode,topic:'永利怎麼辦'});
+  assert.match(context,/永利皇宮/);
+  assert.match(context,/兩百個人/);
+  assert.doesNotMatch(context,/行動已成功/);
+ }
 });
