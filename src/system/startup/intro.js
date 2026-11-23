@@ -36,7 +36,7 @@
   '備忘錄裡的「Cheat Code」，每天都有新的提示。'
  ];
  const seenKey='xm-startup-intro-seen-v1';
- let seen=false,finished=false,ready=false,closed=false,failed=false,tipTimer,deadline,position=0;
+ let seen=false,finished=false,ready=false,closed=false,failed=false,tipTimer,deadline,position=0,entryLabel='點擊進入';
  try{seen=localStorage.getItem(seenKey)==='1';}catch{}
  const showTip=()=>{
   index.textContent=String(position+1).padStart(2,'0')+' / '+String(tips.length).padStart(2,'0');
@@ -44,7 +44,7 @@
   tip.classList.remove('tip-change');void tip.offsetWidth;tip.classList.add('tip-change');
   position=(position+1)%tips.length;
  };
- const revealEntry=()=>{if(finished&&ready&&!closed&&!failed){next.hidden=false;next.textContent='點擊進入';}};
+ const revealEntry=()=>{if(finished&&ready&&!closed&&!failed){next.hidden=false;next.textContent=entryLabel;}};
  const finish=(remember=false)=>{
   if(finished||closed)return;
   finished=true;clearTimeout(deadline);video.pause();skip.hidden=true;
@@ -57,7 +57,8 @@
  };
  window.__xmBootIntroFinish=()=>finish(false);
  window.__xmBootIntroError=()=>{failed=true;finish(false);};
- window.__xmBootIntroReady=(close,status='')=>{
+ window.__xmBootIntroReady=(close,status='',label='點擊進入')=>{
+  entryLabel=label;
   ready=true;failed=false;message.textContent=status;
   next.onclick=()=>{if(closed)return;closed=true;clearInterval(tipTimer);clearTimeout(deadline);video.pause();close();};
   revealEntry();
