@@ -135,7 +135,7 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
   finished=total;phase='complete';ready=true;report();
   packageReady=true;activate();
   void trimOldCaches(name,namespace).catch(()=>{});
-  return {reason:'complete',finished,total,failed:0};
+  return {reason:'complete',finished,total,failed:0,cacheName:name};
  })();
  return {ready:result,complete:result,isReady:()=>ready,progress:()=>({finished,total,failed,ready,phase})};
 }
