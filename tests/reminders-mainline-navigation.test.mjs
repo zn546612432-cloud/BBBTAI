@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55} from '../src/services/story55/runtime.js';
+import {activateStory55,tickStory55,advanceScene55,scene55,sceneLines} from '../src/services/story55/runtime.js';
+import {sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
+import {completed} from '../src/services/story55/state.js';
 import {mainlineTasks,mainlineTask} from '../src/apps/reminders/features/mainline/model.js';
 import {render,openReminderTask} from '../src/apps/reminders/index.js';
 import {reminderWidget} from '../src/system/shell.js';
@@ -145,4 +147,47 @@ test('D02 workstation reminder appears after Aodong SMS delivery and opens the S
  });
  assert.ok(s.content.conversations.messages.find(c=>c.id===D02_AODONG_CHAT_ID)
   .messages.find(m=>m.id==='d02-aodong-sale').delivery);
+});
+
+
+test('D41 uses the 23:30 operation scene for its reminder, deep link and automatic completion',()=>{
+ const s=at(41,'23:00');
+ assert.equal(find(s,'d41-opening'),undefined);
+ s.clock='23:29';assert.equal(find(s,'d41-opening'),undefined);
+ s.clock='23:30';
+ const item=find(s,'d41-opening');
+ assert.equal(item.title,'23:30 行動開始前');assert.equal(item.done,false);
+ assert.deepEqual(item.link,{appId:'wechat',route:'/chat/group',params:{node:'d41-opening'}});
+ assert.match(reminderWidget(s),/23:30 行動開始前/);
+ assert.match(render({store:{get:()=>s}},{route:'/'}),/23:30 行動開始前/);
+ const store={get:()=>s,update:fn=>fn(s)},opened=[];
+ assert.equal(openReminderTask(item.id,{store,router:{open:link=>opened.push(link)}}),true);
+ assert.deepEqual(opened,[item.link]);
+ assert.equal(completed(s,'d41-opening'),false,'opening the reminder is not scene completion');
+ let now=Date.now();
+ for(let i=0;i<sceneLines(s,'d41-opening').length&&!completed(s,'d41-opening');i++){
+  const [who,text]=sceneLines(s,'d41-opening')[scene55(s,'d41-opening').index];
+  if(who==='me')sendScriptedDraft55(s,'wechat','group',text,now+=10000);
+  else advanceScene55(s,'d41-opening',{now:now+=10000});
+ }
+ assert.equal(find(s,'d41-opening').done,true);
+ assert.doesNotMatch(reminderWidget(s),/23:30 行動開始前/);
+ assert.doesNotMatch(render({store},{route:'/'}),/23:30 行動開始前/);
+ assert.match(render({store},{route:'/completed'}),/23:30 行動開始前/);
+ s.day=42;s.clock='08:00';assert.equal(find(s,'d41-opening'),undefined);
+});
+
+test('old unlinked operation reminders are removed on D41 and later days without changing personal tasks',()=>{
+ for(const day of [41,42,55]){
+  const s=at(day,'08:00');
+  s.story55.d41OperationReminderAdded=true;
+  s.content.reminders.push({id:'s55-d41-operation-reminder',title:'23:00 行动开始',done:false},{id:'personal-operation-note',title:'23:00 行动开始',done:false});
+  s.notifications.push({id:'s55-d41-operation-reminder-notice',title:'提醒事項',body:'23:00 行动开始'});
+  tickStory55(s);
+  assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
+  assert.equal(s.notifications.some(n=>n.id==='s55-d41-operation-reminder-notice'),false);
+  assert.ok(s.content.reminders.some(r=>r.id==='personal-operation-note'));
+  tickStory55(s);
+  assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
+ }
 });

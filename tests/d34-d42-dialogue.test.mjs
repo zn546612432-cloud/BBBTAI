@@ -17,10 +17,10 @@ import {D41_CHESS_CUES,D41_CHESS_DRAFT} from '../src/story/d34-d42/d41-chess.js'
 import {BYOK_SESSION} from '../src/services/ai/gateway.js';
 
 function phone(day,clock){const s=initialState();activateStory55(s);rebuildStory55AtDay(s,day,clock);return s;}
-test('D41 operation reminder is present before 23:00 and not duplicated by story ticks',()=>{
+test('D41 no longer creates the unlinked 23:00 reminder',()=>{
  const s=phone(41,'08:00');
- assert.equal(s.content.reminders.find(r=>r.id==='s55-d41-operation-reminder')?.title,'23:00 行动开始');
- tickStory55(s);assert.equal(s.content.reminders.filter(r=>r.id==='s55-d41-operation-reminder').length,1);
+ assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
+ tickStory55(s);assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
 });
 function finish(s,id,chat,channel='wechat'){while(!completed(s,id)){
  const next=sceneLines(s,id)[scene55(s,id).index];

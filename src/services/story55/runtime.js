@@ -514,11 +514,13 @@ export function tickStory55(s){
  syncGhostCarProgress(s);
  if(s.day===41){for(const m of s.matches||[])if(isD41Chess(m))reconcileD41ChessCues({get:()=>s,update:fn=>fn(s)},m.id);}
  syncTearReminders(s);
- if(s.day===41&&!s.story55.d41OperationReminderAdded){
-  s.content.reminders??=[];
-  if(!s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'))s.content.reminders.push({id:'s55-d41-operation-reminder',title:'23:00 行动开始',done:false});
-  s.story55.d41OperationReminderAdded=true;
- }
+ // D41 now uses the canonical 23:30 scene task. Remove the old unlinked
+ // reminder on any day, including players already past the operation.
+ const oldOperationReminder='s55-d41-operation-reminder';
+ if(s.content.reminders?.some(r=>r.id===oldOperationReminder))
+  s.content.reminders=s.content.reminders.filter(r=>r.id!==oldOperationReminder);
+ if(s.notifications?.some(n=>n.id===oldOperationReminder+'-notice'))
+  s.notifications=s.notifications.filter(n=>n.id!==oldOperationReminder+'-notice');
  syncLegacyLoanReceipt55(s);
  syncD13(s);
  ensureNativeMirage55(s);
