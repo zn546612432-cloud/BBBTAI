@@ -26,6 +26,7 @@ import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntr
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
 import {taiRelationshipDirector} from './relationship-director.js';
+import {planTaiRomanceScene} from './romance-scene/index.js';
 import {selectTaiMemoryPreset,alreadyRecentlyUsedTaiPreset} from '../../apps/noapp/memory-replies.js';
 import {musicListeningContext} from '../../apps/music/features/shared/listening.js';
 
@@ -90,6 +91,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  if(pendingRequests.has(store))return {status:'busy',message:'熙泰正在输入'};
  const history=visibleMessages(c).filter(m=>!m.demo&&m.day<=initial.day);
  const batch=incomingTaiBatch(history,sourceMessageId);
+ // The delivered NoApp messages themselves carry the scene cursor. No
+ // parallel save, second event clock, or scripted-story side channel.
+ const romanceBeat=batch.length<=1&&pendingSource?.kind==='text'&&!pendingSource?.story55&&
+  !['connected','ringing','dialing'].includes(callState().state)
+  ?planTaiRomanceScene({input:pendingSource.text,history,
+    relationship:taiRelationshipDirector(initial,{input:pendingSource.text})}):null;
  // A bare share is an ordinary acknowledgment, not an invitation to quiz the
  // sender. Persist delivery through the same receipt/notification path.
  const activeReply=taiExistingCallReply(pendingSource?.voiceCaption||pendingSource?.text,callState().state);
@@ -111,20 +118,24 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  // bypass DeepSeek. No action/voice/call requests can be handled by this path.
  const memoryPreset=batch.length<=1&&pendingSource?.kind!=='voice'
   ?selectTaiMemoryPreset(initial,pendingSource?.text):null;
- if(memoryPreset&&!alreadyRecentlyUsedTaiPreset(history,memoryPreset.id)&&!['connected','ringing','dialing'].includes(callState().state)){
+ // A real ellipsis during an open romance scene is a meaningful pause:
+ // mark the message read, but do not invent a reply or advance it offscreen.
+ if(!memoryPreset&&romanceBeat?.mode==='silent')return finishSilentTaiTurn(store,sourceMessageId,now);
+ const fastPreset=memoryPreset||romanceBeat?.mode==='preset'&&romanceBeat.preset;
+ if(fastPreset&&!alreadyRecentlyUsedTaiPreset(history,fastPreset.id)&&!['connected','ringing','dialing'].includes(callState().state)){
   pendingRequests.add(store);
   try{
    await wait(280);
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
-   const id=uid(),text=memoryPreset.text;
+   const id=uid(),text=fastPreset.text;
    store.update(s=>{
     const target=conversation(s);if(!target)return;
     markTaiRead(s,sourceMessageId,now());
-    target.messages.push({id,from:'tai',text,kind:'text',actual:true,aiPresetId:memoryPreset.id,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
+    target.messages.push({id,from:'tai',text,kind:'text',actual:true,aiPresetId:fastPreset.id,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now(),...(romanceBeat?.mode==='preset'?{taiRomanceScene:romanceBeat.tag}:{})});
     rememberTaiDelivered(s,text,{sourceId:id});
     if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
    });
-   return {status:'replied',count:1,text,presetId:memoryPreset.id};
+   return {status:'replied',count:1,text,presetId:fastPreset.id};
   }finally{pendingRequests.delete(store);}
  }
  const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day&&(m.kind!=='call'||shouldRecallTaiCall(m,initial,pendingSource?.voiceCaption||pendingSource?.text)))
@@ -176,10 +187,13 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   request.scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
+  if(romanceBeat?.mode==='continue')request.scene+='\n'+romanceBeat.prompt;
   if(approvedAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
-  let decision=unheard||socialRefusal?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
+  // After an authored opening, keep one human-scale conversational beat
+  // instead of allowing the model to randomly switch to a call or silence.
+  let decision=unheard||socialRefusal||romanceBeat?.mode==='continue'?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
    allowCall:callAllowed&&!directAffection&&availableCall&&!!status.minimax&&(!firstTextAfterCall||requestedCall),allowVoice,
    allowDefer:!retryDeferred&&!(source?.taiDeferredCount>0),
    playerDeclinedCall:taiPlayerDeclinedCall(lastUser)});
@@ -212,12 +226,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const turnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.
-  const observed=!socialRefusal&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
+  const observed=!romanceBeat&&!socialRefusal&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
    text:lastUser,sourceMessageId,random,now
   }):null;
   if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
@@ -242,7 +256,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
-  if(!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+  if(!romanceBeat&&!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
@@ -282,7 +296,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // bubble; the first phone utterance is played only after the player answers.
   // An unheard voice uses the existing authored network-repair line, not an AI draft.
   if(!unheard&&(hasBannedTaiConstruction(draftEntries.map(e=>e.text))||hasBannedTaiConstruction(draftEntries.map(e=>e.speechText||e.text))))throw Object.assign(Error('Blocked combined dialogue'),{code:'TAI_STYLE'});
-  const limit=Math.max(1,behavior.maxMessages);
+  const limit=romanceBeat?.mode==='continue'?Math.min(2,Math.max(1,behavior.maxMessages)):Math.max(1,behavior.maxMessages);
   const phoneAt=draftEntries.findIndex(item=>item.action==='phone');
   const selected=phoneAt>=limit?[...draftEntries.slice(0,limit-1),draftEntries[phoneAt]]:draftEntries.slice(0,limit);
   const entries=selected.map(item=>actualDecision?
@@ -305,7 +319,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     break;
    }
    const id=uid();
-   let msg={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',aiGenerated:true,actual:true,replySourceId:sourceMessageId,voiceRequested:false,...(item.translation?{translation:item.translation}:{})};
+   let msg={id,from:'tai',text:item.text,kind:'text',aiTone:item.tone,vocalCue:item.vocalCue&&item.vocalCue!=='none'?item.vocalCue:actualDecision?.vocal_cue||'none',aiGenerated:true,actual:true,replySourceId:sourceMessageId,voiceRequested:false,...(romanceBeat?.mode==='continue'?{taiRomanceScene:romanceBeat.tag}:{}),...(item.translation?{translation:item.translation}:{})};
    if(item.mode==='voice')msg=await prepareTaiVoice(msg,{speechText:item.speechText||item.text,tone:item.tone,store});
    if(unavailableVoice)msg={...msg,text:voiceFailureLine(id),translation:undefined};
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||emitted===0&&replyAfter(conversation(store.get()),sourceMessageId))break;
