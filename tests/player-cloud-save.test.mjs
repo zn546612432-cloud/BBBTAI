@@ -99,6 +99,28 @@ test('fresh device can restore cloud, and backup failure cannot overwrite local 
  const c=client(t,backend,phone(30));await c.start();assert.equal(c.status.phase,'conflict');
  c.backupLocal=async()=>{throw Error('quota');};await assert.rejects(c.resolve('remote'),/quota/);assert.equal(c.store.get().day,30);
 });
+test('refresh to D01 restores newer owned cloud checkpoint without overwriting it',async t=>{
+ const backend=server(),first=client(t,backend,phone(28));
+ await first.start();await first.flush();
+ const storage=memory();for(const k of ['phone:cloud-owner','phone:cloud:player-a:1'])storage.setItem(k,first.store.storage.getItem(k));
+ const reboot=client(t,backend,phone(1,{storage}));
+ assert.equal(await reboot.start(),true);
+ assert.equal(reboot.store.get().day,28);
+ assert.equal(backend.row.game_state.day,28);
+ const writes=backend.writes;await reboot.flush();assert.equal(backend.writes,writes);
+});
+test('an accidental day rewind cannot silently overwrite a newer cloud checkpoint',async t=>{
+ const backend=server(),cloud=client(t,backend,phone(23));
+ await cloud.start();await cloud.flush();
+ cloud.store.advance(1);
+ assert.equal(await cloud.flush(),false);
+ assert.equal(cloud.status.phase,'conflict');
+ assert.equal(backend.row.game_state.day,23);
+ // Explicit selection is still supported after the old cloud state is archived.
+ assert.equal(await cloud.resolve('local'),true);
+ assert.equal(backend.row.game_state.day,1);
+ assert.equal(backend.backups.at(-1).game_state.day,23);
+});
 test('a late cloud read cannot replace gameplay started while the connection was slow',async t=>{
  const backend=server(),a=client(t,backend);await a.start();await a.flush();
  const b=client(t,backend,phone(1,{existing:false}));let release;
