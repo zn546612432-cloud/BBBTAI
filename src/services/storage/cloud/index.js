@@ -67,19 +67,23 @@ export class PlayerCloudSave{
     this.publish({phase:'connecting'});const player=await this.api.player();
     if(!player?.id)throw Error('無法確認雲端身份。');
     this.player=player;this.publish({player});
-    const intentionalRestart=parse(this.store.storage.getItem(this.restartKey));
-    // Unknown / switched owners must never lose another account's save.
-    if(intentionalRestart&&intentionalRestart.owner!==player.id){
-     this.conflict(null);return false;
-    }
-    this.erasing=Boolean(intentionalRestart&&intentionalRestart.owner===player.id);
-    this.allowRollback=this.erasing;
     const owner=this.store.storage.getItem(this.ownerKey);
+    this.erasing=Boolean(parse(this.store.storage.getItem(this.restartKey)));
+    this.allowRollback=this.erasing;
     this.meta=parse(this.store.storage.getItem(this.metaKey))||{};
     const initialRaw=JSON.stringify(this.store.get());
     const row=await this.api.read(this.slot,this.player.id);
     if(this.closed)return false;
     const raw=JSON.stringify(this.store.get());this.pending=raw;
+    // Re-read the marker AFTER the network request. The player can enter 0000
+    // while an earlier connection is in flight; it must never resurrect D55.
+    const intentionalRestart=parse(this.store.storage.getItem(this.restartKey));
+    if(intentionalRestart&&(intentionalRestart.owner&&intentionalRestart.owner!==player.id
+      ||(!intentionalRestart.owner&&row)||owner&&owner!==player.id)){
+     this.conflict(row);return false;
+    }
+    this.erasing=Boolean(intentionalRestart);
+    this.allowRollback=this.erasing;
     if(this.erasing){
      // DELETE the owned save by ID and slot; PostgreSQL cascades its 3 backup
      // snapshots and TAI data. This is the only code path that destroys them.

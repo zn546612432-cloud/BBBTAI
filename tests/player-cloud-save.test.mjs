@@ -22,6 +22,12 @@ function server(){
  return {get row(){return row;},get writes(){return writeCount;},backups,
   api:{player:async()=>({id:'player-a',is_anonymous:true}),read:async()=>structuredClone(row),
    media:async()=>({media:{},missing:0}),useMedia(){},backups:async()=>structuredClone(backups),
+   erase:async({slot,player,id})=>{
+    assert.equal(slot,1);assert.equal(player,'player-a');
+    if(!row||row.id!==id)return {status:'conflict'};
+    row=null;backups.length=0;
+    return {status:'deleted'};
+   },
    write:async({revision,writeId,state})=>{
     writeCount++;
     if(row?.client_write_id===writeId)return {...row,status:'saved'};
@@ -121,7 +127,7 @@ test('an accidental day rewind cannot silently overwrite a newer cloud checkpoin
  assert.equal(backend.row.game_state.day,1);
  assert.equal(backend.backups.at(-1).game_state.day,23);
 });
-test('confirmed erase-all restart remains D01 after reload and archives old cloud progress',async t=>{
+test('confirmed 0000 erases old cloud save and all archives before creating D01',async t=>{
  const backend=server(),first=client(t,backend,phone(42));
  await first.start();await first.flush();
  first.markExplicitRestart();
@@ -131,8 +137,51 @@ test('confirmed erase-all restart remains D01 after reload and archives old clou
  assert.equal(reboot.store.get().day,1);
  assert.equal(await reboot.flush(),true);
  assert.equal(backend.row.game_state.day,1);
- assert.equal(backend.backups.at(-1).game_state.day,42);
+ assert.equal(backend.backups.length,0);
+ assert.equal(first.store.storage.getItem('phone:cloud-explicit-restart'),null);
 });
+test('offline 0000 deletion never overwrites the old cloud save, and retries after reload',async t=>{
+ const backend=server(),first=client(t,backend,phone(37));
+ await first.start();await first.flush();
+ first.markExplicitRestart();first.store.advance(1);
+ const storage=first.store.storage,reboot=client(t,backend,phone(1,{storage}));
+ const realErase=reboot.api.erase;
+ reboot.api.erase=async()=>{throw Error('offline');};
+ assert.equal(await reboot.start(),false);
+ assert.equal(backend.row.game_state.day,37);
+ assert.equal(reboot.store.get().day,1);
+ assert.ok(storage.getItem('phone:cloud-explicit-restart'));
+ reboot.api.erase=realErase;
+ assert.equal(await reboot.start(),true);assert.equal(await reboot.flush(),true);
+ assert.equal(backend.row.game_state.day,1);
+ assert.equal(backend.backups.length,0);
+ assert.equal(storage.getItem('phone:cloud-explicit-restart'),null);
+});
+test('0000 reset never erases a different logged-in account',async t=>{
+ const backend=server(),first=client(t,backend,phone(44));
+ await first.start();await first.flush();
+ first.markExplicitRestart();first.store.advance(1);
+ const second=client(t,backend,phone(1,{storage:first.store.storage}));
+ second.api.player=async()=>({id:'player-b'});
+ assert.equal(await second.start(),false);
+ assert.equal(second.status.phase,'conflict');
+ assert.equal(backend.row.game_state.day,44);
+});
+test('reset entered during an in-flight cloud read cannot restore the deleted run',async t=>{
+ const backend=server(),first=client(t,backend,phone(39));
+ await first.start();await first.flush();
+ const another=client(t,backend,phone(39,{storage:first.store.storage}));
+ let release;another.api.read=()=>new Promise(resolve=>{release=()=>resolve(structuredClone(backend.row));});
+ const starting=another.start();await new Promise(resolve=>setImmediate(resolve));
+ another.markExplicitRestart();another.store.advance(1);
+ release();
+ assert.equal(await starting,true);
+ assert.equal(another.store.get().day,1);
+ assert.equal(backend.row,null);
+ assert.equal(await another.flush(),true);
+ assert.equal(backend.row.game_state.day,1);
+});
+
 test('a late cloud read cannot replace gameplay started while the connection was slow',async t=>{
  const backend=server(),a=client(t,backend);await a.start();await a.flush();
  const b=client(t,backend,phone(1,{existing:false}));let release;
