@@ -587,7 +587,7 @@ $('#root').addEventListener('click',async e=>{
   if(action==='kira-d01-bank')e.preventDefault(); // In-app mail link must not navigate to #.
   try{
     if(action==='restart-cancel'&&lockscreen.stage==='restart'){lockscreen.open();render();return;}
-    if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.replace(restartState(store.get()));location.reload();return;}
+    if(action==='restart-confirm'&&lockscreen.stage==='restart'){presets.dispose();delivery.waiting.clear();stopAlarmSound();store.cloud?.markExplicitRestart?.();store.replace(restartState(store.get()));location.reload();return;}
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
