@@ -7,6 +7,8 @@ import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messa
 import {d04Track} from '../src/story/d04/wechat.js';
 import {d03Track} from '../src/story/d03/wechat.js';
 import {d05Track} from '../src/story/d05/wechat.js';
+import {D02_DIALOGUES} from '../src/story/d02/dialogue.js';
+import {d02Track} from '../src/story/d02/wechat.js';
 import {createConversationTrack} from '../src/services/messaging/lifecycle/engine.js';
 import {IncomingBannerQueue} from '../src/services/messaging/incoming-banner-queue.js';
 import {readConversationInState} from '../src/services/messaging/read.js';
@@ -205,4 +207,66 @@ test('breakfast group never claims an unsent player reply happened',()=>{
  const s=fresh(5,'08:15');advance(s,0,30);
  assert.ok(messages(s,'group','d05-breakfast-').some(m=>m.text==='粥放桌上了，等他起來吃。'));
  assert.equal(messages(s,'group','d05-breakfast-').some(m=>m.text==='醒了，剛回我'),false);
+});
+
+
+test('D02 Xiao Xin keeps all nine approved turns across midnight without auto-sending Xi Meng',()=>{
+ const s=fresh(2,'16:08'),records=()=>messages(s,'xiaoxin','d02-xin-script-');
+ tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,2500);
+ assert.equal(records().length,1);
+ assert.equal(records()[0].text,D02_DIALOGUES.xin[0][1]);
+ s.day=3;s.clock='08:04';tickPhoneStoryMessages(s,5000);
+ assert.equal(records().length,1,'crossing midnight must not invent player messages');
+ assert.equal(messages(s,'xiaoxin','d02-xin-late-').length,0);
+ assert.equal(nativeWeChatComposer(s,'xiaoxin').text,D02_DIALOGUES.xin[1][1]);
+ const original=store(s);let now=5000;
+ for(let i=1;i<D02_DIALOGUES.xin.length;i++){
+  const [who,line]=D02_DIALOGUES.xin[i];
+  if(who==='me'){
+   assert.equal(nativeWeChatComposer(s,'xiaoxin').text,line);
+   assert.ok(sendNativeWeChatPreset(original,'xiaoxin',line,now).messageId);
+  }else{
+   now+=5000;tickPhoneStoryMessages(s,now);
+  }
+  assert.equal(records().find(m=>m.id==='d02-xin-script-'+i)?.text,line);
+ }
+ assert.equal(records().length,9);
+ assert.equal(records().filter(m=>m.from==='me').length,3);
+ assert.ok(s.story55.d02.wechat.xin.completed);
+ tickPhoneStoryMessages(s,now+5000);
+ assert.equal(records().length,9,'refresh or more ticks must not duplicate dialogue');
+});
+
+test('D02 Xiao Xin late-branch saves retain actual sent messages and restore remaining original turns',()=>{
+ const s=fresh(3,'08:04'),c=cv(s,'xiaoxin');
+ const q=s.story55.d02.wechat.xin={started:true,index:1,historySettled:true,
+  lateHandled:true,status:'closed',lateRun:{kind:'nextDay',index:2}};
+ c.messages.push({id:'d02-xin-script-0',from:'小辛',text:D02_DIALOGUES.xin[0][1],actual:true,day:2,time:'16:08',sentDate:'2025-05-20'});
+ c.messages.push({id:'d02-xin-late-nextDay-0',from:'me',text:'昨天沒顧上回。那台先別買，配置再看看。',actual:true,day:3,time:'01:04',sentDate:'2025-05-21'});
+ c.messages.push({id:'d02-xin-late-nextDay-1',from:'小辛',text:'行，我先不下單。',actual:true,day:3,time:'01:04',sentDate:'2025-05-21'});
+ const previous=c.messages.map(m=>m.id);
+ tickPhoneStoryMessages(s,1000);
+ assert.deepEqual(c.messages.map(m=>m.id),previous,'previous real sends and replies are never rewritten');
+ assert.equal(nativeWeChatComposer(s,'xiaoxin').text,D02_DIALOGUES.xin[1][1]);
+ assert.equal(q.historySettled,false);
+ assert.equal(q.lateHandled,false);
+ const sent=sendNativeWeChatPreset(store(s),'xiaoxin',D02_DIALOGUES.xin[1][1],2000);
+ assert.ok(sent.messageId);
+ tickPhoneStoryMessages(s,6000);
+ assert.equal(messages(s,'xiaoxin','d02-xin-script-').length,3);
+ assert.equal(c.messages.filter(m=>m.id==='d02-xin-late-nextDay-0').length,1);
+});
+
+test('D02 Xiao Xin missed first delivery backfills only his scheduled opener at original time',()=>{
+ const s=fresh(3,'08:04'),c=cv(s,'xiaoxin');
+ assert.equal(messages(s,'xiaoxin','d02-xin-script-').length,0);
+ tickPhoneStoryMessages(s,1000);
+ const rows=messages(s,'xiaoxin','d02-xin-script-');
+ assert.equal(rows.length,1);
+ assert.equal(rows[0].time,'16:08');assert.equal(rows[0].day,2);
+ assert.equal(rows[0].historical,true);
+ assert.equal(rows.filter(m=>m.from==='me').length,0);
+ assert.equal(nativeWeChatComposer(s,'xiaoxin').text,D02_DIALOGUES.xin[1][1]);
+ tickPhoneStoryMessages(s,8000);
+ assert.equal(messages(s,'xiaoxin','d02-xin-script-').length,1);
 });
