@@ -5,7 +5,7 @@ import {loadClip,saveClip} from './audio-store.js';
 
 const clips=new Map(),warmed=new Map();
 const cacheKey=clip=>clip.bundledOnly?'scripted-recorded-v2-'+clip.id+'-'+clip.text:'scripted-v1-'+apiConfig().voiceId+'-'+clip.id+'-'+clip.text;
-async function prepareClip(clip,key){
+async function prepareClip(clip,key,{prewarm=false}={}){
  // The optional published recording takes precedence; a configured game
  // voice can prepare the same asset even when the repository has no API key.
  const bundled=fetch(resolvePhoneAudioPath(clip.path)).then(async response=>{
@@ -22,17 +22,20 @@ async function prepareClip(clip,key){
   return recording;
  }
  if(recording)return recording;
+ // D55's fixed voice must be rendered before the call, never synthesized
+ // from live dialogue during the cinematic. Missing prep only shows captions.
+ if(clip.prewarmRequired&&!prewarm)throw Error('D55_FIXED_RECORDING_NOT_READY');
  const blob=await voicePreview({text:clip.text.replace(/\bnya\b/gi,'奈亞'),tone:'neutral',directed:true});
  if(!blob?.size)throw Error('Empty authored recording');
  void saveClip(key,blob).catch(()=>{});
  return blob;
 }
-export function loadScriptedVoice(text){
+export function loadScriptedVoice(text,{prewarm=false}={}){
  const clip=scriptedVoiceClip(text);
  if(!clip)return Promise.reject(Error('Missing authored recording'));
  const key=cacheKey(clip);
  if(!clips.has(key)){
-  const pending=prepareClip(clip,key).catch(error=>{clips.delete(key);throw error;});
+  const pending=prepareClip(clip,key,{prewarm}).catch(error=>{clips.delete(key);throw error;});
   clips.set(key,pending);
  }
  return clips.get(key);
@@ -47,6 +50,6 @@ export function preloadScriptedVoice(day){
  // Prioritize the opening line; never bombard the provider with 11 simultaneous
  // requests. The actual scene can reuse an in-flight promise at any time.
  const queue=recordings.map(clip=>({clip,attempt:0}));
- const worker=async()=>{while(queue.length){const {clip,attempt}=queue.shift();try{await loadScriptedVoice(clip.text);}catch(error){if(attempt<1&&error?.code!=='TAI_CLOUD_LIMIT')queue.push({clip,attempt:attempt+1});}}};
+ const worker=async()=>{while(queue.length){const {clip,attempt}=queue.shift();try{await loadScriptedVoice(clip.text,{prewarm:true});}catch(error){if(attempt<1&&error?.code!=='TAI_CLOUD_LIMIT')queue.push({clip,attempt:attempt+1});}}};
  void worker();void worker();
 }

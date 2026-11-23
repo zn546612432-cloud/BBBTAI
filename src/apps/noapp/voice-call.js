@@ -485,7 +485,15 @@ function beginD55Script(ctx,script,phase){
 }
 export function tickD55NoApp(ctx,{now=Date.now()}={}){
  const s=ctx.store.get(),story=s.story55;
- if(!isStory55(s)||s.day!==55||story?.ended)return false;
+ if(!isStory55(s)||story?.ended)return false;
+ // Pre-render approved fixed dialogue at the preceding day's close or early
+ // D55. Actual phone playback only reads cached or bundled recordings.
+ if((s.day===54&&completed(s,'d54-tai')||s.day===55&&s.clock>='09:50')
+    &&story.d55VoicePrewarmDay!==s.day){
+  ctx.store.update(s=>{s.story55.d55VoicePrewarmDay=s.day;});
+  preloadScriptedVoice(55);
+ }
+ if(s.day!==55)return false;
  if(call.state==='ringing'&&call.scripted?.id===D55_RECALL.id){
   if(s.clock>='22:49'){
    callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'d55_unanswered_end'});
@@ -521,6 +529,7 @@ export function tickD55NoApp(ctx,{now=Date.now()}={}){
   if(now-story.d55FatherEndedAt<3000)return false;
   return startIncoming(ctx,'熙泰邀請你語音通話',{scripted:D55_FINAL_CALL});
  }
+ if(call.scriptedRetryId&&now<(call.retryAt||0))return true;
  const introDone=scriptedCallPlayed(s,D55_OPENING_CALL);
  return startIncoming(ctx,'熙泰邀請你語音通話',
   {scripted:introDone?{...D55_OPENING_CALL,steps:[]}:D55_OPENING_CALL});
@@ -723,7 +732,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
   ctx.refresh();startGreeting(ctx);return true;
  case 'tai-decline':case 'tai-hangup':
   if(call.scripted?.unanswerable&&!['d55_unanswered_end'].includes(endReason))return true;
-  if(call.d55Story&&!['d55_disconnect','d55_unanswered_end'].includes(endReason))return true;
+  if(call.d55Story&&call.state==='connected'&&!['d55_disconnect','d55_unanswered_end'].includes(endReason))return true;
   if(!['ringing','dialing','connected'].includes(call.state))return true;
   const previous=call;
   clearTimeout(previous.closeTimer);

@@ -10,7 +10,7 @@ export const SCRIPTED_VOICE_CLIPS=Object.freeze([
  ...D41_CALL.steps.flatMap(([role,text],i)=>role==='tai'?[{id:`d41-call-${i}`,text}]:[]),
  ...D42_CALL.lines.map((text,i)=>({id:`d42-call-${i}`,text})),
  ...D45_CALL.steps.flatMap(([role,text],i)=>role==='tai'?[{id:`d45-call-${i}`,text,path:`/assets/story55/d45/d45-call-${i}.mp3`}]:[]),
- ...[D55_OPENING_CALL,D55_WARNING_CALL,D55_FINAL_CALL].flatMap(script=>script.steps.flatMap(([role,text],i)=>role==='tai'?[{id:`d55-${script.id}-${i}`,text,path:`/assets/story55/d55/${script.id}-${i}.mp3`}]:[])),
+ ...[D55_OPENING_CALL,D55_WARNING_CALL,D55_FINAL_CALL].flatMap(script=>script.steps.flatMap(([role,text],i)=>role==='tai'?[{id:`d55-${script.id}-${i}`,text,path:`/assets/story55/d55/${script.id}-${i}.mp3`,prewarmRequired:true}]:[])),
  ...Object.entries(D41_CHESS_CUES).map(([ply,text])=>({id:`d41-chess-${ply}`,text}))
 ].map(clip=>Object.freeze({...clip,path:clip.path||`/assets/story55/d41-d42/${clip.id}.mp3`})));
 export const scriptedVoiceClip=text=>SCRIPTED_VOICE_CLIPS.find(c=>c.text===text);
