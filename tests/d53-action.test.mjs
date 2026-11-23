@@ -60,3 +60,23 @@ test('D53 advances through native Send, the original phone checkpoint, then the 
  finish(D53_ACTION_END,D53_END_LINES);
  assert.equal(pendingTimedStoryEvent(s),null);
 });
+
+test('D53 native composer and Send outrank an older mandatory reply after a real date rebuild',async()=>{
+ const {rebuildStory55AtDay}=await import('../src/services/story55/rebuild.js');
+ const {tickQueuedStoryScenes55}=await import('../src/services/story55/runtime.js');
+ const {nativeWeChatComposer,sendNativeWeChatPreset}=await import('../src/services/messaging/preset-replies.js');
+ const s=activateStory55(initialState()),store={get:()=>s,update:fn=>fn(s)};
+ rebuildStory55AtDay(s,53,'20:00');
+ let now=Date.now()+10000;
+ for(let i=0;i<3;i++)tickQueuedStoryScenes55(s,now+=10000);
+ assert.equal(nativeWeChatComposer(s,'wang').text,D53_START_LINES[1][1]);
+ const original=s.content.conversations.wechat.find(c=>c.id==='wang').messages.length;
+ assert.ok(sendNativeWeChatPreset(store,'wang','網上一個神經病黑客。',now).reason);
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='wang').messages.length,original);
+ assert.ok(sendNativeWeChatPreset(store,'wang',D53_START_LINES[1][1],now).messageId);
+ tickQueuedStoryScenes55(s,now+=10000);
+ assert.equal(nativeWeChatComposer(s,'wang').text,D53_START_LINES[2][1]);
+ assert.ok(sendNativeWeChatPreset(store,'wang',D53_START_LINES[2][1],now).messageId);
+ for(let i=0;i<3;i++)tickQueuedStoryScenes55(s,now+=10000);
+ assert.equal(completed(s,D53_ACTION_START),true);
+});
