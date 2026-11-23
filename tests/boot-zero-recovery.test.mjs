@@ -62,12 +62,21 @@ test('boot watchdog cannot falsely stall after main boot has actually started',(
 test('story and snapshot hydration do not block the phone indefinitely',()=>{
  assert.match(code,/const boundedBootTask=async/);
  assert.match(code,/Promise\.race\(/);
- assert.match(code,/hydrateBuiltInPresets\(store,bundledFetch\)/);
- assert.match(code,/劇情資料初始化超時/);
- assert.match(code,/prepareState:async bundledFetch/);
+ assert.match(code,/boundedBootTask\(\(\)=>hydrateBuiltInPresets\(store\)/);
+ assert.match(code,/beginLockscreenPreload\(\{/);
+ assert.match(code,/deadlineMs:10000/);
+ assert.doesNotMatch(code,/beginCompleteGamePreload/);
+ assert.doesNotMatch(code,/__xmBootIntroFailed/);
  assert.match(code,/lockAssets\.ready\.then\(/);
  assert.match(code,/primeTestSnapshots\(store\.storage\)/);
  assert.match(code,/globalThis\.__xmBootStarted\?\.\(\)/);
  assert.doesNotMatch(code,/localStorage\.clear\(\)|store\.replace\(initialState\(\)\)/);
  assert.match(html,/<script type="module" src="\/src\/main\.js"><\/script>/);
+});
+
+test('startup allows entry after bounded essential-image preload without requiring the whole package',()=>{
+ assert.match(code,/lockAssets\.ready\.then\(\(\{reason,failed\}\)=>/);
+ assert.match(code,/reason==='timeout'/);
+ assert.match(code,/__xmBootIntroReady\(closeBoot,status\)/);
+ assert.doesNotMatch(code,/lockAssets\.complete\.then/);
 });
