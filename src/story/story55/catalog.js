@@ -16,6 +16,7 @@ import {applyD53Definition} from '../d53/definition.js';
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
   "version": 1,
+  "d55EndingRevision": 1,
   "finalAudio": "/assets/story55/ximeng-final-keywords.mp3",
   "startDate": "2025-05-19",
   "totalDays": 55,

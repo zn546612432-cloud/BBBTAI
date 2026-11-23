@@ -77,6 +77,8 @@ test('D54 follows morning Isolde → 08:40 group → NoApp → 19:00 father; D55
  play(s,D54_FATHER,D54_FATHER_LINES,'wechat','fulongsheng');
  assert.equal(s.content.reminders.find(r=>r.id===D54_FATHER_REMINDER).done,true);
  s.day=55;s.clock='09:00';
+ assert.equal(nodeStatus(s,'ending').state,'locked','D55 ending waits until 22:46');
+ s.clock='22:46';
  assert.equal(nodeStatus(s,'ending').state,'ready');
 });
 
