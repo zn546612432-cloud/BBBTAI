@@ -76,3 +76,36 @@ test('an incomplete resource cache rejects and does not unlock entry',async()=>{
   if(oldNavigator===undefined)delete globalThis.navigator;else Object.defineProperty(globalThis,'navigator',{configurable:true,value:oldNavigator});
  }
 });
+
+test('a Safari service worker that never becomes ready cannot freeze the preload counter',async()=>{
+ const oldCache=globalThis.caches,oldNavigator=globalThis.navigator;
+ const fake=mocks(),reports=[],downloads=[];
+ Object.defineProperty(globalThis,'caches',{configurable:true,value:fake.caches});
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{serviceWorker:{controller:null}}});
+ try{
+  const preload=beginCompleteGamePreload({
+   register:()=>new Promise(()=>{}),
+   loadManifest:async()=>({version:'offline-worker-test',assets:[{path:'icons/a.webp',hash:'a',bytes:2},{path:'assets/story55/d01.json',hash:'b',bytes:3}]}),
+   openCache:fake.caches.open,
+   preloadCritical:()=>[],
+   decode:async()=>true,
+   loadMap:async()=>true,
+   fetchAssets:async({onProgress})=>{
+    downloads.push('started');
+    onProgress({finished:1,total:2,failed:0});
+    onProgress({finished:2,total:2,failed:0});
+    return {done:2,total:2,failed:0,errors:[]};
+   },
+   onProgress:p=>reports.push(p)
+  });
+  assert.equal((await preload.ready).reason,'complete');
+  assert.deepEqual(downloads,['started']);
+  assert.equal(reports[0].phase,'manifest');
+  assert.ok(reports.some(p=>p.phase==='assets'&&p.finished===1));
+  assert.equal(reports.at(-1).phase,'complete');
+  assert.ok(preload.isReady());
+ }finally{
+  if(oldCache===undefined)delete globalThis.caches;else Object.defineProperty(globalThis,'caches',{configurable:true,value:oldCache});
+  if(oldNavigator===undefined)delete globalThis.navigator;else Object.defineProperty(globalThis,'navigator',{configurable:true,value:oldNavigator});
+ }
+});
