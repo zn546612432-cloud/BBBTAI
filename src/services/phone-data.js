@@ -115,8 +115,12 @@ export function restoreRecordedPhoneCalls(state){
   {id:'d55-fulongsheng-last',day:55,at:'22:30'}
  ]){
   if(!state.story55.scriptedCallCompleted?.[script.id])continue;
-  const lines=state.story55.nativePhoneCalls?.[script.id]?.transcript;
-  if(!Array.isArray(lines)||!lines.some(line=>line?.speaker==='傅隆生'&&Number.isFinite(line.playedAt)))continue;
+  const lines=state.story55.nativePhoneCalls?.[script.id]?.transcript||[];
+  const heard=Array.isArray(lines)&&lines.some(line=>line?.speaker==='傅隆生'&&Number.isFinite(line.playedAt));
+  // Older saves sometimes kept the completion + actual trigger but dropped the
+  // transcript. A trigger paired with completion still proves a real call.
+  const triggered=script.id==='d53-fulongsheng-call'?'d53FuCallTriggered':'d55FatherTriggered';
+  if(!heard&&!(state.story55[triggered]===true&&!state.story55.previewNode))continue;
   if(calls.some(c=>c?.scriptId===script.id||c?.id===script.id||String(c?.id||'').startsWith(script.id+'-')))continue;
   const moments=lines.map(x=>x.playedAt).filter(Number.isFinite);
   const duration=moments.length?Math.max(0,Math.floor((Math.max(...moments)-Math.min(...moments))/1000)):0;
