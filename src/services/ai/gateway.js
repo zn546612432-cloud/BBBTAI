@@ -2,6 +2,7 @@ import {normalizeTtsSettings,ttsProviderSettings,ttsCueText} from '../voice/tts-
 import {isTaiCloudHost,taiCloudCall,taiCloudTranscribe} from './supabase-gateway.js';
 import {prepareTaiVoicePerformance,normalizeVoiceStyle} from '../voice/voice-performance.js';
 import {containsPortuguese} from './portuguese.js';
+import {taiTimeContradiction} from './life-context.js';
 import {readableTaiVoiceText,unpackTaiReply} from './format.js';
 import {hasBannedTaiConstruction,hasTaiDirectAffectionDeclaration,XITAI_STYLE_REPAIR} from './expression-style.js';
 import {taiRomanticViolations,taiRelationshipInstruction} from './relationship-director.js';
@@ -87,21 +88,24 @@ export async function askTai(request){
  // The character is free to decline. If a genuine declaration was chosen,
  // the caller delivers only the author's exact line, without a second draft.
  const firstRomance=taiRomanticViolations(request.relationshipPlan,entries);
- if(request.directAffection&&!firstRomance.length)return {...first,directAffectionAccepted:hasTaiDirectAffectionDeclaration(entries)};
+ const timeError=taiTimeContradiction(entries.map(e=>e.text),request);
+ if(request.directAffection&&!firstRomance.length&&!timeError)return {...first,directAffectionAccepted:hasTaiDirectAffectionDeclaration(entries)};
  const texts=entries.map(e=>e.text),privateLeak=hasPrematureTaiDisclosure(texts,request);
- if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))&&!privateLeak&&!firstRomance.length)return first;
+ if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))&&!privateLeak&&!firstRomance.length&&!timeError)return first;
  // Only the offending generation gets one corrective attempt. Preserve the
  // original approved action. A rejected first draft must never leak on retry failure.
  try{
+  const timeRepair=timeError?'【雙時區校驗】上一稿錯把對方的時間或你的時間說反了。熙蒙在澳門當前 '+request.macauClock+'，你陳熙泰在倫敦當前 '+request.londonClock+'。熙蒙早上醒著不能叫熬夜；你可以因自己當地深夜而困，但不要把自己困當成對方不睡。沿用自然、略帶親昵調侃的語氣，避免復讀示例。\n':'';
   const privacyRepair=privateLeak?'【私事披露修正】上一稿提前說出未共享的個人履歷。這時不該交代出生、國籍、領養、教育或家庭細節。重新回應熙蒙的好奇，保留到見面，不提供新履歷。\n':'';
   const romanceRepair=firstRomance.length?'【系統關係校驗】上一稿越過了已確認的感情階段。不能說愛或表白未獲准的感情，可以自然回答、拒絕或保留態度；不得把玩家要求說愛當成他已示好。\n':'';
-  const corrected=await askTaiOnce({...request,scene:privacyRepair+romanceRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
+  const corrected=await askTaiOnce({...request,scene:timeRepair+privacyRepair+romanceRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
   const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
   const revised=lines.map(e=>e.text);
-  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request)&&!taiRomanticViolations(request.relationshipPlan,lines).length)return corrected;
+  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request)&&!taiRomanticViolations(request.relationshipPlan,lines).length&&!taiTimeContradiction(revised,request))return request.directAffection?{...corrected,directAffectionAccepted:hasTaiDirectAffectionDeclaration(lines)}:corrected;
  }catch{}
  // A mistaken early revelation cannot be unsent. In the exceptional case
  // both drafts leak, use the author's own privacy-boundary line, not a fact.
+ if(timeError)throw Object.assign(Error('Tai generated a reversed time-zone attribution after correction'),{code:'TAI_TIME'});
  if(privateLeak&&(!request.approvedDecision||['send_text','send_voice','speak'].includes(request.approvedDecision.action))){
   const mode=request.outputMode==='call'||request.outputMode==='voice'||request.approvedDecision?.action==='send_voice'?'voice':'text';
   return {...first,text:JSON.stringify({messages:[{text:'等到我們見面的時候，說不定我會跟你說。',mode,tone:'neutral'}]})};
