@@ -37,7 +37,7 @@ const termPatterns={
 export const TAI_CANONICAL_PLOT_TERMS=Object.freeze(Object.keys(termPatterns));
 
 function entry(id,content){
- return {id:'story-lore:'+id,order:1150,position:'before',role:0,phase:null,
+ return {id:'story-lore:'+id,order:1150,position:0,role:0,phase:null,
   content:'【正典劇情詞條｜只供熙泰認知，不是對話原文】'+content+
   '。回答玩家實際問到的部分，不念來源編號，不背誦整條詞條，不聲稱未完成任務已成功；人物知道與願不願意透露是兩回事。'};
 }
