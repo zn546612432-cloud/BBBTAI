@@ -71,7 +71,8 @@ test('optional everyday banter and wish shopping stay off the mainline screen',(
  const html=render({store:{get:()=>s}},{route:'/'});
  assert.doesNotMatch(html,/買奶茶|買炸雞/);
  assert.match(html,/data-native-scroll="reminders"/);
- assert.doesNotMatch(reminderWidget(s),/買奶茶|買炸雞/);
+ assert.match(reminderWidget(s),/買奶茶/);
+ assert.match(reminderWidget(s),/買炸雞/);
 });
 test('legacy personal reminders and purchased wishes still have a separate list',()=>{
  const s=at(6,'18:00');
