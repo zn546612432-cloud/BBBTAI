@@ -135,3 +135,17 @@ test('proactive confession is vetoed during a verified D55 crisis',()=>{
  assert.equal(v.canInitiateLike,false);
  assert.deepEqual(taiRomanticViolations(v,[{text:'我愛你。'}]),['love']);
 });
+
+test('multi-adverb genuine confessions count and cannot slip past the output gate',()=>{
+ const s=make(100);
+ for(let d=47;d<=49;d++){
+  add(s,'p'+d,'me','我真的很喜歡你',d);
+  add(s,'t'+d,'tai','我也越來越喜歡你',d);
+ }
+ const v=taiRelationshipDirector(s);
+ assert.equal(v.canDeclareLove,true);
+ const low=taiRelationshipDirector(make(100));
+ assert.deepEqual(taiRomanticViolations(low,[{text:'我真的很愛你。'}]),['love']);
+ assert.deepEqual(taiRomanticViolations(low,[{text:'我也越來越喜歡你。'}]),['like']);
+ assert.deepEqual(taiRomanticViolations(low,[{text:'我不喜歡你。'}]),[]);
+});
