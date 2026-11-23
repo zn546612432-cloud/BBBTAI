@@ -79,7 +79,7 @@ function createJournal(db,key){
 // Hidden is the last reliable mobile lifecycle signal. pagehide and freeze
 // cover navigation/BFCache and browser suspension without touching story time.
 export function mountSaveLifecycle(store,{doc=globalThis.document,win=globalThis.window,manager=globalThis.navigator?.storage}={}){
- const flush=()=>{try{store.persist();}catch(error){console.error('存檔保存失敗',error);}store.journal?.flush().catch(error=>console.warn('存檔備份暫時不可用',error));};
+ const flush=()=>{try{store.persist();}catch(error){console.error('存檔保存失敗',error);}store.journal?.flush().catch(error=>console.warn('存檔備份暫時不可用',error));void store.cloud?.flush();};
  const hidden=()=>{if(doc.hidden)flush();};
  doc?.addEventListener('visibilitychange',hidden);
  doc?.addEventListener('freeze',flush);

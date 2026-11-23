@@ -5,21 +5,22 @@
 export const TAI_CLOUD_URL='https://zmnufhswpnreeseyamlv.supabase.co';
 export const TAI_PUBLIC_KEY="sb_publishable_g5uRIZdBaY36VqtoZXAS_A_3exgtfs9";
 export const TAI_PROVIDER_ENDPOINT=TAI_CLOUD_URL+'/functions/v1/tai-provider-gateway';
-const SESSION_KEY='ximeng-tai-gateway-auth-v1';
+export const SESSION_KEY='ximeng-tai-gateway-auth-v1';
 let flight=null;
 export const isTaiCloudHost=(hostname=globalThis.location?.hostname)=>hostname==='zn546612432-cloud.github.io'
  ||hostname==='bbbtai.pages.dev'||/^[a-z0-9-]+\.bbbtai\.pages\.dev$/.test(hostname||'');
 const stored=()=>{try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch{return null;}};
-const save=session=>{
+export const saveTaiCloudSession=session=>{
  const value={access_token:session.access_token,refresh_token:session.refresh_token,
-  expires_at:session.expires_at||Math.floor(Date.now()/1000)+Number(session.expires_in||3600)};
+  expires_at:session.expires_at||Math.floor(Date.now()/1000)+Number(session.expires_in||3600),
+  ...(session.user?{user:session.user}:{})};
  try{localStorage.setItem(SESSION_KEY,JSON.stringify(value));}catch{}
  return value;
 };
 const fetchAuth=async(url,body)=>{
  const response=await fetch(TAI_CLOUD_URL+url,{method:'POST',
   headers:{apikey:TAI_PUBLIC_KEY,'Content-Type':'application/json'},
-  body:JSON.stringify(body),cache:'no-store'});
+  body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(10000)});
  let json;try{json=await response.json();}catch{throw Error('云端登录返回了无效响应');}
  if(!response.ok||json?.error||json?.error_code)
   throw Error('云端匿名身份验证不可用：'+String(json?.msg||json?.error_description||json?.error||response.status).slice(0,150));
@@ -33,13 +34,14 @@ export async function taiCloudSession(){
   if(current?.refresh_token){
    try{
     const refreshed=await fetchAuth('/auth/v1/token?grant_type=refresh_token',{refresh_token:current.refresh_token});
-    if(refreshed?.access_token)return save(refreshed);
-   }catch{ /* Expired anonymous session: create a fresh one without touching game saves. */ }
+    if(refreshed?.access_token)return saveTaiCloudSession(refreshed);
+   }catch{throw Error('雲端身份暫時無法恢復，已保留本機進度與登入資料。');}
+   throw Error('雲端身份更新失敗，已保留原身份。');
   }
   const result=await fetchAuth('/auth/v1/signup',{data:{},gotrue_meta_security:{}});
   const session=result.session||result;
   if(!session.access_token||!session.refresh_token)throw Error('云端匿名登录尚未开启，请在 Supabase Auth 设置中启用匿名登录');
-  return save(session);
+  return saveTaiCloudSession(session);
  })().finally(()=>{flight=null;});
  return flight;
 }

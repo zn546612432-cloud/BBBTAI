@@ -2,7 +2,8 @@
 // WebKit can reject Blob backing files with "Error preparing Blob/File data".
 const DB='ximeng-noapp-audio-v1',STORE='voice-clips',TIMEOUT=5000;
 const temporary=new Map(),MAX_TEMP_BYTES=24_000_000;
-let dbPromise,tempBytes=0;
+let dbPromise,tempBytes=0,remoteClipLoader=null;
+export const setRemoteClipLoader=loader=>{remoteClipLoader=loader;};
 const storageError=(error,stage)=>Object.assign(new Error('Safari 语音存储'+stage+'：'+(error?.message||error?.name||'IndexedDB 未返回错误详情')),{name:error?.name||'AudioStorageError'});
 function retain(id,blob){
  const old=temporary.get(id);if(old)tempBytes-=old.size;
@@ -52,7 +53,7 @@ export async function saveClip(id,blob){
  }
  return id;
 }
-export async function loadClip(id){
+async function loadLocalClip(id){
  if(temporary.has(id)){const blob=temporary.get(id);retain(id,blob);return blob;}
  const db=await openDB();
  return new Promise((resolve,reject)=>{
@@ -72,4 +73,9 @@ export async function loadClip(id){
    request.onerror=()=>finish(storageError(request.error,'读取失败'));
   }catch(error){finish(storageError(error,'读取失败'));}
  });
+}
+export async function loadClip(id,{localOnly=false}={}){
+ let blob;try{blob=await loadLocalClip(id);}catch(error){if(localOnly||!remoteClipLoader)throw error;}
+ if(blob||localOnly||!remoteClipLoader)return blob||null;
+ return remoteClipLoader(id);
 }
