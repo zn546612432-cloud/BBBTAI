@@ -1,6 +1,7 @@
 import {isStory55,taiRecognized,final55} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {taiRelationshipDirector} from './relationship-director.js';
+import {romanceSceneAwaitingPlayer} from './romance-scene/index.js';
 import {aiStatus,askTai,chooseTaiAction} from './gateway.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
@@ -38,6 +39,9 @@ function elapsed(s,entry,c,now){
  return Math.max(0,stamp(s)-stamp(entry));
 }
 function paused(s){
+ // A two-person scene is waiting for the player; automatic outreach would
+ // write the next line for them and spoil the authored pause.
+ if(romanceSceneAwaitingPlayer(history(s)))return true;
  const last=history(s).filter(m=>m.from==='me').at(-1);
  return !!last&&/晚安|去睡|睡了|不聊了|别发|别理我|不要打扰|让我静|我在忙|先忙|先别聊/.test(last.voiceCaption||last.text);
 }
