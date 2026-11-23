@@ -472,7 +472,15 @@ store.subscribe(()=>{
    // not activated its optional Service Worker yet.
    const packageCache=cacheName&&globalThis.caches?await caches.open(cacheName):null;
    const bundledFetch=async url=>(await packageCache?.match(url))||fetch(url);
-   await hydrateBuiltInPresets(store,bundledFetch);
+   // Never freeze at 99% if history parsing encounters a stalled response.
+   // All static files are already cached; this bound only protects hydration.
+   let hydrateTimer;
+   try{
+    await Promise.race([
+     hydrateBuiltInPresets(store,bundledFetch),
+     new Promise((_,reject)=>{hydrateTimer=setTimeout(()=>reject(new Error('劇情資料初始化超時，請重試')),20000);})
+    ]);
+   }finally{clearTimeout(hydrateTimer);}
    if(loadingLabel)loadingLabel.textContent='載入完成';
    if(loadingNumber)loadingNumber.textContent='100%';
    if(loadingBar)loadingBar.style.width='100%';
