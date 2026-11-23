@@ -82,7 +82,7 @@ export class PlayerCloudSave{
      // checkpoint instead of treating that placeholder as the current game.
      // For a nonempty older local game, preserve both and ask the player.
      if(!this.allowRollback&&this.remoteProgress>progressOf(this.store.get())){
-      if(this.store.get().day===1&&raw===initialRaw)return await this.restore(row,{expectedRaw:raw});
+      if((sameLineage&&localHash===this.meta.hash)||this.store.get().day===1&&raw===initialRaw)return await this.restore(row,{expectedRaw:raw});
       this.conflict(row);return false;
      }
      if((sameLineage&&this.meta.revision===row.revision)||(this.meta.pending?.id&&row.client_write_id===this.meta.pending.id)){
