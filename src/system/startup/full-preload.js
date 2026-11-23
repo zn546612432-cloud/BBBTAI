@@ -48,7 +48,7 @@ function ordered(assets){
  const priority=path=>/^icons\//.test(path)?0:/^wallpapers\//.test(path)?1:/\.(?:png|jpe?g|webp|svg|gif|avif)$/.test(path)?2:/\.(?:mp3|wav|m4a|mp4|webm)$/.test(path)?3:4;
  return assets.slice().sort((a,b)=>priority(a.path)-priority(b.path));
 }
-async function loadAssets({manifest,cache,onProgress}){
+async function loadAssets({manifest,cache,previous,onProgress}){
  const assets=ordered(manifest.assets),total=assets.length;
  let done=0,failed=0,cursor=0;const errors=[];
  onProgress({finished:0,total,failed,ready:false});
@@ -57,9 +57,18 @@ async function loadAssets({manifest,cache,onProgress}){
    const item=assets[cursor++];const url=assetUrl(item.path);
    try{
     if(!(await cache.match(url))){
-     const response=await fetch(url,{cache:'default'});
-     if(!response.ok||response.type==='opaque')throw Error('HTTP '+response.status);
-     await cache.put(url,response);
+     let reused=false;
+     if(previous?.versions.get(item.path)===item.hash){
+      const saved=await previous.cache.match(url);
+      if(saved){await cache.put(url,saved);reused=true;}
+     }
+     if(!reused){
+      // Bypass a previous service-worker cache when the artwork changed.
+      const freshUrl=url+(url.includes('?')?'&':'?')+'__xm_package='+encodeURIComponent(manifest.version);
+      const response=await fetch(freshUrl,{cache:'reload'});
+      if(!response.ok||response.type==='opaque')throw Error('HTTP '+response.status);
+      await cache.put(url,response);
+     }
     }
    }catch(error){failed++;if(errors.length<5)errors.push(item.path+': '+error.message);}
    done++;onProgress({finished:done,total,failed,ready:false});
@@ -73,7 +82,7 @@ async function trimOldCaches(name,namespace){
  // Retain the latest previous package for any tab still open on an older release.
  for(const old of all.filter(k=>k!==name).slice(0,-1))await caches.delete(old);
 }
-export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCritical=initialLockscreenImageUrls,loadManifest=getManifest,register=registerWorker,openCache=name=>caches.open(name),fetchAssets=loadAssets}={}){
+export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCritical=initialLockscreenImageUrls,loadManifest=getManifest,register=registerWorker,openCache=name=>caches.open(name),fetchAssets=loadAssets,decode=decodeImage}={}){
  let ready=false,finished=0,total=1,failed=0;
  const report=()=>onProgress({finished,total,failed,ready});
  const result=(async()=>{
@@ -83,9 +92,15 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
   const namespace=CACHE_PREFIX+site+'-';
   const name=namespace+manifest.version;
   const cache=await openCache(name);
+  let previous=null;
+  for(const old of (await caches.keys()).filter(k=>k.startsWith(namespace)&&k!==name).reverse()){
+   const prior=await caches.open(old),saved=await prior.match(manifestUrl());
+   if(!saved)continue;
+   try{const data=await saved.json();previous={cache:prior,versions:new Map(data.assets.map(x=>[x.path,x.hash]))};break;}catch{}
+  }
   await cache.put(manifestUrl(),new Response(JSON.stringify(manifest),{headers:{'Content-Type':'application/json'}}));
   total=manifest.assets.length+1;report();
-  const status=await fetchAssets({manifest,cache,onProgress:p=>{finished=p.finished;failed=p.failed;report();}});
+  const status=await fetchAssets({manifest,cache,previous,onProgress:p=>{finished=p.finished;failed=p.failed;report();}});
   if(status.failed)throw Error('有 '+status.failed+' 項素材未能載入：'+status.errors.join('；'));
   // A cache hit proves bytes are present on disk, not that Safari decoded them.
   // Decode only the shell's immediately visible assets for reliable first paint.
@@ -93,13 +108,13 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
   for(const source of critical){
    if(!/^data:|^blob:/i.test(source)&&/^https?:/i.test(source)&&!source.startsWith(location.origin))continue;
    // Bundled WebP atlas paths are already rewritten by the release builder.
-   const ok=await decodeImage(source);
+   const ok=await decode(source);
    if(!ok)throw Error('主畫面素材解碼失敗：'+source);
   }
   finished=total;ready=true;report();
   navigator.serviceWorker.controller?.postMessage({type:'ACTIVATE_PACKAGE',cache:name});
   // Old package deletion never holds up entering the game.
-  void trimOldCaches(name).catch(()=>{});
+  void trimOldCaches(name,namespace).catch(()=>{});
   return {reason:'complete',finished,total,failed:0};
  })();
  return {ready:result,complete:result,isReady:()=>ready,progress:()=>({finished,total,failed,ready})};
