@@ -1,8 +1,8 @@
-import {isStory55,date55} from './state.js';
+import {isStory55,date55,nodeStatus} from './state.js';
 
-// D55 authored chat chronology. The voice bubble is SENT at 22:46;
-// Xitai's last call-out is delivered after three game minutes, not on playback.
-export const ENDING_CLOCKS=Object.freeze(['21:00','21:00','21:16','21:49','22:25','22:46','22:49']);
+// Only the confirmed D55 closing beats remain. The superseded 21:00–22:25
+// chat has been retired; 22:46 audio and 22:49 final call-out are preserved.
+export const ENDING_CLOCKS=Object.freeze(['22:46','22:49']);
 export const ENDING_FINAL_REPLY='熙蒙！熙蒙！';
 export const ENDING_NEXT_DATE='2025-07-13';
 export const FAST_FORWARD_MS=12000;
@@ -11,13 +11,13 @@ export const ZERO_PERCENT_MS=1000;
 export const RECHARGE_MS=4000;
 export const ENDING_VOICE_APPEAR_DELAY_MS=4000;
 
-// The watch recording must not appear under the 22:25 NPC bubble.
-// The story clock pauses during its playback, then resumes at a fixed
-// 3 real seconds per game minute so the final message is never immediate.
+// The watch recording is only available when the actual 22:46 node unlocks.
+// The clock pauses during playback, then resumes at 3 real seconds/minute.
 export const endingAwaitingVoice55=s=>isStory55(s)&&!s.story55?.ended
- &&s.day===55&&s.story55?.scenes?.ending?.index===5;
+ &&s.day===55&&s.clock>='22:46'&&nodeStatus(s,'ending').state==='ready'
+ &&(s.story55?.scenes?.ending?.index??0)===0;
 export const endingAwaitingReply55=s=>isStory55(s)&&!s.story55?.ended
- &&s.day===55&&s.story55?.scenes?.ending?.index===6
+ &&s.day===55&&s.story55?.scenes?.ending?.index===1
  &&s.story55?.finalAudioHeard===true;
 export const endingVoiceRevealDue55=(s,now=Date.now())=>endingAwaitingVoice55(s)
  &&!s.story55.endingVoiceAvailable
@@ -49,7 +49,7 @@ export const secondView55=s=>isStory55(s)&&s.story55?.secondView===true;
 export const finalePhase55=s=>isStory55(s)?s.story55?.finalTransition?.phase||null:null;
 export const finaleInProgress55=s=>!!finalePhase55(s)&&!secondView55(s);
 export const endingReplyDue55=s=>isStory55(s)&&!s.story55.ended
- &&s.story55?.scenes?.ending?.index===6
+ &&s.story55?.scenes?.ending?.index===1
  &&s.story55?.endingVoiceSent===true
  &&s.story55?.finalAudioHeard===true
  &&s.day===55&&s.clock>='22:49';

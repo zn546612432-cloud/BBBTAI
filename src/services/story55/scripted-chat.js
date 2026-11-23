@@ -39,7 +39,7 @@ export function currentScript55(s,channel,conversationId,now=Date.now()){
   const progress=scene55(s,n.id),lines=sceneLines(s,n.id);
   const index=progress.index||0;
   if(index>=lines.length)continue;
-  if(n.id==='ending'&&index===6&&!endingReplyDue55(s))continue;
+  if(n.id==='ending'&&index===1&&!endingReplyDue55(s))continue;
   const [kind,text]=lines[index];
   if(kind==='me'&&explicitlyPacedScene55(s,n.id)&&Number.isFinite(progress.nextAt)&&now<progress.nextAt)
    return {id:n.id,index,kind:'waiting',text:'',channel,conversationId,managed:true};

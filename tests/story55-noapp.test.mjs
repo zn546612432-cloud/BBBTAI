@@ -63,21 +63,18 @@ test('NoApp installation rings immediately; recognition is an automatic preset c
  assert.match(show(s),/class="composer"/);
  }finally{callAction('tai-hangup',ctx);Object.assign(globalThis,old);}
 });
-test('D55 final recording is prompted and persisted inside NoApp, not Calendar',()=>{
+test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not Calendar',()=>{
  const s=make();previewNode55(s,'ending');
  assert.equal(s.day,55);
  assert.equal(s.story55.noappInstalled,true);
  assert.deepEqual(nodeLink55(s,'ending'),{appId:'noapp',route:'/chat/tai',params:{node:'ending'}});
  assert.match(show(s),/noapp-story55-active/);
- for(let i=0;i<40;i++){
-  const line=sceneLines(s,'ending')[scene55(s,'ending').index];
-  if(line[0]==='watch')break;
-  advanceScene55(s,'ending');
- }
  assert.equal(sceneLines(s,'ending')[scene55(s,'ending').index][0],'watch');
  assert.doesNotMatch(show(s),/data-action="s55-final-audio"/);
- assert.equal(s.clock,'22:25');
- assert.equal(revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS),true);
+ assert.equal(s.clock,'22:46');
+ const start=Date.now();
+ s.story55.endingVoiceQueuedAt=start;
+ assert.equal(revealEndingVoice55(s,start+ENDING_VOICE_APPEAR_DELAY_MS),true);
  assert.match(show(s),/data-action="s55-final-audio"/);
  assert.match(show(s),/22:46/);
  s.story55.finalAudioHeard=true;advanceScene55(s,'ending');
@@ -85,24 +82,23 @@ test('D55 final recording is prompted and persisted inside NoApp, not Calendar',
  assert.match(show(s),/noapp-final-voice/);
  assert.match(show(s),/aria-label="播放语音"/);
  assert.doesNotMatch(show(s),/最后的密钥录音/);
- assert.equal(scene55(s,'ending').index,6);
+ assert.equal(scene55(s,'ending').index,1);
  assert.equal(s.clock,'22:46');
  advanceGameMinutes(s,3);advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
  assert.equal(s.deathPhase,'s55-accelerating');
  assert.ok(story55Config(s).finalAudio.endsWith('.mp3'));
 });
-test('D55 NoApp composer is never removed for 22:25, 22:46, 22:49 or after the last reply',()=>{
+test('D55 NoApp composer stays available at 22:46, 22:49 and after the last reply',()=>{
  const s=make();previewNode55(s,'ending');
- for(let i=0;i<5;i++)advanceScene55(s,'ending');
- assert.equal(scene55(s,'ending').index,5);
+ assert.equal(scene55(s,'ending').index,0);
  assert.match(show(s),/data-form="send-chat"/);
  assert.match(show(s),/class="composer"/);
- revealEndingVoice55(s,s.story55.endingVoiceQueuedAt+ENDING_VOICE_APPEAR_DELAY_MS);
+ revealEndingVoice55(s);
  assert.match(show(s),/data-form="send-chat"/);
  s.story55.finalAudioHeard=true;
  advanceScene55(s,'ending');
- assert.equal(scene55(s,'ending').index,6);
+ assert.equal(scene55(s,'ending').index,1);
  assert.match(show(s),/data-form="send-chat"/);
  advanceGameMinutes(s,3);advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
