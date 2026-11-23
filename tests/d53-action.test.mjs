@@ -40,6 +40,8 @@ test('updating an old D54 save does not replay D53 or move its clock backwards',
 test('D53 advances through native Send, the original phone checkpoint, then the outcome',()=>{
  const s=activateStory55(initialState());s.day=53;s.clock='19:59';s.story55.activeScene=null;
  for(const n of s.story55.config.nodes)if(n.day<53)s.story55.completed[n.id]={day:n.day,clock:'23:00'};
+ // This accelerated fixture marks D48 completed without creating its real Isolde contact.
+ if(!s.content.conversations.mirage.some(c=>c.id==='mc-isolde-mirage'))s.content.conversations.mirage.push({id:'mc-isolde-mirage',name:'Isolde Mirage',messages:[],unread:0});
  assert.equal(nodeStatus(s,D53_ACTION_START).state,'locked');
  advanceGameMinutes(s,60);assert.equal(s.clock,'20:00');
  assert.equal(pendingTimedStoryEvent(s).id,D53_ACTION_START);
