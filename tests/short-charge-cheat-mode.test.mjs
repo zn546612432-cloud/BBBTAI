@@ -6,6 +6,7 @@ import {LockScreen} from '../src/system/lock.js';
 import {worldMinuteRate} from '../src/system/time/clock.js';
 import {beginShortCharge,endShortCharge} from '../src/system/power/battery.js';
 import {nextStoryEventClock55} from '../src/services/story55/state.js';
+import {nextAuthoredChatBoundary} from '../src/services/messaging/lifecycle/registry.js';
 import {jumpShortChargeToNextEvent} from '../src/system/power/short-charge-jump.js';
 import {dynamicIsland} from '../src/system/power/island.js';
 import {authorize,begin} from '../src/apps/ghost/state.js';
@@ -45,4 +46,45 @@ test('purple presence stays textless and is invisible before recognition',()=>{
  s.day=54;s.story55.completed.recognition={day:33,clock:'12:00'};
  const island=dynamicIsland(s);
  assert.match(island,/has-tai-glow/);assert.doesNotMatch(island,/熙泰在線/);
+});
+
+test('friends cheat considers D02 authored player-initiated chats before the evening event',()=>{
+ const s=phone();
+ s.story55.config.nodes=[{id:'evening',day:2,at:'20:00',kind:'scene',title:'晚上主線',requires:[]}];
+ const next=nextAuthoredChatBoundary(s);
+ assert.equal(next.kind,'upcoming');
+ assert.equal(next.clock,'12:16'); // 熙蒙 must send the prefilled first line to 熙旺.
+ assert.equal(nextStoryEventClock55(s),'20:00');
+ s.editor.cheatMode=true;
+ const result=jumpShortChargeToNextEvent(s,{includeAuthoredChats:true});
+ assert.equal(result.ok,true);
+ assert.equal(s.clock,'12:16');
+});
+
+test('daily chat lookup catches the later D02 Xiao Xin conversation when Wang is complete',()=>{
+ const s=phone();s.clock='13:00';
+ s.story55.d02??={};s.story55.d02.wechat={version:2,wang:{completed:true}};
+ const next=nextAuthoredChatBoundary(s);
+ assert.equal(next.kind,'upcoming');
+ assert.equal(next.clock,'16:08');
+});
+
+test('friends cheat cannot skip a pending typed daily chat response',()=>{
+ const s=phone();s.clock='12:18';s.editor.cheatMode=true;
+ s.story55.d02??={};s.story55.d02.wechat={version:2,wang:{started:true,index:2,nextAt:null,completed:false}};
+ const next=nextAuthoredChatBoundary(s);
+ assert.equal(next.kind,'reply');
+ assert.equal(next.conversationId,'wang');
+ const result=jumpShortChargeToNextEvent(s,{includeAuthoredChats:true});
+ assert.equal(result.reason,'pending-reply');
+ assert.equal(result.ok,false);
+ assert.equal(s.clock,'12:18');
+});
+
+test('friends cheat sees D25 daily chat without changing the default mainline clock finder',()=>{
+ const s=phone();s.day=25;s.clock='10:00';
+ s.story55.completed['d23-chess-finish']={day:23,clock:'23:00'};
+ s.story55.config.nodes=[{id:'night',day:25,at:'21:00',kind:'scene',title:'主線',requires:[]}];
+ assert.equal(nextAuthoredChatBoundary(s).clock,'11:38');
+ assert.equal(nextStoryEventClock55(s),'21:00');
 });

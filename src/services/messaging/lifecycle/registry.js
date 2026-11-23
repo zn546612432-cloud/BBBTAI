@@ -28,3 +28,17 @@ export const AUTHORED_CHAT_TRACKS=[
  ...D14_D24_TRACKS,
  {name:'D25',track:d25Track}
 ];
+
+// One shared query across registered daily chat schedules. Returning a current
+// pending dialogue prevents a cheat jump from skipping its required player Send.
+export function nextAuthoredChatBoundary(s){
+ let next=null,active=null;
+ for(const {track} of AUTHORED_CHAT_TRACKS){
+  const item=track.nextBoundary?.(s);
+  if(!item)continue;
+  if(item.kind==='reply')return item;
+  if(item.kind==='delivering'){active??=item;continue;}
+  if(item.kind==='upcoming'&&(!next||item.minute<next.minute))next=item;
+ }
+ return active||next;
+}

@@ -252,6 +252,38 @@ export function createConversationTrack(config){
    ||q.lateRun&&!q.lateHandled&&qDue(q)!=null&&now>=qDue(q)
    ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
  }
+ // Peek at the same authored chat lifecycle used for real NPC delivery and player Send.
+ // Never synthesize a reply or mark a scene complete during time jumps.
+ function nextBoundary(s){
+  if(!supported(s)||s.day!==config.day)return null;
+  const map=root(s),now=conversationMinute(s);
+  let upcoming=null,active=null,pending=null;
+  for(const d of defs){
+   const q=map[d.id]||{index:0,started:false};
+   if(q.completed||q.skipped||q.historySettled||q.lateHandled||q.lateRun||d.endWhen?.(s))continue;
+   const index=q.index||0,line=lines(s,d,q)[index];
+   if(!line)continue;
+   const at=startMinute(s,d,q),limit=endMinute(s,d,q);
+   const planned=plannedClock(s,d,index);
+   const when=Math.max(at,planned?(d.day-1)*1440+minute(planned):at);
+   // Some chats enable only once their scheduled clock is reached (D02 Xin).
+   const eligible=q.started||when<=now?s:{...s,clock:stamp(when).clock};
+   if(!allowed(eligible,d)||d.enabled&&!d.enabled(eligible,q))continue;
+   if(!q.started&&(when>=limit||now>=limit))continue;
+   if(q.started&&isPast(s,d,q))continue;
+   const item={channel:d.channel,conversationId:chatId(s,d),sceneId:d.id,track:config.prefix};
+   if(line.who==='me'&&when<=now&&lineIsDue(s,d,index)){
+    pending??={...item,kind:'reply'};continue;
+   }
+   if(when>now){
+    const candidate={...item,kind:'upcoming',clock:stamp(when).clock,minute:when};
+    if(!upcoming||candidate.minute<upcoming.minute)upcoming=candidate;
+   }else if(line.who!=='me'&&(q.started?qDue(q)!=null:true)){
+    active??={...item,kind:'delivering'};
+   }
+  }
+  return pending||active||upcoming;
+ }
  function busy(s,id){
   if(!supported(s)||s.day<config.day)return false;
   return defs.some(d=>{const q=get(s,d);return chatId(s,d)===id&&q&&!q.completed&&!q.lateHandled&&(q.lateRun||q.started&&!q.historySettled&&!isPast(s,d,q))&&qDue(q)!=null;});
@@ -283,5 +315,5 @@ export function createConversationTrack(config){
   }
   return items;
  }
- return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure,pendingCatchup,settleCatchup};
+ return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure,nextBoundary,pendingCatchup,settleCatchup};
 }
