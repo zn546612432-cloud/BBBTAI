@@ -81,7 +81,16 @@ export class PlayerCloudSave{
  }
  async flush(){
   if(!this.enabled||this.closed||this.applying||this.switching||this.status.conflict)return false;
-  if(this.saving)return this.saving;
+  if(this.saving){
+   // A second device edit may arrive while the startup save is in flight.
+   // Do not report the first (stale) upload as success for the newer snapshot:
+   // the newer edit must run its own revision CAS and detect a remote conflict.
+   const settled=await this.saving;
+   if(!settled||this.closed||this.status.conflict)return false;
+   const latest=this.pending||JSON.stringify(this.store.get());
+   if(await hash(latest)!==this.meta.hash||this.meta.missingMedia)return this.flush();
+   return settled;
+  }
   if(this.revision===null){await this.start();return false;}
   clearTimeout(this.timer);this.timer=null;
   this.saving=(async()=>{
