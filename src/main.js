@@ -47,6 +47,7 @@ import {IncomingBannerQueue,queueableNotices} from './services/messaging/incomin
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
+import {renderPhoneScreen,activePhoneScreen} from './system/screen.js';
 import {beginCompleteGamePreload} from './system/startup/full-preload.js';
 import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
@@ -66,7 +67,7 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
-// Startup may be deliberately long while the complete package is cached.
+// The splash waits for App essentials; the rest of the package downloads during play.
 // Stop the old 12-second splash watchdog once executable code is running.
 globalThis.__xmBootStarted?.();
 let store;
@@ -109,7 +110,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
   if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
  }finally{clearTimeout(timer);}
 };
-// Hydrate the authored history only after the complete game package is on disk.
+// Hydrate authored history once essential JSON is on disk, before App readiness.
 // It is part of startup readiness, not an unbounded invisible 0% prerequisite.
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
@@ -192,7 +193,7 @@ function setShade({progress,settle=true}){
 function animateNavigation(previous,direction=1){
  const layer=$('#transition-layer');layer.replaceChildren();
  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- const current=$('#screen-layer').firstElementChild;
+ const current=activePhoneScreen($('#screen-layer'));
  if(swipeHomeReturn){
   const gesture=swipeHomeReturn;swipeHomeReturn=null;
   if(previous){
@@ -214,8 +215,8 @@ function render(){
  if(draggingHome&&!phoneBlocked(store.get()))return;
  if(phoneBlocked(store.get()))draggingHome=false;
  const s=store.get(),current=s.nav.current,navigation=s.unlocked?JSON.stringify(current):'lock';
- const changed=lastNavigation!==null&&navigation!==lastNavigation,nativeTabSwitch=changed&&isNativeTabSwitch(lastLocation,current),screen=$('#screen-layer'),previous=changed&&!nativeTabSwitch?screen.firstElementChild?.cloneNode(true):null;
- if(previous){const nodes=screen.firstElementChild.querySelectorAll('.app-content,.chat-messages');previous.querySelectorAll('.app-content,.chat-messages').forEach((node,i)=>node.dataset.restoreScroll=String(nodes[i].scrollTop));}
+ const changed=lastNavigation!==null&&navigation!==lastNavigation,nativeTabSwitch=changed&&isNativeTabSwitch(lastLocation,current),screen=$('#screen-layer'),previous=changed&&!nativeTabSwitch?activePhoneScreen(screen)?.cloneNode(true):null;
+ if(previous){const nodes=activePhoneScreen(screen).querySelectorAll('.app-content,.chat-messages');previous.querySelectorAll('.app-content,.chat-messages').forEach((node,i)=>node.dataset.restoreScroll=String(nodes[i].scrollTop));}
  const oldScroll=$('#screen-layer #app-content')?.scrollTop,actorsOpen=$('.editor-actors')?.open;
  const messagePane=$('#screen-layer .chat-messages'),nearBottom=!messagePane||messagePane.scrollHeight-messagePane.clientHeight-messagePane.scrollTop<85;
  const oldKeys=new Set([...screen.querySelectorAll('.message-row[data-key]')].map(el=>el.dataset.key));
@@ -236,7 +237,7 @@ function render(){
  else if(!s.unlocked)body=lock(s,lockscreen.stage,lockscreen.digits);
  else if(current.appId==='home')body=home(s);
  else{const app=registry.get(current.appId);if(current.appId==='mirage'&&lastLocation?.appId!=='mirage')app?.onEnter?.();body=app?appFrame(s,app,app.render(ctx(),current)):'<div class="empty">App 不可用</div>';}
- patchHTML(screen,body);
+ renderPhoneScreen(screen,{home:home(s),body,showHome:s.unlocked&&current.appId==='home'&&!['off','passcode'].includes(s.deathPhase)});
  const blocked=phoneBlocked(s)||!!fullscreen;
  $('#phone').classList.toggle('death-draining',s.deathPhase==='draining');
  for(const id of ['screen-layer','status-layer','shade-layer','task-layer','homebar'])$('#'+id).inert=blocked;
@@ -444,6 +445,16 @@ store.subscribe(()=>{
  else{
   lockAssets=beginCompleteGamePreload({
    state:store.get(),
+   prepareState:async bundledFetch=>{
+    let hydrateTimer;
+    try{
+     await Promise.race([
+      hydrateBuiltInPresets(store,bundledFetch),
+      new Promise((_,reject)=>{hydrateTimer=setTimeout(()=>reject(new Error('劇情資料初始化超時，請重試')),20000);})
+     ]);
+    }finally{clearTimeout(hydrateTimer);}
+    return store.get();
+   },
    onProgress:({finished,total,failed,phase})=>{
     const percent=Math.floor(finished/Math.max(1,total)*100);
     const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
@@ -451,7 +462,8 @@ store.subscribe(()=>{
     const stageLabel={
      manifest:'正在讀取資源清單',
      cache:'正在檢查本機快取',
-     assets:'正在預載全部資源',
+     history:'正在載入聊天記錄',
+     assets:'正在準備所有 App',
      decoding:'正在準備主畫面',
      map:'正在啟動離線地圖',
      complete:'載入完成'
@@ -461,33 +473,11 @@ store.subscribe(()=>{
     if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
    }
   });
-  lockAssets.ready.then(async({cacheName}={})=>{
-   const loadingLabel=$('#xm-boot-loading-label');
-   const loadingNumber=$('#xm-boot-percent');
-   const loadingBar=$('#xm-boot-progress span');
-   if(loadingLabel)loadingLabel.textContent='正在載入劇情與聊天記錄';
-   if(loadingNumber)loadingNumber.textContent='99%';
-   if(loadingBar)loadingBar.style.width='99%';
-   // Read bundled history from the package cache even when Safari has
-   // not activated its optional Service Worker yet.
-   const packageCache=cacheName&&globalThis.caches?await caches.open(cacheName):null;
-   const bundledFetch=async url=>(await packageCache?.match(url))||fetch(url);
-   // Never freeze at 99% if history parsing encounters a stalled response.
-   // All static files are already cached; this bound only protects hydration.
-   let hydrateTimer;
-   try{
-    await Promise.race([
-     hydrateBuiltInPresets(store,bundledFetch),
-     new Promise((_,reject)=>{hydrateTimer=setTimeout(()=>reject(new Error('劇情資料初始化超時，請重試')),20000);})
-    ]);
-   }finally{clearTimeout(hydrateTimer);}
-   if(loadingLabel)loadingLabel.textContent='載入完成';
-   if(loadingNumber)loadingNumber.textContent='100%';
-   if(loadingBar)loadingBar.style.width='100%';
+  lockAssets.ready.then(()=>{
    const message=$('#xm-boot-message');
-   if(message)message.textContent='遊戲資源已全部載入。';
+   if(message)message.textContent='已準備就緒。';
    if(globalThis.__xmBootIntroReady){
-    globalThis.__xmBootIntroReady(closeBoot,'遊戲資源已全部載入。');
+    globalThis.__xmBootIntroReady(closeBoot,'已準備就緒。');
    }else closeBoot();
   }).catch(error=>{
    console.error('啟動資源未完整載入',error);

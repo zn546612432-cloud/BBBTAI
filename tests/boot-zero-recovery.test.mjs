@@ -64,7 +64,8 @@ test('story and snapshot hydration do not block the phone indefinitely',()=>{
  assert.match(code,/Promise\.race\(/);
  assert.match(code,/hydrateBuiltInPresets\(store,bundledFetch\)/);
  assert.match(code,/劇情資料初始化超時/);
- assert.match(code,/lockAssets\.ready\.then\(async/);
+ assert.match(code,/prepareState:async bundledFetch/);
+ assert.match(code,/lockAssets\.ready\.then\(/);
  assert.match(code,/primeTestSnapshots\(store\.storage\)/);
  assert.match(code,/globalThis\.__xmBootStarted\?\.\(\)/);
  assert.doesNotMatch(code,/localStorage\.clear\(\)|store\.replace\(initialState\(\)\)/);

@@ -1,5 +1,7 @@
 /* A persistent phone surface: navigation animates; data updates never restart it. */
 #screen-layer{inset:0}
+#screen-layer>[data-home-layer],#screen-layer>[data-app-layer]{position:absolute;inset:0}
+#screen-layer>.screen-inactive{visibility:hidden;pointer-events:none}
 #transition-layer{position:absolute;inset:0;z-index:22;pointer-events:none;overflow:hidden}
 #transition-layer>*{position:absolute;inset:0;width:100%;height:100%}
 .home-screen,.app-view{animation:none}

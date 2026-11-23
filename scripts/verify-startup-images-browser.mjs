@@ -43,10 +43,9 @@ try{
  assert.equal(await page.locator('#xm-boot-next').isVisible(),false,'do not enter while a visible photo is still pending');
  assert.notEqual(await page.locator('#xm-boot-percent').textContent(),'100%');
  const start=performance.now();releaseCurrent();
- await Promise.race([futureRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('future-day image was not requested during complete boot')),90000))]);
- assert.equal(await page.locator('#xm-boot-next').isVisible(),false,'future-day artwork must finish before the player can enter');
- releaseFuture();
+ await Promise.race([futureRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('future-day image was not requested by the background queue')),90000))]);
  await page.locator('#xm-boot-next').waitFor({state:'visible',timeout:180000});
+ assert.equal(await page.locator('#xm-boot-next').isVisible(),true,'future-day artwork cannot block entry');
  const foregroundReadyMs=Math.round(performance.now()-start);
  const countBefore=requests.filter(url=>url===current).length;
  await page.locator('#xm-boot-next').click();
@@ -57,6 +56,7 @@ try{
  await page.waitForFunction(()=>[...document.querySelectorAll('.wx-moments-screen img')].every(img=>img.complete&&img.naturalWidth>0));
  assert.equal(requests.filter(url=>url===current).length,countBefore,'opening Moments reuses the image fetched during boot');
  const imageSources=await page.locator('.wx-moments-screen img').evaluateAll(images=>images.map(img=>img.src));
+ releaseFuture();
  assert.ok(imageSources.every(url=>!url.includes('/releases/')),'all visible public photos and avatars use stable URLs');
  assert.ok(!requests.some(url=>/\/releases\/[^/]+\/(?:apps|assets|icons|wallpapers)\//.test(url)),'no bundled media relies on old release directories');
  assert.deepEqual(pngRequests,[],'preload and icons must both request the optimized WebP atlas');
@@ -70,7 +70,7 @@ try{
  assert.ok(visiblePhoto.width>100&&visiblePhoto.height>100,JSON.stringify(visiblePhoto));
  assert.equal(visiblePhoto.visibility,'visible');assert.equal(visiblePhoto.opacity,'1');
  await page.screenshot({path:out+'/390-moments-ready.png'});
- await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,visiblePhoto,delayedFutureImage:'blocked entry until cached',optimizedAtlases:'no original PNG requests'},null,2));
- console.log('PASS complete cold-cache readiness, decoded images and shared URLs',foregroundReadyMs+'ms');
+ await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,visiblePhoto,delayedFutureImage:'downloads while entry and Apps remain available',optimizedAtlases:'no original PNG requests'},null,2));
+ console.log('PASS staged cold-cache readiness, decoded images and shared URLs',foregroundReadyMs+'ms');
 }catch(error){await page.screenshot({path:out+'/failure.png'});throw error;}
 finally{releaseCurrent();releaseFuture();await context.close();await browser.close();await new Promise(resolve=>server.close(resolve));}
