@@ -111,7 +111,7 @@ export function minimizedCallView(s){
  if(!s.unlocked||isNoAppCallRoute(s.nav.current)||!['dialing','connected'].includes(call.state))return '';
  const dialing=call.state==='dialing',listening=!!call.listening;
  const replyStatus=taiCallReplyStatus(call,call.caption||'');
- const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':replyStatus|| (call.muted?'已靜音':'通話中');
+ const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':replyStatus?'通話中 · '+(call.replyPhase==='thinking'?'回覆中':'準備語音'):call.muted?'已靜音':'通話中';
  const action=call.audioReady?'tai-play-audio':dialing||call.scripted?'tai-resume-call':'tai-mic';
  const disabled=!dialing&&(call.requestingMic||call.transcribing);
  return '<aside class="tai-mini-call'+(listening?' is-recording':'')+'" aria-label="NoApp 通話">'+
