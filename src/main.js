@@ -461,14 +461,18 @@ store.subscribe(()=>{
     if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
    }
   });
-  lockAssets.ready.then(async()=>{
+  lockAssets.ready.then(async({cacheName}={})=>{
    const loadingLabel=$('#xm-boot-loading-label');
    const loadingNumber=$('#xm-boot-percent');
    const loadingBar=$('#xm-boot-progress span');
    if(loadingLabel)loadingLabel.textContent='正在載入劇情與聊天記錄';
    if(loadingNumber)loadingNumber.textContent='99%';
    if(loadingBar)loadingBar.style.width='99%';
-   await hydrateBuiltInPresets(store);
+   // Read bundled history from the package cache even when Safari has
+   // not activated its optional Service Worker yet.
+   const packageCache=cacheName&&globalThis.caches?await caches.open(cacheName):null;
+   const bundledFetch=async url=>(await packageCache?.match(url))||fetch(url);
+   await hydrateBuiltInPresets(store,bundledFetch);
    if(loadingLabel)loadingLabel.textContent='載入完成';
    if(loadingNumber)loadingNumber.textContent='100%';
    if(loadingBar)loadingBar.style.width='100%';
