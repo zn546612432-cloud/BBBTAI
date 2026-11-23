@@ -111,6 +111,32 @@ test('missing or corrupt primary recovers the latest durable progress before con
  }
 });
 
+test('stale D01 primary restores later IndexedDB checkpoint without losing the original primary',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();store.journal.close();
+ const day1=initialState();storage.setItem(KEY,JSON.stringify(day1));
+ const recovered=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(recovered.get().day,24);
+ assert.equal(recovered.get().clock,'22:16');
+ assert.equal(JSON.parse(storage.getItem(KEY+':before-checkpoint-recovery')).day,1);
+ assert.equal(JSON.parse(storage.getItem(KEY)).day,24);
+ await recovered.journal.flush();recovered.journal.close();
+});
+
+test('confirmed D01 restart is not mistaken for a stale local save',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();store.journal.close();
+ storage.setItem(KEY+':explicit-restart','1');
+ storage.setItem(KEY,JSON.stringify(initialState()));
+ const reboot=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(reboot.get().day,1);
+ await reboot.journal.flush();reboot.journal.close();
+ assert.equal(storage.getItem(KEY+':explicit-restart'),null);
+ const again=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(again.get().day,1);
+ await again.journal.flush();again.journal.close();
+});
+
 test('unreadable existing save is preserved byte for byte instead of replaced with D01',async()=>{
  const storage=memoryStorage();storage.data.set(KEY,'{damaged-player-save');
  assert.throws(()=>new PhoneStore(storage),/已保留原資料/);
