@@ -160,7 +160,7 @@ import {sendChat} from '../src/components/chat.js';
 import allMain from '../docs/chat-v2/main-all-chat-source.json' with {type:'json'};
 import {readChatSources} from '../src/apps/developer/features/conversations/source-model.js';
 test('every unmodified D01–D55 source remains byte-exact against the immutable main baseline',()=>{
- const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);for(const key of ['d19:dessert','d20:early','d20:soup'])changed.add(key);changed.add('node:azathoth-invitation');changed.add('node:lead');changed.add('node:plan');changed.add('node:recognition');assert.equal(allMain.rows.filter(r=>r.key==='d19:dessert').length,1);
+ const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);for(const key of ['d19:dessert','d20:early','d20:soup'])changed.add(key);for(const id of ['lunch','earbuds','outfit'])changed.add('d04:'+id);changed.add('node:azathoth-invitation');changed.add('node:lead');changed.add('node:plan');changed.add('node:recognition');assert.equal(allMain.rows.filter(r=>r.key==='d19:dessert').length,1);
  // Author-approved D41/D42 replacement and deletion of the four unfinished
  // placeholders; every other frozen row remains subject to the byte check.
  for(const id of ['show','target','paris','confide','failure','ready','ending'])changed.add('node:'+id);

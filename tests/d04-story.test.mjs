@@ -179,7 +179,9 @@ test('expired C and B commissions cannot be played or settled',()=>{
  assert.equal(s.content.orders.find(x=>x.id===D04_CONTRACTS[1].id).status,'EXPIRED');
 });
 test('all D04 image URLs are locally bundled and use nonzero valid WebP assets on branch',()=>{
- for(const source of Object.values(D04_MEDIA))assert.match(source,/\/apps\/wechat\/media\/d04-(cat|jacket)\.webp/);
+ assert.match(D04_MEDIA.d04Cat,/\/apps\/wechat\/media\/d04-cat\.webp/);
+ assert.match(D04_MEDIA.d04Jacket,/\/apps\/wechat\/media\/d04-jacket\.webp/);
+ assert.match(D04_MEDIA.d04Sticker,/\/apps\/wechat\/stickers\/xin-dog-075\.webp/);
 });
 test('the actual Story55 runtime naturally publishes D04 contracts, but not on D03',()=>{
  const s=activateStory55(initialState());
@@ -199,4 +201,58 @@ test('D04 backlog becomes complete quiet history after a fast day transition',()
  assert.ok(s.notifications.every(n=>n.silent));
  assert.ok(byId(s,'group').every(m=>m.day===4&&m.sentDate==='2025-05-22'));
  assert.equal(byId(s,'hufeng').some(m=>m.from==='me'),false);
+});
+
+test('D04 approved group dialogue uses one sticker and preserves the remaining earbuds IDs',()=>{
+ const pick=id=>D04_GROUP.find(scene=>scene.id===id).lines;
+ assert.equal(pick('outfit').at(-1).text,'哼');
+ assert.ok(!pick('earbuds').some(m=>m.text==='你們能不能盼我點好'));
+ assert.deepEqual(pick('lunch').slice(-2).map(m=>[m.who,m.kind,m.text]),[
+  ['仔仔','text','學人精'],['小辛','image','d04Sticker']
+ ]);
+ const s=fixture('23:10');
+ tickD04Chats(s,0);
+ const m=byId(s,'group');
+ assert.equal(m.find(x=>x.id==='d04-earbuds-13'),undefined);
+ assert.equal(m.find(x=>x.id==='d04-earbuds-14')?.text,'找到了');
+ assert.equal(m.find(x=>x.id==='d04-lunch-17')?.text,D04_MEDIA.d04Sticker);
+ assert.equal(m.find(x=>x.id==='d04-lunch-17')?.kind,'image');
+ assert.equal(m.find(x=>x.id==='d04-outfit-20')?.text,'哼');
+ assert.ok(!m.some(x=>x.id==='d04-lunch-18'||x.id==='d04-lunch-19'||x.id==='d04-lunch-20'));
+});
+
+test('D04 old saves migrate only legacy NPC bubbles and keep player-authored messages',()=>{
+ const s=fixture('23:10'),messages=byId(s,'group');
+ const old=[
+  ['d04-earbuds-13','胡枫','你們能不能盼我點好'],
+  ['d04-earbuds-14','胡枫','找到了'],
+  ['d04-lunch-17','小辛','吃你家大米了？'],
+  ['d04-lunch-18','仔仔','沒有'],
+  ['d04-lunch-19','仔仔','你吃燒鵝'],
+  ['d04-lunch-20','小辛','滾啊哈哈哈哈'],
+  ['d04-outfit-20','小辛','哈哈哈哈哈哈滾']
+ ];
+ for(const [id,from,text] of old){
+  messages.push({id,from,text,kind:'text',storyD04:true,day:4,time:'15:58'});
+  s.notifications.push({id:'authored-wechat-'+id,messageId:id,conversationId:'group',body:text});
+ }
+ messages.push({id:'player-free',from:'me',text:'我自己發的訊息',day:4,time:'12:10',actual:true});
+ s.content.conversations.wechat[0].unread=old.length;
+ s.story55.d04Chats={
+  lunch:{started:true,index:21,completed:true},earbuds:{started:true,index:18,completed:true},
+  outfit:{started:true,index:21,completed:true}
+ };
+ tickD04Chats(s,0);
+ const current=byId(s,'group');
+ assert.equal(current.find(x=>x.id==='d04-lunch-17')?.text,D04_MEDIA.d04Sticker);
+ assert.equal(current.find(x=>x.id==='d04-lunch-17')?.kind,'image');
+ assert.equal(current.find(x=>x.id==='d04-outfit-20')?.text,'哼');
+ assert.ok(!current.some(m=>['d04-lunch-18','d04-lunch-19','d04-lunch-20','d04-earbuds-13'].includes(m.id)));
+ assert.equal(current.filter(m=>m.id==='d04-earbuds-14').length,1);
+ assert.ok(current.some(m=>m.id==='player-free'&&m.text==='我自己發的訊息'));
+ assert.equal(s.story55.d04Chats.earbuds.index,17);
+ assert.equal(s.story55.d04Chats.lunch.index,18);
+ const count=current.length;
+ tickD04Chats(s,100000);
+ assert.equal(byId(s,'group').length,count,'repeated reconciliation must not create duplicates');
 });

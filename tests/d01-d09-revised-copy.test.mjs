@@ -33,7 +33,7 @@ test('D03-D05 keep conversation quantity except explicitly retired Hu Feng DMs',
  assert.equal(bubbles(D05_GROUP),154);
  assert.equal(D05_PRIVATE.length,3);
  assert.equal(D04_GROUP.find(x=>x.id==='earbuds').at,'15:50');
- assert.equal(D04_GROUP.find(x=>x.id==='earbuds').lines.length,18);
+ assert.equal(D04_GROUP.find(x=>x.id==='earbuds').lines.length,17);
  assert.equal(D04_GROUP.find(x=>x.id==='video').lines.length,20);
  assert.equal(D04_GROUP.find(x=>x.id==='caught').lines.length,17);
  assert.ok(D04_GROUP.find(x=>x.id==='caught').lines.some(x=>x.text==='阿蒙在工作？'));
