@@ -85,6 +85,9 @@ test('queued NPC speaks in real NoApp; player lines still require their own nati
    s.story55.completed[node.id]??={day:node.day,clock:'19:00'};
  }
  s.story55.activeScene=null;
+ // tickStory55() may have armed the initial reply with the real wall clock.
+ // This test supplies a deterministic fake "now", so reset only that timer.
+ if(s.story55.scenes[D54_PARIS_FUTURE])delete s.story55.scenes[D54_PARIS_FUTURE].nextAt;
  const initial=chat.messages.length;
  const now=10000;
  // The first tick sets the normal delivery deadline; it never sends every line at once.
