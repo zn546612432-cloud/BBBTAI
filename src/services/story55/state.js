@@ -8,6 +8,7 @@ import {D55_OPENING_CALL,D55_FINAL_CALL} from '../../story/d55/calls.js';
 import {NATIVE_PHONE_CALLS} from '../../story/phone-calls.js';
 import {fixedSceneTimeline} from './fixed-timeline.js';
 import {isD41Chess,d41ChessComplete} from '../../story/d34-d42/d41-chess.js';
+import {taiRelationshipDirector} from '../ai/relationship-director.js';
 export const isStory55=s=>s?.story55?.version===1;
 export const story55Config=s=>s?.story55?.config||STORY55_CONFIG;
 export const nodeById=(s,id)=>story55Config(s).nodes.find(n=>n.id===id);
@@ -76,6 +77,14 @@ export function nodeStatus(s,id){
  if(completed(s,id))return {state:'done',reason:'已完成'};
  if(final55(s))return {state:'locked',reason:'第一视角已结束'};
  if(n.authoredPending)return {state:'locked',reason:'等待後續劇情'};
+ // Optional author-authored relationship scenes use the existing verified
+ // R0-R6 director; no trust-score shortcut or new relationship counter.
+ if(n.romanceStageRequired){
+  const relation=taiRelationshipDirector(s);
+  if(relation.stage<n.romanceStageRequired||relation.rejected||relation.crisis||
+   (n.romanceParisPromiseRequired&&!relation.paris))
+   return {state:'locked',reason:'等待已發生的約定與雙方感情進展'};
+ }
  if(s.day<n.day)return {state:'locked',reason:`等待D${n.day}`};
  if(n.optional&&(s.day>n.throughDay||s.day===n.throughDay&&overnightSceneNight55(s)))return {state:'locked',reason:'已過聊天時間'};
  if(n.afterMidnight&&s.day===n.day&&(!overnightSceneNight55(s)||s.clock<n.at))return {state:'locked',reason:`等待次日 ${n.at}`};

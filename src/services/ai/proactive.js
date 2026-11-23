@@ -1,4 +1,4 @@
-import {isStory55,taiRecognized,final55} from '../story55/state.js';
+import {isStory55,taiRecognized,final55,completed,nodeStatus} from '../story55/state.js';
 import {xitaiRelationshipContext} from './relationship-context.js';
 import {taiRelationshipDirector} from './relationship-director.js';
 import {romanceSceneAwaitingPlayer} from './romance-scene/index.js';
@@ -39,6 +39,11 @@ function elapsed(s,entry,c,now){
  return Math.max(0,stamp(s)-stamp(entry));
 }
 function paused(s){
+ // The author-written optional NoApp dialogue is controlled by the existing
+ // Story55 queue. Proactive DeepSeek must not interrupt its fixed lines.
+ if(isStory55(s)&&!completed(s,'d54-paris-future')&&
+  (nodeStatus(s,'d54-paris-future').state==='ready'||
+   (s.story55?.scenes?.['d54-paris-future']?.index||0)>0))return true;
  // A two-person scene is waiting for the player; automatic outreach would
  // write the next line for them and spoil the authored pause.
  if(romanceSceneAwaitingPlayer(history(s)))return true;
