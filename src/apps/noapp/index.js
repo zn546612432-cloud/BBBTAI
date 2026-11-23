@@ -57,6 +57,7 @@ function queueTaiReply(ctx,messageId){
     // Persisted deferrals are resumed by the shared game-clock tick.
     return;
    }
+   if(result.status==='error'){showFeedback(ctx,result.message);return;}
    showFeedback(ctx,['read_no_reply','end_session'].includes(result.status)?'已读':
      result.status==='offline'?'暫時不在線':result.status==='unavailable'?'已送達':'');
   }catch(error){console.warn('NoApp text reply failed:',error?.message);if(version===replyVersion)showFeedback(ctx,'已送達');}

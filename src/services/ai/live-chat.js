@@ -325,13 +325,15 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   console.warn('NoApp reply unavailable:',error?.message);
   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
   if(error?.code==='TAI_STYLE'||isTaiDirectAffectionRequest(pendingSource?.voiceCaption||pendingSource?.text))return finishSilentTaiTurn(store,sourceMessageId,now);
-  const id=uid(),text='晚點再說吧。';
+  // Transport failures are not Tai's speech and must not consume this turn.
+  // Keep diagnostics with the source message; a later real request can retry.
   store.update(s=>{
    const target=conversation(s);if(!target)return;
-   markTaiRead(s,sourceMessageId,now());
-   target.messages.push({id,from:'tai',text,kind:'text',actual:true,replySourceId:sourceMessageId,day:s.day,time:s.clock,sentDate:dateParts(s).iso,receivedAt:now()});
-   if(!isConversationOpen(s,'noapp','tai')){target.unread=(target.unread||0)+1;s.notifications.unshift({id:'tai-reply-'+id,conversationId:'tai',title:taiDisplayName(s),body:text,link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+   const source=target.messages.find(m=>m.id===sourceMessageId);
+   if(source){delete source.taiPending;delete source.taiDeferredGameMinute;delete source.taiDeferredUntil;}
+   s.events.push({type:'tai_reply_failed',sourceId:sourceMessageId,day:s.day,clock:s.clock,
+    code:error?.code||'AI_REQUEST_FAILED',reason:String(error?.message||'AI unavailable').slice(0,300)});
   });
-  return {status:'replied',count:1,text};
+  return {status:'error',count:0,message:'連線暫時中斷，請稍後再試。'};
  }finally{pendingRequests.delete(store);}
 }

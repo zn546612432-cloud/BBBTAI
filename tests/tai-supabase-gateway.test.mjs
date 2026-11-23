@@ -11,7 +11,7 @@ function mockStorage(){
 function installMocks(callback){
  const previous={fetch:globalThis.fetch,location:globalThis.location,localStorage:globalThis.localStorage};
  const local=mockStorage();
- globalThis.location={hostname:'zn546612432-cloud.github.io'};
+ globalThis.location={hostname:'bbbtai.pages.dev'};
  globalThis.localStorage=local;
  return Promise.resolve().then(()=>callback(local)).finally(()=>{
   globalThis.fetch=previous.fetch;
@@ -19,14 +19,62 @@ function installMocks(callback){
   if(previous.localStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=previous.localStorage;
  });
 }
-test('cloud mode only on production GitHub Pages origin; publishable key is never a provider secret',()=>{
+test('production and this project previews use cloud mode without admitting unrelated hosts',()=>{
  assert.equal(isTaiCloudHost('zn546612432-cloud.github.io'),true);
+ assert.equal(isTaiCloudHost('bbbtai.pages.dev'),true);
+ assert.equal(isTaiCloudHost('fix-noapp.bbbtai.pages.dev'),true);
+ assert.equal(isTaiCloudHost('bbbtai.pages.dev.evil.test'),false);
+ assert.equal(isTaiCloudHost('evilbbbtai.pages.dev'),false);
+ assert.equal(isTaiCloudHost('other.pages.dev'),false);
  assert.equal(isTaiCloudHost('evil.github.io'),false);
  assert.equal(isTaiCloudHost('localhost'),false);
  assert.match(TAI_PUBLIC_KEY,/^sb_publishable_/);
  const client=readFileSync(new URL('../src/services/ai/supabase-gateway.js',import.meta.url),'utf8');
  assert.doesNotMatch(client,/DEEPSEEK_API_KEY\s*[:=]|MINIMAX_API_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]/);
 });
+
+test('deployed gateway handles this project CORS preflight while preserving authentication',async()=>{
+ let handler;
+ const source=readFileSync(new URL('../supabase/functions/tai-provider-gateway/index.ts',import.meta.url),'utf8')
+  .replace(/^import .*;$/gm,'').replace('origin!:','origin:');
+ const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-test-only'};
+ new Function('Deno','createClient','deepseekReply',source)(
+  {env:{get:k=>env[k]},serve:fn=>{handler=fn;}},
+  ()=>({auth:{getUser:async()=>({data:{user:null},error:true})}}),()=>{});
+ for(const origin of ['https://bbbtai.pages.dev','https://fix-noapp.bbbtai.pages.dev']){
+  const response=await handler(new Request('https://example.test',{method:'OPTIONS',headers:{origin}}));
+  assert.equal(response.status,204);assert.equal(response.headers.get('access-control-allow-origin'),origin);
+ }
+ for(const origin of ['https://other.pages.dev','https://bbbtai.pages.dev.evil.test']){
+  assert.equal((await handler(new Request('https://example.test',{method:'OPTIONS',headers:{origin}}))).status,403);
+ }
+ const unauth=await handler(new Request('https://example.test',{method:'POST',headers:{origin:'https://bbbtai.pages.dev'},body:'{"op":"status"}'}));
+ assert.equal(unauth.status,401);
+});
+
+test('a failed cloud text request creates no NPC reply and the same message can be retried',async()=>installMocks(async()=>{
+ const {initialState}=await import('../src/services/storage.js');
+ const {replyToTaiMessage}=await import('../src/services/ai/live-chat.js');
+ const s=initialState();s.day=56;s.clock='21:20';
+ const chat=s.content.conversations.noapp.find(c=>c.id==='tai');
+ chat.messages=[{id:'failed-source',from:'me',text:'在幹什麼',kind:'text',actual:true,day:56,time:'21:20'}];
+ const store={get:()=>s,update:fn=>fn(s)};
+ globalThis.fetch=async url=>String(url).endsWith('/auth/v1/signup')
+  ?Response.json({session:{access_token:'jwt-retry',refresh_token:'refresh-retry',expires_in:3600}})
+  :Response.json({error:'provider_unreachable'},{status:502});
+ const result=await replyToTaiMessage(store,'failed-source',{wait:async()=>{},random:()=>0});
+ assert.equal(result.status,'error');assert.equal(result.count,0);
+ assert.equal(chat.messages.length,1);assert.equal(chat.messages[0].taiPending,undefined);
+ assert.ok(s.events.some(e=>e.type==='tai_reply_failed'&&e.sourceId==='failed-source'));
+ globalThis.fetch=async(url,init)=>{
+  if(String(url).includes('/tai-v8-persona'))return Response.json({},{status:404});
+  const body=JSON.parse(init.body);
+  if(body.op==='status')return Response.json({deepseek:true,minimax:false});
+  return Response.json({text:JSON.stringify({messages:[{text:'在忙，等會兒聊。'}]})});
+ };
+ const retry=await replyToTaiMessage(store,'failed-source',{wait:async()=>{},random:()=>0});
+ assert.equal(retry.status,'replied');assert.equal(chat.messages.at(-1).replySourceId,'failed-source');
+}));
 test('anonymous user signs in once and uses the same JWT for chat/status/TTS navigation',async()=>installMocks(async storage=>{
  let signups=0,cloudRequests=0;
  globalThis.fetch=async(url,init)=>{

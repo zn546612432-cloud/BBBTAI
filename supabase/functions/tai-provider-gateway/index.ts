@@ -16,13 +16,15 @@ const admin=URL&&adminKey()?createClient(URL,adminKey(),{
 }):null;
 const DEEPSEEK='https://api.deepseek.com/chat/completions';
 const origins=new Set(['https://zn546612432-cloud.github.io',
+ 'https://bbbtai.pages.dev',
  'https://endearing-horse-4e9b2b.netlify.app',
  'http://localhost:5173','http://127.0.0.1:5173']);
+const allowedOrigin=origin=>origins.has(origin||'')||/^https:\/\/[a-z0-9-]+\.bbbtai\.pages\.dev$/.test(origin||'');
 const headers=req=>{
  const origin=req.headers.get('origin');
  return {'Content-Type':'application/json; charset=utf-8',
   'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
-  'Vary':'Origin','Access-Control-Allow-Origin':origins.has(origin||'')?origin!:'',
+  'Vary':'Origin','Access-Control-Allow-Origin':allowedOrigin(origin)?origin!:'',
   'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info',
   'Access-Control-Allow-Methods':'POST, OPTIONS'};
 };
@@ -95,7 +97,7 @@ async function speech(req,body){
 }
 Deno.serve(async(req)=>{
  const origin=req.headers.get('origin');
- if(origin&&!origins.has(origin))return respond(req,403,{error:'origin_not_allowed'});
+ if(origin&&!allowedOrigin(origin))return respond(req,403,{error:'origin_not_allowed'});
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:headers(req)});
  if(req.method!=='POST')return respond(req,405,{error:'method_not_allowed'});
  if(!admin)return respond(req,503,{error:'server_not_ready'});

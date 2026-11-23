@@ -1,0 +1,183 @@
+{
+  "voice": "moss_audio_708f60ef-d45e-11f1-ac36-1658c5812fe4",
+  "region": "cn",
+  "model": "speech-2.8-hd",
+  "clips": [
+    {
+      "id": "d55-d55-noapp-opening-4",
+      "text": "熙蒙，打起精神來。",
+      "path": "/assets/story55/d55/d55-noapp-opening-4.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "401924d3e2aa3832804e72a248d118e820b652f32baf469643443dbabfd4ece1",
+      "audioHash": "dc834926e879d9df2f88488227ec00b23990aa6bfa0ecf1e5bd1a8fff8e8024c",
+      "size": 36852,
+      "duration": 2.196
+    },
+    {
+      "id": "d55-d55-noapp-opening-5",
+      "text": "現在不是想這些的時候。你還沒離開澳門。",
+      "path": "/assets/story55/d55/d55-noapp-opening-5.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "020808b74cc31cc641f362bb80f49f7f55a86ed5b51e5a5b463c616e34ad69e5",
+      "audioHash": "9f9886c9c08b8492cbd9416101641270512293061933b0988b14d638896df43f",
+      "size": 66804,
+      "duration": 4.068
+    },
+    {
+      "id": "d55-d55-noapp-opening-6",
+      "text": "就算是為了熙旺，你也必須活著離開。",
+      "path": "/assets/story55/d55/d55-noapp-opening-6.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "e17303cd22b88373087bf43b72383e3fd831828ba0201ef2b829c61ef8a1d776",
+      "audioHash": "7323ca11ba55da42cf8f3ea6b27129727bd295cf634dfc6fde05c99bfd851af8",
+      "size": 70260,
+      "duration": 4.284
+    },
+    {
+      "id": "d55-d55-noapp-opening-9",
+      "text": "別說如果。我不想聽。",
+      "path": "/assets/story55/d55/d55-noapp-opening-9.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "ecec10797e8eb2ff82e795c6a5cdf6434f16a044962da9168a7f4996fe38ab75",
+      "audioHash": "d5b96105331fa6f9a35b4fb648b2e93d6dd9d7e64f87e86bcff2fa5a5381430e",
+      "size": 49524,
+      "duration": 2.988
+    },
+    {
+      "id": "d55-d55-noapp-opening-10",
+      "text": "你現在只管往前走。剩下的事，等我們見面再說。",
+      "path": "/assets/story55/d55/d55-noapp-opening-10.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "a16db8aa67abdbec2bc7c81cabb6030a3fb6986f9f60d44ab3de17449dd5f2c7",
+      "audioHash": "e78418acf363d8fe88ad5ac206314c8f0375af6f97bdb9df310f57210a73f2a6",
+      "size": 81204,
+      "duration": 4.968
+    },
+    {
+      "id": "d55-d55-noapp-opening-11",
+      "text": "我會一直陪著你，直到你站到我面前。",
+      "path": "/assets/story55/d55/d55-noapp-opening-11.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "91d741ef648520cc590b3a4494e12e597f1fc10a9f56f1a2f401fbfcce0e0dfa",
+      "audioHash": "f474821cabaa8edbbb18213e1e8c1294dd53aedc365ece31aa075a294d4c02bf",
+      "size": 59892,
+      "duration": 3.636
+    },
+    {
+      "id": "d55-d55-noapp-warning-0",
+      "text": "警察來了，你從洗衣房繞出來。",
+      "path": "/assets/story55/d55/d55-noapp-warning-0.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "5ec865ef1e273e211659361ccd4df61aa7d7016bb05bedfc5d4e1cedcc524403",
+      "audioHash": "479b88c1147850d42c562cf6d0074a5f0fda580d27d0962909f7546d6e1c2f79",
+      "size": 49524,
+      "duration": 2.988
+    },
+    {
+      "id": "d55-d55-noapp-warning-1",
+      "text": "草坪今晚會舉辦賽車展，讓你的弟弟們分頭走，混進人群。",
+      "path": "/assets/story55/d55/d55-noapp-warning-1.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "77480f708a1e7a8da33fee96f2f2f7766e1c91ff6b82c08ab63d3a66e9bd1821",
+      "audioHash": "35d9f1666d295602d3563dec22b945a197d0eae4d25fc0359abc22c3cf60e4c8",
+      "size": 104244,
+      "duration": 6.408
+    },
+    {
+      "id": "d55-d55-final-cut-0",
+      "text": "老頭把你的長相透露給警察了。把頭髮剪短，換件外套，走輕軌站。",
+      "path": "/assets/story55/d55/d55-final-cut-0.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "bbdb8df608b2ef43439a6b2613e603e6982890245f99b57ec2c8ea6521a9ab4f",
+      "audioHash": "a1ac9a4302853c918b473298c0989eb2ed4d28e6a8bfc2aa44e719d78b22bd63",
+      "size": 111732,
+      "duration": 6.876
+    },
+    {
+      "id": "d55-d55-final-cut-2",
+      "text": "什麼？",
+      "path": "/assets/story55/d55/d55-final-cut-2.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "1a4cad3c1da3a26b8a52417c2e22f09f522b1f3b00771a6b03bd458b553c2307",
+      "audioHash": "ceaff24ca8e0e90cf7384505630a254f797e6bfa553da3cd876b006804ccaa7e",
+      "size": 16692,
+      "duration": 0.936
+    },
+    {
+      "id": "d55-d55-final-cut-5",
+      "text": "……不愧是 nya。我小瞧你了。",
+      "path": "/assets/story55/d55/d55-final-cut-5.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "250e9dffb92ee452a508e5194446670c8544db3a92e64215b347eb4f639e362d",
+      "audioHash": "c9242b8a6e2f41f2171b70c30ed3a1f1b790668c88f1e12e22b67008a24e7d0b",
+      "size": 47796,
+      "duration": 2.88
+    },
+    {
+      "id": "d55-d55-final-cut-8",
+      "text": "你從輕軌站出去，我的人會接應你。",
+      "path": "/assets/story55/d55/d55-final-cut-8.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "3624d61b8cb50b491e42c0dcb9f84910a5cee482061c2c7a3991e809bdecc439",
+      "audioHash": "d5e6205907100c7fa55eed8a024190c2ac21b70100e72de52f369a7364e4d9a3",
+      "size": 54132,
+      "duration": 3.276
+    },
+    {
+      "id": "d55-d55-final-cut-10",
+      "text": "你要做什麼？",
+      "path": "/assets/story55/d55/d55-final-cut-10.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "0afadaf807db6a322bf0dee0a138552be5dd3df4c0d5de0629f4648d21efe28d",
+      "audioHash": "0b1b2050c2674510e8641181fc46e7d7c72fbca09b8da63a3fa1098a9a2bdbb3",
+      "size": 23028,
+      "duration": 1.332
+    },
+    {
+      "id": "d55-d55-final-cut-15",
+      "text": "我會幫你。",
+      "path": "/assets/story55/d55/d55-final-cut-15.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "227a788123dde8f362a9b8de748d312ccd8cd5b67b237d63b34132dbf6e94574",
+      "audioHash": "21aa23d687f5a88d5bda9fde7bd0a7c06a83e9dd434f0ef8de79abe3b801c782",
+      "size": 22452,
+      "duration": 1.296
+    },
+    {
+      "id": "d55-d55-final-cut-16",
+      "text": "但是密鑰，我要你站到我面前，親口告訴我。",
+      "path": "/assets/story55/d55/d55-final-cut-16.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "51389a77efbaeb508491d5a3380a9c2bef829b8d7410683e2b5e212cf936af4a",
+      "audioHash": "ac1e684fbc567c6f3f2233d6f04137d20ed7df0143e47925412fb2ca34f7a60b",
+      "size": 73140,
+      "duration": 4.464
+    },
+    {
+      "id": "d55-d55-final-cut-20",
+      "text": "別說了，快走！",
+      "path": "/assets/story55/d55/d55-final-cut-20.mp3",
+      "prewarmRequired": true,
+      "bundledOnly": true,
+      "textHash": "282f6359c3d1ff9ee5b430eba638b3cf0dcf1a85b08f4a4a6b4a7d03e9d6dffd",
+      "audioHash": "8428a0067ab545c4c890d359f74d05fed3f2dadb855c9b05abc7c97b3bf1fdc4",
+      "size": 36852,
+      "duration": 2.196
+    }
+  ]
+}

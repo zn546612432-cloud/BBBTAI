@@ -1,5 +1,5 @@
 import {D14_D24_CONTENT} from './definition.js';
-import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
+import {createConversationTrack,CHAT_LIFECYCLE_POLICY} from '../../services/messaging/lifecycle/engine.js';
 import {trackKey} from './editor-overrides.js';
 
 // Eleven content registrations, one existing conversation lifecycle/clock.
@@ -8,6 +8,9 @@ export const D14_D24_TRACKS=Array.from({length:11},(_,i)=>{
  const scenes=D14_D24_CONTENT.wechat.filter(s=>s.day===day).map(scene=>{
   const key=trackKey(scene);
   return {...scene,
+   // The loan conversation can arrive late, but its old complaint must not
+   // remain a mandatory composer draft weeks after the subject has passed.
+   ...(scene.id==='room'?{endWhen:s=>s.day>day+CHAT_LIFECYCLE_POLICY.lateDays}:{}),
    // Edit only the data consumed by the existing engine. Keep IDs, clock,
    // progress flags, player-Send gating and delivery infrastructure unchanged.
    lines:s=>s.story55?.chatSceneEdits?.[key]?.lines||scene.lines,

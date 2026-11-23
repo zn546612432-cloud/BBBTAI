@@ -42,6 +42,21 @@ test('every D14–D24 WeChat scene uses the existing queue and commits player li
  }
 });
 
+test('an old D15 mandatory draft expires without changing sent history or custom drafts',()=>{
+ const track=D14_D24_TRACKS.find(t=>t.track.day===15).track;
+ const s=at(55,'22:00');s.story55.completed.loan={day:15,clock:'16:00'};
+ const q=track.ensure(s).room;Object.assign(q,{started:true,index:1,nextAt:null});
+ const chat=s.content.conversations.wechat.find(c=>c.id==='wang');
+ const sent={id:'real-sent-history',from:'me',text:'我在。',day:55,time:'18:00',actual:true};chat.messages.push(sent);
+ s.drafts={wang:'網上一個神經病黑客。'};
+ track.reconcile(s,1000);
+ assert.equal(track.draft(s,'wang'),null);assert.equal(s.drafts.wang,undefined);
+ assert.ok(chat.messages.includes(sent));
+ assert.equal(track.send(store(s),'wang','網上一個神經病黑客。',1000).messageId,undefined);
+ s.drafts.wang='我自己還沒發出的話';track.reconcile(s,2000);
+ assert.equal(s.drafts.wang,'我自己還沒發出的話');
+});
+
 test('D14 mail stays separate from deployment, exposes one file attachment and never puts a key in its body',()=>{
  const s=at(14,'09:15');tickStory55(s);assert.equal(s.content.mail.some(m=>m.id==='code-mail'),false);
  s.clock='09:16';tickStory55(s);const mail=s.content.mail.find(m=>m.id==='code-mail');
