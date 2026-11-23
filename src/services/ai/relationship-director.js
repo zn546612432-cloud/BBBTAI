@@ -7,14 +7,20 @@ import {taiCanonicalMilestones} from './worldbook/plot-memory.js';
 
 const clean=value=>String(value||'').normalize('NFKC').trim().replace(/^[\s，,。！!？?「」“”]+|[\s，,。！!？?「」“”]+$/g,'');
 const address=value=>clean(value).replace(/^(?:熙泰|陳熙泰|陈熙泰|nya)[，,、\s]*/i,'');
-const playerAffection=/^(?:我|我也|其實我|其实我|我真的|我很)?(?:好)?(?:喜歡你|喜欢你|愛你|爱你|想你|想念你|想見你|想见你|好想你)(?:了|呢|呀|啊|喔|哦)?$/u;
-const playerExplicit=/(?:^|[，,、\s])(?:我|我也|其實我|其实我)(?:真的|很)?(?:喜歡你|喜欢你|愛你|爱你)(?:[。！!]|$)/u;
-const taiAffection=/(?:我|我也|其實我|其实我)(?:真的|很|也|挺)?(?:喜歡你|喜欢你|想你|想念你|想見你|想见你)/u;
-const taiExplicit=/(?:我|我也|其實我|其实我)(?:真的|很|也|挺)?(?:喜歡你|喜欢你)/u;
+// Recognize natural multi-adverb expressions without interpreting a denial
+// ("我不喜歡你") or a request ("說你愛我") as an affirmative declaration.
+const modifier='(?:也|真的|很|一直|永遠|永远|其實|其实|非常|好像|越來越|越来越|還是|还是|挺|有點|有点|好)*';
+const affectionWords='(?:喜歡你|喜欢你|喜歡上你|喜欢上你|愛你|爱你|愛上你|爱上你|想你|想念你|想見你|想见你|好想你)';
+const explicitWords='(?:喜歡你|喜欢你|喜歡上你|喜欢上你|愛你|爱你|愛上你|爱上你)';
+const taiSubject='(?:我|我也|其實我|其实我)';
+const playerAffection=new RegExp('^(?:'+taiSubject+modifier+'|好)?'+affectionWords+'(?:了|呢|呀|啊|喔|哦)?$','u');
+const playerExplicit=new RegExp('(?:^|[，,、\\s])'+taiSubject+modifier+explicitWords+'(?:[。！!]|$)','u');
+const taiAffection=new RegExp(taiSubject+modifier+'(?:喜歡你|喜欢你|想你|想念你|想見你|想见你)','u');
+const taiExplicit=new RegExp(taiSubject+modifier+'(?:喜歡你|喜欢你)','u');
 const playerReject=/(?:我不(?:喜歡|喜欢)你|我不[愛爱]你|我對你沒感覺|我对你没感觉|不要[再]?向我表白|[別别]再(?:說说|讲).*愛我|我們[只]?是兄弟|我们[只]?是兄弟)/u;
 const taiDisclaim=/(?:別自戀|别自恋|才怪|開玩笑|开玩笑|我不(?:喜歡|喜欢)你|我不[愛爱]你)/u;
-const directLove=/(?:[我俺](?:也|真的|很|一直|永遠|永远)?[愛爱]你|(?:我|俺)對你的愛|(?:我|俺)对你的爱|i\s+love\s+you)/iu;
-const directLike=/(?:[我俺](?:也|真的|很|其實|其实|挺)?(?:喜歡|喜欢)你|(?:我|俺)對你有感覺|(?:我|俺)对你有感觉)/u;
+const directLove=new RegExp('(?:[我俺]'+modifier+'[愛爱](?:上)?你|(?:我|俺)對你的愛|(?:我|俺)对你的爱|i\\s+love\\s+you)','iu');
+const directLike=new RegExp('(?:[我俺]'+modifier+'(?:喜歡|喜欢)(?:上)?你|(?:我|俺)對你有感覺|(?:我|俺)对你有感觉)','u');
 const realMessage=(m,day)=>m&&m.actual!==false&&!m.demo&&!m.authoredPending&&!m.testOnly&&
  Number.isInteger(m.day)&&m.day<=day&&m.day>=1&&['me','tai'].includes(m.from)&&
  m.kind!=='call'&&m.kind!=='image'&&m.kind!=='app_invitation'&&
