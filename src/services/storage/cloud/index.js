@@ -21,6 +21,14 @@ export class PlayerCloudSave{
  publish(patch){Object.assign(this.status,patch);for(const fn of this.listeners)fn(this.status);}
  subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}
  get ownerKey(){return this.key+':cloud-owner';}
+ get restartKey(){return this.key+':cloud-explicit-restart';}
+ // Called only after the player's existing erase-all confirmation.
+ markExplicitRestart(){
+  const owner=this.player?.id||this.store.storage.getItem(this.ownerKey);
+  if(!this.enabled||!owner)return;
+  this.store.storage.setItem(this.restartKey,JSON.stringify({owner,at:this.now()}));
+  this.allowRollback=true;
+ }
  get metaKey(){return this.key+':cloud:'+this.player.id+':'+this.slot;}
  saveMeta(patch){Object.assign(this.meta,patch);this.store.storage.setItem(this.metaKey,JSON.stringify(this.meta));}
  timerAfter(ms=this.delay){if(this.timer||this.closed||!this.enabled||this.status.conflict)return;this.timer=setTimeout(()=>{this.timer=null;void this.flush();},ms);this.timer.unref?.();}
@@ -40,6 +48,7 @@ export class PlayerCloudSave{
   this.revision=row.revision;this.rowId=row.id;this.remoteProgress=progressOf(next);this.remoteRow=row;
   this.store.storage.setItem(this.ownerKey,this.player.id);
   this.saveMeta({revision:row.revision,id:row.id,hash:await hash(this.pending),pending:null,lastSaved:row.updated_at});
+  this.store.storage.removeItem(this.restartKey);this.allowRollback=false;
   this.publish({phase:'synced',lastSaved:row.updated_at,conflict:null});
   return true;
  }
@@ -52,6 +61,8 @@ export class PlayerCloudSave{
     this.publish({phase:'connecting'});const player=await this.api.player();
     if(!player?.id)throw Error('無法確認雲端身份。');
     this.player=player;this.publish({player});
+    const intentionalRestart=parse(this.store.storage.getItem(this.restartKey));
+    this.allowRollback=intentionalRestart?.owner===player.id;
     const owner=this.store.storage.getItem(this.ownerKey);
     this.meta=parse(this.store.storage.getItem(this.metaKey))||{};
     const initialRaw=JSON.stringify(this.store.get());
@@ -70,7 +81,7 @@ export class PlayerCloudSave{
      // If an earlier boot wrote a D01 placeholder, recover the later cloud
      // checkpoint instead of treating that placeholder as the current game.
      // For a nonempty older local game, preserve both and ask the player.
-     if(this.remoteProgress>progressOf(this.store.get())){
+     if(!this.allowRollback&&this.remoteProgress>progressOf(this.store.get())){
       if(this.store.get().day===1)return await this.restore(row,{expectedRaw:raw});
       this.conflict(row);return false;
      }
@@ -83,7 +94,7 @@ export class PlayerCloudSave{
      // A missing remote row is not permission to recreate a deleted save or
      // upload another account's local history.
      if(this.meta.revision){this.conflict(null);return false;}
-     this.revision=0;
+     this.revision=0;this.remoteProgress=0;this.remoteRow=null;
     }
     this.store.storage.setItem(this.ownerKey,player.id);
     this.publish({phase:'pending',conflict:null,lastSaved:this.meta.lastSaved||null});
@@ -133,6 +144,7 @@ export class PlayerCloudSave{
     this.api.useMedia(this.player.id,this.media);
     this.saveMeta({id:result.id,revision:result.revision,hash:fingerprint,pending:null,lastSaved:result.updated_at,missingMedia:media.missing||0});
     this.store.hasExistingSave=true;
+    this.store.storage.removeItem(this.restartKey);this.allowRollback=false;
     this.publish({phase:media.missing?'media-pending':'synced',lastSaved:result.updated_at});
     if(this.pending!==raw)this.timerAfter();return true;
    }catch(error){this.publish({phase:'offline',message:error.message});this.timerAfter(30000);return false;}
