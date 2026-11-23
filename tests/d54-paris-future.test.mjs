@@ -101,7 +101,9 @@ test('queued NPC speaks in real NoApp; player lines still require their own nati
  assert.equal(draft?.id,D54_PARIS_FUTURE);
  assert.equal(draft?.text,'問。');
  assert.equal(draft?.kind,'me');
- assert.equal(tickQueuedStoryScenes55(s,now+60000),false,'NPC timer must not fabricate a player reply');
+ tickQueuedStoryScenes55(s,now+60000); // Other unrelated queued scenes may legitimately advance.
+ assert.equal(scene55(s,D54_PARIS_FUTURE).index,1,'our scene must still wait for the player');
+ assert.equal(chat.messages.some(m=>m.id==='s55-d54-paris-future-1'),false,'the scheduler never writes a player bubble');
  sendScriptedDraft55(s,'noapp','tai','問。',now+60000);
  assert.equal(scene55(s,D54_PARIS_FUTURE).index,2);
  assert.equal(chat.messages.at(-1).from,'me');
