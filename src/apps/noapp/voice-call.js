@@ -3,6 +3,8 @@ import {RECOGNITION_CALL} from '../../story/d29/recognition-call.js';
 import {finishScene55} from '../../services/story55/runtime.js';
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {D45_CALL} from '../../story/d45/definition.js';
+import {D55_OPENING_CALL,D55_WARNING_CALL,D55_FINAL_CALL,D55_RECALL,D55_FATHER_CALL} from '../../story/d55/calls.js';
+import {D55_XIAOXIN} from '../../story/d55/definition.js';
 import {stampFixedLine,presetReplyDelay} from '../../services/story55/fixed-timeline.js';
 import {phoneBlocked} from '../../system/power/story.js';
 import {offerD41ChessInvitation,D41_CHESS_INVITATION} from '../../services/invitations.js';
@@ -63,11 +65,12 @@ function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReaso
 }
 export function incomingCallBanner(s){
  if(call.state!=='ringing'||!s.unlocked||!taiRecognized(s)&&call.scripted?.id!==RECOGNITION_CALL.id)return '';
+ const locked=call.scripted?.unanswerable===true;
  return '<div class="tai-incoming-banner" role="group" aria-label="陈熙泰来电">'+
    '<img class="tai-banner-avatar" src="'+esc(s.characterAvatars?.['熙泰']||AVATAR)+'" alt="">'+
    '<div class="tai-banner-info"><strong>'+esc(taiDisplayName(s))+'</strong><small>NoApp · 语音来电</small></div>'+
-   '<button type="button" class="tai-banner-decline" data-action="tai-banner-decline" aria-label="拒绝来电">'+glyph.hang+'</button>'+
-   '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电">'+glyph.answer+'</button></div>';
+   '<button type="button" class="tai-banner-decline" data-action="tai-banner-decline" aria-label="拒绝来电"'+(locked?' disabled':'')+'>'+glyph.hang+'</button>'+
+   '<button type="button" class="tai-banner-accept" data-action="tai-banner-accept" aria-label="接听来电"'+(locked?' disabled':'')+'>'+glyph.answer+'</button></div>';
 }
 let playback=null;
 let messagePlayback=null,voicePlaylistToken=0,pausedForMicrophone=false,cancelMessagePlayback=null;
@@ -120,16 +123,16 @@ export function callView(s){
  const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':call.inlineNotice||'通話中')):'通話已結束';
  const captionClass=caption&&subtitle===caption?' class="tai-call-spoken-caption '+(call.captionRole==='me'?'mine':'theirs')+'"':'';
  const controls=ring?
-   phoneButton('tai-decline','拒绝',glyph.hang,'is-decline')+phoneButton('tai-accept','接听',glyph.answer,'is-accept'):
+   phoneButton('tai-decline','拒绝',glyph.hang,'is-decline',!!call.scripted?.unanswerable)+phoneButton('tai-accept','接听',glyph.answer,'is-accept',!!call.scripted?.unanswerable):
    active?
    phoneButton('tai-mute',call.muted?'取消靜音':'靜音',call.muted?glyph.micOff:glyph.mic,'is-secondary'+(call.muted?' is-selected':''))+
    phoneButton('tai-mic',call.listening?'結束說話':'說話',glyph.mic,'is-mic'+(call.listening?' is-listening':''),!!call.scripted)+
    phoneButton('tai-speaker','揚聲器',call.speaker?glyph.speaker:glyph.quiet,'is-speaker'+(call.speaker?' is-selected':''))+
    phoneButton('tai-expand',call.scripted?.autoPlayerLines?'通話文字':'文字輸入',glyph.keyboard,'is-secondary'+(call.expanded?' is-selected':''))+
-   phoneButton('tai-hangup','結束',glyph.hang,'is-hang'):
+   phoneButton('tai-hangup','結束',glyph.hang,'is-hang',!!call.d55Story):
    dial?phoneButton('tai-hangup','取消',glyph.hang,'is-hang'):'<button type="button" class="tai-call-return" data-action="tai-return-from-call">返回聊天</button>';
  const draft=scriptedCallDraft();
- const composer=call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
+ const composer=call.d55Held?'':call.scripted?(draft?'<form data-form="tai-call-turn"><input name="text" readonly value="'+esc(draft)+'" aria-label="預設文字"><button type="submit" aria-label="傳送">↑</button></form>':''):'<form data-form="tai-call-turn"><input name="text" inputmode="text" autocomplete="off" maxlength="1200" placeholder="輸入文字…"><button type="submit" aria-label="傳送">↑</button></form>';
  const transcript=call.expanded?'<div class="tai-call-caption-sheet" aria-label="通話文字"><header>通話文字 <button type="button" data-action="tai-expand" aria-label="關閉文字轉寫">✕</button></header><div class="tai-call-transcript">'+(call.scripted?call.turns:call.turns.slice(-9)).map(t=>'<p>'+(t.clock?'<small>'+esc(t.clock)+'</small> ':'')+'<b>'+(t.role==='user'?'熙蒙':'熙泰')+'</b> '+esc(displayedCallText(t.content,t.role!=='user'))+'</p>').join('')+'</div>'+composer+'</div>':'';
  const resumeAudio=active&&call.audioReady?'<div class="tai-live-captions"><button type="button" data-action="tai-play-audio">▶ 继续收听</button></div>':'';
  return '<section class="tai-call-screen tai-native-call'+(call.expanded?' is-expanded':'')+(active?' is-connected':'')+'" aria-label="NoApp语音通话">'
@@ -146,11 +149,16 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
  const sessionId=++callSerial,notificationId='tai-call-'+uid();
  call={state:'ringing',sessionId,revision:0,quietUntil:0,notificationId,direction:'incoming',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0,requestedByPlayer,openingText:String(openingText||'').trim().slice(0,600),reason:reason||(/邀请你语音|语音通话/.test(preview)?'想听熙蒙说说之前提过的事情；不主动汇报自己的生活':preview)};
  call.scripted=scripted;
- if(scripted)preloadScriptedVoice(scripted.id===RECOGNITION_CALL.id?33:scripted.day);
+ if(scripted?.id?.startsWith('d55-')){
+  call.d55Story=true;call.d55Phase=scripted.id===D55_RECALL.id?'recall':scripted.id===D55_FINAL_CALL.id?'final':'opening';
+  call.scriptIndex=ctx.store.get().story55?.d55CallProgress?.[scripted.id]||0;
+ }
+ if(scripted&&!scripted.unanswerable)preloadScriptedVoice(scripted.id===RECOGNITION_CALL.id?33:scripted.day);
  ctx.store.update(s=>{if(scripted)s.story55[scripted.triggerKey||'d42CallTriggered']=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',...(scripted?{scriptedCallId:scripted.id}:{}),link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
  ctx.refresh?.();
+ if(scripted?.unanswerable)return true; // Deliberately unanswered, ends at the authored game clock.
  const missedTimer=setTimeout(()=>{
   if(call.sessionId!==sessionId||call.state!=='ringing')return;
   call.state='missed';callSerial++;
@@ -323,7 +331,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  const sessionId=call.sessionId,revision=call.revision||0,day=ctx.store.get().day;
  const forceHangUp=!opening&&!event&&taiShouldHangUpCall(text);
  const energy=taiSocialEnergy(ctx.store.get(),'call');
- const shouldClose=forceHangUp||event==='closing'||endAfter||energy.remaining<=3;
+ const shouldClose=!call.d55Story&&(forceHangUp||event==='closing'||endAfter||energy.remaining<=3);
  const life=taiLife(ctx.store.get());
  const closingLine=life.minute>=1260||life.minute<90?'時間不早了，我困了。晚安。':life.status==='busy'?'我還有事，先掛了。':'好了，先聊到這裡吧，再見。';
  endAfter=shouldClose;
@@ -463,10 +471,75 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   }
  }
 }
+// D55 uses the existing live NoApp call, native Phone interruption and one
+// world clock. This driver changes phases; it never creates a parallel call UI.
+function beginD55Script(ctx,script,phase){
+ if(call.state!=='connected'||!call.d55Story)return false;
+ call.revision=(call.revision||0)+1;
+ playback?.pause();finishSegment?.('interrupted');
+ call.busy=false;call.audioReady=false;call.caption='';call.captionRole=null;
+ call.scripted=script;call.scriptIndex=ctx.store.get().story55?.d55CallProgress?.[script.id]||0;
+ call.d55Phase=phase;call.d55Held=false;call.expanded=false;
+ ctx.store.update(s=>{s.story55.d55CallStage=phase;s.story55[script.triggerKey]=true;});
+ void playScriptedOpening(ctx);ctx.refresh?.();return true;
+}
+export function tickD55NoApp(ctx,{now=Date.now()}={}){
+ const s=ctx.store.get(),story=s.story55;
+ if(!isStory55(s)||story?.ended)return false;
+ // Pre-render approved fixed dialogue at the preceding day's close or early
+ // D55. Actual phone playback only reads cached or bundled recordings.
+ if((s.day===54&&completed(s,'d54-tai')||s.day===55&&s.clock>='09:50')
+    &&story.d55VoicePrewarmDay!==s.day){
+  ctx.store.update(s=>{s.story55.d55VoicePrewarmDay=s.day;});
+  preloadScriptedVoice(55);
+ }
+ if(s.day!==55)return false;
+ if(call.state==='ringing'&&call.scripted?.id===D55_RECALL.id){
+  if(s.clock>='22:49'){
+   callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'d55_unanswered_end'});
+   ctx.store.update(s=>{s.story55.d55RecallCompleted=true;});
+   return true;
+  }
+  return true;
+ }
+ if(story.d55Disconnected){
+  // The last recording must actually finish playing before the ringing
+  // overlay can cover its voice bubble.
+  if(story.finalAudioHeard&&!story.d55RecallCompleted&&s.clock>='22:46'
+     &&!['ringing','dialing','connected'].includes(call.state)){
+   return startIncoming(ctx,'熙泰邀請你語音通話',{scripted:D55_RECALL});
+  }
+  return false;
+ }
+ if(call.state==='connected'&&call.d55Story){
+  if(call.d55Held){
+   if(story.d55FatherEndedAt&&now-story.d55FatherEndedAt>=3000)
+    return beginD55Script(ctx,D55_FINAL_CALL,'final');
+   return true;
+  }
+  if(call.d55Phase==='free'&&s.clock>='22:30'&&!story.d55FatherReady)
+   return beginD55Script(ctx,D55_WARNING_CALL,'warning');
+  return true;
+ }
+ if(!completed(s,D55_XIAOXIN)||s.clock<'22:00'||!s.unlocked||phoneBlocked(s)
+    ||['ringing','dialing','connected'].includes(call.state))return false;
+ if(['ringing','connected'].includes(s.phoneCall?.state))return false;
+ if(story.d55FatherReady&&!story.d55FatherEndedAt)return false;
+ if(story.d55FatherEndedAt){
+  if(now-story.d55FatherEndedAt<3000)return false;
+  return startIncoming(ctx,'熙泰邀請你語音通話',{scripted:D55_FINAL_CALL});
+ }
+ if(call.scriptedRetryId&&now<(call.retryAt||0))return true;
+ const introDone=scriptedCallPlayed(s,D55_OPENING_CALL);
+ return startIncoming(ctx,'熙泰邀請你語音通話',
+  {scripted:introDone?{...D55_OPENING_CALL,steps:[]}:D55_OPENING_CALL});
+}
+
 export function nextCallIdleEvent(snapshot,now=Date.now(),config){
  return nextNaturalCallIdleEvent(snapshot,now,taiBehavior({aiDraft:{behavior:config}}));
 }
 export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
+ if(call.d55Story&&!call.scripted)return false; // No auto hang-up or idle nudges during D55.
  if(call.scripted){
   if(call.scripted.id===D41_CALL.id&&call.state==='connected'){
    const s=ctx.store.get(),match=s.matches?.find(m=>m.invitationId===D41_CHESS_INVITATION);
@@ -519,6 +592,12 @@ async function playScriptedOpening(ctx){
     if(script.camera)await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(steps[call.scriptIndex][1],script.gapMs)));
     break;
    }
+   if(role==='pause'){
+    call.caption='';call.captionRole=null;ctx.refresh?.();
+    await new Promise(resolve=>setTimeout(resolve,script.pauseMs||2000));
+    if(!current())return;
+    call.scriptIndex++;saveD55CallProgress(ctx,script);continue;
+   }
    if(role==='invite'){
     ctx.store.update(offerD41ChessInvitation);call.scriptIndex++;ctx.refresh?.();await new Promise(resolve=>setTimeout(resolve,script.inviteGapMs));continue;
    }
@@ -540,12 +619,12 @@ async function playScriptedOpening(ctx){
     // Do not create a separate troubleshooting flow inside the story.
     if(outcome==='failed'&&current()){
      if(script.id===RECOGNITION_CALL.id){callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error'});return 'interrupted';}
-     if(script.camera||script.autoPlayerLines){await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(text,script.gapMs)));if(!current())return 'interrupted';}
-     call.turns.push({role:'assistant',content:text,voiceUnavailable:true,clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;call.audioReady=false;call.caption='';
+     if(script.camera||script.autoPlayerLines||script.id.startsWith('d55-')){await new Promise(resolve=>setTimeout(resolve,presetReplyDelay(text,script.gapMs)));if(!current())return 'interrupted';}
+     call.turns.push({role:'assistant',content:text,voiceUnavailable:true,clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;saveD55CallProgress(ctx,script);call.audioReady=false;call.caption='';
      ctx.refresh?.();return 'completed';
     }
     if(current()&&outcome==='completed'){
-     call.turns.push({role:'assistant',content:text,playedAt:Date.now(),clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;call.caption='';call.audioReady=false;ctx.refresh?.();
+     call.turns.push({role:'assistant',content:text,playedAt:Date.now(),clock:stampScriptedCallLine(ctx,script,steps,call.scriptIndex)});call.scriptIndex++;saveD55CallProgress(ctx,script);call.caption='';call.audioReady=false;ctx.refresh?.();
     }
     return outcome;
    }});
@@ -559,12 +638,46 @@ async function playScriptedOpening(ctx){
   const count=script.steps?.length||script.lines.length;
   if(call.scriptIndex>=count){
    if(script.id!==RECOGNITION_CALL.id)ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;});
+   if(script.handoffToFree){
+    call.scripted=null;call.d55Phase='free';call.d55Held=false;call.expanded=false;
+    ctx.store.update(s=>{s.story55.d55CallStage='free';});ctx.refresh?.();return;
+   }
+   if(script.handoffToHold){
+    call.scripted=null;call.d55Phase='held';call.d55Held=true;
+    ctx.store.update(s=>{s.story55.d55CallStage='held';s.story55.d55FatherReady=true;s.story55.d55FatherTakeover=true;});ctx.refresh?.();return;
+   }
+   if(script.disconnectOnComplete){
+    ctx.store.update(s=>{
+     s.story55.d55Disconnected=true;s.story55.d55CallStage='disconnected';
+     if(s.clock<'22:43')s.clock='22:43';
+    });
+    callAction('tai-hangup',ctx,{endedBy:'system',endReason:'d55_disconnect'});
+    ctx.store.update(s=>{
+     const c=s.content.conversations.noapp?.find(c=>c.id==='tai');
+     if(c&&!c.messages.some(m=>m.id==='s55-d55-xitai-last-text')){
+      c.messages.push({id:'s55-d55-xitai-last-text',from:'tai',text:'熙蒙？',kind:'text',
+       day:55,time:s.clock,actual:true,story55:true});
+      if(!isConversationOpen(s,'noapp','tai')){c.unread=(c.unread||0)+1;
+       s.notifications.unshift({id:'s55-d55-xitai-last-notice',title:'陳熙泰',body:'熙蒙？',
+        link:{appId:'noapp',route:'/chat/tai',params:{}}});}
+     }
+    });
+    ctx.refresh?.();return;
+   }
    if(!script.completionMatch){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'scripted_end'});return;}
   }
   if(scriptedCallDraft())call.expanded=true;ctx.refresh?.();
  }}
 }
+function saveD55CallProgress(ctx,script){
+ if(!script?.id?.startsWith('d55-'))return;
+ const index=call.scriptIndex||0;
+ ctx.store.update(s=>{s.story55.d55CallProgress??={};s.story55.d55CallProgress[script.id]=index;});
+}
 function stampScriptedCallLine(ctx,script,steps,index){
+ // D55 uses the world clock: scripted captions must not artificially advance
+ // 22:30 to 22:49 while the phone exchange is still taking place.
+ if(script.id?.startsWith('d55-'))return ctx.store.get().clock;
  let clock;ctx.store.update(s=>{call.timeline??={};clock=stampFixedLine(s,call.timeline,steps,index,{at:script.at,day:script.day});});return clock;
 }
 export function scriptedCallDraft(){
@@ -582,7 +695,14 @@ export function submitCall(form,ctx){
  if(form.dataset.form!=='tai-call-turn')return false;
  if(call.scripted){
   const draft=scriptedCallDraft();
-  if(draft&&String(new FormData(form).get('text')||'').trim()===draft){call.turns.push({role:'user',content:draft,clock:stampScriptedCallLine(ctx,call.scripted,call.scripted.steps,call.scriptIndex)});call.scriptIndex++;void playScriptedOpening(ctx);}
+  if(draft&&String(new FormData(form).get('text')||'').trim()===draft){
+   const script=call.scripted;
+   call.turns.push({role:'user',content:draft,clock:stampScriptedCallLine(ctx,script,script.steps,call.scriptIndex)});
+   call.scriptIndex++;saveD55CallProgress(ctx,script);
+   if(script.id===D55_WARNING_CALL.id&&call.scriptIndex===3)
+    ctx.store.update(s=>{s.story55.d55FatherReady=true;});
+   void playScriptedOpening(ctx);
+  }
   return true;
  }
  const text=String(new FormData(form).get('text')||'').trim();
@@ -604,13 +724,15 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
   if(['ringing','dialing','connected'].includes(call.state)&&!isNoAppCallRoute(ctx.store.get().nav.current))ctx.router.open({appId:'noapp',route:'/call',params:{}});
   return true;
  case 'tai-accept':
-  if(call.state!=='ringing')return false;
+  if(call.state!=='ringing'||call.scripted?.unanswerable)return false;
   if(!call.scripted&&(!taiPresence(ctx.store.get()).contactable||!canTaiCall(ctx.store.get()))){callAction('tai-decline',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
   playback=createGestureAudio();
   call.state='connected';call.started=Date.now();markTaiEngaged();
   ctx.store.update(s=>{s.notifications=s.notifications.filter(n=>n.id!==call.notificationId);});
   ctx.refresh();startGreeting(ctx);return true;
  case 'tai-decline':case 'tai-hangup':
+  if(call.scripted?.unanswerable&&!['d55_unanswered_end'].includes(endReason))return true;
+  if(call.d55Story&&call.state==='connected'&&!['d55_disconnect','d55_unanswered_end'].includes(endReason))return true;
   if(!['ringing','dialing','connected'].includes(call.state))return true;
   const previous=call;
   clearTimeout(previous.closeTimer);
@@ -624,7 +746,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
   ctx.store.update(s=>{
    if(!previous.scripted&&endedBy==='tai'&&['autonomous','idle','declined','resting'].includes(endReason)&&!taiCallCooling(s))markTaiCallRest(s);
    if(previous.notificationId)s.notifications=s.notifications.filter(n=>n.id!==previous.notificationId);
-   const outcome=previous.state==='dialing'&&endedBy==='tai'&&['declined','missed'].includes(outcomeOverride)?outcomeOverride:previous.state==='ringing'?'declined':previous.state==='dialing'?'cancelled':'ended';
+   const outcome=previous.scripted?.unanswerable?'missed':previous.state==='dialing'&&endedBy==='tai'&&['declined','missed'].includes(outcomeOverride)?outcomeOverride:previous.state==='ringing'?'declined':previous.state==='dialing'?'cancelled':'ended';
    s.events.push({type:action==='tai-decline'?'tai_call_declined':'tai_call_ended',day:s.day,clock:s.clock,
     endedBy:previous.state==='connected'?call.endedBy:outcomeOverride&&endedBy==='tai'?'tai':null,endReason:previous.state==='connected'||outcomeOverride?endReason:'',
     durationSeconds:previous.started?Math.max(0,Math.floor((Date.now()-previous.started)/1000)):0});
@@ -665,7 +787,7 @@ export function callAction(action,ctx,{endedBy='player',endReason='manual',fallb
  case 'tai-mute':call.muted=!call.muted;ctx.refresh();return true;
  case 'tai-speaker':call.speaker=!call.speaker;if(playback)playback.muted=!call.speaker;ctx.refresh();return true;
  case 'tai-mic':{
-  if(call.scripted)return true;
+  if(call.scripted||call.d55Held)return true;
   // iOS lowers or interrupts remote audio when a new mic audio session opens.
   // A microphone gesture interrupts the current reply before starting iOS half-duplex capture.
   if(call.state!=='connected'||call.requestingMic||call.transcribing)return true;

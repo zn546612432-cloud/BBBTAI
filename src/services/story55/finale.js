@@ -1,9 +1,8 @@
 import {isStory55,date55,nodeStatus} from './state.js';
 
-// Only the confirmed D55 closing beats remain. The superseded 21:00–22:25
-// chat has been retired; 22:46 audio and 22:49 final call-out are preserved.
-export const ENDING_CLOCKS=Object.freeze(['22:46','22:49']);
-export const ENDING_FINAL_REPLY='熙蒙！熙蒙！';
+// 22:43 voice cut, 22:46 last recording, and a silent unanswered
+// NoApp callback. The superseded 22:49 shouted text is fully retired.
+export const ENDING_CLOCKS=Object.freeze(['22:46']);
 export const ENDING_NEXT_DATE='2025-07-13';
 export const FAST_FORWARD_MS=12000;
 export const ONE_PERCENT_MS=4000;
@@ -15,6 +14,7 @@ export const ENDING_VOICE_APPEAR_DELAY_MS=4000;
 // The clock pauses during playback, then resumes at 3 real seconds/minute.
 export const endingAwaitingVoice55=s=>isStory55(s)&&!s.story55?.ended
  &&s.day===55&&s.clock>='22:46'&&nodeStatus(s,'ending').state==='ready'
+ &&s.story55?.d55Disconnected===true
  &&(s.story55?.scenes?.ending?.index??0)===0;
 export const endingAwaitingReply55=s=>isStory55(s)&&!s.story55?.ended
  &&s.day===55&&s.story55?.scenes?.ending?.index===1
@@ -51,7 +51,7 @@ export const finaleInProgress55=s=>!!finalePhase55(s)&&!secondView55(s);
 export const endingReplyDue55=s=>isStory55(s)&&!s.story55.ended
  &&s.story55?.scenes?.ending?.index===1
  &&s.story55?.endingVoiceSent===true
- &&s.story55?.finalAudioHeard===true
+ &&s.story55?.finalAudioHeard===true&&s.story55?.d55RecallCompleted===true
  &&s.day===55&&s.clock>='22:49';
 
 export function stampEnding55(s,index){

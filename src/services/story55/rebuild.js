@@ -437,6 +437,17 @@ export function prepareStory55NodeAtDay(s,id){
   tickStory55(s);
  };
  for(const depId of current.requires)visit(depId,[id]);
+ // Developer preview only: simulated earlier D55 messages must not shift the
+ // 22:46 recording. Actual player time remains monotonic.
+ if(id==='ending'&&s.day===55){
+  s.clock='22:46';s.worldMinuteFraction=0;
+  s.story55.d55Disconnected=true;
+  // Developer-only preview can jump past the phone scenes, but never creates
+  // imaginary call history or sends player dialogue into actual chat threads.
+  s.story55.scriptedCallCompleted??={};
+  for(const id of ['d55-noapp-opening','d55-fulongsheng-last','d55-final-cut'])
+   s.story55.scriptedCallCompleted[id]=true;
+ }
  if(current.afterMidnight){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=current.at;}
  if(id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
  if(id==='invite')s.story55.identityInviteRequested=true;

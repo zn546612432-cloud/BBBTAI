@@ -68,7 +68,7 @@ test('Recognition never exposes player text drafts in NoApp; the preset call own
  assert.equal(chat.messages.filter(m=>m.from==='me').length,0);
 });
 test('D55 final voice is an in-chat sound bubble, not a Next-button card',()=>{
- const s=state();previewNode55(s,'ending');s.story55.noappInstalled=true;
+ const s=state();previewNode55(s,'ending');s.story55.noappInstalled=true;s.story55.d55Disconnected=true;
  while(sceneLines(s,'ending')[scene55(s,'ending').index]?.[0]!=='watch'){
   const step=currentScript55(s,'noapp','tai');
   assert.ok(step);

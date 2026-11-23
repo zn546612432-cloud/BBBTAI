@@ -28,7 +28,7 @@ import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartRecognitionCall,maybeStartD41Call,maybeStartD42Call,maybeStartD45Call} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartRecognitionCall,maybeStartD41Call,maybeStartD42Call,maybeStartD45Call,tickD55NoApp} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -59,6 +59,7 @@ import {plugIn,unplug,beginShortCharge,endShortCharge,isShortCharging,shortCharg
 import {advanceGameMinutes,setSleeping,dismissAlarm} from './system/time/clock.js';
 import {chargingBlock,shortChargeBlock,deathLocked,phoneBlocked,recoverPhone} from './system/power/story.js';
 import {mountTelephony} from './services/telephony/index.js';
+import {telephonyIncomingBanner} from './services/telephony/view.js';
 import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
@@ -217,7 +218,7 @@ function render(){
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));
   // Popup buttons live below the compact 60px status bar: enlarge its touch surface.
   $('#status-layer').classList.toggle('is-charge-expanded',islandExpanded);
- patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s)+minimizedCallView(s));
+ patchHTML($('#tai-call-banner-layer'),incomingCallBanner(s)+telephonyIncomingBanner(s)+minimizedCallView(s));
  $('#tai-call-banner-layer').inert=!s.unlocked||phoneBlocked(s);
  patchHTML($('#shade-layer'),notifications(s));
  if(s.deathPhase==='passcode'&&lockscreen.stage==='cover')lockscreen.open();
@@ -508,8 +509,8 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  if(duePlayerInviteReply(store.get()))processDemoReply(store);
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
- if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const callCandidate=store.get();
- if(!maybeStartRecognitionCall(ctx())&&!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
+ if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const d55Handled=tickD55NoApp(ctx());const callCandidate=store.get();
+ if(!d55Handled&&!maybeStartRecognitionCall(ctx())&&!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));

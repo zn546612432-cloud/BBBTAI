@@ -79,7 +79,7 @@ test('D54 follows morning Isolde → 08:40 group → NoApp → 19:00 father; D55
  s.day=55;s.clock='09:00';
  assert.equal(nodeStatus(s,'ending').state,'locked','D55 ending waits until 22:46');
  s.clock='22:46';
- assert.equal(nodeStatus(s,'ending').state,'ready');
+ assert.equal(nodeStatus(s,'ending').state,'locked','D55 ending waits for new scenes');
 });
 
 test('D54 keeps Tai online at every hour, including his normal London sleep window',()=>{

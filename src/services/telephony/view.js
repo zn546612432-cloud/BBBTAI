@@ -11,6 +11,7 @@ export function telephonyFullscreen(s){
  if(!canPresentPhoneCall(s))return '';
  if(s.story55?.d13?.phase==='green')return '<section class="power-fullscreen tel-green-screen" role="presentation"></section>';
  const c=activePhoneCall(s);if(!c)return '';
+ if(c.scriptId==='d55-fulongsheng-last'&&c.state==='ringing'&&!s.story55?.d55FatherTakeover)return '';
  if(c.state==='connected'&&!c.resumeRequired&&!c.showControls)return '';
  if(c.source==='authored-phone')return authoredPhoneView(c,callDuration(c));
  const connected=c.state==='connected',incoming=c.direction==='incoming';
@@ -29,6 +30,12 @@ export function telephonyFullscreen(s){
    <div class="tel-call-actions">${actions}</div>
   </div>
  </section>`;
+}
+export function telephonyIncomingBanner(s){
+ const call=activePhoneCall(s);
+ if(call?.scriptId!=='d55-fulongsheng-last'||call.state!=='ringing'||s.story55?.d55FatherTakeover)return '';
+ return '<div class="tai-incoming-banner d55-father-incoming" role="status" aria-label="傅隆生來電">'+
+  '<div class="tai-banner-info"><strong>傅隆生</strong><small>電話 · 來電</small></div></div>';
 }
 export function telephonyIsland(s){
  const c=activePhoneCall(s);if(c?.state!=='connected')return '';
