@@ -1,6 +1,6 @@
 // Read-only projection of the existing story, order and agent ledgers.
 // Reminders do not persist a second copy of task progress.
-import {isStory55,story55Config,nodeStatus,completed,date55,overnightSceneNight55} from '../../../../services/story55/state.js';
+import {isStory55,story55Config,nodeStatus,completed,date55,storyDayMinute} from '../../../../services/story55/state.js';
 import {nodeLink55,scene55,sceneLines} from '../../../../services/story55/runtime.js';
 import {D01_OPENING,D01_REPAIR,D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
 import {d02CompleteBuild} from '../../../../story/d02/runtime.js';
@@ -16,9 +16,11 @@ const task=(id,title,link,detail,done=false,at='')=>({
  id:'mainline:'+id,storyNode:id,mainline:true,title,detail,link,done,at,
  destinationName:link?appLabel[link.appId]||'':''
 });
-const hasReached=(s,n)=>n.day<s.day||(
- n.afterMidnight?overnightSceneNight55(s)&&(!n.at||s.clock>=n.at):!n.at||s.clock>=n.at
-);
+// The canonical story clock counts past midnight as the preceding story day.
+// D23 03:00/1% chess holds must not hide already-due reminders.
+const clockMinute=value=>Number(value.slice(0,2))*60+Number(value.slice(3,5));
+const hasReached=(s,n)=>n.day<s.day||!n.at||
+ storyDayMinute(s)>=clockMinute(n.at)+(n.afterMidnight?1440:0);
 function mandatoryIds(s){
  const byId=new Map(story55Config(s).nodes.map(n=>[n.id,n])),required=new Set();
  function visit(id){if(required.has(id))return;const n=byId.get(id);if(!n||n.authoredPending)return;required.add(id);for(const parent of n.requires||[])visit(parent);}

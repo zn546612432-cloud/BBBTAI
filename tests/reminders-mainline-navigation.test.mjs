@@ -48,6 +48,12 @@ test('D06 wallet appears only after Flow schedule, following acceptance and auth
  s.content.mail.find(m=>m.id===STORY55_WALLET_MAIL_ID).read=true;
  assert.equal(find(s,'wallet').link.route,'/deployment');
 });
+test('D23 chess remains visible during the real 03:00 overnight power hold',()=>{
+ const s=at(23,'03:00');
+ s.story55.d23??={};s.story55.d23.nightAfterMidnight=true;
+ assert.ok(find(s,'d23-chess'),'the overnight clock must not hide the overdue chess');
+ assert.equal(find(s,'d23-chess').link.appId,'mirage');
+});
 test('timed D54 father task and D55 briefing are hidden before their actual time',()=>{
  const s=at(54,'18:59');
  s.story55.completed['d54-isolde-ready']={day:54,clock:'08:20'};
