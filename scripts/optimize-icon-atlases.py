@@ -7,6 +7,7 @@ generated page can request a missing WebP.
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 import sys
 
@@ -36,6 +37,28 @@ for png in ROOT.rglob("*.png"):
 
 if not converted:
     raise SystemExit("No icon atlases found to optimize")
+
+# The complete game-package manifest is generated before atlas compression.
+# Replace the entries with the actual shipped WebP file names and checksums.
+for manifest_path in ROOT.rglob("full-assets.json"):
+    if manifest_path.parent.name != "startup" or manifest_path.parent.parent.name != "assets":
+        continue
+    data = json.loads(manifest_path.read_text("utf-8"))
+    site_root = manifest_path.parent.parent.parent
+    changed = False
+    for asset in data.get("assets", []):
+        if asset.get("path") not in ("icons/glass-atlas.png", "icons/glass-utilities.png"):
+            continue
+        asset["path"] = asset["path"][:-4] + ".webp"
+        binary = (site_root / asset["path"]).read_bytes()
+        asset["bytes"] = len(binary)
+        asset["hash"] = hashlib.sha256(binary).hexdigest()[:20]
+        changed = True
+    if changed:
+        data["version"] = hashlib.sha256(
+            json.dumps(data["assets"], sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()[:20]
+        manifest_path.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
 
 rewritten = 0
 for path in ROOT.rglob("*"):
