@@ -16,6 +16,7 @@ import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {taiRelationshipDirector} from '../../services/ai/relationship-director.js';
+import {planTaiRomanceScene} from '../../services/ai/romance-scene/index.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
 import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
@@ -361,9 +362,19 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  try{
   const history=call.turns.slice(-20);
   const behavior=taiBehavior(ctx.store.get());
+  const relationshipPlan=taiRelationshipDirector(ctx.store.get(),{input:text,callTurns:call.turns});
+  const romanceBeat=!opening&&!event&&!presetText&&!shouldClose&&!call.scripted&&!call.d55Story
+   ?planTaiRomanceScene({input:text,history,relationship:relationshipPlan}):null;
+  if(romanceBeat?.mode==='silent'){
+   // Existing call quiet-time service: do not manufacture the next line.
+   call.quietUntil=Date.now()+behavior.callQuietSeconds*1000;
+   call.lastTaiEndAt=Date.now();
+   return;
+  }
   const plan=planCallSpeech({text,history,behavior,opening,event,closing:shouldClose});
   plan.maxSegments=Math.max(1,Math.min(plan.maxSegments,energy.remaining-(shouldClose?0:1),energy.stage==='fatigue'?2:Infinity));
   plan.minSegments=Math.min(plan.minSegments,plan.maxSegments);
+  if(romanceBeat){plan.maxSegments=Math.min(plan.maxSegments,romanceBeat.mode==='preset'?1:2);plan.minSegments=1;}
   const moreSpeech=plan.explicit&&!shouldClose&&!opening&&!event;
   const speechDepth='【本轮通话表达计划】'+JSON.stringify({min_segments:plan.minSegments,max_segments:plan.maxSegments,mode:'voice'})+'。'+
    (shouldClose?'本轮结束电话。可先回应眼前的话，然后亲口说自然告别；最后一段必须是告别，之后程序实际挂断，不提额限。':
@@ -374,7 +385,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    callPersonaGuidance(taiLife(ctx.store.get()))+
    ' 通话开场不喊对方名字；需要称呼时只叫 nya（奈亚），不要念熙蒙、陈熙蒙。允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
-   taiMomentumPrompt(history,{mode:'call'});
+   taiMomentumPrompt(history,{mode:'call'})+
+   (romanceBeat?.mode==='continue'?' '+romanceBeat.prompt:'');
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
   const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call',topic:text});
   const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId,worldbookEvents:['social_energy']});
@@ -385,7 +397,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
-    relationshipPlan:taiRelationshipDirector(ctx.store.get(),{input:text,callTurns:call.turns}),
+    relationshipPlan,
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
@@ -394,7 +406,11 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   const candidate=!opening&&!event&&!presetText&&!shouldClose&&!call.scripted&&!call.d55Story
    ?selectTaiMemoryPreset(ctx.store.get(),text):null;
   const memoryPreset=candidate&&!call.turns.filter(t=>t.role==='assistant').slice(-8).some(t=>t.content===candidate.text)?candidate:null;
+  const romancePreset=romanceBeat?.mode==='preset'&&
+   !call.turns.filter(t=>t.role==='assistant').slice(-8).some(t=>t.aiPresetId===romanceBeat.preset.id)
+   ?romanceBeat.preset:null;
   let data=memoryPreset?{text:JSON.stringify({messages:[{text:memoryPreset.text,mode:'voice',tone:'neutral'}]})}:
+   romancePreset?{text:JSON.stringify({messages:[{text:romancePreset.text,mode:'voice',tone:'neutral'}]})}:
    presetText&&!shouldClose?{text:JSON.stringify({messages:(Array.isArray(presetText)?presetText:[presetText]).map(text=>({text,mode:'voice',tone:'neutral'}))})}:
    event==='unheard'&&!shouldClose?null:await askTai(request);
   if(!current())return;
@@ -410,13 +426,13 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   const goodbyeAt=raw.findIndex(r=>taiCallFarewellIntent(r.text)==='end');
   if(goodbyeAt>=0){raw=raw.slice(0,goodbyeAt+1);endAfter=true;}
   else if(!shouldClose&&raw.some(r=>taiCallFarewellIntent(r.text)==='warn'))endAfter=false;
-  const select=entries=>selectCallSegments(!endAfter&&!opening&&!event&&plan.minSegments>1?expandCallSegments(entries):entries,{
+  const select=entries=>selectCallSegments(!romanceBeat&&!endAfter&&!opening&&!event&&plan.minSegments>1?expandCallSegments(entries):entries,{
    maxSegments:endAfter?Math.min(2,plan.maxSegments):plan.maxSegments,
    dedupe:behavior.callDedupe,
    recent:call.turns.filter(t=>t.role==='assistant').slice(-2).map(t=>t.content)
   });
   let {segments,blocked}=select(raw);
-  if(!endAfter&&!presetText&&!memoryPreset&&energy.stage==='normal'&&!raw.some(r=>taiCallFarewellIntent(r.text)==='warn')&&needsCallContinuation(segments,plan)){
+  if(!endAfter&&!presetText&&!memoryPreset&&!romanceBeat&&energy.stage==='normal'&&!raw.some(r=>taiCallFarewellIntent(r.text)==='warn')&&needsCallContinuation(segments,plan)){
    // Retain the first response; one bounded continuation for meaningful speech.
    try{
     const revised=await askTai({...request,scene:scene+' 【多段语音补足】已经拟好且会保留的台词：'+segments.map(r=>r.text).join(' / ')+'。只生成接下来'+(plan.minSegments-segments.length)+'至'+(plan.maxSegments-segments.length)+'段不同且有实质内容的 messages，不要重述已有台词。若确实没有更多内容、想安静或不愿披露私事，可选择 listen；若准备挂断，请输出自然告别并选择 hang_up。'});
@@ -462,7 +478,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    if(outcome==='failed')throw Error('Call audio playback failed');
    if(!current()||outcome!=='completed')break;
    call.turns.push({role:'assistant',content:r.text,tone:r.tone||decision?.tone||'neutral',
-    vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now()});
+    vocalCue:r.vocalCue||decision?.vocal_cue||'none',playedAt:Date.now(),
+    ...(romanceBeat?{taiRomanceScene:romanceBeat.tag,...(romancePreset?{aiPresetId:romancePreset.id}:{})}:{})});
    if(event==='nudge'&&taiCallFarewellIntent(r.text)==='warn')call.warnedAt=Date.now();
    if(!presetText&&event!=='unheard')ctx.store.update(s=>rememberTaiDelivered(s,r.text,{sourceId:turnId+':played:'+call.turns.length}));
    call.caption='';call.audioReady=false;call.replyPhase='voice';ctx.refresh?.();
