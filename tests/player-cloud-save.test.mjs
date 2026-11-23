@@ -140,6 +140,19 @@ test('a late cloud read cannot replace gameplay started while the connection was
  const starting=b.start();await new Promise(r=>setImmediate(r));b.store.advance(2);release();await starting;
  assert.equal(b.status.phase,'conflict');assert.equal(b.store.get().day,2);
 });
+test('late cloud response cannot erase a fresh D01 edit',async t=>{
+ const backend=server(),first=client(t,backend,phone(19));
+ await first.start();await first.flush();
+ const second=client(t,backend,phone(1,{existing:true}));
+ let release;second.api.read=()=>new Promise(resolve=>{release=()=>resolve(backend.row);});
+ const connecting=second.start();await new Promise(resolve=>setImmediate(resolve));
+ second.store.replace({...second.store.get(),clock:'19:00'});
+ release();await connecting;
+ assert.equal(second.store.get().day,1);
+ assert.equal(second.store.get().clock,'19:00');
+ assert.equal(second.status.phase,'conflict');
+ assert.equal(backend.row.game_state.day,19);
+});
 test('an unrelated account cannot silently upload existing local history; deleted cloud saves are not recreated',async t=>{
  const backend=server(),storage=memory();storage.setItem('phone:cloud-owner','another-player');
  const cloud=client(t,backend,phone(33,{storage}));await cloud.start();await cloud.flush();
