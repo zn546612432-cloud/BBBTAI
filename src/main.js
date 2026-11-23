@@ -443,12 +443,21 @@ store.subscribe(()=>{
  else{
   lockAssets=beginCompleteGamePreload({
    state:store.get(),
-   onProgress:({finished,total,failed})=>{
+   onProgress:({finished,total,failed,phase})=>{
     const percent=Math.floor(finished/Math.max(1,total)*100);
     const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
-    if(number)number.textContent=percent+'%';
-    if(bar)bar.style.width=percent+'%';
-    if(label)label.textContent=failed?'正在重試載入':finished===total?'載入完成':'正在預載全部資源';
+    const preparing=phase==='manifest'||phase==='cache';
+    const stageLabel={
+     manifest:'正在讀取資源清單',
+     cache:'正在檢查本機快取',
+     assets:'正在預載全部資源',
+     decoding:'正在準備主畫面',
+     map:'正在啟動離線地圖',
+     complete:'載入完成'
+    }[phase]||'正在載入';
+    if(number)number.textContent=preparing?'…':percent+'%';
+    if(bar)bar.style.width=preparing?'0%':percent+'%';
+    if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
    }
   });
   lockAssets.ready.then(()=>{
