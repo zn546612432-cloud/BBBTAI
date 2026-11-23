@@ -38,8 +38,7 @@ export function indexAuthoredPresetKnowledge(config=STORY55_CONFIG){
   }];
  }));
 }
-const AUTHOR_INDEX=indexAuthoredPresetKnowledge();
-const AUTHOR_BY_ID=new Map(AUTHOR_INDEX.map(e=>[e.id,e]));
+
 const textTokens=x=>{
  const s=normal(x),result=new Set(s.match(/[a-z][a-z0-9]{2,}/g)||[]);
  for(const word of s.match(/[\u3400-\u9fff]+/g)||[])
@@ -54,12 +53,15 @@ const similarity=(queryTokens,text)=>{
  return [...queryTokens].reduce((n,t)=>n+Number(tokens.has(t)),0);
 };
 function availableEvidence(s){
+ // Use each save's current authored configuration (including late D54/D55
+ // additions and editor revisions), not a frozen default catalog.
+ const byId=new Map(indexAuthoredPresetKnowledge(s.story55?.config||STORY55_CONFIG).map(e=>[e.id,e]));
  const result=[];
  for(const [channel,id,scope] of [['noapp','tai','tai-direct'],['mirage','s55-ouroboros','tai-mirage']]){
   const messages=s.content?.conversations?.[channel]?.find(c=>c.id===id)?.messages||[];
   for(const m of messages){
    if(!actual(m)||m.day>s.day||m.kind&&m.kind!=='text')continue;
-   const e=AUTHOR_BY_ID.get(String(m.id||''));
+   const e=byId.get(String(m.id||''));
    // A delivered ID alone is not evidence: check actual text against the
    // authored source. Private chats and staged/preview data never qualify.
    if(e?.scope===scope&&normal(e.text)===normal(m.text))result.push(e);
