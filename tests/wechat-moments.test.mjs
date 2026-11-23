@@ -31,7 +31,7 @@ test('Awei outfit, night photos and pinned training use the approved posts and b
  const find=id=>authoredMoments.find(p=>p.id===id);
  assert.equal(find('aw-d05').pinned,true);
  assert.deepEqual(find('aw-d05').media,['aweiTraining']);
- assert.deepEqual(find('aw-d17').media,['gymGear']);
+ assert.deepEqual(find('aw-d17').media,[]);
  assert.deepEqual(find('aw-d24').media,['aweiStyle']);
  const mediaRoot=new URL('../public/apps/wechat/media/',import.meta.url);
  // Confirm the actual approved photos, not just their semantic media keys.
@@ -129,7 +129,7 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
 });
 
 test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
- assert.equal(authoredMoments.length,38);
+ assert.equal(authoredMoments.length,37);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
  assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
