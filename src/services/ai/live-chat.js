@@ -24,6 +24,7 @@ import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {taiMomentumPrompt,needsTaiMomentumRepair} from './conversation-momentum-v11.js';
 import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} from './voice-request-v11.js';
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
+import {planTaiStoryResponse,tuneTaiStoryTurnPlan} from './story-response-director.js';
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
 import {taiRelationshipDirector} from './relationship-director.js';
@@ -194,6 +195,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(approvedAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
+  // The shared worldbook decides which source facts have reached Xi Tai.
+  request.storyReplyDirection=planTaiStoryResponse(request);
   // After an authored opening, keep one human-scale conversational beat
   // instead of allowing the model to randomly switch to a call or silence.
   let decision=unheard||socialRefusal||romanceBeat?.mode==='continue'?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
@@ -229,8 +232,9 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const turnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const rawTurnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
+  const turnPlan=tuneTaiStoryTurnPlan(rawTurnPlan,request.storyReplyDirection);
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.
