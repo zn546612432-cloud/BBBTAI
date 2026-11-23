@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {planTaiRomanceScene,romanceQuestionIntent,romanceSceneAwaitingPlayer} from '../src/services/ai/romance-scene/index.js';
+import {planTaiRomanceScene,romanceQuestionIntent,romanceSceneAwaitingPlayer,romanceReplyIntent,bridgeRelationshipPermissions} from '../src/services/ai/romance-scene/index.js';
 import {initialState} from '../src/services/storage.js';
 import {replyToTaiMessage} from '../src/services/ai/live-chat.js';
 import {saveApiConfig,clearApiConfig} from '../src/services/ai/gateway.js';
@@ -23,29 +23,43 @@ test('stage, rejection, crisis, and actual delivery guard fixed scenes',()=>{
  assert.equal(plan([m('u','me','說愛我')],'說愛我',{...rel(),rejected:true}),null);
  assert.equal(plan([m('u','me','說愛我')],'說愛我',{...rel(),crisis:true}),null);
 });
-test('player really chooses teasing, sincerity, joking, refusal, or silence',()=>{
+test('approved node follows a real affirmative player message without DeepSeek',()=>{
  const first=plan([m('u1','me','說愛我')],'說愛我');
- const base=[m('u1','me','說愛我'),m('t1','tai',first.preset.text,{aiPresetId:first.preset.id,taiRomanceScene:first.tag})];
- for(const [input,branch] of [['對啊','playful'],['我認真的','serious'],['哈哈逗你的','joke'],['別說了','boundary']]){
-  const result=plan([...base,m('u2','me',input)],input);
-  assert.equal(result.mode,'continue');assert.equal(result.branch,branch);
-  assert.equal(result.tag.beat,['joke','boundary'].includes(branch)?'closed':branch);
- }
+ const history=[m('u1','me','說愛我'),m('t1','tai',first.preset.text,{aiPresetId:first.preset.id,taiRomanceScene:first.tag})];
+ const second=plan([...history,m('u2','me','對啊')],'對啊');
+ assert.equal(second.mode,'preset');
+ assert.equal(second.preset.text,'……你認真的？');
+ assert.equal(second.tag.step,2);
+ const earnest=plan([...history,m('u2','me','我認真的')],'我認真的');
+ assert.equal(earnest.mode,'continue');
+ assert.equal(earnest.bridgeOnly,true);
+ assert.equal(bridgeRelationshipPermissions({canDeclareLike:true,canDeclareLove:true},earnest).canDeclareLike,false);
+});
+test('free input classification handles serious, jokes, silence, boundaries and topic switches',()=>{
+ const first=plan([m('u1','me','你是不是喜歡我？')],'你是不是喜歡我？');
+ const base=[m('u1','me','你是不是喜歡我？'),m('t1','tai',first.preset.text,{aiPresetId:first.preset.id,taiRomanceScene:first.tag})];
+ assert.equal(romanceQuestionIntent('熙泰，你到底喜欢我吗？'),'feelings_question');
+ assert.equal(romanceQuestionIntent('你不是说喜欢我吗'),'');
+ assert.equal(romanceReplyIntent('哈哈，我认真的'),'serious');
+ assert.equal(plan([...base,m('u2','me','哈哈逗你的')],'哈哈逗你的').tag.beat,'closed');
+ assert.equal(plan([...base,m('u2','me','別說了')],'別說了').mode,'silent');
  assert.equal(plan([...base,m('u2','me','……')],'……').mode,'silent');
  assert.equal(plan([...base,m('u2','me','查看報告')],'查看報告'),null);
  assert.equal(romanceSceneAwaitingPlayer(base),true);
 });
-test('one two-person scene is capped at three actual reply beats',()=>{
+test('the story stays open as long as the player talks about it; no 3-reply cap',()=>{
  const first=plan([m('u1','me','說愛我')],'說愛我');
- const base=[m('u1','me','說愛我'),m('t1','tai',first.preset.text,{taiRomanceScene:first.tag})];
- const two=plan([...base,m('u2','me','我認真的')],'我認真的');
- const extended=[...base,m('u2','me','我認真的'),m('t2','tai','模型回應',{taiRomanceScene:two.tag})];
- const three=plan([...extended,m('u3','me','對啊')],'對啊');
- assert.equal(three.tag.beat,'closed');
- assert.equal(three.tag.step,3);
- assert.equal(plan([...extended,m('u3','me','對啊'),m('t3','tai','好',{taiRomanceScene:three.tag}),m('u4','me','對啊')],'對啊'),null);
+ const history=[m('u1','me','說愛我'),m('t1','tai',first.preset.text,{taiRomanceScene:first.tag})];
+ for(let i=2;i<=9;i++){
+  history.push(m('u'+i,'me','我認真的'));
+  const step=plan(history,'我認真的');
+  assert.equal(step.mode,'continue');
+  assert.equal(step.tag.step,i);
+  history.push(m('t'+i,'tai','普通銜接',{taiRomanceScene:step.tag}));
+ }
+ assert.equal(plan([...history,m('new','me','我先修電腦了')],'我先修電腦了'),null);
 });
-test('history survives JSON save and repeated presets cannot farm replies',()=>{
+test('save restores scene cursor, but a previously used opening never loops',()=>{
  const first=plan([m('u1','me','說愛我')],'說愛我');
  const base=JSON.parse(JSON.stringify([m('u1','me','說愛我'),
   m('t1','tai',first.preset.text,{aiPresetId:first.preset.id,taiRomanceScene:first.tag})]));
@@ -53,6 +67,15 @@ test('history survives JSON save and repeated presets cannot farm replies',()=>{
  const interrupted=[...base,m('u2','me','別的話題'),m('t2','tai','我聽到了')];
  assert.equal(plan([...interrupted,m('u3','me','說愛我')],'說愛我'),null);
  assert.equal(romanceSceneAwaitingPlayer(interrupted),false);
+});
+test('unplayed phone speech does not count as an actual authored beat',()=>{
+ const first=plan([{role:'user',content:'說愛我',id:'u1'}],'說愛我');
+ const history=[{role:'user',content:'說愛我',id:'u1'},
+  {role:'assistant',content:first.preset.text,taiRomanceScene:first.tag}];
+ assert.equal(plan([...history,{role:'user',content:'對啊',id:'u2'}],'對啊'),null);
+ history[1].playedAt=5000;
+ const next=plan([...history,{role:'user',content:'對啊',id:'u2'}],'對啊');
+ assert.equal(next.preset.text,'……你認真的？');
 });
 function setup(input){
  const s=initialState();s.day=56;s.clock='21:30';
@@ -75,6 +98,21 @@ test('NoApp actually delivers approved opening without invoking an AI provider',
   assert.equal(chat.messages.at(-1).replySourceId,'user-1');
  }finally{globalThis.fetch=before;}
 });
+test('NoApp delivers a second approved graph beat without any model call',async()=>{
+ const {chat,store}=setup('說愛我');
+ const previous=globalThis.fetch;
+ globalThis.fetch=async()=>{throw Error('approved authored node must never call a model');};
+ try{
+  assert.equal((await replyToTaiMessage(store,'user-1',quick)).text,'你就這麼想聽？');
+  chat.messages.push(m('user-2','me','對啊',{day:56,time:'21:31'}));
+  const response=await replyToTaiMessage(store,'user-2',quick);
+  assert.equal(response.status,'replied');
+  assert.equal(response.text,'……你認真的？');
+  assert.equal(chat.messages.at(-1).taiRomanceScene.beat,'confirm');
+  assert.equal(chat.messages.at(-1).replySourceId,'user-2');
+ }finally{globalThis.fetch=previous;}
+});
+
 test('NoApp continuation uses exactly one bounded DeepSeek generation, not forced bubble count',async()=>{
  const {chat,store}=setup('說愛我');
  assert.equal((await replyToTaiMessage(store,'user-1',quick)).status,'replied');
@@ -90,7 +128,7 @@ test('NoApp continuation uses exactly one bounded DeepSeek generation, not force
   if(String(url).includes('/tai-v8-persona'))return Response.json({},{status:404});
   if(String(url).includes('api.deepseek.com/chat/completions'))calls++;
   const req=JSON.parse(init.body);
-  assert.match(req.messages[0].content,/雙人對話/);
+  assert.match(req.messages[0].content,/自由打字對話圖/);
   return Response.json({choices:[{message:{content:JSON.stringify({messages:[{text:'我聽到了。',mode:'text',tone:'neutral'}]})}}]});
  };
  try{

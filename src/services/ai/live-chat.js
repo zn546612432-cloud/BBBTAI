@@ -26,7 +26,7 @@ import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntr
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
 import {taiRelationshipDirector} from './relationship-director.js';
-import {planTaiRomanceScene} from './romance-scene/index.js';
+import {planTaiRomanceScene,bridgeRelationshipPermissions} from './romance-scene/index.js';
 import {selectTaiMemoryPreset,alreadyRecentlyUsedTaiPreset} from '../../apps/noapp/memory-replies.js';
 import {musicListeningContext} from '../../apps/music/features/shared/listening.js';
 
@@ -94,6 +94,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  // The delivered NoApp messages themselves carry the scene cursor. No
  // parallel save, second event clock, or scripted-story side channel.
  const romanceBeat=batch.length<=1&&pendingSource?.kind==='text'&&!pendingSource?.story55&&
+  !/^s55-/.test(String(pendingSource?.id||''))&&!pendingSource?.authoredPending&&
   !['connected','ringing','dialing'].includes(callState().state)
   ?planTaiRomanceScene({input:pendingSource.text,history,
     relationship:taiRelationshipDirector(initial,{input:pendingSource.text})}):null;
@@ -182,7 +183,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    behavior,allowVoice,worldbookEvents,
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    callActive,relationshipContext:xitaiRelationshipContext(initial,{mode:'text',callActive}),
-   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan};
+   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,
+   relationshipPlan:bridgeRelationshipPermissions(relationshipPlan,romanceBeat)};
   request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
   request.scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);

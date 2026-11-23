@@ -16,7 +16,7 @@ import {unheardReply} from '../../services/voice/unheard.js';
 import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.js';
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {taiRelationshipDirector} from '../../services/ai/relationship-director.js';
-import {planTaiRomanceScene} from '../../services/ai/romance-scene/index.js';
+import {planTaiRomanceScene,bridgeRelationshipPermissions} from '../../services/ai/romance-scene/index.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
 import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
@@ -397,7 +397,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
     channel:'noapp',day,storyVersion:isStory55(ctx.store.get())?'55-v1':undefined,
     recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scene,worldbookSnapshot,
     behavior:taiBehavior(ctx.store.get()),approvedDecision:decision,
-    relationshipPlan,
+    relationshipPlan:bridgeRelationshipPermissions(relationshipPlan,romanceBeat),
     relationshipContext,profile:ctx.store.get().aiDraft?.profile,
     memories:ctx.store.get().aiDraft?.memories
   };
