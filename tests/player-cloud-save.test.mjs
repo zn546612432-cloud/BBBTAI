@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {PlayerCloudSave,connectPlayerSave} from '../src/services/storage/cloud/index.js';
 import {verifySaveEmail,takeEmailCallback,cloudRequest} from '../src/services/storage/cloud/api.js';
 import {taiCloudSession,SESSION_KEY} from '../src/services/ai/supabase-gateway.js';
-import {cloudSaveView} from '../src/apps/settings/features/cloud-save/index.js';
+import {cloudSaveView,cloudSaveAction} from '../src/apps/settings/features/cloud-save/index.js';
 import {snapshotVoiceMedia} from '../src/services/storage/cloud/media.js';
 import {saveClip} from '../src/services/voice/audio-store.js';
 
@@ -149,6 +149,29 @@ test('settings shows actual synchronization state without changing the fictional
  const html=cloudSaveView(cloud.store);assert.match(html,/已同步/);assert.match(html,/綁定郵箱/);assert.match(html,/歷史備份/);
  assert.doesNotMatch(html,/player-a|access_token/);
 });
+test('manual sync reports an unconfirmed upload and then confirms a successful retry',async()=>{
+ const store={get:()=>state(18),cloud:{enabled:true,revision:1,status:{phase:'offline',message:'雲端回應逾時'},flush:async()=>false}};
+ const act=()=>new Promise(resolve=>{
+  let renders=0;
+  assert.equal(cloudSaveAction('cloud-sync',{}, {store,refresh(){if(++renders===2)resolve();}}),true);
+ });
+ await act();
+ assert.match(cloudSaveView(store),/雲端回應逾時/);
+ assert.doesNotMatch(cloudSaveView(store),/已確認同步至雲端/);
+ store.cloud.status={phase:'synced'};
+ store.cloud.flush=async()=>true;
+ await act();
+ assert.match(cloudSaveView(store),/已確認同步至雲端/);
+ store.cloud.status={phase:'pending'};
+ assert.doesNotMatch(cloudSaveView(store),/已確認同步至雲端/);
+ store.cloud.status={phase:'offline',message:'最新請求已失敗'};
+ assert.match(cloudSaveView(store),/最新請求已失敗/);
+});
+test('offline failure cause is visible before a manual retry',()=>{
+ const store={get:()=>state(11),cloud:{enabled:true,status:{phase:'offline',message:'身份更新失敗'}}};
+ assert.match(cloudSaveView(store),/身份更新失敗/);
+});
+
 test('private audio duplicates are reused; unavailable audio does not prevent the progress snapshot',async()=>{
  const previous={fetch:globalThis.fetch,localStorage:globalThis.localStorage};globalThis.localStorage=memory();
  globalThis.localStorage.setItem(SESSION_KEY,JSON.stringify({access_token:'audio-test',refresh_token:'refresh',user:{id:'player-a'},expires_at:Date.now()/1000+3600}));
