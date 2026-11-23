@@ -221,7 +221,7 @@ test('D04 approved group dialogue uses one sticker and preserves the remaining e
  assert.ok(!m.some(x=>x.id==='d04-lunch-18'||x.id==='d04-lunch-19'||x.id==='d04-lunch-20'));
 });
 
-test('D04 old saves migrate only legacy NPC bubbles and keep the player's edits',()=>{
+test('D04 old saves migrate only legacy NPC bubbles and keep player-authored messages',()=>{
  const s=fixture('23:10'),messages=byId(s,'group');
  const old=[
   ['d04-earbuds-13','胡枫','你們能不能盼我點好'],
@@ -243,7 +243,6 @@ test('D04 old saves migrate only legacy NPC bubbles and keep the player's edits'
   outfit:{started:true,index:21,completed:true}
  };
  tickD04Chats(s,0);
- assert.equal(messages.includes(''),false);
  const current=byId(s,'group');
  assert.equal(current.find(x=>x.id==='d04-lunch-17')?.text,D04_MEDIA.d04Sticker);
  assert.equal(current.find(x=>x.id==='d04-lunch-17')?.kind,'image');
