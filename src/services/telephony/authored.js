@@ -32,10 +32,10 @@ function appendCaption(s,call,step,index,now){
  s.phoneCall.caption={speaker:step.speaker,text:step.text,clock:line.clock};
  s.phoneCall.transcript=structuredClone(p.transcript);
 }
-function advance(ctx,call,index,script,now){
+function advance(ctx,call,index,script,now,consumedSteps=1){
  ctx.store.update(s=>{
   const p=ensureProgress(s,script.id);if(p.index!==index)return;
-  p.index++;delete p.captionUntil;
+  p.index+=consumedSteps;delete p.captionUntil;
   p.nextAt=now+(script.steps[p.index]?.delayMs||0);
   s.phoneCall.speaking=false;
  });
@@ -102,7 +102,16 @@ async function playAuthoredPhoneLine(ctx,a,call,script,index,step){
   const audio=a.audio;audio.src=resolveStablePhoneAudioPath(step.audio);
   await new Promise((resolve,reject)=>{
    let timer;
-   const cleanup=()=>{clearTimeout(timer);audio.onplaying=null;audio.onended=null;audio.onerror=null;a.playing=null;};
+   const next=script.steps[index+1];
+   const cueMs=step.followupCaptionAtMs;
+   const hasFollowupCue=Number.isFinite(cueMs)&&cueMs>0&&next&&!next.audio;
+   let followupShown=false;
+   const showFollowup=()=>{
+    if(!hasFollowupCue||followupShown||!current())return;
+    followupShown=true;
+    ctx.store.update(s=>appendCaption(s,call,next,index+1,Date.now()));
+   };
+   const cleanup=()=>{clearTimeout(timer);audio.onplaying=null;audio.ontimeupdate=null;audio.onended=null;audio.onerror=null;a.playing=null;};
    const fail=error=>{cleanup();reject(error);};
    a.playing={id:call.id,cancel(){cancelled=true;cleanup();resolve();}};
    audio.onplaying=()=>{
@@ -110,12 +119,13 @@ async function playAuthoredPhoneLine(ctx,a,call,script,index,step){
     clearTimeout(timer);timer=setTimeout(()=>fail(Error('VOICE_TIMEOUT')),180000);
     ctx.store.update(s=>{appendCaption(s,call,step,index,Date.now());s.phoneCall.speaking=true;});
    };
-   audio.onended=()=>{cleanup();resolve();};
+   audio.ontimeupdate=()=>{if(hasFollowupCue&&audio.currentTime*1000>=cueMs)showFollowup();};
+   audio.onended=()=>{showFollowup();cleanup();resolve();};
    audio.onerror=()=>fail(Error('VOICE_UNAVAILABLE'));
    timer=setTimeout(()=>fail(Error('VOICE_TIMEOUT')),15000);
    try{Promise.resolve(audio.play()).catch(fail);}catch(error){fail(error);}
   });
-  if(!cancelled&&current())advance(ctx,call,index,script,Date.now());
+  if(!cancelled&&current())advance(ctx,call,index,script,Date.now(),step.followupCaptionAtMs?2:1);
  }catch{
   // A missing/rejected recording must be retried by a gesture, never skipped.
   if(current())pauseAuthoredPhoneCall(ctx,a);
