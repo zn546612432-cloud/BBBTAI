@@ -20,24 +20,34 @@ const realMessage=(m,day)=>m&&m.actual!==false&&!m.demo&&!m.authoredPending&&!m.
  m.kind!=='call'&&m.kind!=='image'&&m.kind!=='app_invitation'&&
  typeof (m.voiceCaption||m.text)==='string';
 
-function observedNoAppTurns(s){
+function observedNoAppTurns(s,callTurns=[]){
  const raw=s?.content?.conversations?.noapp?.find(x=>x.id==='tai')?.messages||[];
- const rows=raw.filter(m=>realMessage(m,s.day)).map(m=>({
-  speaker:m.from,text:address(m.voiceCaption||m.text),day:m.day,id:m.id
- }));
- // Only speech already stored on an ENDED phone call is evidence, never
- // text pending playback or unplayed script steps.
- for(const m of raw.filter(m=>m.kind==='call'&&m.callStatus==='ended'&&m.day<=s.day&&
-  m.actual!==false&&!m.demo&&typeof m.transcript==='string')){
-  for(const [i,line] of m.transcript.split('\n').entries()){
-   const match=line.match(/^(?:\[\d\d:\d\d\]\s*)?(熙蒙|熙泰)[：:]\s*(.*)$/);
-   if(match)rows.push({speaker:match[1]==='熙蒙'?'me':'tai',text:address(match[2]),day:m.day,id:m.id+':'+i});
+ const rows=[];
+ for(const m of raw){
+  if(realMessage(m,s.day)){
+   rows.push({speaker:m.from,text:address(m.voiceCaption||m.text),day:m.day,id:m.id});
+  }else if(m?.kind==='call'&&m.callStatus==='ended'&&m.day<=s.day&&
+   m.actual!==false&&!m.demo&&typeof m.transcript==='string'){
+   // Preserve actual chronology: an earlier call cannot undo a newer refusal.
+   for(const [i,line] of m.transcript.split('\n').entries()){
+    const match=line.match(/^(?:\[\d\d:\d\d\]\s*)?(熙蒙|熙泰)[：:]\s*(.*)$/);
+    if(match)rows.push({speaker:match[1]==='熙蒙'?'me':'tai',
+     text:address(match[2]),day:m.day,id:m.id+':'+i});
+   }
   }
+ }
+ // Live connected calls share the same verdict, but only played Tai speech
+ // and actually submitted/recognized player turns are eligible evidence.
+ for(const [i,turn] of callTurns.entries()){
+  if(!['user','assistant'].includes(turn?.role)||typeof turn.content!=='string')continue;
+  if(turn.role==='assistant'&&!Number.isFinite(turn.playedAt))continue;
+  rows.push({speaker:turn.role==='user'?'me':'tai',text:address(turn.content),
+   day:s.day,id:'active-call:'+i});
  }
  return rows;
 }
-export function taiRelationshipDirector(s,{input='',initiative=false}={}){
- const known=taiRecognized(s),bond=taiBond(s),rows=known?observedNoAppTurns(s):[];
+export function taiRelationshipDirector(s,{input='',initiative=false,callTurns=[]}={}){
+ const known=taiRecognized(s),bond=taiBond(s),rows=known?observedNoAppTurns(s,callTurns):[];
  const player=[],tai=[],playerExplicitDays=new Set(),taiExplicitDays=new Set(),meaningfulDays=new Set(),rejections=[];
  for(const [i,row] of rows.entries()){
   const t=row.text;
@@ -107,7 +117,7 @@ export function taiRelationshipInstruction(v){
 export function taiRomanticViolations(v,entries=[]){
  if(!v)return [];
  const words=entries.flatMap(e=>[e?.text,e?.speechText]).filter(Boolean).map(clean);
- if(!v.canDeclareLove&&words.some(x=>directLove.test(x)))return ['love'];
- if(!v.canDeclareLike&&words.some(x=>directLike.test(x)))return ['like'];
+ if((!v.canDeclareLove||v.initiative&&!v.canInitiateLike)&&words.some(x=>directLove.test(x)))return ['love'];
+ if((!v.canDeclareLike||v.initiative&&!v.canInitiateLike)&&words.some(x=>directLike.test(x)))return ['like'];
  return [];
 }
