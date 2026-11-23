@@ -98,6 +98,21 @@ test('NoApp actually delivers approved opening without invoking an AI provider',
   assert.equal(chat.messages.at(-1).replySourceId,'user-1');
  }finally{globalThis.fetch=before;}
 });
+test('NoApp delivers a second approved graph beat without any model call',async()=>{
+ const {chat,store}=setup('說愛我');
+ const previous=globalThis.fetch;
+ globalThis.fetch=async()=>{throw Error('approved authored node must never call a model');};
+ try{
+  assert.equal((await replyToTaiMessage(store,'user-1',quick)).text,'你就這麼想聽？');
+  chat.messages.push(m('user-2','me','對啊',{day:56,time:'21:31'}));
+  const response=await replyToTaiMessage(store,'user-2',quick);
+  assert.equal(response.status,'replied');
+  assert.equal(response.text,'……你認真的？');
+  assert.equal(chat.messages.at(-1).taiRomanceScene.beat,'confirm');
+  assert.equal(chat.messages.at(-1).replySourceId,'user-2');
+ }finally{globalThis.fetch=previous;}
+});
+
 test('NoApp continuation uses exactly one bounded DeepSeek generation, not forced bubble count',async()=>{
  const {chat,store}=setup('說愛我');
  assert.equal((await replyToTaiMessage(store,'user-1',quick)).status,'replied');
@@ -113,7 +128,7 @@ test('NoApp continuation uses exactly one bounded DeepSeek generation, not force
   if(String(url).includes('/tai-v8-persona'))return Response.json({},{status:404});
   if(String(url).includes('api.deepseek.com/chat/completions'))calls++;
   const req=JSON.parse(init.body);
-  assert.match(req.messages[0].content,/雙人對話/);
+  assert.match(req.messages[0].content,/自由打字對話圖/);
   return Response.json({choices:[{message:{content:JSON.stringify({messages:[{text:'我聽到了。',mode:'text',tone:'neutral'}]})}}]});
  };
  try{
