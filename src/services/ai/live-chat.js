@@ -45,7 +45,8 @@ const pendingRequests=new WeakSet();
 export const isTaiReplyPending=store=>pendingRequests.has(store);
 export function isCurrentTaiTurn(s,sourceMessageId,day){
  const c=conversation(s);
- return !!c&&s.day===day&&!deathLocked(s)&&!s.poweredOff&&s.powerMode==='idle'&&
+ const source=c?.messages.find(m=>m.id===sourceMessageId);
+ return !!c&&source?.taiHandledAction!=='absorbed_by_call'&&s.day===day&&!deathLocked(s)&&!s.poweredOff&&s.powerMode==='idle'&&
   taiPresence(s).contactable&&visibleMessages(c).filter(m=>m.from==='me'&&!m.demo&&m.day<=s.day).at(-1)?.id===sourceMessageId;
 }
 // Recover persisted deferrals after a page reload while the game is active.
@@ -73,7 +74,7 @@ export function synthesizeVoiceNotes(){return waitForTaiVoiceQueue();}
 
 export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),random=Math.random,now=Date.now,refresh=()=>{},retryDeferred=false,onTyping=()=>{}}={}){
  const initial=store.get(),c=conversation(initial);
- if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||c.messages.some(m=>m.id===sourceMessageId&&['read_no_reply','end_session','start_call'].includes(m.taiHandledAction))||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
+ if(!c||!c.messages.some(m=>m.id===sourceMessageId)||replyAfter(c,sourceMessageId)||c.messages.some(m=>m.id===sourceMessageId&&['read_no_reply','end_session','start_call','absorbed_by_call'].includes(m.taiHandledAction))||initial.events?.some(e=>e.type==='tai_text_call_trigger'&&e.sourceId===sourceMessageId))return {status:'scripted'};
  const pendingSource=c.messages.find(m=>m.id===sourceMessageId);
  if(pendingSource?.taiDeferredUntil&&now()<pendingSource.taiDeferredUntil)return {status:'deferred',retryAfterMs:pendingSource.taiDeferredUntil-now()};
  if(pendingSource?.taiDeferredGameMinute>absoluteMinute(initial))return {status:'deferred'};

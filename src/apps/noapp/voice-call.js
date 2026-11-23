@@ -17,6 +17,7 @@ import {pressFeedback,releaseFeedback,impact} from '../../system/feedback/index.
 import {xitaiRelationshipContext} from '../../services/ai/relationship-context.js';
 import {TAI_PORTRAIT} from './portrait.js';
 import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../../services/ai/memory.js';
+import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
 import {taiLife} from '../../services/ai/life-context.js';
@@ -58,7 +59,7 @@ function recordCall(s,{direction,status,seconds=0,turns=[],endedBy=null,endReaso
  const entry={id:'tai-call-history-'+uid(),from:direction==='incoming'?'tai':'me',text:label,
    kind:'call',callStatus:status,duration:seconds,day:s.day,time:s.clock,actual:true,
    ...(status==='ended'||direction==='outgoing'&&['declined','missed'].includes(status)?{endedBy:['tai','player','system','connection_error'].includes(endedBy)?endedBy:'system',endReason:String(endReason||'').slice(0,40)}:{})};
- if(status==='ended'&&turns.length){const fixed=turns.some(t=>t.clock);entry.transcript=(fixed?turns:turns.slice(-14)).map(t=>(t.clock?'['+t.clock+'] ':'')+(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(0,fixed?12000:900);}
+ if(status==='ended'&&turns.length){const fixed=turns.some(t=>t.clock);entry.transcript=(fixed?turns:turns.slice(-120)).map(t=>(t.clock?'['+t.clock+'] ':'')+(t.role==='user'?'熙蒙':'熙泰')+'：'+t.content).join('\n').slice(-12000);}
  chat.messages.push(entry);
  if(direction==='incoming'&&status==='missed'&&!(s.unlocked&&s.nav.current.appId==='noapp'&&s.nav.current.route==='/chat/tai'))
   chat.unread=Math.max(0,Number(chat.unread)||0)+1;
@@ -155,7 +156,7 @@ export function startIncoming(ctx,preview='熙泰邀请你语音通话',{reason=
   call.scriptIndex=ctx.store.get().story55?.d55CallProgress?.[scripted.id]||0;
  }
  if(scripted&&!scripted.unanswerable)preloadScriptedVoice(scripted.id===RECOGNITION_CALL.id?33:scripted.day);
- ctx.store.update(s=>{if(scripted)s.story55[scripted.triggerKey||'d42CallTriggered']=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',...(scripted?{scriptedCallId:scripted.id}:{}),link:{appId:'noapp',route:'/call',params:{}}});});
+ ctx.store.update(s=>{absorbPendingTaiTextsForCall(s);if(scripted)s.story55[scripted.triggerKey||'d42CallTriggered']=true;s.notifications.unshift({id:notificationId,title:'NoApp · '+taiDisplayName(s),body:preview,type:'tai-incoming-call',...(scripted?{scriptedCallId:scripted.id}:{}),link:{appId:'noapp',route:'/call',params:{}}});});
  // A missed call stays in the game's notifications; answering or declining
  // removes just this call's card, never another character's messages.
  ctx.refresh?.();
@@ -219,6 +220,7 @@ export function startOutgoing(ctx){
  playback=createGestureAudio();
  const sessionId=++callSerial;
  call={state:'dialing',sessionId,revision:0,quietUntil:0,direction:'outgoing',muted:false,speaker:true,turns:[],started:0,busy:false,audioReady:false,nudgeCount:0};
+ ctx.store.update(absorbPendingTaiTextsForCall);
  ctx.router.open({appId:'noapp',route:'/call'});
  const pending=()=>call.sessionId===sessionId&&call.state==='dialing';
  const refuse=()=>callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'resting',outcomeOverride:'declined',fallback:taiCallCooling(ctx.store.get())?'':'現在不方便打電話，晚點再說。'});
@@ -368,7 +370,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
    taiMomentumPrompt(history,{mode:'call'});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
-  const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
+  const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call',topic:text});
   const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId,worldbookEvents:['social_energy']});
   // Calls need one model round-trip: return the legal action and spoken
   // messages together. Ringing and text still use their existing decisions.
