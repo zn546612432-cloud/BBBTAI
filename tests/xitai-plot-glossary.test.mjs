@@ -5,6 +5,7 @@ import {activateStory55} from '../src/services/story55/runtime.js';
 import {selectTaiMemoryPreset} from '../src/apps/noapp/memory-replies.js';
 import {projectTaiPlotGlossary,taiDirectTearDefinition,TAI_CANONICAL_PLOT_TERMS} from '../src/services/ai/worldbook/plot-glossary.js';
 import {captureTaiWorldbook,assembleTaiMessages,splitWorldbook} from '../src/services/ai/worldbook/index.js';
+import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 
 function fixture({recognized=true,day=45}={}){
  const s=initialState();
@@ -99,7 +100,8 @@ test('the actual shared worldbook snapshot injects named lore for BOTH decision 
  assert(snapshot.entries.some(e=>e.id==='story-lore:tear-program'));
  assert.equal(splitWorldbook(snapshot,'expression').before.some(e=>e.id==='story-lore:tear-program'),true);
  assert.equal(splitWorldbook(snapshot,'decision').before.some(e=>e.id==='story-lore:tear-program'),true);
- const outbound=assembleTaiMessages('熙泰系統',context.messages,snapshot).at(0).content;
+ const system=buildTaiPrompt({...context,worldbookSnapshot:snapshot});
+ const outbound=assembleTaiMessages(system,context.messages,snapshot).at(0).content;
  assert.match(outbound,/衔尾蛇|銜尾蛇/);
  assert.match(outbound,/TAI/);
  assert.equal(s.aiDraft.worldbook.runtime.noapp.snapshot.entries.some(e=>e.id==='story-lore:tear-program'),true);
