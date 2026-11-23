@@ -72,7 +72,7 @@ test('phone book contains only the seven authored contacts and Macau identity',(
  phone.handle('phone-tab',{dataset:{tab:'contacts'}},ctx);
  const html=phone.render({store}),people=store.get().content.phone.contacts;
  assert.deepEqual(people.map(p=>p.name),['哥','口腔前台','傅隆生','阿威','小辛','仔仔','胡枫']);
- assert.match(html,/熙蒙/);assert.match(html,/\+853 6XXX XXXX/);
+ assert.match(html,/熙蒙/);assert.match(html,/\+853 6935 0816/);
  assert.doesNotMatch(html,/张娜|阿飞定餐总部|阿梅/);
  assert.ok(store.get().content.phone.calls.every(call=>call.number.startsWith('+853')&&call.place==='澳门'));
  store.update(s=>{s.content.phone.contacts[0].name='哥哥';s.content.phone.contacts[0].number='+853 6000 1234';});
