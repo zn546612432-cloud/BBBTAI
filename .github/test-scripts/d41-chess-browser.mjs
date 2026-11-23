@@ -62,8 +62,26 @@ try{
  assert.deepEqual(final.d41Script.spoken,[1,7,19,25,31,37]);assert.equal(final.d41Script.voiceUnavailable,undefined);
  assert.equal(await page.locator('[data-action="d41-retry-voice"],[data-action="d41-skip-voice"],[data-action="tai-scripted-next"]').count(),0);
  assert.equal(tts.filter(t=>t.includes('恭喜')).length,0);
- assert.equal(bishopAttempts,1);assert.equal(bishopFileAttempts,2);assert.equal(tts.length,1);
- assert.equal(recordings.size,10);assert.ok(!recordings.has('d41-chess-13.mp3'));
+ // With complete startup preloading, all ten published recordings can be
+ // served from CacheStorage. In that mode the simulated network outage is
+ // deliberately never encountered during chess playback, so TTS must NOT run.
+ const cachedAudio=await page.evaluate(async()=>{
+  for(const name of await caches.keys()){
+   if(!name.startsWith('ximeng-game-package-'))continue;
+   const cache=await caches.open(name),requests=await cache.keys();
+   const clips=requests.filter(req=>/\/assets\/story55\/d41-d42\/.*\.mp3(?:\?|$)/.test(req.url));
+   if(clips.length===10)return true;
+  }
+  return false;
+ });
+ if(cachedAudio){
+  assert.equal(bishopAttempts,0,'fully cached clips must not trigger network TTS fallback');
+  assert.equal(tts.length,0,'no remote TTS needed when every preset clip was preloaded');
+ }else{
+  assert.equal(bishopAttempts,1);assert.equal(bishopFileAttempts,2);assert.equal(tts.length,1);
+  assert.equal(recordings.size,10);
+ }
+ assert.ok(!recordings.has('d41-chess-13.mp3'));
  await page.locator('.board-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'d23-chess-browser-results/d41/checkmate.png'});
  assert.deepEqual(errors,[]);console.log('D41 MOBILE PASS',JSON.stringify({url:page.url(),title:await page.title(),plies:final.history.length,voiceCount:tts.length,final:final.history.at(-1).san,result:final.result,errors}));
 }finally{await browser.close();}

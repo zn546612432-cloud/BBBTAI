@@ -39,14 +39,15 @@ page.on('response',response=>{if(response.url().startsWith(base)&&response.statu
 page.on('request',request=>{if(/\/icons\/glass-(?:atlas|utilities)\.png/.test(request.url()))pngRequests.push(request.url());});
 try{
  await page.goto(base+'/BBBTAI/',{waitUntil:'domcontentloaded'});
- await Promise.race([currentRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('current photo was not preloaded')),15000))]);
+ await Promise.race([currentRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('current photo was not preloaded')),60000))]);
  assert.equal(await page.locator('#xm-boot-next').isVisible(),false,'do not enter while a visible photo is still pending');
  assert.notEqual(await page.locator('#xm-boot-percent').textContent(),'100%');
  const start=performance.now();releaseCurrent();
- await page.locator('#xm-boot-next').waitFor({state:'visible',timeout:10000});
+ await Promise.race([futureRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('future-day image was not requested during complete boot')),90000))]);
+ assert.equal(await page.locator('#xm-boot-next').isVisible(),false,'future-day artwork must finish before the player can enter');
+ releaseFuture();
+ await page.locator('#xm-boot-next').waitFor({state:'visible',timeout:180000});
  const foregroundReadyMs=Math.round(performance.now()-start);
- await Promise.race([futureRequest,new Promise((_,reject)=>setTimeout(()=>reject(Error('background queue did not start')),10000))]);
- assert.equal(await page.locator('#xm-boot-next').isVisible(),true,'a delayed future-day image must not block entry');
  const countBefore=requests.filter(url=>url===current).length;
  await page.locator('#xm-boot-next').click();
  await page.locator('#xm-boot').waitFor({state:'detached'});
@@ -69,7 +70,7 @@ try{
  assert.ok(visiblePhoto.width>100&&visiblePhoto.height>100,JSON.stringify(visiblePhoto));
  assert.equal(visiblePhoto.visibility,'visible');assert.equal(visiblePhoto.opacity,'1');
  await page.screenshot({path:out+'/390-moments-ready.png'});
- await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,visiblePhoto,delayedFutureImage:'did not block entry',optimizedAtlases:'no original PNG requests'},null,2));
- console.log('PASS cold-cache readiness, decoded images, shared image URLs and background priority',foregroundReadyMs+'ms');
+ await writeFile(out+'/results.json',JSON.stringify({release:release.version,foregroundReadyMs,currentPhotoRequests:countBefore,images:imageSources.length,visiblePhoto,delayedFutureImage:'blocked entry until cached',optimizedAtlases:'no original PNG requests'},null,2));
+ console.log('PASS complete cold-cache readiness, decoded images and shared URLs',foregroundReadyMs+'ms');
 }catch(error){await page.screenshot({path:out+'/failure.png'});throw error;}
 finally{releaseCurrent();releaseFuture();await context.close();await browser.close();await new Promise(resolve=>server.close(resolve));}

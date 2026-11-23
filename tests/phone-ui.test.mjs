@@ -4,6 +4,7 @@ import {existsSync} from 'node:fs';
 import {LockScreen} from '../src/system/lock.js';
 import {PhoneStore,initialState} from '../src/services/storage.js';
 import {iconAssets} from '../src/system/icon-assets.js';
+import {icon} from '../src/system/ui.js';
 import {registry,homePages,dockApps} from '../src/system/registry.js';
 import {addReminder,toggleReminder,reminders} from '../src/services/reminders.js';
 import {home} from '../src/system/shell.js';
@@ -38,3 +39,15 @@ test('reminders persist independently of notes and old saved content can add its
 
 import {uid} from '../src/services/id.js';
 test('local record creation also works without secure-context randomUUID',()=>{const ids=new Set(Array.from({length:100},()=>uid({})));assert.equal(ids.size,100);});
+
+test('home icons share CSS atlas backgrounds and retain an SVG fallback',()=>{
+ const state=initialState();
+ for(const id of new Set([...homePages.flat(),...dockApps])){
+  const markup=icon(registry.get(id).manifest,state);
+  if(id==='aomi')continue;
+  assert.match(markup,/class="icon-sprite"/);
+  assert.match(markup,/class="icon-fallback"/);
+  assert.match(markup,/background-position:/);
+  assert.doesNotMatch(markup,/<img src="\/icons\/glass-/);
+ }
+});

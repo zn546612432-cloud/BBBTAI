@@ -47,7 +47,7 @@ import {IncomingBannerQueue,queueableNotices} from './services/messaging/incomin
 import {readNotification} from './services/messaging/read.js';
 import {mountInteractions} from './apps/developer/index.js';
 import {patchHTML} from './system/dom.js';
-import {beginLockscreenPreload} from './system/preload.js';
+import {beginCompleteGamePreload} from './system/startup/full-preload.js';
 import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
 import {mountViewport} from './system/viewport.js';
@@ -66,6 +66,9 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
+// Startup may be deliberately long while the complete package is cached.
+// Stop the old 12-second splash watchdog once executable code is running.
+globalThis.__xmBootStarted?.();
 let store;
 try{store=await openPhoneStore();}
 catch(error){window.__xmBootError?.(error.message);throw error;}
@@ -106,7 +109,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
   if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
  }finally{clearTimeout(timer);}
 };
-await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
+try{await hydrateBuiltInPresets(store);}catch(error){window.__xmBootError?.('內置劇情載入失敗：'+error.message);throw error;}
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
 if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
@@ -336,7 +339,7 @@ function requestUnlock(link=null){
   lockAssets.ready.then(()=>{
    unlockingCover=false;
    if(!store.get().unlocked&&lockscreen.stage==='cover'&&!phoneBlocked(store.get()))requestUnlock(link);
-  });
+  }).catch(()=>{unlockingCover=false;});
   return;
  }
  setShade({progress:0});
@@ -437,40 +440,36 @@ store.subscribe(()=>{
  };
  globalThis.__xmBootStarted?.();
  if(RECOGNITION_PREVIEW||D45D46_PREVIEW)closeBoot();
-  lockAssets=beginLockscreenPreload({
-  state:store.get(),
-  wallpaper:store.get().wallpaper,
-  onProgress:({finished,total,failed})=>{
-   const percent=Math.floor(finished/Math.max(1,total)*100);
-   const number=$('#xm-boot-percent');
-   const bar=$('#xm-boot-progress span');
-   const label=$('#xm-boot-loading-label');
-   if(number)number.textContent=percent+'%';
-   if(bar)bar.style.width=percent+'%';
-   if(label)label.textContent=finished===total?(failed?'已處理':'載入完成'):'正在載入';
-   if(finished===total&&$('#xm-boot-message'))$('#xm-boot-message').textContent=failed?'部分素材將於使用時重試。':'';
-  }
- });
- lockAssets.ready.then(({reason,failed})=>{
-  const message=$('#xm-boot-message');
-  const next=$('#xm-boot-next');
-  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot,reason==='timeout'?'其餘素材將繼續載入。':failed?'部分素材將於使用時重試。':'');return;}
-  if(reason==='timeout'){
-   if(message)message.textContent='有资源未能及时完成。可以继续进入，地图会在打开时重试。';
-   if(next){next.hidden=false;next.onclick=closeBoot;}
-   else closeBoot();
-   return;
-  }
-  if(message)message.textContent=failed?'已准备完成，部分素材将在使用时重试':'资源已就绪，正在进入锁屏…';
-  const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span');
-  if(number)number.textContent='100%';
-  if(bar)bar.style.width='100%';
-  setTimeout(closeBoot,300);
- }).catch(error=>{
-  console.error('启动资源准备出错',error);
-  if(globalThis.__xmBootIntroReady){globalThis.__xmBootIntroReady(closeBoot);return;}
-  const next=$('#xm-boot-next');if(next){next.hidden=false;next.onclick=closeBoot;}else closeBoot();
- });
+ else{
+  lockAssets=beginCompleteGamePreload({
+   state:store.get(),
+   onProgress:({finished,total,failed})=>{
+    const percent=Math.floor(finished/Math.max(1,total)*100);
+    const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
+    if(number)number.textContent=percent+'%';
+    if(bar)bar.style.width=percent+'%';
+    if(label)label.textContent=failed?'正在重試載入':finished===total?'載入完成':'正在預載全部資源';
+   }
+  });
+  lockAssets.ready.then(()=>{
+   const message=$('#xm-boot-message');
+   if(message)message.textContent='遊戲資源已全部載入。';
+   if(globalThis.__xmBootIntroReady){
+    globalThis.__xmBootIntroReady(closeBoot,'遊戲資源已全部載入。');
+   }else closeBoot();
+  }).catch(error=>{
+   console.error('啟動資源未完整載入',error);
+   const reason='資源尚未載入完成。'+String(error?.message||'請檢查網路。').slice(0,160);
+   const retry=()=>globalThis.location.reload();
+   const message=$('#xm-boot-message');
+   if(message)message.textContent=reason;
+   if(globalThis.__xmBootIntroFailed)globalThis.__xmBootIntroFailed(retry,reason);
+   else{
+    const next=$('#xm-boot-next');
+    if(next){next.hidden=false;next.textContent='重新載入';next.onclick=retry;}
+   }
+  });
+ }
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  if(e.target.closest?.('#xm-boot'))return;

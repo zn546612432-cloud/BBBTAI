@@ -48,6 +48,14 @@ test('Pages releases isolate code while all public media URLs survive version ro
   assert.ok((await read(root+'src/main.js')).includes('/AAATAI/assets/icon.svg'));
   const oldCode=await read(root+'src/main.js');
   const manifest=JSON.parse((await read(root+'src/system/startup/image-manifest.js')).match(/export default (\[.*\]);/)[1]);
+  const packageManifest=JSON.parse(await read('dist/assets/startup/full-assets.json'));
+  assert.ok(packageManifest.version);
+  assert.ok(packageManifest.assets.some(item=>item.path==='assets/icon.svg'));
+  assert.ok(packageManifest.assets.some(item=>item.path==='src/main.js'));
+  assert.ok(packageManifest.assets.some(item=>item.path==='vendor/stockfish-19-lite-single.wasm'));
+  assert.ok(packageManifest.assets.every(item=>item.bytes>0&&item.hash.length===20));
+  assert.deepEqual(JSON.parse(await read(root+'assets/startup/full-assets.json')),packageManifest);
+
   assert.ok(manifest.includes('/AAATAI/assets/icon.svg'));
   assert.ok(!manifest.some(url=>url.includes('/releases/')),'no public images are tied to a release');
   for(const item of evidence)assert.ok(manifest.includes(`/AAATAI/${item}`),`preload must use the same stable media URL: ${item}`);

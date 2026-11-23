@@ -346,7 +346,10 @@ to{opacity:1;transform:none}
 
 /* Position the art itself inside each tile, excluding the sheet gutters. */
 .icon-rendered,.icon-override{position:relative;background:transparent;border-radius:24%;isolation:isolate}
-.icon-rendered img{position:absolute;max-width:none;pointer-events:none;user-select:none}
+.icon-rendered{background:linear-gradient(145deg,#4c6e8a,#172d47);color:#e9f4ff}
+.icon-rendered .icon-fallback{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.icon-rendered .icon-fallback svg{display:block;width:50%;height:50%}
+.icon-rendered .icon-sprite{position:absolute;inset:0;background-repeat:no-repeat;pointer-events:none}
 .icon-override img{width:100%;height:100%;object-fit:cover;pointer-events:none}
 .reminder-widget{height:auto;min-height:170px;flex-shrink:0;width:100%;margin-bottom:29px;padding:15px 18px;display:block;background:linear-gradient(135deg,#e5f3ff35,#759ab329);color:#eef7ff}
 .reminder-widget-title{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 0 10px;font-size:16px;font-weight:600}
