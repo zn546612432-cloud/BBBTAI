@@ -66,6 +66,9 @@ import {powerFullscreen} from './system/power/controls.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
+// Startup may be deliberately long while the complete package is cached.
+// Stop the old 12-second splash watchdog once executable code is running.
+globalThis.__xmBootStarted?.();
 let store;
 try{store=await openPhoneStore();}
 catch(error){window.__xmBootError?.(error.message);throw error;}
@@ -106,7 +109,7 @@ const boundedBootTask=async(task,label,limit=7000)=>{
   if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
  }finally{clearTimeout(timer);}
 };
-await boundedBootTask(()=>hydrateBuiltInPresets(store),'内置剧情加载失败');
+try{await hydrateBuiltInPresets(store);}catch(error){window.__xmBootError?.('內置劇情載入失敗：'+error.message);throw error;}
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
 if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
