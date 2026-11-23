@@ -24,6 +24,17 @@ function endingReady(){
  return {s,historical};
 }
 
+test('D55 holds the final bubble for exactly three real seconds',()=>{
+ const {s}=endingReady();
+ const start=Date.now();
+ s.story55.endingVoiceQueuedAt=start;
+ assert.equal(ENDING_VOICE_APPEAR_DELAY_MS,3000);
+ assert.equal(endingVoiceRevealDue55(s,start+2999),false);
+ assert.equal(endingVoiceRevealDue55(s,start+3000),true);
+ assert.equal(revealEndingVoice55(s,start+3000),true);
+ assert.equal(s.content.conversations.noapp.find(c=>c.id==='tai').messages.filter(m=>m.id==='s55-ending-final-voice').length,1);
+});
+
 test('D55 removes old 21:00–22:25 NoApp dialogue; 22:46 watch remains',()=>{
  const {s}=endingReady();
  assert.equal(s.day,55);
