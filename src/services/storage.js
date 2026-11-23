@@ -184,6 +184,9 @@ export async function openPhoneStore({storage=globalThis.localStorage,factory=gl
   if(!state)throw saveReadError();
   console.warn('存檔備份暫時不可用',error);
  }
+ const restartMarker=KEY+':explicit-restart';
+ let explicitRestart=false;
+ try{explicitRestart=storage.getItem(restartMarker)==='1';}catch{}
  if(!state&&entry){
   for(const raw of [entry.raw,entry.previous]){
    if(!raw)continue;
@@ -191,12 +194,28 @@ export async function openPhoneStore({storage=globalThis.localStorage,factory=gl
   }
   if(!state){journal?.close();throw saveReadError();}
  }
+ // A stale D01 primary must not conceal a newer durable checkpoint. Save
+ // the D01 copy before restoring so no player's local edits are discarded.
+ if(state?.day===1&&entry?.raw&&!explicitRestart){
+  let checkpoint=null;
+  try{checkpoint=validatePhoneSave(JSON.parse(entry.raw));}catch{}
+  if(checkpoint?.day>1){
+   try{storage.setItem(KEY+':before-checkpoint-recovery',JSON.stringify(state));}
+   catch{journal?.close();throw saveReadError();}
+   state=checkpoint;
+  }
+ }
  if(!state&&readError){journal?.close();throw readError;}
  try{
   const store=new PhoneStore(storage,{recoveredState:state,journal});
   store.hasExistingSave=!!state;
   // Start the first durable checkpoint now, rather than waiting for a timer.
-  journal?.flush().catch(error=>console.warn('存檔備份暫時不可用',error));
+  const firstCheckpoint=journal?.flush();
+  firstCheckpoint?.catch(error=>console.warn('存檔備份暫時不可用',error));
+  if(explicitRestart){
+   if(firstCheckpoint)firstCheckpoint.then(()=>storage.removeItem(restartMarker)).catch(()=>{});
+   else storage.removeItem(restartMarker);
+  }
   return store;
  }catch(error){journal?.close();throw error;}
 }
