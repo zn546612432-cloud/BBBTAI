@@ -117,10 +117,11 @@ test('old D55+ saves keep their position without synthetic past messages',()=>{
  c.nodes=c.nodes.filter(n=>![D54_ISOLDE,D54_GROUP,D54_TAI].includes(n.id));
  delete c.d54Revision;
  s.day=55;s.clock='09:10';
- const base=s.content.conversations.wechat.find(c=>c.id==='group').messages.length;
+ const authoredD54Messages=()=>Object.values(s.content.conversations).flat().flatMap(c=>c.messages||[]).filter(m=>/^s55-(d54-|ready-)/.test(m.id||''));
+ const baseline=authoredD54Messages().length;
  tickStory55(s);
  for(const node of [D54_ISOLDE,D54_GROUP,D54_TAI,D54_FATHER])
   assert.equal(s.story55.completed[node]?.legacySkipped,true,node);
- assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.length,base);
+ assert.equal(authoredD54Messages().length,baseline,'no newly generated D54 scene bubbles');
  assert.equal(s.day,55);assert.equal(s.clock,'09:10');
 });
