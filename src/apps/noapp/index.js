@@ -1,6 +1,6 @@
 import {aiParameterFields,ttsParameterFields,readAiForm,readTtsForm} from './settings/parameters.js';
 import {s55Button} from '../../services/story55/views.js';
-import {currentScript55} from '../../services/story55/scripted-chat.js';
+import {currentScript55,sendScriptedDraft55} from '../../services/story55/scripted-chat.js';
 import {finalVoiceBubble} from './final-voice.js';
 import {isStory55,taiRecognized,completed,nodeStatus} from '../../services/story55/state.js';
 import {taiForcedOnline,setTaiForcedOnline} from '../../services/ai/test-controls.js';
@@ -187,7 +187,24 @@ export async function handle(action,target,ctx){
 }
 export const submit=(form,ctx)=>{
  if(form.dataset.form==='tai-save-remark'){const remark=String(new FormData(form).get('remark')||'').trim().slice(0,32);ctx.store.update(s=>{s.aiDraft??={};s.aiDraft.taiRemark=remark;});ctx.router.open({appId:'noapp',route:'/chat/tai'});return;}
- if(form.dataset.form==='send-chat'){const id=sendChat(form,ctx);if(id&&form.dataset.id==='tai'){ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);}return;}
+ if(form.dataset.form==='send-chat'){
+  // Scripted NoApp turns use native Send, never free AI dispatch.
+  if(form.dataset.id==='tai'&&isStory55(ctx.store.get())){
+   const fixed=currentScript55(ctx.store.get(),'noapp','tai');
+   if(fixed){
+    if(fixed.kind!=='me')return;
+    const text=String(new FormData(form).get('text')||'').trim();
+    ctx.store.update(s=>sendScriptedDraft55(s,'noapp','tai',text));
+    return;
+   }
+  }
+  const id=sendChat(form,ctx);
+  if(id&&form.dataset.id==='tai'){
+   ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});
+   if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);
+  }
+  return;
+ }
  if(form.dataset.form==='tai-call-turn'){submitCall(form,ctx);return;}
  if(form.dataset.form==='tai-save-behavior'){
   const behavior=normalizeTaiBehavior(readBehaviorForm(new FormData(form)));

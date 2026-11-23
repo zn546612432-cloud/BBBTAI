@@ -16,6 +16,8 @@ import {applyD47Definition,migrateD47TimelineHistory,SOURCE_SCENE,DEPOSIT_SCENE,
 import {applyD53Definition,D53_ACTION_START,D53_ACTION_END,D53_ISOLDE_DEAL,D53_TAI_NIGHT} from '../../story/d53/definition.js';
 import {applyD51Definition,D51_ISOLDE_CHAT,D51_PRIVATE_MAIL,syncD51MailReminder} from '../../story/d51/definition.js';
 import {syncD53DealReminder} from '../../story/d53/reminders.js';
+import {applyD54Definition,D54_ISOLDE,D54_GROUP,D54_TAI,D54_FATHER} from '../../story/d54/definition.js';
+import {syncD54FatherReminder} from '../../story/d54/reminders.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -449,6 +451,14 @@ export function tickStory55(s){
  }
  syncD51MailReminder(s);
  syncD53DealReminder(s);
+ const introducedD54=applyD54Definition(story55Config(s));
+ // D55+ saves must retain their position rather than being stopped on
+ // newly authored D54 scenes. Never forge 2025 messages for skipped dates.
+ if(introducedD54&&s.day>54){
+  for(const [id,clock] of [[D54_ISOLDE,'08:20'],[D54_GROUP,'08:40'],[D54_TAI,'09:00'],[D54_FATHER,'19:00']])
+   s.story55.completed[id]??={day:54,clock,legacySkipped:true};
+ }
+ syncD54FatherReminder(s);
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);
@@ -571,6 +581,8 @@ export function tickStory55(s){
 }
 export function story55Presence(s,now=Date.now()){
  if(final55(s))return {status:'offline',contactable:false,reason:'连接中断'};
+ // D54: he explicitly promises to stay online throughout the day.
+ if(s.day===54&&completed(s,'recognition'))return {status:'online',contactable:true,reason:'在線'};
  if(s.story55.activeScene)return {status:'busy',contactable:false,reason:'正在通话或事件中'};
  if(!completed(s,'recognition'))return {status:'offline',contactable:false,reason:'尚未相认'};
  if(s.day===WALLET_GIFT_DAY&&completed(s,D45_WALLET_SCENE)&&s.clock<'21:30')return {status:'offline',contactable:false,reason:'離線'};
