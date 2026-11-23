@@ -4,6 +4,7 @@ import {visibleMessages} from '../messaging/delivery.js';
 import {callBridgeNote,isRecentTaiCall,shouldRecallTaiCall} from './humanize.js';
 import {taiBondPrompt} from './relationship-bond.js';
 import {extractTaiCuriosities,taiCuriosityPrompt} from './curiosity-memory-v9.js';
+import {taiPlotMemory,recallTaiOlderTalk} from './worldbook/plot-memory.js';
 // Truthful, compact relationship context reconstructed only from visible
 // NoApp messages and author-confirmed canon. Never read WeChat/private drafts.
 const relevant=/喜欢|讨厌|害怕|记住|约好|答应|说好了|哥哥|圣诞惊魂夜|想你|我生气|你不认识|有事|博士|生日/;
@@ -14,6 +15,7 @@ export function xitaiRelationshipContext(s,{mode='text',callActive=false}={}){
  const recent=history.filter(m=>m.kind!=='call').slice(-16);
  const remembered=history.filter(m=>m.kind!=='call').slice(0,-16).filter(m=>relevant.test(m.text)).slice(-8);
  const quotes=remembered.map(m=>'D'+m.day+' '+(m.from==='me'?'熙蒙':'熙泰')+'：'+String(m.voiceCaption||m.text).slice(0,140)).join('\n');
+ const plotMemory=taiPlotMemory(s,history);
  const callEntry=history.filter(m=>m.kind==='call'&&(m.transcript||m.callStatus==='ended')).at(-1);
  const userEntry=recent.filter(x=>x.from==='me').at(-1);
  const lastUser=userEntry?.voiceCaption||userEntry?.text||'';
@@ -28,6 +30,8 @@ export function xitaiRelationshipContext(s,{mode='text',callActive=false}={}){
   taiBondPrompt(s,{channel:'noapp'}),
   taiCuriosityPrompt(extractTaiCuriosities(history,{day:s.day,channel:'noapp'}),{day:s.day}),
   taiLifeContext(s)+' '+mood,
+  plotMemory,
+  recallTaiOlderTalk(history,lastUser),
   lastCall?(isRecentTaiCall(callEntry,s)?'刚打过的电话（真实发生，话题未结束时自然承接）：\n':'更早的通话原话（保留发生日期）：\n')+lastCall:'',
   recent.length?'最近已分享的生活与对话（含本人近况，须保持连续）：\n'+recent.map(m=>(m.from==='me'?'熙蒙':'熙泰')+'：'+String(m.voiceCaption||m.text).slice(0,240)).join('\n'):'',
   quotes?'较早的可核对聊天原话（不要改写成没发生的故事）：\n'+quotes:'',
