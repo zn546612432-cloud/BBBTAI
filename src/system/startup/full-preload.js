@@ -32,8 +32,10 @@ async function registerWorker(){
 
 async function getManifest(){
  const url=manifestUrl();
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),15000);
  try{
-  const response=await fetch(url,{cache:'no-store'});
+  const response=await fetch(url,{cache:'no-store',signal:controller.signal});
   if(!response.ok)throw Error('下載清單失敗 '+response.status);
   const manifest=await response.json();
   if(!manifest.version||!Array.isArray(manifest.assets))throw Error('素材清單不完整');
@@ -41,7 +43,9 @@ async function getManifest(){
  }catch(error){
   const cached=await globalThis.caches?.match(url);
   if(cached)return cached.json();
-  throw error;
+  throw new Error('無法取得遊戲資源清單，請檢查網路後重試：'+error.message);
+ }finally{
+  clearTimeout(timeout);
  }
 }
 function ordered(assets){
