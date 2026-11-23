@@ -41,7 +41,7 @@ export function recallTaiOlderTalk(history=[],latestUser='',{recentCount=16,maxI
  const older=ordinary.slice(0,Math.max(0,ordinary.length-recentCount));
  const calls=history.filter(m=>m?.kind==='call'&&hasText(m.transcript));
  const candidates=older.map((m,i)=>({m,i,score:overlap(query,terms(m.voiceCaption||m.text)),text:(m.voiceCaption||m.text).slice(0,230)}));
- for(let i=0;i<calls.length-1;i++){
+ for(let i=0;i<calls.length;i++){
   const m=calls[i],all=String(m.transcript).split('\n');
   const matching=all.filter(line=>overlap(query,terms(line))>0).slice(-5);
   if(matching.length)candidates.push({m,i:older.length+i,score:overlap(query,terms(m.transcript)),text:matching.join(' / ').slice(0,500)});
