@@ -5,6 +5,7 @@ import {registry,installed,homePages,dockApps,appUnlocked} from './registry.js';
 import {taiPresence} from '../services/presence.js';
 import {taiDisplayName} from '../apps/noapp/contact.js';
 import {reminders,canManuallyToggleReminder} from '../services/reminders.js';
+import {mainlineTasks} from '../apps/reminders/features/mainline/model.js';
 import {wishPurchaseOverlay} from '../apps/reminders/index.js';
 import {storyDay,dateParts,dateLabel} from '../services/calendar.js';
 import {actors,isGroup} from '../editor/conversations/model.js';
@@ -22,7 +23,7 @@ const notificationApp=(n)=>{
 export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.link?.appId==='noapp'&&(['/chat/tai','/call'].includes(n.link.route))?taiDisplayName(s):n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
 const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
 export function reminderWidget(s){
- const items=reminders(s),pending=items.filter(r=>!r.done);
+ const items=isStory55(s)?mainlineTasks(s):reminders(s),pending=items.filter(r=>!r.done);
  const project=pending.findIndex(r=>r.id==='ghost-car-plan');
  if(project>0)pending.unshift(pending.splice(project,1)[0]);
  const urgent=pending.findIndex(r=>r.priority==='critical');
