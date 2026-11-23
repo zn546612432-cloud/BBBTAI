@@ -42,7 +42,7 @@ export function seedD02Wechat(s){
 // Keep the original unsent turns playable after midnight instead of converting
 // them into the short late-reply branch. This also repairs older save states.
 function restoreXiaoXinDialogue(s,q){
- if(s.day<=2||q.completed)return;
+ if(s.day!==3||q.completed)return;
  const c=chat(s,'xin');
  if(!c)return;
  if(q.historySettled){
@@ -74,7 +74,7 @@ const specs=['wang','xin'].map(key=>({id:key,chat:key,
  at:(s,q)=>q?.startedClock|| (key==='wang'?(s.day===2&&Number.isFinite(s.story55?.d02?.wechat?.earlyAt)?s.clock:'12:16'):s.day===2&&Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15?s.clock:'16:08'),
  // Xiao Xin's optional shopping advice is still a required *conversation* once
  // his opening text exists; only the player may send the three protagonist lines.
- ...(key==='xin'?{mandatory:true,migrate:restoreXiaoXinDialogue}:{}),
+ ...(key==='xin'?{mandatory:true,endWhen:s=>s.day>=4,migrate:restoreXiaoXinDialogue}:{}),
  initialDelayMs:key==='xin'?0:450,
  pauseMs:(s,q)=>q.index>0&&D02_DIALOGUES[key][q.index-1]?.[0]!=='me'?2200:1800,
  enabled:s=>key==='wang'||s.day>2||s.clock>='16:08'||Number.isFinite(s.story55?.d02?.wechat?.earlyAt)&&gameMinute(s)>=s.story55.d02.wechat.earlyAt+15,
