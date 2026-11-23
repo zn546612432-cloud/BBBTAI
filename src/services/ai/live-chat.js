@@ -349,7 +349,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  }catch(error){
   console.warn('NoApp reply unavailable:',error?.message);
   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
-  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code)||approvedAffection)return finishSilentTaiTurn(store,sourceMessageId,now);
+  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code))return finishSilentTaiTurn(store,sourceMessageId,now);
   // Transport failures are not Tai's speech and must not consume this turn.
   // Keep diagnostics with the source message; a later real request can retry.
   store.update(s=>{
