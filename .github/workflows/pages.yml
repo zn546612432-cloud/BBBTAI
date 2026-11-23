@@ -38,7 +38,7 @@ jobs:
           import {readFile,writeFile} from 'node:fs/promises';
           const html=await readFile('dist/index.html','utf8');
           if(!html.includes('ximeng-release')||!html.includes('<head>'))throw Error('Production entry not ready');
-          const friends=html.replace('<head>','<head><meta name="phone-friends-test" content="true"><meta name="phone-preview" content="true">').replace('<title>','<title>TEST · ');
+          const friends=html.replace('<head>','<head><meta name="phone-friends-test" content="true">');
           await writeFile('dist/review/friends-test/index.html',friends);
           NODE
       - name: Build Tai Vision in isolated save namespace
