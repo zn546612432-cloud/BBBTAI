@@ -128,8 +128,8 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  const post=authoredMoments.find(p=>p.id==='xs-0519');assert.equal(post.comments.length,2);
 });
 
-test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
- assert.equal(authoredMoments.length,38);
+test('37 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
+ assert.equal(authoredMoments.length,37);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
  assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
@@ -233,4 +233,15 @@ test('approved Jack Moments cover, empty signature and greeting update preserve 
  assert.doesNotMatch(html,/别打电话，在工房。|早上好。/);
  s.content.moments.profiles['熙蒙'].bio='本人自己写的签名';
  assert.equal(momentProfiles(s)['熙蒙'].bio,'本人自己写的签名');
+});
+
+test('D35 panda caption and removal of D55 late-night video survive old saved posts',()=>{
+ const s=initialState(),post=findMoment(s,'xw-d35');
+ assert.equal(post.text,'原來澳門真的有大熊貓');
+ assert.ok(!authoredMoments.some(p=>p.id==='xs-d55'));
+ s.content.moments={editedPosts:{'xw-d35':{...post,text:'石排湾看熊猫。阿蒙在馆里站得比熊猫还久。'}},posts:[{id:'xs-d55',storyDay:55,author:'小辛',publishedAt:'2025-07-12T23:31',text:'半夜刷到这个直接笑醒了。'}]};
+ assert.equal(findMoment(s,'xw-d35').text,post.text);
+ assert.equal(findMoment(s,'xs-d55'),undefined);
+ s.content.moments.editedPosts['xw-d35'].text='自定义文案';
+ assert.equal(findMoment(s,'xw-d35').text,'自定义文案');
 });
