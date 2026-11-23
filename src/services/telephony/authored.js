@@ -1,4 +1,5 @@
 import {NATIVE_PHONE_CALLS} from '../../story/phone-calls.js';
+import {D53_CALL} from '../../story/d53/call.js';
 import {isStory55,scriptedCallPlayed} from '../story55/state.js';
 import {activePhoneCall,canPresentPhoneCall,receiveCall,endCall} from './store.js';
 import {resolveStablePhoneAudioPath} from '../voice/asset-url.js';
@@ -65,7 +66,9 @@ export function tickAuthoredPhoneCalls(ctx,a,now=Date.now()){
  }
  const index=p?.index||0,step=script.steps[index];
  if(!step){
-  ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;});
+  ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;
+   if(script.id===D53_CALL.id)s.story55.d53DealPromptAt=now+2000;
+  });
   endCall(ctx.store,call.id,now,{reason:'scripted_end'});return true;
  }
  if(now<(p?.nextAt||0))return true;

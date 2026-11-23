@@ -34,6 +34,7 @@ import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
 import {LockScreen} from './system/lock.js';
 import {toggleReminder} from './services/reminders.js';
+import {d53DealReminderDue,syncD53DealReminder} from './story/d53/reminders.js';
 import {processDemoReply,duePlayerInviteReply,sendUnansweredChessReminders,dueChessReminders} from './services/invitations.js';
 import {nextScheduledTaiInvite,deliverTaiChessInvite} from './services/chess-invites.js';
 import {ensureMirageStory,WALLET_CHALLENGE_ID} from './apps/mirage/contacts-seed.js';
@@ -502,6 +503,7 @@ mountWeatherSwipe($('#root'),ctx);
 setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get())||identityRevealDue55(store.get())||pacedStorySceneDue55(store.get()))store.update(s=>tickStory55(s));
+  if(d53DealReminderDue(store.get()))store.update(s=>syncD53DealReminder(s));
  if(wishEventsDue(store.get()))store.update(s=>tickWishes(s,Date.now()));
  if(duePlayerInviteReply(store.get()))processDemoReply(store);
  const d01=store.get().story55?.d01;
@@ -632,6 +634,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='home'){if(tasks.visible)tasks.hide();else if(store.get().nav.current.appId==='home')tasks.show(store.get().nav.current);else router.home();return;}
     if(action==='back'){router.back();return;}
     if(action==='open-app'){const id=target.dataset.app,m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,store.get()))return toast('此 App 尚未开放');router.open({appId:id,route:m.defaultRoute||'/'});return;}
+    if(action==='home-reminder-open'){registry.get('reminders')?.handle('reminder-follow',target,ctx());return;}
     if(action==='home-reminder-wish'){openWishPurchase(target.dataset.wishId,ctx());return;}
     if(action==='home-reminder-project'){registry.get('reminders')?.handle('reminder-project-open',target,ctx());return;}
     if(['reminder-wish-buy','reminder-wish-cancel','reminder-wish-finish','reminder-wish-chat','reminder-wish-bank'].includes(action)&&store.get().nav.current.appId==='home'){

@@ -1,8 +1,8 @@
-import {isStory55,date55} from '../../services/story55/state.js';
+import {isStory55,date55,nodeStatus} from '../../services/story55/state.js';
 import {D02_REMINDER,d02CompleteBuild,toggleD02Build} from '../../story/d02/runtime.js';
 import {objectives55} from '../../services/story55/views.js';
 import {btn,esc} from '../../system/ui.js';
-import {reminders,toggleReminder,addReminder} from '../../services/reminders.js';
+import {reminders,toggleReminder,addReminder,reminderDestination} from '../../services/reminders.js';
 import {listHome,listDetail} from './features/lists/index.js';
 import {ghostCarDetail} from './features/project/index.js';
 import {wishDefinition} from '../../services/wishes/catalog.js';
@@ -55,7 +55,19 @@ export function render({store},loc){
  const body=loc.route==='/project/ghost-car-plan'?ghostCarDetail(s,reminders(s).find(r=>r.id==='ghost-car-plan')):loc.route==='/completed'?listDetail(items.filter(x=>x.done),'已完成'):loc.route==='/all'?listDetail(items,'全部'):listHome(items,search);
  return '<div class="reminders-app" data-native-scroll="reminders">'+body+'</div>'+wishPurchaseOverlay(s);
 }
+export function openReminderTask(id,c){
+ const s=c.store.get(),r=reminders(s).find(r=>r.id===id);
+ if(!r)return false;
+ const destination=reminderDestination(s,r);
+ if(destination?.kind==='wish')return openWishPurchase(destination.id,c);
+ if(destination?.node&&nodeStatus(s,destination.node).state!=='ready'){
+  c.toast?.(nodeStatus(s,destination.node).reason);return false;
+ }
+ if(destination?.link){c.router.open({...destination.link,params:destination.link.params||{}});return true;}
+ return false;
+}
 export function handle(a,t,c){
+ if(a==='reminder-follow'){openReminderTask(t.dataset.id,c);return;}
  if(a==='reminder-private-contract')return c.router.open({appId:'mirage',route:'/private-contract'});
  if(a==='reminder-project-open'){if(reminders(c.store.get()).some(r=>r.id==='ghost-car-plan'))c.router.open({appId:'reminders',route:'/project/ghost-car-plan'});return;}
  if(a==='reminder-project-file'){const f=reminders(c.store.get()).find(r=>r.id==='ghost-car-plan')?.children?.find(tk=>tk.file===t.dataset.id&&tk.delivered);if(f)c.router.open({appId:'files',route:'/item/'+encodeURIComponent(f.file)});return;}

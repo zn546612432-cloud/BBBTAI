@@ -5,7 +5,7 @@ import {activateStory55,advanceScene55,scene55,sceneLines,tickStory55} from '../
 import {nodeStatus,completed,pendingTimedStoryEvent} from '../src/services/story55/state.js';
 import {sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
-import {D53_ACTION_START,D53_ACTION_END,D53_START_LINES,D53_END_LINES} from '../src/story/d53/definition.js';
+import {D53_ACTION_START,D53_ISOLDE_DEAL,D53_ACTION_END,D53_TAI_NIGHT,D53_START_LINES,D53_DEAL_LINES,D53_END_LINES,D53_TAI_LINES} from '../src/story/d53/definition.js';
 import {D53_CALL} from '../src/story/d53/call.js';
 import {applyD47Definition,migrateD47TimelineHistory} from '../src/story/d47/definition.js';
 import {allMoments} from '../src/apps/wechat/features/moments/model.js';
@@ -33,7 +33,7 @@ test('updating an old D54 save does not replay D53 or move its clock backwards',
  s.story55.config.nodes=s.story55.config.nodes.filter(n=>n.id!==D53_ACTION_START);
  delete s.story55.completed[D53_ACTION_START];delete s.story55.completed[D53_ACTION_END];
  tickStory55(s);
- assert.equal(completed(s,D53_ACTION_START),true);assert.equal(completed(s,D53_ACTION_END),true);
+ assert.equal(completed(s,D53_ACTION_START),true);assert.equal(completed(s,D53_ISOLDE_DEAL),true);assert.equal(completed(s,D53_ACTION_END),true);assert.equal(completed(s,D53_TAI_NIGHT),true);
  assert.equal(s.day,54);assert.equal(s.clock,'14:12');
 });
 
@@ -43,10 +43,10 @@ test('D53 advances through native Send, the original phone checkpoint, then the 
  assert.equal(nodeStatus(s,D53_ACTION_START).state,'locked');
  advanceGameMinutes(s,60);assert.equal(s.clock,'20:00');
  assert.equal(pendingTimedStoryEvent(s).id,D53_ACTION_START);
- const finish=(id,lines)=>{
+ const finish=(id,lines,channel='wechat',conversation='wang')=>{
   for(const [who,text] of lines){
    assert.equal(sceneLines(s,id)[scene55(s,id).index][1],text);
-   if(who==='me')sendScriptedDraft55(s,'wechat','wang',text,scene55(s,id).nextAt??Date.now());
+   if(who==='me')sendScriptedDraft55(s,channel,conversation,text,(scene55(s,id).nextAt??Date.now())+1);
    else advanceScene55(s,id);
   }
   assert.equal(completed(s,id),true);
@@ -55,9 +55,15 @@ test('D53 advances through native Send, the original phone checkpoint, then the 
  advanceGameMinutes(s,180);assert.equal(s.clock,'21:30');
  assert.equal(pendingTimedStoryEvent(s).id,D53_CALL.id);
  s.story55.scriptedCallCompleted={[D53_CALL.id]:true};
+ assert.equal(pendingTimedStoryEvent(s).id,D53_ISOLDE_DEAL);
+ assert.equal(advanceGameMinutes(s,180).minutes,0,'do not jump to 23:00 before the deal');
+ finish(D53_ISOLDE_DEAL,D53_DEAL_LINES,'mirage','mc-isolde-mirage');
  advanceGameMinutes(s,180);assert.equal(s.clock,'23:00');
  assert.equal(nodeStatus(s,D53_ACTION_END).state,'ready');
  finish(D53_ACTION_END,D53_END_LINES);
+ assert.equal(pendingTimedStoryEvent(s).id,D53_TAI_NIGHT);
+ advanceGameMinutes(s,30);assert.equal(s.clock,'23:30');
+ finish(D53_TAI_NIGHT,D53_TAI_LINES,'noapp','tai');
  assert.equal(pendingTimedStoryEvent(s),null);
 });
 
