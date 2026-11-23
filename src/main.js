@@ -620,7 +620,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-short-next'){
        let result;store.update(s=>{result=jumpShortChargeToNextEvent(s);});
        collapseIsland();
-       if(!result?.ok)toast(result?.reason==='no-event'?'今天暫無下一事件':'目前無法短充');
+       if(!result?.ok)toast(result?.reason==='pending-reply'?'請先回覆目前的日常聊天，再跳到下一事件':result?.reason==='chat-delivering'?'正在收到聊天消息，請稍候再跳轉':result?.reason==='no-event'?'今天暫無下一事件':'目前無法短充');
        return;
      }
      if(action==='power-short-start'){
