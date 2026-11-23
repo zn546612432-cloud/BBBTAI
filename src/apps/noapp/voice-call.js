@@ -39,7 +39,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
 import {taiShouldHangUpCall,taiCallFarewellIntent} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
 import {isConversationOpen} from '../../services/messaging/delivery.js';
@@ -110,7 +110,8 @@ function duration(){
 export function minimizedCallView(s){
  if(!s.unlocked||isNoAppCallRoute(s.nav.current)||!['dialing','connected'].includes(call.state))return '';
  const dialing=call.state==='dialing',listening=!!call.listening;
- const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':call.replyPhase==='thinking'?'熙泰回覆中':call.replyPhase==='voice'?'準備語音中':call.muted?'已靜音':'通話中';
+ const replyStatus=taiCallReplyStatus(call,call.caption||'');
+ const label=dialing?'呼叫中':listening?'錄音中':call.requestingMic?'開啟中':call.transcribing?'傳送中':call.audioReady?'待收聽':replyStatus|| (call.muted?'已靜音':'通話中');
  const action=call.audioReady?'tai-play-audio':dialing||call.scripted?'tai-resume-call':'tai-mic';
  const disabled=!dialing&&(call.requestingMic||call.transcribing);
  return '<aside class="tai-mini-call'+(listening?' is-recording':'')+'" aria-label="NoApp 通話">'+
@@ -123,8 +124,9 @@ const displayedCallText=(text,isTai)=>isTai?String(text||'').replace(/…+|\.{3,
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
  const caption=active?displayedCallText(call.caption,call.captionRole!=='me'):'';
- const replying=active&&!call.scripted&&!caption&&!call.audioReady&&!call.transcribing&&!call.requestingMic&&!call.listening&&['thinking','voice'].includes(call.replyPhase);
- const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':replying?(call.replyPhase==='voice'?'熙泰正在準備語音…':'熙泰正在回覆…'):call.inlineNotice||'通話中')):'通話已結束';
+ const replyStatus=taiCallReplyStatus(call,caption);
+ const replying=!!replyStatus;
+ const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':replyStatus||call.inlineNotice||'通話中')):'通話已結束';
  const captionClass=caption&&subtitle===caption?' class="tai-call-spoken-caption '+(call.captionRole==='me'?'mine':'theirs')+'"':replying?' class="tai-call-replying"':'';
  const controls=ring?
    phoneButton('tai-decline','拒绝',glyph.hang,'is-decline',!!call.scripted?.unanswerable)+phoneButton('tai-accept','接听',glyph.answer,'is-accept',!!call.scripted?.unanswerable):
