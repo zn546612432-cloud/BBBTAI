@@ -7,3 +7,5 @@
 .wifi-icons{display:flex;align-items:center;gap:6px;flex:none;color:#161616}
 .wifi-icons svg{width:16px;height:16px}
 .wifi-icons b{font-size:20px;font-weight:400;color:#007aff}
+.cloud-save-form{display:grid;gap:14px;padding:16px}.cloud-save-form label{display:grid;gap:8px;font-size:16px}.cloud-save-form input{width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #d6d6da;border-radius:10px;background:#f2f2f7;color:#111;font-size:16px}.cloud-save-form button{min-height:44px}.cloud-save-page details>summary{cursor:pointer}.cloud-save-page button.settings-row{color:#007aff}
+.cloud-save-form button{border:0;border-radius:10px;background:#007aff;color:white;font-size:16px;font-weight:500}.cloud-save-form button:disabled{opacity:.5}.cloud-save-page .settings-row{height:auto;min-height:49px;padding:12px 16px;overflow-wrap:anywhere}.cloud-save-page .settings-row small{text-align:right;max-width:65%;line-height:1.5}.cloud-save-page section>.settings-caption{margin:16px 16px 0;line-height:1.5}.cloud-save-page>p{line-height:1.5}

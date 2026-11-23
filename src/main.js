@@ -21,6 +21,8 @@ import {openPhoneStore,isPreview,RECOGNITION_PREVIEW,D45D46_PREVIEW} from './ser
 import {prepareD45D46Preview} from './story/d46/preview.js';
 import {prepareRecognitionPreview} from './apps/noapp/recognition-preview.js';
 import {mountSaveLifecycle} from './services/storage/recovery.js';
+import {connectPlayerSave} from './services/storage/cloud/index.js';
+import {KEY as phoneSaveKey,validateState,D13_PREVIEW,reviewNamespace} from './services/storage.js';
 import {isTaiV10MobilePreview,prepareTaiV10MobilePreview} from './services/ai/v10-mobile-preview.js';
 import {isNoAppV2Review,prepareNoAppV2Review} from './apps/noapp/preview-v2.js';
 import {isNoAppV3Review,prepareNoAppV3Review} from './apps/noapp/preview-v3.js';
@@ -67,6 +69,7 @@ import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 let store;
 try{store=await openPhoneStore();}
 catch(error){window.__xmBootError?.(error.message);throw error;}
+await connectPlayerSave(store,{key:phoneSaveKey,validate:validateState,preview:isPreview||D13_PREVIEW||!!reviewNamespace||RECOGNITION_PREVIEW||!!D45D46_PREVIEW});
 mountSaveLifecycle(store);
 // Telephone sessions are not persisted. Remove abandoned call routes on boot.
 if(isNoAppCallRoute(store.get().nav.current)||store.get().nav.stack?.some(isNoAppCallRoute))
@@ -408,6 +411,7 @@ function expandIsland(page='home'){
  if(phoneBlocked(store.get())||store.get().emergencyCharge||store.get().poweredOff)return;
  islandPage=page;islandExpanded=true;render();collapseIsland(page==='select'?18000:8000);
 }
+store.cloud?.subscribe(()=>{if(store.get().nav.current.appId==='settings'&&store.get().nav.current.route==='/cloud-save')render();});
 store.subscribe(()=>{
  const s=store.get();
  // A compulsory active scene or a newly imposed charge gate unplugs the cable.
