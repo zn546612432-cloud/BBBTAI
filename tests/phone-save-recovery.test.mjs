@@ -5,7 +5,7 @@ import {openSaveJournal,mountSaveLifecycle} from '../src/services/storage/recove
 
 function memoryStorage(){
  const data=new Map();
- return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value)};
+ return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};
 }
 function fakeIndexedDB(){
  const stores=new Map();
