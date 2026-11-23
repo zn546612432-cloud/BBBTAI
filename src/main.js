@@ -440,6 +440,7 @@ store.subscribe(()=>{
  };
  globalThis.__xmBootStarted?.();
  if(RECOGNITION_PREVIEW||D45D46_PREVIEW)closeBoot();
+ else{
   lockAssets=beginCompleteGamePreload({
    state:store.get(),
    onProgress:({finished,total,failed})=>{
@@ -468,6 +469,7 @@ store.subscribe(()=>{
     if(next){next.hidden=false;next.textContent='重新載入';next.onclick=retry;}
    }
   });
+ }
 
 for(const type of ['click','dblclick','pointerdown','pointermove','pointerup','touchstart','touchmove','touchend','keydown','input','change','submit','contextmenu'])document.addEventListener(type,e=>{
  if(e.target.closest?.('#xm-boot'))return;

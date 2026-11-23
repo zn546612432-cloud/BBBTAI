@@ -14,10 +14,11 @@ async function fromDisk(request){
  return null;
 }
 async function ranged(request,cached){
- const match=/^bytes=(\d+)-(\d*)$/.exec(request.headers.get('range')||'');
- if(!match)return fetch(request);
- const whole=await cached.arrayBuffer(),size=whole.byteLength,begin=Number(match[1]);
- const end=match[2]?Math.min(Number(match[2]),size-1):size-1;
+ const match=/^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range')||'');
+ if(!match||(!match[1]&&!match[2]))return fetch(request);
+ const whole=await cached.arrayBuffer(),size=whole.byteLength;
+ const begin=match[1]?Number(match[1]):Math.max(0,size-Number(match[2]));
+ const end=match[1]&&match[2]?Math.min(Number(match[2]),size-1):size-1;
  if(begin>=size||end<begin)return new Response(null,{status:416,headers:{'Content-Range':'bytes */'+size}});
  const headers=new Headers(cached.headers);
  headers.set('Content-Range',`bytes ${begin}-${end}/${size}`);
