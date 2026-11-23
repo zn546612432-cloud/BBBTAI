@@ -80,6 +80,7 @@ function nodeTask(s,n){
 
   detail=(appLabel[n.channel]||'訊息')+display;
  }
+ if(n.id==='d41-opening')title=(n.at?n.at+' ':'')+n.title;
  if(n.kind==='mail'){title=n.manualSend?'發送目標資料':'查看 KIRA 郵件';detail='KIRA · '+(n.manualSend?'發送郵件':'收件箱');}
  if(n.id==='ready')title='給傅隆生發信息';
  if(n.id==='d53-isolde-deal')title='Isolde｜確認第二筆委託';
