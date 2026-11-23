@@ -11,10 +11,10 @@ const playerAffection=/^(?:我|我也|其實我|其实我|我真的|我很)?(?:�
 const playerExplicit=/(?:^|[，,、\s])(?:我|我也|其實我|其实我)(?:真的|很)?(?:喜歡你|喜欢你|愛你|爱你)(?:[。！!]|$)/u;
 const taiAffection=/(?:我|我也|其實我|其实我)(?:真的|很|也|挺)?(?:喜歡你|喜欢你|想你|想念你|想見你|想见你)/u;
 const taiExplicit=/(?:我|我也|其實我|其实我)(?:真的|很|也|挺)?(?:喜歡你|喜欢你)/u;
-const playerReject=/(?:我不[喜歡欢]你|我不[愛爱]你|我對你沒感覺|我对你没感觉|不要[再]?向我表白|[別别]再(?:說说|讲).*愛我|我們[只]?是兄弟|我们[只]?是兄弟)/u;
-const taiDisclaim=/(?:別自戀|别自恋|才怪|開玩笑|开玩笑|我不[喜歡欢]你|我不[愛爱]你)/u;
+const playerReject=/(?:我不(?:喜歡|喜欢)你|我不[愛爱]你|我對你沒感覺|我对你没感觉|不要[再]?向我表白|[別别]再(?:說说|讲).*愛我|我們[只]?是兄弟|我们[只]?是兄弟)/u;
+const taiDisclaim=/(?:別自戀|别自恋|才怪|開玩笑|开玩笑|我不(?:喜歡|喜欢)你|我不[愛爱]你)/u;
 const directLove=/(?:[我俺](?:也|真的|很|一直|永遠|永远)?[愛爱]你|(?:我|俺)對你的愛|(?:我|俺)对你的爱|i\s+love\s+you)/iu;
-const directLike=/(?:[我俺](?:也|真的|很|其實|其实|挺)?[喜歡欢]你|(?:我|俺)對你有感覺|(?:我|俺)对你有感觉)/u;
+const directLike=/(?:[我俺](?:也|真的|很|其實|其实|挺)?(?:喜歡|喜欢)你|(?:我|俺)對你有感覺|(?:我|俺)对你有感觉)/u;
 const realMessage=(m,day)=>m&&m.actual!==false&&!m.demo&&!m.authoredPending&&!m.testOnly&&
  Number.isInteger(m.day)&&m.day<=day&&m.day>=1&&['me','tai'].includes(m.from)&&
  m.kind!=='call'&&m.kind!=='image'&&m.kind!=='app_invitation'&&
