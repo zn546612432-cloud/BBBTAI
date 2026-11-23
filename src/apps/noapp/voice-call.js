@@ -40,6 +40,7 @@ import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
 import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
+import {scriptedCallIsComplete} from './scripted-call-progress.js';
 import {taiShouldHangUpCall,taiCallFarewellIntent} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
 import {isConversationOpen} from '../../services/messaging/delivery.js';
@@ -657,8 +658,7 @@ async function playScriptedOpening(ctx){
   if(current()){console.warn('NoApp scripted call connection failed:',error?.message);callAction('tai-hangup',ctx,{endedBy:'connection_error',endReason:'connection_error'});}
  }finally{if(current()){
   call.busy=false;call.lastTaiEndAt=Date.now();
-  const count=script.steps?.length||script.lines.length;
-  if(call.scriptIndex>=count){
+  if(scriptedCallIsComplete(script,call.scriptIndex)){
    if(script.id!==RECOGNITION_CALL.id)ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;});
    if(script.handoffToFree){
     call.scripted=null;call.d55Phase='free';call.d55Held=false;call.expanded=false;
