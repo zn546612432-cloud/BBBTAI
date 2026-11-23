@@ -370,7 +370,7 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
    taiMomentumPrompt(history,{mode:'call'});
   const messages=opening||event?[...history,{role:'user',content:'[电话系统事件；不是熙蒙说出的台词：'+scene+']'}]:history;
-  const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call'});
+  const relationshipContext=xitaiRelationshipContext(ctx.store.get(),{mode:'call',topic:text});
   const worldbookSnapshot=presetText||event==='unheard'?null:captureTaiWorldbook(ctx.store,{channel:'noapp',day,recognized:taiRecognized(ctx.store.get()),messages,outputMode:'call',scenario:scene,turnId,worldbookEvents:['social_energy']});
   // Calls need one model round-trip: return the legal action and spoken
   // messages together. Ringing and text still use their existing decisions.
