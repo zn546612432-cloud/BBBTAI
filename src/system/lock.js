@@ -4,7 +4,7 @@ export class LockScreen {
   reset() { this.stage = 'cover'; this.digits = ''; this.pendingLink = null; }
   open(link = null) { this.stage = 'passcode'; this.digits = ''; this.pendingLink = link; }
   cancel() { this.reset(); }
-  key(key,passcode='0816') {
+  key(key,passcode='0816',{allowCheat=false}={}) {
     if (this.stage !== 'passcode') return 'ignored';
     if (key === 'cancel') { this.cancel(); return 'cancelled'; }
     if (key === 'erase') { this.digits = this.digits.slice(0, -1); return 'changed'; }
@@ -12,7 +12,9 @@ export class LockScreen {
     this.digits += key;
     if (this.digits.length < 4) return 'changed';
     const accepted = Array.isArray(passcode) ? passcode : [passcode];
-    this.stage = this.digits === '0000' ? 'restart' : accepted.includes(this.digits) ? 'unlocking' : 'error';
+    this.stage = this.digits === '0000' ? 'restart' : accepted.includes(this.digits) ? 'unlocking'
+      : allowCheat && this.digits === '1234' ? 'cheat-on'
+      : allowCheat && this.digits === '4321' ? 'cheat-off' : 'error';
     return this.stage;
   }
   retry() { if (this.stage === 'error') { this.stage = 'passcode'; this.digits = ''; } }

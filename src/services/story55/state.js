@@ -139,13 +139,40 @@ export function story55ChargeGate(s){
 // stops for an active scene; long charge remains gated by the story tree.
 const D13_WAITING_NODES=new Set(['exhibition','d13-wallet-mail','d13-wallet-bind','d13-wallet-transfer','intrusion']);
 export function story55ShortChargeGate(s){
- // Daily LINK checks gate overnight advancement only; short charging keeps
- // the pre-existing scene gates and does not mark a test or payment done.
- if(isStory55(s)&&s.day>=14&&s.day<=24){
-  if(d01Gate(s))return 'plot';
-  return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id))?'plot':null;
+ if(!isStory55(s))return story55ChargeGate(s);
+ if(d01Gate(s)||timedStoryPaused(s)||s.story55?.activeScene)return 'plot';
+ // D23's compulsory chess and Mirage postgame remain unskippable even if
+ // an older save advances to a later day before closing the scene.
+ if(s.day>=23&&!completed(s,'d23-chess-finish'))return 'plot';
+ // Waiting for a future scene is exactly why short charging exists.
+ return story55Config(s).nodes.some(n=>
+  Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)
+  &&!(s.day===13&&D13_WAITING_NODES.has(n.id))
+  &&nodeStatus(s,n.id).state==='ready'
+ )?'plot':null;
+}
+
+// Chooses a future authored boundary without mutating time or story state.
+export function nextStoryEventClock55(s){
+ if(!isStory55(s)||s.story55.ended||storyDayMinute(s)>=1439)return null;
+ const now=storyDayMinute(s),times=[];
+ const add=clock=>{
+  if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(clock||'')))return;
+  const minute=minuteOf(clock);
+  if(minute>now&&minute<=1439)times.push(minute);
+ };
+ for(const n of [...story55Config(s).nodes,...timedStoryEvents(s)]){
+  if(n.day!==s.day||n.afterMidnight||!n.at||timedStoryEventComplete(s,n))continue;
+  if(Array.isArray(n.requires)&&n.requires.some(id=>!completed(s,id)))continue;
+  add(n.at);
  }
- if(!isStory55(s)||s.day!==13)return story55ChargeGate(s);
- if(d01Gate(s))return 'plot';
- return story55Config(s).nodes.some(n=>Number.isInteger(n.gateDay)&&n.gateDay<=s.day&&!completed(s,n.id)&&!D13_WAITING_NODES.has(n.id))?'plot':null;
+ for(const conversations of Object.values(s.content?.conversations||{}))
+  for(const conversation of conversations||[])
+   for(const message of conversation.messages||[]){
+    const schedule=message.schedule;
+    if(message.delivery||schedule?.mode!=='game-time'||schedule.day!==s.day)continue;
+    add(schedule.clock);
+   }
+ const next=times.length?Math.min(...times):null;
+ return next===null?null:[String(Math.floor(next/60)).padStart(2,'0'),String(next%60).padStart(2,'0')].join(':');
 }

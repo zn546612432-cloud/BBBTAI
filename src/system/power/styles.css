@@ -109,3 +109,10 @@
 .s55-finale-charge-icon:after{content:"";position:absolute;right:-9px;top:18px;width:5px;height:20px;border-radius:0 4px 4px 0;background:#eef1f4}
 .s55-finale-charge-icon span{display:block;height:100%;background:#64d894;border-radius:8px;transition:width .2s linear}
 .s55-finale-charge-percent{font-size:27px;font-weight:520;color:#f5f8f7;font-variant-numeric:tabular-nums}
+
+/* Private presence: subtle violet edge, one five-second arrival, quiet steady glow. */
+.battery-island.has-tai-glow{box-shadow:0 0 0 1px #9c72df8a,0 0 10px #9b6ae65e,0 3px 16px #0008}
+.battery-island.has-tai-glow:not(.is-expanded)::after{content:'';position:absolute;inset:6px 10px;border-radius:24px;background:radial-gradient(circle at 18% 50%,#b895ff50,transparent 41%);pointer-events:none}
+.battery-island.has-tai-glow.tai-glow-enter{animation:tai-island-arrival 5s ease-in-out 1 forwards}
+@keyframes tai-island-arrival{0%,20%,46%,72%{box-shadow:0 0 0 1px #a67be944,0 0 6px #9c66ef42,0 3px 12px #0006}12%,34%,60%,87%{box-shadow:0 0 0 1.5px #c398ffad,0 0 20px #a96bf6ad,0 0 32px #8c48e24d}100%{box-shadow:0 0 0 1px #9c72df8a,0 0 10px #9b6ae65e,0 3px 16px #0008}}
+@media(prefers-reduced-motion:reduce){.battery-island.has-tai-glow.tai-glow-enter{animation:none}}

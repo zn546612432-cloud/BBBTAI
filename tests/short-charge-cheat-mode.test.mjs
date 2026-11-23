@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {initialState} from '../src/services/storage.js';
+import {activateStory55} from '../src/services/story55/runtime.js';
+import {LockScreen} from '../src/system/lock.js';
+import {worldMinuteRate} from '../src/system/time/clock.js';
+import {beginShortCharge,endShortCharge} from '../src/system/power/battery.js';
+import {nextStoryEventClock55} from '../src/services/story55/state.js';
+import {jumpShortChargeToNextEvent} from '../src/system/power/short-charge-jump.js';
+import {dynamicIsland} from '../src/system/power/island.js';
+import {authorize,begin} from '../src/apps/ghost/state.js';
+import {skipGhostGame} from '../src/apps/ghost/features/dev-skip/index.js';
+
+const phone=()=>{const s=activateStory55(initialState());s.day=2;s.clock='08:00';s.unlocked=true;s.story55.completed.intro={day:1,clock:'12:00'};return s;};
+test('lockscreen secret codes leave restart and terminal recovery unchanged',()=>{
+ const lock=new LockScreen();lock.open();for(const digit of '1234')lock.key(digit,['0816','0119'],{allowCheat:true});assert.equal(lock.stage,'cheat-on');
+ lock.open();for(const digit of '4321')lock.key(digit,['0816','0119'],{allowCheat:true});assert.equal(lock.stage,'cheat-off');
+ lock.open();for(const digit of '1234')lock.key(digit,'6180');assert.equal(lock.stage,'error');
+ lock.open();for(const digit of '0000')lock.key(digit,['0816','0119'],{allowCheat:true});assert.equal(lock.stage,'restart');
+});
+test('App time stays slow while short charging, home switches from 3 to 5',()=>{
+ const s=phone();s.nav.current={appId:'wechat',route:'/chat/group',params:{}};
+ assert.equal(worldMinuteRate(s),5/60000);
+ assert.equal(beginShortCharge(s),true);assert.equal(worldMinuteRate(s),5/60000);
+ s.nav.current={appId:'home',route:'/',params:{}};assert.equal(worldMinuteRate(s),5/1000);
+ endShortCharge(s);assert.equal(worldMinuteRate(s),3/1000);
+});
+test('cheat event jump finds the next same-day clock but cannot run in normal mode',()=>{
+ const s=phone();s.day=41;s.clock='08:00';
+ s.story55.config.nodes=[{id:'custom-event',day:41,at:'21:00',kind:'scene',title:'晚間消息',requires:[]}];
+ assert.equal(nextStoryEventClock55(s),'21:00');
+ assert.equal(jumpShortChargeToNextEvent(s).ok,false);
+});
+test('GHOST skip is inaccessible normally and uses the real success settlement',()=>{
+ const s=phone(),id='author-ghost-verify';
+ authorize(s,{orderId:id,mailId:null,type:'verify'});assert.equal(begin(s,id),true);
+ assert.equal(skipGhostGame(s,id),false);
+ s.editor??={};s.editor.cheatMode=true;
+ assert.equal(skipGhostGame(s,id),true);
+ assert.equal(s.ghost.orders[id].status,'success');
+ assert.equal(s.ghost.history[0].success,true);
+});
+test('purple presence stays textless and is invisible before recognition',()=>{
+ const s=phone();assert.doesNotMatch(dynamicIsland(s),/has-tai-glow|熙泰在線/);
+ s.day=54;s.story55.completed.recognition={day:33,clock:'12:00'};
+ const island=dynamicIsland(s);
+ assert.match(island,/has-tai-glow/);assert.doesNotMatch(island,/熙泰在線/);
+});

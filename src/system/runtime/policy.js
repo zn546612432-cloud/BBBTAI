@@ -3,7 +3,8 @@
 export const PHONE_RUNTIME_POLICY=Object.freeze({
  version:1,
  appMinutesPerRealMinute:5,
- homeMinutesPerRealSecond:5,
+ homeMinutesPerRealSecond:3,
+ shortChargeHomeMinutesPerRealSecond:5,
  batteryGameMinutesPerPoint:900/80, // 08:00–23:00: 100% -> 20%
  shortChargeFillMs:60_000,
  shortChargeMaxGain:10
@@ -23,5 +24,5 @@ export function phoneRuntimeScene(s,{hidden=false,background=false,restarting=fa
 export function phoneSceneMinuteRate(s,options={}){
  const scene=phoneRuntimeScene(s,options),home=phoneHomeSpeed(s);
  if(scene==='paused'||home===0)return 0;
- return scene==='home'||scene==='background'?home/1000:PHONE_RUNTIME_POLICY.appMinutesPerRealMinute/60_000;
+ return scene==='home'||scene==='background'?(s.powerMode==='short-charging'?PHONE_RUNTIME_POLICY.shortChargeHomeMinutesPerRealSecond:home)/1000:PHONE_RUNTIME_POLICY.appMinutesPerRealMinute/60_000;
 }

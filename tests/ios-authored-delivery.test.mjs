@@ -96,12 +96,12 @@ test('banner queue serializes every unread event and skips banners read before d
 
 test('D04 delivery never overrides the unified home speed, and stays one bubble at a time',()=>{
  const s=state(4,'08:20');s.unlocked=true;s.nav.current={appId:'home',route:'/',params:{}};
- assert.equal(worldMinuteRate(s),5/1000);
+ assert.equal(worldMinuteRate(s),3/1000);
  tickD04Chats(s,0);
- assert.equal(worldMinuteRate(s),5/1000);
+ assert.equal(worldMinuteRate(s),3/1000);
  for(let now=2000;now<80000;now+=2000)tickD04Chats(s,now);
  assert.ok(s.story55.d04Chats.morning.completed);
- assert.equal(worldMinuteRate(s),5/1000);
+ assert.equal(worldMinuteRate(s),3/1000);
 });
 
 test('D04 optional player answer appears in group composer, never auto-sent',()=>{

@@ -17,7 +17,7 @@ test('Dynamic Island offers short and long charging choices',()=>{
  assert.match(dynamicIsland(s,{expanded:true}),/power-charge-select/);
  const html=dynamicIsland(s,{expanded:true,page:'select'});
  assert.match(html,/power-short-start/);assert.match(html,/power-long-start/);
- assert.match(html,/>短充<\/button>/);assert.match(html,/>长充<\/button>/);
+ assert.match(html,/>短充<\/button>/);assert.match(html,/>長充<\/button>/);
  assert.doesNotMatch(html,/现实 1 分钟|次日 08:00|最多 \+10%/);
  assert.match(status(s,{islandExpanded:true,islandPage:'select'}),/is-charge-select/);
 });
@@ -45,7 +45,7 @@ test('Unplugging stops acceleration immediately, retains the earned charge and d
  assert.equal(endShortCharge(s),true);assert.equal(s.powerMode,'idle');
  assert.equal(s.shortCharge,null);assert.equal(s.day,2);
  assert.equal(endShortCharge(s),false);
- tickWorld(s,3_000);assert.equal(s.clock,'10:45');
+ tickWorld(s,3_000);assert.equal(s.clock,'10:39');
 });
 test('short charge stops at 23:59 instead of skipping to tomorrow',()=>{
  const s=d02();s.clock='23:50';s.batteryPercent=70;

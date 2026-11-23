@@ -13,10 +13,10 @@ test('status bar shows a numeric battery value and keeps it in range',()=>{
  assert.equal(batteryLevel({...state,batteryPercent:-3}),0);
 });
 
-test('compact Dynamic Island is inert; the status-bar battery is the only battery entry point',()=>{
+test('compact Dynamic Island opens presence detail while status-bar battery remains available',()=>{
  const html=status(initialState());
- assert.equal((html.match(/data-action="power-open"/g)||[]).length,1);
- assert.match(html,/<span class="battery-island-compact" aria-hidden="true">/);
+ assert.equal((html.match(/data-action="power-open"/g)||[]).length,2);
+ assert.match(html,/<button type="button" class="battery-island-compact" data-action="power-open"/);
 });
 
 test('lock and notification shade use real originating-app icons and readable text',()=>{

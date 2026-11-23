@@ -24,7 +24,7 @@ function timeSpeedPanel(s){
   value="${speed}" aria-label="遊戲時間流速" aria-valuetext="${speed===0?'暫停遊戲時間':'現實一秒等於遊戲'+speed+'分鐘'}"
   style="display:block;width:100%;min-height:48px;accent-color:#0a84ff;touch-action:pan-y;cursor:pointer">
  <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.75">
-  <span>0 · 暫停</span><span>5 · 預設</span><span>10 · 最快</span>
+  <span>0 · 暫停</span><span>${STORY55_SPEED_DEFAULT} · 預設</span><span>10 · 最快</span>
  </div>
  <p class="editor-help">所有 App（含 GHOST、微信、Mirage）內、鎖屏、通知與通話：現實 1 分鐘＝手機 ${PHONE_RUNTIME_POLICY.appMinutesPerRealMinute} 分鐘。滑桿只調整主畫面掛機；設為 0 時全局暫停時間與耗電。電量按實際經過的手機時間計算，滿電從 08:00 到 23:00 約剩 20%。短充仍按現實 1 分鐘最多補 10%，長充與終章保持既定流程。</p>
  <button class="s55-button" type="button" data-action="s55-speed-default">恢復預設（${STORY55_SPEED_DEFAULT} 分鐘／秒）</button>

@@ -131,3 +131,9 @@
 .app-ghost .gh-share-actions .gh-share-accept{font-weight:600;color:#d8f1e3}
 .app-ghost .gh-share-choice:active{background:#ffffff12}
 .app-ghost .gh-share-choice:focus-visible{outline:2px solid #c6dfd7;outline-offset:-4px}
+
+/* Secret shortcut inherits the GHOST terminal's restrained green language. */
+.gh-shell .gh-top:has(.gh-quick-skip){display:flex;align-items:center;gap:8px;min-height:40px;margin-bottom:20px}
+.gh-shell button.gh-quick-skip{margin-left:auto;flex:none;min-height:34px;padding:7px 15px;border:1px solid #83b6a0a6;border-radius:18px;background:linear-gradient(135deg,#1e4339,#112b25);color:#d1f5e3;font:500 11px ui-monospace,SFMono-Regular,monospace;letter-spacing:.08em;box-shadow:inset 0 1px #d8ffee17,0 5px 16px #0005;cursor:pointer;touch-action:manipulation}
+.gh-shell button.gh-quick-skip:active{transform:scale(.96);background:#2a5948}
+.gh-shell button.gh-quick-skip:focus-visible{outline:2px solid #adeccf;outline-offset:3px}

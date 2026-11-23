@@ -7,14 +7,14 @@ import {story55Editor} from '../src/apps/developer/features/story55/index.js';
 import {change as developerChange,input as developerInput,handle as developerHandle} from '../src/apps/developer/index.js';
 
 const start=()=>{const s=activateStory55(initialState());s.unlocked=true;return s;};
-test('D03 slider UI is a real mobile range control with default 5 minutes per second',()=>{
+test('D03 slider UI is a real mobile range control with default 3 minutes per second',()=>{
  const s=start();
  const html=story55Editor(s);
  assert.match(html,/data-s55-clock-speed/);
  assert.match(html,/type="range"/);
  assert.match(html,/min="0" max="10" step="0.5"/);
- assert.match(html,/value="5" aria-label="遊戲時間流速"/);
- assert.match(html,/5 分鐘／秒/);
+ assert.match(html,/value="3" aria-label="遊戲時間流速"/);
+ assert.match(html,/3 分鐘／秒/);
  assert.match(html,/s55-speed-default/);
 });
 test('speed slider readout changes without persisting until release',()=>{
@@ -54,16 +54,16 @@ test('App time ignores home slider and keyboard focus; reset restores home 5',()
  developerHandle('s55-speed-default',{dataset:{}},{
   store:{get:()=>s,update:fn=>fn(s)},toast:t=>{message=t;},router:{}
  });
- assert.equal(story55MinutesPerSecond(s),5);
- assert.match(message,/5 分鐘/);
+ assert.equal(story55MinutesPerSecond(s),3);
+ assert.match(message,/3 分鐘/);
 });
 test('invalid or missing saved options fall back safely to 5',()=>{
  const s=start();
- assert.equal(story55MinutesPerSecond(s),5);
+ assert.equal(story55MinutesPerSecond(s),3);
  s.story55.minutesPerSecond='999';
- assert.equal(story55MinutesPerSecond(s),5);
+ assert.equal(story55MinutesPerSecond(s),3);
  s.story55.minutesPerSecond=NaN;
- assert.equal(story55MinutesPerSecond(s),5);
+ assert.equal(story55MinutesPerSecond(s),3);
 });
 
 test('developer new-run reset preserves the selected clock speed without preserving plot progress',()=>{
