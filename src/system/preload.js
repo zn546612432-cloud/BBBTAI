@@ -8,6 +8,7 @@ import {chatImageUrls} from '../apps/wechat/components/chat-view.js';
 
 const DEADLINE_MS=20000;
 const CONCURRENCY=8;
+const MAX_BACKGROUND_IMAGES=12;
 
 function preloadImage(url,decode=false) {
  return new Promise(resolve=>{
@@ -74,7 +75,9 @@ export function beginLockscreenPreload({wallpaper='',state=null,onProgress=()=>{
  const foreground=run([()=>loadMap(),...critical.map(url=>()=>loadImage(url,true))],true);
  const complete=foreground.then(async()=>{
   const urls=dedupe(await manifest).filter(url=>!critical.includes(url));
-  await run(urls.map(url=>()=>loadImage(url,false)),false);
+  // Only current-screen artwork is critical. Decoding the full image library
+  // in the background overwhelms Safari's image cache and can blank home icons.
+  await run(urls.slice(0,MAX_BACKGROUND_IMAGES).map(url=>()=>loadImage(url,false)),false);
  });
  let deadline;
  const guard=new Promise(resolve=>{deadline=setTimeout(()=>resolve('timeout'),deadlineMs);});
