@@ -71,7 +71,9 @@ export const D55_FATHER_CALL={
   {speaker:'傅隆生',text:'但是，想要做事有把握，必須自己動手。',audio:'/assets/story55/d55/fu-3.mp3',delayMs:0},
   {speaker:'熙蒙',text:'記住了。',delayMs:800},
   {speaker:'傅隆生',text:'這方面，阿旺做得比你好。',audio:'/assets/story55/d55/fu-4.mp3',delayMs:0},
-  {speaker:'傅隆生',text:'我希望你們都能過上你們想要的生活。',audio:'/assets/story55/d55/fu-5.mp3',delayMs:600},
-  {speaker:'傅隆生',text:'最後一次幫你了。',audio:'/assets/story55/d55/fu-6.mp3',delayMs:300}
+  // Preserve the original cry and breath between these two lines as one uninterrupted recording.
+  // The second caption appears while the same recording is still playing.
+  {speaker:'傅隆生',text:'我希望你們都能過上你們想要的生活。',audio:'/assets/story55/d55/fu-5-6-uncut.mp3',delayMs:600,followupCaptionAtMs:17410},
+  {speaker:'傅隆生',text:'最後一次幫你了。',delayMs:0}
  ]
 };

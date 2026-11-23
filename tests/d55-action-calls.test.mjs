@@ -53,13 +53,16 @@ test('D55 starts a real NoApp call at 22:00, then waits for manual player speech
  callAction('tai-hangup',ctx,{endedBy:'system',endReason:'d55_disconnect'});
 });
 
-test('D55 native Father call waits for the NoApp takeover and uses six user recordings',()=>{
+test('D55 native Father call waits for NoApp takeover and keeps the ending cry uninterrupted',()=>{
  const {s,ctx}=fixture();s.clock='22:30';s.story55.d55FatherReady=false;
  assert.equal(nativePhoneCallDue(s,D55_FATHER_CALL),false);
  s.story55.d55FatherReady=true;
  assert.equal(nativePhoneCallDue(s,D55_FATHER_CALL),true);
  const audio=D55_FATHER_CALL.steps.filter(x=>x.audio);
- assert.equal(audio.length,6);
+ assert.equal(audio.length,5);
+ assert.equal(D55_FATHER_CALL.steps.at(-2).followupCaptionAtMs,17410);
+ assert.equal(D55_FATHER_CALL.steps.at(-1).audio,undefined,'last sentence is subtitled during the uninterrupted recording');
+ assert.equal(audio.at(-1).audio,'/assets/story55/d55/fu-5-6-uncut.mp3');
  for(const step of audio)assert.ok(existsSync(new URL('../public'+step.audio,import.meta.url)),step.audio);
  tickAuthoredPhoneCalls(ctx,{audio:null,running:false,playing:null},1000);
  assert.equal(s.phoneCall.scriptId,D55_FATHER_CALL.id);
