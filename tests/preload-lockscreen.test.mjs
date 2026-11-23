@@ -89,3 +89,13 @@ test('the restored chat warms the same media URLs as its message bubbles',()=>{
  const module='https://example.test/BBBTAI/releases/0123456789abcdef/src/apps/wechat/components/chat-view.js';
  assert.equal(new URL(pictureSrc('/apps/wechat/media/macau-morning.webp',module)).pathname,'/BBBTAI/apps/wechat/media/macau-morning.webp');
 });
+
+test('optional image preloading is capped to avoid iOS image-cache eviction',async()=>{
+ const critical=initialLockscreenImageUrls();
+ const extra=Array.from({length:100},(_,i)=>'/assets/optional-'+i+'.webp');
+ const seen=[];
+ const preload=beginLockscreenPreload({loadManifest:async()=>[...extra,...critical],loadMap:async()=>true,loadImage:async url=>{seen.push(url);return true;}});
+ await preload.ready;await preload.complete;
+ assert.equal(seen.filter(url=>extra.includes(url)).length,12);
+ assert.ok(critical.every(url=>seen.includes(url)));
+});
