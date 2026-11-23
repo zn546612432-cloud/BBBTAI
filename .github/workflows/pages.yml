@@ -29,6 +29,18 @@ jobs:
       - run: node --check public/voice-lab/panel.js
       - run: npm test
       - run: npm run build:pages
+      # Friends share the exact same release modules and public assets as main.
+      # Only the entry HTML opts into hiding author/debug controls.
+      - name: Create isolated friends test entry
+        run: |
+          mkdir -p dist/review/friends-test
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const html=await readFile('dist/index.html','utf8');
+          if(!html.includes('ximeng-release')||!html.includes('<head>'))throw Error('Production entry not ready');
+          const friends=html.replace('<head>','<head><meta name="phone-friends-test" content="true"><meta name="phone-preview" content="true">').replace('<title>','<title>TEST · ');
+          await writeFile('dist/review/friends-test/index.html',friends);
+          NODE
       - name: Build Tai Vision in isolated save namespace
         run: |
           mv dist stable-dist
@@ -109,7 +121,7 @@ jobs:
           if(!index.includes(release.url+'src/main.js'))throw new Error('Main entry is not version-pinned');
           console.log('Verified Pages resources:',release.version);
           NODE
-      - name: Audit 3 retained site paths and enforce artifact size limit
+      - name: Audit retained site paths and enforce artifact size limit
         run: node scripts/audit-pages-site.mjs dist
       - name: Configure Pages
         uses: actions/configure-pages@v5
