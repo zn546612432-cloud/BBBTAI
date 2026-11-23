@@ -231,7 +231,9 @@ export function applyD54Definition(c){
   pauseTimeUntilComplete:false
  });
  // Reuse the existing D54 "ready" node already required by D55's finale.
- scene(D54_FATHER,'19:00','通知傅隆生','wechat','fulongsheng',[D54_TAI],D54_FATHER_LINES);
+ scene(D54_FATHER,'19:00','通知傅隆生','wechat','fulongsheng',[D54_GROUP],D54_FATHER_LINES);
+ const ending=c.nodes.find(n=>n.id==='ending');
+ if(ending&&!ending.requires.includes(D54_TAI))ending.requires.push(D54_TAI);
  c.d54Revision=1;
  return true;
 }

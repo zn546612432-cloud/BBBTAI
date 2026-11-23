@@ -90,6 +90,22 @@ test('D54 keeps Tai online at every hour, including his normal London sleep wind
  }
 });
 
+test('19:00 father reminder arrives on time even if the NoApp chat is unfinished',()=>{
+ const s=fixture('08:40');
+ play(s,D54_ISOLDE,D54_ISOLDE_LINES,'mirage',D46_CONTACT);
+ play(s,D54_GROUP,D54_GROUP_LINES,'wechat','group');
+ assert.equal(completed(s,D54_TAI),false);
+ s.clock='19:00';
+ assert.equal(syncD54FatherReminder(s),true,'the timed task must not depend on finishing the daytime NoApp conversation');
+ assert.equal(s.content.reminders.some(r=>r.id===D54_FATHER_REMINDER&&!r.done),true);
+ assert.equal(nodeStatus(s,D54_FATHER).state,'ready');
+ const store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(toggleReminder(store,D54_FATHER_REMINDER),false);
+ play(s,D54_FATHER,D54_FATHER_LINES,'wechat','fulongsheng');
+ assert.equal(completed(s,D54_TAI),false);
+ assert.equal(s.story55.config.nodes.find(n=>n.id==='ending').requires.includes(D54_TAI),true);
+});
+
 test('NoApp fixed Send is saved as one authored scene message, not a free AI request',()=>{
  const s=fixture('08:40');
  play(s,D54_ISOLDE,D54_ISOLDE_LINES,'mirage',D46_CONTACT);
