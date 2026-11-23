@@ -54,11 +54,12 @@ function pictureGrid(post){
  return '<div class="wx-moments-photos '+(media.length===1?'one':'')+'">'+media.map((src,i)=>
   '<button type="button" class="wx-moments-photo" data-action="wx-moment-photo" data-id="'+esc(post.id)+'" data-index="'+i+'" aria-label="查看图片 '+(i+1)+'">'+im(src,post.author+'的照片 '+(i+1))+'</button>').join('')+'</div>';
 }
-function postContent(post){
+function postContent(post,s){
  if(post.kind==='article')return '<button type="button" class="wx-moments-article" data-action="wx-moment-article" data-id="'+esc(post.id)+'"><span class="wx-moments-article-logo">📖</span><span><strong>'+esc(post.article.title)+'</strong><small>'+esc(post.article.publisher)+'</small></span></button>';
  if(post.kind==='music'){
   const playable=!!post.music.trackId;
-  return '<'+(playable?'button type="button" data-action="wx-moment-music" data-id="'+esc(post.id)+'"':'div role="group"')+' class="wx-moments-music" aria-label="'+(playable?'播放':'分享音乐 ')+esc(post.music.title)+'"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+(post.music.album?' · '+esc(post.music.album):'')+'</small></span><span class="wx-moments-music-note">'+(playable?'▶':'♫')+'</span></'+(playable?'button':'div')+'>';
+  const playing=playable&&s.musicPlaying&&s.musicTrack===post.music.trackId;
+  return '<'+(playable?'button type="button" data-action="wx-moment-music" data-id="'+esc(post.id)+'" aria-pressed="'+!!playing+'"':'div role="group"')+' class="wx-moments-music" aria-label="'+(playable?(playing?'暂停':'播放'):'分享音乐 ')+esc(post.music.title)+'"><span class="wx-moments-music-art">♫</span><span><strong>'+esc(post.music.title)+'</strong><small>'+esc(post.music.artist)+(post.music.album?' · '+esc(post.music.album):'')+'</small></span><span class="wx-moments-music-note" aria-hidden="true">'+(playable?(playing?'Ⅱ':'▶'):'♫')+'</span></'+(playable?'button':'div')+'>';
  }
  return pictureGrid(post);
 }
@@ -72,7 +73,7 @@ function postCard(post,s){
   '<button type="button" class="wx-moments-post-avatar" data-action="wx-moment-profile" data-name="'+esc(post.author)+'" aria-label="查看'+esc(post.author)+'的相册">'+avatar(post.author,s)+'</button><div class="wx-moments-post-content">'+
   '<div class="wx-moments-poster">'+authorBtn(post.author)+(post.pinned?'<span class="wx-moments-pin-label">置顶</span>':'')+'</div>'+
   (post.text?'<p class="wx-moments-post-text">'+esc(post.text)+'</p>':'')+
-  postContent(post)+
+  postContent(post,s)+
   '<div class="wx-moments-meta"><span>'+esc(clockLabel(post.publishedAt,nowDate(s)))+'</span><div class="wx-moments-tools">'+
   (openActions===post.id?'<div class="wx-moments-action-menu" role="group" aria-label="动态操作"><button type="button" data-action="wx-moment-like" data-id="'+esc(post.id)+'">'+heart+(liked?'取消':'赞')+'</button><button type="button" data-action="wx-moment-reply" data-id="'+esc(post.id)+'">'+momentIcons['message-circle']+'评论</button></div>':'')+
   '<button type="button" class="wx-moments-more" data-action="wx-moment-actions" data-id="'+esc(post.id)+'" aria-label="点赞和评论" aria-expanded="'+(openActions===post.id)+'"><span></span><span></span></button></div></div>'+
@@ -158,7 +159,7 @@ export function handleMoment(action,target,ctx){
  const id=target.dataset.id,route=path=>{openActions=null;replyTo=null;replyToName=null;replyDraft='';ctx.router.open({appId:'wechat',route:'/moments'+path});};
  if(action==='wx-moment-music'){
   const post=findMoment(ctx.store.get(),id);
-  if(post?.music?.trackId){handleMusic('music-play-track',{dataset:{track:post.music.trackId}},ctx);ctx.router.open({appId:'music',route:'/'});}
+  if(post?.music?.trackId)handleMusic('music-toggle-track',{dataset:{track:post.music.trackId}},ctx);
   return true;
  }
  if(action==='wx-moment-profile'){route('/profile/'+encodeURIComponent(target.dataset.name));return true;}
