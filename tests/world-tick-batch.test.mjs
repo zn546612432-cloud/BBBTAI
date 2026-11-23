@@ -25,8 +25,8 @@ test('switching App -> home prices each elapsed segment at its original rate',()
  const s=start(),batch=new WorldTickBatch();s.nav.current={appId:'ghost',route:'/'};
  assert.equal(batch.take(s,6000),null); // half a game minute of reading
  s.nav.current={appId:'home',route:'/'};
- const frame=batch.take(s,100); // half a game minute on home
- assert.deepEqual(frame,{elapsedMs:6100,gameMinutes:1});
+ const frame=batch.take(s,170); // roughly half a game minute on home
+ assert.deepEqual(frame,{elapsedMs:6170,gameMinutes:1.01});
  tickPhoneRuntime(s,frame);assert.equal(s.clock,'08:01');
  s.nav.current={appId:'wechat',route:'/chat/group'};
  tickPhoneRuntime(s,batch.take(s,6000));

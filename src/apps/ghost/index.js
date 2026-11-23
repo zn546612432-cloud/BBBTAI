@@ -23,7 +23,7 @@ import {renderGhostHome} from './features/workspace/view.js';
 import {pipeFlow,pipeSolved} from './games/pipe-network.js';
 import {arcadeAction,arcadeTick,arcadeNeedsTick} from './games/arcade.js';
 import {renderArcade} from './games/arcade-ui.js';
-import {ghostDevSkipAvailable,previewSkipD01} from './features/dev-skip/index.js';
+import {ghostDevSkipAvailable,previewSkipD01,skipGhostGame} from './features/dev-skip/index.js';
 export const manifest={id:'ghost',name:'GHOST',icon:9,defaultRoute:'/',supportsDeepLink:true,kicker:'LOCAL WORKSPACE'};
 const button=(action,label,attrs='',cls='')=>`<button class="gh-button ${cls}" data-action="gh-${action}" ${attrs}>${label}</button>`;
 const nav=(ctx,route='/',params={})=>ctx.router.open({appId:'ghost',route,params});
@@ -87,7 +87,9 @@ if(loc.route!=='/tear')tearChatSessionOpen=false;if(!clock&&typeof window!=='und
   if(o.status!=='running'&&o.status!=='preview-win'){
    const success=['success','settling','paid'].includes(o.status);body=title('close',`GHOST / 执行报告`,shareBtn(s,{orderId:o?.id}))+`<div class="gh-report"><div class="gh-result-mark">${success?'✓':'×'}</div><small>执行报告</small><h1>${success?'成功':'失败'}</h1><p>${d02OrderOfStep(o.id)?(d02NextStep(s,o.id)?esc(tool?.name||'执行完成'):'项目完成 · 請返回 MIRAGE 提交驗收'):d03OrderOfStep(o.id)?(d03NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):d04OrderOfStep(o.id)?(d04NextStep(s,o.id)?esc(tool?.name||'執行完成'):'項目完成'):esc(tool?.name||'工具')+' / '+esc(o.id)}</p>${o.id===D01_REPAIR?`<p>已修復 ${Math.min(100,(s.story55?.d01?.completedRounds||0)*20)}%</p>`:''}${o.id===D01_REPAIR&&success?button('d01-next',(s.story55?.d01?.completedRounds||0)>=5?'返回 KIRA' :'修復下一處',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d02OrderOfStep(o.id)?button('d02-next',d02NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d03OrderOfStep(o.id)?button('d03-next',d03NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):success&&d04OrderOfStep(o.id)?button('d04-next',d04NextStep(s,o.id)?'繼續處理':'返回 MIRAGE',`data-id="${esc(o.id)}"`,'gh-primary'):button('close','关闭',`data-id="${esc(o.id)}"`,'gh-primary')}</div>`;
   }else{
-   const devSkipTop=o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
+   const devSkipTop=o.status==='running'&&s.editor?.cheatMode
+    ?button('quick-skip','跳過','aria-label="跳過目前 GHOST 關卡"','gh-quick-skip')
+    :o.id===D01_REPAIR&&o.type==='route'&&o.status==='running'&&ghostDevSkipAvailable(globalThis.document,ctx.store.get())
     ?button('d01-dev-skip','跳过本关','aria-label="跳过当前 LINK 测试关卡"','gh-dev-skip-top'):'';
    body=(o.status==='preview-win'?'<div class="gh-top"><span>●</span><span>GHOST / 連線確認</span><span>✓</span></div>':title('exit',tool.name,(devSkipTop|| (o.deadline!==null?fmt(remaining):''))+shareBtn(s,{orderId:o?.id})))+`<div class="gh-game-head">${o.id===D01_REPAIR?'<small>已修復 '+((s.story55?.d01?.completedRounds||0)*20)+'%</small>':''}<h1>${tool.name}</h1></div>`;
    const b=o.board;
@@ -147,6 +149,11 @@ export function handle(action,t,ctx,loc){if(!action.startsWith('gh-'))return;if(
  if(a==='history')return nav(ctx,'/history');
  if(a==='tool'){if(t.dataset.tool==='verify')return isStory55(ctx.store.get())?nav(ctx,'/flow-deploy'):nav(ctx,'/deploy-info');return nav(ctx,'/tool',{tool:t.dataset.tool});}
  if(a==='locked'){document.getElementById('gh-key')?.focus();return;}
+ if(a==='quick-skip'){
+  let ok=false;ctx.store.update(n=>{ok=skipGhostGame(n,id);});
+  if(!ok)ctx.toast?.('目前無法跳過');
+  return;
+ }
  if(a==='d01-dev-skip'){
   if(!ghostDevSkipAvailable(globalThis.document,ctx.store.get())||id!==D01_REPAIR)return;
   let skipped=false;

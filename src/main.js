@@ -65,6 +65,8 @@ import {chargingBlock,shortChargeBlock,deathLocked,phoneBlocked,recoverPhone} fr
 import {mountTelephony} from './services/telephony/index.js';
 import {telephonyIncomingBanner} from './services/telephony/view.js';
 import {powerFullscreen} from './system/power/controls.js';
+import {jumpShortChargeToNextEvent} from './system/power/short-charge-jump.js';
+import {taiPresence} from './services/presence.js';
 import {PresetConversationEngine,deliverMissedScheduled} from './story/presets/engine.js';
 import {hydrateBuiltInPresets} from './story/presets/catalog.js';
 
@@ -373,7 +375,8 @@ function enterDigit(key){
   if(recovery&&key==='cancel'){lockscreen.reset();store.update(s=>{s.deathPhase='off';});return;}
   // Preserve the legacy 0816 lock code while accepting the authored first-view 0119.
    // After the handoff, Xitai has a distinct 6180 lock; 0000 remains restart.
-   const result=lockscreen.key(key,recovery||secondView55(store.get())||store.get().deathPhase==='recovered'?'6180':['0816','0119']);
+   const allowCheat=!recovery&&!secondView55(store.get())&&store.get().deathPhase!=='recovered';
+    const result=lockscreen.key(key,recovery||secondView55(store.get())||store.get().deathPhase==='recovered'?'6180':['0816','0119'],{allowCheat});
   if(result==='ignored')return;
   if(result==='restart'){render();return;}
   if(result==='cancelled'){pendingNoticeId=null;render();return;}
@@ -388,13 +391,13 @@ function enterDigit(key){
     errorHaptic();
     setTimeout(()=>{lockscreen.retry();render();},520);
   }
-  if(result==='unlocking'){
+  if(['unlocking','cheat-on','cheat-off'].includes(result)){
     digitsRoot.querySelector('.lock-screen')?.classList.add('lock-unlocking');
     setTimeout(()=>{
       if(recovery){const code=lockscreen.digits;lockscreen.reset();store.update(s=>recoverPhone(s,code));expandIsland();return;}
       if(phoneBlocked(store.get()))return;
       const link=lockscreen.pendingLink,noticeId=pendingNoticeId;pendingNoticeId=null;lockscreen.reset();setShade({progress:0});entryAnimation=true;
-      store.update(s=>{s.unlocked=true;});
+      store.update(s=>{if(result==='cheat-on'||result==='cheat-off'){s.editor??={};s.editor.cheatMode=result==='cheat-on';}s.unlocked=true;});
       if(store.get().story55?.version===1&&store.get().day===1&&!store.get().content.mail.some(m=>m.id==='d01-vulnerability-paid'))setTimeout(()=>{if(store.get().unlocked&&store.get().day===1)store.update(s=>deliverD01Opening(s));},3000);
       if(link)router.open(link);
       if(noticeId)readNotification(store,noticeId);
@@ -606,9 +609,21 @@ $('#root').addEventListener('click',async e=>{
     if(action==='story-wake'&&store.get().deathPhase==='off'){lockscreen.open();store.update(s=>{s.deathPhase='passcode';});return;}
     if(action==='story55-wake'&&store.get().deathPhase==='s55-off'){store.update(s=>startSecondCharge55(s));return;}
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
-    if(action==='power-open'){expandIsland();return;}
+    if(action==='power-open'){
+       const current=store.get();
+       if(current.unlocked&&current.story55?.completed?.recognition&&!current.story55?.ended&&taiPresence(current).status==='online'&&!['charging','sleeping','short-charging'].includes(current.powerMode)){
+         router.open({appId:'noapp',route:'/chat/tai',params:{}});return;
+       }
+       expandIsland();return;
+     }
     if(action==='power-charge'||action==='power-charge-select'){expandIsland('select');return;}
-    if(action==='power-short-start'){
+    if(action==='power-short-next'){
+       let result;store.update(s=>{result=jumpShortChargeToNextEvent(s);});
+       collapseIsland();
+       if(!result?.ok)toast(result?.reason==='no-event'?'今天暫無下一事件':'目前無法短充');
+       return;
+     }
+     if(action==='power-short-start'){
       if(shortChargeBlock(store.get())||store.get().story55?.activeScene){collapseIsland();toast('充电口进水，稍后再试。');return;}
       let ok=false;store.update(s=>{ok=beginShortCharge(s);});
       collapseIsland();

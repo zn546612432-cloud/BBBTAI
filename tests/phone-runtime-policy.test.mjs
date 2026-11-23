@@ -23,12 +23,12 @@ test('every registered App on every story day uses 1 real minute = 5 game minute
  }
 });
 test('home alone is fast; locked, call, notification and task switcher remain slow',()=>{
- const s=start();assert.equal(worldMinuteRate(s),5/1000);
+ const s=start();assert.equal(worldMinuteRate(s),3/1000);
  for(const options of [{overlay:true},{callActive:true},{fastForward:false}])assert.equal(worldMinuteRate(s,options),5/60000);
  s.unlocked=false;assert.equal(worldMinuteRate(s),5/60000);
 });
 test('full-day home and App use consume exactly the same charge for the same game minutes',()=>{
- for(const [appId,elapsed] of [['home',180000],['ghost',10800000]]){
+ for(const [appId,elapsed] of [['home',300000],['ghost',10800000]]){
   const s=start(2,appId);tickWorld(s,elapsed);
   assert.equal(s.clock,'23:00');assert.equal(s.batteryPercent,20);
   assert.equal(drainBattery(s,elapsed),0,'old real-time caller cannot debit twice');
@@ -84,7 +84,7 @@ test('mixed App/home segments and reload have the same debit as uninterrupted ga
  let s=start(),batch=new WorldTickBatch();
  for(let n=0;n<10;n++){
   s.nav.current.appId='ghost';let f=batch.take(s,6000);if(f)tickPhoneRuntime(s,f);
-  s.nav.current.appId='home';f=batch.take(s,100);if(f)tickPhoneRuntime(s,f);
+  s.nav.current.appId='home';f=batch.take(s,170);if(f)tickPhoneRuntime(s,f);
  }
  assert.equal(s.clock,'08:10');assert.equal(s.batteryPercent,100);
  s=JSON.parse(JSON.stringify(s));advanceGameMinutes(s,2);assert.equal(s.batteryPercent,99);
