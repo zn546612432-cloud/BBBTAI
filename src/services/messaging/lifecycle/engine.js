@@ -278,7 +278,7 @@ export function createConversationTrack(config){
    if(when>now){
     const candidate={...item,kind:'upcoming',clock:stamp(when).clock,minute:when};
     if(!upcoming||candidate.minute<upcoming.minute)upcoming=candidate;
-   }else if(q.started&&line.who!=='me'&&qDue(q)!=null||!q.started&&line.who!=='me'){
+   }else if(line.who!=='me'&&(q.started?qDue(q)!=null:true)){
     active??={...item,kind:'delivering'};
    }
   }
