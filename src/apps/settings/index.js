@@ -1,4 +1,5 @@
 import {wifiNetworks} from './features/wifi/index.js';
+import {isFriendsTest} from '../../system/runtime/friends-test.js';
 import {settingsHome} from './features/home/index.js';
 import {settingsDetail} from './features/details/index.js';
 import {cloudSaveView,cloudSaveAction,cloudSaveSubmit} from './features/cloud-save/index.js';
@@ -11,7 +12,7 @@ export function handle(a,t,c){
  if(a==='settings-back')c.router.back();
  if(a==='settings-open'){
   const route=t.dataset.route;
-  if(route==='editor')return c.router.open({appId:'editor',route:'/'});
+  if(route==='editor')return isFriendsTest?undefined:c.router.open({appId:'editor',route:'/'});
   if(route==='lock')return c.store.update(s=>{s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};});
   if(route==='export')return c.download();
   c.router.open({appId:'settings',route:'/'+route});
