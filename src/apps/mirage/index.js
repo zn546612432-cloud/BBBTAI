@@ -300,7 +300,7 @@ export function handle(action,t,ctx,loc){
 }
 
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
- if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/order/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract')?loc.route:'/');return;}
+ if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/order/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract'||loc?.route==='/bounties/hall')?loc.route:'/');return;}
  if(!isMirageAuthenticated())return;
  if(f==='mc-send'){
   const text=val('text'),id=form.dataset.id;
