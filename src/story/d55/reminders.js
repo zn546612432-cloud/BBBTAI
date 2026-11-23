@@ -8,6 +8,12 @@ export function syncD55Reminders(s){
  if(!isStory55(s)||s.day!==55)return false;
  let changed=false;
  s.content.reminders??=[];s.notifications??=[];
+ // A D41 23:00 operation reminder cannot survive into D55.
+ const oldId='s55-d41-operation-reminder';
+ const before=s.content.reminders.length,noticesBefore=s.notifications.length;
+ s.content.reminders=s.content.reminders.filter(r=>r.id!==oldId);
+ s.notifications=s.notifications.filter(n=>n.id!==oldId+'-notice');
+ if(s.content.reminders.length!==before||s.notifications.length!==noticesBefore)changed=true;
  for(const entry of ITEMS){
   const done=completed(s,entry.node),reminder=s.content.reminders.find(r=>r.id===entry.id);
   if(reminder){reminder.done=done;continue;}
