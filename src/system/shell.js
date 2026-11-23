@@ -21,7 +21,7 @@ const notificationApp=(n)=>{
   return registry.get(id)?.manifest||registry.get('messages')?.manifest;
 };
 export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.link?.appId==='noapp'&&(['/chat/tai','/call'].includes(n.link.route))?taiDisplayName(s):n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
-const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
+const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-key="home-app-${id}" data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
 export function reminderWidget(s){
  const original=reminders(s);
  // Keep player-owned lists and accepted wish purchase controls functional.
