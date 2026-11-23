@@ -11,7 +11,7 @@ export function taiCanonicalMilestones(s,history){
  if(s?.story55?.version!==1)return [];
  const messages=history||s?.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||[];
  const facts=[
-  {id:'story55-paris-promise',day:43,pattern:/^s55-paris-\d+$/,text:'所以別讓我失望，熙蒙。我們巴黎見。',topic:'巴黎約定'},
+  {id:'story55-paris-promise',day:43,pattern:/^s55-(?:d43-)?paris-\d+$/,text:'所以別讓我失望，熙蒙。我們巴黎見。',topic:'巴黎約定'},
   {id:'story55-rescue-promise',day:53,pattern:/^s55-d53-tai-night-\d+$/,text:'就算被抓了也沒關係，只要你還活著，我就有辦法把你救出來。',topic:'救援承諾'}
  ];
  return facts.flatMap(f=>{

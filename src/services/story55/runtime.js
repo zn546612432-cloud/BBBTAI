@@ -17,6 +17,7 @@ import {applyD53Definition,D53_ACTION_START,D53_ACTION_END,D53_ISOLDE_DEAL,D53_T
 import {applyD51Definition,D51_ISOLDE_CHAT,D51_PRIVATE_MAIL,syncD51MailReminder} from '../../story/d51/definition.js';
 import {syncD53DealReminder} from '../../story/d53/reminders.js';
 import {applyD54Definition,D54_ISOLDE,D54_GROUP,D54_TAI,D54_FATHER} from '../../story/d54/definition.js';
+import {applyD54ParisFuture} from '../../story/d54/paris-future.js';
 import {syncD54FatherReminder} from '../../story/d54/reminders.js';
 import {retireLegacyD55Ending} from '../../story/d55/retire-legacy.js';
 import {applyD55Definition} from '../../story/d55/definition.js';
@@ -457,6 +458,9 @@ export function tickStory55(s){
  syncD51MailReminder(s);
  syncD53DealReminder(s);
  const introducedD54=applyD54Definition(story55Config(s));
+ // Add the optional relationship episode without migrating, skipping or
+ // editing anyone's already-delivered D54 fixed dialogue.
+ applyD54ParisFuture(story55Config(s));
  // D55+ saves must retain their position rather than being stopped on
  // newly authored D54 scenes. Never forge 2025 messages for skipped dates.
  if(introducedD54&&s.day>54){
