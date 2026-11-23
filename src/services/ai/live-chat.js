@@ -25,6 +25,7 @@ import {taiExplicitVoiceRequest,honorTaiVoiceRequest,combineTaiVoiceThoughts} fr
 import {sampleTaiTurnPlan,taiTurnNeedsMore,mergeTaiTurnEntries,dedupeTaiTurnEntries,taiGuidanceNeedsRepair,taiIntegrateGuidingQuestion} from './conversation-shape-v12.js';
 import {researchTaiPhone} from './phone-mcp/curiosity.js';
 import {incomingTaiBatch,incomingBatchPrompt,TAI_INCOMING_QUIET_MS} from './incoming-turn.js';
+import {taiRelationshipDirector} from './relationship-director.js';
 import {selectTaiMemoryPreset,alreadyRecentlyUsedTaiPreset} from '../../apps/noapp/memory-replies.js';
 import {musicListeningContext} from '../../apps/music/features/shared/listening.js';
 
@@ -141,6 +142,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const musicContext=musicListeningContext(history,batchText);
   const consolidated=batch.length>1||!!musicContext;
   const directAffection=!unheard&&isTaiDirectAffectionRequest(lastUser);
+  const relationshipPlan=taiRelationshipDirector(initial,{input:lastUser});
+  const approvedAffection=directAffection&&relationshipPlan.canDeclareLove;
   // A telephone request is not a request for one prerecorded voice bubble.
   const requestedCall=taiPlayerRequestedCall(lastUser);
   const shortCallReply=requestedCall||taiCallAvailabilityQuestion(lastUser);
@@ -168,12 +171,12 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    behavior,allowVoice,worldbookEvents,
    scene:postCallTextContext+(firstTextAfterCall?' 【刚挂电话后第一条文字】优先给出针对性的完整回应，不执行文字气泡数抽签，也不主动发送一条新语音或发起新来电，除非熙蒙明确要求。':'')+' 熙蒙刚通过文字聊天发来：'+String(lastUser).slice(0,400)+'。认真接住他的意思：能继续聊就给具体内容，不用把一段完整想法拆成四个只有几个字的短气泡，也不要反复换词重复同一件事。你可以发表实际看法、适度解释、主动推进话题，有时候说几句完整的话；简单回应仍可短。'+taiMomentumPrompt(messages,{mode:'text'})+(voiceRequested&&voiceAvailable?' 熙蒙明确希望收到一条可播放的语音消息，不是只要你用文字说几句。如果你愿意回应且MiniMax可用，优先选择真正的send_voice；确实不愿意可明说，不要用文字冒充语音。':'')+(requestedCall?' 如果你同意现在立刻给熙蒙打电话，回复的最后一项必须以 (phone) 开头，后面写接通时你准备说的第一句话，不要把「我现在打」当普通文字就结束；如果不方便就正常发文字说明，不要用 (phone)。':''),
    callActive,relationshipContext:xitaiRelationshipContext(initial,{mode:'text',callActive}),
-   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories};
+   profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan};
   request.scene+='\n'+incomingBatchPrompt(batch)+(musicContext?'\n'+musicContext:'');
   request.scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
-  if(directAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
+  if(approvedAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   let decision=unheard||socialRefusal?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
@@ -224,11 +227,11 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   store.update(s=>markTaiRead(s,sourceMessageId,now(),{keepPending:true}));
   if(!unheard)onTyping();
   const result=unheard||socialRefusal?null:await askTai({...request,relationshipContext:xitaiRelationshipContext(store.get(),{mode:'text',callActive})});
-  if(directAffection){
+  if(approvedAffection){
    if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
    if(!result?.directAffectionAccepted)return finishSilentTaiTurn(store,sourceMessageId,now);
   }
-  let draftEntries=socialRefusal?[{text:socialRefusal,mode:'text',tone:'neutral'}]:directAffection?[{text:TAI_DIRECT_AFFECTION_LINE,mode:'text',tone:'neutral'}]:unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
+  let draftEntries=socialRefusal?[{text:socialRefusal,mode:'text',tone:'neutral'}]:approvedAffection?[{text:TAI_DIRECT_AFFECTION_LINE,mode:'text',tone:'neutral'}]:unheard?[unheardReply(sourceMessageId)]:dedupeTaiTurnEntries(unpackTaiReply(result,'noapp'));
   // A bare mirrored greeting is a model-continuation artifact, not a choice
   // rooted in Tai's personality. Repair it only when he replied with nothing
   // but the exact same greeting; preserve other genuine one-line replies.
@@ -346,7 +349,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
  }catch(error){
   console.warn('NoApp reply unavailable:',error?.message);
   if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)||replyAfter(conversation(store.get()),sourceMessageId))return {status:'superseded'};
-  if(error?.code==='TAI_STYLE'||isTaiDirectAffectionRequest(pendingSource?.voiceCaption||pendingSource?.text))return finishSilentTaiTurn(store,sourceMessageId,now);
+  if(['TAI_STYLE','TAI_ROMANCE_GATE'].includes(error?.code)||approvedAffection)return finishSilentTaiTurn(store,sourceMessageId,now);
   // Transport failures are not Tai's speech and must not consume this turn.
   // Keep diagnostics with the source message; a later real request can retry.
   store.update(s=>{
