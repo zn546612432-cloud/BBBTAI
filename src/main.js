@@ -109,7 +109,8 @@ const boundedBootTask=async(task,label,limit=7000)=>{
   if(result.status==='timeout')console.warn(label+'超时，先进入锁屏；继续加载现有剧情数据');
  }finally{clearTimeout(timer);}
 };
-try{await hydrateBuiltInPresets(store);}catch(error){window.__xmBootError?.('內置劇情載入失敗：'+error.message);throw error;}
+// Hydrate the authored history only after the complete game package is on disk.
+// It is part of startup readiness, not an unbounded invisible 0% prerequisite.
 
 // Load only tiny IndexedDB snapshot metadata. Preserve old localStorage backups.
 if(!RECOGNITION_PREVIEW&&!D45D46_PREVIEW)await boundedBootTask(()=>primeTestSnapshots(store.storage),'测试快照目录读取失败，旧存档保持原状',3000);
@@ -443,15 +444,46 @@ store.subscribe(()=>{
  else{
   lockAssets=beginCompleteGamePreload({
    state:store.get(),
-   onProgress:({finished,total,failed})=>{
+   onProgress:({finished,total,failed,phase})=>{
     const percent=Math.floor(finished/Math.max(1,total)*100);
     const number=$('#xm-boot-percent'),bar=$('#xm-boot-progress span'),label=$('#xm-boot-loading-label');
-    if(number)number.textContent=percent+'%';
-    if(bar)bar.style.width=percent+'%';
-    if(label)label.textContent=failed?'正在重試載入':finished===total?'載入完成':'正在預載全部資源';
+    const preparing=phase==='manifest'||phase==='cache';
+    const stageLabel={
+     manifest:'正在讀取資源清單',
+     cache:'正在檢查本機快取',
+     assets:'正在預載全部資源',
+     decoding:'正在準備主畫面',
+     map:'正在啟動離線地圖',
+     complete:'載入完成'
+    }[phase]||'正在載入';
+    if(number)number.textContent=preparing?'…':percent+'%';
+    if(bar)bar.style.width=preparing?'0%':percent+'%';
+    if(label)label.textContent=failed?'有資源未能載入':stageLabel+(phase==='assets'?' · '+finished+'/'+Math.max(0,total-1):'');
    }
   });
-  lockAssets.ready.then(()=>{
+  lockAssets.ready.then(async({cacheName}={})=>{
+   const loadingLabel=$('#xm-boot-loading-label');
+   const loadingNumber=$('#xm-boot-percent');
+   const loadingBar=$('#xm-boot-progress span');
+   if(loadingLabel)loadingLabel.textContent='正在載入劇情與聊天記錄';
+   if(loadingNumber)loadingNumber.textContent='99%';
+   if(loadingBar)loadingBar.style.width='99%';
+   // Read bundled history from the package cache even when Safari has
+   // not activated its optional Service Worker yet.
+   const packageCache=cacheName&&globalThis.caches?await caches.open(cacheName):null;
+   const bundledFetch=async url=>(await packageCache?.match(url))||fetch(url);
+   // Never freeze at 99% if history parsing encounters a stalled response.
+   // All static files are already cached; this bound only protects hydration.
+   let hydrateTimer;
+   try{
+    await Promise.race([
+     hydrateBuiltInPresets(store,bundledFetch),
+     new Promise((_,reject)=>{hydrateTimer=setTimeout(()=>reject(new Error('劇情資料初始化超時，請重試')),20000);})
+    ]);
+   }finally{clearTimeout(hydrateTimer);}
+   if(loadingLabel)loadingLabel.textContent='載入完成';
+   if(loadingNumber)loadingNumber.textContent='100%';
+   if(loadingBar)loadingBar.style.width='100%';
    const message=$('#xm-boot-message');
    if(message)message.textContent='遊戲資源已全部載入。';
    if(globalThis.__xmBootIntroReady){

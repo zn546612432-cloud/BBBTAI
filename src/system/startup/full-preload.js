@@ -32,8 +32,10 @@ async function registerWorker(){
 
 async function getManifest(){
  const url=manifestUrl();
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),15000);
  try{
-  const response=await fetch(url,{cache:'no-store'});
+  const response=await fetch(url,{cache:'no-store',signal:controller.signal});
   if(!response.ok)throw Error('下載清單失敗 '+response.status);
   const manifest=await response.json();
   if(!manifest.version||!Array.isArray(manifest.assets))throw Error('素材清單不完整');
@@ -41,7 +43,9 @@ async function getManifest(){
  }catch(error){
   const cached=await globalThis.caches?.match(url);
   if(cached)return cached.json();
-  throw error;
+  throw new Error('無法取得遊戲資源清單，請檢查網路後重試：'+error.message);
+ }finally{
+  clearTimeout(timeout);
  }
 }
 function ordered(assets){
@@ -83,15 +87,30 @@ async function trimOldCaches(name,namespace){
  for(const old of all.filter(k=>k!==name).slice(0,-1))await caches.delete(old);
 }
 export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCritical=initialLockscreenImageUrls,loadManifest=getManifest,register=registerWorker,openCache=name=>caches.open(name),fetchAssets=loadAssets,decode=decodeImage,loadMap=()=>import('../../apps/maps/leaflet.js').then(module=>module.prewarmOfflineMap())}={}){
- let ready=false,finished=0,total=1,failed=0;
- const report=()=>onProgress({finished,total,failed,ready});
+ let ready=false,finished=0,total=1,failed=0,phase='manifest';
+ const report=()=>onProgress({finished,total,failed,ready,phase});
  const result=(async()=>{
-  await register();
+  // CacheStorage itself does not require a controlling Service Worker.
+  // Do not block the loading counter behind navigator.serviceWorker.ready:
+  // Safari can leave that promise pending while the page is already usable.
+  report();
   const manifest=await loadManifest();
+  total=manifest.assets.length+1;phase='cache';report();
+  if(!globalThis.caches)throw Error('瀏覽器無法使用離線資源快取，請用 Safari 正常視窗開啟。');
   const site=stablePublicAssetBase().replace(/[^a-z0-9]/gi,'_');
   const namespace=CACHE_PREFIX+site+'-';
   const name=namespace+manifest.version;
   const cache=await openCache(name);
+  let activated=false,packageReady=false;
+  const activate=()=>{
+   if(!packageReady||!activated)return;
+   globalThis.navigator?.serviceWorker?.controller?.postMessage({type:'ACTIVATE_PACKAGE',cache:name});
+  };
+  // Installation is best-effort and independent of the full download queue.
+  // A stalled/unsupported worker must never freeze a progress bar at 0%.
+  void Promise.resolve().then(register).then(()=>{
+   activated=true;activate();
+  }).catch(error=>console.warn('離線背景服務尚未就緒，直接使用本機資源快取',error));
   let previous=null;
   for(const old of (await caches.keys()).filter(k=>k.startsWith(namespace)&&k!==name).reverse()){
    const prior=await caches.open(old),saved=await prior.match(manifestUrl());
@@ -99,25 +118,24 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
    try{const data=await saved.json();previous={cache:prior,versions:new Map(data.assets.map(x=>[x.path,x.hash]))};break;}catch{}
   }
   await cache.put(manifestUrl(),new Response(JSON.stringify(manifest),{headers:{'Content-Type':'application/json'}}));
-  total=manifest.assets.length+1;report();
+  phase='assets';report();
   const status=await fetchAssets({manifest,cache,previous,onProgress:p=>{finished=p.finished;failed=p.failed;report();}});
   if(status.failed)throw Error('有 '+status.failed+' 項素材未能載入：'+status.errors.join('；'));
-  // A cache hit proves bytes are present on disk, not that Safari decoded them.
-  // Decode only the shell's immediately visible assets for reliable first paint.
+  phase='decoding';report();
+  // Compressed assets stay on disk. Only immediately visible artwork needs
+  // eager decode; decoding every future-day photograph would exhaust iOS RAM.
   const critical=[...new Set(preloadCritical(state?.wallpaper,state).map(rebaseBundledPublicAsset))];
   for(const source of critical){
    if(!/^data:|^blob:/i.test(source)&&/^https?:/i.test(source)&&!source.startsWith(location.origin))continue;
-   // Bundled WebP atlas paths are already rewritten by the release builder.
    const ok=await decode(source);
    if(!ok)throw Error('主畫面素材解碼失敗：'+source);
   }
-  // Initialize the shared map engine here as well, not on first map tap.
+  phase='map';report();
   await loadMap();
-  finished=total;ready=true;report();
-  navigator.serviceWorker.controller?.postMessage({type:'ACTIVATE_PACKAGE',cache:name});
-  // Old package deletion never holds up entering the game.
+  finished=total;phase='complete';ready=true;report();
+  packageReady=true;activate();
   void trimOldCaches(name,namespace).catch(()=>{});
-  return {reason:'complete',finished,total,failed:0};
+  return {reason:'complete',finished,total,failed:0,cacheName:name};
  })();
- return {ready:result,complete:result,isReady:()=>ready,progress:()=>({finished,total,failed,ready})};
+ return {ready:result,complete:result,isReady:()=>ready,progress:()=>({finished,total,failed,ready,phase})};
 }
