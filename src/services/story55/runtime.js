@@ -18,6 +18,7 @@ import {applyD51Definition,D51_ISOLDE_CHAT,D51_PRIVATE_MAIL,syncD51MailReminder}
 import {syncD53DealReminder} from '../../story/d53/reminders.js';
 import {applyD54Definition,D54_ISOLDE,D54_GROUP,D54_TAI,D54_FATHER} from '../../story/d54/definition.js';
 import {syncD54FatherReminder} from '../../story/d54/reminders.js';
+import {retireLegacyD55Ending} from '../../story/d55/retire-legacy.js';
 import {fixedSceneTimeline,presetReplyDelay,stampFixedLine} from './fixed-timeline.js';
 import {recognitionHistory,migrateRecognitionHistory} from './recognition-history.js';
 import {recordRoom404Visit} from '../../apps/browser/features/room404/index.js';
@@ -186,7 +187,7 @@ function creditScene55(s,n){
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
  if(planned&&s.clock<planned&&(!fixedSceneTimeline(n)||r.index===0&&!n.pauseTimeUntilComplete)&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
  const fixedTime=fixedSceneTimeline(n)?stampFixedLine(s,r,lines,r.index,{at:n.at,explicit:planned,afterMidnight:n.afterMidnight,day:n.day}):null;
- if(id==='ending'&&r.index===6&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
+ if(id==='ending'&&r.index===1&&(!s.story55.endingVoiceSent||s.clock<'22:49'))throw Error('三分钟尚未过去');
  const authoredTime=id==='ending'?stampEnding55(s,r.index):fixedTime;
  if(disconnect&&line[0]!=='disconnect')throw Error('目前沒有等待切斷的連線');
  if(line[0]==='disconnect'&&!disconnect)throw Error('請先切斷連線');
@@ -215,7 +216,6 @@ function creditScene55(s,n){
  // One shared pacing contract for queued native messaging scenes.
  // The player must explicitly send their own line before any next NPC line.
  if(n.delivery==='queued'&&r.index<lines.length)r.nextAt=now+scene55ReplyDelay(s,id,r.index);
- if(id==='ending'&&r.index===5){s.story55.endingVoiceQueuedAt=Date.now();s.worldMinuteFraction=0;}
  if(r.index===lines.length)finishScene55(s,id);
  return r;
 }
@@ -240,7 +240,7 @@ export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
   const bubbleClock=line[0]==='me'||id==='ending'||id==='intrusion'?
    (authoredTime||s.clock):(authoredTime||firstNightClock||(shown&&shown<=s.clock?shown:s.clock));
   const image=n.imageLines?.[index];
-  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===6?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55',attachment:n.attachments?.[index]});
+  appendAuthoredPhoneMessage(s,{channel,conversationId:cid,messageId:`${n.messagePrefix||'s55-'+id}-${index}`,from:line[0]==='me'?'me':channel==='wechat'?(line[0]==='awei'?'阿威':line[0]==='xin'?'小辛':line[0]==='zai'?'仔仔':line[0]):cid,text:image|| (id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'':id==='ending'&&index===1?ENDING_FINAL_REPLY:line[1]),kind:image?'image':n.fileLines?.includes(index)?'file':id==='intrusion'&&index>=8&&line[0]==='ouroboros'?'call-avatar':'text',notify:!(id==='intrusion'&&index>=8&&line[0]==='ouroboros'),day:s.day,clock:bubbleClock,sentDate:((['d23-chess','d23-chess-finish'].includes(id)&&s.story55?.d23?.nightAfterMidnight)||(overnightSceneNight55(s))?date55(s.day+1):date55(s.day)),storyTag:'story55',attachment:n.attachments?.[index]});
   if(id==='plan'&&line[1]===D29_IP)seedAuthoredNotes(s,[{id:'s55-d29-ip',day:s.day,at:s.clock,title:'Ouroboros',text:D29_IP}]);
  }
 }
@@ -459,6 +459,7 @@ export function tickStory55(s){
    s.story55.completed[id]??={day:54,clock,legacySkipped:true};
  }
  syncD54FatherReminder(s);
+ retireLegacyD55Ending(s);
  if(!s.story55.d34D42Revision){
   // Remove only obsolete authored bubbles, not player-written messages.
   const oldIds=new Set(['show','target',...RETIRED_SCENES]);
@@ -549,9 +550,6 @@ export function tickStory55(s){
  tickD03MomentReply(s);
  tickD02Diary(s);
  tickD01(s);
- // Update only the former default line; never overwrite author-edited dialogue.
- const finalLines=story55Config(s).scenes?.ending;
- if(finalLines?.[6]?.[1]==='熙蒙？熙蒙？')finalLines[6][1]=ENDING_FINAL_REPLY;
  if(final55(s))return;
  const c=story55Config(s);
  if(completed(s,'recognition')){const chat=s.content.conversations.noapp?.find(c=>c.id==='tai');if(chat)chat.name='陈熙泰';}

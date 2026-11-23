@@ -112,8 +112,8 @@ test('expenses, scene loans, direct commissions and mercenary payments settle on
 test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits for final audio',()=>{
  const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(chargingBlock(s),'plot');
  previewNode55(s,'ending');assert.equal(s.day,55);syncDeathNight(s);assert.equal(s.deathPhase,null);assert.equal(chargingBlock(s),'death');
- advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);s.clock='20:00'; // New focused D55 scene rehearsal after the skip-limit test.
- for(let i=0;i<100;i++){const state=s.story55.scenes.ending;const line=story55Config(s).scenes.ending[state?.index||0];if(line[0]==='watch')break;advanceScene55(s,'ending');}
+ advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);s.clock='22:46'; // Only the confirmed 22:46–22:49 finale remains.
+ assert.equal(story55Config(s).scenes.ending.length,2);
  assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
 });
 test('game-clock mining accrues once, survives backwards inspection and caps at ten upgrade levels',()=>{
