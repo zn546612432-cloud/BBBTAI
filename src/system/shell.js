@@ -23,7 +23,12 @@ const notificationApp=(n)=>{
 export const notificationCard=(n,s)=>`<span class="notification-app-icon" aria-hidden="true">${icon(notificationApp(n),s)}</span><span class="notification-copy"><small>${esc(n.link?.appId==='noapp'&&(['/chat/tai','/call'].includes(n.link.route))?taiDisplayName(s):n.title)} ${n.demo?demo():''}</small><strong>${esc(n.body)}</strong></span>`;
 const entry=(id,s)=>{const m=registry.get(id)?.manifest;if(!m||!appUnlocked(id,s))return '';const count=unreadAppCount(s,id);return btn('open-app',`<span class="home-icon-wrap">${icon(m,s)}${unreadBadge(s,id)}</span><span>${esc(m.name)}</span>`,'home-app',`data-app="${id}" aria-label="${esc(m.name)}${count?'，'+count+'条未读消息':''}"`);};
 export function reminderWidget(s){
- const items=isStory55(s)?mainlineTasks(s):reminders(s),pending=items.filter(r=>!r.done);
+ const original=reminders(s);
+ // Keep player-owned lists and accepted wish purchase controls functional.
+ // Only story objectives are filtered to mainline; personal reminders aren't quests.
+ const pinned=original.filter(r=>r.wishId||canManuallyToggleReminder(r)||r.id==='ghost-car-plan');
+ const storyTasks=mainlineTasks(s).filter(t=>t.id!=='mainline:prep'||!pinned.some(r=>r.id==='ghost-car-plan'));
+ const items=isStory55(s)?[...pinned,...storyTasks]:original,pending=items.filter(r=>!r.done);
  const project=pending.findIndex(r=>r.id==='ghost-car-plan');
  if(project>0)pending.unshift(pending.splice(project,1)[0]);
  const urgent=pending.findIndex(r=>r.priority==='critical');

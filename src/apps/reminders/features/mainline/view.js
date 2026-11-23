@@ -3,12 +3,15 @@ import {esc} from '../../../../system/ui.js';
 import {mainlineTasks,mainlineDayLabel} from './model.js';
 const row=(record,first=false)=>{
  const done=record.done,link=!done&&!!record.link;
+ const project=record.id==='mainline:prep';
+ const action=project?'reminder-project-open':'reminder-mainline';
+ const recordId=project?'ghost-car-plan':record.id;
  const title='<strong>'+esc(record.title)+'</strong>';
  const detail='<small>'+esc(record.detail||'')+'</small>';
  const content='<span class="ml-copy">'+title+detail+'</span>';
  return '<div class="ml-row'+(done?' is-done':'')+(first?' is-first':'')+'">'+
   '<span class="ml-status" aria-hidden="true">'+(done?'✓':'')+'</span>'+
-  (link?'<button type="button" class="ml-target" data-action="reminder-mainline" data-id="'+esc(record.id)+'" aria-label="前往：'+esc(record.title)+'">'+content+'<span class="ml-chevron" aria-hidden="true">›</span></button>':
+  (link?'<button type="button" class="ml-target" data-action="'+action+'" data-id="'+esc(recordId)+'" aria-label="前往：'+esc(record.title)+'">'+content+'<span class="ml-chevron" aria-hidden="true">›</span></button>':
    '<div class="ml-target ml-disabled">'+content+'</div>')+
  '</div>';
 };
@@ -23,6 +26,7 @@ export function renderMainline(s,route='/',search=''){
   '<span>'+selected.filter(x=>!x.done).length+' 項待辦</span></div>'+
   '<div class="ml-list">'+(selected.length?selected.map((t,i)=>row(t,i===0&&!t.done)).join(''):
    '<p class="ml-empty">目前沒有要處理的事項。</p>')+'</div>'+
-  (route==='/'&&done.length?'<div class="ml-bottom"><button type="button" data-action="reminder-open" data-route="/completed">已完成 · '+done.length+'　›</button></div>':
-   route!=='/'?'<div class="ml-bottom"><button type="button" data-action="reminder-open" data-route="/">返回今天</button></div>':'');
+  (route==='/'?'<div class="ml-bottom">'+(done.length?'<button type="button" data-action="reminder-open" data-route="/completed">已完成 · '+done.length+'　›</button>':'')+
+   '<button type="button" data-action="reminder-open" data-route="/personal">個人事項　›</button></div>':
+   '<div class="ml-bottom"><button type="button" data-action="reminder-open" data-route="/">返回今天</button></div>');
 }

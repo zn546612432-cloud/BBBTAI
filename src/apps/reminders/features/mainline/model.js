@@ -22,7 +22,7 @@ const hasReached=(s,n)=>n.day<s.day||(
 function mandatoryIds(s){
  const byId=new Map(story55Config(s).nodes.map(n=>[n.id,n])),required=new Set();
  function visit(id){if(required.has(id))return;const n=byId.get(id);if(!n||n.authoredPending)return;required.add(id);for(const parent of n.requires||[])visit(parent);}
- for(const n of byId.values())if(!n.authoredPending&&!n.optional&&(Number.isInteger(n.gateDay)||n.pauseTimeUntilComplete===true))visit(n.id);
+ for(const n of byId.values())if(!n.authoredPending&&!n.optional&&(Number.isInteger(n.gateDay)||n.pauseTimeUntilComplete===true||n.id==='ending'))visit(n.id);
  return required;
 }
 function d01Tasks(s){
@@ -72,9 +72,9 @@ function nodeTask(s,n){
   const first=lines[progress?.index||0]?.[0];
   const person=name[n.conversationId];
   const display=person?' · '+person:'';
-  title=first==='me'?'繼續'+(n.channel==='mirage'?'聯絡':'回覆')+display:
-   '查看'+display+'的訊息';
-  if(!person)title=n.channel==='noapp'?'查看 NoApp 訊息':n.channel==='wechat'?'查看微信訊息':'查看 MIRAGE 訊息';
+  title=first==='me'?(person?'回覆'+person:'繼續目前的對話'):
+   (person?'查看'+person+'的訊息':'查看'+(appLabel[n.channel]||'')+'訊息');
+
   detail=(appLabel[n.channel]||'訊息')+display;
  }
  if(n.kind==='mail'){title=n.manualSend?'發送目標資料':'查看 KIRA 郵件';detail='KIRA · '+(n.manualSend?'發送郵件':'收件箱');}
@@ -123,6 +123,9 @@ function researchTasks(s){
   const job=a.jobs?.[entry.id],done=!!job?.done,upload=['survey','maintenance','staff'].includes(entry.id);
   if(done&&s.day!==entry.day)return null;
   if(!job&&!stageReady(s,entry.id))return null;
+  // A retroactively completed scene is not proof an old agent attachment was saved.
+  // Keep real overdue jobs and saved attachments, not phantom assignments.
+  if(s.day>entry.day&&!job&&(!upload||!files.some(f=>storyFileStage(f)===entry.id)))return null;
   const file=upload?files.find(f=>storyFileStage(f)===entry.id):true;
   const waiting=!file&&!done;
   const link=done?null:waiting?destination('wechat','/chat/'+entry.chat):destination('ghost','/tear');
@@ -143,11 +146,15 @@ export function mainlineTasks(s){
   if(n.id==='wallet'&&s.day===6&&s.clock<D06_FLOW_AT)continue;
   // Nothing has happened to disclose this node until its predecessors finish.
   if((n.requires||[]).some(id=>!completed(s,id)))continue;
-  const view=nodeTask(s,n);if(view)items.push(view);
+  const view=nodeTask(s,n);if(view&&(!view.done||n.day===s.day))items.push(view);
  }
  items.push(...researchTasks(s));
  const unique=[...new Map(items.map(t=>[t.id,t])).values()];
- return unique.sort((a,b)=>Number(a.done)-Number(b.done)||((a.at||'00:00').localeCompare(b.at||'00:00')));
+ const today=new Set(story55Config(s).nodes.filter(n=>n.day===s.day).map(n=>'mainline:'+n.id));
+ const rank=t=>today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')?0:
+   t.id.startsWith('mainline:research-')?1:t.id==='mainline:workstation'?2:3;
+ return unique.sort((a,b)=>Number(a.done)-Number(b.done)||rank(a)-rank(b)||
+  ((a.at||'00:00').localeCompare(b.at||'00:00')));
 }
 export function mainlineTask(s,id){return mainlineTasks(s).find(t=>t.id===id)||null;}
 export function mainlineDayLabel(s){

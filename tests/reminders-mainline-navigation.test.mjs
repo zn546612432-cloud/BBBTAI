@@ -73,6 +73,18 @@ test('optional everyday banter and wish shopping stay off the mainline screen',(
  assert.match(html,/data-native-scroll="reminders"/);
  assert.doesNotMatch(reminderWidget(s),/買奶茶|買炸雞/);
 });
+test('legacy personal reminders and purchased wishes still have a separate list',()=>{
+ const s=at(6,'18:00');
+ s.content.reminders.push({id:'personal-keep',title:'買牛奶',done:false});
+ s.content.reminders.push({id:'wish-keep',wishId:'d06-dinner',title:'和大家吃飯',done:false});
+ const today=render({store:{get:()=>s}},{route:'/'});
+ assert.match(today,/個人事項/);
+ assert.doesNotMatch(today,/買牛奶|和大家吃飯/);
+ const personal=render({store:{get:()=>s}},{route:'/personal'});
+ assert.match(personal,/買牛奶|和大家吃飯/);
+ assert.match(reminderWidget(s),/home-reminder-wish/);
+ assert.match(reminderWidget(s),/home-reminder-toggle/);
+});
 test('D55 final entry is revealed only after disconnection and the actual recording arrives',()=>{
  const s=at(55,'22:46');
  s.story55.completed['d55-briefing']={day:55,clock:'09:50'};
