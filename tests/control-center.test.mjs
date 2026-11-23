@@ -47,3 +47,21 @@ test('connectivity controls all expose real on and off states; rotation does not
  assert.match(controlCenter({focus:true,silent:false}),/data-cc="mute"[^>]*aria-pressed="false"/);
  assert.match(controlCenter({focus:false,silent:true}),/data-cc="toggle-focus"[^>]*aria-pressed="false"/);
 });
+
+test('music explicitly uses the output gain even when native volume appears writable',async()=>{
+ const previous=globalThis.AudioContext,links=[],gains=[];
+ class Context{constructor(){this.state='running';this.destination={};}createGain(){const gain={gain:{value:1},connect(){}};gains.push(gain);return gain;}createMediaElementSource(element){links.push(element);return {connect(){}};}}
+ try{
+  globalThis.AudioContext=Context;
+  // Isolate the bus from the read-only iOS fixture above.
+  const {configureAudio:configure,registerAudio:register}=await import('../src/system/audio/index.js?forced-music');
+  const element={volume:1,addEventListener(){}};
+  configure({volume:.8});register(element,{webAudio:true});
+  assert.deepEqual(links,[element]);assert.equal(element.volume,1);
+  assert.equal(gains[1].gain.value,.8);
+  configure({volume:.2});assert.equal(gains[1].gain.value,.2);
+  configure({muted:true,volume:.2});assert.equal(gains[1].gain.value,0);
+  configure({volume:.6});assert.equal(gains[1].gain.value,.6);
+  register(element,{webAudio:true});assert.equal(links.length,1);
+ }finally{globalThis.AudioContext=previous;}
+});

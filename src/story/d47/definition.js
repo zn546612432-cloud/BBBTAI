@@ -10,6 +10,16 @@ export const DEPOSIT_HKD=5000000;
 export const DEPOSIT_ID='s55-payment-mercenary';
 export const DEPOSIT_USD=641025.64;
 
+export function migrateD47TimelineHistory(s){
+ if(s.story55?.d47TimelineHistoryRevision)return;
+ const correct=message=>{
+  if(message?.id==='s55-d47-wang-4'&&message.text==='明天晚上，你去暗殺黃德忠。')message.text='你去暗殺黃德忠……';
+ };
+ for(const chat of s.content.conversations.wechat||[])for(const message of chat.messages||[])correct(message);
+ for(const entry of s.story55?.developerChatArchive||[])correct(entry.message);
+ s.story55.d47TimelineHistoryRevision=1;
+}
+
 export function applyD47Definition(c){
  if(c.d47Revision){
   if(c.d47Revision===1){

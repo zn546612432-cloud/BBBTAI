@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {initialState,repairLegacyWechatDates} from '../src/services/storage.js';
 import {timestampGroups} from '../src/services/messaging/timestamps.js';
 import {authoredMoments,visibleMoments} from '../src/apps/wechat/features/moments/data.js';
@@ -30,6 +31,17 @@ test('Awei outfit, night photos and pinned training use the approved posts and b
  const find=id=>authoredMoments.find(p=>p.id===id);
  assert.equal(find('aw-d05').pinned,true);
  assert.deepEqual(find('aw-d05').media,['aweiTraining']);
+ assert.deepEqual(find('aw-d17').media,['gymGear']);
+ assert.deepEqual(find('aw-d24').media,['aweiStyle']);
+ const mediaRoot=new URL('../public/apps/wechat/media/',import.meta.url);
+ // Confirm the actual approved photos, not just their semantic media keys.
+ for(const [key,file,sha] of [
+  ['aweiTraining','awei-d05-training.webp','f468dfa3a89593f6a5b2f21a29e5055638afbddbdac6d105552f3a5e18d456f4'],
+  ['aweiStyle','awei-d24-style.webp','0e6834fada361678b184b7eb1116896cbe9d9b97b4e3d744be89ac3c3963cb65']
+ ]){
+  assert.ok(momentImage(key).endsWith('/'+file));
+  assert.equal(createHash('sha256').update(readFileSync(new URL(file,mediaRoot))).digest('hex'),sha);
+ }
  assert.equal(find('aw-d17').text,'走在路上被健身房招去当教练，哈哈。');
  assert.deepEqual(find('aw-d24').likes,['仔仔','小辛','阿威','熙旺','胡枫']);
  assert.equal(find('aw-d24').publishedAt,'2025-06-11T17:20');
@@ -41,6 +53,18 @@ test('Awei outfit, night photos and pinned training use the approved posts and b
  assert.deepEqual(authoredMoments.filter(p=>p.author==='阿威').map(p=>p.id),['aw-d05','aw-d17','aw-d24','aw-d29','aw-d39']);
  const s=initialState();s.content.moments={posts:[{id:'aw-d53',author:'阿威',storyDay:53},{id:'aw-d69',author:'阿威',storyDay:69}]};
  assert.deepEqual(allMoments(s).filter(p=>p.author==='阿威').map(p=>p.id),['aw-d05','aw-d17','aw-d24','aw-d29','aw-d39']);
+});
+
+test('D05 Xiao Xin selfie uses the approved caption and Hu Feng comment, including old saved defaults',()=>{
+ const s=initialState(),post=findMoment(s,'xs-d05');
+ assert.equal(post.text,'相册里有个人长得好帅，原来是我');
+ assert.deepEqual(post.comments,[{by:'胡枫',text:'猪来的。'},{by:'小辛',text:'不接受反駁'}]);
+ assert.deepEqual(post.likes,['仔仔','阿威']);
+ s.content.moments={editedPosts:{'xs-d05':{...post,text:'今天這張我先發了。別又說我相冊全是自己。',comments:[{by:'胡枫',text:'你自己先說的'},post.comments[1],{by:'仔仔',text:'哈哈'}]}}};
+ assert.equal(findMoment(s,'xs-d05').text,post.text);
+ assert.deepEqual(findMoment(s,'xs-d05').comments,[...post.comments,{by:'仔仔',text:'哈哈'}]);
+ s.content.moments.editedPosts['xs-d05'].text='自定义文案';
+ assert.equal(findMoment(s,'xs-d05').text,'自定义文案');
 });
 
 test('Both native WeChat entrances open Moments, which have complete media & profile views',()=>{
@@ -107,7 +131,7 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
 test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
  assert.equal(authoredMoments.length,38);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));

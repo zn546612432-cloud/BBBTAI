@@ -86,12 +86,25 @@ test('an active conversation today outranks a generic older backlog',()=>{
  assert.equal(c.source,'d05');
 });
 
+test('a genuine newer private message retires an already queued generic reminder without replaying old topics',()=>{
+ const s=fresh(6);tickPhoneStoryMessages(s,0);
+ const before=genericMissedReplyDraft(s,'wang');assert.ok(before);
+ messages(s,'wang').push({id:'new-real-player',from:'me',actual:true,day:6,time:'08:00',text:'哥，早'});
+ assert.equal(genericMissedReplyDraft(s,'wang'),null);
+ tickPhoneStoryMessages(s,5000);
+ assert.equal(s.story55.genericMissedReplies.episodes.wang.status,'done');
+ assert.equal(generic(s,'wang').length,0);
+ const saved=JSON.parse(JSON.stringify(s));saved.day=8;tickPhoneStoryMessages(saved,20000);
+ assert.equal(generic(saved,'wang').length,0);
+});
+
 test('the shared engine excludes mandatory, unstarted and group history from batch closing',()=>{
  const s=fresh(6);
  const track=createConversationTrack({day:4,prefix:'check',scenes:[
   {id:'required',chat:'hufeng',at:'09:00',mandatory:true,lines:[{who:'me',text:'主線必須發送'}]},
   {id:'unstarted',chat:'hufeng',at:'09:00',lines:[{who:'me',text:'未曾啟動'}]},
   {id:'group',chat:'group',at:'09:00',lines:[{who:'小辛',text:'早上好'}]},
+  {id:'commitment',chat:'hufeng',at:'09:30',preserveLate:true,lines:[{who:'胡枫',text:'有件事'},{who:'me',text:'好'}],replies:{later:[{who:'me',text:'那件事我還記得'}]}},
   {id:'optional',chat:'hufeng',at:'10:00',lines:[{who:'胡枫',text:'有空聊聊'},{who:'me',text:'好'}]}
  ],progress:x=>x.story55.catchupTest??={}});
  track.tick(s,0);
@@ -99,4 +112,5 @@ test('the shared engine excludes mandatory, unstarted and group history from bat
  assert.equal(track.settleCatchup(s,'hufeng').length,1);
  assert.equal(track.draft(s,'hufeng').text,'主線必須發送');
  assert.equal(track.pendingCatchup(s,'hufeng').length,0);
+ assert.equal(s.story55.catchupTest.commitment.lateHandled,undefined);
 });

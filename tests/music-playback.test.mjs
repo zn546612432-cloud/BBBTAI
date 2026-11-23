@@ -41,3 +41,32 @@ test('music mode cycles silently without a toast',async()=>{
  const state={musicMode:'sequence'},ctx={store:{get:()=>state,update:fn=>fn(state)},toast(){assert.fail('Playback mode must not toast');}};
  for(const mode of ['repeat','single','shuffle','sequence']){handle('music-mode',{},ctx);assert.equal(state.musicMode,mode);}
 });
+
+test('Xiao Xin D51 song opens the shared player and saves in the playlist across reloads',async()=>{
+ const {initialState,PhoneStore}=await import('../src/services/storage.js');
+ const {findMoment}=await import('../src/apps/wechat/features/moments/model.js');
+ const {renderMoments,handleMoment}=await import('../src/apps/wechat/features/moments/index.js');
+ const {handle,render}=await import('../src/apps/music/index.js');
+ const {playlistTracks}=await import('../src/apps/music/features/library/playlist.js');
+ const entries=new Map(),storage={getItem:key=>entries.get(key)||null,setItem:(key,value)=>entries.set(key,value),removeItem:key=>entries.delete(key)};
+ const store=new PhoneStore(storage),s=store.get();s.day=51;s.clock='00:21';
+ const post=findMoment(s,'xs-d51'),track=trackById(post.music.trackId);
+ assert.equal(post.author,'小辛');assert.deepEqual(post.likes,[]);assert.deepEqual(post.comments,[]);
+ assert.match(renderMoments(s,'/moments'),/data-action="wx-moment-music" data-id="xs-d51"/);
+ assert.ok(!findMoment(s,'xm-d51'));
+ assert.match(track.src,/ten-thousand-and-one\.mp3$/);assert.ok(existsSync('public'+track.src));
+ for(const query of ['一万零一次沉溺','一萬零一次沉溺','李佳薇'])assert.equal(matchingTracks(query)[0].id,track.id);
+ const oldDocument=globalThis.document;globalThis.document={querySelector:()=>null};
+ const routes=[],ctx={store,refresh(){},toast:msg=>assert.fail(msg),router:{open:loc=>routes.push(loc)}};
+ try{
+  assert.equal(handleMoment('wx-moment-music',{dataset:{id:post.id}},ctx),true);
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(store.get().musicTrack,track.id);assert.equal(store.get().musicPlaying,true);
+  assert.equal(routes.at(-1).appId,'music');assert.match(render(ctx),/加入歌单/);
+  handle('music-playlist',{},ctx);assert.equal(playlistTracks(store.get())[0].id,track.id);
+  assert.match(render(ctx),/已加入歌单/);
+  const loaded=new PhoneStore(storage);assert.deepEqual(loaded.get().musicPlaylist,[track.id]);
+  handle('music-browse',{dataset:{category:'我的歌单'}},ctx);assert.match(render(ctx),/一万零一次沉溺/);
+  handle('music-playlist',{},ctx);assert.deepEqual(playlistTracks(store.get()),[]);
+ }finally{globalThis.document=oldDocument;}
+});

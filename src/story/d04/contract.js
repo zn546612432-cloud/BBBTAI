@@ -47,7 +47,7 @@ const issueMail=(s,c)=>{
  if(mail.some(m=>m.id===mailId))return false;
  mail.unshift({id:mailId,orderId:c.id,from:c.owner+' / MIRAGE',
   subject:'【mirage】委託資料已發送',
-  body:c.marketDaily?c.letter:'您已接取委託。\n\n'+c.letter+'\n\n完成後請在 MIRAGE 手動提交驗收。',
+  body:c.marketDaily?c.letter:'您已接取委託。\n\n'+c.letter+(c.id===D06_ORDER_ID?'':'\n\n完成後請在 MIRAGE 手動提交驗收。'),
   attachments:[c.attachment],read:false,[storyTag(c)]:true,
   day:s.day,time:s.clock,date:dateOf(s.day)});
  const nid='d04-order-mail-'+c.id;
@@ -111,6 +111,11 @@ export function tickD04Contracts(s){
  let changed=seedD04Contracts(s);
  for(const c of DAILY_CONTRACTS){
   const mail=s.content.mail?.find(m=>m.id===D04_MAIL(c.id));
+  if(c.id===D06_ORDER_ID&&mail?.storyD06&&typeof mail.body==='string'){
+   const oldInstructions='\n\n請先在 GHOST 輸入授權密鑰，依次執行：\n01 破譯 → 02 隱匿 → 03 連結（第一關） → 04 連結（第二關） → 05 竊取。\n\n完成五項驗證後，回到 MIRAGE 手動提交，獎池才會結算。';
+   const body=mail.body.replace(oldInstructions,'').replace('\n\n完成後請在 MIRAGE 手動提交驗收。','');
+   if(body!==mail.body){mail.body=body;changed=true;}
+  }
   if(mail?.[storyTag(c)]&&(mail.attachments?.length!==1||mail.attachments?.[0]!==c.attachment)){
    mail.attachments=[c.attachment];changed=true;
   }

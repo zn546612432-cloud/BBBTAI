@@ -1,4 +1,4 @@
-// Existing D03 dialogue, unchanged.
+// Existing D03 dialogue.
 import {D03_ORDER} from './contract.js';
 const pc='/apps/wechat/media/d03-computer.webp';
 const t=(who,text)=>({who,text,kind:'text'});
@@ -17,7 +17,7 @@ export const D03_SCENES=[
   t('me','你買電腦還是買燈'),t('小辛','主要是性能'),t('小辛','燈只是順便的'),
   t('me','把配置發我'),t('小辛','等下等下'),t('小辛','我找找'),
   t('me','你連配置都沒看就想買？'),t('小辛','我這不是先找專業人士把關嗎🥺'),
-  t('me','預算多少'),t('小辛','最好不要超過八千'),t('me','澳門幣？'),
+  t('me','預算多少'),t('小辛','最好不要超過一萬'),t('me','澳門幣？'),
   t('小辛','不然呢大哥'),t('me','那你先別買'),t('小辛','啊？'),
   t('me','我給你配一套，比這個划算'),t('小辛','！！！'),
   t('小辛','蒙哥我真是全天下最愛你的人🥺'),t('me','滾')

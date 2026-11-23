@@ -2,17 +2,18 @@ import {registerAudio} from '../../system/audio/index.js';
 import {musicLibrary,musicAccount,musicBrowse,trackRows} from './features/library/index.js';
 import {musicPlayer,modeLabels} from './features/player/index.js';
 import {tracks,trackById} from './features/shared/catalog.js';
+import {playlistTracks,togglePlaylistTrack} from './features/library/playlist.js';
 import {sendMessage} from '../../services/messaging/index.js';
 export const manifest={id:'music',name:'音乐',icon:14,defaultRoute:'/',supportsDeepLink:true,kicker:'MUSIC'};
 let audio=null,progress=0,view='library',tab='listen',query='',category='歌曲',playRequest=0;
 const modes=Object.keys(modeLabels);
 export const isPlaying=()=>!!audio&&!audio.paused;
 const format=n=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
-export const render=({store})=>{const s=store.get(),current=trackById(s.musicTrack);return `<div class="ios-music${view==='player'?' music-full-player':''}">${view==='player'?musicPlayer(s.musicPlaying,progress,s.musicMode||'sequence',current):view==='account'?musicAccount():view==='browse'?musicBrowse(category):musicLibrary({playing:s.musicPlaying,tab,query,current})}</div>`;};
+export const render=({store})=>{const s=store.get(),current=trackById(s.musicTrack);return `<div class="ios-music${view==='player'?' music-full-player':''}">${view==='player'?musicPlayer(s.musicPlaying,progress,s.musicMode||'sequence',current,s.musicPlaylist?.includes(current.id)):view==='account'?musicAccount():view==='browse'?musicBrowse(category,category==='我的歌单'?playlistTracks(s):tracks):musicLibrary({playing:s.musicPlaying,tab,query,current})}</div>`;};
 const sync=()=>{if(!audio)return;progress=audio.duration?audio.currentTime/audio.duration*100:0;const seek=document.querySelector('#screen-layer .music-seek-input');if(seek&&document.activeElement!==seek)seek.value=String(progress);const current=document.querySelector('[data-music-current]'),duration=document.querySelector('[data-music-duration]');if(current)current.textContent=format(audio.currentTime);if(duration)duration.textContent=format(audio.duration||0);};
 function adjacent(s,step){const i=tracks.findIndex(t=>t.id===trackById(s.musicTrack).id);if(s.musicMode==='shuffle'&&tracks.length>1)return tracks[(i+1+Math.floor(Math.random()*(tracks.length-1)))%tracks.length];return tracks[(i+step+tracks.length)%tracks.length];}
 function loadTrack(t,c){
- if(!audio){audio=registerAudio(new Audio());audio.preload='auto';audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{const s=c.store.get(),i=tracks.findIndex(t=>t.id===trackById(s.musicTrack).id);if((s.musicMode||'sequence')==='sequence'&&i===tracks.length-1){c.store.update(s=>s.musicPlaying=false);return;}playTrack(adjacent(s,1).id,c);});}
+ if(!audio){audio=registerAudio(new Audio(),{webAudio:true});audio.preload='auto';audio.addEventListener('timeupdate',sync);audio.addEventListener('loadedmetadata',sync);audio.addEventListener('ended',()=>{const s=c.store.get(),i=tracks.findIndex(t=>t.id===trackById(s.musicTrack).id);if((s.musicMode||'sequence')==='sequence'&&i===tracks.length-1){c.store.update(s=>s.musicPlaying=false);return;}playTrack(adjacent(s,1).id,c);});}
  if(audio.dataset.track!==t.id||audio.error){audio.src=t.src;audio.dataset.track=t.id;audio.dataset.source='primary';progress=0;}
  audio.loop=c.store.get().musicMode==='single';
 }
@@ -32,6 +33,7 @@ export function playTrack(id,c){
  });
 }
 export function handle(a,t,c){
+ if(a==='music-playlist'){c.store.update(s=>togglePlaylistTrack(s,trackById(s.musicTrack).id));}
  if(a==='music-tab'){tab=t.dataset.tab;view='library';c.refresh();}
  if(a==='music-open'){view='player';c.refresh();sync();}
  if(a==='music-account'){view='account';c.refresh();}

@@ -11,9 +11,9 @@ function applyMediaLevel(element,record){
  else element.volume=record.expected;
 }
 function resumeMediaOutput(){if(mediaContext&&mediaContext.state!=='running')mediaContext.resume()?.catch(()=>{});}
-function connectUnsupportedVolume(element,record){
+function connectUnsupportedVolume(element,record,force=false){
  const level=element.volume,probe=level===.5?.75:.5;
- try{element.volume=probe;if(Math.abs(element.volume-probe)<.00001){element.volume=level;return;}}catch{}
+ if(!force)try{element.volume=probe;if(Math.abs(element.volume-probe)<.00001){element.volume=level;return;}}catch{}
  const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
  if(!AudioContext)return;
  try{
@@ -22,6 +22,7 @@ function connectUnsupportedVolume(element,record){
    for(const type of ['pointerdown','touchend','click','keydown'])globalThis.document?.addEventListener(type,resumeMediaOutput,{capture:true,passive:true});
   }
   const source=mediaContext.createMediaElementSource(element),gain=mediaContext.createGain();
+  element.volume=1;
   source.connect(gain);gain.connect(audioDestination(mediaContext));record.gain=gain;
   element.addEventListener?.('play',resumeMediaOutput);resumeMediaOutput();
  }catch(error){console.warn('Phone volume output unavailable:',error?.message);}
@@ -32,10 +33,10 @@ export function configureAudio(value={}){
  for(const gain of buses)gain.gain.value=outputLevel();
  if(!outputLevel())globalThis.speechSynthesis?.cancel?.();
 }
-export function registerAudio(element){
+export function registerAudio(element,{webAudio=false}={}){
  if(!element||media.has(element))return element;
  const record={base:Number.isFinite(element.volume)?element.volume:1,expected:element.volume};media.set(element,record);
- connectUnsupportedVolume(element,record);
+ connectUnsupportedVolume(element,record,webAudio);
  element.addEventListener?.('volumechange',()=>{
   if(record.gain)return; // Native mute remains independent of phone volume.
   if(Math.abs(element.volume-record.expected)<.00001)return;

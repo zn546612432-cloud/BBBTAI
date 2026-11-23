@@ -37,16 +37,15 @@ test('D04 authored replies are present as literal native input values, not blank
  assert.equal(conversation(s,'wang').messages.filter(m=>m.from==='me').length,1);
 
 });
-test('D04 next private scene supersedes stale morning draft and keeps a late alternative',()=>{
+test('D04 missed dinner expires without offering stale alternatives',()=>{
  const s=state(4,'17:45');
  tickD04Chats(s,0);tickD04Chats(s,2100);
  assert.equal(d04Draft(s,'wang')?.text,'你請？');
  s.clock='18:32';tickD04Chats(s,5000);
  const late=d04Draft(s,'wang');
- assert.ok(late,'missed Wang dinner remains replyable with a time-aware alternative');
- assert.match(late.text,/改天一起/);
+ assert.equal(late,null,'missed Wang dinner is not replyable after the deadline');
  assert.equal(d04Draft(s,'hufeng'),null);
- assert.equal(s.story55.d04Chats['wang-dinner'].status,'waiting-late');
+ assert.equal(s.story55.d04Chats['wang-dinner'].status,'expired');
  assert.ok(conversation(s,'wang').messages.every(m=>m.from!=='me'));
 
 });

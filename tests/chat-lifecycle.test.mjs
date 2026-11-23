@@ -5,6 +5,7 @@ import {activateStory55} from '../src/services/story55/runtime.js';
 import {tickPhoneStoryMessages,phoneStoryMessagesDue} from '../src/services/messaging/phone-story-scheduler.js';
 import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
 import {d04Track} from '../src/story/d04/wechat.js';
+import {d03Track} from '../src/story/d03/wechat.js';
 import {d05Track} from '../src/story/d05/wechat.js';
 import {createConversationTrack} from '../src/services/messaging/lifecycle/engine.js';
 import {IncomingBannerQueue} from '../src/services/messaging/incoming-banner-queue.js';
@@ -46,46 +47,47 @@ test('same-day topic transition reconciles the old group and paces only the new 
  assert.equal(messages(s,'group','d04-earbuds-').length,0,'Korea earbuds now happen after class');
 
 });
-test('next-day and several-day replies differ; a resolved computer never asks to repair it again',()=>{
- const s=fresh(5,'08:00');tickPhoneStoryMessages(s,0);
+test('non-expired topics retain time-aware alternatives; the missed dinner expires',()=>{
+ const s=fresh(4,'08:00');tickPhoneStoryMessages(s,0);
  assert.equal(nativeWeChatComposer(s,'hufeng').text,null,'deleted repair thread never comes back');
- assert.match(nativeWeChatComposer(s,'wang').text,/昨天忙忘了/);
- s.day=6;tickPhoneStoryMessages(s,1000);
- assert.match(d04Track.draft(s,'wang').text,/前幾天/);
+ assert.match(d03Track.draft(s,'xiaoxin').text,/昨天那台/);
+ s.day=5;tickPhoneStoryMessages(s,1000);
+ assert.match(d03Track.draft(s,'xiaoxin').text,/電腦買了沒有/);
+ assert.equal(d04Track.draft(s,'wang'),null);
  s.day=8;tickPhoneStoryMessages(s,2000);
  assert.equal(d04Track.draft(s,'wang'),null,'expired invitation has no indefinite draft');
 
 });
-test('late player sends are stamped today, NPC answers wait, reload is idempotent, and no dinner is invented',()=>{
+test('valid late player sends are stamped today, NPC answers wait, reload is idempotent, and no dinner is invented',()=>{
  const s=fresh(5,'08:00');tickPhoneStoryMessages(s,0);
- const text=nativeWeChatComposer(s,'wang').text;assert.match(text,/昨天忙忘了/);
- assert.equal(messages(s,'wang','d04-wang-dinner-late-nextDay-').length,0);
+ const text=nativeWeChatComposer(s,'wang').text;assert.match(text,/衣服我自己收拾/);
+ assert.equal(messages(s,'wang','d03-wang-late-later-').length,0);
  assert.ok(sendNativeWeChatPreset(store(s),'wang',text,500).messageId);
- let sent=messages(s,'wang','d04-wang-dinner-late-nextDay-');
+ let sent=messages(s,'wang','d03-wang-late-later-');
  assert.equal(sent.length,1);assert.equal(sent[0].from,'me');
  assert.equal(sent[0].day,5);assert.equal(sent[0].sentDate,'2025-05-23');
- tickPhoneStoryMessages(s,1000);assert.equal(messages(s,'wang','d04-wang-dinner-late-nextDay-').length,1);
+ tickPhoneStoryMessages(s,1000);assert.equal(messages(s,'wang','d03-wang-late-later-').length,1);
  const loaded=JSON.parse(JSON.stringify(s));tickPhoneStoryMessages(loaded,3000);
- assert.equal(messages(loaded,'wang','d04-wang-dinner-late-nextDay-').length,2);
- tickPhoneStoryMessages(loaded,7000);assert.equal(messages(loaded,'wang','d04-wang-dinner-late-nextDay-').length,2);
- assert.ok(loaded.notifications.filter(n=>n.messageId?.startsWith('d04-wang-dinner-late-nextDay-')).every(n=>!n.silent),'today late NPC is a live incoming notification');
+ assert.equal(messages(loaded,'wang','d03-wang-late-later-').length,2);
+ tickPhoneStoryMessages(loaded,7000);assert.equal(messages(loaded,'wang','d03-wang-late-later-').length,2);
+ assert.ok(loaded.notifications.filter(n=>n.messageId?.startsWith('d03-wang-late-later-')).every(n=>!n.silent),'today late NPC is a live incoming notification');
  assert.equal(!!loaded.story55.d04Chats.dinnerConfirmed,false);
  assert.equal(allMoments(loaded).some(m=>m.id==='xw-d04'),false);
- assert.ok(messages(loaded,'wang','d04-wang-dinner-late-nextDay-').every(m=>m.day===5));
+ assert.ok(messages(loaded,'wang','d03-wang-late-later-').every(m=>m.day===5));
 });
 
 test('missed invitation has an NPC closure; obsolete emoji is rejected and late reply cannot confirm it',()=>{
  const s=fresh(4,'18:31');d04Track.tick(s,0);
  assert.ok(messages(s,'wang','d04-wang-dinner-late-unanswered').some(m=>m.text.includes('我先去吃了')));
- const draft=d04Track.draft(s,'wang');assert.match(draft.text,/改天一起/);
+ const draft=d04Track.draft(s,'wang');assert.equal(draft,null);
  assert.ok(d04Track.send(store(s),'wang','😘',500).reason);
  assert.equal(messages(s,'wang','d04-wang-dinner-late-sameDay').length,0);
- d04Track.send(store(s),'wang',draft.text,1000);d04Track.tick(s,4000);
+ d04Track.tick(s,4000);
  assert.equal(!!s.story55.d04Chats.dinnerConfirmed,false);
  assert.equal(messages(s,'wang','d04-wang-dinner-').some(m=>m.from==='me'&&m.text==='😘'),false);
 });
 
-test('today NPC and player turns outrank old replies, which can be handled after the current scene',()=>{
+test('today replies close obsolete ordinary topics, including across refresh',()=>{
  const s=fresh(5,'08:05');tickPhoneStoryMessages(s,0);
  assert.equal(nativeWeChatComposer(s,'wang').text,null);
  tickPhoneStoryMessages(s,1000);
@@ -95,17 +97,23 @@ test('today NPC and player turns outrank old replies, which can be handled after
  assert.equal(nativeWeChatComposer(s,'wang').text,'嗯');
  sendNativeWeChatPreset(store(s),'wang','嗯',15000);
  assert.equal(nativeWeChatComposer(s,'wang').text,null);
+ tickPhoneStoryMessages(s,18000);
+ assert.equal(s.story55.d03Chats.wang.lateHandled,true);
+ assert.equal(s.story55.d04Chats['wang-dinner'].lateHandled,true);
+ const loaded=JSON.parse(JSON.stringify(s));loaded.day=6;loaded.clock='08:00';tickPhoneStoryMessages(loaded,30000);
+ assert.equal(nativeWeChatComposer(loaded,'wang').text,null);
+ assert.equal(messages(loaded,'wang','d04-wang-dinner-late-nextDay-').length,0);
 });
 
 test('crossing midnight during a late reply quietly settles earned NPC tail using the actual reply date',()=>{
- const s=fresh(5,'23:59');d04Track.tick(s,0);
- const draft=d04Track.draft(s,'wang');
+ const s=fresh(4,'23:59');d03Track.tick(s,0);
+ const draft=d03Track.draft(s,'wang');
  assert.ok(draft);
- d04Track.send(store(s),'wang',draft.text,1000);
- s.day=6;s.clock='08:00';d04Track.tick(s,2000);
- const replies=messages(s,'wang','d04-wang-dinner-late-nextDay-');
+ d03Track.send(store(s),'wang',draft.text,1000);
+ s.day=5;s.clock='08:00';d03Track.tick(s,2000);
+ const replies=messages(s,'wang','d03-wang-late-nextDay-');
  assert.equal(replies.length,2);
- assert.ok(replies.every(m=>m.day===5&&m.time==='23:59'));
+ assert.ok(replies.every(m=>m.day===4&&m.time==='23:59'));
  assert.equal(replies[1].historical,true);
  assert.ok(s.notifications.filter(n=>n.messageId===replies[1].id).every(n=>n.silent));
 
@@ -175,7 +183,7 @@ test('a configured mandatory scene stays replyable across dates; unrelated histo
 
 test('new daily definitions share a conversation cooldown even when a late and current reply are both due',()=>{
  const s=fresh(5,'08:04');tickPhoneStoryMessages(s,0);
- const draft=d04Track.draft(s,'wang');d04Track.send(store(s),'wang',draft.text,1000);
+ const draft=d03Track.draft(s,'wang');d03Track.send(store(s),'wang',draft.text,1000);
  s.clock='08:05';tickPhoneStoryMessages(s,2800);tickPhoneStoryMessages(s,3300);
  const incoming=s.events.filter(e=>e.channel==='wechat'&&e.conversationId==='wang'&&e.type==='authored_message_delivered'&&!e.silent);
  assert.equal(incoming.length,1);

@@ -17,6 +17,10 @@ export function allMoments(s){
  // Old D56–D90 posts remain in source but never leak into this 55-day campaign.
  return [...authoredMoments.filter(p=>!isStory55(s)||p.storyDay<=55).map(p=>{
    const post=m.editedPosts?.[p.id]||p;
+   if(post.id==='xs-d05'&&post!==p){
+    return {...post,text:post.text==='今天這張我先發了。別又說我相冊全是自己。'?p.text:post.text,
+     comments:(post.comments||[]).map(c=>c.by==='胡枫'&&c.text==='你自己先說的'?{...c,text:p.comments[0].text}:c)};
+   }
    if(post.id==='xm-d44'&&post.text==='西湖醋鱼吃完了。下次别点。'){
     const oldComments=(post.comments||[]).length===2&&post.comments[0].by==='胡枫'&&post.comments[0].text==='我就说你不爱吃'&&post.comments[1].by==='熙旺'&&post.comments[1].text==='回去给你买烧腊';
     return {...post,text:p.text,...(oldComments?{comments:p.comments}:{}),likes:[...new Set([...(post.likes||[]),...p.likes])]};
@@ -25,7 +29,7 @@ export function allMoments(s){
    const legacy=(post.likes||[]).length===1&&post.likes[0]==='熙蒙'&&(post.comments||[]).some(c=>c.by==='熙蒙'&&c.text==='哥哥早安');
    return {...post,...(post.text==='早上好。今天的云很好看。'?{text:p.text}:{}),...(legacy?{likes:p.likes,comments:p.comments}:{})};
   }),...(m.posts||[])]
-  .filter(p=>p&&p.id&&!['xm-d41','aw-d53','aw-d69'].includes(p.id)&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
+  .filter(p=>p&&p.id&&!['xm-d41','aw-d53','aw-d69','xs-d47'].includes(p.id)&&!deleted.has(p.id)&&(!isStory55(s)||!(p.storyDay>55))
    &&(!isStory55(s)||p.id!=='xw-d04'||d04DinnerConfirmed(s)));
 }
 export const findMoment=(s,id)=>allMoments(s).find(p=>p.id===id);
