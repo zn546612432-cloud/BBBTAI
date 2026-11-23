@@ -1,4 +1,5 @@
 import {uid} from './id.js';
+import {D02_AODONG_CHAT_ID} from '../story/d02/runtime.js';
 export const reminders = s => s.content.reminders || [];
 export const canManuallyToggleReminder=r=>!!r&&!(
  r.wishId||r.storyProject||r.storyNode||r.storyPrivateContract||
@@ -12,7 +13,7 @@ export function reminderDestination(s,record){
  if(record.id==='ghost-car-plan')return {kind:'link',link:{appId:'reminders',route:'/project/ghost-car-plan'}};
  if(record.storyPrivateContract)return {kind:'link',link:{appId:'mirage',route:'/private-contract'}};
  if(record.storyD02Order&&record.orderId)return {kind:'link',link:{appId:'mirage',route:'/order/'+record.orderId}};
- if(record.storyD02)return {kind:'link',link:{appId:'aomi',route:'/'}};
+ if(record.storyD02)return {kind:'link',link:{appId:'messages',route:'/chat/'+D02_AODONG_CHAT_ID}};
  if(record.id==='d01-reminder-bank')return {kind:'link',link:{appId:'bank',route:'/'}};
  if(record.id==='d01-reminder-repair')return {kind:'link',link:{appId:'mirage',route:'/bounties/hall'}};
  if(record.id?.startsWith('tear-link-'))return {kind:'link',link:{appId:'ghost',route:'/deployment'}};

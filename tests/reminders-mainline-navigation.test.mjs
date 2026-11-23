@@ -8,6 +8,9 @@ import {reminderWidget} from '../src/system/shell.js';
 import {syncD55Reminders} from '../src/story/d55/reminders.js';
 import {seedD01,deliverD01Opening,acceptD01Repair,deliverD01Attachment,revealD01Key} from '../src/story/d01/runtime.js';
 import {D06_ORDER_ID} from '../src/story/d06/commission.js';
+import {D02_AODONG_CHAT_ID,seedD02} from '../src/story/d02/runtime.js';
+import {MessageDelivery} from '../src/services/messaging/delivery.js';
+import {reminderDestination} from '../src/services/reminders.js';
 import {STORY55_WALLET_MAIL_ID} from '../src/apps/mirage/data.js';
 const find=(s,id)=>mainlineTasks(s).find(t=>t.id==='mainline:'+id);
 function at(day,clock){
@@ -120,4 +123,26 @@ test('D55 cleans the D41 23:00 operation reminder from old saves without deletin
  assert.doesNotMatch(reminderWidget(s),/23:00 行动开始/);
  assert.match(reminderWidget(s),/買奶茶/);
  assert.equal(syncD55Reminders(s),false,'cleanup is idempotent after removal');
+});
+
+
+test('D02 workstation reminder appears after Aodong SMS delivery and opens the SMS thread',()=>{
+ const s=at(2,'08:59');seedD02(s);
+ assert.equal(find(s,'workstation'),undefined);
+ s.clock='09:00';
+ assert.equal(find(s,'workstation'),undefined,'a scheduled but undelivered SMS must not reveal its reminder');
+ const store={get:()=>s,update:fn=>fn(s)};
+ new MessageDelivery(store).tick(1000);
+ const item=find(s,'workstation');
+ assert.ok(item,'the task appears after the SMS has been delivered');
+ assert.deepEqual(item.link,{appId:'messages',route:'/chat/'+D02_AODONG_CHAT_ID,params:{}});
+ assert.match(reminderWidget(s),/準備工作站配件/);
+ const opened=[];
+ assert.equal(openReminderTask(item.id,{store,router:{open:target=>opened.push(target)}}),true);
+ assert.deepEqual(opened,[item.link]);
+ assert.deepEqual(reminderDestination(s,{id:'d02-pc-build-reminder',storyD02:true}),{
+  kind:'link',link:{appId:'messages',route:'/chat/'+D02_AODONG_CHAT_ID}
+ });
+ assert.ok(s.content.conversations.messages.find(c=>c.id===D02_AODONG_CHAT_ID)
+  .messages.find(m=>m.id==='d02-aodong-sale').delivery);
 });
