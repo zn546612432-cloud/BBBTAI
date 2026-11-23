@@ -51,7 +51,7 @@ const friendsFiles=await readdir(friendsFolder);
 check(friendsFiles.length===1&&friendsFiles[0]==='index.html','friends test must reuse production assets');
 const friendsHtml=await readFile(path.join(friendsFolder,'index.html'),'utf8');
 const productionRelease=await readJSON(path.join(dir,'release.json'));
-check(friendsHtml.includes('phone-friends-test')&&friendsHtml.includes('phone-preview'),'missing friends test variant markers');
+check(friendsHtml.includes('phone-friends-test')&&!friendsHtml.includes('name="phone-preview"'),'friends must use production runtime mode');
 check(friendsHtml.includes(productionRelease.url+'src/main.js'),'friends test must share production module release');
 sizes.friends=await walk(friendsFolder);
 const total=await walk(dir);
