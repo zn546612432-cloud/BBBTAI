@@ -81,7 +81,7 @@ test('Pages releases isolate code while all public media URLs survive version ro
  }finally{await rm(folder,{recursive:true,force:true});}
 });
 
-test('main Pages packaging only retains 3 approved sites and never rebuilds retired previews',async()=>{
+test('main Pages packaging retains the approved reference sites and the lightweight friends test',async()=>{
  const workflow=await readFile(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');
  const audit=await readFile(new URL('../scripts/audit-pages-site.mjs',import.meta.url),'utf8');
  // Production stays online; the duplicate latest preview is retired.
@@ -90,6 +90,7 @@ test('main Pages packaging only retains 3 approved sites and never rebuilds reti
  assert.doesNotMatch(workflow,/Build isolated preview|dist\/preview|production-dist\/preview/);
  assert.match(workflow,/review\/tai-vision-20261105/);
  assert.match(workflow,/review\/55-20261101/);
+ assert.match(workflow,/dist\/review\/friends-test\/index\.html/);
  assert.match(workflow,/ref: feat\/story55-dev-snapshot-safety-20261101/);
  assert.match(workflow,/audit-pages-site\.mjs dist/);
  assert.match(workflow,/actions\/deploy-pages@v4/);
@@ -104,7 +105,7 @@ test('main Pages packaging only retains 3 approved sites and never rebuilds reti
  assert.equal(oldReviewNames.length,14);
  for(const name of oldReviewNames)assert.equal(workflow.includes(name),false,'Old preview still packaged: '+name);
  assert.doesNotMatch(workflow,/Preserve isolated historical review sites/);
- assert.match(audit,/allowedReviews=\['55-20261101','tai-vision-20261105'\]/);
+ assert.match(audit,/allowedReviews=\['55-20261101','tai-vision-20261105','friends-test'\]/);
  assert.match(audit,/retired \/preview\/ must not be packaged/);
  assert.match(audit,/maxBytes=450\*1024\*1024/);
 });
