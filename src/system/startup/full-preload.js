@@ -82,7 +82,7 @@ async function trimOldCaches(name,namespace){
  // Retain the latest previous package for any tab still open on an older release.
  for(const old of all.filter(k=>k!==name).slice(0,-1))await caches.delete(old);
 }
-export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCritical=initialLockscreenImageUrls,loadManifest=getManifest,register=registerWorker,openCache=name=>caches.open(name),fetchAssets=loadAssets,decode=decodeImage}={}){
+export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCritical=initialLockscreenImageUrls,loadManifest=getManifest,register=registerWorker,openCache=name=>caches.open(name),fetchAssets=loadAssets,decode=decodeImage,loadMap=()=>import('../../apps/maps/leaflet.js').then(module=>module.prewarmOfflineMap())}={}){
  let ready=false,finished=0,total=1,failed=0;
  const report=()=>onProgress({finished,total,failed,ready});
  const result=(async()=>{
@@ -111,6 +111,8 @@ export function beginCompleteGamePreload({state=null,onProgress=()=>{},preloadCr
    const ok=await decode(source);
    if(!ok)throw Error('主畫面素材解碼失敗：'+source);
   }
+  // Initialize the shared map engine here as well, not on first map tap.
+  await loadMap();
   finished=total;ready=true;report();
   navigator.serviceWorker.controller?.postMessage({type:'ACTIVATE_PACKAGE',cache:name});
   // Old package deletion never holds up entering the game.

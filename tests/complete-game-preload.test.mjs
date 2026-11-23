@@ -34,6 +34,7 @@ test('all bundled files must finish before start is marked ready',async()=>{
    openCache:fake.caches.open,
    preloadCritical:()=>['/icons/a.png'],
    decode:async()=>true,
+   loadMap:async()=>true,
    fetchAssets:async({manifest,onProgress})=>{
     onProgress({finished:1,total:2,failed:0});
     await gate;
@@ -65,6 +66,7 @@ test('an incomplete resource cache rejects and does not unlock entry',async()=>{
    register:async()=>{},loadManifest:async()=>({version:'broken-build',assets:[{path:'assets/fail.mp4',hash:'bad',bytes:3}]}),
    openCache:fake.caches.open,
    preloadCritical:()=>[],
+   loadMap:async()=>true,
    fetchAssets:async()=>({done:1,total:1,failed:1,errors:['assets/fail.mp4']})
   });
   await assert.rejects(preload.ready,/未能載入/);
