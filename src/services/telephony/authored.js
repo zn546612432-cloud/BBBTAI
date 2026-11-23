@@ -11,7 +11,8 @@ const ensureProgress=(s,id)=>{
  return s.story55.nativePhoneCalls[id]??={index:0,nextAt:0,transcript:[],attempt:0};
 };
 export const nativePhoneScript=call=>call?.source==='authored-phone'?NATIVE_PHONE_CALLS.find(n=>n.id===call.scriptId):null;
-export const nativePhoneCallDue=(s,script)=>isStory55(s)&&!s.story55.ended&&s.day===script.day&&s.clock>=script.at&&!scriptedCallPlayed(s,script);
+export const nativePhoneCallDue=(s,script)=>isStory55(s)&&!s.story55.ended&&s.day===script.day&&s.clock>=script.at
+ &&(!script.requiresFlag||s.story55?.[script.requiresFlag]===true)&&!scriptedCallPlayed(s,script);
 export function pauseAuthoredPhoneCall(ctx,a,now=Date.now()){
  const c=activePhoneCall(ctx.store.get());if(!nativePhoneScript(c)||c.state!=='connected')return;
  a.audio?.pause();a.playing?.cancel();
@@ -66,8 +67,15 @@ export function tickAuthoredPhoneCalls(ctx,a,now=Date.now()){
  }
  const index=p?.index||0,step=script.steps[index];
  if(!step){
+  // Keep the last recording followed by actual silence before remote hang-up.
+  if(script.hangupDelayMs&&!p?.hangupAt){
+   ctx.store.update(s=>{ensureProgress(s,script.id).hangupAt=now+script.hangupDelayMs;});
+   return true;
+  }
+  if(script.hangupDelayMs&&now<(p?.hangupAt||0))return true;
   ctx.store.update(s=>{s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;
    if(script.id===D53_CALL.id)s.story55.d53DealPromptAt=now+2000;
+   if(script.id==='d55-fulongsheng-last')s.story55.d55FatherEndedAt=now;
   });
   endCall(ctx.store,call.id,now,{reason:'scripted_end'});return true;
  }

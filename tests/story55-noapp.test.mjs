@@ -67,6 +67,7 @@ test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not C
  const s=make();previewNode55(s,'ending');
  assert.equal(s.day,55);
  assert.equal(s.story55.noappInstalled,true);
+ s.story55.d55Disconnected=true;
  assert.deepEqual(nodeLink55(s,'ending'),{appId:'noapp',route:'/chat/tai',params:{node:'ending'}});
  assert.match(show(s),/noapp-story55-active/);
  assert.equal(sceneLines(s,'ending')[scene55(s,'ending').index][0],'watch');
@@ -84,13 +85,13 @@ test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not C
  assert.doesNotMatch(show(s),/最后的密钥录音/);
  assert.equal(scene55(s,'ending').index,1);
  assert.equal(s.clock,'22:46');
- advanceGameMinutes(s,3);advanceScene55(s,'ending');
+ advanceGameMinutes(s,3);s.story55.d55RecallCompleted=true;advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
  assert.equal(s.deathPhase,'s55-accelerating');
  assert.ok(story55Config(s).finalAudio.endsWith('.mp3'));
 });
 test('D55 NoApp composer stays available at 22:46, 22:49 and after the last reply',()=>{
- const s=make();previewNode55(s,'ending');
+ const s=make();previewNode55(s,'ending');s.story55.d55Disconnected=true;
  assert.equal(scene55(s,'ending').index,0);
  assert.match(show(s),/data-form="send-chat"/);
  assert.match(show(s),/class="composer"/);
@@ -100,7 +101,7 @@ test('D55 NoApp composer stays available at 22:46, 22:49 and after the last repl
  advanceScene55(s,'ending');
  assert.equal(scene55(s,'ending').index,1);
  assert.match(show(s),/data-form="send-chat"/);
- advanceGameMinutes(s,3);advanceScene55(s,'ending');
+ advanceGameMinutes(s,3);s.story55.d55RecallCompleted=true;advanceScene55(s,'ending');
  assert.equal(s.story55.ended,true);
  assert.match(show(s),/data-form="send-chat"/);
  assert.match(show(s),/placeholder="发送消息…"/);

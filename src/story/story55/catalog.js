@@ -16,7 +16,7 @@ import {applyD53Definition} from '../d53/definition.js';
 export const STORY55_CONFIG={
   "format": "ximeng-story55-config-v1",
   "version": 1,
-  "d55EndingRevision": 1,
+  "d55EndingRevision": 2,
   "finalAudio": "/assets/story55/ximeng-final-keywords.mp3",
   "startDate": "2025-05-19",
   "totalDays": 55,
@@ -710,8 +710,7 @@ export const STORY55_CONFIG={
     "failure": [],
     "ready": [],
     "ending": [
-      ["watch","手表同步：最后一段语音"],
-      ["tai","熙蒙！熙蒙！"]
+      ["watch","手表同步：最后一段语音"]
     ],
     "invitation": [
           [

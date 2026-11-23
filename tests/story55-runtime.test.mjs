@@ -113,8 +113,8 @@ test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits
  const s=fixture();advanceGameMinutes(s,5000);assert.equal(s.day,1);assert.equal(s.clock,'03:00');assert.equal(s.story55.d01.nightAfterMidnight,true);assert.equal(chargingBlock(s),'plot');
  previewNode55(s,'ending');assert.equal(s.day,55);syncDeathNight(s);assert.equal(s.deathPhase,null);assert.equal(chargingBlock(s),'death');
  advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);s.clock='22:46'; // Only the confirmed 22:46–22:49 finale remains.
- assert.equal(story55Config(s).scenes.ending.length,2);
- assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
+ assert.equal(story55Config(s).scenes.ending.length,1);s.story55.d55Disconnected=true;
+ assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);s.story55.d55RecallCompleted=true;advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
 });
 test('game-clock mining accrues once, survives backwards inspection and caps at ten upgrade levels',()=>{
  const s=fixture();previewNode55(s,'mercenary');s.clock='20:00';s.bankData.balance=100000000;installMining(s);s.clock='21:00';accrueMining(s);assert.equal(s.story55.mining.btc,.05);accrueMining(s);assert.equal(s.story55.mining.btc,.05);

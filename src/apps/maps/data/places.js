@@ -14,6 +14,8 @@ export const MAP_PLACES=Object.freeze([
  {id:'orphanage',name:'旧孤儿院',kind:'fictional',area:'MACAU',lat:22.2035,lng:113.545,description:'',aliases:['舊孤兒院'],revealDay:1,storyLocationId:'orphanage'},
  {id:'base',name:'废弃大屋',kind:'fictional',area:'MACAU',lat:22.2021,lng:113.5374,description:'',aliases:['训练屋','Training House'],revealNode:'move',storyLocationId:'base'},
  {id:'bank',name:'金辉资金中心',kind:'fictional',area:'MACAU',lat:22.1895,lng:113.5486,description:'',aliases:['Funds Centre','澳兴大厦'],revealNode:'show',storyLocationId:'bank'},
+ // The institution is real; its digital vault is a fictional D55 plot marker.
+ {id:'d55-judiciary',name:'司法警察局',kind:'fictional',area:'MACAU',lat:22.1929,lng:113.5523,description:'數字金庫所在地',aliases:['司法警察局大樓','數字金庫'],revealDay:55},
  // A fictional coastal marker, not an actual property's coordinates or IP location.
  {id:'lisbon-villa',name:'葡萄牙・里斯本・銀潮別墅',kind:'fictional',area:'LISBON',lat:38.6985,lng:-9.2985,description:'',aliases:[],exactQuery:D29_IP}
 ]);
