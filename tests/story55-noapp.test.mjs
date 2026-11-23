@@ -68,6 +68,8 @@ test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not C
  assert.equal(s.day,55);
  assert.equal(s.story55.noappInstalled,true);
  s.story55.d55Disconnected=true;
+ s.story55.scriptedCallCompleted??={};
+ for(const id of ['d55-noapp-opening','d55-fulongsheng-last','d55-final-cut'])s.story55.scriptedCallCompleted[id]=true;
  assert.deepEqual(nodeLink55(s,'ending'),{appId:'noapp',route:'/chat/tai',params:{node:'ending'}});
  assert.match(show(s),/noapp-story55-active/);
  assert.equal(sceneLines(s,'ending')[scene55(s,'ending').index][0],'watch');
@@ -92,6 +94,8 @@ test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not C
 });
 test('D55 NoApp composer stays available at 22:46, 22:49 and after the last reply',()=>{
  const s=make();previewNode55(s,'ending');s.story55.d55Disconnected=true;
+ s.story55.scriptedCallCompleted??={};
+ for(const id of ['d55-noapp-opening','d55-fulongsheng-last','d55-final-cut'])s.story55.scriptedCallCompleted[id]=true;
  assert.equal(scene55(s,'ending').index,0);
  assert.match(show(s),/data-form="send-chat"/);
  assert.match(show(s),/class="composer"/);

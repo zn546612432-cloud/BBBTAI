@@ -666,6 +666,9 @@ function saveD55CallProgress(ctx,script){
  ctx.store.update(s=>{s.story55.d55CallProgress??={};s.story55.d55CallProgress[script.id]=index;});
 }
 function stampScriptedCallLine(ctx,script,steps,index){
+ // D55 uses the world clock: scripted captions must not artificially advance
+ // 22:30 to 22:49 while the phone exchange is still taking place.
+ if(script.id?.startsWith('d55-'))return ctx.store.get().clock;
  let clock;ctx.store.update(s=>{call.timeline??={};clock=stampFixedLine(s,call.timeline,steps,index,{at:script.at,day:script.day});});return clock;
 }
 export function scriptedCallDraft(){

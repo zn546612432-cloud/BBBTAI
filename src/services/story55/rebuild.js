@@ -437,6 +437,9 @@ export function prepareStory55NodeAtDay(s,id){
   tickStory55(s);
  };
  for(const depId of current.requires)visit(depId,[id]);
+ // Developer preview only: simulated earlier D55 messages must not shift the
+ // 22:46 recording. Actual player time remains monotonic.
+ if(id==='ending'&&s.day===55){s.clock='22:46';s.worldMinuteFraction=0;}
  if(current.afterMidnight){s.story55.overnightHold={day:s.day,nightAfterMidnight:true};s.clock=current.at;}
  if(id==='questions')s.story55.identityContact={count:4,replyDay:s.day};
  if(id==='invite')s.story55.identityInviteRequested=true;

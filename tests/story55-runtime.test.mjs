@@ -43,7 +43,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
  const nodes=validateStory55Config(story55Config(s)).nodes;
- assert.equal(nodes.length,92);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
+ assert.equal(nodes.length,96);assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
  assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
@@ -114,6 +114,8 @@ test('time cannot skip mandatory incomplete nodes or flow into D56; ending waits
  previewNode55(s,'ending');assert.equal(s.day,55);syncDeathNight(s);assert.equal(s.deathPhase,null);assert.equal(chargingBlock(s),'death');
  advanceGameMinutes(s,20000);assert.equal(s.day,55);assert.equal(s.story55.ended,false);s.clock='22:46'; // Only the confirmed 22:46–22:49 finale remains.
  assert.equal(story55Config(s).scenes.ending.length,1);s.story55.d55Disconnected=true;
+ s.story55.scriptedCallCompleted??={};
+ for(const id of ['d55-noapp-opening','d55-fulongsheng-last','d55-final-cut'])s.story55.scriptedCallCompleted[id]=true;
  assert.throws(()=>advanceScene55(s,'ending'),/语音/);s.story55.finalAudioHeard=true;advanceScene55(s,'ending');assert.equal(s.clock,'22:46');advanceGameMinutes(s,3);s.story55.d55RecallCompleted=true;advanceScene55(s,'ending');assert.equal(s.day,55);assert.equal(s.deathPhase,'s55-accelerating');
 });
 test('game-clock mining accrues once, survives backwards inspection and caps at ten upgrade levels',()=>{

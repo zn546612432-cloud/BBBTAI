@@ -133,7 +133,8 @@ class XimengMap extends HTMLElement {
  }
  showPlace(p){
   const name=p?.name||(this.area==='LISBON'?'里斯本':'澳门');
-  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(name)+'</b>'+(p?.description?'<span>'+safeText(p.description)+'</span>':'');
+  const note=p?.id==='d55-judiciary'?'數字金庫所在地':p?.description;
+  this.querySelector('.xm-map-bottom').innerHTML='<b>'+safeText(name)+'</b>'+(note?'<span>'+safeText(note)+'</span>':'');
  }
  setArea(area){
   area=area==='LISBON'?'LISBON':'MACAU';
@@ -157,7 +158,7 @@ class XimengMap extends HTMLElement {
   for(const [id,marker] of this.markers)if(!ids.has(id)){marker.remove();this.markers.delete(id);}
   for(const p of available){
    if(this.markers.has(p.id))continue;
-   const title=safeText(p.name),note=safeText(p.description);
+   const title=safeText(p.name),note=safeText(p.id==='d55-judiciary'?'數字金庫所在地':p.description);
    const marker=window.L.marker([p.lat,p.lng],{icon:pinIcon(p.kind)}).addTo(this.map)
     .bindPopup('<strong>'+title+'</strong>'+(note?'<div>'+note+'</div>':''),{autoPan:p.area!=='LISBON'});
    marker.on('click',()=>{this.querySelector('.xm-map-bottom').innerHTML='<b>'+title+'</b>'+(note?'<span>'+note+'</span>':'');});

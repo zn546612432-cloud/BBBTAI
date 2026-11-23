@@ -18,6 +18,8 @@ function endingReady(){
  const s=initialState();activateStory55(s);previewNode55(s,'ending');
  s.story55.noappInstalled=true;
  s.story55.d55Disconnected=true;
+ s.story55.scriptedCallCompleted??={};
+ for(const id of ['d55-noapp-opening','d55-fulongsheng-last','d55-final-cut'])s.story55.scriptedCallCompleted[id]=true;
  const historical=s.content.conversations.wechat[0].messages.length;
  return {s,historical};
 }
@@ -160,7 +162,7 @@ test('regression: after real audio ends, exactly 3 game minutes progress in 9 re
  assert.equal(endingReplyDue55(s),false);
  tickWorld(s,2999,{taiChat:true});
  assert.equal(s.clock,'22:46');
- assert.equal(chat.messages.some(m=>m.text===ENDING_FINAL_REPLY),false);
+ assert.equal(chat.messages.some(m=>m.text==='熙蒙！熙蒙！'),false);
  tickWorld(s,1,{taiChat:true});
  assert.equal(s.clock,'22:47');
  tickWorld(s,3000,{taiChat:true});
@@ -168,9 +170,10 @@ test('regression: after real audio ends, exactly 3 game minutes progress in 9 re
  assert.equal(endingReplyDue55(s),false);
  tickWorld(s,3000,{taiChat:true});
  assert.equal(s.clock,'22:49');
+ s.story55.d55RecallCompleted=true;
  assert.equal(endingReplyDue55(s),true);
  advanceScene55(s,'ending');
- assert.equal(chat.messages.filter(m=>m.text===ENDING_FINAL_REPLY).length,1);
+ assert.equal(chat.messages.filter(m=>m.text==='熙蒙！熙蒙！').length,0);
  assert.equal(s.deathPhase,'s55-accelerating');
 });
 
