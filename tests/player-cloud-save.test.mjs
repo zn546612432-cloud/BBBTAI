@@ -142,6 +142,43 @@ test('preview saves are disabled by default; explicit preview QA uses an isolate
   t.after(()=>cloud.close());assert.equal(cloud.enabled,enabled);assert.equal(cloud.slot,slot);
  }
 });
+test('anonymous cloud identity survives localStorage eviction using the existing IndexedDB journal',async()=>{
+ const previous={fetch:globalThis.fetch,localStorage:globalThis.localStorage,indexedDB:globalThis.indexedDB};
+ const storage=memory(),records=new Map();let created=false,signupCalls=0;
+ const db={
+  objectStoreNames:{contains:()=>created},
+  createObjectStore(){created=true;},
+  close(){},
+  transaction(){
+   let complete=false;const tx={objectStore:()=>({
+    get(key){const req={};queueMicrotask(()=>{
+     req.result=records.get(key);req.onsuccess?.();
+     if(!complete){complete=true;queueMicrotask(()=>tx.oncomplete?.());}
+    });return req;},
+    put(value){records.set(value.key,structuredClone(value));}
+   })};return tx;
+  }
+ };
+ const indexedDB={open(){const req={};queueMicrotask(()=>{
+  req.result=db;if(!created)req.onupgradeneeded?.();req.onsuccess?.();
+ });return req;}};
+ globalThis.localStorage=storage;globalThis.indexedDB=indexedDB;
+ globalThis.fetch=async url=>{
+  assert.match(String(url),/\/auth\/v1\/signup/);signupCalls++;
+  return Response.json({access_token:'saved-access',refresh_token:'saved-refresh',
+   expires_in:3600,user:{id:'same-player'}});
+ };
+ try{
+  const first=await taiCloudSession();
+  assert.equal(first.user.id,'same-player');
+  assert.equal(signupCalls,1);
+  storage.removeItem(SESSION_KEY);
+  const restored=await taiCloudSession();
+  assert.equal(restored.user.id,'same-player');
+  assert.equal(signupCalls,1,'must not sign up a second anonymous player');
+  assert.equal(JSON.parse(storage.getItem(SESSION_KEY)).refresh_token,'saved-refresh');
+ }finally{Object.assign(globalThis,previous);}
+});
 test('expired identity refresh failure keeps the original session instead of creating a new player',async()=>{
  const previous={fetch:globalThis.fetch,localStorage:globalThis.localStorage};const storage=memory();globalThis.localStorage=storage;
  const old=JSON.stringify({access_token:'old',refresh_token:'old-refresh',expires_at:1});storage.setItem(SESSION_KEY,old);let calls=0;
