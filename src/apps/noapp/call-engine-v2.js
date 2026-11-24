@@ -135,8 +135,24 @@ export function callAnswerGuidance(text='',history=[]){
  const why=/(?:為什麼|为什么|為何|为何|怎麼|怎么)(?:.{0,25})[？?]?/u.test(input);
  const explanation=/[？?]|(?:能不能|可不可以|到底|怎麼辦|怎么办|什麼原因|什么原因|為何|为何)/u.test(input);
  if(!why&&!explanation)return '';
- const focus='【本輪問題優先】熙蒙實際問的是「'+input.slice(0,180)+'」。先正面回答這個問題，再說一個真正有根據的原因、顧慮、具體打算或目前確實無法透露的邊界；可以有情緒和文學性，但不能只有空話、換句話說同一個拒絕，或把問題反拋給熙蒙。不能憑空捏造行程、警方動向和已完成的承諾。只要內容說清楚，一段完整話就夠，不必拆成多段。';
+ const focus='【本輪問題優先】熙蒙實際問的是「'+input.slice(0,180)+'」。先正面回應這個問題。'+(why?'這是追問原因：結合已經確定的事給出一項真正的原因、顧慮、打算，或具體說明現在不能透露哪部分；別用兩句拒絕代替理由。':'普通問題簡潔答就好，若沒有值得展開的內容不要硬加解釋。')+' 可以有情緒和文學性，但不能靠換詞重複、空泛反問或臨時編造行程、警方動向和已完成的承諾。一段完整話就夠，不必拆成多段。';
  if(!/(?:不來|不来|來不了|来不了|不去|去不了).{0,6}(?:澳門|澳门)|(?:澳門|澳门).{0,8}(?:不來|不来|不去|去不了)/u.test(input))return focus;
  const mentionedOutside=Array.isArray(history)&&history.some(t=>t?.role==='assistant'&&/(?:英國|英国|葡萄牙|安排|退路|離開|离开)/u.test(String(t.content||'')));
  return focus+' 【澳門來訪追問】不要連發「現在還不是時候」「現在不行」。如果此前真的提到能幫熙蒙和熙旺安排去英國或葡萄牙，請解釋自己留在外面能做什麼、和自己暫不來澳門的取捨；不要把這個推論冒充新增的劇情事實。'+(mentionedOutside?'前文確實談過外部協助，可以自然承接實際承諾。':'只有可核對的已說內容才能承接；若沒有根據，不要假稱有過這項承諾。');
+}
+
+
+// Only repair an explicit yesterday reference in *new free-call AI speech*.
+// "剛才你問…" can truthfully refer to this ongoing call and stays intact.
+// Never touch authored call lines, user transcripts, or an ordinary call with
+// no explicit past-day reference; no new API request or second time service.
+export function correctCallYesterdayReference(entries=[],playerText=''){
+ if(!/(?:昨天|昨晚|昨日)/u.test(String(playerText||'')))return entries;
+ const pastAction=/(?:剛才|刚才|剛剛|刚刚)(?=(?:\s*)(?:說過|说过|談過|谈过|提過|提过|答應|答应|約好|约好|發生|发生|的事|的安排|那件事|那個事|那个事))/gu;
+ const repair=text=>String(text||'').replace(pastAction,'昨天');
+ return entries.map(entry=>{
+  if(!entry||typeof entry!=='object')return entry;
+  const text=repair(entry.text),speechText=entry.speechText?repair(entry.speechText):undefined;
+  return text!==entry.text||speechText!==entry.speechText?{...entry,text,...(speechText?{speechText}:{})}:entry;
+ });
 }
