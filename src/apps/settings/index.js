@@ -2,7 +2,7 @@ import {wifiNetworks} from './features/wifi/index.js';
 import {isFriendsTest} from '../../system/runtime/friends-test.js';
 import {settingsHome} from './features/home/index.js';
 import {settingsDetail} from './features/details/index.js';
-import {cloudSaveView,cloudSaveAction,cloudSaveSubmit} from './features/cloud-save/index.js';
+import {cloudSaveView,cloudSaveAction,cloudSaveSubmit,cloudSaveInput} from './features/cloud-save/index.js';
 export const manifest={id:'settings',name:'设置',icon:6,defaultRoute:'/',kicker:'SYSTEM'};
 export function render({store},loc){const s=store.get();return loc.route==='/cloud-save'?cloudSaveView(store):loc.route==='/'?settingsHome(s):settingsDetail(s,loc.route.slice(1));}
 export function handle(a,t,c){
@@ -20,3 +20,5 @@ export function handle(a,t,c){
  if(a==='settings-toggle')c.store.update(s=>{const key=t.dataset.key;s[key]=!(s[key]??(['wifi','bluetooth','allowNotifications','haptics','airdrop','rotationLock'].includes(key)));});
 }
 export const submit=(form,ctx)=>cloudSaveSubmit(form,ctx);
+
+export const input=(target,ctx)=>cloudSaveInput(target,ctx);
