@@ -4,7 +4,8 @@ import {MIRAGE_TAI_PRESETS,mirageTaiReplyGuidance,mirageTaiForbiddenLine}
  from '../src/apps/mirage/features/ai-replies/presets.js';
 import {OUROBOROS_DOSSIER_ID,OUROBOROS_DOSSIER_TITLE,OUROBOROS_DOSSIER_HEADING,ouroborosDossierHours,syncOuroborosDossier}
  from '../src/apps/notes/data/ouroboros.js';
-import {ANONYMOUS_MIRAGE_WINDOWS_55} from '../src/services/story55/runtime.js';
+import {ANONYMOUS_MIRAGE_WINDOWS_55,anonymousPresence55} from '../src/services/story55/runtime.js';
+import {mirageAIEnabled} from '../src/services/ai/channel-controls.js';
 import {projectMirageTaiGlossary} from '../src/services/ai/worldbook/plot-glossary.js';
 
 const makeState=(day=16)=>({day,clock:'21:00',story55:{version:1,authoredNoteIds:[],completed:{}},
@@ -76,4 +77,28 @@ test('Mirage lore describes early identity without claiming later events have ha
  assert.match(entries.map(e=>e.content).join('\n'),/匿名|相認前|尚未/);
  const future=projectMirageTaiGlossary(s,{channel:'mirage',recognized:false,messages:[{role:'user',content:'Azathoth 的管理員？'}]});
  assert.doesNotMatch(future.map(e=>e.content).join('\n'),/D17 熙泰已告訴熙蒙/);
+});
+
+
+test('D14 at 08:00 uses the same canonical anonymous online window as D15',()=>{
+ const s=makeState(14);
+ const cases=[
+  ['07:59',false],['08:00',true],['09:24',true],['09:25',false],
+  ['11:59',false],['12:00',true],['12:29',true],['12:30',false],
+  ['21:59',false],['22:00',true],['22:59',true],['23:00',false]
+ ];
+ assert.equal(mirageAIEnabled(s),true,'D14 Mirage AI is intentionally enabled');
+ for(const [clock,want] of cases){
+  s.clock=clock;
+  assert.equal(anonymousPresence55(s).online,want,'D14 '+clock);
+  s.day=15;
+  assert.equal(anonymousPresence55(s).online,want,'existing D15 '+clock+' unchanged');
+  s.day=14;
+ }
+ s.clock='08:00';
+ s.story55.activeScene='intrusion';
+ assert.equal(anonymousPresence55(s).online,false,'authored scenes still preempt free chat');
+ s.story55.activeScene=null;
+ s.story55.completed.recognition={day:14,clock:'07:58'};
+ assert.equal(mirageAIEnabled(s),false,'post-recognition free Mirage stays disabled');
 });
