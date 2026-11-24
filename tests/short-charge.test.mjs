@@ -24,28 +24,28 @@ test('Dynamic Island offers short and long charging choices',()=>{
 test('D02 short charging uses unified home/App rates while charging by real time',()=>{
  const s=d02();s.batteryPercent=70;
  assert.equal(beginShortCharge(s),true);
- assert.equal(worldMinuteRate(s,{focused:true,taiChat:true}),5/1000);
+ assert.equal(worldMinuteRate(s,{focused:true,taiChat:true}),3.75/1000);
  assert.equal(worldMinuteRate(s,{focused:true,taiChat:false,fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
  assert.equal(worldMinuteRate(s,{focused:false,taiChat:true,fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
  tickShortChargeBattery(s,20_000);
- assert.equal(tickWorld(s,20_000,{focused:true,taiChat:true}).minutes,100);
- assert.equal(s.day,2);assert.equal(s.clock,'09:40');assert.equal(batteryPercent(s),73);
+ assert.equal(tickWorld(s,20_000,{focused:true,taiChat:true}).minutes,75);
+ assert.equal(s.day,2);assert.equal(s.clock,'09:15');assert.equal(batteryPercent(s),73);
  assert.equal(drainBattery(s,20_000),0);
  tickShortChargeBattery(s,40_000);tickWorld(s,40_000);
- assert.equal(s.clock,'13:00');assert.equal(batteryPercent(s),80);
+ assert.equal(s.clock,'11:45');assert.equal(batteryPercent(s),80);
  tickShortChargeBattery(s,60_000);tickWorld(s,60_000);
- assert.equal(s.clock,'18:00');assert.equal(batteryPercent(s),80);
+ assert.equal(s.clock,'15:30');assert.equal(batteryPercent(s),80);
  assert.equal(s.shortCharge.elapsedMs,60_000);assert.equal(SHORT_CHARGE_MAX_GAIN,10);
 });
 test('Unplugging stops acceleration immediately, retains the earned charge and day',()=>{
  const s=d02();s.batteryPercent=84;
  assert.equal(beginShortCharge(s),true);
  tickShortChargeBattery(s,30_000);tickWorld(s,30_000);
- assert.equal(s.clock,'10:30');assert.equal(s.batteryPercent,89);
+ assert.equal(s.clock,'09:52');assert.equal(s.batteryPercent,89);
  assert.equal(endShortCharge(s),true);assert.equal(s.powerMode,'idle');
  assert.equal(s.shortCharge,null);assert.equal(s.day,2);
  assert.equal(endShortCharge(s),false);
- tickWorld(s,3_000);assert.equal(s.clock,'10:39');
+ tickWorld(s,3_000);assert.equal(s.clock,'10:00');
 });
 test('short charge stops at 23:59 instead of skipping to tomorrow',()=>{
  const s=d02();s.clock='23:50';s.batteryPercent=70;
@@ -195,12 +195,12 @@ test('background/closed browser credits battery without advancing story time',()
 
 test('short charging has no separate clock: App slow, home fast',()=>{
  const s=d02();s.batteryPercent=70;beginShortCharge(s);
- assert.equal(worldMinuteRate(s,{fastForward:true}),5/1000);
+ assert.equal(worldMinuteRate(s,{fastForward:true}),3.75/1000);
  assert.equal(worldMinuteRate(s,{fastForward:false}),STORY55_CHAT_MINUTES_PER_MS);
  tickWorld(s,9_000,{fastForward:false});
  assert.equal(s.clock,'08:00');
  tickWorld(s,1_000,{fastForward:true});
- assert.equal(s.clock,'08:05');assert.equal(s.powerMode,'short-charging');
+ assert.equal(s.clock,'08:04');assert.equal(s.powerMode,'short-charging');
 });
 
 test('an active compulsory story scene forces a quiet unplug',()=>{
