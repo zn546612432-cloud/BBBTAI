@@ -75,10 +75,9 @@ test('D13 pure-green overlay has no narration, call icons are SVG, island blinks
  assert.doesNotMatch(island,/☎/);
 });
 
-test('D13 spoken Tai turns belong to the phone, not empty Mirage avatars; IP trace is terminal status',()=>{
+test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not a narrator',()=>{
  const s=day13('22:26');
  assert.equal(sceneLines(s,'intrusion')[21][1].endsWith('晚安，nya，或者我該叫你，熙蒙……'),true);
- s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
  appendSceneMessage55(s,'intrusion',8);
  appendSceneMessage55(s,'intrusion',15);
  appendSceneMessage55(s,'intrusion',19);
@@ -86,7 +85,8 @@ test('D13 spoken Tai turns belong to the phone, not empty Mirage avatars; IP tra
  appendSceneMessage55(s,'intrusion',21);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  for(const i of [8,19,21]){
-  assert.equal(chat.messages.some(x=>x.id==='s55-intrusion-v2-'+i),false);
+  const m=chat.messages.find(x=>x.id==='s55-intrusion-v2-'+i);
+  assert.equal(m.kind,'call-avatar');assert.equal(m.text,'');
  }
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-15').text,'（正在定位 IP………）');
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-20').text,'（追蹤失敗！錯誤代碼：ERR-4037）');
@@ -320,8 +320,9 @@ test('previously delivered D13 system/voice messages reorder without touching pl
  const player={id:'user-typed',from:'me',kind:'text',text:'還在嗎'};
  chat.messages.push(oldStatus,oldVoice,player);
  tickStory55(s);
- assert.equal(chat.messages.some(m=>m.kind==='call-avatar'),false);
- assert.deepEqual(chat.messages.map(m=>m.id),['s55-intrusion-v2-20','user-typed'],'retire avatar but keep status and player');
+ assert.equal(chat.messages.at(-3),oldVoice);
+ assert.equal(chat.messages.at(-2),oldStatus);
+ assert.deepEqual(chat.messages.slice(-3).map(m=>m.id),['s55-intrusion-v2-19','s55-intrusion-v2-20','user-typed']);
  assert.equal(chat.messages.at(-1).text,'還在嗎');
  const snapshot=structuredClone(chat.messages);
  tickStory55(s);assert.deepEqual(chat.messages,snapshot);
