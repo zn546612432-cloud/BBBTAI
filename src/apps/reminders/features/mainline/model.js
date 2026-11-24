@@ -4,6 +4,7 @@ import {isStory55,story55Config,nodeStatus,completed,date55,storyDayMinute} from
 import {nodeLink55,scene55,sceneLines} from '../../../../services/story55/runtime.js';
 import {D01_OPENING,D01_REPAIR,D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
 import {d02CompleteBuild,D02_AODONG_CHAT_ID} from '../../../../story/d02/runtime.js';
+import {d02WangReminder} from '../../../../story/d02/wechat.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {D06_ORDER_ID,D06_FLOW_AT} from '../../../../story/d06/commission.js';
 import {STORY55_WALLET_MAIL_ID} from '../../../mirage/data.js';
@@ -140,6 +141,8 @@ function researchTasks(s){
 export function mainlineTasks(s){
  if(!isStory55(s)||s.story55?.ended)return [];
  const items=d01Tasks(s);
+ const wang=d02WangReminder(s);
+ if(wang)items.push(task('d02-wang-chat','給熙旺發消息',wang.done?null:destination('wechat','/chat/'+wang.chatId),wang.done?'已完成':'微信 · 熙旺',wang.done,wang.at));
  const aodongChat=s.content.conversations.messages?.find(c=>c.id===D02_AODONG_CHAT_ID);
  const aodongSmsReady=visibleMessages(aodongChat,s).some(m=>m.id==='d02-aodong-sale');
  if(s.day>=2&&s.day<=14&&aodongSmsReady&&!d02CompleteBuild(s))
@@ -157,7 +160,7 @@ export function mainlineTasks(s){
  items.push(...researchTasks(s));
  const unique=[...new Map(items.map(t=>[t.id,t])).values()];
  const today=new Set(story55Config(s).nodes.filter(n=>n.day===s.day).map(n=>'mainline:'+n.id));
- const rank=t=>today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')?0:
+ const rank=t=>today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')||s.day===2&&t.id==='mainline:d02-wang-chat'?0:
    t.id.startsWith('mainline:research-')?1:t.id==='mainline:workstation'?2:3;
  return unique.sort((a,b)=>Number(a.done)-Number(b.done)||rank(a)-rank(b)||
   ((a.at||'00:00').localeCompare(b.at||'00:00')));

@@ -65,3 +65,17 @@ export const d02ComposerDisabled=d02Track.disabled;
 export const sendD02WeChat=d02Track.send;
 export const d02WeChatDue=d02Track.due;
 export const tickD02Wechat=d02Track.tick;
+
+// Read-only reminder projection of the existing Wang scene's start/progress.
+export function d02WangReminder(s){
+ if(s.story55?.version!==1||s.day!==DAY)return null;
+ const q=s.story55.d02?.wechat?.wang;
+ const revision=s.story55.chatSceneEdits?.['d02:wang'];
+ const at=revision?.at||specs[0].at(s,q);
+ const first=revision?.lineTimes?.[0];
+ const start=first&&first>at?first:at;
+ if(q?.completed)return {done:true,at:start,chatId:chat(s,'wang')?.id||'wang'};
+ if(q?.skipped||q?.historySettled||q?.lateHandled)return null;
+ if(!q?.started&&s.clock<start)return null;
+ return {done:false,at:start,chatId:chat(s,'wang')?.id||'wang'};
+}
