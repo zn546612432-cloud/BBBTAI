@@ -1,63 +1,58 @@
-// One-time audition: the seven existing D13 phone lines, not the Mirage text chat.
-// Never modifies game dialogue, voice settings, scripted assets, or production.
-import {D13_LINES,D13_VOICE_INDICES} from '../src/story/d13/content.js';
+// D13 original phone line 16 ONLY. Production script/dialogue/audio are unchanged.
+import {D13_LINES} from '../src/story/d13/content.js';
 import {XITAI_VOICE_ID} from '../src/services/ai/gateway.js';
 import {taiCloudCall} from '../src/services/ai/supabase-gateway.js';
 import {normalizeTtsSettings,ttsProviderSettings} from '../src/services/voice/tts-settings.js';
-import {prepareTaiVoicePerformance} from '../src/services/voice/voice-performance.js';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-const indices=D13_VOICE_INDICES,region=process.env.MINIMAX_REGION||'cn';
-const key=process.env.MINIMAX_API_KEY,dir=new URL('../artifacts/d13-original-phone-audition/',import.meta.url);
-if(indices.join(',')!=='8,10,12,14,16,18,20')throw Error('D13 telephone source changed; abort');
+const [actor,original]=D13_LINES[16]||[];
+if(actor!=='ouroboros'||original!=='別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。')
+ throw Error('Original D13 telephone copy changed; stop rather than reword.');
+const spoken=original.replace(/\bnya\b/gi,'奈亞');
+const candidates=[
+ {id:'A-calm',label:'冷静、自然',speed:0.96,
+  text:spoken.replace('大名鼎鼎的 奈亞 究竟','大名鼎鼎的奈亞究竟')},
+ {id:'B-pause',label:'较慢、轻嘲',speed:0.88,
+  text:spoken.replace('我沒有惡意，只是想看看，','我沒有惡意。只是想看看……')}
+];
+const clean=t=>t.replace(/[，。！？…、\s]/g,'');
+for(const c of candidates)if(clean(c.text)!==clean(spoken))throw Error('A retake changed a word.');
+const dir=new URL('../artifacts/d13-line16-retakes/',import.meta.url);
 await mkdir(dir,{recursive:true});
+const key=process.env.MINIMAX_API_KEY,region=process.env.MINIMAX_REGION||'cn';
 if(!key){
- const sessionStore=new Map();
+ const cache=new Map();
  Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{
-  getItem:k=>sessionStore.get(k)||null,setItem:(k,v)=>sessionStore.set(k,v),
+  getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v)
  }});
 }
 const clips=[];
-for(const index of indices){
- const [actor,original]=D13_LINES[index];
- if(actor!=='ouroboros'||!original)throw Error('D13 line '+index+' is not the original caller');
- const spoken=original.replace(/\bnya\b/gi,'奈亞'); // Same words, established pronunciation.
- const performance=prepareTaiVoicePerformance(spoken);
- const settings=normalizeTtsSettings({...performance,speed:0.94,emotion:'calm',language:'Chinese',
+for(const c of candidates){
+ const settings=normalizeTtsSettings({speed:c.speed,emotion:'calm',language:'Chinese',
   sampleRate:32000,bitrate:128000,channel:1});
- const provider=ttsProviderSettings(settings);
+ const options=ttsProviderSettings(settings);
  let bytes;
  if(key){
   const endpoint=region==='intl'?'https://api.minimax.io/v1/t2a_v2':'https://api.minimaxi.com/v1/t2a_v2';
-  const r=await fetch(endpoint,{method:'POST',
-   headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),
-   body:JSON.stringify({model:'speech-2.8-hd',text:performance.text,stream:false,output_format:'hex',
-    ...provider,voice_setting:{voice_id:XITAI_VOICE_ID,...provider.voice_setting}})});
-  if(!r.ok)throw Error('MiniMax original telephone line '+index+': HTTP '+r.status);
-  const d=await r.json(),hex=d.data?.audio;
-  if(Number(d.base_resp?.status_code||0)!==0||typeof hex!=='string'||hex.length<2000
-     ||hex.length%2||!/^[0-9a-f]+$/i.test(hex))throw Error('MiniMax line '+index+': invalid audio '+(d.base_resp?.status_msg||''));
+  const response=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+   signal:AbortSignal.timeout(90000),
+   body:JSON.stringify({model:'speech-2.8-hd',text:c.text,stream:false,output_format:'hex',
+    ...options,voice_setting:{voice_id:XITAI_VOICE_ID,...options.voice_setting}})});
+  if(!response.ok)throw Error('MiniMax TTS failed: HTTP '+response.status);
+  const result=await response.json(),hex=result.data?.audio;
+  if(Number(result.base_resp?.status_code||0)!==0||typeof hex!=='string'||hex.length<2000
+   ||hex.length%2||!/^[0-9a-f]+$/i.test(hex))throw Error('MiniMax returned invalid audio: '+result.base_resp?.status_msg);
   bytes=Buffer.from(hex,'hex');
  }else{
-  const audio=await taiCloudCall('tts',{model:'speech-2.8-hd',text:performance.text,
-   voiceId:XITAI_VOICE_ID,region,settings});
-  bytes=Buffer.from(await audio.arrayBuffer());
+  const blob=await taiCloudCall('tts',{model:'speech-2.8-hd',text:c.text,voiceId:XITAI_VOICE_ID,region,settings});
+  bytes=Buffer.from(await blob.arrayBuffer());
  }
- if(bytes.length<1500||!(bytes.toString('utf8',0,3)==='ID3'||bytes[0]===255))throw Error('Line '+index+': not valid MP3');
- const filename='d13-phone-line-'+index+'.mp3';await writeFile(new URL(filename,dir),bytes);
- clips.push({index,original,filename,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
- console.log('Original Dr Ouroboros telephone line '+index+' generated: '+bytes.length+' bytes');
+ if(bytes.length<3000||!(bytes.toString('utf8',0,3)==='ID3'||bytes[0]===255))throw Error('Invalid MP3 for '+c.id);
+ const filename='D13-line16-'+c.id+'.mp3';
+ await writeFile(new URL(filename,dir),bytes);
+ clips.push({...c,filename,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+ console.log('Recorded '+filename+': '+bytes.length+' bytes');
 }
 await writeFile(new URL('manifest.json',dir),JSON.stringify({
- source:'src/story/d13/content.js',indices,originalLines:true,model:'speech-2.8-hd',
- voiceId:XITAI_VOICE_ID,settings:{speed:0.94,emotion:'calm',language:'Chinese'},clips
-},null,2)+'\n');
-const args=[];
-for(const c of clips)args.push('-i',new URL(c.filename,dir).pathname);
-const filter=clips.map((_,i)=>'['+i+':a]aresample=24000,asetpts=PTS-STARTPTS[a'+i+']').join(';')
- +';'+clips.map((_,i)=>'[a'+i+']').join('')+'concat=n='+clips.length+':v=0:a=1[out]';
-execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-y',...args,'-filter_complex',filter,
- '-map','[out]','-ar','24000','-ac','1','-b:a','64k',new URL('d13-phone-all-seven.mp3',dir).pathname],
- {timeout:60000});
-console.log('Finished 7 original scripted telephone voice lines and combined listening sample');
+ scene:'D13 telephone',lineIndex:16,original,voiceId:XITAI_VOICE_ID,model:'speech-2.8-hd',
+ clips},null,2)+'\n');
