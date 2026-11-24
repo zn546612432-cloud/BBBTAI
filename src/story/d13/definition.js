@@ -1,4 +1,4 @@
-import {D13_LINES,D13_PREVIOUS_LINES,D13_LEGACY_LINES,D13_VOICE_INDICES} from './content.js';
+import {D13_LINES,D13_PREVIOUS_LINES,D13_LEGACY_LINES,D13_BEFORE_MAIL_PROMISE_LINES,D13_VOICE_INDICES} from './content.js';
 export const D13_WALLET_ID='s55-d13-wallet-50btc';
 export const D13_MAIL_ID='s55-d13-wallet-mail';
 export const D13_NODES=[
@@ -9,7 +9,7 @@ export const D13_NODES=[
 export function applyD13Definition(c){
  const current=c.scenes.intrusion,old=structuredClone(D13_LEGACY_LINES);
  old[5][1]='你的日程里写着汪杰和他的电子钱包，我想我们有必要把接下来的事情谈清楚。';
- const replace=[D13_LEGACY_LINES,old,D13_PREVIOUS_LINES].some(lines=>JSON.stringify(current)===JSON.stringify(lines));
+ const replace=[D13_LEGACY_LINES,old,D13_PREVIOUS_LINES,D13_BEFORE_MAIL_PROMISE_LINES].some(lines=>JSON.stringify(current)===JSON.stringify(lines));
  if(replace)c.scenes.intrusion=structuredClone(D13_LINES);
 
  for(const node of D13_NODES)if(!c.nodes.some(n=>n.id===node.id))c.nodes.push(structuredClone(node));
@@ -39,6 +39,18 @@ export function applyD13Definition(c){
  if(!walletMail)c.mails.push(target);
  else if(['[MIRAGE] 50 BTC','數位資產入帳通知','待領取資產通知'].includes(walletMail.subject))Object.assign(walletMail,target);
  c.voiceAssets??={};c.voiceAssets.intrusion??={};
- if(replace){delete c.voiceAssets.intrusion[7];delete c.voiceAssets.intrusion[9];}
+ if(replace){
+  delete c.voiceAssets.intrusion[7];delete c.voiceAssets.intrusion[9];
+  // The old farewell is now at 21. Move its clip and custom preferences;
+  // the newly approved sentence uses index 20, never the old farewell clip.
+  const previous=c.voiceAssets.intrusion[20];
+  c.voiceAssets.intrusion[21]??=previous&&previous!=='/assets/story55/d13/call-20.mp3'
+   ?previous:'/assets/story55/d13/call-21.mp3';
+  c.voiceAssets.intrusion[20]='/assets/story55/d13/call-20.mp3';
+  for(const key of ['voiceSettings','voiceClipIds']){
+   const values=c[key]?.intrusion;
+   if(values&&Object.hasOwn(values,20)){values[21]??=values[20];delete values[20];}
+  }
+ }
  for(const i of D13_VOICE_INDICES)c.voiceAssets.intrusion[i]??=`/assets/story55/d13/call-${i}.mp3`;
 }
