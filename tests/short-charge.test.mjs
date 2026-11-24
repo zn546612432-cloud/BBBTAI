@@ -45,7 +45,7 @@ test('Unplugging stops acceleration immediately, retains the earned charge and d
  assert.equal(endShortCharge(s),true);assert.equal(s.powerMode,'idle');
  assert.equal(s.shortCharge,null);assert.equal(s.day,2);
  assert.equal(endShortCharge(s),false);
- tickWorld(s,3_000);assert.equal(s.clock,'10:00');
+ tickWorld(s,3_000);assert.equal(s.clock,'09:59'); // unplug resets the old half-minute fraction
 });
 test('short charge stops at 23:59 instead of skipping to tomorrow',()=>{
  const s=d02();s.clock='23:50';s.batteryPercent=70;
