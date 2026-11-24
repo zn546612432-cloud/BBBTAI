@@ -218,3 +218,41 @@ test('D02 Wang reminder follows early settlement and author-edited opening time'
  assert.equal(find(s,'d02-wang-chat'),undefined);
  s.clock='10:00';assert.ok(find(s,'d02-wang-chat'));
 });
+
+test('daily MIRAGE reminder follows a real accepted order, resets each story day and opens the hall',()=>{
+ const s=at(2,'08:00');
+ const item=find(s,'daily-mirage');
+ assert.equal(item.title,'前往 MIRAGE 接單');
+ assert.deepEqual(item.link,{appId:'mirage',route:'/bounties/hall',params:{}});
+ const opened=[],store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(openReminderTask(item.id,{store,router:{open:link=>opened.push(link)}}),true);
+ assert.deepEqual(opened,[item.link]);
+ assert.equal(find(s,'daily-mirage').done,false);
+ s.content.orders.push({id:'test-accepted',status:'ACCEPTED',acceptedDay:2});
+ assert.equal(find(s,'daily-mirage').done,true);
+ s.day=3;assert.equal(find(s,'daily-mirage').done,false);
+});
+test('approved optional D01, D20 and D37 proactive chat reminders follow real scene state',()=>{
+ const d1=at(1,'08:00');
+ assert.equal(find(d1,'d01-group-chat').link.route,'/chat/group');
+ assert.equal(find(d1,'d01-brother-chat').link.route,'/chat/wang');
+ d1.story55.d01??={};d1.story55.d01.group={completed:true};
+ assert.equal(find(d1,'d01-group-chat').done,true);
+ const d20=at(20,'10:44');
+ assert.equal(find(d20,'d20-monitoring-chat'),undefined);
+ d20.clock='10:45';
+ assert.equal(find(d20,'d20-monitoring-chat').title,'確認人員安排');
+ d20.story55.authoredDays??={};d20.story55.authoredDays.d20={monitoring:{completed:true}};
+ assert.equal(find(d20,'d20-monitoring-chat').done,true);
+ const d37=at(37,'16:20');
+ assert.equal(find(d37,'d37-workstation'),undefined);
+ d37.clock='16:21';assert.equal(find(d37,'d37-workstation').title,'分享移動工作站照片');
+});
+test('workstation group reminder requires the actual build-ready flag and completes only after chat',()=>{
+ const s=at(2,'15:00');seedD02(s);
+ assert.equal(find(s,'d02-newpc-chat'),undefined);
+ s.story55.d02.buildReady=true;s.story55.d02.buildReadyClock='15:00';
+ assert.equal(find(s,'d02-newpc-chat').link.route,'/chat/group');
+ s.story55.d02.wechat.newpc={completed:true};s.story55.d02.buildCelebrated=true;
+ assert.equal(find(s,'d02-newpc-chat').done,true);
+});
