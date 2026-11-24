@@ -156,3 +156,36 @@ export function correctCallYesterdayReference(entries=[],playerText=''){
   return text!==entry.text||speechText!==entry.speechText?{...entry,text,...(speechText?{speechText}:{})}:entry;
  });
 }
+
+
+// Read the one canonical London-life status; never create another per-call
+// schedule or use wall-clock sleep times. The last ten game minutes let an
+// ongoing phone call finish naturally before the sleep gate closes.
+export function taiCallDepartureWindow(life){
+ const minute=Number(life?.minute);
+ if(!Number.isFinite(minute))return '';
+ if(life.activity==='準備休息或私人時間'&&minute>=80&&minute<90)return 'upcoming';
+ if(life.activity==='睡覺'&&minute>=90&&minute<450&&life.status==='offline')return 'overdue';
+ return '';
+}
+
+// These system-level NoApp call beats are already-authorized short spoken
+// replies. They must not make a second DeepSeek request or enter story events.
+export function taiNaturalCallLine(kind,{hadPlayerTurn=false,variant=0}={}){
+ const index=Math.abs(Math.trunc(Number(variant)||0))%3;
+ if(kind==='nudge'){
+  if(!hadPlayerTurn)return ['喂？你在聽嗎？','你還在嗎？','喂，聽得到嗎？'][index];
+  return ['怎麼不說話了？','你還在聽嗎？','喂？怎麼突然安靜了？'][index];
+ }
+ if(kind==='closing')return [
+  '你那邊好像沒聲音了。那我先掛了，晚點聊。',
+  '那就先這樣吧。下次再聊。',
+  '你先忙吧，我掛了。'
+ ][index];
+ if(kind==='departure')return [
+  '我這邊時間不早了，得去休息了。先掛了。',
+  '我還有點事要處理。先掛了，晚點再聊。',
+  '我得去睡了。下次再聊。'
+ ][index];
+ return '';
+}

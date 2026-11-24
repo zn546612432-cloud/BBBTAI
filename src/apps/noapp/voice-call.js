@@ -1,6 +1,6 @@
 import {isStory55,taiRecognized,completed,overnightSceneNight55,scriptedCallPlayed,recognitionCallDue} from '../../services/story55/state.js';
 import {RECOGNITION_CALL} from '../../story/d29/recognition-call.js';
-import {finishScene55} from '../../services/story55/runtime.js';
+import {finishScene55,story55Presence} from '../../services/story55/runtime.js';
 import {D41_CALL,D42_CALL} from '../../story/d34-d42/definition.js';
 import {D45_CALL} from '../../story/d45/definition.js';
 import {D55_OPENING_CALL,D55_WARNING_CALL,D55_FINAL_CALL,D55_RECALL,D55_FATHER_CALL} from '../../story/d55/calls.js';
@@ -22,6 +22,7 @@ import {rememberTaiConversation,rememberTaiDelivered,rememberTaiCall} from '../.
 import {absorbPendingTaiTextsForCall} from '../../services/ai/incoming-turn.js';
 import {esc} from '../../system/ui.js';
 import {taiPresence,markTaiEngaged} from '../../services/presence.js';
+import {taiForcedOnline} from '../../services/ai/test-controls.js';
 import {taiLife,taiLifeContext} from '../../services/ai/life-context.js';
 import {synthesizeTaiVoice} from '../../services/ai/voice-synthesis.js';
 import {selectTaiMemoryPreset} from './memory-replies.js';
@@ -41,7 +42,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,planCallSpeech,callAnswerGuidance,correctCallYesterdayReference,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,planCallSpeech,callAnswerGuidance,correctCallYesterdayReference,taiCallDepartureWindow,taiNaturalCallLine,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
 import {scriptedCallIsComplete} from './scripted-call-progress.js';
 import {taiShouldHangUpCall,taiCallFarewellIntent} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
@@ -337,7 +338,11 @@ export function callScene({opening=false,event='',direction='outgoing',reason=''
 async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,presetText=''}={}){
  if(call.state!=='connected'||call.busy)return;
  if(call.closingPending){if(String(text).trim())call.turns.push({role:'user',content:String(text).trim()});return;}
- if(!taiPresence(ctx.store.get()).contactable){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});return;}
+ if(!taiPresence(ctx.store.get()).contactable){
+  if(taiRoutineCallDeparture(ctx.store.get()))void playNaturalCallSystemLine(ctx,'departure');
+  else callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});
+  return;
+ }
  const sessionId=call.sessionId,revision=call.revision||0,day=ctx.store.get().day;
  const forceHangUp=!opening&&!event&&taiShouldHangUpCall(text);
  const energy=taiSocialEnergy(ctx.store.get(),'call');
@@ -345,7 +350,8 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
  const life=taiLife(ctx.store.get());
  const closingLine=life.minute>=1260||life.minute<90?'時間不早了，我困了。晚安。':life.status==='busy'?'我還有事，先掛了。':'好了，先聊到這裡吧，再見。';
  endAfter=shouldClose;
- const current=()=>call.sessionId===sessionId&&call.revision===revision&&call.state==='connected'&&taiPresence(ctx.store.get()).contactable;
+ const sessionAlive=()=>call.sessionId===sessionId&&call.revision===revision&&call.state==='connected';
+ const current=()=>sessionAlive()&&taiPresence(ctx.store.get()).contactable;
  if(!opening&&!event&&!String(text).trim())return;
  if(!opening&&!event){
   const playerText=String(text).trim();
@@ -489,9 +495,9 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   }
  }
  finally{
-  if(current()){
+  if(sessionAlive()){
    call.busy=false;call.replyPhase=null;call.lastTaiEndAt=Date.now();
-   if(endAfter){
+   if(endAfter&&taiPresence(ctx.store.get()).contactable){
     const finish=()=>{if(call.sessionId===sessionId&&call.state==='connected')callAction('tai-hangup',ctx,{endedBy:'tai',endReason:forceHangUp?'player_request':event==='closing'?'idle':'autonomous'});};
     if(forceHangUp)finish();else{call.closingPending=true;call.closeTimer=setTimeout(finish,2500);call.closeTimer.unref?.();ctx.refresh?.();}
    }else ctx.refresh?.();
@@ -569,6 +575,69 @@ export function tickD55NoApp(ctx,{now=Date.now()}={}){
 export function nextCallIdleEvent(snapshot,now=Date.now(),config){
  return nextNaturalCallIdleEvent(snapshot,now,taiBehavior({aiDraft:{behavior:config}}));
 }
+function taiRoutineCallDeparture(s){
+ if(!isStory55(s)||!taiRecognized(s)||taiForcedOnline()||!story55Presence(s).contactable)return '';
+ return taiCallDepartureWindow(taiLife(s));
+}
+
+async function boundedCallSystemAudio(task,ms){
+ let timer;
+ try{return await Promise.race([task,new Promise((_,reject)=>{
+  timer=setTimeout(()=>reject(Error('NoApp native call audio unavailable')),ms);
+  timer.unref?.();
+ })]);}
+ finally{clearTimeout(timer);}
+}
+
+// A native call event, not an AI-authored reply: use the exact shared MiniMax
+// speaker, report the words only after audio finishes, and never call DeepSeek.
+// If synthesis fails, save one matching text note in the existing NoApp
+// conversation before ending the call rather than disappearing silently.
+async function playNaturalCallSystemLine(ctx,kind){
+ if(call.state!=='connected'||call.scripted||call.d55Story||call.busy)return false;
+ const sessionId=call.sessionId,revision=call.revision||0;
+ const current=()=>call.sessionId===sessionId&&call.revision===revision&&call.state==='connected';
+ const text=taiNaturalCallLine(kind,{
+  hadPlayerTurn:call.turns.some(t=>t.role==='user'),
+  variant:sessionId+(kind==='closing'?1:kind==='departure'?2:0)
+ });
+ if(!text)return false;
+ call.busy=true;call.replyPhase='voice';call.caption='';
+ ctx.refresh?.();
+ let spoken=false;
+ try{
+  const behavior=taiBehavior(ctx.store.get());
+  const voice=await boundedCallSystemAudio(synthesizeTaiVoice({
+   text:composeCallSpeech([{text,tone:'neutral',mode:'voice'}],behavior),
+   tone:'neutral',directed:true
+  },voicePreview,{store:ctx.store,kind:'call'}),16000);
+  if(!current())return true;
+  call.caption=text;call.lastSpeech=text;call.replyPhase='speaking';ctx.refresh?.();
+  const outcome=await boundedCallSystemAudio(playCallAudio(ctx,voice,sessionId,revision),22000);
+  if(!current())return true;
+  if(outcome==='completed'){
+   spoken=true;
+   call.turns.push({role:'assistant',content:text,tone:'neutral',playedAt:Date.now(),systemCallBeat:kind});
+   call.lastTaiEndAt=Date.now();
+  }
+ }catch(error){
+  if(current())console.warn('NoApp call system reply unavailable:',error?.message);
+ }finally{
+  if(current()){
+   call.busy=false;call.caption='';call.audioReady=false;call.replyPhase=null;
+   call.lastTaiEndAt=Date.now();
+   ctx.refresh?.();
+   if(kind==='closing'||kind==='departure'||!spoken){
+    callAction('tai-hangup',ctx,{
+     endedBy:'tai',endReason:kind==='departure'?'resting':kind==='nudge'?'idle':'idle',
+     fallback:spoken?'':text
+    });
+   }
+  }
+ }
+ return true;
+}
+
 export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
  if(call.d55Story&&!call.scripted)return false; // No auto hang-up or idle nudges during D55.
  if(call.scripted){
@@ -579,12 +648,23 @@ export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
   }
   return false; // authored calls never hand off to a model or idle nudge
  }
- if(call.state==='connected'&&!taiPresence(ctx.store.get()).contactable){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
- if(playback&&!playback.paused)return false;
- const event=nextCallIdleEvent(call,now,taiBehavior(ctx.store.get()));
+ if(call.state!=='connected')return false;
+ const s=ctx.store.get(),departure=taiRoutineCallDeparture(s);
+ // When sleep approaches (or the game clock skipped the boundary), the
+ // live conversation gets a spoken farewell before the contact goes offline.
+ if(departure){
+  // Let an active microphone turn or an audible clip finish. Do not talk
+  // over Xi Meng while he is already answering the call.
+  if(call.busy||call.listening||call.requestingMic||call.transcribing||call.audioReady||playback&&!playback.paused)return false;
+  void playNaturalCallSystemLine(ctx,'departure');
+  return true;
+ }
+ if(!taiPresence(s).contactable){callAction('tai-hangup',ctx,{endedBy:'tai',endReason:'unavailable'});return true;}
+ if(playback&&!playback.paused||call.busy)return false;
+ const event=nextCallIdleEvent(call,now,taiBehavior(s));
  if(!event)return false;
  call.nudgeCount=event==='nudge'?1:2;
- void generateTurn(ctx,{event,endAfter:event==='closing'});
+ void playNaturalCallSystemLine(ctx,event);
  return true;
 }
 async function respond(text,ctx){return generateTurn(ctx,{text});}
