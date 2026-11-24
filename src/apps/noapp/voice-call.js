@@ -41,7 +41,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,planCallSpeech,callAnswerGuidance,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,planCallSpeech,callAnswerGuidance,correctCallYesterdayReference,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
 import {scriptedCallIsComplete} from './scripted-call-progress.js';
 import {taiShouldHangUpCall,taiCallFarewellIntent} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
@@ -425,6 +425,10 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   let raw;
   try{raw=event==='unheard'&&!shouldClose?[unheardReply(sessionId+':'+generationId)]:parse(data);}
   catch(error){if(endAfter)raw=[];else throw error;}
+  // If the player explicitly means yesterday, stop a generated "剛才說過"
+  // from rewriting that older event as though it just happened on this call.
+  // This affects free AI replies only; fixed-story recordings stay untouched.
+  if(!opening&&!event&&!presetText&&!call.scripted&&!call.d55Story)raw=correctCallYesterdayReference(raw,text);
   const goodbyeAt=raw.findIndex(r=>taiCallFarewellIntent(r.text)==='end');
   if(goodbyeAt>=0){raw=raw.slice(0,goodbyeAt+1);endAfter=true;}
   else if(!shouldClose&&raw.some(r=>taiCallFarewellIntent(r.text)==='warn'))endAfter=false;
