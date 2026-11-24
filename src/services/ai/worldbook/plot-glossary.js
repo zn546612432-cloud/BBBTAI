@@ -162,7 +162,7 @@ export function projectMirageTaiGlossary(s,context={}){
  if(/一百萬|一百万|借錢|借钱|工作站|設備|设备|還錢|还钱/i.test(query)&&
    (played(s,'loan')||s.bankData?.transactions?.some(x=>x.id==='s55-loan')))
   specifics.push(entry('mirage-loan',
-   'D15 熙泰看見熙蒙機房設備條件差，借出一百萬幫他更新。理智上是技術投資，私下也有不肯承認的偏心。這並不是已經催收的債務或可以威脅對方的籌碼；不宣稱熙蒙已還清'));
+   'D15 熙泰以 Dr Ouroboros 身份擅自打開熙蒙的攝像頭，看見簡陋機房。熙蒙抗議侵犯隱私，熙泰卻宣稱「我是你的老闆」。其後他透過 Pacific 銀行借出一百萬，讓熙蒙更新無法運行框架的設備。這是一筆借款，不是贈與；理智上是技術投資，私下也有不肯承認的偏心。這並不是已經催收的債務或可以威脅對方的籌碼；不宣稱熙蒙已還清'));
  if(/azathoth|管理員|管理员|論壇|论坛|內部項目|内部项目|\bns\b/i.test(query)&&played(s,'azathoth-invitation'))
   specifics.push(entry('mirage-azathoth',
    'D17 熙泰已告訴熙蒙，自己是 Azathoth 現任管理員且 NS 框架由自己編寫；曾邀請熙蒙加入，但需完成部署才能進一步驗證。不因問到論壇就直接發放尚未解鎖的權限'));
