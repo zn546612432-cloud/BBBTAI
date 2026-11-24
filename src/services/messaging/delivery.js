@@ -30,7 +30,13 @@ export class MessageDelivery {
     const schedule=m.schedule;if(!schedule||schedule.mode==='immediate'||m.delivery)continue;
     let ready=false;
     if(schedule.mode==='game-time')ready=s.day>schedule.day||(s.day===schedule.day&&s.clock>=schedule.clock);
-    if(schedule.mode==='chat-delay'&&pageVisible&&isConversationOpen(s,channel,c.id)){
+    // Tai's already-queued scripted replies can finish while the player
+    // waits on HOME. The native delivery service still owns delay, unread
+    // badges and notices; neither other chats nor outgoing lines are released.
+    const taiHomeReply=channel==='mirage'&&c.id==='s55-ouroboros'&&
+     m.from===c.id&&s.nav?.current?.appId==='home'&&s.unlocked;
+    if(schedule.mode==='chat-delay'&&pageVisible&&
+       (isConversationOpen(s,channel,c.id)||taiHomeReply)){
      const key=JSON.stringify([channel,c.id,m.id,schedule,m.deliveryRevision||0]),start=this.waiting.get(key)??now;
      waiting.set(key,start);ready=now-start>=schedule.seconds*1000;
     }

@@ -22,24 +22,24 @@ const start=(day=2,clock='08:00')=>{
 const reconcile=(s,from)=>{tickStory55(s);deliverMissedScheduled(s,from);};
 const resume=(s,ms,extra={})=>settlePhoneBackground(s,ms,{now:1000+ms,reconcile,...extra});
 
-test('background uses three game minutes per second regardless of open App or lock screen',()=>{
+test('background uses ten game minutes per real minute regardless of open App or lock screen',()=>{
  for(const appId of ['home','wechat','ghost'])for(const unlocked of [true,false]){
   const s=start();s.nav.current.appId=appId;s.unlocked=unlocked;
-  assert.equal(resume(s,10000).minutes,30);assert.equal(s.clock,'08:30');
-  assert.equal(s.batteryPercent,98);assert.equal(s.nav.current.appId,appId);
+  assert.equal(resume(s,60000).minutes,10);assert.equal(s.clock,'08:10');
+  assert.equal(s.batteryPercent,100);assert.equal(s.nav.current.appId,appId);
  }
 });
-test('foreground App remains slow; fractional background time and developer speed are retained',()=>{
+test('foreground App remains 5x; background fractions ignore home slider except 0x pause',()=>{
  const s=start();tickWorld(s,6000);assert.equal(s.worldMinuteFraction,0.5);
- resume(s,500/3);assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
+ resume(s,3000);assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
  tickWorld(s,60000);assert.equal(s.clock,'08:06');
- setStory55MinutesPerSecond(s,2);resume(s,250);assert.equal(s.worldMinuteFraction,0.5);
- resume(s,250);assert.equal(s.clock,'08:07');
+ setStory55MinutesPerSecond(s,2);resume(s,3000);assert.equal(s.worldMinuteFraction,0.5);
+ resume(s,3000);assert.equal(s.clock,'08:07');
  setStory55MinutesPerSecond(s,0);resume(s,60000);assert.equal(s.clock,'08:07');
 });
 test('pending foreground fractions are settled before background changes the rate',()=>{
  const s=start(),batch=new WorldTickBatch();assert.equal(batch.take(s,6000),null);
- tickPhoneRuntime(s,batch.flush());resume(s,500/3);
+ tickPhoneRuntime(s,batch.flush());resume(s,3000);
  assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
  assert.equal(batch.flush(),null);
 });
@@ -87,9 +87,9 @@ test('alarm, 03:00 emergency, short-charge midnight and long absences retain exa
 });
 test('short charging credits once for the real elapsed interval alongside fast background time',()=>{
  const s=start();s.batteryPercent=50;assert.equal(beginShortCharge(s,1000),true);
- resume(s,6000);assert.equal(s.clock,'08:30');assert.equal(s.batteryPercent,51);
+ resume(s,6000);assert.equal(s.clock,'08:22');assert.equal(s.batteryPercent,51);
  assert.equal(s.shortCharge.elapsedMs,6000);
- resume(s,6000,{now:13000});assert.equal(s.clock,'09:00');assert.equal(s.batteryPercent,52);
+ resume(s,6000,{now:13000});assert.equal(s.clock,'08:45');assert.equal(s.batteryPercent,52);
  assert.equal(s.shortCharge.elapsedMs,12000);
 });
 test('scheduled catch-up preserves authored chronology, never invents outgoing lines and is idempotent',()=>{
@@ -97,7 +97,7 @@ test('scheduled catch-up preserves authored chronology, never invents outgoing l
   {id:'late',enabled:true,kind:'proactive',mode:'scheduled',day:2,from:'08:30',to:'08:31',channel:'wechat',conversationId:'group',messages:['late'],once:true},
   {id:'early',enabled:true,kind:'proactive',mode:'scheduled',day:2,from:'08:10',to:'08:11',channel:'wechat',conversationId:'group',messages:['early'],once:true}
  ];
- resume(s,10000);
+ resume(s,180000);
  const c=s.content.conversations.wechat.find(c=>c.id==='group');
  assert.deepEqual(c.messages.filter(m=>/^preset-(early|late)-/.test(m.id)).map(m=>[m.text,m.time]),[['early','08:10'],['late','08:30']]);
  resume(s,1000);assert.equal(c.messages.filter(m=>/^preset-(early|late)-/.test(m.id)).length,2);

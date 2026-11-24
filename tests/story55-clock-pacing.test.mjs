@@ -4,19 +4,19 @@ import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {tickWorld,worldMinuteRate,STORY55_FINALE_REPLY_MINUTES_PER_MS} from '../src/system/time/clock.js';
 
-test('only the unlocked idle home advances three game minutes per real second',()=>{
+test('only the unlocked idle home advances 150 game minutes per real minute',()=>{
  for(const appId of ['home']){
   const s=activateStory55(initialState());s.unlocked=true;s.nav.current={appId,route:'/',params:{}};
-  tickWorld(s,1000);assert.equal(s.clock,'08:03');
-  tickWorld(s,2000);assert.equal(s.clock,'08:09');
-  tickWorld(s,7000);assert.equal(s.clock,'08:30');
+  tickWorld(s,1000);assert.equal(s.clock,'08:02');
+  tickWorld(s,2000);assert.equal(s.clock,'08:07');
+  tickWorld(s,7000);assert.equal(s.clock,'08:25');
  }
 });
 test('short partial ticks retain fractional time, without dropping minutes',()=>{
  const s=activateStory55(initialState());s.unlocked=true;
  tickWorld(s,100);assert.equal(s.clock,'08:00');
  tickWorld(s,100);assert.equal(s.clock,'08:00');
- tickWorld(s,800);assert.equal(s.clock,'08:03');
+ tickWorld(s,800);assert.equal(s.clock,'08:02');
 });
 test('finale three-minute reply keeps its slower nine-second pace',()=>{
  assert.equal(STORY55_FINALE_REPLY_MINUTES_PER_MS,1/3000);
