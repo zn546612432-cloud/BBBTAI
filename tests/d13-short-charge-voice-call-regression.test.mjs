@@ -84,12 +84,12 @@ test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not
  appendSceneMessage55(s,'intrusion',20);
  appendSceneMessage55(s,'intrusion',21);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
- for(const i of [8,20,21]){
+ for(const i of [8,19,21]){
   const m=chat.messages.find(x=>x.id==='s55-intrusion-v2-'+i);
   assert.equal(m.kind,'call-avatar');assert.equal(m.text,'');
  }
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-15').text,'（正在定位 IP………）');
- assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-19').text,'（追蹤失敗！錯誤代碼：ERR-4037）');
+ assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-20').text,'（追蹤失敗！錯誤代碼：ERR-4037）');
  assert.ok(chat.messages.filter(m=>m.kind==='terminal-status').every(m=>m.from==='system'));
 });
 
@@ -258,15 +258,15 @@ test('D13 approved added voice plays before original farewell and tracking phras
  const s=day13('22:26'),lines=sceneLines(s,'intrusion');
  assert.equal(lines.length,22);
  assert.deepEqual(lines.slice(19),[
-  ['system','（追蹤失敗！錯誤代碼：ERR-4037）'],
   ['ouroboros','好了，今天不逗你了。明天有份東西給你，記得看郵箱。'],
+  ['system','（追蹤失敗！錯誤代碼：ERR-4037）'],
   ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……']
  ]);
  assert.equal(lines[16][1],'別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。');
 });
 test('D13 existing phone saves migrate only unmodified default and keep progress/preferences',()=>{
  const s=day13('22:26'),next=structuredClone(sceneLines(s,'intrusion'));
- s.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ s.story55.config.scenes.intrusion=[...next.slice(0,19),...next.slice(20)];
  s.story55.config.voiceAssets.intrusion[20]='/assets/story55/d13/call-20.mp3';
  s.story55.config.voiceClipIds={intrusion:{20:'farewell-cached'}};
  s.story55.config.voiceSettings={intrusion:{20:{speed:0.93}}};
@@ -274,7 +274,8 @@ test('D13 existing phone saves migrate only unmodified default and keep progress
  tickStory55(s);
  assert.deepEqual(sceneLines(s,'intrusion'),next);
  assert.equal(s.story55.scenes.intrusion.index,20);
- assert.equal(s.story55.config.voiceAssets.intrusion[20],'/assets/story55/d13/call-20.mp3');
+ assert.equal(s.story55.config.voiceAssets.intrusion[19],'/assets/story55/d13/call-20.mp3');
+ assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
  assert.equal(s.story55.config.voiceAssets.intrusion[21],'/assets/story55/d13/call-21.mp3');
  assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
  assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
@@ -282,13 +283,53 @@ test('D13 existing phone saves migrate only unmodified default and keep progress
  tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
  const finished=day13('22:26');
  finished.story55.completed.intrusion={day:13,clock:'22:26'};
- finished.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ finished.story55.config.scenes.intrusion=[...next.slice(0,19),...next.slice(20)];
  tickStory55(finished);
  assert.deepEqual(sceneLines(finished,'intrusion'),next);
  assert.ok(finished.story55.completed.intrusion);
  const custom=day13('22:26');
- custom.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ custom.story55.config.scenes.intrusion=[...next.slice(0,19),...next.slice(20)];
  custom.story55.config.scenes.intrusion[16]=['ouroboros','作者自訂'];
  tickStory55(custom);
  assert.equal(sceneLines(custom,'intrusion').length,21);
+});
+
+test('saved D13 22-line call reorders only two authored turns and migrates approved audio cache',()=>{
+ const s=day13('22:26'),correct=structuredClone(sceneLines(s,'intrusion'));
+ s.story55.config.scenes.intrusion=[...correct.slice(0,19),correct[20],correct[19],correct[21]];
+ s.story55.config.voiceAssets.intrusion[20]='/assets/story55/d13/call-20.mp3';
+ s.story55.config.voiceClipIds={intrusion:{20:'approved-recording'}};
+ s.story55.config.voiceSettings={intrusion:{20:{speed:0.94}}};
+ tickStory55(s);
+ assert.deepEqual(sceneLines(s,'intrusion'),correct);
+ assert.equal(s.story55.config.voiceAssets.intrusion[19],'/assets/story55/d13/call-20.mp3');
+ assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
+ assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
+ assert.equal(s.story55.config.voiceSettings.intrusion[19].speed,0.94);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+});
+test('previously delivered D13 system/voice messages reorder without touching players or duplicating statuses',()=>{
+ const s=day13('22:26'),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ const correct=structuredClone(sceneLines(s,'intrusion'));
+ s.story55.config.scenes.intrusion=[...correct.slice(0,19),correct[20],correct[19],correct[21]];
+ s.story55.d13TrackingOrderRevision=undefined;
+ const oldStatus={id:'s55-intrusion-v2-19',from:'system',kind:'terminal-status',text:'（追蹤失敗！錯誤代碼：ERR-4037）'};
+ const oldVoice={id:'s55-intrusion-v2-20',from:'s55-ouroboros',kind:'call-avatar',text:''};
+ const player={id:'user-typed',from:'me',kind:'text',text:'還在嗎'};
+ chat.messages.push(oldStatus,oldVoice,player);
+ tickStory55(s);
+ assert.equal(chat.messages.at(-3),oldVoice);
+ assert.equal(chat.messages.at(-2),oldStatus);
+ assert.deepEqual(chat.messages.slice(-3).map(m=>m.id),['s55-intrusion-v2-19','s55-intrusion-v2-20','user-typed']);
+ assert.equal(chat.messages.at(-1).text,'還在嗎');
+ const snapshot=structuredClone(chat.messages);
+ tickStory55(s);assert.deepEqual(chat.messages,snapshot);
+ const partial=day13('22:26'),c=partial.content.conversations.mirage.find(x=>x.id==='s55-ouroboros');
+ partial.story55.d13TrackingOrderRevision=undefined;
+ partial.story55.scenes.intrusion={index:20,accepted:true};
+ c.messages.push({id:'s55-intrusion-v2-19',from:'system',kind:'terminal-status',text:'（追蹤失敗！錯誤代碼：ERR-4037）'});
+ tickStory55(partial);
+ assert.equal(partial.story55.scenes.intrusion.index,19);
+ assert.equal(c.messages.some(m=>m.id==='s55-intrusion-v2-19'),false);
 });
