@@ -256,3 +256,35 @@ test('workstation group reminder requires the actual build-ready flag and comple
  s.story55.d02.wechat.newpc={completed:true};s.story55.d02.buildCelebrated=true;
  assert.equal(find(s,'d02-newpc-chat').done,true);
 });
+
+test('D06 celebration reminds only when wallet completion unlocks the real group draft',()=>{
+ const s=at(6,'15:16');
+ assert.equal(find(s,'d06-celebration-chat'),undefined);
+ s.story55.completed.wallet={day:6,clock:'15:16'};
+ const item=find(s,'d06-celebration-chat');
+ assert.equal(item.title,'回群裡發消息');
+ assert.deepEqual(item.link,{appId:'wechat',route:'/chat/group',params:{}});
+ assert.match(reminderWidget(s),/回群裡發消息/);
+ const opened=[],store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(openReminderTask(item.id,{store,router:{open:link=>opened.push(link)}}),true);
+ assert.deepEqual(opened,[item.link]);assert.equal(find(s,'d06-celebration-chat').done,false);
+ s.story55.wishes={records:{},story:{started:true,delivered:[]}};
+ assert.equal(find(s,'d06-celebration-chat').done,false);
+ s.story55.wishes.story.delivered.push('d06-celebrate-11');
+ assert.equal(find(s,'d06-celebration-chat').done,true);
+ assert.doesNotMatch(reminderWidget(s),/回群裡發消息/);
+ s.day=7;assert.equal(find(s,'d06-celebration-chat'),undefined);
+});
+test('D06 dinner reminder follows payment and the actual booking confirmation',()=>{
+ const s=at(6,'15:16');
+ s.story55.wishes={records:{'d06-dinner':{status:'saved'}},story:{delivered:[]}};
+ assert.equal(find(s,'d06-dinner-chat'),undefined);
+ s.story55.wishes.records['d06-dinner'].purchasedDay=6;
+ const item=find(s,'d06-dinner-chat');
+ assert.equal(item.title,'回群裡確認聚餐');
+ assert.equal(item.link.route,'/chat/group');
+ s.story55.wishes.records['d06-dinner'].confirmedByXimeng=true;
+ assert.equal(find(s,'d06-dinner-chat').done,false);
+ s.story55.wishes.story.delivered.push('wish-dinner-booking-01');
+ assert.equal(find(s,'d06-dinner-chat').done,true);
+});
