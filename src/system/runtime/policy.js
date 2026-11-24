@@ -38,7 +38,9 @@ export function taiReplyTriggered(s,now=Date.now()){
     now>=pendingAt&&now-pendingAt<120000)return true;
  // NoApp already persists this on the actual AI reply path; an offline or
  // deferred outgoing message has no taiReadAt and must not trigger slowdown.
- if(lastNoapp?.from==='me'&&lastNoapp.taiPending&&lastNoapp.taiReadAt&&
+ const noappPendingAt=Number(lastNoapp?.taiReadAt);
+ if(lastNoapp?.from==='me'&&lastNoapp.taiPending&&Number.isFinite(noappPendingAt)&&
+    noappPendingAt>0&&now>=noappPendingAt&&now-noappPendingAt<120000&&
     !lastNoapp.taiHandledAction&&!lastNoapp.taiDeferredGameMinute&&!lastNoapp.taiDeferredUntil)
   return true;
  return false;
