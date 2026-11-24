@@ -45,13 +45,14 @@ test('NoApp list has no back/home buttons but chat retains call, AI setup and co
  const chat=appFrame(s,{manifest},render({store},s.nav.current));
  for(const action of ['tai-outgoing','tai-api-settings','tai-contact-more'])assert.match(chat,new RegExp('data-action="'+action+'"'));
 });
-test('ordinary call plan includes multiple thoughts, preserves short exceptions and closes only when requested',()=>{
+test('ordinary call plan no longer forces extra voice clips or DeepSeek continuation',()=>{
  const plan=planCallSpeech({text:'你最近研究的东西有意思吗？',history:[{role:'user',content:'你好'},{role:'user',content:'你在忙吗？'},{role:'user',content:'你最近研究的东西有意思吗？'}]});
- assert.equal(plan.minSegments,2);assert.equal(plan.smallTalk,true);
- assert.equal(needsCallContinuation([{text:'還行。'}],plan),true);
+ assert.equal(plan.minSegments,1);assert.equal(plan.smallTalk,true);
+ assert.equal(needsCallContinuation([{text:'還行。'}],plan),false);
  assert.equal(needsCallContinuation([{text:'見面的時候再說。'}],plan),false);
  assert.equal(planCallSpeech({text:'嗯'}).minSegments,1);
- assert.equal(planCallSpeech({text:'多說幾句'}).minSegments,3);
+ assert.equal(planCallSpeech({text:'多說幾句'}).minSegments,1);
+ assert.ok(planCallSpeech({text:'多說幾句'}).maxSegments>=3);
  const near=planCallSpeech({text:'你怎麼看？',remaining:3});
  assert.equal(near.close,false);
  const farewell=finalizeCallSegments([{text:'我聽見了。'},{text:'這個晚點談。'}],{close:true,maxSegments:1});

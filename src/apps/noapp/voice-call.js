@@ -41,7 +41,7 @@ import {createGestureAudio} from '../../services/voice/playback.js';
 import {composeCallSpeech} from '../../services/voice/call-speech.js';
 import {taiMomentumPrompt} from '../../services/ai/conversation-momentum-v11.js';
 import {dedupeTaiTurnEntries} from '../../services/ai/conversation-shape-v12.js';
-import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,expandCallSegments,planCallSpeech,needsCallContinuation,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
+import {selectCallSegments,isQuietCallRequest,nextNaturalCallIdleEvent,planCallSpeech,callAnswerGuidance,correctCallYesterdayReference,finalizeCallSegments,outgoingCallOpening,incomingCallOpening,callPersonaGuidance,taiCallReplyStatus} from './call-engine-v2.js';
 import {scriptedCallIsComplete} from './scripted-call-progress.js';
 import {taiShouldHangUpCall,taiCallFarewellIntent} from './call-hangup-intent.js';
 import {callFailureLine} from '../../services/ai/voice-delivery.js';
@@ -378,11 +378,12 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   const moreSpeech=plan.explicit&&!shouldClose&&!opening&&!event;
   const speechDepth='【本轮通话表达计划】'+JSON.stringify({min_segments:plan.minSegments,max_segments:plan.maxSegments,mode:'voice'})+'。'+
    (shouldClose?'本轮结束电话。可先回应眼前的话，然后亲口说自然告别；最后一段必须是告别，之后程序实际挂断，不提额限。':
-    'messages 数组按计划分开输出完整的口语意群，每段1至3句；先直接回应，再顺着真实话题补充想法、细节、下一句或自然转题。不要把一句话拆成碎片或同义重复。简单招呼、明确拒绝、私事界线、真正的简短回答可以短；其余有内容的对话不要仅输出一个短句。')+
+    '优先一段完整、有信息量的口语回答；确实有不同意思才分多段。段数只是上限，不是必须完成的指标。不重复拒绝、绕圈或换词说同一件事。简单招呼和明确边界可以短，涉及原因、安排、关系时要正面回应，给出已知事实及有意义的想法。')+
    (plan.smallTalk&&!shouldClose?' 熙蒙已经连续问了几轮短问题。判断这些话是否有意义；如果他只是想闲聊，你可以接着聊、自然逗他一句，或者直接询问还有什么正事；若现在确实忙或不想继续，说明一句并选择 hang_up，不需要迎合每一个无意义的问题。':'');
   const currentState=ctx.store.get(),currentLife=taiLife(currentState);
+  const answerFocus=!opening&&!event&&!presetText&&!call.scripted?callAnswerGuidance(text,history):'';
   const scene=taiLifeContext(currentState)+' '+socialEnergyPrompt(currentState,'call',{connected:true})+' '+callScene({opening,event,direction:call.direction,reason:call.reason})+
-   ' 【NoApp V3｜真人电话】这轮只调用一次台词生成。你现在仍在真实通话里。'+speechDepth+
+   ' 【NoApp V3｜真人电话】這輪只生成一次完整答覆，不為湊段數再次要求 AI 補話。你現在仍在真實通話裡。'+speechDepth+answerFocus+
    callPersonaGuidance(currentLife)+
    ' 通话开场不喊对方名字；需要称呼时只叫 nya（奈亚），不要念熙蒙、陈熙蒙。允许丰富而自然的几段说话，绝不为数量补写废话，也不留下逗号结尾的残句。'+
    (call.quietUntil>Date.now()?' 熙蒙要求安静陪伴，回答后保持安静，不催他说话。':'')+
@@ -424,30 +425,21 @@ async function generateTurn(ctx,{opening=false,text='',event='',endAfter=false,p
   let raw;
   try{raw=event==='unheard'&&!shouldClose?[unheardReply(sessionId+':'+generationId)]:parse(data);}
   catch(error){if(endAfter)raw=[];else throw error;}
+  // If the player explicitly means yesterday, stop a generated "剛才說過"
+  // from rewriting that older event as though it just happened on this call.
+  // This affects free AI replies only; fixed-story recordings stay untouched.
+  if(!opening&&!event&&!presetText&&!call.scripted&&!call.d55Story)raw=correctCallYesterdayReference(raw,text);
   const goodbyeAt=raw.findIndex(r=>taiCallFarewellIntent(r.text)==='end');
   if(goodbyeAt>=0){raw=raw.slice(0,goodbyeAt+1);endAfter=true;}
   else if(!shouldClose&&raw.some(r=>taiCallFarewellIntent(r.text)==='warn'))endAfter=false;
-  const select=entries=>selectCallSegments(!romanceBeat&&!endAfter&&!opening&&!event&&plan.minSegments>1?expandCallSegments(entries):entries,{
+  const select=entries=>selectCallSegments(entries,{
    maxSegments:endAfter?Math.min(2,plan.maxSegments):plan.maxSegments,
    dedupe:behavior.callDedupe,
    recent:call.turns.filter(t=>t.role==='assistant').slice(-2).map(t=>t.content)
   });
   let {segments,blocked}=select(raw);
-  if(!endAfter&&!presetText&&!memoryPreset&&!romanceBeat&&energy.stage==='normal'&&!raw.some(r=>taiCallFarewellIntent(r.text)==='warn')&&needsCallContinuation(segments,plan)){
-   // Retain the first response; one bounded continuation for meaningful speech.
-   try{
-    const revised=await askTai({...request,scene:scene+' 【多段语音补足】已经拟好且会保留的台词：'+segments.map(r=>r.text).join(' / ')+'。只生成接下来'+(plan.minSegments-segments.length)+'至'+(plan.maxSegments-segments.length)+'段不同且有实质内容的 messages，不要重述已有台词。若确实没有更多内容、想安静或不愿披露私事，可选择 listen；若准备挂断，请输出自然告别并选择 hang_up。'});
-    if(!current())return;
-    const nextDecision=readDecision(revised);
-    const revisedRaw=parse(revised),next=select(revisedRaw);
-    if(nextDecision?.action==='hang_up'||validateCallReplyAction(revised,{callConnected:current(),approvedDecision:nextDecision})||revisedRaw.some(r=>taiCallFarewellIntent(r.text)==='end')){
-     const accumulated=select([...segments,...revisedRaw]);data=revised;decision=nextDecision;endAfter=true;raw=[...raw,...revisedRaw];({segments,blocked}=accumulated);
-    }else if(nextDecision?.action!=='listen'&&next.segments.length){
-     const initial=moreSpeech&&segments.length===1&&/^(?:好|嗯|行|可以)[。！？!?]*$/.test(segments[0].text)?[]:segments;
-     const accumulated=select([...initial,...revisedRaw]);if(accumulated.segments.length>segments.length){raw=[...raw,...revisedRaw];({segments,blocked}=accumulated);}
-    }
-   }catch{}
-  }
+  // The initial model result is final. Do not add a second model round-trip
+  // merely to meet a segment quota before the first MiniMax request begins.
   if(!current())return;
   if(decision)rememberTaiMood(ctx.store,decision,turnId,{evidence:!opening&&!event?text:''});
   if(endAfter){
