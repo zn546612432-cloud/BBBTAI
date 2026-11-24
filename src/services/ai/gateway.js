@@ -6,6 +6,7 @@ import {taiTimeContradiction} from './life-context.js';
 import {readableTaiVoiceText,unpackTaiReply} from './format.js';
 import {hasBannedTaiConstruction,hasTaiDirectAffectionDeclaration,XITAI_STYLE_REPAIR} from './expression-style.js';
 import {taiRomanticViolations,taiRelationshipInstruction} from './relationship-director.js';
+import {isExactApprovedNoAppCinematicReply} from '../../apps/noapp/features/cinematic-dialogue/index.js';
 import {applyTaiPrivacyDecision,hasPrematureTaiDisclosure} from './conversation-momentum-v11.js';
 import {deepseekModelOptions,normalizeDeepSeekModel,normalizeAiParameters,TEAR_DEEPSEEK_MODEL,XITAI_MODEL_PRESET,XITAI_MODEL_PRESET_REVISION} from './model-config.js';
 import {explainMinimaxFailure,minimaxUnavailableOnGithubPages} from '../voice/minimax-diagnostics.js';
@@ -91,7 +92,8 @@ export async function askTai(request){
  const timeError=taiTimeContradiction(entries.map(e=>e.text),request);
  if(request.directAffection&&!firstRomance.length&&!timeError)return {...first,directAffectionAccepted:hasTaiDirectAffectionDeclaration(entries)};
  const texts=entries.map(e=>e.text),privateLeak=hasPrematureTaiDisclosure(texts,request);
- if(!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))&&!privateLeak&&!firstRomance.length&&!timeError)return first;
+ const approvedCinematic=isExactApprovedNoAppCinematicReply(request,entries);
+ if((approvedCinematic||!hasBannedTaiConstruction(texts)&&!hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text)))&&!privateLeak&&!firstRomance.length&&!timeError)return first;
  // Only the offending generation gets one corrective attempt. Preserve the
  // original approved action. A rejected first draft must never leak on retry failure.
  try{
@@ -101,7 +103,7 @@ export async function askTai(request){
   const corrected=await askTaiOnce({...request,scene:timeRepair+privacyRepair+romanceRepair+XITAI_STYLE_REPAIR+'\n'+(request.scene||'')});
   const lines=unpackTaiReply(corrected,request.outputMode==='call'?'call':request.channel);
   const revised=lines.map(e=>e.text);
-  if(!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text))&&!hasPrematureTaiDisclosure(revised,request)&&!taiRomanticViolations(request.relationshipPlan,lines).length&&!taiTimeContradiction(revised,request))return request.directAffection?{...corrected,directAffectionAccepted:hasTaiDirectAffectionDeclaration(lines)}:corrected;
+  if((isExactApprovedNoAppCinematicReply(request,lines)||!hasBannedTaiConstruction(revised)&&!hasBannedTaiConstruction(lines.map(e=>e.speechText||e.text)))&&!hasPrematureTaiDisclosure(revised,request)&&!taiRomanticViolations(request.relationshipPlan,lines).length&&!taiTimeContradiction(revised,request))return request.directAffection?{...corrected,directAffectionAccepted:hasTaiDirectAffectionDeclaration(lines)}:corrected;
  }catch{}
  // A mistaken early revelation cannot be unsent. In the exceptional case
  // both drafts leak, use the author's own privacy-boundary line, not a fact.
@@ -111,7 +113,7 @@ export async function askTai(request){
   return {...first,text:JSON.stringify({messages:[{text:'等到我們見面的時候，說不定我會跟你說。',mode,tone:'neutral'}]})};
  }
  if(firstRomance.length)throw Object.assign(Error('Unapproved Tai romantic declaration blocked'),{code:'TAI_ROMANCE_GATE'});
- if(hasBannedTaiConstruction(texts)||hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text)))throw Object.assign(Error('Blocked Tai dialogue after correction'),{code:'TAI_STYLE'});
+ if(!approvedCinematic&&(hasBannedTaiConstruction(texts)||hasBannedTaiConstruction(entries.map(e=>e.speechText||e.text))))throw Object.assign(Error('Blocked Tai dialogue after correction'),{code:'TAI_STYLE'});
  return first;
 }
 async function askTaiOnce({channel,day,messages,profile,memories,outputMode='text',scene='',relationshipContext='',behavior,recognized,storyVersion,approvedDecision=null,turnPlan=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,callActive=false,relationshipPlan=null,macauClock='',londonClock=''}){
