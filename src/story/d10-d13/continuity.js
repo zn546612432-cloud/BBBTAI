@@ -1,6 +1,7 @@
 // Exact-match D10–D13 migration. No new scheduler, no rewriting player speech.
 import {D10_GROUP} from '../d10/dialogue.js';
-import {seedAuthoredNotes} from '../../services/story55/authored-notes.js';
+import {MEETING_NOTE,D11_DIARY} from '../d11/diary.js';
+export {MEETING_NOTE} from '../d11/diary.js';
 export const OLD_D10={"shopping-list":["下午去超市，有没有要带的","洗衣液快没了","五号电池","薯片","什么口味","都行，别芥末"],"noodles":["中午有人吃面吗","等会儿再说","昨天那袋咖啡豆谁开的","我，剩的都封好了"],"heat":["今天太阳是真的狠"],"supermarket":["超市排队排了半小时","我们还在停车场","马上好了"],"carry":["到楼下了，谁下来搬东西","我下去","薯片呢","你先搬"],"dinner":["汤在炉上，回来自己盛"],"night":["明天终于不用买东西了"]};
 export const OLD_RETURN=[["wang","起床了没有？干爹回来了，今天回据点一趟。"],["me","真的？我马上过去。"],["father","好好干。"]];
 export const OLD_MOVE=[["wang","先把自己的东西搬回来。胡枫晚上到，我去机场接他。"],["xin","谁把这屋子的插座全占了，我手机快没电了。"],["me","先别动那排，那是我的服务器。"]];
@@ -9,12 +10,7 @@ export const NEW_MOVE=[["wang", "今天先把舊大屋收拾出來，常用的�
 export const OLD_INTRUSION_LINE="你的日程里写着汪杰和他的电子钱包，我想我们有必要把接下来的事情谈清楚。";
 export const NEW_INTRUSION_LINE="你手机里的消息比你想的多。看来你要做的事，也不只那十枚比特币。";
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-export const MEETING_NOTE={id:'xm-note-d11-meeting',day:11,at:'22:00',title:'5/29 · 备忘',
- text:['今晚去了老地方。胡枫还在韩国，明晚落地。',
- '干爹前天回了澳门，住美景大厦。今晚烧烤时问起大家最近在忙什么。',
- '我提了汪杰那份五亿美元电子钱包的线索。现在还不能把话说满。',
- '三个月筹三千万。干爹要看我们做出的东西，不是听我吹。',
- '明天整理旧据点，哥晚上去机场接胡枫。'].join('\n')};
+
 const archive=(s,m)=>{(s.story55.contentArchives??=[]).push({
  id:m.id,text:m.text,from:m.from,day:m.day,time:m.time,sentDate:m.sentDate,
  original:structuredClone(m),revision:'d10-d13-20261108'
@@ -96,6 +92,32 @@ function correctD10Pickup(s){
  for(const n of s.notifications||[])if(n.messageId===m.id&&n.conversationId==='group'&&n.body===oldText)n.body=newText;
  return true;
 }
+// Existing saves may have already received the D11 meeting as an authored
+// Notes item. Transfer it to the existing journal override only when the
+// player actually changed its text/title. Never overwrite an edited diary.
+// Preserve the entire original note in story migration history for recovery.
+function migrateD11MeetingNoteToDiary(s){
+ const list=s.content?.notes;
+ if(!Array.isArray(list)||s.day<MEETING_NOTE.day)return false;
+ const index=list.findIndex(note=>note?.id===MEETING_NOTE.id&&
+  note.authored===true&&note.storyContent===true);
+ if(index<0)return false; // Unrelated player-created notes are not ours.
+ const note=list[index];
+ const customized=note.text!==MEETING_NOTE.text||note.title!==MEETING_NOTE.title;
+ s.story55.d11MeetingNoteArchive??=structuredClone(note);
+ if(customized){
+  s.content.storyDiary??={};
+  if(!Object.hasOwn(s.content.storyDiary,'11')){
+   s.content.storyDiary['11']={
+    title:note.title===MEETING_NOTE.title?D11_DIARY.title:String(note.title||''),
+    body:String(note.text||''),
+    migratedFromNote:MEETING_NOTE.id
+   };
+  }
+ }
+ list.splice(index,1);
+ return true;
+}
 export function syncD10D13Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
@@ -134,6 +156,6 @@ export function syncD10D13Content(s){
  }
  changed=correctD10Pickup(s)||changed;
  changed=correctMigratedD10Speakers(s)||changed;
- if(s.story55.completed?.return)changed=seedAuthoredNotes(s,[MEETING_NOTE])||changed;
+ changed=migrateD11MeetingNoteToDiary(s)||changed;
  return changed;
 }
