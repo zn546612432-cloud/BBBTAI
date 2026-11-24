@@ -60,6 +60,13 @@ export function sendD06DinnerReply(store,id,text,now=Date.now()){
 export function syncWishReminders(s){
  if(!perDay(s))return false;
  let changed=false;
+ // Remove retired D06 bubbles in both the shared queue and existing saves.
+ const retired=new Set(['d06-celebrate-06','d06-celebrate-11']);
+ const group=s.content?.conversations?.wechat?.find(c=>c.id==='group');
+ if(group?.messages?.some(m=>retired.has(m.id))){group.messages=group.messages.filter(m=>!retired.has(m.id));changed=true;}
+ if(s.notifications?.some(n=>retired.has(n.messageId))){s.notifications=s.notifications.filter(n=>!retired.has(n.messageId));changed=true;}
+ const queued=s.story55?.wishes?.story;
+ if(queued?.lines?.some(m=>retired.has(m.id))){queued.lines=queued.lines.filter(m=>!retired.has(m.id));queued.nextAt=0;changed=true;}
  // Remove retired Hu Feng wish UI even from previously paid saves.
  // Never erase an existing bank purchase or transaction history.
  const oldCount=s.content?.reminders?.length||0;

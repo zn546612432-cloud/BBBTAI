@@ -161,3 +161,16 @@
  .tel-standard-action>span{width:68px;height:68px}
 }
 @media(prefers-reduced-motion:reduce){.tel-standard-voice i{animation:none}}
+
+/* One system-phone surface: bypass the centered desktop mockup for incoming calls. */
+body:has(#phone .tel-standard-call){display:block;background:#151923}
+#phone:has(.tel-standard-call){
+ position:fixed;inset:0;width:100vw;width:100dvw;height:100vh;height:100dvh;
+ min-height:0;max-width:none;margin:0;border-radius:0;box-shadow:none;
+}
+#phone:has(.tel-standard-call) #day-transition-layer{inset:0}
+.tel-standard-call .tel-standard-identity{margin-top:clamp(98px,15dvh,160px)}
+.tel-standard-call .tel-standard-identity h1{font-size:clamp(36px,10vw,48px);font-weight:400;letter-spacing:-1.2px}
+.tel-standard-call .tel-standard-bottom{padding-bottom:clamp(27px,8dvh,85px)}
+.tel-standard-call .tel-standard-actions{gap:clamp(60px,16vw,132px)}
+@media(max-height:680px){.tel-standard-call .tel-standard-identity{margin-top:65px}.tel-standard-call .tel-standard-bottom{padding-bottom:15px}}

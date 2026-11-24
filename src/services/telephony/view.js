@@ -21,8 +21,7 @@ function standardPhoneView(c,duration){
   '<div class="tel-standard-backdrop" aria-hidden="true"></div>'+
   (connected?'<button type="button" class="tel-standard-back" data-action="tel-chat" aria-label="'+label+'">'+backChevron+'<span>'+label+'</span></button>':'')+
   '<header class="tel-standard-identity">'+
-   (!connected?'<span class="tel-standard-overline">'+(incoming?'手機來電':'撥號中')+'</span>':'')+
-   '<h1>'+name+'</h1><p>'+(connected?'通話中 · '+duration:incoming?'手機':'正在撥號…')+'</p>'+wave+
+   '<h1>'+name+'</h1>'+(connected?'<p>'+duration+'</p>':incoming?'':'<p>正在撥號…</p>')+wave+
   '</header>'+
   '<footer class="tel-standard-bottom">'+
    (c.resumeRequired?'<button type="button" class="tel-call-resume" data-action="tel-resume">繼續通話</button>':'')+

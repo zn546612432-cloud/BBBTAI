@@ -229,6 +229,7 @@ function creditScene55(s,n){
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
  if(id==='recognition')return; // Recognition is one call record, not chat bubbles.
  const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
+ if(id==='intrusion'&&index>=8&&line[0]==='ouroboros')return; // Speech is already in the Phone call.
  if(id==='intrusion'&&line[0]==='system'&&(index===15||index===20)){
   appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:`s55-intrusion-v2-${index}`,from:'system',text:line[1],kind:'terminal-status',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   return;
