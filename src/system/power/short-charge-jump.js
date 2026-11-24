@@ -1,13 +1,13 @@
 import {nextStoryEventClock55} from '../../services/story55/state.js';
 import {nextAuthoredChatBoundary} from '../../services/messaging/lifecycle/registry.js';
-import {isFriendsTest} from '../runtime/friends-test.js';
 import {advanceGameMinutes,clockMinutes} from '../time/clock.js';
 import {beginShortCharge,endShortCharge,isShortCharging,tickShortChargeBattery,SHORT_CHARGE_FILL_MS} from './battery.js';
+import {tickD01WeChat} from '../../story/d01/wechat.js';
 import {tickStory55} from '../../services/story55/runtime.js';
 import {deliverMissedScheduled} from '../../story/presets/engine.js';
 
 // One explicit cheat action; never assign the game date or clock.
-export function jumpShortChargeToNextEvent(s,{includeAuthoredChats=isFriendsTest}={}){
+export function jumpShortChargeToNextEvent(s,{includeAuthoredChats=true}={}){
  if(s.editor?.cheatMode!==true)return {ok:false,reason:'disabled'};
  const chat=includeAuthoredChats?nextAuthoredChatBoundary(s):null;
  if(chat?.kind==='reply')return {ok:false,reason:'pending-reply',channel:chat.channel,conversationId:chat.conversationId};
@@ -22,6 +22,7 @@ export function jumpShortChargeToNextEvent(s,{includeAuthoredChats=isFriendsTest
  tickShortChargeBattery(s,SHORT_CHARGE_FILL_MS);
  endShortCharge(s);
  tickStory55(s);
+ if(s.day===1)tickD01WeChat(s);
  deliverMissedScheduled(s,from);
  return {ok:true,clock:s.clock,event:outcome.event};
 }
