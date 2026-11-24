@@ -3,6 +3,7 @@ import {getDailyWeather,setWeatherOverride} from '../../services/weather/world.j
 import {GHOST_CAR_DIARY} from '../d35-d40/diary.js';
 import {D44_DIARY} from '../d43-d44/definition.js';
 import {D45_DIARY} from '../d45/definition.js';
+import {D11_DIARY} from '../d11/diary.js';
 import {GHOST_CAR_MODEL_FILES} from '../d35-d40/progress.js';
 import {modelDelivered} from '../../services/story55/ghost-car.js';
 // Game D01 is 2025-05-19. [[label|reminder title]] marks optional reminders.
@@ -11,6 +12,7 @@ export const DEFAULT_DIARY_ENTRIES={
   ...GHOST_CAR_DIARY,
   44:D44_DIARY,
   45:D45_DIARY,
+  11:D11_DIARY,
   25:{title:'銜尾蛇之淚',afterNode:'d25-survey',body:'終於把程序跑起來了。\n\n阿威送來了第一批資料。估計這幾天機房都得開著。'},
   26:{title:'維保記錄',afterNode:'d26-records',body:'銀行今年三月換過安保公司。\n\n阿楓帶回來了新的維保記錄，重新調整研究方向。\n\n讓它繼續跑吧。'},
   27:{title:'四年',afterNode:'d27-ouroboros',body:'今天問了 Ouroboros，才知道他前前後後花了四年才寫完這個程序。\n\n我有些想不通。他明明知道我一直想贏過他，怎麼還肯把自己的東西交給我研究？\n\n換作是我，肯定捨不得。\n\n不過，既然給了我，就別指望我手下留情了。'},
@@ -83,6 +85,7 @@ export function entryFor(s,day){
  if(!base)return null;
  // Approved authored entries appear only when their source scene has happened.
  // User-edited diary entries remain independent and visible as written.
+ if(authored?.availableAt&&(s.day<day||s.day===day&&s.clock<authored.availableAt))return null;
  if(!extra&&authored?.afterNode&&!Object.hasOwn(s.story55?.completed||{},authored.afterNode))return null;
  if(!extra&&authored?.afterFact&&!diaryFacts[authored.afterFact]?.(s))return null;
  const authoredChat=s.story55?.authoredDays?.['d'+String(day).padStart(2,'0')]?.[authored?.afterChat];
