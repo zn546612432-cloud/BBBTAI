@@ -9,7 +9,7 @@ export function blocksAnonymousMirageInput(s,id,text){
  // bypass the same pre-recognition plot gate as the Chinese name.
  const value=String(text||'').normalize('NFKD').toLowerCase()
   .replace(/[\p{M}\s\p{P}\p{Cf}]/gu,'');
- const name=/(?:xi[1-4]?tai[1-4]?|[熙希曦羲惜西夕溪晰昔喜戲戏細细吸][泰太台臺胎汰態态])/;
+ const name=/(?:xi[1-4]?tai[1-4]?|[熙希曦羲惜西夕溪晰昔喜戲戏細细吸奚錫锡稀嘻犀嬉熄習习璽玺][泰太台臺胎汰態态](?!平洋))/;
  return name.test(value)||/三胞胎/.test(value)||
   /我是你(?:的)?(?:親|亲|二|大)?(?:哥哥?|兄長|兄长|兄弟|弟弟)/.test(value)||
   /你是我(?:的)?(?:親|亲)?(?:弟弟?|兄弟)/.test(value)||
