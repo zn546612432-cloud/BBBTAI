@@ -77,13 +77,14 @@ test('D13 pure-green overlay has no narration, call icons are SVG, island blinks
 
 test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not a narrator',()=>{
  const s=day13('22:26');
- assert.equal(sceneLines(s,'intrusion')[20][1].endsWith('晚安，nya，或者我該叫你，熙蒙……'),true);
+ assert.equal(sceneLines(s,'intrusion')[21][1].endsWith('晚安，nya，或者我該叫你，熙蒙……'),true);
  appendSceneMessage55(s,'intrusion',8);
  appendSceneMessage55(s,'intrusion',15);
  appendSceneMessage55(s,'intrusion',19);
  appendSceneMessage55(s,'intrusion',20);
+ appendSceneMessage55(s,'intrusion',21);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
- for(const i of [8,20]){
+ for(const i of [8,20,21]){
   const m=chat.messages.find(x=>x.id==='s55-intrusion-v2-'+i);
   assert.equal(m.kind,'call-avatar');assert.equal(m.text,'');
  }
@@ -251,4 +252,43 @@ test('D13 evening phone call releases long-charge to D14 even when the independe
  s.dayChargeRemainingMs=0;tickStory55(s);
  s.clock='09:16';tickStory55(s);
  assert.ok(s.content.mail.some(m=>m.id==='code-mail'),'D14 KIRA mail is still reached');
+});
+
+test('D13 approved added voice plays before original farewell and tracking phrase stays untouched',()=>{
+ const s=day13('22:26'),lines=sceneLines(s,'intrusion');
+ assert.equal(lines.length,22);
+ assert.deepEqual(lines.slice(19),[
+  ['system','（追蹤失敗！錯誤代碼：ERR-4037）'],
+  ['ouroboros','好了，今天不逗你了。明天有份東西給你，記得看郵箱。'],
+  ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……']
+ ]);
+ assert.equal(lines[16][1],'別急著追蹤我。放心，我沒有惡意，只是想看看，大名鼎鼎的 nya 究竟能走多遠。');
+});
+test('D13 existing phone saves migrate only unmodified default and keep progress/preferences',()=>{
+ const s=day13('22:26'),next=structuredClone(sceneLines(s,'intrusion'));
+ s.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ s.story55.config.voiceAssets.intrusion[20]='/assets/story55/d13/call-20.mp3';
+ s.story55.config.voiceClipIds={intrusion:{20:'farewell-cached'}};
+ s.story55.config.voiceSettings={intrusion:{20:{speed:0.93}}};
+ s.story55.scenes.intrusion={index:20,accepted:true};
+ tickStory55(s);
+ assert.deepEqual(sceneLines(s,'intrusion'),next);
+ assert.equal(s.story55.scenes.intrusion.index,20);
+ assert.equal(s.story55.config.voiceAssets.intrusion[20],'/assets/story55/d13/call-20.mp3');
+ assert.equal(s.story55.config.voiceAssets.intrusion[21],'/assets/story55/d13/call-21.mp3');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
+ assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
+ assert.equal(s.story55.config.voiceSettings.intrusion[21].speed,0.93);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
+ const finished=day13('22:26');
+ finished.story55.completed.intrusion={day:13,clock:'22:26'};
+ finished.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ tickStory55(finished);
+ assert.deepEqual(sceneLines(finished,'intrusion'),next);
+ assert.ok(finished.story55.completed.intrusion);
+ const custom=day13('22:26');
+ custom.story55.config.scenes.intrusion=[...next.slice(0,20),...next.slice(21)];
+ custom.story55.config.scenes.intrusion[16]=['ouroboros','作者自訂'];
+ tickStory55(custom);
+ assert.equal(sceneLines(custom,'intrusion').length,21);
 });
