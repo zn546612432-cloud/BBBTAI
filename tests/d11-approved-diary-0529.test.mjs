@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
-import {MEETING_NOTE,D11_DIARY,retireLegacyD11MeetingNote} from '../src/story/d11/diary.js';
+import {MEETING_NOTE,D11_DIARY} from '../src/story/d11/diary.js';
 import {entryFor,diaryDate} from '../src/story/diary/entries.js';
 import {diaryView} from '../src/apps/schedule/features/diary/index.js';
 
@@ -49,29 +49,37 @@ test('D11 original 22:00 gate and the completed-return source scene stay unchang
  assert.ok(entryFor(s,11));
 });
 
-test('existing save: only the untouched generated 5/29 Notes summary is retired',()=>{
+test('existing save: untouched old 5/29 note is archived and retired, never overrides new diary',()=>{
  const s=ready();
  s.content.notes.push(oldNote(),{id:'personal',title:'我自己的記錄',text:'很久沒有一起吃燒烤了',actual:true});
- assert.equal(retireLegacyD11MeetingNote(s),true);
+ tickStory55(s);
  assert.equal(s.content.notes.some(n=>n.id==='xm-note-d11-meeting'),false);
  assert.equal(s.content.notes.some(n=>n.id==='personal'),true);
- assert.equal(retireLegacyD11MeetingNote(s),false);
+ assert.equal(s.story55.d11MeetingNoteArchive.text,oldText,'the old authored note is recoverable');
+ assert.equal(s.content.storyDiary?.['11'],undefined,'old default must not shadow approved prose');
+ assert.equal(entryFor(s,11).body,MEETING_NOTE.text);
  tickStory55(s);
- assert.equal(s.content.notes.some(n=>n.id==='xm-note-d11-meeting'),false,'the same legacy note must not respawn');
+ assert.equal(s.content.notes.some(n=>n.id==='xm-note-d11-meeting'),false,'migration must not respawn old note');
  assert.equal(entryFor(s,11).body,MEETING_NOTE.text);
 });
 
-test('player-edited Notes titles/bodies and saved diary overrides are never destroyed',()=>{
- for(const edited of [oldNote({text:oldText+'\n自己加的話'}),oldNote({title:'我的 5/29'}),oldNote({actual:true})]){
-  const s=ready();s.content.notes.push(edited);
-  assert.equal(retireLegacyD11MeetingNote(s),false);
+test('player edited D11 Notes migrate to diary with archived original; unrelated Notes and diary overrides survive',()=>{
+ for(const edited of [oldNote({text:oldText+'\n自己加的話'}),oldNote({title:'我的 5/29'})]){
+  const s=ready();
+  s.content.notes.push(edited,{id:'personal',title:'我自己的筆記',text:'不要刪掉',actual:true});
   tickStory55(s);
-  assert.deepEqual(s.content.notes.find(n=>n.id===edited.id),edited);
+  assert.equal(s.content.notes.some(n=>n.id===edited.id),false,'legacy entry moves to diary, not lost');
+  assert.equal(s.story55.d11MeetingNoteArchive.text,edited.text);
+  assert.equal(entryFor(s,11).body,edited.text);
+  assert.equal(entryFor(s,11).title,edited.title==='5/29 · 备忘'?'老地方':edited.title);
+  assert.equal(s.content.notes.find(n=>n.id==='personal')?.text,'不要刪掉');
  }
  const s=ready();
  s.content.storyDiary??={};
  s.content.storyDiary['11']={title:'我的版本',body:'我自己寫的日記'};
+ s.content.notes.push(oldNote({text:'備忘錄自己寫的文字'}));
  tickStory55(s);
  assert.equal(entryFor(s,11).body,'我自己寫的日記');
  assert.equal(entryFor(s,11).title,'我的版本');
+ assert.equal(s.story55.d11MeetingNoteArchive.text,'備忘錄自己寫的文字');
 });
