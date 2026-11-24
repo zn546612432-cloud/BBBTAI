@@ -297,6 +297,17 @@ test('settings shows actual synchronization state without changing the fictional
  const html=cloudSaveView(cloud.store);assert.match(html,/已同步/);assert.match(html,/綁定郵箱/);assert.match(html,/歷史備份/);
  assert.doesNotMatch(html,/player-a|access_token/);
 });
+test('pending email verification survives a page reload without persisting the email link',()=>{
+ const storage=memory();
+ const cloud={enabled:true,key:'phone',slot:1,status:{phase:'synced',player:{is_anonymous:true}}};
+ const first={storage,cloud,get:()=>state(1)};
+ storage.setItem('phone:email-verification:1',JSON.stringify({email:'test@example.com',type:'magiclink'}));
+ const reopened={storage,cloud,get:()=>state(1)};
+ assert.match(cloudSaveView(reopened),/複製完整連結/);
+ assert.match(cloudSaveView(reopened),/郵件連結或驗證碼/);
+ assert.doesNotMatch(storage.getItem('phone:email-verification:1'),/token|access_token/);
+ assert.match(cloudSaveView(first),/已有綁定郵箱？找回進度/);
+});
 test('manual sync reports an unconfirmed upload and then confirms a successful retry',async()=>{
  const store={get:()=>state(18),cloud:{enabled:true,revision:1,status:{phase:'offline',message:'雲端回應逾時'},flush:async()=>false}};
  const act=()=>new Promise(resolve=>{
