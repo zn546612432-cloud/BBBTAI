@@ -38,7 +38,7 @@ test('D53 reminder appears only two seconds after the fully completed call and d
  const n=s.notifications.find(n=>n.id==='s55-d53-isolde-deal-notice');
  assert.ok(n);assert.equal(n.body,'Isolde｜確認第二筆委託');
  assert.match(reminderWidget(s),/data-action="home-reminder-open"/);
- assert.match(reminderWidget(s),/Isolde｜確認第二筆委託/);
+ assert.match(reminderWidget(s),/與 Isolde 確認委託/);
  assert.match(listHome(s.content.reminders,''),/data-action="reminder-follow"/);
  assert.equal(toggleReminder(store,D53_REMINDER_ID),false,'story reminders cannot be checked off');
  let opened;
