@@ -3,7 +3,7 @@ export const DEFAULT_TAI_BEHAVIOR=Object.freeze({
  verbosity:'expansive',maxMessages:5,firstDelayMin:4,firstDelayMax:10,
  messageGapMin:3,messageGapMax:7,initiative:'natural',proactive:true,autonomousVoice:true,
  triggerClock:'real',idleMinutes:10,followupMinutes:5,cooldownMinutes:30,dailyLimit:3,
- callPause:1.7,callNudgeSeconds:10,callCloseSeconds:125,
+ callPause:1.7,callNudgeSeconds:10,callCloseSeconds:50,
   callMaxSegments:5,callQuietSeconds:240,callDedupe:true,callInterrupt:true,callIdleMode:'natural',callDetail:'detailed'
 });
 const limits={maxMessages:[1,6],firstDelayMin:[0,60],firstDelayMax:[0,120],
