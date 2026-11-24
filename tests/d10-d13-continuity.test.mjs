@@ -50,7 +50,7 @@ test('D11 Fu returns via Wang private native Send, without inventing Fu group bu
  const rendered=diaryView(s,{route:'/',params:{day:'11'}});
  assert.match(rendered,/DAY 11/);
  assert.match(rendered,/老地方/);
- assert.match(rendered,/五亿美元电子钱包/);
+ assert.match(rendered,/五億美元的比特幣/);
  assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false,'D11 scene must not seed a Notes item');
  s.day=12;s.clock='08:00';tickStory55(s);
  assert.equal(entryFor(s,11).body,MEETING_NOTE.text,'earlier journal entries persist');
