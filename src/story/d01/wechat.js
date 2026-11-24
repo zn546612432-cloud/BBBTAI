@@ -169,3 +169,21 @@ export function d01WeChatDue(s,now=Date.now()){
   ||b?.phase==='waiting'&&gameMinute(s)>=b.dueGameMinute
   ||b?.phase==='replySecond'&&now>=b.secondAt);
 }
+
+// Read-only adapter for the shared cheat event finder. D01 chats are initiated
+// by actual player messages, not by a fabricated scheduled opening.
+export function nextD01ChatBoundary(s){
+ if(!d01(s)||s.story55.d01?.nightAfterMidnight)return null;
+ const {group:g,brother:b}=s.story55.d01||{};
+ const item=(conversationId,kind,extra={})=>({channel:'wechat',conversationId,track:'D01',kind,...extra});
+ if(g?.started&&!g.completed&&!g.cancelled&&g.awaitingPlayer)return item(GROUP_ID,'reply');
+ if(g?.started&&!g.completed&&!g.cancelled&&g.dueAt!=null)return item(GROUP_ID,'delivering');
+ if(!b||b.phase==='cancelled'||b.phase==='done')return null;
+ if(b.helloAt&&!b.helloDelivered||b.phase==='replySecond')return item(BROTHER_ID,'delivering');
+ if(b.phase==='waiting'&&Number.isFinite(b.dueGameMinute)){
+  const m=b.dueGameMinute;
+  if(m<=gameMinute(s))return item(BROTHER_ID,'delivering');
+  if(m<1440)return item(BROTHER_ID,'upcoming',{minute:m,clock:String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')});
+ }
+ return null;
+}
