@@ -580,6 +580,15 @@ function taiRoutineCallDeparture(s){
  return taiCallDepartureWindow(taiLife(s));
 }
 
+async function boundedCallSystemAudio(task,ms){
+ let timer;
+ try{return await Promise.race([task,new Promise((_,reject)=>{
+  timer=setTimeout(()=>reject(Error('NoApp native call audio unavailable')),ms);
+  timer.unref?.();
+ })]);}
+ finally{clearTimeout(timer);}
+}
+
 // A native call event, not an AI-authored reply: use the exact shared MiniMax
 // speaker, report the words only after audio finishes, and never call DeepSeek.
 // If synthesis fails, save one matching text note in the existing NoApp
@@ -598,13 +607,13 @@ async function playNaturalCallSystemLine(ctx,kind){
  let spoken=false;
  try{
   const behavior=taiBehavior(ctx.store.get());
-  const voice=await synthesizeTaiVoice({
+  const voice=await boundedCallSystemAudio(synthesizeTaiVoice({
    text:composeCallSpeech([{text,tone:'neutral',mode:'voice'}],behavior),
    tone:'neutral',directed:true
-  },voicePreview,{store:ctx.store,kind:'call'});
+  },voicePreview,{store:ctx.store,kind:'call'}),16000);
   if(!current())return true;
   call.caption=text;call.lastSpeech=text;call.replyPhase='speaking';ctx.refresh?.();
-  const outcome=await playCallAudio(ctx,voice,sessionId,revision);
+  const outcome=await boundedCallSystemAudio(playCallAudio(ctx,voice,sessionId,revision),22000);
   if(!current())return true;
   if(outcome==='completed'){
    spoken=true;
