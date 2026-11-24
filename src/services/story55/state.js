@@ -63,8 +63,15 @@ export function pendingTimedStoryEvent(s){
  return timedStoryEvents(s).filter(n=>n.day===s.day&&!timedStoryEventComplete(s,n))
   .map(n=>({...n,minute:minuteOf(n.at)+(n.afterMidnight?1440:0)})).sort((a,b)=>a.minute-b.minute)[0]||null;
 }
+// D06's 10 BTC settlement is the fixed story checkpoint. Reuse the unified
+// time/charging gate; the existing wish queue delivers the eleven NPC replies
+// on real-time timers even while the game clock is stationary.
+export const d06WalletSettled=s=>isStory55(s)&&completed(s,'wallet')&&
+ !!s.content?.mirage?.transactions?.some(t=>t.id==='s55-wallet-10btc');
+export const d06CelebrationHold=s=>s.day===6&&d06WalletSettled(s)&&
+ !s.story55?.wishes?.story?.delivered?.includes('d06-celebrate-11');
 export function timedStoryPaused(s){
- if(recognitionCallDue(s))return true;
+ if(d06CelebrationHold(s)||recognitionCallDue(s))return true;
  const n=pendingTimedStoryEvent(s);if(n&&storyDayMinute(s)>=n.minute)return true;
  const active=s.story55?.activeScene;
  return !!active&&fixedSceneTimeline(nodeById(s,active))&&(s.story55.scenes?.[active]?.index||0)>0&&!completed(s,active)&&nodeStatus(s,active).state==='ready';
@@ -125,7 +132,7 @@ export function date55(day,start='2025-05-19'){
 export function story55ChargeGate(s){
  if(!isStory55(s))return null;
  if(s.day>=55)return 'death';
- if(d01Gate(s))return 'plot';
+ if(d01Gate(s)||d06CelebrationHold(s))return 'plot';
  if(pendingTimedStoryEvent(s))return 'plot';
  // Every day's LINK and explicit equipment payment must settle before
  // advancing; the existing overnight hold handles the 03:00 2% state.
