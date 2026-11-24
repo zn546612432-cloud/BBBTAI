@@ -162,7 +162,7 @@ test('old D13 chats migrate built-in group bubbles only, preserving player speec
   ['d13-evening-2','胡枫','我剛回來，先把收到的檔案過一遍']
  ];
  s.story55.d13GroupCopyRevision=undefined;
- for(const [id,from,text] of stale)group.messages.push({id,from,text,storyTag:'storyD13'});
+ for(const [id,from,text] of stale)group.messages.push({id,from,text,actual:true,storyD13:true});
  group.messages.push({id:'real-player-d13',from:'me',text:'我也想去',actual:true});
  s.notifications.push({id:'old-work-banner',conversationId:'group',messageId:'d13-work-0',body:stale[0][2]});
  s.notifications.push({id:'old-evening-banner',conversationId:'group',messageId:'d13-evening-0',body:stale[4][2]});
