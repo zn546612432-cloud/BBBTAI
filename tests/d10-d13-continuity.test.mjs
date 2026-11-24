@@ -10,6 +10,7 @@ import {PHONE_CHAT_TRACKS} from '../src/services/messaging/phone-story-scheduler
 import {D10_GROUP} from '../src/story/d10/dialogue.js';
 import {D11_GROUP} from '../src/story/d11/dialogue.js';
 import {D12_GROUP,D13_GROUP,d12Track} from '../src/story/d12-d13/wechat.js';
+import {tickPhoneStoryMessages} from '../src/services/messaging/phone-story-scheduler.js';
 import {d11Track} from '../src/story/d11/wechat.js';
 import {syncD10D13Content,OLD_D10,OLD_RETURN,OLD_MOVE,MEETING_NOTE,OLD_INTRUSION_LINE} from '../src/story/d10-d13/continuity.js';
 const phone=(day,clock='08:00')=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.unlocked=true;s.story55.completed.invitation={day:6,clock:'20:00'};tickStory55(s);return s;};
@@ -132,4 +133,47 @@ test('D10 revision-one saved chat repairs only the known stale NPC speaker, keep
  const archived=s.story55.contentArchives.find(x=>x.id===oldSpeaker.id&&x.original?.from==='熙旺');
  assert.ok(archived,'original NPC record is recoverable');
  assert.equal(syncD10D13Content(s),false,'migration runs once for an already repaired save');
+});
+
+test('D13 removes only 15:10 clothing scene and uses exact confirmed 18:35 group chat',()=>{
+ assert.equal(D13_GROUP.some(s=>s.id==='work'),false);
+ const evening=D13_GROUP.find(s=>s.id==='evening');
+ assert.equal(evening.at,'18:35');
+ assert.deepEqual(evening.lines.map(m=>[m.who,m.text]),[
+  ['熙旺','明天碰個頭，東西都帶上'],
+  ['阿威','我那份晚點發你'],
+  ['胡枫','我剛回來，讓我先看看']
+ ]);
+ const s=phone(13,'18:34'),group=thread(s,'group');
+ s.clock='18:35'; // start the actual D13 timer only after reaching the authored boundary
+ for(let i=0;i<20;i++)tickPhoneStoryMessages(s,10000+i*2500);
+ assert.deepEqual(group.messages.filter(m=>m.id?.startsWith('d13-evening-')).map(m=>m.text),evening.lines.map(m=>m.text));
+ assert.equal(group.messages.some(m=>m.id?.startsWith('d13-work-')),false);
+});
+test('old D13 chats migrate built-in group bubbles only, preserving player speech',()=>{
+ const s=phone(13,'14:00'),group=thread(s,'group');
+ s.clock='19:00';
+ const stale=[
+  ['d13-work-0','仔仔','那幾套衣服要再核一次尺寸'],
+  ['d13-work-1','阿威','我晚上過去試'],
+  ['d13-work-2','仔仔','別穿著跑，先讓我改完'],
+  ['d13-work-3','小辛','這話怎麼像特地說給我聽的'],
+  ['d13-evening-0','熙旺','各自手上的資料先整理好，明天碰面一起看'],
+  ['d13-evening-1','阿威','我那份晚上發你'],
+  ['d13-evening-2','胡枫','我剛回來，先把收到的檔案過一遍']
+ ];
+ s.story55.d13GroupCopyRevision=undefined;
+ for(const [id,from,text] of stale)group.messages.push({id,from,text,actual:true,storyD13:true});
+ group.messages.push({id:'real-player-d13',from:'me',text:'我也想去',actual:true});
+ s.notifications.push({id:'old-work-banner',conversationId:'group',messageId:'d13-work-0',body:stale[0][2]});
+ s.notifications.push({id:'old-evening-banner',conversationId:'group',messageId:'d13-evening-0',body:stale[4][2]});
+ tickPhoneStoryMessages(s,50000);
+ assert.equal(group.messages.some(m=>m.id?.startsWith('d13-work-')),false);
+ assert.deepEqual(group.messages.filter(m=>m.id?.startsWith('d13-evening-')).map(m=>m.text),D13_GROUP.find(x=>x.id==='evening').lines.map(x=>x.text));
+ assert.equal(group.messages.find(m=>m.id==='real-player-d13')?.text,'我也想去');
+ assert.equal(s.notifications.some(n=>n.id==='old-work-banner'),false);
+ assert.equal(s.notifications.find(n=>n.id==='old-evening-banner')?.body,'明天碰個頭，東西都帶上');
+ const once=structuredClone(group.messages);
+ tickPhoneStoryMessages(s,60000);
+ assert.deepEqual(group.messages,once);
 });

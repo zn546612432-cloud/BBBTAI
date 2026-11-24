@@ -71,3 +71,44 @@ export function reviseMissedComputerCopy(s){
  s.story55.missedComputerCopyRevision=1;
  return true;
 }
+
+const D13_REVISED_NPC=Object.freeze([
+ {id:'d13-evening-0',from:'熙旺',before:'各自手上的資料先整理好，明天碰面一起看',after:'明天碰個頭，東西都帶上'},
+ {id:'d13-evening-1',from:'阿威',before:'我那份晚上發你',after:'我那份晚點發你'},
+ {id:'d13-evening-2',from:'胡枫',before:'我剛回來，先把收到的檔案過一遍',after:'我剛回來，讓我先看看'}
+]);
+const D13_RETIRED_WORK=Object.freeze([
+ ['d13-work-0','仔仔','那幾套衣服要再核一次尺寸'],
+ ['d13-work-1','阿威','我晚上過去試'],
+ ['d13-work-2','仔仔','別穿著跑，先讓我改完'],
+ ['d13-work-3','小辛','這話怎麼像特地說給我聽的']
+]);
+/** Reconcile D13 author revisions in a saved game without touching player messages.
+ * This is a one-time source-copy migration, not a second conversation scheduler. */
+export function reviseD13GroupCopy(s){
+ if(s.story55?.version!==1||s.story55.d13GroupCopyRevision===1)return false;
+ const c=s.content?.conversations?.wechat?.find(x=>x.id==='group');
+ if(c){
+  const retired=new Set();
+  for(const message of c.messages||[]){
+   if(message.from==='me'||message.from==='熙蒙')continue; // NPC authored messages are also actual:true.
+   const old=D13_RETIRED_WORK.find(([id,from,body])=>message.id===id&&message.from===from&&message.text===body);
+   if(old){retired.add(message.id);continue;}
+   const replacement=D13_REVISED_NPC.find(line=>message.id===line.id&&message.from===line.from&&message.text===line.before);
+   if(replacement){
+    message.text=replacement.after;
+    for(const notice of s.notifications||[])
+     if(notice.messageId===message.id&&notice.conversationId==='group'&&notice.body===replacement.before)
+      notice.body=replacement.after;
+   }
+  }
+  if(retired.size){
+   c.messages=c.messages.filter(m=>!retired.has(m.id));
+   c.unread=Math.max(0,(Number(c.unread)||0)-retired.size);
+   s.notifications=(s.notifications||[]).filter(n=>!(n.conversationId==='group'&&retired.has(n.messageId)));
+   s.events=(s.events||[]).filter(e=>!(e.conversationId==='group'&&retired.has(e.messageId)));
+  }
+ }
+ s.story55.d13GroupCopyRevision=1;
+ return true;
+}

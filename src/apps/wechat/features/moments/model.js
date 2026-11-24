@@ -26,6 +26,17 @@ export function allMoments(s){
      comments:(post.comments||[]).map(c=>c.by==='小辛'&&c.text==='哥你說的是菜還是你自己？'?{...c,text:'好啊你們，偷偷吃好的'}:c)};
    }
    // Migrate only the old built-in HYQ defaults; keep genuinely customized posts.
+   if(post.id==='xw-d11'&&post!==p&&post.media?.length===1&&post.media[0]==='macau')
+    return {...post,media:[]};
+   if(post.id==='xm-d13'&&post!==p){
+    const old='新灯装上了。看起来不像临时工房了。';
+    const comments=post.comments||[];
+    const oldReplies=comments.length>=2&&comments[0].by==='熙旺'&&comments[0].text==='早点睡'
+     &&comments[1].by==='胡枫'&&comments[1].text==='上次你也这么说';
+    return {...post,text:post.text===old?p.text:post.text,
+     comments:oldReplies?[...p.comments,...comments.slice(2)]:post.comments,
+     likes:post.likes?.length?post.likes:p.likes};
+   }
    if(post.id==='xw-d35'&&post.text==='石排湾看熊猫。阿蒙在馆里站得比熊猫还久。')
     return {...post,text:p.text};
    if(post.id==='xs-d51'&&post.text==='爱上你 是命是病 是明知得不到的回应 我最亲爱的炸鸡')
