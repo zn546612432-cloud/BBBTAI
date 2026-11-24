@@ -88,3 +88,25 @@ test('friends cheat sees D25 daily chat without changing the default mainline cl
  assert.equal(nextAuthoredChatBoundary(s).clock,'11:38');
  assert.equal(nextStoryEventClock55(s),'21:00');
 });
+
+test('D01 cheat recognizes a started group chat without inventing the opening',()=>{
+ const s=phone();s.day=1;s.clock='08:00';s.editor.cheatMode=true;
+ s.story55.d01={bankClaimed:true,rewardPaid:true};
+ assert.equal(nextAuthoredChatBoundary(s),null);
+ s.story55.d01.group={started:true,branch:'morning',index:4,awaitingPlayer:true,dueAt:null};
+ assert.equal(jumpShortChargeToNextEvent(s).reason,'pending-reply');
+ assert.equal(s.clock,'08:00');
+ s.story55.d01.group={started:true,branch:'morning',index:0,awaitingPlayer:false,dueAt:Date.now()+1000};
+ assert.equal(jumpShortChargeToNextEvent(s).reason,'chat-delivering');
+});
+test('D01 cheat selects the actual game-time brother reply boundary',()=>{
+ const s=phone();s.day=1;s.clock='10:00';s.editor.cheatMode=true;
+ s.story55.d01={bankClaimed:true,rewardPaid:true,brother:{phase:'waiting',helloDelivered:true,dueGameMinute:602}};
+ s.story55.config.nodes=[];
+ const next=nextAuthoredChatBoundary(s);
+ assert.equal(next.kind,'upcoming');assert.equal(next.clock,'10:02');
+ assert.equal(jumpShortChargeToNextEvent(s).ok,true);
+ assert.equal(s.clock,'10:02');
+ assert.equal(s.story55.d01.brother.phase,'replySecond');
+ assert.equal(jumpShortChargeToNextEvent(s).reason,'chat-delivering');
+});
