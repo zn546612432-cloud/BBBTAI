@@ -10,9 +10,9 @@ const phone=(day=15,clock='08:00')=>({
   mirage:{account:'NYARLATHOTEP',products:[],cart:[],assets:[],wallets:[],balance:0,digitalBalance:0}},
  events:[]
 });
-test('D15-D24 presence follows only the Story55 clock and all three exact half-open windows',()=>{
+test('D14-D24 presence follows only the Story55 clock and all three exact half-open windows',()=>{
  assert.deepEqual(ANONYMOUS_MIRAGE_WINDOWS_55,[['08:00','09:25'],['12:00','12:30'],['22:00','23:00']]);
- for(const d of [15,20,24]){
+ for(const d of [14,15,20,24]){
   const s=phone(d);
   for(const [at,expected] of [
    ['07:59',false],['08:00',true],['09:24',true],['09:25',false],
@@ -32,7 +32,7 @@ test('old 25-minute windows are ignored, and offline scene or story ending still
  assert.equal(anonymousPresence55(s).online,false);
  s.clock='12:00';assert.equal(anonymousPresence55(s).online,true);
  s.clock='22:20';assert.equal(anonymousPresence55(s).online,true);
- s.day=14;assert.equal(anonymousPresence55(s).online,false);
+ s.day=14;assert.equal(anonymousPresence55(s).online,true,'D14 22:20 now shares the existing online window');
  s.day=25;assert.equal(anonymousPresence55(s).online,true);
  s.story55.ended=true;assert.equal(anonymousPresence55(s).online,false);
 });
