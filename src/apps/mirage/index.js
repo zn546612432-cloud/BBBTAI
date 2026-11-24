@@ -228,22 +228,31 @@ export function handle(action,t,ctx,loc){
  if(action==='mc-accept-bounty'||action==='mc-complete-bounty'){
   if(s.content.orders.some(o=>o.id===id&&o.marketRestricted))return ctx.toast('ACCESS RESTRICTED');
   if(id==='d01-hunt-view')return;
+  // Keep the existing order ledger's acceptance date for the daily reminder.
+  const acceptUpdate=fn=>ctx.store.update(n=>{
+   const wasOpen=n.content.orders.find(o=>o.id===id)?.status==='OPEN';
+   fn(n);
+   const order=n.content.orders.find(o=>o.id===id);
+   if(action==='mc-accept-bounty'&&wasOpen&&order?.status==='ACCEPTED'){
+    order.acceptedDay=n.day;order.acceptedClock=n.clock;
+   }
+  });
   if(action==='mc-accept-bounty'&&D04_ORDER_IDS.includes(id)){
-   let ok=false;ctx.store.update(n=>{ok=acceptD04Contract(n,id);});
+   let ok=false;acceptUpdate(n=>{ok=acceptD04Contract(n,id);});
    ctx.toast(ok?'ORDER ACCEPTED · KIRA':'委託暫不可接取');
    if(ok)route(ctx,'/order/'+id);return;
   }
   if(action==='mc-accept-bounty'&&id===D03_ORDER){
-   let ok=false;ctx.store.update(n=>{ok=acceptD03Contract(n);});
+   let ok=false;acceptUpdate(n=>{ok=acceptD03Contract(n);});
    ctx.toast(ok?'ORDER ACCEPTED · KIRA':'委託暫不可接取');
    if(ok)route(ctx,'/order/'+id);return;
   }
-  if(action==='mc-accept-bounty'&&D02_STAGES[id]){let ok=false;ctx.store.update(n=>{ok=acceptD02(n,id);});if(!ok)return ctx.toast('该委托只可按 D02 规定接取');return route(ctx,'/order/'+id);}
-  if(action==='mc-accept-bounty'&&id===D01_REPAIR){let ok=false;ctx.store.update(s=>{ok=acceptD01Repair(s);});ctx.toast(ok?'CONTRACT ACCEPTED · KIRA':'仅限 D01 接单，且委托必须为 OPEN');if(ok)setTimeout(()=>ctx.store.update(s=>deliverD01Attachment(s)),2000);return;}
+  if(action==='mc-accept-bounty'&&D02_STAGES[id]){let ok=false;acceptUpdate(n=>{ok=acceptD02(n,id);});if(!ok)return ctx.toast('该委托只可按 D02 规定接取');return route(ctx,'/order/'+id);}
+  if(action==='mc-accept-bounty'&&id===D01_REPAIR){let ok=false;acceptUpdate(s=>{ok=acceptD01Repair(s);});ctx.toast(ok?'CONTRACT ACCEPTED · KIRA':'仅限 D01 接单，且委托必须为 OPEN');if(ok)setTimeout(()=>ctx.store.update(s=>deliverD01Attachment(s)),2000);return;}
   if(action==='mc-complete-bounty'&&linkedMission(s,id))return ctx.router.open({appId:'kira',route:'/mail/'+linkedMailId(id),params:{}});
   if(isStory55(s)&&id===STORY55_BOUNTY_ID){
    let accepted=false;
-   if(action==='mc-accept-bounty')ctx.store.update(next=>{accepted=acceptStory55Wallet(next);});
+   if(action==='mc-accept-bounty')acceptUpdate(next=>{accepted=acceptStory55Wallet(next);});
    if(!accepted&&action==='mc-accept-bounty'){ctx.toast('挑战尚未开放或已接取');return;}
    ctx.router.open({appId:'kira',route:'/mail/'+STORY55_WALLET_MAIL_ID,params:{}});
    return;
@@ -260,16 +269,16 @@ export function handle(action,t,ctx,loc){
    ctx.router.open({appId:'ghost',route:'/contract',params:{orderId:id}});
    return;
   }else if(action==='mc-accept-bounty'&&id===WALLET_CHALLENGE_ID){
-   let accepted=false;ctx.store.update(s=>{accepted=acceptOuroborosChallenge(s);});
+   let accepted=false;acceptUpdate(s=>{accepted=acceptOuroborosChallenge(s);});
    ctx.toast(accepted?'ORDER CREATED · 10 BTC':'ORDER NOT AVAILABLE');
   }else if(action==='mc-accept-bounty'&&linkedMission(ctx.store.get(),id)){
    let accepted=false;
-   ctx.store.update(s=>{accepted=acceptLinkedMission(s,id);});
+   acceptUpdate(s=>{accepted=acceptLinkedMission(s,id);});
    ctx.toast(accepted?'ORDER ACCEPTED · KIRA':'ORDER ALREADY ACCEPTED');
   }else if(action==='mc-accept-bounty'&&id===HACKER_BOUNTY_ID){
-   newMailNotice=true;acceptHackerBounty(ctx.store);ctx.refresh();
+   newMailNotice=true;acceptHackerBounty({update:acceptUpdate});ctx.refresh();
   }else{
-   ctx.store.update(s=>{const o=s.content.orders.find(x=>x.id===id);if(o)o.status=action==='mc-accept-bounty'?'ACCEPTED':'COMPLETED';});
+   acceptUpdate(s=>{const o=s.content.orders.find(x=>x.id===id);if(o)o.status=action==='mc-accept-bounty'?'ACCEPTED':'COMPLETED';});
    ctx.toast(action==='mc-accept-bounty'?'CONTRACT ACCEPTED':'CONTRACT COMPLETED');
   }
   if(action==='mc-complete-bounty')goTab(ctx,'/bounties/completed');
