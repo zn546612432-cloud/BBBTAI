@@ -52,10 +52,10 @@ test('MIRAGE wallet has real return and cancel navigation actions',()=>{
 test('D13 system tracking is metadata, never a chat bubble',()=>{
  const s=fixture();
  assert.equal(sceneLines(s,'intrusion')[15][0],'system');
- assert.equal(sceneLines(s,'intrusion')[19][0],'system');
+ assert.equal(sceneLines(s,'intrusion')[20][0],'system');
  const before=s.content.conversations.mirage.reduce((count,c)=>count+c.messages.length,0);
  appendSceneMessage55(s,'intrusion',15);
- appendSceneMessage55(s,'intrusion',19);
+ appendSceneMessage55(s,'intrusion',20);
  const after=s.content.conversations.mirage.reduce((count,c)=>count+c.messages.length,0);
  assert.equal(after,before);
 });

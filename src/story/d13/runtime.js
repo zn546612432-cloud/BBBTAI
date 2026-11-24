@@ -7,11 +7,32 @@ export function syncD13(s){
  applyD13Definition(s.story55.config);
  const due=s.story55.config.nodes.find(n=>n.id==='d13-wallet-mail');
  if(s.day===13&&s.story55.d13Chats?.['father-planning']?.completed&&due?.at==='22:10'&&s.clock<'22:10'&&!s.content.mail.some(m=>m.id===D13_MAIL_ID))due.at=s.clock;
+ // A prior preview may already contain the two delivered lines in reverse order.
+ // Move only exact authored entries; preserve user-created messages and completed calls.
+ if(s.story55.d13TrackingOrderRevision!==1){
+  const thread=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
+  const messages=thread?.messages||[];
+  const error=messages.find(m=>m.id==='s55-intrusion-v2-19'&&m.from==='system'&&m.text==='（追蹤失敗！錯誤代碼：ERR-4037）');
+  const voice=messages.find(m=>m.id==='s55-intrusion-v2-20'&&m.from!=='me'&&m.kind==='call-avatar'&&m.text==='');
+  if(error&&voice){
+   const a=messages.indexOf(error),b=messages.indexOf(voice);
+   if(a<b){
+    [messages[a],messages[b]]=[messages[b],messages[a]];
+    voice.id='s55-intrusion-v2-19';
+    error.id='s55-intrusion-v2-20';
+   }
+  }else if(error&&!voice&&!completed(s,'intrusion')&&s.story55.scenes?.intrusion?.index===20){
+   // Old status displayed before the new voice: deliver both once in new order.
+   messages.splice(messages.indexOf(error),1);
+   s.story55.scenes.intrusion.index=19;
+  }
+  s.story55.d13TrackingOrderRevision=1;
+ }
  if(s.story55.d13Revision===3)return;
  // Previously authored spoken turns become avatar-only call records.
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
  for(const m of chat?.messages||[]){
-  if(/^s55-intrusion-v2-(8|10|12|14|16|18|20|21)$/.test(m.id||'')&&m.from!=='me'){
+  if(/^s55-intrusion-v2-(8|10|12|14|16|18|19|21)$/.test(m.id||'')&&m.from!=='me'){
    m.kind='call-avatar';m.text='';
   }
  }
