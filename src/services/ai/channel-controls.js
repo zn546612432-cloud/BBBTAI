@@ -1,6 +1,7 @@
-// MIRAGE uses authored dialogue only. Old saves and developer toggles cannot
-// re-enable generated replies; NoApp/phone/chess keep their existing AI paths.
-export const mirageAIEnabled=()=>false;
+// Re-enable anonymous free chat only in the Story55 Mirage phase. Fixed
+// scripted lines, chess and recognition still have separate native gates.
+// Legacy developer toggles remain retired and do not override story access.
+export const mirageAIEnabled=s=>s?.story55?.version===1&&s.day>=14&&!s.story55?.ended&&!s.story55?.completed?.recognition;
 export const mirageAIRevision=s=>Number.isSafeInteger(s?.developerSettings?.mirageAIRevision)?s.developerSettings.mirageAIRevision:0;
 export function setMirageAIEnabled(store,enabled){
  store.update(s=>{
