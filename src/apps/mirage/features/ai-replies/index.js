@@ -38,6 +38,13 @@ export async function replyToOuroboros(ctx,contactId,sourceId,{wait=ms=>new Prom
  const initial=ctx.store.get(),revision=mirageAIRevision(initial),key=contactId+':'+sourceId;
  if(pending.has(key)||!freeTurnAllowed(initial,contactId,sourceId,revision,initial.day))return 0;
  pending.add(key);
+ // Mark only an actually accepted async reply attempt. The unified clock
+ // reads this on HOME; online presence alone never slows the game.
+ const pendingAt=Date.now();
+ ctx.store.update(s=>{
+  const source=findContact(s,contactId)?.messages?.find(m=>m.id===sourceId);
+  if(source)source.taiReplyRequestAt=pendingAt;
+ });
  const permitted=()=>freeTurnAllowed(ctx.store.get(),contactId,sourceId,revision,initial.day);
  try{
   await wait(650);
@@ -100,7 +107,13 @@ export async function replyToOuroboros(ctx,contactId,sourceId,{wait=ms=>new Prom
    if(inserted<chunks.length)await wait(replyDelayMs(item.text,taiBehavior(initial)));
   }
   return inserted;
- }finally{pending.delete(key);}
+ }finally{
+  pending.delete(key);
+  ctx.store.update(s=>{
+   const source=findContact(s,contactId)?.messages?.find(m=>m.id===sourceId);
+   if(source?.taiReplyRequestAt===pendingAt)delete source.taiReplyRequestAt;
+  });
+ }
 }
 
 // Offline messages stay in the same conversation and can be answered when
