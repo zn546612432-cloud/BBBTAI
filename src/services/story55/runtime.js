@@ -1,4 +1,4 @@
-import {expireGhostShare,resolveGhostShare} from './ghost-share.js';
+import {expireGhostShare,resolveGhostShare,syncGhostShareOvernightDates} from './ghost-share.js';
 import {syncApprovedChatV2} from '../../story/revisions/d05-d17-v2.js';
 import {syncD13} from '../../story/d13/runtime.js';
 import {syncD14D24Content} from '../../story/d14-d24/migrate.js';
@@ -391,6 +391,7 @@ function quarantineUnsentD23Bubbles(s){
 export function tickStory55(s){
  if(!isStory55(s))return;
  expireGhostShare(s);
+ syncGhostShareOvernightDates(s);
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);

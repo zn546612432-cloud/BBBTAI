@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
-import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource,resolveGhostShare,expireGhostShare,TAI_REMOTE_TYPED_LINE} from '../src/services/story55/ghost-share.js';
+import {shareGhostToTai,ghostShareScriptLine,ghostShareReadyForControl,beginGhostShareControl,finishGhostShareControl,ghostShareSource,resolveGhostShare,expireGhostShare,syncGhostShareOvernightDates,TAI_REMOTE_TYPED_LINE} from '../src/services/story55/ghost-share.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {MessageDelivery,visibleMessages} from '../src/services/messaging/delivery.js';
+import {date55} from '../src/services/story55/state.js';
+import {withMirageSessionDividers} from '../src/apps/mirage/index.js';
 import {render as renderMirage,handle as handleMirage,submit as submitMirage,onEnter as enterMirage} from '../src/apps/mirage/index.js';
 import {setMirageAuthenticated} from '../src/apps/mirage/session.js';
 import {render as renderGhost,handle as handleGhost} from '../src/apps/ghost/index.js';
@@ -122,6 +124,7 @@ test('spoiler gate respects recognition and only targets the anonymous MIRAGE co
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我哥今晚回來'),false);
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我是你哥'),true);
  assert.equal(blocksAnonymousMirageInput(s,'other-contact','我是你哥'),false);
+ assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','西太平洋'),false,'ordinary geography is not the Xi Tai name');
  s.story55.completed.recognition={day:30,clock:'20:00'};
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','熙泰，我是你哥'),false);
 });
@@ -314,4 +317,96 @@ for(const roll of [0,.499999,.5,.999999])test(`third-stage acceptance retains 50
  assert.equal(s.story55.ghostShareDaily.accepted,roll<.5);
  assert.equal(s.story55.ghostShareDaily.day,s.day);
  assert.equal(s.story55.ghostShareTakeovers,2);
+});
+
+test('D15 03:00 Ghost share keeps player replies on the visible next calendar date',()=>{
+ const s=fixture(15,'03:00'),cardId='s55-ghost-share-15-1';
+ s.story55.completed.loan={day:15,clock:'15:43'};
+ s.story55.overnightHold={day:15,nightAfterMidnight:true};
+ const result=shareGhostToTai(s,{projectId:'identity'},{now:5000,random:()=>0});
+ const share=chat(s).messages.find(m=>m.id===result.cardId);
+ assert.equal(share.sentDate,date55(16),'the share card belongs to tomorrow on the phone');
+ // D15 framework shares reuse this same native Send handler.
+ s.story55.ghostShare={phase:'dialogue',script:'tear-15',index:0,pendingIds:[],cardId};
+ const line=scriptedDraft55(s,'mirage','s55-ouroboros');
+ assert.equal(line.text,'你寫的程序，你自己來。');
+ sendScriptedDraft55(s,'mirage','s55-ouroboros',line.text);
+ const sent=chat(s).messages.find(m=>m.id===cardId+'-me-0');
+ assert.equal(sent.sentDate,date55(16));
+ const reply=chat(s).messages.find(m=>m.id===cardId+'-tai-1');
+ assert.ok(reply,'the existing authored reply is still queued');
+ reply.delivery={day:15,clock:'03:00',sentDate:date55(16)};
+ const visible=visibleMessages(chat(s),s);
+ assert.ok(visible.some(m=>m.id===sent.id),'the player bubble must appear at 03:00');
+ assert.ok(visible.some(m=>m.id===reply.id),'the NPC bubble must appear at 03:00');
+ const ordered=withMirageSessionDividers(visible,s).map(m=>m.id);
+ assert.ok(ordered.indexOf(sent.id)<ordered.indexOf(reply.id),'player reply precedes NPC response');
+});
+
+test('saved GHOST 03:00 messages are date-repaired once without changing unrelated history',()=>{
+ const s=fixture(16,'08:44'),cardId='s55-ghost-share-15-2';
+ const yesterday=date55(15),today=date55(16);
+ s.story55.completed.loan={day:15,clock:'15:43'};
+ const card={id:cardId,from:'me',kind:'ghost-project',text:'[GHOST PROJECT]',day:15,time:'03:00',sentDate:yesterday};
+ const reply={id:cardId+'-me-0',from:'me',kind:'text',text:'你寫的程序，你自己來。',day:15,time:'03:00',sentDate:yesterday};
+ const npc={id:cardId+'-tai-1',from:'s55-ouroboros',kind:'text',text:'？',day:15,time:'03:00',sentDate:yesterday,
+  schedule:{mode:'chat-delay',seconds:3},delivery:{day:15,clock:'03:00',sentDate:today}};
+ const unrelated={id:'real-old-message',from:'me',kind:'text',text:'我晚點再說',day:15,time:'03:00',sentDate:yesterday};
+ chat(s).messages.push(card,reply,npc,unrelated);
+ const originals=structuredClone({events:s.events,notifications:s.notifications,progress:s.story55.scenes,delivery:npc.delivery});
+ assert.equal(syncGhostShareOvernightDates(s),true);
+ assert.equal(card.sentDate,today);
+ assert.equal(reply.sentDate,today);
+ assert.equal(npc.sentDate,today);
+ assert.equal(unrelated.sentDate,yesterday);
+ assert.deepEqual({events:s.events,notifications:s.notifications,progress:s.story55.scenes,delivery:npc.delivery},originals);
+ assert.equal(syncGhostShareOvernightDates(s),false,'reloads never reapply migration');
+ const visible=withMirageSessionDividers(visibleMessages(chat(s),s),s).map(m=>m.id);
+ assert.ok(visible.indexOf(reply.id)<visible.indexOf(npc.id));
+});
+
+test('pre-recognition nickname and Xi Tai homophones never submit or request AI',()=>{
+ const original=globalThis.FormData,oldFetch=globalThis.fetch;
+ setMirageAuthenticated(true);
+ globalThis.fetch=()=>assert.fail('identity guesses cannot request AI');
+ const phrases=['你是熙泰','你是希泰','希太','西泰','西太','曦泰','戲台','熙太','XiTai','xi tai','Xī Tài','xi-tai','xi1tai4','希 泰','三胞胎'];
+ try{
+  for(const photo of [false,true])for(const text of phrases){
+   const s=fixture(30,'21:00'),input={value:text};
+   if(photo)s.story55.completed.photo={day:29,clock:'20:00'};
+   s.drafts={'s55-ouroboros':text};
+   const originalState=structuredClone({messages:chat(s).messages,events:s.events,notifications:s.notifications});
+   globalThis.FormData=class{get(name){return name==='text'?text:'';}};
+   submitMirage({dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}},
+    {store:store(s),toast:()=>assert.fail('spoiler input must be silent')},s.nav.current);
+   assert.equal(input.value,'');
+   assert.equal(s.drafts['s55-ouroboros'],undefined);
+   assert.deepEqual({messages:chat(s).messages,events:s.events,notifications:s.notifications},originalState);
+  }
+ }finally{globalThis.FormData=original;globalThis.fetch=oldFetch;setMirageAuthenticated(false);}
+});
+
+test('identity guessing stays silent even while a fixed GHOST-share player line is waiting',()=>{
+ const s=fixture(16,'08:20');
+ const result=shareGhostToTai(s,{projectId:'identity'},{random:()=>0,now:10000});
+ assert.equal(result.script,'first');
+ deliverNpc(s);
+ s.story55.completed.photo={day:30,clock:'20:00'};
+ const expected=scriptedDraft55(s,'mirage','s55-ouroboros');
+ assert.equal(expected?.kind,'me');
+ const oldFormData=globalThis.FormData,oldFetch=globalThis.fetch;
+ s.drafts={'s55-ouroboros':'希泰'};
+ const input={value:'希泰'};
+ const saved=structuredClone({messages:chat(s).messages,events:s.events,notifications:s.notifications,index:s.story55.ghostShare.index});
+ setMirageAuthenticated(true);
+ globalThis.FormData=class{get(name){return name==='text'?'希泰':'';}};
+ globalThis.fetch=()=>assert.fail('an identity guess cannot invoke AI');
+ try{
+  submitMirage({dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}},
+   {store:store(s),toast:()=>assert.fail('identity guess must be silent, even during preset')},s.nav.current);
+  assert.equal(input.value,'');
+  assert.equal(s.drafts['s55-ouroboros'],undefined);
+  assert.deepEqual({messages:chat(s).messages,events:s.events,notifications:s.notifications,index:s.story55.ghostShare.index},saved);
+  assert.equal(scriptedDraft55(s,'mirage','s55-ouroboros')?.text,expected.text,'the real preset is still pending');
+ }finally{globalThis.FormData=oldFormData;globalThis.fetch=oldFetch;setMirageAuthenticated(false);}
 });
