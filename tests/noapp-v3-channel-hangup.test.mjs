@@ -229,29 +229,31 @@ test('substantive call can speak four distinct paragraphs in one generation with
  });
 });
 
-test('explicit request for more speech has a JSON segment plan and repairs a short draft only once',async()=>{
- const lines=['我有些話還沒有說完。','你剛剛說起那件事，我想了一下。','我想聽聽你當時具體是怎麼處理的。'];
- await withMockCall(body=>body.messages[0].content.includes('【多段语音补足】')?lines:['好。'],async({state,players,requests,waitFor,send})=>{
+test('explicit request for more speech permits a substantial single-pass response',async()=>{
+ const line='我有些話還沒有說完。你剛剛說起那件事，我想了一下。我想聽聽你當時具體是怎麼處理的。';
+ await withMockCall([line],async({state,players,requests,waitFor,send})=>{
   send('能不能多说几句');
-  for(const line of lines){await waitFor(()=>callView(state).includes(line),line);players[0].finish();}
-  await waitFor(()=>callState().turnCount===5);
+  await waitFor(()=>callView(state).includes(line),line);
+  players[0].finish();
+  await waitFor(()=>callState().turnCount===3);
   const calls=requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【单次通话 JSON'));
-  assert.equal(calls.length,2);
-  assert.match(calls[0].body.messages[0].content,/"min_segments":3/);
-  assert.match(calls[1].body.messages[0].content,/多段语音补足/);
-  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,3);
+  assert.equal(calls.length,1,'one substantial generation; do not delay the first clip for a second model call');
+  assert.match(calls[0].body.messages[0].content,/"min_segments":1/);
+  assert.match(calls[0].body.messages[0].content,/"max_segments":5/);
+  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,1);
  });
 });
 
-test('ordinary live conversation continues after a one-line draft without a new player message',async()=>{
- const first='那是博士課程。',second='你找我到底什麼事？我等一下還有事。';
- await withMockCall(body=>body.messages[0].content.includes('【多段语音补足】')?[second]:[first],async({state,players,requests,waitFor,send})=>{
+test('ordinary live conversation keeps one complete reply without a filler continuation call',async()=>{
+ const first='那是博士課程。';
+ await withMockCall([first],async({state,players,requests,waitFor,send})=>{
   send('你不是在哈佛讀書嗎？');
-  await waitFor(()=>callView(state).includes(first),first);players[0].finish();
-  await waitFor(()=>callView(state).includes(second),second);players[0].finish();
-  await waitFor(()=>callState().turnCount===4);
-  assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【单次通话 JSON')).length,2);
-  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,2);
+  await waitFor(()=>callView(state).includes(first),first);
+  players[0].finish();
+  await waitFor(()=>callState().turnCount===3);
+  assert.equal(requests.filter(x=>x.url.includes('chat/completions')&&x.body.messages[0].content.includes('【单次通话 JSON')).length,1);
+  assert.equal(state.events.filter(x=>x.type==='tai_call_v2_turn').at(-1).planned,1);
+  assert.equal(callState().state,'connected');
  });
 });
 
