@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {PlayerCloudSave,connectPlayerSave} from '../src/services/storage/cloud/index.js';
 import {verifySaveEmail,takeEmailCallback,cloudRequest} from '../src/services/storage/cloud/api.js';
 import {taiCloudSession,SESSION_KEY} from '../src/services/ai/supabase-gateway.js';
-import {cloudSaveView,cloudSaveAction} from '../src/apps/settings/features/cloud-save/index.js';
+import {cloudSaveView,cloudSaveAction,cloudSaveInput} from '../src/apps/settings/features/cloud-save/index.js';
 import {snapshotVoiceMedia} from '../src/services/storage/cloud/media.js';
 import {saveClip} from '../src/services/voice/audio-store.js';
 
@@ -350,4 +350,32 @@ test('another tab changing account cannot send the previous player save to the n
  let calls=0;globalThis.fetch=async()=>{calls++;return Response.json({});};
  try{await assert.rejects(cloudRequest('/rest/v1/rpc/sync_phone_save',{method:'POST',expectedPlayer:'player-a',body:{}}),/登入身份已變更/);assert.equal(calls,0);}
  finally{Object.assign(globalThis,previous);}
+});
+
+test('cloud email drafts survive repeated view refresh and recovery details remain user-owned',()=>{
+ const store=phone();
+ store.cloud={enabled:true,key:'phone',slot:1,status:{phase:'synced'}};
+ const ctx={store};
+ const target=(recover,value)=>({name:'email',value,form:{dataset:{form:'cloud-email'},elements:{recover:{value:recover?'1':'0'}}}});
+ cloudSaveInput(target(false,'bind@example.com'),ctx);
+ cloudSaveInput(target(true,'recover@example.com'),ctx);
+ store.cloud.status={phase:'saving'};
+ let html=cloudSaveView(store);
+ assert.match(html,/data-view-key="cloud-bind-form"/);
+ assert.match(html,/data-view-key="cloud-recover-form"/);
+ assert.match(html,/<details data-preserve-open>/);
+ assert.match(html,/value="bind@example.com"/);
+ assert.match(html,/value="recover@example.com"/);
+ store.cloud.status={phase:'offline',message:'offline'};
+ html=cloudSaveView(store);
+ assert.match(html,/value="bind@example.com"/);
+ assert.match(html,/value="recover@example.com"/);
+});
+test('verification draft survives UI refresh without persisting secret',()=>{
+ const store=phone();
+ store.cloud={enabled:true,key:'phone',slot:1,status:{phase:'synced'}};
+ store.storage.setItem('phone:email-verification:1',JSON.stringify({email:'bind@example.com',type:'magiclink'}));
+ cloudSaveInput({name:'token',value:'123456',form:{dataset:{form:'cloud-verify'}}},{store});
+ assert.match(cloudSaveView(store),/name="token"[^>]*value="123456"/);
+ assert.doesNotMatch(store.storage.getItem('phone:email-verification:1'),/123456/);
 });
