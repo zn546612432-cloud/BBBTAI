@@ -67,6 +67,36 @@ test('D05 Xiao Xin selfie uses the approved caption and Hu Feng comment, includi
  assert.equal(findMoment(s,'xs-d05').text,'自定义文案');
 });
 
+test('D15 Zaizai pinned photo teases Xiao Xin only, including legacy saved comments',()=>{
+ const s=initialState(),post=findMoment(s,'zz-d15');
+ const approved=[
+  {by:'熙旺',text:'小辛最近是不是又胖了'},
+  {by:'小辛',text:'？？？我明明很輕好不好'},
+  {by:'仔仔',to:'小辛',text:'下次你背我試試'}
+ ];
+ assert.equal(post.text,'猜猜谁该减肥了。');
+ assert.deepEqual(post.media,['brothers']);
+ assert.equal(post.publishedAt,'2025-06-02T18:35');
+ assert.equal(post.pinned,true);
+ assert.deepEqual(post.likes,['小辛']);
+ assert.deepEqual(post.comments,approved);
+ assert.ok(!post.comments.some(c=>c.by==='熙蒙'));
+ const original={...post,comments:[
+  {by:'熙蒙',text:'你说谁？'},
+  {by:'熙旺',text:'我没说累'},
+  {by:'小辛',text:'这题我不敢答'},
+  {by:'胡枫',text:'玩家自訂留言'}
+ ]};
+ s.content.moments.editedPosts['zz-d15']=original;
+ const migrated=findMoment(s,'zz-d15');
+ assert.deepEqual(migrated.comments,[...approved,{by:'胡枫',text:'玩家自訂留言'}]);
+ assert.equal(migrated.publishedAt,post.publishedAt);
+ assert.deepEqual(migrated.media,post.media);
+ assert.deepEqual(s.content.moments.editedPosts['zz-d15'].comments,original.comments,'migrate only at read time');
+ s.content.moments.editedPosts['zz-d15']={...post,comments:[{by:'小辛',text:'自訂評論'}]};
+ assert.deepEqual(findMoment(s,'zz-d15').comments,[{by:'小辛',text:'自訂評論'}]);
+});
+
 test('Both native WeChat entrances open Moments, which have complete media & profile views',()=>{
  const s=initialState();s.day=1;s.clock='13:00';
  assert.match(renderWeChatHome(s,'/discover'),/data-label="朋友圈"/);
