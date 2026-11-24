@@ -144,7 +144,8 @@ test('D13 removes only 15:10 clothing scene and uses exact confirmed 18:35 group
   ['阿威','我那份晚點發你'],
   ['胡枫','我剛回來，讓我先看看']
  ]);
- const s=phone(13,'18:35'),group=thread(s,'group');
+ const s=phone(13,'18:34'),group=thread(s,'group');
+ s.clock='18:35'; // start the actual D13 timer only after reaching the authored boundary
  for(let i=0;i<20;i++)tickPhoneStoryMessages(s,10000+i*2500);
  assert.deepEqual(group.messages.filter(m=>m.id?.startsWith('d13-evening-')).map(m=>m.text),evening.lines.map(m=>m.text));
  assert.equal(group.messages.some(m=>m.id?.startsWith('d13-work-')),false);
