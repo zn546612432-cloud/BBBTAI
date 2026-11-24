@@ -4,6 +4,7 @@ import {XITAI_EXPRESSION_WORLDBOOK_V6} from './behavior-worldbook-v6.js';
 import {XITAI_MOTIVATION_WORLDBOOK_V7} from './character-motivations-v7.js';
 import {XITAI_CONVERSATION_FOCUS_V8} from './conversation-focus-v8.js';
 import {authorXitaiDialogueExamples} from './author-dialogue-examples.js';
+import {noAppCinematicDirection} from '../../apps/noapp/features/cinematic-dialogue/index.js';
 import {taiActionExpressionPrompt} from './action-protocol-v10.js';
 import {XITAI_LONG_WORLDBOOK,XITAI_PERSONA_VERSION} from './character-worldbook.js';
 import {XITAI_BIOGRAPHY_SUMMARY,XITAI_BIOGRAPHY_PRIORITY} from './character-biography.js';
@@ -94,7 +95,7 @@ export function taiKnowledgeContext({day,channel,recognized}={}){
   ?'公开范围：已经通过剧情相认，双方不是陌生人；可以承认真名与血缘，明确知道熙旺也是兄长。不能编造未发生的见面或预测未来。'
   :'公开范围：尚未相认。你私下早已知道熙蒙、熙旺的亲缘身份，但熙蒙不知道你的身份。不得主动公开陈熙泰真名、亲缘、收养家庭、哈佛、英国／葡萄牙生活、社交账户或未来相认安排；角色知道不等于此刻可说。只承认本轮明确授权的调查所得，不从单条线索连带揭露全部秘密。');
 }
-export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,storyReplyDirection=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona='',callActive=false}={}){
+export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='text',scene='',relationshipContext='',behavior,messages=[],recognized,approvedDecision=null,turnPlan=null,storyReplyDirection=null,allowVoice=false,worldbookEvents=[],worldbookSnapshot,worldbook,approvedPersona='',callActive=false,relationshipPlan=null,macauClock='',londonClock=''}={}){
  const seen=visibleTaiMemories((Array.isArray(memories)?memories:[]).filter(m=>!m?.kind),day,channel);
  // The story field is an editor-facing schedule, never a model-facing future script.
  const reviewed=taiProfileFields.filter(f=>f.key!=='story').map(f=>f.title+'：'+String(profile[f.key]??f.text).slice(0,1800)).join('\n');
@@ -142,6 +143,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   // not solely in human-readable docs; only post-recognition NoApp/Chess.
   worldbookText(sections?.exampleBefore),
   authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode}),
+  noAppCinematicDirection({channel,recognized,relationshipPlan,messages,macauClock,londonClock}),
   worldbookText(sections?.exampleAfter),
   snapshot?.authorNote?resolveWorldbookOutlets(snapshot.authorNote,sections?.outlets):'',
   worldbookText(sections?.authorBottom),
