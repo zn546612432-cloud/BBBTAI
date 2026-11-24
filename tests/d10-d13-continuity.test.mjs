@@ -182,3 +182,45 @@ test('old D13 chats migrate built-in group bubbles only, preserving player speec
  tickPhoneStoryMessages(s,60000);
  assert.deepEqual(group.messages,once);
 });
+
+
+test('D11 old seeded Notes are moved out of Notes without duplicating or changing the canonical journal text',()=>{
+ const s=phone(12,'08:00');
+ const original={id:MEETING_NOTE.id,title:MEETING_NOTE.title,text:MEETING_NOTE.text,
+  authored:true,storyContent:true,createdDay:11,updatedDay:11,updatedClock:'22:00'};
+ s.content.notes.unshift(structuredClone(original));
+ s.story55.authoredNoteIds??=[];
+ s.story55.authoredNoteIds.push(MEETING_NOTE.id);
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+ assert.deepEqual(s.story55.d11MeetingNoteArchive,original);
+ assert.equal(entryFor(s,11).body,MEETING_NOTE.text);
+ assert.equal(syncD10D13Content(s),false,'a second load must not recreate anything');
+});
+
+test('a customized legacy D11 note is preserved as the journal edit, not silently replaced',()=>{
+ const s=phone(12,'08:00'),edited='熙蒙自己改過的內容';
+ s.content.notes.unshift({id:MEETING_NOTE.id,title:'我自己改的標題',
+  text:edited,authored:true,storyContent:true,createdDay:11,updatedDay:12});
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(entryFor(s,11).title,'我自己改的標題');
+ assert.equal(entryFor(s,11).body,edited);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+ assert.equal(s.story55.d11MeetingNoteArchive.text,edited);
+ assert.equal(syncD10D13Content(s),false);
+});
+
+test('an edited D11 journal takes priority; the previous edited Note is archived, and unrelated Notes survive',()=>{
+ const s=phone(12,'08:00');
+ s.content.storyDiary??={};
+ s.content.storyDiary['11']={title:'自己的日程',body:'日程里已有的原文'};
+ s.content.notes.unshift({id:MEETING_NOTE.id,title:'備份版本',text:'備忘錄里的修改',
+  authored:true,storyContent:true});
+ s.content.notes.unshift({id:'my-private-note',title:'自己的筆記',text:'不要刪掉'});
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(entryFor(s,11).title,'自己的日程');
+ assert.equal(entryFor(s,11).body,'日程里已有的原文');
+ assert.equal(s.story55.d11MeetingNoteArchive.text,'備忘錄里的修改');
+ assert.ok(s.content.notes.some(n=>n.id==='my-private-note'));
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+});
