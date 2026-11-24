@@ -379,3 +379,41 @@ test('verification draft survives UI refresh without persisting secret',()=>{
  assert.match(cloudSaveView(store),/name="token"[^>]*value="123456"/);
  assert.doesNotMatch(store.storage.getItem('phone:email-verification:1'),/123456/);
 });
+
+test('verified guest handoff recovers a later guest snapshot into an empty email slot',async t=>{
+ const backend=server(),store=phone(6),cloud=client(t,backend,store,{slot:2});
+ await cloud.start();await cloud.flush();const guest=structuredClone(backend.row);
+ store.advance(1);
+ const target=server();
+ cloud.api={...target.api,player:async()=>({id:'email-player',is_anonymous:false,email_confirmed_at:'2026-11-24T05:25:00Z'})};
+ cloud.revision=null;
+ assert.equal(await cloud.start({switchAccount:true,handoff:{owner:'player-a',target:'email-player',row:guest}}),true);
+ assert.equal(store.get().day,6);
+ assert.equal(await cloud.flush(),true);
+ assert.equal(target.row.game_state.day,6);
+ assert.equal(backend.row.game_state.day,6);
+ const reboot=client(t,target,phone(1,{storage:store.storage}),{slot:2});
+ reboot.api.player=cloud.api.player;
+ assert.equal(await reboot.start(),true);
+ assert.equal(reboot.store.get().day,6);
+});
+test('guest handoff never recreates a deleted target slot or bypasses another owner',async t=>{
+ const backend=server(),storage=memory();storage.setItem('phone:cloud-owner','guest');
+ const cloud=client(t,backend,phone(6,{storage}),{slot:2});
+ cloud.api.player=async()=>({id:'email-player',email_confirmed_at:'2026-11-24T05:25:00Z'});
+ storage.setItem('phone:cloud:email-player:2',JSON.stringify({revision:3,id:'deleted'}));
+ assert.equal(await cloud.start({switchAccount:true,handoff:{owner:'guest',target:'email-player'}}),false);
+ assert.equal(cloud.status.phase,'conflict');assert.equal(backend.writes,0);
+ storage.removeItem('phone:cloud:email-player:2');
+ assert.equal(await cloud.start({switchAccount:true,handoff:{owner:'wrong',target:'email-player'}}),false);
+ assert.equal(backend.writes,0);
+});
+test('an empty conflict cannot overwrite a save that appeared after the conflict was displayed',async t=>{
+ const backend=server(),storage=memory();storage.setItem('phone:cloud-owner','other');
+ const cloud=client(t,backend,phone(1,{storage}));await cloud.start();
+ assert.equal(cloud.status.conflict.remote,null);
+ const other=client(t,backend,phone(6));await other.start();await other.flush();
+ assert.equal(await cloud.resolve('local'),false);
+ assert.equal(backend.row.game_state.day,6);
+ assert.equal(cloud.status.conflict.remote.game_state.day,6);
+});
