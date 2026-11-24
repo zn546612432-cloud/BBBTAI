@@ -139,6 +139,8 @@ test('Tai online alone does not slow HOME; queued, real AI and unread replies do
  assert.equal(rate(),2.5/1000,'an offline stored message is not an active reply');
  noapp.messages.at(-1).taiReadAt=Date.now();
  assert.equal(rate(),5/60000,'a genuinely processing NoApp reply slows the home screen');
+ noapp.messages.at(-1).taiReadAt=Date.now()-130000;
+ assert.equal(rate(),2.5/1000,'stale saved NoApp request cannot slow the phone forever');
  delete noapp.messages.at(-1).taiPending;
  assert.equal(rate(),2.5/1000);
  noapp.messages.push({id:'noapp-tai',from:'tai',kind:'text',text:'好',actual:true});
