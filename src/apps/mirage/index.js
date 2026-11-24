@@ -1,4 +1,5 @@
 import {blocksAnonymousMirageInput} from '../../services/story55/mirage-input.js';
+import {replyToOuroboros,resumeOuroborosReply} from './features/ai-replies/index.js';
 import {walletPage} from './features/wallet/index.js';
 import {privateContractEntry,privateContractPage} from './features/private-contract/index.js';
 import {publishPrivateContract,transferD45Wallet} from '../../story/d46/runtime.js';
@@ -194,6 +195,7 @@ export function handle(action,t,ctx,loc){
    if(c)c.lastOpened=Math.max(Date.now(),...list.map(x=>(Number(x.lastOpened)||0)+1));
   });
   route(ctx,'/chat/'+id);
+  void resumeOuroborosReply(ctx,id).catch(error=>ctx.toast(error?.message||'MIRAGE 回覆暫時不可用'));
  }
  if(action==='mc-decrypt'){decrypting.add(id);ctx.refresh();setTimeout(()=>{decrypting.delete(id);decrypted.add(id);ctx.refresh();},360);}
  if(action==='mc-encrypt'){decrypted.delete(id);ctx.refresh();}
@@ -309,7 +311,7 @@ export function handle(action,t,ctx,loc){
 }
 
 export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.form,val=n=>String(fd.get(n)||'').trim();
- if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/order/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract'||loc?.route==='/bounties/hall')?loc.route:'/');return;}
+ if(f==='mc-login'){if(val('account')!==MIRAGE_ACCOUNT||val('password')!==MIRAGE_PASSWORD){ctx.toast('ACCOUNT OR PASSWORD INCORRECT');return;}initializeMirage(ctx.store);ctx.store.update(s=>{s.content.mirage.account=MIRAGE_ACCOUNT;flowOnMirageEntry(s);});setMirageAuthenticated(true);goTab(ctx,(loc?.route?.startsWith('/chat/')||loc?.route?.startsWith('/order/')||loc?.route?.startsWith('/wallet')||loc?.route==='/private-contract'||loc?.route==='/bounties/hall')?loc.route:'/');if(loc?.route?.startsWith('/chat/'))void resumeOuroborosReply(ctx,loc.route.slice(6)).catch(error=>ctx.toast(error?.message||'MIRAGE 回覆暫時不可用'));return;}
  if(!isMirageAuthenticated())return;
  if(f==='mc-send'){
   const text=val('text'),id=form.dataset.id;
@@ -361,7 +363,8 @@ export function submit(form,ctx,loc){const fd=new FormData(form),f=form.dataset.
     if(!completed)ctx.toast('请先发送已经输入的内容');
     return;
    }
-   sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
+   const messageId=sendMessage(ctx.store,{channel:'mirage',conversationId:id,text});
+   void replyToOuroboros(ctx,id,messageId).catch(error=>ctx.toast(error?.message||'MIRAGE 回覆暫時不可用'));
    if(id===D01_CONTACT)ctx.store.update(s=>queueD01ContactReply(s,id));
    if(id===D02_TALIA)ctx.store.update(s=>onD02TaliaMessage(s,id,text));
   }
