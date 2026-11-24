@@ -1,7 +1,8 @@
 // GHOST project cards and Xi Tai's authored MIRAGE share dialogue.
 // This is an adapter to the existing Story55 / native-message pipeline, NOT
 // another clock, chat queue, minigame runner, or phone-control transport.
-import {isStory55,projectById,date55} from './state.js';
+import {isStory55,projectById,date55,overnightSceneNight55} from './state.js';
+import {dateParts} from '../calendar.js';
 import {anonymousPresence55} from './runtime.js';
 import {deployment,deploymentPercent,deploymentReadiness} from './projects.js';
 import {TEAR_DIALOGUES,isTearShare} from '../../story/d14-d24/tear-dialogue.js';
@@ -67,6 +68,39 @@ export function expireGhostShare(s){
 }
 const active=p=>p&&['awaiting-online','dialogue','ready-control','controlling'].includes(p.phase);
 const chat=s=>s.content?.conversations?.mirage?.find(c=>c.id===TAI_GHOST_THREAD);
+
+// Game day can still be D15 at 03:00 while the phone calendar already reads
+// D16. Every authored share bubble must use that SAME visible calendar date.
+const shareSentDate=s=>dateParts(s).iso;
+
+// Repair only real GHOST-share messages from the old 03:00 overnight boundary.
+// Require a next-day NPC delivery, the current overnight hold, or the D15
+// loan already completed that afternoon; never rewrite arbitrary conversations,
+// player drafts, message IDs, scene progress, or message delivery receipts.
+export function syncGhostShareOvernightDates(s){
+ if(!isStory55(s))return false;
+ const messages=chat(s)?.messages||[];
+ let changed=false;
+ for(const card of messages){
+  const match=/^s55-ghost-share-(1[5-9]|2[0-4])-(\d+)$/.exec(String(card.id||''));
+  if(!match||card.from!=='me'||card.kind!=='ghost-project'||card.time!=='03:00')continue;
+  const day=Number(match[1]),oldDate=date55(day),nextDate=date55(day+1);
+  if(card.day!==day||card.sentDate!==oldDate)continue;
+  const group=messages.filter(m=>m.id===card.id||String(m.id||'').startsWith(card.id+'-'));
+  const nextDayDelivery=group.some(m=>m.delivery?.sentDate===nextDate||m.delivery?.day===day+1);
+  const inOvernightHold=s.day===day&&overnightSceneNight55(s);
+  const loanAlreadyPaid=day===15&&s.story55?.completed?.loan?.day===15&&
+   s.story55.completed.loan.clock>card.time;
+  if(!nextDayDelivery&&!inOvernightHold&&!loanAlreadyPaid)continue;
+  for(const message of group){
+   if(message.day!==day||message.sentDate!==oldDate||message.time!=='03:00')continue;
+   message.sentDate=nextDate;
+   changed=true;
+  }
+ }
+ return changed;
+}
+
 const pendingDelivered=(s,p)=>!(p?.pendingIds||[]).some(id=>!chat(s)?.messages?.find(m=>m.id===id)?.delivery);
 const noAccess=()=>({ok:false,error:'目前無法分享此項目'});
 
@@ -103,7 +137,7 @@ function queueNpc(s,p){
   if(!p.pendingIds.length)pause=responseSeconds(lines[index][1]);
   const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
    messageId,from:TAI_GHOST_THREAD,text:lines[index][1],storyTag:'story55',
-   day:s.day,clock:s.clock,sentDate:date55(s.day),
+   day:s.day,clock:s.clock,sentDate:shareSentDate(s),
    schedule:{mode:'chat-delay',seconds:pause}});
   if(message)message.ghostShareScript=p.script;
   p.pendingIds.push(messageId);pause+=WAIT_MS/1000;
@@ -128,7 +162,7 @@ export function shareGhostToTai(s,source,{random=Math.random,now=Date.now()}={})
  const cardId=`s55-ghost-share-${s.day}-${serial}`;
  const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
   messageId:cardId,from:'me',text:'[GHOST PROJECT]',kind:'ghost-project',
-  day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55',notify:false,
+  day:s.day,clock:s.clock,sentDate:shareSentDate(s),storyTag:'story55',notify:false,
   attachment:item});
  if(!message)return noAccess();
  const p={phase:'awaiting-online',script:null,index:0,pendingIds:[],cardId,source:item,
@@ -193,7 +227,7 @@ export function sendGhostShareDraft(s,text){
   throw Error('請先發送輸入框內的預設訊息');
  appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
   messageId:`${p.cardId}-me-${p.index}`,from:'me',text:line.text,storyTag:'story55',
-  day:s.day,clock:s.clock,sentDate:date55(s.day),notify:false});
+  day:s.day,clock:s.clock,sentDate:shareSentDate(s),notify:false});
  p.index++;
  queueNpc(s,p);
  if(s.drafts)delete s.drafts[TAI_GHOST_THREAD];
@@ -216,7 +250,7 @@ export function sendGhostShareRemoteText(s,text){
  const message=appendAuthoredPhoneMessage(s,{
   channel:'mirage',conversationId:TAI_GHOST_THREAD,
   messageId:p.cardId+'-remote-typing',from:'me',text:TAI_REMOTE_TYPED_LINE,
-  storyTag:'story55',day:s.day,clock:s.clock,sentDate:date55(s.day),notify:false
+  storyTag:'story55',day:s.day,clock:s.clock,sentDate:shareSentDate(s),notify:false
  });
  if(!message)return false;
  // Record the real outgoing message once. The controller waits for this
