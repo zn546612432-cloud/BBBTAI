@@ -64,7 +64,7 @@ export function isRecentTaiCall(entry,current={}){
 export function shouldRecallTaiCall(entry,current={},text=''){
  if(!entry)return false;
  const t=String(text);
- if(/(?:剛才|刚才|剛剛|刚刚|之前|上次|下午|那通|那次|上一通).{0,16}(?:電話|电话|通話|通话|說|说|掛|挂)|(?:還|还)(?:記|记)得|(?:為|为)什[麼么](?:掛|挂)/.test(t))return true;
+ if(/(?:剛才|刚才|剛剛|刚刚|昨天|昨晚|昨日|前天|前幾天|前几天|之前|上次|下午|那通|那次|上一通).{0,20}(?:電話|电话|通話|通话|說|说|講|讲|提|約|约|答應|答应|掛|挂)|(?:昨天|昨晚|前天).{0,18}(?:那件事|那個事|那个事|事情|安排|承諾|承诺|計劃|计划)|(?:還|还)(?:記|记)得|(?:為|为)什[麼么](?:掛|挂)/.test(t))return true;
  if(/孤[兒儿]院/.test(t)&&/孤[兒儿]院/.test(entry.transcript||''))return true;
  // Immediately following a real hangup, the conversation remains available as background.
  return isRecentTaiCall(entry,current);
