@@ -75,7 +75,7 @@ test('speech appends on sound start, locks input and never sends the player line
  try{
   const audio=primeTelephony(ctx);store.update(s=>s.story55.scenes.intrusion.nextAt=0);tickTelephony(ctx,Date.now());
   const chat=()=>store.get().content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
-  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-v2-8'),false);audio.onplaying();assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-v2-8').length,1);
+  assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-v2-8'),false);audio.onplaying();assert.equal(chat().messages.filter(m=>m.id==='s55-intrusion-v2-8').length,0,'spoken audio must not append a blank Mirage avatar');
   assert.equal(store.get().phoneCall.speaking,true);assert.equal(scriptedDraft55(store.get(),'mirage','s55-ouroboros'),null);
   audio.onended();await new Promise(resolve=>setImmediate(resolve));assert.equal(scene55(store.get(),'intrusion').index,9);
   assert.equal(chat().messages.some(m=>m.id==='s55-intrusion-v2-9'),false);

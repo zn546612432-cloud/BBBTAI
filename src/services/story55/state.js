@@ -64,12 +64,12 @@ export function pendingTimedStoryEvent(s){
   .map(n=>({...n,minute:minuteOf(n.at)+(n.afterMidnight?1440:0)})).sort((a,b)=>a.minute-b.minute)[0]||null;
 }
 // D06's 10 BTC settlement is the fixed story checkpoint. Reuse the unified
-// time/charging gate; the existing wish queue delivers the eleven NPC replies
+// time/charging gate; the existing wish queue delivers the nine retained NPC replies
 // on real-time timers even while the game clock is stationary.
 export const d06WalletSettled=s=>isStory55(s)&&completed(s,'wallet')&&
  !!s.content?.mirage?.transactions?.some(t=>t.id==='s55-wallet-10btc');
 export const d06CelebrationHold=s=>s.day===6&&d06WalletSettled(s)&&
- !s.story55?.wishes?.story?.delivered?.includes('d06-celebrate-11');
+ !s.story55?.wishes?.story?.delivered?.includes('d06-celebrate-10');
 export function timedStoryPaused(s){
  if(d06CelebrationHold(s)||recognitionCallDue(s))return true;
  const n=pendingTimedStoryEvent(s);if(n&&storyDayMinute(s)>=n.minute)return true;

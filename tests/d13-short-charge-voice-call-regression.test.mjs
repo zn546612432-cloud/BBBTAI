@@ -75,9 +75,10 @@ test('D13 pure-green overlay has no narration, call icons are SVG, island blinks
  assert.doesNotMatch(island,/☎/);
 });
 
-test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not a narrator',()=>{
+test('D13 spoken Tai turns belong to the phone, not empty Mirage avatars; IP trace is terminal status',()=>{
  const s=day13('22:26');
  assert.equal(sceneLines(s,'intrusion')[21][1].endsWith('晚安，nya，或者我該叫你，熙蒙……'),true);
+ s.content.conversations.mirage.push({id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0});
  appendSceneMessage55(s,'intrusion',8);
  appendSceneMessage55(s,'intrusion',15);
  appendSceneMessage55(s,'intrusion',19);
@@ -85,8 +86,7 @@ test('D13 spoken Tai turns are avatar-only and IP trace is a terminal state, not
  appendSceneMessage55(s,'intrusion',21);
  const chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
  for(const i of [8,19,21]){
-  const m=chat.messages.find(x=>x.id==='s55-intrusion-v2-'+i);
-  assert.equal(m.kind,'call-avatar');assert.equal(m.text,'');
+  assert.equal(chat.messages.some(x=>x.id==='s55-intrusion-v2-'+i),false);
  }
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-15').text,'（正在定位 IP………）');
  assert.equal(chat.messages.find(m=>m.id==='s55-intrusion-v2-20').text,'（追蹤失敗！錯誤代碼：ERR-4037）');
@@ -278,9 +278,9 @@ test('D13 existing phone saves migrate only unmodified default and keep progress
  assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
  assert.equal(s.story55.config.voiceAssets.intrusion[21],'/assets/story55/d13/call-21.mp3');
  assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
- assert.equal(s.story55.config.voiceSettings.intrusion[21].speed,0.93);
- tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[21],undefined,'old cached farewell must not override bundled final MP3');
+ assert.equal(s.story55.config.voiceSettings.intrusion[20],undefined);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],undefined);
  const finished=day13('22:26');
  finished.story55.completed.intrusion={day:13,clock:'22:26'};
  finished.story55.config.scenes.intrusion=[...next.slice(0,19),...next.slice(20)];
@@ -304,10 +304,10 @@ test('saved D13 22-line call reorders only two authored turns and migrates appro
  assert.deepEqual(sceneLines(s,'intrusion'),correct);
  assert.equal(s.story55.config.voiceAssets.intrusion[19],'/assets/story55/d13/call-20.mp3');
  assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[19],undefined,'cached older recording cannot play at new promise');
  assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceSettings.intrusion[19].speed,0.94);
- tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+ assert.equal(s.story55.config.voiceSettings.intrusion[20],undefined);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],undefined);
 });
 test('previously delivered D13 system/voice messages reorder without touching players or duplicating statuses',()=>{
  const s=day13('22:26'),chat={id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};
@@ -320,9 +320,8 @@ test('previously delivered D13 system/voice messages reorder without touching pl
  const player={id:'user-typed',from:'me',kind:'text',text:'還在嗎'};
  chat.messages.push(oldStatus,oldVoice,player);
  tickStory55(s);
- assert.equal(chat.messages.at(-3),oldVoice);
- assert.equal(chat.messages.at(-2),oldStatus);
- assert.deepEqual(chat.messages.slice(-3).map(m=>m.id),['s55-intrusion-v2-19','s55-intrusion-v2-20','user-typed']);
+ assert.equal(chat.messages.some(m=>m.kind==='call-avatar'),false);
+ assert.deepEqual(chat.messages.map(m=>m.id),['s55-intrusion-v2-20','user-typed'],'retire avatar but keep status and player');
  assert.equal(chat.messages.at(-1).text,'還在嗎');
  const snapshot=structuredClone(chat.messages);
  tickStory55(s);assert.deepEqual(chat.messages,snapshot);

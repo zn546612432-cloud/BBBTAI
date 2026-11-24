@@ -181,7 +181,7 @@ export function beginD06Celebration(s,now=Date.now()){
  if(!msg)return false;
  story.started=true;
  for(const line of celebration)queue(s,{...line,dueDay:6,dueClock:s.clock,silentAfterDay:true});
- for(const line of privateScenes)queue(s,{...line,dueDay:6,dueClock:s.clock,afterId:'d06-celebrate-11',silentAfterDay:true});
+ for(const line of privateScenes)queue(s,{...line,dueDay:6,dueClock:s.clock,afterId:'d06-celebrate-10',silentAfterDay:true});
  story.nextAt=now+1800;
  s.events.push({type:'d06_celebration_started',day:s.day,clock:s.clock});
  return true;
