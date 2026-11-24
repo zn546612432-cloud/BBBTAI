@@ -160,7 +160,7 @@ export function createConversationTrack(config){
   for(const d of defs){
    const q=map[d.id],key=d.channel+':'+chatId(s,d);
    if(q.lateRun&&!q.lateHandled){
-    const r=q.lateRun;if(!lineIsDue(s,d,q.index)||qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
+    const r=q.lateRun;if((d.lineClock&&!lineIsDue(s,d,q.index))||qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
     const last=s.story55.conversationDelivery[key];
     if(Number.isFinite(last)&&now-last<pause(s,d,q))continue;
     const line=r.lines[r.index];if(!line||line.who==='me')continue;
@@ -250,7 +250,7 @@ export function createConversationTrack(config){
   return defs.some(d=>{const q=map[d.id];return !q||(!q.completed&&!q.skipped&&!q.historySettled&&isPast(s,d,q))
    ||!q.completed&&!q.lateHandled&&!q.lateRun&&superseded(s,d,q)
    ||q.lateRun&&!q.lateHandled&&qDue(q)!=null&&now>=qDue(q)
-   ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?lineIsDue(s,d,q.index)&&qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
+   ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?(!d.lineClock||lineIsDue(s,d,q.index))&&qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
  }
  // Peek at the same authored chat lifecycle used for real NPC delivery and player Send.
  // Never synthesize a reply or mark a scene complete during time jumps.
