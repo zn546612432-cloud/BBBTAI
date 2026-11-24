@@ -18,6 +18,7 @@ photos.hufengCover='hufeng-moments-cover.webp';
 photos.xiaoxinSunsetCover='d06-xiaoxin-sunset-cover.webp';
 photos.xiaoxinSunsetVideo='d06-xiaoxin-sunset.mp4';
 photos.d41GoodShow='d41-hufeng-good-show.jpeg';
+photos.hufengD12Homecoming='hufeng-d12-homecoming.webp';
 photos.xiaoxinD25Selfie='d25-xiaoxin-selfie.webp';
 photos.d49Moon='d49-xiwang-moon.webp';
 Object.assign(photos,{aweiTraining:'awei-d05-training.webp',aweiStyle:'awei-d24-style.webp',aweiFriends:'awei-d29-friends.webp',aweiFountainFront:'awei-d39-fountain-front.webp',aweiFountainBack:'awei-d39-fountain-back.webp'});
