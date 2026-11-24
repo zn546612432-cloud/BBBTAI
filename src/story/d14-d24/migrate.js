@@ -1,6 +1,7 @@
 import {applyD14D24Definition,D14_D24_CONTENT,D14_D24_LEGACY} from './definition.js';
 import {seedAuthoredNotes} from '../../services/story55/authored-notes.js';
 import previousLoan from './previous-loan-v1.json' with {type:'json'};
+import previousLoanV2 from './previous-loan-v2.json' with {type:'json'};
 
 export function syncD14D24Content(s){
  if(s.story55?.version!==1)return false;
@@ -102,6 +103,18 @@ export function syncD14D24Content(s){
    }
   }
   s.story55.d14D24LoanRevision=2;changed=true;
+ }
+ // D15 approved dialogue update: adopt the new script only before its first
+ // real message. Never reinterpret an in-flight index, replay old credits or
+ // fabricate player SEND messages from a previous release.
+ if(s.story55.d15ApprovedLoanRevision!==1){
+  const q=s.story55.scenes?.loan,stored=s.story55.config?.scenes?.loan;
+  if(JSON.stringify(stored)===JSON.stringify(previousLoanV2)&&
+     !q?.index&&!s.story55.completed?.loan){
+   s.story55.config.scenes.loan=structuredClone(D14_D24_CONTENT.scenes.loan);
+   changed=true;
+  }
+  s.story55.d15ApprovedLoanRevision=1;changed=true;
  }
  return seedAuthoredNotes(s,D14_D24_CONTENT.notes)||changed;
 }
