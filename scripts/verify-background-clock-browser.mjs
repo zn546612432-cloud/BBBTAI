@@ -22,7 +22,7 @@ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH
 await mkdir('qa/background-clock',{recursive:true});
 const results=[];
 try{
- for(const scenario of [{name:'normal',day:2,clock:'08:00',target:'08:50'},
+ for(const scenario of [{name:'normal',day:2,clock:'08:00',target:'08:30'},
   {name:'d13-mail',day:13,clock:'22:00',target:'22:10'},
   {name:'d23-chess',day:23,clock:'22:10',target:'22:16'},
   {name:'short-charge',day:2,clock:'08:00',target:'08:50',short:true}]){
