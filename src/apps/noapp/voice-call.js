@@ -653,7 +653,9 @@ export function maybeAdvanceCall(ctx,{now=Date.now()}={}){
  // When sleep approaches (or the game clock skipped the boundary), the
  // live conversation gets a spoken farewell before the contact goes offline.
  if(departure){
-  if(call.busy||playback&&!playback.paused)return false;
+  // Let an active microphone turn or an audible clip finish. Do not talk
+  // over Xi Meng while he is already answering the call.
+  if(call.busy||call.listening||call.requestingMic||call.transcribing||call.audioReady||playback&&!playback.paused)return false;
   void playNaturalCallSystemLine(ctx,'departure');
   return true;
  }
