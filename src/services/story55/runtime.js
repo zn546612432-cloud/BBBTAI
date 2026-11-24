@@ -619,7 +619,9 @@ export function anonymousPresence55(s,now=Date.now()){
  if(s.day===23&&completed(s,'d23-chess-finish'))return {online:false,reason:'已下線'};
  if(s.day===29&&completed(s,'plan'))return {online:false,reason:''};
  if(completed(s,'recognition'))return {online:story55Presence(s,now).contactable,reason:story55Presence(s,now).reason};
- if(s.day>=15&&s.day<=24){
+ // D14 was omitted from this shared schedule, even though Mirage AI starts D14.
+ // Include the full first anonymous day without bypassing authored-scene gates.
+ if(s.day>=14&&s.day<=24){
   const clock=typeof s.clock==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s.clock)?s.clock:'';
   const window=ANONYMOUS_MIRAGE_WINDOWS_55.find(([from,to])=>clock>=from&&clock<to);
   if(!window)return {online:false,reason:'目前離線'};
