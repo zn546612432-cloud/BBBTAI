@@ -29,17 +29,18 @@ jobs:
       - run: node --check public/voice-lab/panel.js
       - run: npm test
       - run: npm run build:pages
-      # Friends share the exact same release modules and public assets as main.
-      # Only the entry HTML opts into hiding author/debug controls.
-      - name: Create isolated friends test entry
+      # The shared build generates the exact same friends-test entry for
+      # Cloudflare Pages and GitHub Pages; verify rather than recreate it.
+      - name: Verify isolated friends test entry
         run: |
-          mkdir -p dist/review/friends-test
           node --input-type=module <<'NODE'
-          import {readFile,writeFile} from 'node:fs/promises';
-          const html=await readFile('dist/index.html','utf8');
-          if(!html.includes('ximeng-release')||!html.includes('<head>'))throw Error('Production entry not ready');
-          const friends=html.replace('<head>','<head><meta name="phone-friends-test" content="true">');
-          await writeFile('dist/review/friends-test/index.html',friends);
+          import {readFile} from 'node:fs/promises';
+          const html=await readFile('dist/review/friends-test/index.html','utf8');
+          const release=JSON.parse(await readFile('dist/release.json','utf8'));
+          if(!html.includes('name="phone-friends-test" content="true"')||
+             html.includes('name="phone-preview"')||
+             !html.includes(release.url+'src/main.js'))
+            throw Error('Friends test must use production code with developer controls hidden');
           NODE
       # The author preview uses the SAME verified release modules/assets as
       # production, but opts into the existing isolated preview save key via
