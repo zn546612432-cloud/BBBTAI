@@ -11,7 +11,7 @@ export function syncD13(s){
  // Previously authored spoken turns become avatar-only call records.
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
  for(const m of chat?.messages||[]){
-  if(/^s55-intrusion-v2-(8|10|12|14|16|18|20)$/.test(m.id||'')&&m.from!=='me'){
+  if(/^s55-intrusion-v2-(8|10|12|14|16|18|20|21)$/.test(m.id||'')&&m.from!=='me'){
    m.kind='call-avatar';m.text='';
   }
  }
