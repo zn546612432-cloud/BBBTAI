@@ -142,6 +142,8 @@ test('38 authored posts span D01–D90 with optional zero-comment posts and mixe
  assert.deepEqual(authoredMoments.filter(p=>p.author==='胡枫'||p.author==='胡楓').map(p=>p.id),['hf-d41']);
  assert.deepEqual(find('xs-d04').media,['xmCaught']);
  assert.deepEqual(find('xw-d04').media,['xmDinner','dinnerDish']);
+ assert.equal(find('xw-d04').text,'和阿蒙出來吃飯。');
+ assert.deepEqual(find('xw-d04').comments,[{by:'小辛',text:'好啊你們，偷偷吃好的'},{by:'阿威',text:'下次叫我'}]);
  assert.deepEqual(find('zz-d15').media,['brothers']);
  assert.equal(find('zz-d15').author,'仔仔');
  assert.equal(authoredMoments.filter(p=>p.author==='仔仔').length,1);
