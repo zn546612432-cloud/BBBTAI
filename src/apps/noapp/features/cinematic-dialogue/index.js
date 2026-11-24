@@ -25,6 +25,7 @@ function eligible(entry,{relationshipPlan,input,messages,macauClock,londonClock}
  if(entry.gate==='repeated-other-person'&&!repeatedOtherPerson.test(input))return false;
  if(entry.gate==='actual-danger'&&(!relationshipPlan.crisis||!CRISIS_CONTEXT.test(input)))return false;
  if(entry.gate==='demonstrated-independence'&&!/不用再問你|不用再问你|我自己.*決定|我自己.*决定|不需要你替我|不需要你帮我决定/.test(input))return false;
+ if(entry.id==='40'&&/失去聯絡|失去联络|聯絡不上|联系不上|怕你消失|怕你失聯|怕你失联/.test(input))return false;
  if(entry.gate==='fear-of-loss'&& !/(?:失去你|失去我|失去熙泰|怕.{0,8}(?:你|我).{0,4}離開|怕.{0,8}(?:你|我).{0,4}离开|別離開我|别离开我|害怕.{0,8}你離開|害怕.{0,8}你离开)/.test(input))return false;
  return true;
 }
