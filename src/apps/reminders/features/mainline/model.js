@@ -4,7 +4,8 @@ import {isStory55,story55Config,nodeStatus,completed,date55,storyDayMinute} from
 import {nodeLink55,scene55,sceneLines} from '../../../../services/story55/runtime.js';
 import {D01_OPENING,D01_REPAIR,D01_ATTACHMENT} from '../../../../story/d01/runtime.js';
 import {d02CompleteBuild,D02_AODONG_CHAT_ID} from '../../../../story/d02/runtime.js';
-import {d02WangReminder} from '../../../../story/d02/wechat.js';
+import {d02Track,d02WangReminder} from '../../../../story/d02/wechat.js';
+import {D14_D24_TRACKS} from '../../../../story/d14-d24/wechat.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {D06_ORDER_ID,D06_FLOW_AT} from '../../../../story/d06/commission.js';
 import {STORY55_WALLET_MAIL_ID} from '../../../mirage/data.js';
@@ -23,6 +24,30 @@ const task=(id,title,link,detail,done=false,at='')=>({
 const clockMinute=value=>Number(value.slice(0,2))*60+Number(value.slice(3,5));
 const hasReached=(s,n)=>n.day<s.day||!n.at||
  storyDayMinute(s)>=clockMinute(n.at)+(n.afterMidnight?1440:0);
+// Approved proactive chat reminders, including optional scenes.
+const proactiveTitles={"d23-chess":"問問銜尾蛇會不會下棋","lead":"向 Flow 打聽銜尾蛇","d26-procurement":"確認採購清單","d29-chess":"請教國際象棋","d37-workstation":"分享移動工作站照片","d39-wang":"給哥哥看看數字人","d42-wang":"給熙旺發消息","d47-group":"通知大家最新情況","d51-isolde-second":"聯繫 Isolde","d53-isolde-deal":"與 Isolde 確認委託","ready":"給傅隆生發信息","d55-briefing":"確認行動流程"};
+const d20Track=D14_D24_TRACKS.find(x=>x.track.day===20)?.track;
+function dailyOrderTask(s){
+ const orders=s.content.orders||[];
+ const accepted=orders.some(o=>o.acceptedDay===s.day)||
+  s.day===1&&!!s.story55.d01?.repairAccepted||
+  (s.content.mail||[]).some(m=>m.day===s.day&&m.linkedContract&&m.missionStep===1&&orders.some(o=>o.id===m.orderId&&!o.acceptedDay&&o.status!=='OPEN'));
+ return task('daily-mirage','前往 MIRAGE 接單',accepted?null:destination('mirage','/bounties/hall'),accepted?'已完成':'MIRAGE · 訂單大廳',!!accepted);
+}
+function proactiveDailyTasks(s){
+ const out=[];
+ const add=(id,title,chatId,done,at='')=>out.push(task(id,title,done?null:destination('wechat','/chat/'+chatId),done?'已完成':'微信',done,at));
+ if(s.day===1&&!s.story55.d01?.nightAfterMidnight){
+  const d=s.story55.d01||{};
+  if(!d.group?.cancelled)add('d01-group-chat','在群裡打個招呼','group',!!d.group?.completed);
+  if(d.brother?.phase!=='cancelled')add('d01-brother-chat','給哥哥發消息','wang',d.brother?.phase==='done');
+ }
+ const build=d02Track.reminderState(s,'newpc');
+ if(build&&(!build.done||s.day===2))add('d02-newpc-chat','告訴大家電腦裝好了',build.conversationId,build.done,build.at);
+ const monitoring=d20Track?.reminderState(s,'monitoring');
+ if(monitoring&&s.day===20)add('d20-monitoring-chat','確認人員安排',monitoring.conversationId,monitoring.done,monitoring.at);
+ return out;
+}
 function mandatoryIds(s){
  const byId=new Map(story55Config(s).nodes.map(n=>[n.id,n])),required=new Set();
  function visit(id){if(required.has(id))return;const n=byId.get(id);if(!n||n.authoredPending)return;required.add(id);for(const parent of n.requires||[])visit(parent);}
@@ -113,6 +138,12 @@ function nodeTask(s,n){
   detail='GHOST · '+(batch?.complete?'已完成':'五輪測試與升級');
   if(batch?.complete||done)return task(n.id,title,null,'已完成',true,n.at);
  }
+ if(proactiveTitles[n.id])title=proactiveTitles[n.id];
+ if(n.id==='d29-chess'&&s.day===29&&!s.story55.d29ChessExited){
+  const match=s.matches?.find(m=>m.invitationId==='s55-d29-chess-invite'&&!m.closedAt);
+  if(match)return task(n.id,title,destination('chess','/match/'+match.id),'國際象棋',false,n.at);
+  if(done)return task(n.id,title,destination('mirage','/chat/s55-ouroboros'),'MIRAGE · Dr Ouroboros',false,n.at);
+ }
  return task(n.id,title,link,done?'已完成':detail,done,n.at);
 }
 function researchTasks(s){
@@ -140,7 +171,7 @@ function researchTasks(s){
 }
 export function mainlineTasks(s){
  if(!isStory55(s)||s.story55?.ended)return [];
- const items=d01Tasks(s);
+ const items=[...d01Tasks(s),dailyOrderTask(s),...proactiveDailyTasks(s)];
  const wang=d02WangReminder(s);
  if(wang)items.push(task('d02-wang-chat','給熙旺發消息',wang.done?null:destination('wechat','/chat/'+wang.chatId),wang.done?'已完成':'微信 · 熙旺',wang.done,wang.at));
  const aodongChat=s.content.conversations.messages?.find(c=>c.id===D02_AODONG_CHAT_ID);
@@ -149,18 +180,19 @@ export function mainlineTasks(s){
   items.push(task('workstation','準備工作站配件',destination('messages','/chat/'+D02_AODONG_CHAT_ID),'短信 · 澳東商城優惠資訊'));
  const required=mandatoryIds(s);
  for(const n of story55Config(s).nodes){
-  if(!required.has(n.id)||n.day>s.day||!hasReached(s,n))continue;
+  if((!required.has(n.id)&&!(proactiveTitles[n.id]&&n.day===s.day))||n.day>s.day||!hasReached(s,n))continue;
   if(n.autoComplete===true)continue;
   if(n.id==='flow-d03'&&s.day===3&&s.clock<'08:15')continue;
   if(n.id==='wallet'&&s.day===6&&s.clock<D06_FLOW_AT)continue;
   // Nothing has happened to disclose this node until its predecessors finish.
   if((n.requires||[]).some(id=>!completed(s,id)))continue;
+  if(n.id==='plan'&&s.day===29&&!s.story55.d29ChessExited&&completed(s,'d29-chess'))continue;
   const view=nodeTask(s,n);if(view&&(!view.done||n.day===s.day))items.push(view);
  }
  items.push(...researchTasks(s));
  const unique=[...new Map(items.map(t=>[t.id,t])).values()];
  const today=new Set(story55Config(s).nodes.filter(n=>n.day===s.day).map(n=>'mainline:'+n.id));
- const rank=t=>today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')||s.day===2&&t.id==='mainline:d02-wang-chat'?0:
+ const rank=t=>t.id==='mainline:daily-mirage'?4:today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')||s.day===2&&t.id==='mainline:d02-wang-chat'?0:
    t.id.startsWith('mainline:research-')?1:t.id==='mainline:workstation'?2:3;
  return unique.sort((a,b)=>Number(a.done)-Number(b.done)||rank(a)-rank(b)||
   ((a.at||'00:00').localeCompare(b.at||'00:00')));
