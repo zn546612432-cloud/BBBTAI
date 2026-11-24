@@ -1,6 +1,6 @@
 // Exact-match D10–D13 migration. No new scheduler, no rewriting player speech.
 import {D10_GROUP} from '../d10/dialogue.js';
-import {MEETING_NOTE,D11_DIARY} from '../d11/diary.js';
+import {MEETING_NOTE,D11_DIARY,LEGACY_MEETING_NOTE_TEXT} from '../d11/diary.js';
 export {MEETING_NOTE} from '../d11/diary.js';
 export const OLD_D10={"shopping-list":["下午去超市，有没有要带的","洗衣液快没了","五号电池","薯片","什么口味","都行，别芥末"],"noodles":["中午有人吃面吗","等会儿再说","昨天那袋咖啡豆谁开的","我，剩的都封好了"],"heat":["今天太阳是真的狠"],"supermarket":["超市排队排了半小时","我们还在停车场","马上好了"],"carry":["到楼下了，谁下来搬东西","我下去","薯片呢","你先搬"],"dinner":["汤在炉上，回来自己盛"],"night":["明天终于不用买东西了"]};
 export const OLD_RETURN=[["wang","起床了没有？干爹回来了，今天回据点一趟。"],["me","真的？我马上过去。"],["father","好好干。"]];
@@ -103,7 +103,10 @@ function migrateD11MeetingNoteToDiary(s){
   note.authored===true&&note.storyContent===true);
  if(index<0)return false; // Unrelated player-created notes are not ours.
  const note=list[index];
- const customized=note.text!==MEETING_NOTE.text||note.title!==MEETING_NOTE.title;
+ // Recognize the obsolete five-line authored Notes default as *unmodified*.
+ // Otherwise the old default would overwrite the newly approved literary D11 diary.
+ const legacyDefault=note.title==='5/29 · 备忘'&&note.text===LEGACY_MEETING_NOTE_TEXT;
+ const customized=!legacyDefault&&(note.text!==MEETING_NOTE.text||note.title!==MEETING_NOTE.title);
  s.story55.d11MeetingNoteArchive??=structuredClone(note);
  if(customized){
   s.content.storyDiary??={};
