@@ -30,9 +30,10 @@ await page.addInitScript(({seed,key})=>{
   const match=/\/assets\/story55\/d13\/call-(\d+)\.mp3(?:[?#]|$)/.exec(this.src||'');
   if(match||(this.src||'').startsWith('blob:')){
    const index=match?Number(match[1]):JSON.parse(localStorage.getItem(key)||'{}')?.story55?.scenes?.intrusion?.index;
+   const sceneIndex=index===20?19:index; // Approved scene 19 uses the existing call-20.mp3.
    for(const kind of ['playing','ended','error'])this.addEventListener(kind,()=>{
     const input=document.querySelector('.mc-composer input');
-    window.__d13AudioEvents.push({index,kind,inputDisabled:input?.disabled===true,bubblePresent:!!document.querySelector('[data-key="message-s55-intrusion-v2-'+index+'"]')});
+    window.__d13AudioEvents.push({index,sceneIndex,kind,inputDisabled:input?.disabled===true,bubblePresent:!!document.querySelector('[data-key="message-s55-intrusion-v2-'+sceneIndex+'"]')});
    },{once:true});
   }
   return play.apply(this,args);
@@ -82,7 +83,29 @@ try{
  await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
  await page.locator('.tel-green-screen').waitFor();await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');assert.equal(await page.locator('.tel-green-screen').innerText(),'');assert.equal(await page.locator('.tel-green-screen').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(5, 107, 46)');await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
- await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),1);assert.equal(await action('tel-answer').count(),1);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
+ await page.locator('.tel-call-screen').waitFor({timeout:90000});
+ assert.equal(await action('tel-decline').count(),1);
+ assert.equal(await action('tel-answer').count(),1);
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');
+ // Fullscreen geometry regression: never grid-center a relatively positioned card.
+ const callLayout=await page.evaluate(()=>{
+  const rect=selector=>{
+   const r=document.querySelector(selector).getBoundingClientRect();
+   return {x:r.x,y:r.y,width:r.width,height:r.height};
+  };
+  return {call:rect('.tel-standard-call'),layer:rect('#day-transition-layer'),
+   phone:rect('#phone'),position:getComputedStyle(document.querySelector('.tel-standard-call')).position,
+   callLayerZ:Number(getComputedStyle(document.querySelector('#day-transition-layer')).zIndex),
+   toastZ:Number(getComputedStyle(document.querySelector('#toast')).zIndex)};
+ });
+ assert.equal(callLayout.position,'absolute','Incoming call must not be a grid-centered card');
+ for(const edge of ['x','y','width','height']){
+  assert.ok(Math.abs(callLayout.call[edge]-callLayout.layer[edge])<=2,
+   'Incoming call must fill its overlay on '+edge+': '+JSON.stringify(callLayout));
+ }
+ assert.ok(callLayout.call.width>=callLayout.phone.width-2);
+ assert.ok(callLayout.callLayerZ>callLayout.toastZ,'Toast must not appear above an incoming call');
+ await page.screenshot({path:'qa-results/d13-forced-call.png'});
  await action('tel-decline').click();
  await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key)).phoneCall?.reason==='user-declined',key);
  await page.locator('.tel-call-island').waitFor({timeout:20000});
@@ -108,8 +131,9 @@ try{
  const audioEvents=[...preReloadAudioEvents,...await page.evaluate(()=>window.__d13AudioEvents)];
  await writeFile('qa-results/d13-audio-events.json',JSON.stringify(audioEvents,null,2));
  {
-  assert.deepEqual(audioEvents.filter(e=>e.kind==='playing').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must start in script order');
-  assert.deepEqual(audioEvents.filter(e=>e.kind==='ended').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must end normally');
+  const expectedAudioFiles=D13_VOICE_INDICES.map(i=>i===19?20:i);
+  assert.deepEqual(audioEvents.filter(e=>e.kind==='playing').map(e=>e.index),expectedAudioFiles,'All eight approved MP3s must start in script order');
+  assert.deepEqual(audioEvents.filter(e=>e.kind==='ended').map(e=>e.index),expectedAudioFiles,'All eight approved MP3s must end normally');
   assert.ok(audioEvents.filter(e=>e.kind==='playing').every(e=>e.inputDisabled&&e.bubblePresent),'Speech locks Send and displays the speaker avatar at sound start');
   assert.equal(audioEvents.filter(e=>e.kind==='error').length,0);
  }

@@ -76,7 +76,8 @@
 
 /* Native iPhone layout for standard calls; cinematic calls keep .tel-native-call. */
 .tel-call-screen.tel-standard-call{
- position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;
+ position:absolute;inset:0;width:100%;height:100%;
+ isolation:isolate;overflow:hidden;box-sizing:border-box;
  justify-content:flex-start;align-items:center;gap:0;text-align:center;
  padding:0 24px max(35px,env(safe-area-inset-bottom,0px));
  background:#292a32;color:#fff;
@@ -168,7 +169,7 @@ body:has(#phone .tel-standard-call){display:block;background:#151923}
  position:fixed;inset:0;width:100vw;width:100dvw;height:100vh;height:100dvh;
  min-height:0;max-width:none;margin:0;border-radius:0;box-shadow:none;
 }
-#phone:has(.tel-standard-call) #day-transition-layer{inset:0}
+#phone:has(.tel-standard-call) #day-transition-layer{inset:0;z-index:80} /* Phone must cover message banners (z=60–62). */
 .tel-standard-call .tel-standard-identity{margin-top:clamp(98px,15dvh,160px)}
 .tel-standard-call .tel-standard-identity h1{font-size:clamp(36px,10vw,48px);font-weight:400;letter-spacing:-1.2px}
 .tel-standard-call .tel-standard-bottom{padding-bottom:clamp(27px,8dvh,85px)}
