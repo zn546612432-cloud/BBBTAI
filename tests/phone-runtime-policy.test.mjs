@@ -7,6 +7,9 @@ import {worldMinuteRate,tickWorld,advanceGameMinutes,setStory55MinutesPerSecond}
 import {phoneRuntimePaused,tickPhoneRuntime} from '../src/system/runtime/controller.js';
 import {WorldTickBatch} from '../src/system/time/tick-batch.js';
 import {drainBattery,BATTERY_DRAIN_INTERVAL_MS,plugIn,beginShortCharge} from '../src/system/power/battery.js';
+import {PHONE_RUNTIME_POLICY,phoneSceneMinuteRate,taiReplyTriggered} from '../src/system/runtime/policy.js';
+import {MessageDelivery} from '../src/services/messaging/delivery.js';
+import {readConversationInState} from '../src/services/messaging/read.js';
 const start=(day=2,appId='home')=>{
  const s=activateStory55(initialState());s.day=day;s.unlocked=true;
  s.story55.completed.intro={day:1,clock:'12:00'};
@@ -88,4 +91,80 @@ test('mixed App/home segments and reload have the same debit as uninterrupted ga
  }
  assert.equal(s.clock,'08:10');assert.equal(s.batteryPercent,100);
  s=JSON.parse(JSON.stringify(s));advanceGameMinutes(s,2);assert.equal(s.batteryPercent,99);
+});
+
+test('unified clock: home 150x, background 10x and short charging 225x overrides both',()=>{
+ const s=start(),home=2.5/1000,background=10/60000,short=3.75/1000;
+ assert.equal(PHONE_RUNTIME_POLICY.homeMinutesPerRealSecond,2.5);
+ assert.equal(PHONE_RUNTIME_POLICY.backgroundMinutesPerRealMinute,10);
+ assert.equal(PHONE_RUNTIME_POLICY.shortChargeHomeMinutesPerRealSecond,3.75);
+ assert.equal(phoneSceneMinuteRate(s),home);
+ assert.equal(phoneSceneMinuteRate(s,{hidden:true,background:true}),background);
+ s.nav.current.appId='wechat';
+ assert.equal(phoneSceneMinuteRate(s),5/60000);
+ assert.equal(phoneSceneMinuteRate(s,{hidden:true,background:true}),background);
+ s.nav.current.appId='home';
+ s.powerMode='short-charging';
+ assert.equal(phoneSceneMinuteRate(s),short);
+ assert.equal(phoneSceneMinuteRate(s,{hidden:true,background:true}),short);
+ s.nav.current.appId='wechat';
+ assert.equal(phoneSceneMinuteRate(s),5/60000);
+ setStory55MinutesPerSecond(s,0);
+ assert.equal(phoneSceneMinuteRate(s,{hidden:true,background:true}),0,'developer pause still stops everything');
+});
+
+test('Tai online alone does not slow HOME; queued, real AI and unread replies do',()=>{
+ const s=start(),rate=()=>phoneSceneMinuteRate(s),c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ assert.ok(c);
+ assert.equal(taiReplyTriggered(s),false);
+ assert.equal(rate(),2.5/1000,'mere presence is not a reply');
+ c.messages.push({id:'reply-me',from:'me',kind:'text',text:'在嗎？',taiReplyRequestAt:Date.now(),day:s.day,time:s.clock});
+ assert.equal(rate(),5/60000,'an actual pending Mirage AI reply slows the home screen');
+ c.messages.at(-1).taiReplyRequestAt=Date.now()-130000;
+ assert.equal(rate(),2.5/1000,'a stale request from a frozen page cannot hold the speed forever');
+ delete c.messages.at(-1).taiReplyRequestAt;
+ const queued={id:'pending-tai',from:'s55-ouroboros',kind:'text',text:'？',day:s.day,time:s.clock,schedule:{mode:'chat-delay',seconds:3}};
+ c.messages.push(queued);
+ s.story55.ghostShare={phase:'dialogue',pendingIds:[queued.id]};
+ assert.equal(rate(),5/60000,'an authored reply already queued slows the home screen');
+ queued.delivery={day:s.day,clock:s.clock};
+ assert.equal(rate(),2.5/1000);
+ c.unread=1;
+ assert.equal(rate(),5/60000,'an unread Tai reply stays protected until opened');
+ readConversationInState(s,'mirage','s55-ouroboros');
+ assert.equal(rate(),2.5/1000);
+ const noapp=s.content.conversations.noapp.find(c=>c.id==='tai');
+ assert.ok(noapp);
+ noapp.messages.push({id:'noapp-me',from:'me',kind:'text',text:'等等',taiPending:true});
+ assert.equal(rate(),2.5/1000,'an offline stored message is not an active reply');
+ noapp.messages.at(-1).taiReadAt=Date.now();
+ assert.equal(rate(),5/60000,'a genuinely processing NoApp reply slows the home screen');
+ delete noapp.messages.at(-1).taiPending;
+ assert.equal(rate(),2.5/1000);
+ noapp.messages.push({id:'noapp-tai',from:'tai',kind:'text',text:'好',actual:true});
+ noapp.unread=1;
+ assert.equal(rate(),5/60000);
+ noapp.unread=0;
+ assert.equal(rate(),2.5/1000);
+});
+
+test('native Tai reply continues while waiting on HOME and uses original unread notification service',()=>{
+ const s=start(),c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ const id='queued-home-tai-test',m={id,from:'s55-ouroboros',kind:'text',text:'在這裡',day:s.day,time:s.clock,
+  schedule:{mode:'chat-delay',seconds:2},story55:true};
+ c.messages.push(m);s.story55.ghostShare={phase:'dialogue',pendingIds:[id]};
+ const engine=new MessageDelivery({get:()=>s,update:fn=>fn(s)});
+ engine.tick(1000,true);
+ assert.equal(m.delivery,undefined);
+ engine.tick(2999,true);assert.equal(m.delivery,undefined);
+ engine.tick(3000,true);
+ assert.ok(m.delivery,'queued message must arrive even outside MIRAGE');
+ assert.equal(c.unread,1,'the existing unread counter records the reply');
+ assert.ok(s.notifications.some(n=>n.messageId===id),'existing notification queue is reused');
+ assert.equal(phoneSceneMinuteRate(s),5/60000);
+ readConversationInState(s,'mirage','s55-ouroboros');
+ assert.equal(c.unread,0);
+ assert.equal(phoneSceneMinuteRate(s),2.5/1000);
+ engine.tick(4000,true);
+ assert.equal(s.notifications.filter(n=>n.messageId===id).length,0,'no duplicated notification');
 });
