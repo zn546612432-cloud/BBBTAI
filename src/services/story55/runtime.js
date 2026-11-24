@@ -46,6 +46,7 @@ import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
+import {retireLegacyD11MeetingNote} from '../../story/d11/diary.js';
 import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55,identityReplyMode55} from './state.js';
 import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
 import {syncGhostCarProgress} from './ghost-car.js';
@@ -384,6 +385,8 @@ function quarantineUnsentD23Bubbles(s){
 }
 export function tickStory55(s){
  if(!isStory55(s))return;
+ // D11's approved journal lives in 日程; retire only the untouched Notes duplicate.
+ retireLegacyD11MeetingNote(s);
  expireGhostShare(s);
  // Repair old persisted build URLs without resetting the day or story progress.
  normalizeStory55AudioAssets(story55Config(s));
