@@ -80,7 +80,9 @@ test('NPC reminders are spaced, capped, persisted and never turn into player tex
 
 test('an active conversation today outranks a generic older backlog',()=>{
  const s=fresh(5,'08:05');
- tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,1000);
+ for(let now=0;now<60000;now+=2500)tickPhoneStoryMessages(s,now);
+ assert.equal(s.story55.d05Chats.breakfast.completed,true);
+ s.clock='08:15';tickPhoneStoryMessages(s,60000);tickPhoneStoryMessages(s,62500);
  const c=nativeWeChatComposer(s,'wang');
  assert.equal(c.text,'嗯','today authored player reply has priority');
  assert.equal(c.source,'d05');
