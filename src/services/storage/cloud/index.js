@@ -1,4 +1,4 @@
-import {isTaiCloudHost,saveTaiCloudSession,SESSION_KEY} from '../../ai/supabase-gateway.js';
+import {isTaiCloudHost,commitTaiCloudSession,SESSION_KEY} from '../../ai/supabase-gateway.js';
 import {openSaveJournal} from '../recovery.js';
 import {currentCloudPlayer,readCloudSave,writeCloudSave,eraseCloudSave,cloudBackups,takeEmailCallback} from './api.js';
 import {snapshotVoiceMedia,useCloudVoiceMedia} from './media.js';
@@ -59,7 +59,7 @@ export class PlayerCloudSave{
   return true;
  }
  conflict(row){this.publish({phase:'conflict',conflict:{remote:row,local:JSON.parse(this.pending||JSON.stringify(this.store.get()))}});}
- async start({switchAccount=false}={}){
+ async start({switchAccount=false,handoff=null}={}){
   if(!this.enabled)return false;
   if(this.starting)return this.starting;
   this.starting=(async()=>{
@@ -99,7 +99,25 @@ export class PlayerCloudSave{
      this.timerAfter(0);return true;
     }
     if(owner&&owner!==player.id){
-     if(switchAccount&&row)return await this.restore(row);
+     if(switchAccount&&row)return await this.restore(row,{expectedRaw:raw});
+     // Only a verified guest handoff may initialize an empty email slot.
+     if(!row&&switchAccount&&handoff?.owner===owner&&handoff.target===player.id
+       &&player.email_confirmed_at&&!player.is_anonymous&&!this.meta.revision){
+      const previous=handoff.row;
+      if(previous&&progressOf(snapshot(previous))>progressOf(this.store.get())){
+       const next=this.validate(snapshot(previous));
+       await this.backupLocal();
+       if(this.erasing||JSON.stringify(this.store.get())!==raw){this.conflict(null);return false;}
+       this.applying=true;try{this.store.replace(next);}finally{this.applying=false;}
+      }
+      this.pending=JSON.stringify(this.store.get());
+      this.revision=0;this.rowId=null;this.remoteProgress=0;this.remoteRow=null;this.media={};
+      this.api.useMedia(player.id,{});
+      this.store.storage.setItem(this.ownerKey,player.id);
+      this.saveMeta({id:null,revision:0,hash:null,pending:null,lastSaved:null,missingMedia:0});
+      this.publish({phase:'pending',conflict:null,lastSaved:null,message:''});
+      this.timerAfter(0);return true;
+     }
      this.conflict(row);return false;
     }
     if(row){
@@ -187,7 +205,11 @@ export class PlayerCloudSave{
   if(choice!=='local')return false;
   // Read once more before a user-authorized replacement; CAS still protects
   // against a device that writes between this read and our upload.
-  const remote=await this.api.read(this.slot,this.player.id);await this.backupLocal();
+  const remote=await this.api.read(this.slot,this.player.id);
+  if((remote?.id||null)!==(conflict.remote?.id||null)||(remote?.revision||0)!==(conflict.remote?.revision||0)){
+   this.conflict(remote);return false;
+  }
+  await this.backupLocal();
   this.revision=remote?.revision||0;this.rowId=remote?.id;
   this.store.storage.setItem(this.ownerKey,this.player.id);
   this.meta={revision:this.revision,id:this.rowId};this.saveMeta({});
@@ -200,10 +222,28 @@ export class PlayerCloudSave{
   try{
    if(this.starting)await this.starting;
    if(this.saving)await this.saving;
-   await this.backupLocal();saveTaiCloudSession(session);
+   const owner=this.store.storage.getItem(this.ownerKey);
+   let handoff=null;
+   if(owner&&!parse(this.store.storage.getItem(this.restartKey))){
+    try{
+     const previous=await this.api.player();
+     if(previous.id===owner&&previous.is_anonymous){
+      const row=await this.api.read(this.slot,owner);
+      if(row)this.validate(snapshot(row));
+      if(row||this.store.hasExistingSave)handoff={owner,row};
+     }
+    }catch{} // Unproven ownership retains the existing conflict protection.
+   }
+   await this.backupLocal();
+   await commitTaiCloudSession(session);
    const player=await this.api.player();
-   if(player.id===this.player?.id){this.player=player;this.publish({player});return true;}
-   this.revision=null;this.publish({conflict:null});return await this.start({switchAccount:true});
+   if(handoff)handoff.target=player.id;
+   if(player.id===this.player?.id&&this.revision!==null&&!this.status.conflict){
+    this.player=player;this.publish({player});return true;
+   }
+   this.revision=null;this.rowId=null;
+   this.publish({conflict:null,lastSaved:null});
+   return await this.start({switchAccount:true,handoff});
   }finally{this.switching=false;this.timerAfter(0);}
  }
  async history(){if(!this.rowId)return [];return this.api.backups(this.rowId,this.player.id);}
@@ -227,8 +267,8 @@ export async function connectPlayerSave(store,{key,validate,preview=false,locati
  const enabled=isTaiCloudHost(location?.hostname)&&(!preview||friendsTest)&&(!previewHost||testPreview);
  const cloud=new PlayerCloudSave(store,{key,validate,enabled,slot:friendsTest||testPreview?2:1,...options});store.cloud=cloud;
  if(!enabled)return cloud;
- let callback=false;try{callback=takeEmailCallback();}catch(error){cloud.publish({phase:'offline',message:error.message});return cloud;}
- const initial=cloud.start({switchAccount:callback});
+ let callback=false;try{callback=takeEmailCallback(location,globalThis.history,{persist:false});}catch(error){cloud.publish({phase:'offline',message:error.message});return cloud;}
+ const initial=callback?cloud.acceptSession(callback).catch(error=>{cloud.publish({phase:'offline',message:error.message});return false;}):cloud.start();
  // Offline or slow cloud access cannot prevent the existing local phone
  // from opening. Late arrivals use the normal conflict checks above.
  let timer;await Promise.race([initial,new Promise(resolve=>{timer=setTimeout(resolve,5000);})]);clearTimeout(timer);

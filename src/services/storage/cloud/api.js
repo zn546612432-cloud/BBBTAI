@@ -55,12 +55,14 @@ export async function verifySaveEmail({email,type},token){
  return await (await cloudRequest('/auth/v1/verify',{method:'POST',body,auth:false})).json();
 }
 // Confirmation email links use the same existing session store as AI/TTS.
-export function takeEmailCallback(location=globalThis.location,history=globalThis.history){
+export function takeEmailCallback(location=globalThis.location,history=globalThis.history,{persist=true}={}){
  const hash=new URLSearchParams(String(location?.hash||'').replace(/^#/,''));
  if(!hash.has('access_token'))return false;
  const access_token=hash.get('access_token'),refresh_token=hash.get('refresh_token');
  history?.replaceState(null,'',location.pathname+location.search);
  if(!refresh_token)throw Error('驗證連結不完整，原存檔已保留。');
- saveTaiCloudSession({access_token,refresh_token,expires_in:Number(hash.get('expires_in'))||3600});
+ const session={access_token,refresh_token,expires_in:Number(hash.get('expires_in'))||3600};
+ if(!persist)return session;
+ saveTaiCloudSession(session);
  return true;
 }
