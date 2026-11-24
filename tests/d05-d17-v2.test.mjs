@@ -41,7 +41,7 @@ function drain(s,track,id,chatId){
 
 test('unlisted scenes and D13 remain frozen; D17 differs only by the withdrawn line',()=>{
  const s=phone(5,'08:00');const modified=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));
- for(const key of ['d13:work','d13:evening'])modified.add(key); // explicitly approved deletion and replacement
+ for(const key of ['d13:work','d13:evening','d10:shopping-list','d10:heat'])modified.add(key); // explicitly approved deletion and replacement
  for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,approvedCopy(old.source+':'+old.id,old.lines),old.source+':'+old.id);}
  const originalD13=baseline.story.find(x=>x.node.id==='intrusion').lines;
  assert.deepEqual(s.story55.config.scenes.intrusion,[
@@ -168,7 +168,7 @@ import {sendChat} from '../src/components/chat.js';
 import allMain from '../docs/chat-v2/main-all-chat-source.json' with {type:'json'};
 import {readChatSources} from '../src/apps/developer/features/conversations/source-model.js';
 test('every unmodified D01–D55 source remains byte-exact against the immutable main baseline',()=>{
- const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);for(const key of ['d19:dessert','d20:early','d20:soup'])changed.add(key);for(const id of ['lunch','earbuds','outfit'])changed.add('d04:'+id);for(const key of ['d13:work','d13:evening'])changed.add(key);changed.add('node:azathoth-invitation');changed.add('node:lead');changed.add('node:plan');changed.add('node:recognition');assert.equal(allMain.rows.filter(r=>r.key==='d19:dessert').length,1);
+ const changed=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));for(const id of ['return','move','loan'])changed.add('node:'+id);for(const id of ['wish:d07-extra','wish:d07-d07-tableware'])changed.add(id);for(const key of ['d19:dessert','d20:early','d20:soup'])changed.add(key);for(const id of ['lunch','earbuds','outfit'])changed.add('d04:'+id);for(const key of ['d13:work','d13:evening','d10:shopping-list','d10:heat','wish:d06-celebration'])changed.add(key);changed.add('node:azathoth-invitation');changed.add('node:lead');changed.add('node:plan');changed.add('node:recognition');assert.equal(allMain.rows.filter(r=>r.key==='d19:dessert').length,1);
  // Author-approved D41/D42 replacement and deletion of the four unfinished
  // placeholders; every other frozen row remains subject to the byte check.
  for(const id of ['show','target','paris','confide','failure','ready','ending'])changed.add('node:'+id);

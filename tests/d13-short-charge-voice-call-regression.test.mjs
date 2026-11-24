@@ -278,9 +278,9 @@ test('D13 existing phone saves migrate only unmodified default and keep progress
  assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
  assert.equal(s.story55.config.voiceAssets.intrusion[21],'/assets/story55/d13/call-21.mp3');
  assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
- assert.equal(s.story55.config.voiceSettings.intrusion[21].speed,0.93);
- tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],'farewell-cached');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[21],undefined,'old cached farewell must not override bundled final MP3');
+ assert.equal(s.story55.config.voiceSettings.intrusion[20],undefined);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[21],undefined);
  const finished=day13('22:26');
  finished.story55.completed.intrusion={day:13,clock:'22:26'};
  finished.story55.config.scenes.intrusion=[...next.slice(0,19),...next.slice(20)];
@@ -304,10 +304,10 @@ test('saved D13 22-line call reorders only two authored turns and migrates appro
  assert.deepEqual(sceneLines(s,'intrusion'),correct);
  assert.equal(s.story55.config.voiceAssets.intrusion[19],'/assets/story55/d13/call-20.mp3');
  assert.equal(s.story55.config.voiceAssets.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+ assert.equal(s.story55.config.voiceClipIds.intrusion[19],undefined,'cached older recording cannot play at new promise');
  assert.equal(s.story55.config.voiceClipIds.intrusion[20],undefined);
- assert.equal(s.story55.config.voiceSettings.intrusion[19].speed,0.94);
- tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
+ assert.equal(s.story55.config.voiceSettings.intrusion[20],undefined);
+ tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],undefined);
 });
 test('previously delivered D13 system/voice messages reorder without touching players or duplicating statuses',()=>{
  const s=day13('22:26'),chat={id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};

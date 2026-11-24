@@ -28,19 +28,7 @@ export function syncD13(s){
   }
   s.story55.d13TrackingOrderRevision=1;
  }
- // Completed saves need a one-time cleanup. Earlier revisions may still
- // convert spoken messages to empty avatars, so clean again after migration.
- const clearVoiceAvatars=()=>{
-  const thread=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
-  const spoken=/^s55-intrusion-v2-(8|10|12|14|16|18|19|21)$/;
-  if(thread?.messages)thread.messages=thread.messages.filter(m=>
-   !(spoken.test(m.id||'')&&m.from!=='me'&&(m.kind==='call-avatar'||m.text==='')));
-  s.story55.d13SilentAvatarRevision=1;
- };
- if(s.story55.d13Revision===3){
-  if(s.story55.d13SilentAvatarRevision!==1)clearVoiceAvatars();
-  return;
- }
+ if(s.story55.d13Revision===3)return;
  // Previously authored spoken turns become avatar-only call records.
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
  for(const m of chat?.messages||[]){
@@ -48,7 +36,6 @@ export function syncD13(s){
    m.kind='call-avatar';m.text='';
   }
  }
- clearVoiceAvatars();
  if(s.story55.d13Revision===2){s.story55.d13Revision=3;return;}
  // Completed saves retain their exact scene, records and balances.
  // Partial legacy calls restart at the wallet; existing bubble IDs stay intact.

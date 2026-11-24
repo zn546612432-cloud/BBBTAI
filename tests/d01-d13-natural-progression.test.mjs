@@ -127,13 +127,14 @@ test('D01 → D14 follows actual charge / KIRA / MIRAGE / GHOST / message intera
  completeQueued(s,'invitation','mirage','s55-ouroboros');
  assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.from==='me').length,6);
  // Wallet payout is the mandatory D06 checkpoint; the actual player Send
- // and all eleven NPC bubbles must finish before charging into D07.
+ // and all nine retained NPC bubbles must finish before charging into D07.
  assert.equal(d06CelebrationHold(s),true);
  assert.equal(advanceGameMinutes(s,10).minutes,0);
  assert.equal(sendD06Celebration(store(s),'group','兄弟们！我真的拿到 10 BTC 了！',5000).handled,true);
  assert.equal(d06CelebrationHold(s),true,'sending alone does not unlock the clock');
- for(let i=0;i<11;i++)tickWishes(s,7000+i*2500);
- assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-11'));
+ for(let i=0;i<9;i++)tickWishes(s,7000+i*2500);
+ assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-10'));
+  assert.ok(!s.content.conversations.wechat.find(c=>c.id==='group').messages.some(m=>['d06-celebrate-06','d06-celebrate-11'].includes(m.id)));
  assert.equal(d06CelebrationHold(s),false);
  nextDay(s,7);
  nextDay(s,8);

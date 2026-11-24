@@ -136,14 +136,14 @@ test('D06 victory pauses at the real 10 BTC credit, never at GHOST completion al
  assert.equal(setSleeping(s),false,'sleep must not lock the player out of the frozen chat');
  s.powerMode='idle';
 });
-test('D06 freeze stays through the player send and ends only after all eleven real group bubbles',()=>{
+test('D06 freeze stays through the player send and ends after all nine retained group bubbles',()=>{
  const s=start(6,'15:16');
  s.story55.completed.wallet={day:6,clock:'15:16'};
  assert.equal(settleStory55Wallet(s),true);
  assert.equal(beginD06Celebration(s,1000),true);
  assert.equal(d06CelebrationHold(s),true);
  assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.filter(m=>m.id==='d06-celebration-player').length,1);
- for(let i=0;i<10;i++){
+ for(let i=0;i<8;i++){
   const st=s.story55.wishes.story;
   st.nextAt=0;
   tickWishes(s,4000+i*2500);
@@ -152,7 +152,7 @@ test('D06 freeze stays through the player send and ends only after all eleven re
  }
  s.story55.wishes.story.nextAt=0;
  tickWishes(s,30000);
- assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-11'));
+ assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-10'));
  assert.equal(d06CelebrationHold(s),false);
  assert.equal(timedStoryPaused(s),false);
  assert.equal(d06WalletSettled(s),true,'resuming the clock must not undo the payout');
