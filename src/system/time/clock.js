@@ -1,4 +1,4 @@
-import {isStory55,story55ChargeGate,overnightSceneGate55,overnightSceneNight55,pendingTimedStoryEvent,storyDayMinute,timedStoryPaused} from '../../services/story55/state.js';
+import {isStory55,story55ChargeGate,overnightSceneGate55,overnightSceneNight55,pendingTimedStoryEvent,storyDayMinute,timedStoryPaused,d06CelebrationHold} from '../../services/story55/state.js';
 import {PHONE_RUNTIME_POLICY,phoneHomeSpeed,phoneSceneMinuteRate} from '../runtime/policy.js';
 import {secondView55,finaleInProgress55,endingAwaitingVoice55,endingAwaitingReply55} from '../../services/story55/finale.js';
 import {DEATH_START,DEATH_END,chargingBlock,shortChargeBlock,deathLocked,syncDeathNight} from '../power/story.js';
@@ -188,7 +188,7 @@ export function tickWorld(s,realMilliseconds,options={}){
  return outcome;
 }
 export function setSleeping(s){
- if(deathLocked(s)||(isStory55(s)?s.day===55:s.day===90)||s.powerMode!=='charging'||s.alarmRinging)return false;
+ if(d06CelebrationHold(s)||deathLocked(s)||(isStory55(s)?s.day===55:s.day===90)||s.powerMode!=='charging'||s.alarmRinging)return false;
  s.powerMode='sleeping';s.sleepWakeAt=wakeMinute(s);s.worldMinuteFraction=0;
  s.unlocked=false;s.nav.stack=[];s.nav.current={appId:'home',route:'/',params:{}};
  return true;
