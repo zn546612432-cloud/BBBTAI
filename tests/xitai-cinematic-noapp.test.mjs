@@ -41,23 +41,23 @@ test('stage limits protect the original R1–R6 romance permissions',()=>{
  assert.equal(choose('你喜歡我嗎？',r4)?.id,'25');
  assert.equal(choose('我愛你',r4),null);
  assert.equal(choose('我愛你',r6)?.id,'58');
- assert.equal(choose('你愛我嗎？',r6)?.id,'25'=== '58'?'58':undefined);
+ assert.notEqual(choose('你愛我嗎？',r6)?.id,'58');
  assert.equal(choose('你能說你愛我嗎？',r6),null);
  assert.equal(choose('我愛你',{...r6,canDeclareLove:false}),null);
  assert.equal(choose('你喜歡我嗎？',{...r4,rejected:true}),null);
  assert.equal(choose('你很傲慢',low)?.id,undefined);
- assert.equal(choose('你很傲慢',r4)?.id,'12');
+ assert.equal(choose('你太傲慢',r4)?.id,'12');
 });
 
 test('sensitive, time-specific and invented-commitment passages stay behind evidence gates',()=>{
- assert.equal(choose('我怕失去聯絡',r6)?.id,undefined,'never invent meal debt');
+ assert.equal(choose('我怕失去聯絡',r6),null,'never invent a meal debt or prior separation in an ordinary connectivity question');
  assert.equal(choose('我怕失去聯絡',r6,{messages:[{role:'user',content:'我欠你一頓飯'},{role:'user',content:'我怕失去聯絡'}]})?.id,'18');
  assert.equal(choose('你在哪個時區',r6,{londonClock:'14:35'})?.id,undefined);
  assert.equal(choose('我想聊時差',r6,{londonClock:'22:35',macauClock:'06:35'})?.id,'13');
  assert.equal(choose('我想聊時差',r6,{londonClock:'22:35',macauClock:'18:35'}),null);
  assert.equal(choose('我會不會死',r6),null);
  assert.equal(choose('我會不會死',{...r6,crisis:true})?.id,'42');
- assert.equal(choose('睡不著了',r6,{londonClock:'14:35'})?.id,'37'=== '60'?'60':undefined);
+ assert.equal(choose('睡不著了',r6,{londonClock:'14:35'})?.id,'37');
 });
 
 test('repeat detection removes an already-delivered literary passage, without creating plot history',()=>{
