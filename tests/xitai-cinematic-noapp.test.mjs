@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {XITAI_CINEMATIC_NOAPP_LINES} from '../src/apps/noapp/features/cinematic-dialogue/lines.js';
-import {selectNoAppCinematicDialogue,noAppCinematicDirection}
+import {selectNoAppCinematicDialogue,noAppCinematicDirection,isExactApprovedNoAppCinematicReply}
  from '../src/apps/noapp/features/cinematic-dialogue/index.js';
+import {hasBannedTaiConstruction} from '../src/services/ai/expression-style.js';
 import {buildTaiPrompt} from '../src/services/ai/tai-profile.js';
 import {taiRelationshipDirector} from '../src/services/ai/relationship-director.js';
 
@@ -18,6 +19,7 @@ const choose=(text,relationshipPlan=r6,more={})=>selectNoAppCinematicDialogue({
 test('all sixty approved Tai-only passages are retained without adding Xi Meng dialogue',()=>{
  const c=XITAI_CINEMATIC_NOAPP_LINES;
  assert.equal(c.length,60);
+ assert.ok(Object.isFrozen(c)&&c.every(Object.isFrozen));
  assert.deepEqual(c.map(x=>Number(x.id)),Array.from({length:60},(_,i)=>i+1));
  assert.ok(c.every(x=>x.stage>=1&&x.stage<=6&&x.lines.length>=2));
  assert.ok(c.every(x=>x.lines.every(t=>typeof t==='string'&&t.trim()===t&&t.length>0)));
@@ -94,4 +96,20 @@ test('canonical relationship director remains the only authority for stage and l
  const p=noAppCinematicDirection({channel:'noapp',recognized:true,relationshipPlan:plan,messages:user('我愛你')});
  assert.doesNotMatch(p,/我愛你，熙蒙/);
  assert.match(p,/R1–R6/);
+});
+
+
+test('verbatim approved dramatic passages survive the generic AI-rhetoric filter without broadly disabling it',()=>{
+ const context={channel:'noapp',recognized:true,relationshipPlan:low,
+  macauClock:'06:35',londonClock:'22:35',messages:user('你怎麼看勝負？')};
+ const approved=selectNoAppCinematicDialogue(context);
+ assert.equal(approved?.id,'09');
+ assert.equal(hasBannedTaiConstruction(approved.lines),true,'approved author passage contains an intentional contrast');
+ assert.equal(isExactApprovedNoAppCinematicReply(context,approved.lines.map(text=>({text}))),true);
+ assert.equal(isExactApprovedNoAppCinematicReply(context,approved.lines.map(text=>({
+  text:text.length<=24?text.replace(/。$/u,''):text
+ }))),true,'existing short NoApp bubbles may drop a final full stop');
+ assert.equal(isExactApprovedNoAppCinematicReply(context,[{text:'我不是那種人。'},{text:'我是另外一種人。'}]),false);
+ assert.equal(isExactApprovedNoAppCinematicReply({...context,channel:'mirage'},approved.lines.map(text=>({text}))),false);
+ assert.equal(isExactApprovedNoAppCinematicReply({...context,relationshipPlan:{...low,stage:0}},approved.lines.map(text=>({text}))),false);
 });
