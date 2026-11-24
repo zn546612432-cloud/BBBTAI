@@ -52,7 +52,7 @@ test('D04 group delivers NPC bubbles one by one outside the group and counts eve
  assert.equal(byId(s,'group').filter(x=>x.from==='me').length,0);
 });
 test('overdue D04 scenes reconcile silently without fake dinner or player messages',()=>{
- const s=fixture('23:10');let now=0;
+ const s=fixture('23:59');let now=0;
  tickD04Chats(s,now);
  assert.ok(s.notifications.filter(n=>n.conversationId==='group').every(n=>n.silent));
  const messages=byId(s,'group');
@@ -86,7 +86,7 @@ test('private Hufeng dialogue never fabricates player messages',()=>{
 
 });
 test('skipping all protagonist responses does not block family chatter',()=>{
- const s=fixture('23:10');
+ const s=fixture('23:59');
  for(let now=0;now<1050000;now+=2100)tickD04Chats(s,now);
  assert.ok(byId(s,'group').some(x=>x.text==='晚安😡'));
  assert.equal(byId(s,'hufeng').some(x=>x.from==='me'),false);
@@ -210,7 +210,7 @@ test('D04 approved group dialogue uses one sticker and preserves the remaining e
  assert.deepEqual(pick('lunch').slice(-2).map(m=>[m.who,m.kind,m.text]),[
   ['仔仔','text','學人精'],['小辛','image','d04Sticker']
  ]);
- const s=fixture('23:10');
+ const s=fixture('23:59');
  tickD04Chats(s,0);
  const m=byId(s,'group');
  assert.equal(m.find(x=>x.id==='d04-earbuds-13'),undefined);
@@ -222,7 +222,7 @@ test('D04 approved group dialogue uses one sticker and preserves the remaining e
 });
 
 test('D04 old saves migrate only legacy NPC bubbles and keep player-authored messages',()=>{
- const s=fixture('23:10'),messages=byId(s,'group');
+ const s=fixture('23:59'),messages=byId(s,'group');
  const old=[
   ['d04-earbuds-13','胡枫','你們能不能盼我點好'],
   ['d04-earbuds-14','胡枫','找到了'],
@@ -255,4 +255,19 @@ test('D04 old saves migrate only legacy NPC bubbles and keep player-authored mes
  const count=current.length;
  tickD04Chats(s,100000);
  assert.equal(byId(s,'group').length,count,'repeated reconciliation must not create duplicates');
+});
+
+test('D04 approved dinner chat is exact, and night games wait thirty game minutes',()=>{
+ const dinner=D04_GROUP.find(d=>d.id==='dinner-post').lines;
+ assert.deepEqual(dinner.map(m=>m.text),["？？？","哥你們出去吃飯不帶我","我也看見了","有點過分","不是，你們不是都吃過了嗎😂","吃過了又不是不能再吃","你今天下午剛說要減肥","明天再減","你哪天不是這麼說的","哈哈哈哈 下次一起去","截圖了","我也截了","🤣"]);
+ const s=fixture('22:30');
+ for(let now=0;now<=80000;now+=2100)tickD04Chats(s,now);
+ const group=byId(s,'group');
+ assert.ok(group.some(m=>m.id==='d04-night-games-17'));
+ assert.ok(!group.some(m=>m.id==='d04-night-games-18'));
+ s.clock='22:59';tickD04Chats(s,100000);
+ assert.ok(!group.some(m=>m.id==='d04-night-games-18'));
+ s.clock='23:00';tickD04Chats(s,102100);
+ assert.equal(group.find(m=>m.id==='d04-night-games-18')?.time,'23:00');
+ assert.equal(group.find(m=>m.id==='d04-night-games-18')?.text,'不打了');
 });
