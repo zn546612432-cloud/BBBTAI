@@ -21,6 +21,10 @@ export function allMoments(s){
     return {...post,text:post.text==='今天這張我先發了。別又說我相冊全是自己。'?p.text:post.text,
      comments:(post.comments||[]).map(c=>c.by==='胡枫'&&c.text==='你自己先說的'?{...c,text:p.comments[0].text}:c)};
    }
+   if(post.id==='xw-d04'&&post!==p){
+    return {...post,text:post.text==='和阿蒙出來吃飯。終於肯離開工房了。'?p.text:post.text,
+     comments:(post.comments||[]).map(c=>c.by==='小辛'&&c.text==='哥你說的是菜還是你自己？'?{...c,text:'好啊你們，偷偷吃好的'}:c)};
+   }
    // Migrate only the old built-in HYQ defaults; keep genuinely customized posts.
    if(post.id==='xw-d35'&&post.text==='石排湾看熊猫。阿蒙在馆里站得比熊猫还久。')
     return {...post,text:p.text};
