@@ -82,7 +82,29 @@ try{
  await action('mc-wallet-transfer').click();await action('mc-wallet-transfer-confirm').click();
  await page.locator('.tel-green-screen').waitFor();await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');assert.equal(await page.locator('.tel-green-screen').innerText(),'');assert.equal(await page.locator('.tel-green-screen').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(5, 107, 46)');await page.screenshot({path:'qa-results/d13-green-screen.png'});await page.locator('.tel-green-screen').waitFor({state:'hidden',timeout:8000});
  await page.locator('.mc-composer').waitFor();await send(2);await send(4);
- await page.locator('.tel-call-screen').waitFor({timeout:90000});assert.equal(await action('tel-decline').count(),1);assert.equal(await action('tel-answer').count(),1);await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');await page.screenshot({path:'qa-results/d13-forced-call.png'});
+ await page.locator('.tel-call-screen').waitFor({timeout:90000});
+ assert.equal(await action('tel-decline').count(),1);
+ assert.equal(await action('tel-answer').count(),1);
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('#day-transition-layer')).opacity==='1');
+ // Fullscreen geometry regression: never grid-center a relatively positioned card.
+ const callLayout=await page.evaluate(()=>{
+  const rect=selector=>{
+   const r=document.querySelector(selector).getBoundingClientRect();
+   return {x:r.x,y:r.y,width:r.width,height:r.height};
+  };
+  return {call:rect('.tel-standard-call'),layer:rect('#day-transition-layer'),
+   phone:rect('#phone'),position:getComputedStyle(document.querySelector('.tel-standard-call')).position,
+   callLayerZ:Number(getComputedStyle(document.querySelector('#day-transition-layer')).zIndex),
+   toastZ:Number(getComputedStyle(document.querySelector('#toast')).zIndex)};
+ });
+ assert.equal(callLayout.position,'absolute','Incoming call must not be a grid-centered card');
+ for(const edge of ['x','y','width','height']){
+  assert.ok(Math.abs(callLayout.call[edge]-callLayout.layer[edge])<=2,
+   'Incoming call must fill its overlay on '+edge+': '+JSON.stringify(callLayout));
+ }
+ assert.ok(callLayout.call.width>=callLayout.phone.width-2);
+ assert.ok(callLayout.callLayerZ>callLayout.toastZ,'Toast must not appear above an incoming call');
+ await page.screenshot({path:'qa-results/d13-forced-call.png'});
  await action('tel-decline').click();
  await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key)).phoneCall?.reason==='user-declined',key);
  await page.locator('.tel-call-island').waitFor({timeout:20000});
