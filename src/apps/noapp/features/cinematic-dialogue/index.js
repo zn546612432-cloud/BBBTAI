@@ -76,6 +76,9 @@ export function noAppCinematicDirection(context={}){
 export function isExactApprovedNoAppCinematicReply(context={},entries=[]){
  const chosen=selectNoAppCinematicDialogue(context),texts=(Array.isArray(entries)?entries:[]).map(e=>e?.text);
  if(!chosen||!texts.length||texts.some(t=>typeof t!=='string'||!t.trim()))return false;
- const start=chosen.lines.findIndex(line=>line===texts[0]);
- return start>=0&&texts.length>=2&&texts.every((text,i)=>chosen.lines[start+i]===text);
+ // The existing NoApp display formatter removes a short bubble's final full stop.
+ // Accept only that precise presentation normalization, never paraphrases.
+ const same=(line,text)=>line===text||line.length<=24&&line.replace(/。$/u,'')===text;
+ const start=chosen.lines.findIndex(line=>same(line,texts[0]));
+ return start>=0&&texts.length>=2&&texts.every((text,i)=>same(chosen.lines[start+i]||'',text));
 }
