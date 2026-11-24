@@ -39,11 +39,17 @@ test('Pages releases isolate code while all public media URLs survive version ro
   assert.equal(release.source_commit,'test-sha');
   assert.equal(await read('index.html'),source);
   const html=await read('dist/index.html');
+  const friends=await read('dist/review/friends-test/index.html');
+  assert.ok(friends.includes(`${prefix}src/main.js`),'friends test shares the same versioned release');
+  assert.match(friends,/name="phone-friends-test" content="true"/);
+  assert.doesNotMatch(friends,/name="phone-preview"/);
+  assert.doesNotMatch(html,/name="phone-friends-test"/,'production keeps the normal developer UI');
   assert.ok(html.includes(`${prefix}src/main.js`));
   assert.ok(html.includes(`${prefix}vendor/chess.js`));
   assert.match(html,/name="ximeng-release"/);
   const root=`dist/releases/${release.version}/`;
   assert.equal(await read(root+'index.html'),html);
+  assert.equal(await read(root+'review/friends-test/index.html'),friends);
   assert.match(await read(root+'src/main.js'),/import '\.\/child.js'/);
   assert.ok((await read(root+'src/main.js')).includes('/AAATAI/assets/icon.svg'));
   const oldCode=await read(root+'src/main.js');
@@ -76,6 +82,13 @@ test('Pages releases isolate code while all public media URLs survive version ro
   await put('src/child.js','export const value=2;');
   build();
   assert.notEqual(JSON.parse(await read('dist/release.json')).version,release.version);
+  // The Cloudflare Pages standard build must also ship the same friend route,
+  // without depending on the GitHub Pages workflow that runs after build.
+  execFileSync(process.execPath,['scripts/build.mjs'],{cwd:folder,stdio:'pipe'});
+  const cloudflareFriends=await read('dist/review/friends-test/index.html');
+  assert.match(cloudflareFriends,/name="phone-friends-test" content="true"/);
+  assert.ok(cloudflareFriends.includes('/src/main.js'));
+  assert.doesNotMatch(cloudflareFriends,/name="phone-preview"/);
   // A live phone from the prior release still requests valid public media.
   for(const item of evidence)assert.equal(await read('dist/'+item),'fixture: '+item);
  }finally{await rm(folder,{recursive:true,force:true});}

@@ -24,6 +24,15 @@ console.log(`Startup: ${imageUrls.length} bundled images`);
 await import('./build-pre-d01-history.mjs');
 await rm('dist/src/legacy',{recursive:true,force:true});
 await cp('index.html','dist/index.html');
+// Cloudflare Pages and GitHub Pages share this single friends-test entry.
+// It reuses the production assets and runtime; the meta flag only hides
+// author/developer controls (no parallel build or duplicated game files).
+const friendsHtml=(await readFile('dist/index.html','utf8'))
+ .replace('<head>','<head><meta name="phone-friends-test" content="true">');
+if(!friendsHtml.includes('<meta name="phone-friends-test" content="true">'))
+ throw Error('Friends test isolation flag missing');
+await mkdir('dist/review/friends-test',{recursive:true});
+await writeFile('dist/review/friends-test/index.html',friendsHtml);
 await mkdir('dist/vendor',{recursive:true});
 await cp('node_modules/chess.js/dist/esm/chess.js','dist/vendor/chess.js');
 await cp('node_modules/opencc-js/dist/esm/cn2t.js','dist/vendor/opencc-cn2t.js');
