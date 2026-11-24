@@ -30,9 +30,10 @@ await page.addInitScript(({seed,key})=>{
   const match=/\/assets\/story55\/d13\/call-(\d+)\.mp3(?:[?#]|$)/.exec(this.src||'');
   if(match||(this.src||'').startsWith('blob:')){
    const index=match?Number(match[1]):JSON.parse(localStorage.getItem(key)||'{}')?.story55?.scenes?.intrusion?.index;
+   const sceneIndex=index===20?19:index; // Approved scene 19 uses the existing call-20.mp3.
    for(const kind of ['playing','ended','error'])this.addEventListener(kind,()=>{
     const input=document.querySelector('.mc-composer input');
-    window.__d13AudioEvents.push({index,kind,inputDisabled:input?.disabled===true,bubblePresent:!!document.querySelector('[data-key="message-s55-intrusion-v2-'+index+'"]')});
+    window.__d13AudioEvents.push({index,sceneIndex,kind,inputDisabled:input?.disabled===true,bubblePresent:!!document.querySelector('[data-key="message-s55-intrusion-v2-'+sceneIndex+'"]')});
    },{once:true});
   }
   return play.apply(this,args);
@@ -130,8 +131,9 @@ try{
  const audioEvents=[...preReloadAudioEvents,...await page.evaluate(()=>window.__d13AudioEvents)];
  await writeFile('qa-results/d13-audio-events.json',JSON.stringify(audioEvents,null,2));
  {
-  assert.deepEqual(audioEvents.filter(e=>e.kind==='playing').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must start in script order');
-  assert.deepEqual(audioEvents.filter(e=>e.kind==='ended').map(e=>e.index),D13_VOICE_INDICES,'All seven real MP3s must end normally');
+  const expectedAudioFiles=D13_VOICE_INDICES.map(i=>i===19?20:i);
+  assert.deepEqual(audioEvents.filter(e=>e.kind==='playing').map(e=>e.index),expectedAudioFiles,'All eight approved MP3s must start in script order');
+  assert.deepEqual(audioEvents.filter(e=>e.kind==='ended').map(e=>e.index),expectedAudioFiles,'All eight approved MP3s must end normally');
   assert.ok(audioEvents.filter(e=>e.kind==='playing').every(e=>e.inputDisabled&&e.bubblePresent),'Speech locks Send and displays the speaker avatar at sound start');
   assert.equal(audioEvents.filter(e=>e.kind==='error').length,0);
  }
