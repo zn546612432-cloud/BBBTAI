@@ -1,3 +1,4 @@
+import {nextD01ChatBoundary} from '../../../story/d01/wechat.js';
 import {d07RepliesTrack} from '../../../story/d07/replies.js';
 // One registration point for all daily authored conversation lifecycles.
 // Future D07-D55 content joins here; generic catch-up never needs day-specific code.
@@ -32,7 +33,9 @@ export const AUTHORED_CHAT_TRACKS=[
 // One shared query across registered daily chat schedules. Returning a current
 // pending dialogue prevents a cheat jump from skipping its required player Send.
 export function nextAuthoredChatBoundary(s){
- let next=null,active=null;
+ const first=nextD01ChatBoundary(s);
+ if(first?.kind==='reply')return first;
+ let next=first?.kind==='upcoming'?first:null,active=first?.kind==='delivering'?first:null;
  for(const {track} of AUTHORED_CHAT_TRACKS){
   const item=track.nextBoundary?.(s);
   if(!item)continue;
