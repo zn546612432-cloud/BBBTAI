@@ -10,7 +10,7 @@ const isMacauMorning=clock=>/^\d\d:\d\d$/.test(clock)&&
 
 const CONFESSION=/^(?:(?:熙泰|nya)[，,！!\s]*)?我(?:真的|也|好|一直|很|越來越|越来越)*[愛爱]你(?:了|啊|呀|呢)?[。！!~\s]*$/iu;
 const MEAL=/我(?:還|还)?欠你(?:一頓|一顿)?飯|(?:說好|说好|約好|约好).{0,15}(?:吃飯|吃饭)|(?:我請你|我请你).{0,6}(?:吃飯|吃饭)/u;
-const CRISIS_CONTEXT=/警察|追捕|被抓|受傷|受伤|逃跑|逃命|醫院|医院|救我|有人要殺|有人要杀|真的會死|真的会死/u;
+const CRISIS_CONTEXT=/警察|追捕|被抓|受傷|受伤|逃跑|逃命|醫院|医院|救我|有人要殺|有人要杀|真的會死|真的会死|會不會死|会不会死|活不下去|活下來|活下来/u;
 const repeatedOtherPerson=/最近.{0,5}(?:常|一直).{0,5}(?:提|說|说).{0,4}(?:他|她)|(?:他|她)比你|總跟我說他|总跟我说他/u;
 
 function eligible(entry,{relationshipPlan,input,messages,macauClock,londonClock}){
