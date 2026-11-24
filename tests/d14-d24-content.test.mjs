@@ -5,6 +5,7 @@ import {activateStory55,tickStory55,tickQueuedStoryScenes55,advanceScene55,markM
 import {defaultStory55Config} from '../src/services/story55/config.js';
 import {completed,nodeStatus,story55Config} from '../src/services/story55/state.js';
 import {D14_D24_CONTENT,D14_D24_LEGACY} from '../src/story/d14-d24/definition.js';
+import previousLoanV2 from '../src/story/d14-d24/previous-loan-v2.json' with {type:'json'};
 import {D14_D24_TRACKS} from '../src/story/d14-d24/wechat.js';
 import {syncD14D24Content} from '../src/story/d14-d24/migrate.js';
 import {seedAuthoredNotes} from '../src/services/story55/authored-notes.js';
@@ -74,12 +75,28 @@ test('D15 fictional session requires an explicit disconnect and one ledger/debt 
  const s=at(15,'15:35');s.story55.completed.code={day:14,clock:'10:00'};
  assert.equal(nodeStatus(s,'loan').state,'locked');s.clock='15:36';assert.equal(nodeStatus(s,'loan').state,'locked');
  s.story55.projects.base={authorized:true,batches:[{complete:true,steps:[1,2,3,4,5],day:14,testedDay:14,runFailed:true}],active:null};assert.equal(nodeStatus(s,'loan').state,'ready');
- let now=Date.now()+100000;
+ const approved=D14_D24_CONTENT.scenes.loan,offer=approved.findIndex(x=>x[1]==='一百萬，借你的。');
+ assert.equal(approved[1][1],'部署是成功了，但運行不了。');
+ assert.equal(approved[offer+1][0],'credit');
+ assert.ok(approved.some(x=>x[0]==='camera'));
+ assert.ok(!JSON.stringify(approved).includes('陈熙蒙'));
+ assert.ok(!JSON.stringify(approved).includes('哈哈'));
+ let now=Date.now()+100000,offerSeen=false;
  const drain=()=>{for(let n=0;n<120&&!completed(s,'loan');n++){
   const line=currentScript55(s,'mirage','s55-ouroboros');
   if(line?.kind==='disconnect')return;
   if(line?.kind==='me')sendScriptedDraft55(s,'mirage','s55-ouroboros',line.text);
   else tickQueuedStoryScenes55(s,now+=3000);
+  if(s.story55.scenes.loan.index===offer+1){
+   offerSeen=true;
+   assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1,'credit posts exactly with spoken loan');
+   const notification=s.notifications.find(n=>n.id==='s55-loan-receipt');
+   assert.ok(notification?.bannerPending,'native bank banner is pending');
+   assert.equal(notification.title,'Pacific 銀行');
+   assert.match(notification.body,/1,000,000/);
+   assert.equal(notification.link.appId,'bank');
+   assert.equal(notification.link.route,'/receipt/s55-loan');
+  }
  }};
  drain();const index=s.story55.scenes.loan.index;assert.equal(currentScript55(s,'mirage','s55-ouroboros').kind,'disconnect');
  assert.match(storySessionControls(s,'s55-ouroboros'),/切斷連線/);
@@ -87,9 +104,39 @@ test('D15 fictional session requires an explicit disconnect and one ledger/debt 
  assert.equal(s.story55.scenes.loan.index,index);assert.equal(s.bankData.transactions.some(t=>t.id==='s55-loan'),false);
  assert.throws(()=>advanceScene55(s,'loan'),/切斷/);
  advanceScene55(s,'loan',{disconnect:true});assert.equal(s.story55.sceneCamera.active,false);drain();
+ assert.equal(offerSeen,true,'live offer must be reached after disconnect');
  assert.equal(completed(s,'loan'),true);const receipt=s.bankData.transactions.filter(t=>t.id==='s55-loan');
  assert.equal(receipt.length,1);assert.equal(receipt[0].amount,1000000);assert.equal(receipt[0].liabilityId,'s55-loan');assert.equal(s.story55.liabilities,1000000);
  tickStory55(s);tickStory55(s);assert.equal(s.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);assert.equal(s.story55.liabilities,1000000);
+});
+
+test('D15 approved copy migrates only unstarted legacy drafts, never in-flight or paid saves',()=>{
+ const fresh=at(15,'15:36');
+ fresh.story55.config.scenes.loan=structuredClone(previousLoanV2);
+ fresh.story55.scenes.loan={index:0,accepted:false};
+ delete fresh.story55.d15ApprovedLoanRevision;
+ syncD14D24Content(fresh);
+ assert.deepEqual(fresh.story55.config.scenes.loan,D14_D24_CONTENT.scenes.loan);
+ const ongoing=at(15,'15:41'),oldLine={id:'s55-loan-v2-1',from:'me',text:'跑得動，就是慢。',actual:true};
+ ongoing.story55.config.scenes.loan=structuredClone(previousLoanV2);
+ ongoing.story55.scenes.loan={index:4,accepted:false};
+ ongoing.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.push(oldLine);
+ delete ongoing.story55.d15ApprovedLoanRevision;
+ syncD14D24Content(ongoing);
+ assert.deepEqual(ongoing.story55.config.scenes.loan,previousLoanV2);
+ assert.equal(ongoing.story55.scenes.loan.index,4);
+ assert.equal(oldLine.text,'跑得動，就是慢。');
+ const finished=at(16,'16:00');
+ finished.story55.config.scenes.loan=structuredClone(previousLoanV2);
+ finished.story55.completed.loan={day:15,clock:'15:43'};
+ finished.story55.liabilities=1000000;
+ finished.bankData.balance=1000000;
+ finished.bankData.transactions.push({id:'s55-loan',amount:1000000});
+ delete finished.story55.d15ApprovedLoanRevision;
+ syncD14D24Content(finished);
+ assert.equal(finished.bankData.balance,1000000);
+ assert.equal(finished.bankData.transactions.filter(t=>t.id==='s55-loan').length,1);
+ assert.deepEqual(finished.story55.config.scenes.loan,previousLoanV2);
 });
 
 test('old default scene migration preserves player history, finished loan and real Ghost batches',()=>{
