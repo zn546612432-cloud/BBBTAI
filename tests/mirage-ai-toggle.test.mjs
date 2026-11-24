@@ -16,21 +16,23 @@ function fixture(){
  setMirageAuthenticated(true);
  return {store,storage,toast:message=>assert.fail(message)};
 }
-test('MIRAGE stays OFF for old saves and every Story55 day, regardless of a saved opt-in',()=>{
- for(const day of [1,14,15,16,24,55]){
+test('MIRAGE AI is available only during the Story55 anonymous stage, independent of obsolete toggles',()=>{
+ for(const day of [1,13,14,15,16,24,34,35,55]){
   const s=activateStory55(initialState());s.day=day;
   for(const enabled of [undefined,false,true]){
    s.developerSettings={mirageAIReplies:enabled};
-   assert.equal(mirageAIEnabled(s),false);
+   assert.equal(mirageAIEnabled(s),day>=14&&day<=34);
   }
  }
+ const recognized=activateStory55(initialState());recognized.day=29;recognized.story55.completed.recognition={day:29,clock:'23:00'};
+ assert.equal(mirageAIEnabled(recognized),false);
  assert.equal(mirageAIEnabled(initialState()),false);
 });
 test('obsolete developer enable cannot restore Mirage AI or change NoApp configuration',()=>{
  const ctx=fixture(),before=structuredClone(ctx.store.get().aiDraft);
  ctx.store.update(s=>{s.developerSettings={mirageAIReplies:true,mirageAIRevision:3};});
  assert.doesNotMatch(aiVoicePanel(ctx.store.get()),/data-mirage-ai/);
- assert.match(aiVoicePanel(ctx.store.get()),/MIRAGE · 固定對話/);
+ assert.match(aiVoicePanel(ctx.store.get()),/MIRAGE · 匿名期 AI/);
  change({dataset:{mirageAi:''},checked:true},ctx);
  assert.equal(mirageAIEnabled(new PhoneStore(ctx.storage).get()),false);
  assert.equal(ctx.store.get().developerSettings.mirageAIReplies,false);
