@@ -67,3 +67,15 @@ export function noAppCinematicDirection(context={}){
   selected.lines.map(line=>'「'+line+'」').join('\n')+
   '\n只有當這組台詞恰好回答當下真正的問題、感情和事實都成立時才使用；若採用則沿用原句，不要擅自改寫。也可以不引用，先解決熙蒙真正提出的事。台詞只屬於熙泰，不能要求玩家配合劇本。一次不必說完全部，多餘的句子不要硬塞到聊天。';
 }
+
+
+/** Narrow exemption: a matched, stage-authorized, verbatim author-approved
+ * passage is not an AI-invented rhetorical construction. All other generated
+ * dialogue still passes the existing language and romance validators.
+ */
+export function isExactApprovedNoAppCinematicReply(context={},entries=[]){
+ const chosen=selectNoAppCinematicDialogue(context),texts=(Array.isArray(entries)?entries:[]).map(e=>e?.text);
+ if(!chosen||!texts.length||texts.some(t=>typeof t!=='string'||!t.trim()))return false;
+ const start=chosen.lines.findIndex(line=>line===texts[0]);
+ return start>=0&&texts.length>=2&&texts.every((text,i)=>chosen.lines[start+i]===text);
+}
