@@ -262,9 +262,9 @@ test('D06 celebration reminds only when wallet completion unlocks the real group
  assert.equal(find(s,'d06-celebration-chat'),undefined);
  s.story55.completed.wallet={day:6,clock:'15:16'};
  const item=find(s,'d06-celebration-chat');
- assert.equal(item.title,'回群裡發消息');
+ assert.equal(item.title,'把好消息告訴大家');
  assert.deepEqual(item.link,{appId:'wechat',route:'/chat/group',params:{}});
- assert.match(reminderWidget(s),/回群裡發消息/);
+ assert.match(reminderWidget(s),/把好消息告訴大家/);
  const opened=[],store={get:()=>s,update:fn=>fn(s)};
  assert.equal(openReminderTask(item.id,{store,router:{open:link=>opened.push(link)}}),true);
  assert.deepEqual(opened,[item.link]);assert.equal(find(s,'d06-celebration-chat').done,false);
@@ -272,7 +272,7 @@ test('D06 celebration reminds only when wallet completion unlocks the real group
  assert.equal(find(s,'d06-celebration-chat').done,false);
  s.story55.wishes.story.delivered.push('d06-celebrate-11');
  assert.equal(find(s,'d06-celebration-chat').done,true);
- assert.doesNotMatch(reminderWidget(s),/回群裡發消息/);
+ assert.doesNotMatch(reminderWidget(s),/把好消息告訴大家/);
  s.day=7;assert.equal(find(s,'d06-celebration-chat'),undefined);
 });
 test('D06 dinner reminder follows payment and the actual booking confirmation',()=>{
