@@ -1,0 +1,69 @@
+/* iOS Files Quick Look treatment for the authored Ouroboros .key only. */
+.app-files .app-content:has(.files-key-preview){overflow:auto;background:#f3f4f8}
+.app-files .files-d01-preview.files-key-preview{
+ display:flex;flex-direction:column;box-sizing:border-box;min-height:100%;
+ padding:8px 20px 24px;background:#f3f4f8;color:#1c1d22;
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC",sans-serif;
+}
+.app-files .files-key-navigation{
+ flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+ min-height:52px;color:#22242a;font-size:16px;border-bottom:1px solid #e3e5eb;
+}
+.app-files .files-key-navigation strong{font-size:16px;font-weight:600;white-space:nowrap}
+.app-files .files-key-navigation .files-key-back{
+ display:inline-flex;align-items:center;gap:2px;justify-self:start;
+ min-height:44px;margin-left:-8px;padding:6px 8px;border:0;box-shadow:none;
+ background:transparent;color:#007aff;font-size:16px;font-weight:400;cursor:pointer;
+}
+.app-files .files-key-back svg{width:22px;height:22px}
+.app-files .files-key-nav-spacer{min-width:60px}
+.app-files .files-key-body{
+ flex:1;min-height:280px;display:flex;flex-direction:column;align-items:center;
+ padding:clamp(48px,10vh,85px) 0 38px;text-align:center;
+}
+.app-files .files-key-document-icon{width:76px;height:94px;margin:0 auto 21px}
+.app-files .files-key-document-icon svg{display:block;width:100%;height:100%}
+.app-files .files-key-body h1{
+ max-width:100%;margin:0;padding:0 6px;box-sizing:border-box;
+ font-size:clamp(15px,4.2vw,17px);font-weight:600;line-height:1.45;
+ letter-spacing:-.25px;overflow-wrap:anywhere;color:#20232a;
+}
+.app-files .files-key-body .files-key-type{font-size:12px;color:#8a909a;margin:7px 0 0}
+.app-files .files-key-credential{
+ display:flex;flex-direction:column;align-items:center;gap:10px;
+ margin-top:43px;padding:0 12px;max-width:100%;box-sizing:border-box;
+}
+.app-files .files-key-credential>span{font-size:12px;letter-spacing:.4px;color:#818794}
+.app-files .files-key-credential code{
+ display:inline-block;max-width:100%;padding:10px 14px;border-radius:9px;
+ background:#e8ebf1;color:#282e39;font-size:17px;font-weight:600;
+ line-height:1.4;letter-spacing:.55px;overflow-wrap:anywhere;
+ font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+ -webkit-user-select:text!important;user-select:text!important;
+ -webkit-touch-callout:default;cursor:text;
+}
+.app-files .files-key-reveal{
+ min-height:42px;padding:8px 18px;border:1px solid #d8dce5;
+ border-radius:10px;background:#fff;color:#007aff;font-size:15px;cursor:pointer;
+}
+.app-files .files-key-footer{
+ flex:none;padding:8px 0 max(4px,env(safe-area-inset-bottom,0px));
+}
+.app-files .files-key-open-ghost{
+ display:flex;align-items:center;justify-content:center;gap:8px;position:relative;
+ width:100%;min-height:54px;padding:12px 22px;border:0;border-radius:15px;
+ background:#17191d;color:#fff;font-size:16px;font-weight:600;
+ font-family:inherit;box-shadow:none;cursor:pointer;touch-action:manipulation;
+}
+.app-files .files-key-open-ghost svg{
+ position:absolute;right:18px;width:18px;height:18px;opacity:.76;
+}
+.app-files .files-key-open-ghost:active{background:#30343b}
+.app-files .files-key-open-ghost:focus-visible,
+.app-files .files-key-navigation button:focus-visible,
+.app-files .files-key-reveal:focus-visible{outline:2px solid #007aff;outline-offset:3px}
+@media(max-height:650px){
+ .app-files .files-key-body{min-height:210px;padding-top:28px;padding-bottom:22px}
+ .app-files .files-key-credential{margin-top:25px}
+}
+@media(prefers-reduced-motion:reduce){.app-files .files-key-open-ghost{transition:none}}
