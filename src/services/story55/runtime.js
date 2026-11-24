@@ -153,8 +153,9 @@ function creditScene55(s,n){
  if(s.bankData.transactions.some(t=>t.id===id))return false;
  postBankTransaction(s,{id,label:n.liability?'ANONYMOUS LOAN':'STORY CREDIT',amount:n.credit,
    metadata:n.liability?{liabilityId:id,liabilityAmount:n.credit,kind:'loan'}:{},
-   receipt:{id:id+'-receipt',title:'Pacific',
-    body:'帳戶入帳 US$'+Number(n.credit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+   receipt:{id:id+'-receipt',title:n.id==='loan'?'Pacific 銀行':'Pacific',
+    body:n.id==='loan'?'您的帳戶收到轉帳 US$1,000,000.00，款項已成功入帳。':
+     '帳戶入帳 US$'+Number(n.credit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
     link:{appId:'bank',route:'/receipt/'+encodeURIComponent(id)}}});
  if(n.liability){
   s.story55.liabilities=(s.story55.liabilities||0)+n.credit;
@@ -172,9 +173,11 @@ function creditScene55(s,n){
   const id='s55-loan-receipt',existing=s.notifications.find(n=>n.id===id);
   if(existing){
    if(existing.bannerShown!==true)existing.bannerPending=true;
+   if(existing.title==='Pacific')existing.title='Pacific 銀行';
+   if(existing.body==='帳戶入帳 US$1,000,000.00')existing.body='您的帳戶收到轉帳 US$1,000,000.00，款項已成功入帳。';
    existing.link={appId:'bank',route:'/receipt/s55-loan'};
   }else s.notifications.unshift({
-   id,title:'Pacific',body:'帳戶入帳 US$1,000,000.00',
+   id,title:'Pacific 銀行',body:'您的帳戶收到轉帳 US$1,000,000.00，款項已成功入帳。',
    day:s.story55.completed?.loan?.day||s.day,clock:s.story55.completed?.loan?.clock||s.clock,
    link:{appId:'bank',route:'/receipt/s55-loan'},bannerPending:true
   });
@@ -218,6 +221,9 @@ function creditScene55(s,n){
   if(chat)appendAuthoredPhoneMessage(s,{channel:'noapp',conversationId:'tai',messageId:'s55-ending-final-voice',from:'me',kind:'story55_final_audio',text:'手表同步 · 最后的密钥录音',day:s.day,clock:authoredTime||s.clock,sentDate:date55(s.day),storyTag:'story55'});
  }
  appendSceneMessage55(s,id,r.index,{authoredTime});
+ // D15 posts the existing one-time ledger and native receipt when the loan is offered.
+ // The historical credit marker and completion fallback remain safe for old saves.
+ if(id==='loan'&&line[0]==='ouroboros'&&line[1]==='一百萬，借你的。')creditScene55(s,n);
  if(id===D45_WALLET_SCENE&&r.index===0)releaseD45Wallet(s);
  r.index++;
  // One shared pacing contract for queued native messaging scenes.
