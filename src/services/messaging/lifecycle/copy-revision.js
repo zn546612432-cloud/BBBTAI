@@ -91,7 +91,7 @@ export function reviseD13GroupCopy(s){
  if(c){
   const retired=new Set();
   for(const message of c.messages||[]){
-   if(message.from==='me'||message.from==='熙蒙'||message.actual===true)continue;
+   if(message.from==='me'||message.from==='熙蒙')continue; // NPC authored messages are also actual:true.
    const old=D13_RETIRED_WORK.find(([id,from,body])=>message.id===id&&message.from===from&&message.text===body);
    if(old){retired.add(message.id);continue;}
    const replacement=D13_REVISED_NPC.find(line=>message.id===line.id&&message.from===line.from&&message.text===line.before);
