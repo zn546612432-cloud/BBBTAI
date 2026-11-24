@@ -1,0 +1,31 @@
+name: Preview D13 original Dr Ouroboros MiniMax speech
+on:
+  push:
+    branches:
+      - preview/d13-original-ouroboros-voice-20261124
+    paths:
+      - 'scripts/preview-d13-original-ouroboros-voice.mjs'
+      - '.github/workflows/preview-d13-original-ouroboros-voice.yml'
+permissions:
+  contents: read
+jobs:
+  synthesize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Generate exactly three original Ouroboros MP3 previews
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_REGION: cn
+        run: node scripts/preview-d13-original-ouroboros-voice.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d13-ouroboros-original-voice-preview
+          path: artifacts/voice-preview-d13/
+          retention-days: 7
