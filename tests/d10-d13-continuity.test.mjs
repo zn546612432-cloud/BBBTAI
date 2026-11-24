@@ -186,6 +186,7 @@ test('old D13 chats migrate built-in group bubbles only, preserving player speec
 
 test('D11 old seeded Notes are moved out of Notes without duplicating or changing the canonical journal text',()=>{
  const s=phone(12,'08:00');
+ s.story55.completed.return={day:11,clock:'21:00'};
  const original={id:MEETING_NOTE.id,title:MEETING_NOTE.title,text:MEETING_NOTE.text,
   authored:true,storyContent:true,createdDay:11,updatedDay:11,updatedClock:'22:00'};
  s.content.notes.unshift(structuredClone(original));
@@ -200,6 +201,7 @@ test('D11 old seeded Notes are moved out of Notes without duplicating or changin
 
 test('a customized legacy D11 note is preserved as the journal edit, not silently replaced',()=>{
  const s=phone(12,'08:00'),edited='熙蒙自己改過的內容';
+ s.story55.completed.return={day:11,clock:'21:00'};
  s.content.notes.unshift({id:MEETING_NOTE.id,title:'我自己改的標題',
   text:edited,authored:true,storyContent:true,createdDay:11,updatedDay:12});
  assert.equal(syncD10D13Content(s),true);
@@ -212,6 +214,7 @@ test('a customized legacy D11 note is preserved as the journal edit, not silentl
 
 test('an edited D11 journal takes priority; the previous edited Note is archived, and unrelated Notes survive',()=>{
  const s=phone(12,'08:00');
+ s.story55.completed.return={day:11,clock:'21:00'};
  s.content.storyDiary??={};
  s.content.storyDiary['11']={title:'自己的日程',body:'日程里已有的原文'};
  s.content.notes.unshift({id:MEETING_NOTE.id,title:'備份版本',text:'備忘錄里的修改',
