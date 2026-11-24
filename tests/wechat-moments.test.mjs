@@ -247,7 +247,7 @@ test('D11 street without photo, D12 Hu Feng homecoming and D13 cleanup use exact
  assert.equal(hf.text,'집에 간다. 마카오가 그리웠어.');
  assert.deepEqual(hf.media,['hufengD12Homecoming']);
  assert.equal(hf.author,'胡枫');
- assert.match(momentImage('hufengD12Homecoming'),/hufeng-d12-homecoming\\.webp$/);
+ assert.ok(momentImage('hufengD12Homecoming').endsWith('/hufeng-d12-homecoming.webp'));
  assert.deepEqual(xm.media,[]);
  assert.equal(xm.text,'我讨厌大扫除');
  assert.deepEqual(xm.likes,['小辛','仔仔']);
