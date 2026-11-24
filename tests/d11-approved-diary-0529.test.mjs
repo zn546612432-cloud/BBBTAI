@@ -70,7 +70,7 @@ test('player edited D11 Notes migrate to diary with archived original; unrelated
   tickStory55(s);
   assert.equal(s.content.notes.some(n=>n.id===edited.id),false,'legacy entry moves to diary, not lost');
   assert.equal(s.story55.d11MeetingNoteArchive.text,edited.text);
-  assert.equal(entryFor(s,11).body,edited.text);
+  assert.equal(entryFor(s,11).body,edited.text===oldText?MEETING_NOTE.text:edited.text,'only genuinely edited prose shadows the approved diary');
   assert.equal(entryFor(s,11).title,edited.title==='5/29 · 备忘'?'老地方':edited.title);
   assert.equal(s.content.notes.find(n=>n.id==='personal')?.text,'不要刪掉');
  }
