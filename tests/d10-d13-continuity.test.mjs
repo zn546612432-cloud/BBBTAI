@@ -13,6 +13,8 @@ import {D12_GROUP,D13_GROUP,d12Track} from '../src/story/d12-d13/wechat.js';
 import {tickPhoneStoryMessages} from '../src/services/messaging/phone-story-scheduler.js';
 import {d11Track} from '../src/story/d11/wechat.js';
 import {syncD10D13Content,OLD_D10,OLD_RETURN,OLD_MOVE,MEETING_NOTE,OLD_INTRUSION_LINE} from '../src/story/d10-d13/continuity.js';
+import {entryFor,allDiaryDays} from '../src/story/diary/entries.js';
+import {diaryView} from '../src/apps/schedule/features/diary/index.js';
 const phone=(day,clock='08:00')=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.unlocked=true;s.story55.completed.invitation={day:6,clock:'20:00'};tickStory55(s);return s;};
 const thread=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
 const flat=defs=>defs.flatMap(d=>d.lines);
@@ -38,12 +40,20 @@ test('D11 Fu returns via Wang private native Send, without inventing Fu group bu
  sendScriptedDraft55(s,'wechat','wang',draft.text);
  assert.equal(thread(s,'wang').messages.filter(m=>m.from==='me'&&m.id.startsWith('s55-return-')).length,1);
  advanceScene55(s,'return');advanceScene55(s,'return');assert.ok(completed(s,'return'));
- s.clock='21:59';tickStory55(s);assert.ok(!s.content.notes.some(n=>n.id===MEETING_NOTE.id));
- s.clock='22:00';tickStory55(s);const note=s.content.notes.find(n=>n.id===MEETING_NOTE.id);
- assert.ok(note);assert.match(note.text,/五亿美元/);
- note.text='熙蒙自己改過的內容';tickStory55(s);
- assert.equal(s.content.notes.filter(n=>n.id===MEETING_NOTE.id).length,1);
- assert.equal(s.content.notes.find(n=>n.id===MEETING_NOTE.id).text,'熙蒙自己改過的內容');
+ s.clock='21:59';tickStory55(s);assert.equal(entryFor(s,11),null);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+ s.clock='22:00';tickStory55(s);
+ const entry=entryFor(s,11);
+ assert.ok(entry);assert.equal(entry.title,'老地方');
+ assert.equal(entry.body,MEETING_NOTE.text,'approved prose must be exactly unchanged');
+ assert.ok(allDiaryDays(s).includes(11));
+ const rendered=diaryView(s,{route:'/',params:{day:'11'}});
+ assert.match(rendered,/DAY 11/);
+ assert.match(rendered,/老地方/);
+ assert.match(rendered,/五亿美元电子钱包/);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false,'D11 scene must not seed a Notes item');
+ s.day=12;s.clock='08:00';tickStory55(s);
+ assert.equal(entryFor(s,11).body,MEETING_NOTE.text,'earlier journal entries persist');
 });
 test('D12 Hu Feng lands in Macau; D13 fresh group remains NPC only and no future identity is leaked',()=>{
  assert.deepEqual(PHONE_CHAT_TRACKS.filter(x=>x.day>=10&&x.day<=13).map(x=>x.day),[10,11,12,13]);
@@ -176,4 +186,49 @@ test('old D13 chats migrate built-in group bubbles only, preserving player speec
  const once=structuredClone(group.messages);
  tickPhoneStoryMessages(s,60000);
  assert.deepEqual(group.messages,once);
+});
+
+
+test('D11 old seeded Notes are moved out of Notes without duplicating or changing the canonical journal text',()=>{
+ const s=phone(12,'08:00');
+ s.story55.completed.return={day:11,clock:'21:00'};
+ const original={id:MEETING_NOTE.id,title:MEETING_NOTE.title,text:MEETING_NOTE.text,
+  authored:true,storyContent:true,createdDay:11,updatedDay:11,updatedClock:'22:00'};
+ s.content.notes.unshift(structuredClone(original));
+ s.story55.authoredNoteIds??=[];
+ s.story55.authoredNoteIds.push(MEETING_NOTE.id);
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+ assert.deepEqual(s.story55.d11MeetingNoteArchive,original);
+ assert.equal(entryFor(s,11).body,MEETING_NOTE.text);
+ assert.equal(syncD10D13Content(s),false,'a second load must not recreate anything');
+});
+
+test('a customized legacy D11 note is preserved as the journal edit, not silently replaced',()=>{
+ const s=phone(12,'08:00'),edited='熙蒙自己改過的內容';
+ s.story55.completed.return={day:11,clock:'21:00'};
+ s.content.notes.unshift({id:MEETING_NOTE.id,title:'我自己改的標題',
+  text:edited,authored:true,storyContent:true,createdDay:11,updatedDay:12});
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(entryFor(s,11).title,'我自己改的標題');
+ assert.equal(entryFor(s,11).body,edited);
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
+ assert.equal(s.story55.d11MeetingNoteArchive.text,edited);
+ assert.equal(syncD10D13Content(s),false);
+});
+
+test('an edited D11 journal takes priority; the previous edited Note is archived, and unrelated Notes survive',()=>{
+ const s=phone(12,'08:00');
+ s.story55.completed.return={day:11,clock:'21:00'};
+ s.content.storyDiary??={};
+ s.content.storyDiary['11']={title:'自己的日程',body:'日程里已有的原文'};
+ s.content.notes.unshift({id:MEETING_NOTE.id,title:'備份版本',text:'備忘錄里的修改',
+  authored:true,storyContent:true});
+ s.content.notes.unshift({id:'my-private-note',title:'自己的筆記',text:'不要刪掉'});
+ assert.equal(syncD10D13Content(s),true);
+ assert.equal(entryFor(s,11).title,'自己的日程');
+ assert.equal(entryFor(s,11).body,'日程里已有的原文');
+ assert.equal(s.story55.d11MeetingNoteArchive.text,'備忘錄里的修改');
+ assert.ok(s.content.notes.some(n=>n.id==='my-private-note'));
+ assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false);
 });
