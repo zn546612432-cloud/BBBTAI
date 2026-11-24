@@ -150,7 +150,8 @@ test('D13 removes only 15:10 clothing scene and uses exact confirmed 18:35 group
  assert.equal(group.messages.some(m=>m.id?.startsWith('d13-work-')),false);
 });
 test('old D13 chats migrate built-in group bubbles only, preserving player speech',()=>{
- const s=phone(13,'19:00'),group=thread(s,'group');
+ const s=phone(13,'14:00'),group=thread(s,'group');
+ s.clock='19:00';
  const stale=[
   ['d13-work-0','仔仔','那幾套衣服要再核一次尺寸'],
   ['d13-work-1','阿威','我晚上過去試'],
