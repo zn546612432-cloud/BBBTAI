@@ -254,6 +254,20 @@ export function createConversationTrack(config){
  }
  // Peek at the same authored chat lifecycle used for real NPC delivery and player Send.
  // Never synthesize a reply or mark a scene complete during time jumps.
+ // Read-only projection for explicitly approved reminder scenes. The same
+ // lifecycle owns start clocks, eligibility, expiry and completion.
+ function reminderState(s,id){
+  if(!supported(s)||s.day<config.day)return null;
+  const d=defs.find(x=>x.id===id);if(!d)return null;
+  // Progress accessors lazily create containers; use a shallow isolated view
+  // so rendering a reminder never mutates the saved phone.
+  const view={...s,story55:{...s.story55,d02:{...s.story55.d02},authoredDays:{...s.story55.authoredDays}}};
+  const q=root(view)[id]||{index:0,started:false,completed:false};
+  if(q.completed)return {done:true,at:starts(view,d,q),conversationId:chatId(view,d)};
+  if(q.skipped||q.historySettled||q.lateHandled||isPast(view,d,q)||!allowed(view,d))return null;
+  if(!q.started&&!canStart(view,d,q))return null;
+  return {done:false,at:starts(view,d,q),conversationId:chatId(view,d)};
+ }
  function nextBoundary(s){
   if(!supported(s)||s.day!==config.day)return null;
   const map=root(s),now=conversationMinute(s);
@@ -315,5 +329,5 @@ export function createConversationTrack(config){
   }
   return items;
  }
- return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure,nextBoundary,pendingCatchup,settleCatchup};
+ return {name:config.prefix,day:config.day,defs,tick,due,draft,send,disabled,busy,reconcile,ensure,reminderState,nextBoundary,pendingCatchup,settleCatchup};
 }
