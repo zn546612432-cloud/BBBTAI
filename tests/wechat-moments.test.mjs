@@ -129,9 +129,9 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
 });
 
 test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
- assert.equal(authoredMoments.length,37);
+ assert.equal(authoredMoments.length,38);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
@@ -139,7 +139,7 @@ test('38 authored posts span D01–D90 with optional zero-comment posts and mixe
  for(const post of authoredMoments)for(const media of post.media||[])assert.ok(momentImage(media),post.id+': '+media);
  const find=id=>authoredMoments.find(p=>p.id===id);
  assert.deepEqual(find('xw-0519').media,['morning']);
- assert.deepEqual(authoredMoments.filter(p=>p.author==='胡枫'||p.author==='胡楓').map(p=>p.id),['hf-d41']);
+ assert.deepEqual(authoredMoments.filter(p=>p.author==='胡枫'||p.author==='胡楓').map(p=>p.id),['hf-d12-homecoming','hf-d41']);
  assert.deepEqual(find('xs-d04').media,['xmCaught']);
  assert.deepEqual(find('xw-d04').media,['xmDinner','dinnerDish']);
  assert.equal(find('xw-d04').text,'和阿蒙出來吃飯。');
@@ -235,4 +235,32 @@ test('approved Jack Moments cover, empty signature and greeting update preserve 
  assert.doesNotMatch(html,/别打电话，在工房。|早上好。/);
  s.content.moments.profiles['熙蒙'].bio='本人自己写的签名';
  assert.equal(momentProfiles(s)['熙蒙'].bio,'本人自己写的签名');
+});
+
+test('D11 street without photo, D12 Hu Feng homecoming and D13 cleanup use exact approved copy',()=>{
+ const s=initialState(),find=id=>findMoment(s,id);
+ const xw=find('xw-d11'),hf=find('hf-d12-homecoming'),xm=find('xm-d13');
+ assert.equal(xw.text,'出车前的街道，安静得像还没醒。');
+ assert.deepEqual(xw.media,[]);
+ assert.deepEqual(xw.comments,[{by:'熙蒙',text:'路上小心'}]);
+ assert.equal(hf.publishedAt,'2025-05-30T15:00');
+ assert.equal(hf.text,'집에 간다. 마카오가 그리웠어.');
+ assert.deepEqual(hf.media,['hufengD12Homecoming']);
+ assert.equal(hf.author,'胡枫');
+ assert.match(momentImage('hufengD12Homecoming'),/hufeng-d12-homecoming\\.webp$/);
+ assert.deepEqual(xm.media,[]);
+ assert.equal(xm.text,'我讨厌大扫除');
+ assert.deepEqual(xm.likes,['小辛','仔仔']);
+ assert.deepEqual(xm.comments,[{by:'仔仔',text:'可是蒙哥你的东西都是我们帮你搬的！'},{by:'熙蒙',text:'我站在那里也累到了'}]);
+ assert.ok(!visibleMoments(authoredMoments,'2025-05-30',{clock:'14:59'}).some(p=>p.id==='hf-d12-homecoming'));
+ assert.ok(visibleMoments(authoredMoments,'2025-05-30',{clock:'15:00'}).some(p=>p.id==='hf-d12-homecoming'));
+ // Old editor snapshots must not restore retired default copy or media.
+ s.content.moments={editedPosts:{
+  'xw-d11':{...xw,media:['macau']},
+  'xm-d13':{...xm,text:'新灯装上了。看起来不像临时工房了。',comments:[{by:'熙旺',text:'早点睡'},{by:'胡枫',text:'上次你也这么说'},{by:'小辛',text:'哈哈'}],likes:[]}
+ }};
+ assert.deepEqual(find('xw-d11').media,[]);
+ assert.equal(find('xm-d13').text,xm.text);
+ assert.deepEqual(find('xm-d13').comments,[...xm.comments,{by:'小辛',text:'哈哈'}]);
+ assert.deepEqual(find('xm-d13').likes,xm.likes);
 });
