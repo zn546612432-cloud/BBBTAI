@@ -53,6 +53,7 @@ import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
 import {ensureNativeMirage55,STORY55_BOUNTY_ID} from '../../apps/mirage/data.js';
 import {ensureAuthoredNotes} from '../../apps/notes/data/seed.js';
 import {seedAuthoredNotes} from './authored-notes.js';
+import {syncOuroborosDossier} from '../../apps/notes/data/ouroboros.js';
 import {tickFlowD03,tickFlowD06} from './flow-d03.js';
 import {stampEnding55,startFinale55,endingReplyDue55,revealEndingVoice55} from './finale.js';
 const actors={awei:'阿威',me:'熙蒙',wang:'熙旺',tai:'陈熙泰',ouroboros:'衔尾蛇博士',father:'傅隆生',xin:'小辛',zai:'仔仔',hacker:'熟悉的黑客',mercenary:'雇佣兵'};
@@ -388,6 +389,7 @@ export function tickStory55(s){
  normalizeStory55AudioAssets(story55Config(s));
  syncD10D13Content(s);
  syncD14D24Content(s);
+ syncOuroborosDossier(s,ANONYMOUS_MIRAGE_WINDOWS_55);
  repairRebuiltD23Postgame(s);
  quarantineUnsentD23Bubbles(s);
  syncApprovedChatV2(s);

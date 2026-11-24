@@ -9,7 +9,7 @@ const opt=(value,label,selected)=>'<option value="'+esc(value)+'"'+(selected===v
 export function aiVoicePanel(s){
   const p={...defaults,...apiConfig(),model:apiConfig().ttsModel||defaults.model};
   return '<div class="editor-panel">'+
-    card('<h3>MIRAGE · 固定對話</h3><p class="editor-help">MIRAGE 使用既有固定劇情與分享預設對白，不接入自由聊天 AI；NoApp、電話與國際象棋沿用原 AI 設定。</p>')+
+    card('<h3>MIRAGE · 匿名期 AI</h3><p class="editor-help">MIRAGE 在匿名期開放熙泰自由聊天；固定劇情、分享預設和棋局優先。離線時不即時回覆；NoApp、電話與國際象棋沿用原 AI 設定。</p>')+
     card('<span class="eyebrow">DEEPSEEK × MINIMAX / LOCAL GATEWAY</span><h2>熙泰 · AI 接口与音色实验室</h2>'+
     '<p class="editor-help">文字大脑：DeepSeek · 语音合成：MiniMax。GitHub Pages 可在本页打开 NoApp 私人 AI 设置配置会话密钥；开发服务器也可使用环境变量。此处可调整声音并试听。</p>'+
     '<p>文字接口 <code>POST /api/ai/chat</code><br>语音接口 <code>POST /api/voice/tts</code><br>检查接口 <code>GET /api/ai/status</code></p>'+

@@ -4,7 +4,7 @@ import {evaluateWorldbook} from './engine.js';
 import {taiMoodPrompt,readTaiMood} from './mood.js';
 import {selectTaiLongMemories,taiLongMemoryPrompt} from '../memory.js';
 import {taiCanonicalMilestones} from './plot-memory.js';
-import {projectTaiPlotGlossary} from './plot-glossary.js';
+import {projectTaiPlotGlossary,projectMirageTaiGlossary} from './plot-glossary.js';
 
 export const TAI_WORLDBOOK_BUDGET=1800;
 // Legacy diagnostic signature still uses the same engine.
@@ -29,7 +29,7 @@ export function captureTaiWorldbook(store,context={}){
  const base=previewTaiWorldbook(world,{...context,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}});
  // Canonical plot lexicon is a read-only projection on this same snapshot:
  // no extra store, no stale default book migration and no second scheduler.
- const glossary=projectTaiPlotGlossary(state,{...context,channel:scope});
+ const glossary=scope==='mirage'?projectMirageTaiGlossary(state,{...context,channel:scope}):projectTaiPlotGlossary(state,{...context,channel:scope});
  const snapshot={...base,entries:[...(base.entries||[]),...glossary],
   mood:privateContext?readTaiMood(state):null,longMemory:privateContext?selectTaiLongMemories([...(state.aiDraft?.memories||[]).filter(m=>m.kind),...taiCanonicalMilestones(state)],{day:state.day,channel:scope,recognized:true,messages:context.messages||[]}):[]};
  store.update(s=>{
