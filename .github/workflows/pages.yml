@@ -41,6 +41,26 @@ jobs:
           const friends=html.replace('<head>','<head><meta name="phone-friends-test" content="true">');
           await writeFile('dist/review/friends-test/index.html',friends);
           NODE
+      # The author preview uses the SAME verified release modules/assets as
+      # production, but opts into the existing isolated preview save key via
+      # its own HTML meta. This avoids a second full asset tree and preserves
+      # the published /BBBTAI/preview/ address.
+      - name: Restore isolated author preview entry
+        run: |
+          mkdir -p dist/preview
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const html=await readFile('dist/index.html','utf8');
+          const release=JSON.parse(await readFile('dist/release.json','utf8'));
+          if(!html.includes(release.url+'src/main.js')||html.includes('name="phone-preview"'))
+            throw Error('Production release cannot safely power the author preview');
+          const preview=html
+            .replace('<head>','<head><meta name="phone-preview" content="true">')
+            .replace('<title>','<title>PREVIEW · ');
+          if(!preview.includes('name="phone-preview" content="true"'))
+            throw Error('Preview save isolation flag missing');
+          await writeFile('dist/preview/index.html',preview);
+          NODE
       - name: Build Tai Vision in isolated save namespace
         run: |
           mv dist stable-dist
@@ -51,8 +71,9 @@ jobs:
           mv stable-dist dist
           test -s dist/review/tai-vision-20261105/index.html
           grep -q phone-preview dist/review/tai-vision-20261105/index.html
-      # The main Pages workflow builds only 3 independent entry points:
-      # production, Story55 reference and Tai Vision.
+      # The main Pages workflow builds three independent module graphs:
+      # production, Story55 reference and Tai Vision. The author preview and
+      # friends test are tiny HTML entries sharing production release assets.
       # Retired review snapshots stay in their Git branches, not the deployed
       # Pages artifact. DO NOT delete historical branches or gameplay assets.
       - name: Check out Story55 comparison snapshot
