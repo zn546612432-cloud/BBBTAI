@@ -105,15 +105,16 @@ function migrateD11MeetingNoteToDiary(s){
  const note=list[index];
  // Recognize the obsolete five-line authored Notes default as *unmodified*.
  // Otherwise the old default would overwrite the newly approved literary D11 diary.
- const legacyDefault=note.title==='5/29 · 备忘'&&note.text===LEGACY_MEETING_NOTE_TEXT;
- const customized=!legacyDefault&&(note.text!==MEETING_NOTE.text||note.title!==MEETING_NOTE.title);
+ const defaultTitle=note.title==='5/29 · 备忘'||note.title===MEETING_NOTE.title;
+ const defaultBody=note.text===LEGACY_MEETING_NOTE_TEXT||note.text===MEETING_NOTE.text;
+ const customized=!defaultTitle||!defaultBody;
  s.story55.d11MeetingNoteArchive??=structuredClone(note);
  if(customized){
   s.content.storyDiary??={};
   if(!Object.hasOwn(s.content.storyDiary,'11')){
    s.content.storyDiary['11']={
-    title:note.title===MEETING_NOTE.title?D11_DIARY.title:String(note.title||''),
-    body:String(note.text||''),
+    title:defaultTitle?D11_DIARY.title:String(note.title||''),
+    body:defaultBody?D11_DIARY.body:String(note.text||''),
     migratedFromNote:MEETING_NOTE.id
    };
   }
