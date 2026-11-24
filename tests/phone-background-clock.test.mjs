@@ -29,7 +29,7 @@ test('background uses ten game minutes per real minute regardless of open App or
   assert.equal(s.batteryPercent,100);assert.equal(s.nav.current.appId,appId);
  }
 });
-test('foreground App remains slow; fractional background time and developer speed are retained',()=>{
+test('foreground App remains 5x; background fractions ignore home slider except 0x pause',()=>{
  const s=start();tickWorld(s,6000);assert.equal(s.worldMinuteFraction,0.5);
  resume(s,3000);assert.equal(s.clock,'08:01');assert.equal(s.worldMinuteFraction,0);
  tickWorld(s,60000);assert.equal(s.clock,'08:06');
