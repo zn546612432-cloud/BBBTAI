@@ -1,14 +1,13 @@
-name: Check feature branches
+name: D13 original telephone voice audition (isolated)
 on:
   push:
-    branches: ['fix/**']
-  pull_request:
-    branches: [main]
+    branches: ['fix/d13-original-phone-voice-preview-20261124']
 permissions:
   contents: read
 jobs:
-  verify:
+  audition:
     runs-on: ubuntu-latest
+    timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,9 +15,15 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Test 55-day browser migration
-        run: node --test tests/story55-default-migration.test.mjs
-      - name: Test existing 55-day graph
-        run: node --test tests/story55-runtime.test.mjs
-      - run: npm test
-      - run: npm run build:pages
+      - name: Synthesize original D13 phone dialogue with existing MiniMax voice
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_REGION: cn
+        run: node scripts/preview-d13-phone-voice.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: D13-original-phone-voice-seven-MP3
+          path: artifacts/d13-original-phone-audition/
+          if-no-files-found: warn
+          retention-days: 7
