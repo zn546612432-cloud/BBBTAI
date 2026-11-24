@@ -50,7 +50,7 @@ function proactiveDailyTasks(s){
   const sent=!!story?.started;
   const delivered=story?.delivered||[];
   if(d06CelebrationDraft(s,'group')||sent)
-   add('d06-celebration-chat','回群裡發消息','group',sent&&delivered.includes('d06-celebrate-11'));
+   add('d06-celebration-chat','把好消息告訴大家','group',sent&&delivered.includes('d06-celebrate-11'));
   const dinner=getWish(s,'d06-dinner');
   if(d06DinnerDraft(s,'group')||dinner?.confirmedByXimeng)
    add('d06-dinner-chat','回群裡確認聚餐','group',!!dinner?.confirmedByXimeng&&delivered.includes('wish-dinner-booking-01'));
