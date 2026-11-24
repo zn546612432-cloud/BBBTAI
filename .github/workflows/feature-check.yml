@@ -1,24 +1,50 @@
-name: Check feature branches
+name: Stage D13 approved eight phone recordings once
 on:
   push:
-    branches: ['fix/**']
-  pull_request:
-    branches: [main]
+    branches: ['assets/d13-one-new-approved-phone-line-20261124']
+    paths: ['.github/workflows/feature-check.yml']
 permissions:
-  contents: read
+  contents: write
+  actions: read
 jobs:
-  verify:
+  stage:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Test 55-day browser migration
-        run: node --test tests/story55-default-migration.test.mjs
-      - name: Test existing 55-day graph
-        run: node --test tests/story55-runtime.test.mjs
-      - run: npm test
-      - run: npm run build:pages
+      - name: Fetch six confirmed original MiniMax performances
+        uses: actions/download-artifact@v4
+        with:
+          name: D13-original-phone-voice-seven-MP3
+          repository: zn546612432-cloud/BBBTAI
+          run-id: 45351922699
+          github-token: ${{ github.token }}
+          path: .d13-approved-old
+      - name: Fetch confirmed additional mail promise recording
+        uses: actions/download-artifact@v4
+        with:
+          name: D13-new-mail-line-audition
+          repository: zn546612432-cloud/BBBTAI
+          run-id: 45354343889
+          github-token: ${{ github.token }}
+          path: .d13-approved-new
+      - name: Assemble eight clips and prove original tracking clip stays unchanged
+        run: node scripts/stage-d13-approved-voice.mjs
+      - name: Verify exact audio SHA and game telephone sequence
+        run: |
+          node --test tests/d13-voice-assets.test.mjs tests/d13-short-charge-voice-call-regression.test.mjs tests/d13-native-mail-wallet-call.test.mjs
+          node scripts/publish-d13-bundled-voice.mjs
+      - name: Commit ONLY verified eight MP3 recordings to preview branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f public/assets/story55/d13/call-*.mp3 public/assets/story55/d13/voice-manifest.json
+          git commit -m 'assets(d13): approved eight clips and original tracking recording'
+          git push origin HEAD:refs/heads/${GITHUB_REF_NAME}
