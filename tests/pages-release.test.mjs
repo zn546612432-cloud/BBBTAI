@@ -81,13 +81,16 @@ test('Pages releases isolate code while all public media URLs survive version ro
  }finally{await rm(folder,{recursive:true,force:true});}
 });
 
-test('main Pages packaging retains the approved reference sites and the lightweight friends test',async()=>{
+test('main Pages packaging retains the light author preview, reference sites and friends test',async()=>{
  const workflow=await readFile(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');
  const audit=await readFile(new URL('../scripts/audit-pages-site.mjs',import.meta.url),'utf8');
- // Production stays online; the duplicate latest preview is retired.
+  // The active author preview reuses production modules with its own saved state.
  assert.match(workflow,/branches: \[main\]/);
  assert.match(workflow,/npm run build:pages/);
- assert.doesNotMatch(workflow,/Build isolated preview|dist\/preview|production-dist\/preview/);
+  assert.doesNotMatch(workflow,/Build isolated preview|production-dist\/preview/);
+  assert.match(workflow,/Restore isolated author preview entry/);
+  assert.match(workflow,/dist\/preview\/index\.html/);
+  assert.match(workflow,/name="phone-preview" content="true"/);
  assert.match(workflow,/review\/tai-vision-20261105/);
  assert.match(workflow,/review\/55-20261101/);
  assert.match(workflow,/dist\/review\/friends-test\/index\.html/);
@@ -106,15 +109,27 @@ test('main Pages packaging retains the approved reference sites and the lightwei
  for(const name of oldReviewNames)assert.equal(workflow.includes(name),false,'Old preview still packaged: '+name);
  assert.doesNotMatch(workflow,/Preserve isolated historical review sites/);
  assert.match(audit,/allowedReviews=\['55-20261101','tai-vision-20261105','friends-test'\]/);
- assert.match(audit,/retired \/preview\/ must not be packaged/);
+  assert.match(audit,/the requested \/preview\/ author entry is missing/);
+  assert.match(audit,/author preview must share production release modules/);
+  assert.match(audit,/previewHtml\.includes\('name="phone-preview" content="true"'\)/);
  assert.match(audit,/maxBytes=450\*1024\*1024/);
 });
 
-test('Pages audit rejects an accidentally packaged duplicate preview',async()=>{
+test('Pages audit rejects duplicate media copied into the author preview folder',async()=>{
  const folder=await mkdtemp(path.join(os.tmpdir(),'ximeng-pages-audit-'));
  try{
-  await mkdir(path.join(folder,'preview'));
+   await mkdir(path.join(folder,'preview'));
+   await writeFile(path.join(folder,'preview','index.html'),'<html></html>');
+   await writeFile(path.join(folder,'preview','duplicate-module.js'),'undesired duplicated bundle');
   assert.throws(()=>execFileSync(process.execPath,[new URL('../scripts/audit-pages-site.mjs',import.meta.url).pathname,folder],{stdio:'pipe'}),
-   error=>error.stderr.toString().includes('retired /preview/ must not be packaged'));
+    error=>error.stderr.toString().includes('author preview must share production release modules'));
+ }finally{await rm(folder,{recursive:true,force:true});}
+});
+
+test('Pages audit refuses to ship a missing /preview/ and avoids a 404',async()=>{
+ const folder=await mkdtemp(path.join(os.tmpdir(),'ximeng-preview-missing-'));
+ try{
+  assert.throws(()=>execFileSync(process.execPath,[new URL('../scripts/audit-pages-site.mjs',import.meta.url).pathname,folder],{stdio:'pipe'}),
+   error=>error.stderr.toString().includes('the requested /preview/ author entry is missing'));
  }finally{await rm(folder,{recursive:true,force:true});}
 });

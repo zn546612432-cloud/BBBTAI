@@ -13,6 +13,10 @@ const check=(condition,message)=>{if(!condition)throw Error('Pages cleanup audit
 
 // /preview/ is the active author-testing entry, not an old review snapshot.
 check((await readdir(dir)).includes('preview'),'the requested /preview/ author entry is missing');
+const previewFolder=path.join(dir,'preview');
+const previewFiles=await readdir(previewFolder);
+check(previewFiles.length===1&&previewFiles[0]==='index.html',
+ 'author preview must share production release modules without copying large assets');
 const actualReviews=(await readdir(path.join(dir,'review'))).sort();
 check(JSON.stringify(actualReviews)===JSON.stringify([...allowedReviews].sort()),
  'only approved reference sites and friends test are allowed in /review/: '+actualReviews.join(', '));
@@ -48,10 +52,6 @@ for(const root of roots){
  if(root.key!=='production')sizes[root.key]=await walk(root.folder);
 }
 const productionRelease=await readJSON(path.join(dir,'release.json'));
-const previewFolder=path.join(dir,'preview');
-const previewFiles=await readdir(previewFolder);
-check(previewFiles.length===1&&previewFiles[0]==='index.html',
- 'author preview must share production release modules without copying large assets');
 const previewHtml=await readFile(path.join(previewFolder,'index.html'),'utf8');
 check(previewHtml.includes('name="phone-preview" content="true"')&&
  !previewHtml.includes('name="phone-friends-test"')&&
