@@ -25,6 +25,15 @@ export function allMoments(s){
     return {...post,text:post.text==='和阿蒙出來吃飯。終於肯離開工房了。'?p.text:post.text,
      comments:(post.comments||[]).map(c=>c.by==='小辛'&&c.text==='哥你說的是菜還是你自己？'?{...c,text:'好啊你們，偷偷吃好的'}:c)};
    }
+   if(post.id==='zz-d15'&&post!==p){
+    // An older saved editor snapshot can retain the retired default comments.
+    // Replace that exact authored prefix only; preserve player-added comments
+    // and every other edited field, without touching live reaction history.
+    const comments=post.comments||[];
+    const previous=[['熙蒙','你说谁？'],['熙旺','我没说累'],['小辛','这题我不敢答']];
+    const oldDefaults=previous.every(([by,text],i)=>comments[i]?.by===by&&comments[i]?.text===text&&!comments[i]?.to);
+    return oldDefaults?{...post,comments:[...p.comments,...comments.slice(previous.length)]}:post;
+   }
    // Migrate only the old built-in HYQ defaults; keep genuinely customized posts.
    if(post.id==='xw-d11'&&post!==p&&post.media?.length===1&&post.media[0]==='macau')
     return {...post,media:[]};
