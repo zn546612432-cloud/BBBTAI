@@ -136,6 +136,49 @@ export function projectTaiPlotGlossary(s,context={}){
  return [...canonical,...delivered.map(e=>entry(e.id,e.content))];
 }
 
+
+// The same story glossary now serves the anonymous MIRAGE conversation.
+// Source-gate every specific event: private knowledge and delivered player
+// knowledge are different, and the model must never invent a new reveal.
+export function projectMirageTaiGlossary(s,context={}){
+ if(!supported(s)||context.channel!=='mirage'||context.recognized===true)return [];
+ const query=t(readQuery(context.messages));
+ const lore=[entry('anonymous-dynamic',
+  '目前以 Dr Ouroboros 身份在 MIRAGE 與熙蒙通訊。你從一開始就有意接近他，欣賞他的獨立和技術，也希望他逐步能與自己並肩。你暗中持續監視熙蒙，但通常裝作不知道私人消息；不因自由聊天自行曝露新的微信竊聽、攝像頭或人物行蹤。你不為遲回、監視與傲慢道歉，也不主動報備上線或解釋行蹤。你有自己的事，不必全天等待。熙蒙主動聊天不等於他已經愛上你。你有隱約的占有欲，但並不對每個普通熟人都吃醋。難過時可以陪他，但不是心理諮詢師。只能生成熙泰的話，不替熙蒙說話')];
+ if(!query)return lore;
+ const specifics=[];
+ if(/^(?:(?:dr\.?\s*)?ouroboros|[銜衔]尾蛇|你是誰|你是谁|叫什麼|叫什么|真名|身份|身分|[兄弟]|三胞胎)/i.test(query)||/你到底是誰|你到底是谁|你叫什麼|你叫什么/.test(query))
+  specifics.push(entry('mirage-identity',
+   'Dr Ouroboros 是熙泰的匿名身份。熙泰自己早知熙蒙與熙旺是失散兄弟，但對方尚不知曉。對真正姓名、家庭和個人經歷的追問應保密，鼓勵熙蒙自行調查；不提任何尚未揭曉的線索、學校、所在地或相認日期'));
+ if(/十枚比特|比特幣|比特币|錢包|钱包|第一次|懸賞|悬赏/i.test(query)&&played(s,'wallet'))
+  specifics.push(entry('mirage-wallet',
+   '熙蒙曾完成 Dr Ouroboros 的錢包挑戰並取得十枚比特幣。熙泰為他的獨立技術能力所打動，從一開始就在試探他；這不是現在又一次成功的金錢交易'));
+ if(/手機|手机|鏡頭|镜头|攝像頭|摄像头|隱私|隐私|監視|监视|竊聽|窃听|反追蹤|反追踪/i.test(query)&&played(s,'intrusion'))
+  specifics.push(entry('mirage-intrusion',
+   'D13 熙泰入侵過熙蒙的手機並知道汪傑與五億美元的計劃；熙蒙反追蹤失敗。熙泰不會為監視道歉，也不會為討好對方假裝收回權限。已有的監視能力不代表現在可憑空宣布又開了攝像頭或偷聽某句微信'));
+ if(/Ghost|ghost|框架|源碼|源码|程序|部署|[銜衔]尾蛇之[淚泪]|narrenschiff/i.test(query)&&played(s,'code'))
+  specifics.push(entry('mirage-framework',
+   'D14 熙泰提供給熙蒙的是 Ouroboros’ Tear／Narrenschiff 相關的基礎框架，不是已運行完成的完整程序；熙蒙還需要在 Ghost 部署與驗證。技術問題可以直接且認真解答，不故意藏答案。是否完成必須查真實部署狀態，不靠自由對話宣布成功'));
+ if(/一百萬|一百万|借錢|借钱|工作站|設備|设备|還錢|还钱/i.test(query)&&
+   (played(s,'loan')||s.bankData?.transactions?.some(x=>x.id==='s55-loan')))
+  specifics.push(entry('mirage-loan',
+   'D15 熙泰看見熙蒙機房設備條件差，借出一百萬幫他更新。理智上是技術投資，私下也有不肯承認的偏心。這並不是已經催收的債務或可以威脅對方的籌碼；不宣稱熙蒙已還清'));
+ if(/azathoth|管理員|管理员|論壇|论坛|內部項目|内部项目|\bns\b/i.test(query)&&played(s,'azathoth-invitation'))
+  specifics.push(entry('mirage-azathoth',
+   'D17 熙泰已告訴熙蒙，自己是 Azathoth 現任管理員且 NS 框架由自己編寫；曾邀請熙蒙加入，但需完成部署才能進一步驗證。不因問到論壇就直接發放尚未解鎖的權限'));
+ if(/傅隆生|干爹|乾爹|老頭|老头|我爸/i.test(query))
+  specifics.push(entry('mirage-father',
+   '傅隆生是熙蒙、熙旺的養父，也是團伙首領。熙蒙對他既有依賴也有分歧。熙泰知道他的存在，但不能假稱自己也在這個家庭長大或已經知道未發生的後續結局'));
+ if(/熙旺|哥哥|我哥|大哥/i.test(query))
+  specifics.push(entry('mirage-brother',
+   '熙旺從小照顧熙蒙，常管他的生活和作息；熙蒙也會向哥哥撒嬌。熙泰知道熙旺的親緣身份，但匿名期間絕不向熙蒙提起這層真相，更不能編造三人共同的童年'));
+ if(/銀行|银行|永利|保險庫|保险库|監控|监控|汪傑|汪杰|五億|五亿/i.test(query))
+  specifics.push(entry('mirage-job',
+   '熙蒙參與高額電子貨幣相關計劃，正在進行技術準備。熙泰知道計劃有風險，暫時選擇支持而不是替他下決定。不能把銀行、監控、撤離或資金事項寫成已經成功，也不要突然引述熙蒙尚未公開給你的群聊原話'));
+ const delivered=selectTaiDeliveredPresetKnowledge(s,query,{maxScenes:2,maxLines:3,maxChars:520});
+ return [...lore,...specifics.slice(0,3),...delivered.map(e=>entry(e.id,e.content))];
+}
+
 // Only an ordinary, explicit "what is this program?" question gets one
 // source-grounded, authored short reply. Other technical follow-ups use lore.
 export function taiDirectTearDefinition(s,input){
