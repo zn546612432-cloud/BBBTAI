@@ -113,8 +113,10 @@ test('MIRAGE has no management entry, while the global message editor remains us
 test('full naming-revised source remains intact and only shipped legacy copy migrates',async()=>{
  const {D13_LINES,D13_LEGACY_LINES,D13_VOICE_INDICES}=await import('../src/story/d13/content.js');
  const {applyD13Definition}=await import('../src/story/d13/definition.js');
- assert.equal(D13_LINES.length,21);assert.deepEqual(D13_VOICE_INDICES,[8,10,12,14,16,18,20]);
- assert.match(D13_LINES[8][1],/^晚上好，nya。/);assert.match(D13_LINES[20][1],/晚安，nya，或者我該叫你，熙蒙……/);
+ assert.equal(D13_LINES.length,22);assert.deepEqual(D13_VOICE_INDICES,[8,10,12,14,16,18,20,21]);
+ assert.match(D13_LINES[8][1],/^晚上好，nya。/);
+ assert.equal(D13_LINES[20][1],'好了，今天不逗你了。明天有份東西給你，記得看郵箱。');
+ assert.match(D13_LINES[21][1],/晚安，nya，或者我該叫你，熙蒙……/);
  const {store}=fixture(),config=structuredClone(store.get().story55.config);config.scenes.intrusion=structuredClone(D13_LEGACY_LINES);applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,D13_LINES);
  const edited=structuredClone(D13_LEGACY_LINES);edited[1][1]='作者自己改過的句子';config.scenes.intrusion=edited;applyD13Definition(config);assert.deepEqual(config.scenes.intrusion,edited);
 });
