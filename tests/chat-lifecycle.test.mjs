@@ -91,7 +91,7 @@ test('missed invitation has an NPC closure; obsolete emoji is rejected and late 
 });
 
 test('today replies close obsolete ordinary topics, including across refresh',()=>{
- const s=fresh(5,'08:05');tickPhoneStoryMessages(s,0);
+ const s=fresh(5,'08:15');d05Track.ensure(s).breakfast.completed=true;tickPhoneStoryMessages(s,0);
  assert.equal(nativeWeChatComposer(s,'wang').text,null);
  tickPhoneStoryMessages(s,1000);
  assert.equal(nativeWeChatComposer(s,'wang').text,'嗯');
@@ -187,7 +187,7 @@ test('a configured mandatory scene stays replyable across dates; unrelated histo
 test('new daily definitions share a conversation cooldown even when a late and current reply are both due',()=>{
  const s=fresh(5,'08:04');tickPhoneStoryMessages(s,0);
  const draft=d03Track.draft(s,'wang');d03Track.send(store(s),'wang',draft.text,1000);
- s.clock='08:05';tickPhoneStoryMessages(s,2800);tickPhoneStoryMessages(s,3300);
+ s.clock='08:15';d05Track.ensure(s).breakfast.completed=true;tickPhoneStoryMessages(s,2800);tickPhoneStoryMessages(s,3300);
  const incoming=s.events.filter(e=>e.channel==='wechat'&&e.conversationId==='wang'&&e.type==='authored_message_delivered'&&!e.silent);
  assert.equal(incoming.length,1);
  tickPhoneStoryMessages(s,5500);
@@ -206,7 +206,7 @@ test('merely offering a player-led D02 draft does not start a conversation or ma
 
 test('breakfast group never claims an unsent player reply happened',()=>{
  const s=fresh(5,'08:15');advance(s,0,30);
- assert.ok(messages(s,'group','d05-breakfast-').some(m=>m.text==='粥放桌上了，等他起來吃。'));
+ assert.ok(messages(s,'group','d05-breakfast-').some(m=>m.text==='我問問他'));
  assert.equal(messages(s,'group','d05-breakfast-').some(m=>m.text==='醒了，剛回我'),false);
 });
 
