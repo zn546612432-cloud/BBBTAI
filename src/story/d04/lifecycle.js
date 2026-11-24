@@ -102,14 +102,14 @@ function migrateDinnerPost(s,q){
 }
 // The game break is measured from the preceding delivered message, not a real-time timeout.
 function nightGameClock(s,i){
- if(i<18)return null;
- const before=s.content?.conversations?.wechat?.find(c=>c.id==='group')?.messages?.find(m=>m.id==='d04-night-games-17');
+ if(i<19)return null;
+ const before=s.content?.conversations?.wechat?.find(c=>c.id==='group')?.messages?.find(m=>m.id==='d04-night-games-18');
  const t=before?.time||'22:42';
  const min=Math.min(1439,Number(t.slice(0,2))*60+Number(t.slice(3,5))+30);
  return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
 }
 const allowed=(s,scene)=>scene.condition==='dinner'?d04DinnerConfirmed(s):scene.condition==='no-dinner'?!d04DinnerConfirmed(s):true;
-const clocks={morning:[[0,'08:20'],[11,'08:37'],[17,'08:51']],earbuds:[[0,'15:50'],[13,'15:58']],lunch:[[0,'12:10'],[14,'12:23']],cat:[[0,'13:25'],[12,'13:38']],'night-games':[[0,'22:30'],[14,'22:42'],[18,'23:12']]};
+const clocks={morning:[[0,'08:20'],[11,'08:37'],[17,'08:51']],earbuds:[[0,'15:50'],[13,'15:58']],lunch:[[0,'12:10'],[14,'12:23']],cat:[[0,'13:25'],[12,'13:38']],'night-games':[[0,'22:30'],[14,'22:42'],[19,'23:12']]};
 const clock=(scene,i)=>{let t=scene.at;for(const [at,c] of clocks[scene.id]||[])if(i>=at)t=c;return t;};
 const specs=[...D04_GROUP,...D04_PRIVATE].map(scene=>({...scene,
  initialDelayMs:scene.chat==='group'?450:0,condition:s=>allowed(s,scene),historyClock:i=>scene.condition==='no-dinner'?'18:31':clock(scene,i),

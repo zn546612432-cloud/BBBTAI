@@ -121,7 +121,7 @@ test('portable 55-day source bundle restores D02 track, D06 wish and D55 node wi
  assert.deepEqual(restored.content.conversations.wechat.map(c=>c.messages.length),before);
 });
 
-test('editing one D05 message does not freeze the original conditional breakfast reply',()=>{
+test('editing one D05 message preserves the approved unconditional breakfast ending',()=>{
  const s=fresh(),key='d05:breakfast',before=find(s,5,key);
  assert.ok(before);
  const copy=before.lines.map(x=>x.text);copy[0]='已編修的早餐開場';
@@ -133,5 +133,6 @@ test('editing one D05 message does not freeze the original conditional breakfast
  wang.messages.push({id:'safety-test-player',from:'me',text:'早安',storyD05:true,day:5,time:'08:10',actual:true});
  const after=find(s,5,key);
  assert.equal(after.lines[0].text,'已編修的早餐開場');
- assert.notEqual(after.lines[16].text,morning);
+ assert.equal(morning,'我問問他');
+ assert.equal(after.lines[16].text,morning);
 });

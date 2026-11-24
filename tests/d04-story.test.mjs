@@ -263,11 +263,11 @@ test('D04 approved dinner chat is exact, and night games wait thirty game minute
  const s=fixture('22:30');
  for(let now=0;now<=80000;now+=2100)tickD04Chats(s,now);
  const group=byId(s,'group');
- assert.ok(group.some(m=>m.id==='d04-night-games-17'));
- assert.ok(!group.some(m=>m.id==='d04-night-games-18'));
+ assert.ok(group.some(m=>m.id==='d04-night-games-18'));
+ assert.ok(!group.some(m=>m.id==='d04-night-games-19'));
  s.clock='22:59';tickD04Chats(s,100000);
- assert.ok(!group.some(m=>m.id==='d04-night-games-18'));
+ assert.ok(!group.some(m=>m.id==='d04-night-games-19'));
  s.clock='23:00';tickD04Chats(s,102100);
- assert.equal(group.find(m=>m.id==='d04-night-games-18')?.time,'23:00');
- assert.equal(group.find(m=>m.id==='d04-night-games-18')?.text,'不打了');
+ assert.equal(group.find(m=>m.id==='d04-night-games-19')?.time,'23:00');
+ assert.equal(group.find(m=>m.id==='d04-night-games-19')?.text,'不打了');
 });
