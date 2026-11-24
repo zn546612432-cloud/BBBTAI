@@ -12,10 +12,14 @@ export function taiCallReplyStatus(snapshot={},caption=''){
 }
 const comfort=text=>/(?:累|休息|缓过来|别说话|不想说话|没力气)/.test(text)&&/(?:陪|听你|先别|别费劲|放着|缓过来)/.test(text);
 const promise=text=>/(?:等.{0,5}(?:事|事情).{0,4}(?:结|完)|等我见到|事情结束)/.test(text)&&/(?:见|找|抱|去|结束|完)/.test(text);
+ // Two empty availability refusals are one thought, not two independent voice clips.
+ // Reasons and constraints are never removed by this narrow match.
+ const plainRefusal=value=>/^(?:現在|现在|目前|暫時|暂时|眼下)(?:還|还|也)?(?:不行|不可以|不合適|不合适|不是時候|不是时候|不能|去不了|來不了|来不了)[。.!！\s]*$/u.test(String(value||'').trim());
 export function sameCallMeaning(a,b){
  const x=clean(a),y=clean(b);
  if(!x||!y)return false;
  if(x===y)return true;
+ if(plainRefusal(a)&&plainRefusal(b))return true;
  if(Math.min(x.length,y.length)>=8&&(x.includes(y)||y.includes(x)))return true;
  if(Math.min(x.length,y.length)>=10){
   const gx=grams(x),gy=grams(y),intersection=[...gx].filter(t=>gy.has(t)).length;
@@ -92,7 +96,9 @@ export function planCallSpeech({text='',history=[],behavior={},opening=false,eve
  const smallTalk=recent.length>=3&&recent.every(t=>String(t.content||'').trim().length<=28);
  const close=closing;
  const cap=Math.min(max,close?2:explicit||opening?5:short?2:behavior.callDetail==='natural'?3:4);
- return {minSegments:close?1:explicit?Math.min(3,cap):short?1:Math.min(2,cap),maxSegments:cap,smallTalk,close,explicit};
+ // Segment count is an upper bound, not a minimum to fill with another AI call.
+ // A single substantial answer is often better and faster than three short denials.
+ return {minSegments:1,maxSegments:cap,smallTalk,close,explicit};
 }
 export function needsCallContinuation(segments,plan){
  if(plan.close||segments.length>=plan.minSegments||!segments.length)return false;
@@ -119,4 +125,18 @@ export function nextNaturalCallIdleEvent(snapshot,now=Date.now(),settings={}){
  if(snapshot.nudgeCount===0&&elapsed>=Math.max(10000,Number(settings.callNudgeSeconds||10)*1000*scale))return 'nudge';
  if(snapshot.nudgeCount===1&&elapsed>=Math.max(20000,Number(settings.callCloseSeconds||125)*1000*scale))return 'closing';
  return '';
+}
+
+// The call asks one model turn, based on the player's *actual* question.
+// It may keep secrets, but cannot trade an answer for two versions of "not now".
+export function callAnswerGuidance(text='',history=[]){
+ const input=String(text||'').trim().slice(0,500);
+ if(!input)return '';
+ const why=/(?:為什麼|为什么|為何|为何|怎麼|怎么)(?:.{0,25})[？?]?/u.test(input);
+ const explanation=/[？?]|(?:能不能|可不可以|到底|怎麼辦|怎么办|什麼原因|什么原因|為何|为何)/u.test(input);
+ if(!why&&!explanation)return '';
+ const focus='【本輪問題優先】熙蒙實際問的是「'+input.slice(0,180)+'」。先正面回答這個問題，再說一個真正有根據的原因、顧慮、具體打算或目前確實無法透露的邊界；可以有情緒和文學性，但不能只有空話、換句話說同一個拒絕，或把問題反拋給熙蒙。不能憑空捏造行程、警方動向和已完成的承諾。只要內容說清楚，一段完整話就夠，不必拆成多段。';
+ if(!/(?:不來|不来|來不了|来不了|不去|去不了).{0,6}(?:澳門|澳门)|(?:澳門|澳门).{0,8}(?:不來|不来|不去|去不了)/u.test(input))return focus;
+ const mentionedOutside=Array.isArray(history)&&history.some(t=>t?.role==='assistant'&&/(?:英國|英国|葡萄牙|安排|退路|離開|离开)/u.test(String(t.content||'')));
+ return focus+' 【澳門來訪追問】不要連發「現在還不是時候」「現在不行」。如果此前真的提到能幫熙蒙和熙旺安排去英國或葡萄牙，請解釋自己留在外面能做什麼、和自己暫不來澳門的取捨；不要把這個推論冒充新增的劇情事實。'+(mentionedOutside?'前文確實談過外部協助，可以自然承接實際承諾。':'只有可核對的已說內容才能承接；若沒有根據，不要假稱有過這項承諾。');
 }
