@@ -46,8 +46,11 @@ export const D13_LINES=[
  ['me','你有病吧？我說過了，我只單幹。'],
  ['ouroboros','可你的手機裡那些資料告訴我，你似乎不止一個人。'],
  ['system','（追蹤失敗！錯誤代碼：ERR-4037）'],
+ ['ouroboros','好了，今天不逗你了。明天有份東西給你，記得看郵箱。'],
  ['ouroboros','呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……']
 ];
+// Only upgrade the unchanged previously released scene, never author edits.
+export const D13_BEFORE_MAIL_PROMISE_LINES=[...D13_LINES.slice(0,20),...D13_LINES.slice(21)];
 export const D13_VOICE_INDICES=D13_LINES.flatMap(([actor],index)=>index>7&&actor==='ouroboros'?[index]:[]);
 export const D13_LEGACY_LINES=[
  ['system','屏幕失去响应，重启没有恢复。'],
