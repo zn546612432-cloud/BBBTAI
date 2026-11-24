@@ -48,6 +48,11 @@
       "id": "d13-call-20",
       "source": "bundled-local",
       "path": "public/assets/story55/d13/call-20.mp3"
+    },
+    {
+      "id": "d13-call-21",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d13/call-21.mp3"
     }
   ],
   "events": [
@@ -644,9 +649,35 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……",
+      "text": "好了，今天不逗你了。明天有份東西給你，記得看郵箱。",
       "thread": "s55-ouroboros",
       "audioAssetId": "d13-call-20"
+    },
+    {
+      "id": "s55-intrusion-v2-21",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "owner": "messaging",
+      "capability": "chat.d13-intrusion",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-intrusion-v2-20"
+      },
+      "requires": [
+        "s55-intrusion-v2-20"
+      ],
+      "timing": {
+        "day": 13,
+        "at": "on-trigger"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "呵呵，我已經提醒過你了，追蹤我只是白費工夫。晚安，nya，或者我該叫你，熙蒙……",
+      "thread": "s55-ouroboros",
+      "audioAssetId": "d13-call-21"
     }
   ],
   "acceptance": [
@@ -683,7 +714,7 @@
     {
       "id": "accept-d13-assets",
       "type": "assets",
-      "verify": "七段 MP3 的文字雜湊須與定稿相符。依序收到七次 playing 與 ended；熙泰開口時顯示頭像並鎖定輸入。載入失敗須停在當句，點繼續可重試。"
+      "verify": "八段 MP3 的文字雜湊須與定稿相符。依序收到八次 playing 與 ended；熙泰開口時顯示頭像並鎖定輸入。載入失敗須停在當句，點繼續可重試。"
     },
     {
       "id": "accept-d13-date-clock",
@@ -693,7 +724,7 @@
     {
       "id": "accept-d13-dialogue",
       "type": "dialogue",
-      "verify": "完整稱呼修訂稿 21 行逐句保留，不自行縮寫；六次 me 只靠原生 Send。"
+      "verify": "完整稱呼修訂稿 22 行逐句保留，不自行縮寫；六次 me 只靠原生 Send。"
     },
     {
       "id": "accept-d13-finance",
