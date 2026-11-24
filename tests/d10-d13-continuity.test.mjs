@@ -14,6 +14,7 @@ import {tickPhoneStoryMessages} from '../src/services/messaging/phone-story-sche
 import {d11Track} from '../src/story/d11/wechat.js';
 import {syncD10D13Content,OLD_D10,OLD_RETURN,OLD_MOVE,MEETING_NOTE,OLD_INTRUSION_LINE} from '../src/story/d10-d13/continuity.js';
 import {entryFor,allDiaryDays} from '../src/story/diary/entries.js';
+import {diaryView} from '../src/apps/schedule/features/diary/index.js';
 const phone=(day,clock='08:00')=>{const s=activateStory55(initialState());s.day=day;s.clock=clock;s.unlocked=true;s.story55.completed.invitation={day:6,clock:'20:00'};tickStory55(s);return s;};
 const thread=(s,id)=>s.content.conversations.wechat.find(c=>c.id===id);
 const flat=defs=>defs.flatMap(d=>d.lines);
@@ -46,6 +47,10 @@ test('D11 Fu returns via Wang private native Send, without inventing Fu group bu
  assert.ok(entry);assert.equal(entry.title,'老地方');
  assert.equal(entry.body,MEETING_NOTE.text,'approved prose must be exactly unchanged');
  assert.ok(allDiaryDays(s).includes(11));
+ const rendered=diaryView(s,{route:'/',params:{day:'11'}});
+ assert.match(rendered,/DAY 11/);
+ assert.match(rendered,/老地方/);
+ assert.match(rendered,/五亿美元电子钱包/);
  assert.equal(s.content.notes.some(n=>n.id===MEETING_NOTE.id),false,'D11 scene must not seed a Notes item');
  s.day=12;s.clock='08:00';tickStory55(s);
  assert.equal(entryFor(s,11).body,MEETING_NOTE.text,'earlier journal entries persist');
