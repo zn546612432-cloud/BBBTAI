@@ -1,4 +1,4 @@
-name: D13 one-line retakes (original phone script)
+name: D13 new mail promise audition only
 on:
   push:
     branches: ['fix/d13-original-phone-voice-preview-20261124']
@@ -15,15 +15,13 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Render two takes of D13 original phone line 16
+      - name: Generate only the new D13 Dr Ouroboros phone sentence
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          MINIMAX_REGION: cn
         run: node scripts/preview-d13-phone-voice.mjs
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: D13-line16-original-script-retakes
-          path: artifacts/d13-line16-retakes/
-          if-no-files-found: warn
+          name: D13-new-mail-line-audition
+          path: artifacts/d13-new-mail-line-audition/
+          if-no-files-found: error
           retention-days: 7
