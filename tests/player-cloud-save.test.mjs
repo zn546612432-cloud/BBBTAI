@@ -213,6 +213,10 @@ test('friends-test cloud backup uses slot 2 while formal and other preview saves
  const backend=server();
  const cases=[
   ['bbbtai.pages.dev','/','',false,true,1],
+  ['bbbtai.pages.dev','/review/friends-test/','',true,true,2],
+  ['bbbtai.pages.dev','/review/friends-test/index.html','',true,true,2],
+  ['bbbtai.pages.dev','/review/friends-test-copy/','',true,false,1],
+  ['bbbtai.pages.dev','/review/55-20261101/','',true,false,1],
   ['zn546612432-cloud.github.io','/BBBTAI/','',false,true,1],
   ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/','',true,true,2],
   ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/index.html','',true,true,2],
