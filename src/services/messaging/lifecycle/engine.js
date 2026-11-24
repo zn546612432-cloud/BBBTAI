@@ -40,7 +40,7 @@ export function createConversationTrack(config){
  };
  const plannedClock=(s,d,i)=>{
   const t=edited(s,d)?.lineTimes?.[i];
-  return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:null;
+  return typeof t==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(t)?t:d.lineClock?.(s,i)||null;
  };
  const lineIsDue=(s,d,i)=>!plannedClock(s,d,i)||conversationMinute(s)>=(d.day-1)*1440+minute(plannedClock(s,d,i));
  const starts=(s,d,q)=>edited(s,d)?.at||value(d.at,s,q)||d.fallback||d.early||'08:00';
@@ -183,7 +183,7 @@ export function createConversationTrack(config){
    const line=lines(s,d,q)[q.index];
    if(!line){finish(s,d,q);changed=true;continue;}
    if(line.who==='me'){q.status='waiting';setDue(q,null);continue;}
-   if(qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
+   if(!lineIsDue(s,d,q.index)||qDue(q)==null||now<qDue(q)||spoken.has(key))continue;
    const last=s.story55.conversationDelivery[key];
    if(Number.isFinite(last)&&now-last<pause(s,d,q))continue;
    const shown=plannedClock(s,d,q.index);
@@ -250,7 +250,7 @@ export function createConversationTrack(config){
   return defs.some(d=>{const q=map[d.id];return !q||(!q.completed&&!q.skipped&&!q.historySettled&&isPast(s,d,q))
    ||!q.completed&&!q.lateHandled&&!q.lateRun&&superseded(s,d,q)
    ||q.lateRun&&!q.lateHandled&&qDue(q)!=null&&now>=qDue(q)
-   ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
+   ||!q.completed&&!q.skipped&&!q.historySettled&&(q.started?lineIsDue(s,d,q.index)&&qDue(q)!=null&&now>=qDue(q):canStart(s,d,q)&&lines(s,d,q)[q.index]?.who!=='me');});
  }
  // Peek at the same authored chat lifecycle used for real NPC delivery and player Send.
  // Never synthesize a reply or mark a scene complete during time jumps.
