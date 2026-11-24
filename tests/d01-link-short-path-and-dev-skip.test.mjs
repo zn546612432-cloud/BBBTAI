@@ -39,18 +39,18 @@ test('D01 LINK succeeds on valid five-cell path; extra tiles are not required',(
  const broken=structuredClone(board);broken.masks[13]=2;
  assert.equal(pipeSolved(broken),false,'connections require reciprocal ports');
 });
-test('five-cell win starts real 3s visible preview and increases progress once',()=>{
+test('five-cell win starts real 2s visible preview and increases progress once',()=>{
  const s=fixture(),o=s.ghost.orders[D01_REPAIR];
  o.board=shortPathBoard();
  assert.equal(startD01PipePreview(s,D01_REPAIR,2000),true);
- assert.equal(o.status,'preview-win');assert.equal(o.previewUntil,5000);
+ assert.equal(o.status,'preview-win');assert.equal(o.previewUntil,4000);
  assert.equal(s.story55.d01.completedRounds,0);
- finish(s,D01_REPAIR,true,4999);
+ finish(s,D01_REPAIR,true,3999);
  assert.equal(s.story55.d01.completedRounds,0);
- finish(s,D01_REPAIR,true,5000);
+ finish(s,D01_REPAIR,true,4000);
  assert.equal(s.story55.d01.completedRounds,1);
  assert.equal(o.status,'success');
- finish(s,D01_REPAIR,true,5001);
+ finish(s,D01_REPAIR,true,4001);
  assert.equal(s.story55.d01.completedRounds,1);
 });
 test('already-connected saved board recovers automatically without another touch',()=>{
@@ -59,13 +59,13 @@ test('already-connected saved board recovers automatically without another touch
  assert.equal(needsWorldTick(s,2000),true);
  advanceGhost(s,2000);
  assert.equal(o.status,'preview-win');
- assert.equal(o.previewUntil,5000);
- advanceGhost(s,4000);
+ assert.equal(o.previewUntil,4000);
+ advanceGhost(s,3999);
  assert.equal(s.story55.d01.completedRounds,0);
- advanceGhost(s,5000);
+ advanceGhost(s,4000);
  assert.equal(s.story55.d01.completedRounds,1);
 });
-test('preview-only skip fills real solved board, waits 3 seconds, then awards one round',()=>{
+test('preview-only skip fills real solved board, waits 2 seconds, then awards one round',()=>{
  const s=fixture(),o=s.ghost.orders[D01_REPAIR];
  assert.equal(ghostDevSkipAvailable(doc(true)),true);
  assert.equal(ghostDevSkipAvailable(doc(false)),false);
@@ -74,14 +74,14 @@ test('preview-only skip fills real solved board, waits 3 seconds, then awards on
  assert.equal(pipeSolved(o.board),true);
  assert.deepEqual(o.board.masks,o.board.solvedMasks);
  assert.equal(o.status,'preview-win');
- assert.equal(o.previewUntil,6000);
+ assert.equal(o.previewUntil,5000);
  assert.equal(o.devSkippedRounds,1);
  assert.equal(previewSkipD01(s,D01_REPAIR,3001),false,'no double skip in preview');
- finish(s,D01_REPAIR,true,5999);
+ finish(s,D01_REPAIR,true,4999);
  assert.equal(s.story55.d01.completedRounds,0);
- finish(s,D01_REPAIR,true,6000);
+ finish(s,D01_REPAIR,true,5000);
  assert.equal(s.story55.d01.completedRounds,1);
- assert.equal(previewSkipD01(s,D01_REPAIR,6001),false);
+ assert.equal(previewSkipD01(s,D01_REPAIR,5001),false);
 });
 test('skip is preview-enabled or explicitly enabled in developer tools, never by default in production',()=>{
  const s=fixture(),o=s.ghost.orders[D01_REPAIR],original=globalThis.document;

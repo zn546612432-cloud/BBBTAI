@@ -105,41 +105,42 @@ export function finish(s,id,success,now=Date.now()){
  if(success&&linkedMission(s,id))createLinkedArtifact(s,id);
  else if(success)advanceLinkedMission(s,id,5);
 }
-// D01's final connected network must remain visible for three full seconds.
+// LINK's final connected network remains visible for two real seconds.
+const LINK_WIN_PREVIEW_MS=2000;
 // The saved absolute deadline survives app switches and page reloads.
 export function startD01PipePreview(s,id,now=Date.now()){
  if(id!==D01_REPAIR)return false;
  const o=s.ghost?.orders?.[id];
  if(!o||o.status!=='running'||o.type!=='route')return false;
  if(!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
- o.status='preview-win';o.previewUntil=now+3000;
+ o.status='preview-win';o.previewUntil=now+LINK_WIN_PREVIEW_MS;
  return true;
 }
 export function startD02PipePreview(s,id,now=Date.now()){
  if(!d02OrderOfStep(id))return false;
  const run=s.ghost?.orders?.[id];
  if(run?.type!=='route'||run.status!=='running'||!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
- run.status='preview-win';run.previewUntil=now+3000;return true;
+ run.status='preview-win';run.previewUntil=now+LINK_WIN_PREVIEW_MS;return true;
 }
-// The D03 LINK level must also keep its solved circuit visible for 3 seconds.
+// D03 uses the same LINK victory delay.
 export function startD03PipePreview(s,id,now=Date.now()){
  if(!d03OrderOfStep(id))return false;
  const o=s.ghost?.orders?.[id];
  if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
- o.status='preview-win';o.previewUntil=now+3000;return true;
+ o.status='preview-win';o.previewUntil=now+LINK_WIN_PREVIEW_MS;return true;
 }
-// D04 LINK also displays the connected circuit for three seconds.
+// Base framework and D04 use the same LINK victory delay.
 export function startBaseFrameworkPipePreview(s,id,now=Date.now()){
  const run=s.ghost?.orders?.[id];
  if(run?.story55Project!=='base'||run.type!=='route'||run.status!=='running')return false;
  if(!(run.board?.size?pipeSolved(run.board):connected(run.board?.masks||[]).has(8)))return false;
- run.status='preview-win';run.previewUntil=now+3000;return true;
+ run.status='preview-win';run.previewUntil=now+LINK_WIN_PREVIEW_MS;return true;
 }
 export function startD04PipePreview(s,id,now=Date.now()){
  if(!d04OrderOfStep(id))return false;
  const o=s.ghost?.orders?.[id];
  if(o?.type!=='route'||o.status!=='running'||!(o.board?.size?pipeSolved(o.board):connected(o.board?.masks||[]).has(8)))return false;
- o.status='preview-win';o.previewUntil=now+3000;return true;
+ o.status='preview-win';o.previewUntil=now+LINK_WIN_PREVIEW_MS;return true;
 }
 export function exitD01Puzzle(s,{discard=false}={}){
  const run=s.ghost?.orders?.[D01_REPAIR];if(!run||run.status!=='running')return false;

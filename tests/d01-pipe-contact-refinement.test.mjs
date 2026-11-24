@@ -33,7 +33,7 @@ test('GHOST network puzzle grows 5×5 to 7×7, two fixed glowing terminals on se
   }
  }
 });
-test('D01 all five rounds use a randomized one-tap 3×3 board and keep the 3s victory preview',()=>{
+test('D01 all five rounds use a randomized one-tap 3×3 board and keep the 2s victory preview',()=>{
  const s=fixture();seedD01(s);acceptD01Repair(s);
  s.story55.d01.deployed=true;s.story55.d01.completedRounds=0;
  authorize(s,{orderId:D01_REPAIR,type:'route',mailId:D01_ATTACHMENT});
@@ -43,7 +43,7 @@ test('D01 all five rounds use a randomized one-tap 3×3 board and keep the 3s vi
  o.board.masks=o.board.solvedMasks.slice();
  assert.equal(startD01PipePreview(s,D01_REPAIR,2000),true);
  assert.equal(o.status,'preview-win');
- assert.equal(o.previewUntil,5000);
+ assert.equal(o.previewUntil,4000);
  const victoryHTML=renderGhost({store:{get:()=>s}},{route:'/run',params:{orderId:D01_REPAIR}});
  assert.match(victoryHTML,/gh-network-complete/);
  assert.match(victoryHTML,/連線已建立/);
@@ -52,13 +52,13 @@ test('D01 all five rounds use a randomized one-tap 3×3 board and keep the 3s vi
  assert.match(victoryHTML,/gh-target-tile/);
  assert.equal((victoryHTML.match(/data-action="gh-pipe"/g)||[]).length,9);
  assert.equal(s.story55.d01.completedRounds,0,'do not count a round immediately');
- finish(s,D01_REPAIR,true,4999);
+ finish(s,D01_REPAIR,true,3999);
  assert.equal(o.status,'preview-win');
  assert.equal(s.story55.d01.completedRounds,0);
- finish(s,D01_REPAIR,true,5000);
+ finish(s,D01_REPAIR,true,4000);
  assert.equal(o.status,'success');
  assert.equal(s.story55.d01.completedRounds,1);
- finish(s,D01_REPAIR,true,5001);
+ finish(s,D01_REPAIR,true,4001);
  assert.equal(s.story55.d01.completedRounds,1);
  o.status='authorized';
  assert.equal(begin(s,D01_REPAIR,6000),true);
