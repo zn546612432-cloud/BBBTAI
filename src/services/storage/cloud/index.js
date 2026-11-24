@@ -220,8 +220,12 @@ export class PlayerCloudSave{
 export async function connectPlayerSave(store,{key,validate,preview=false,location=globalThis.location,...options}={}){
  const previewHost=/^[a-z0-9-]+\.bbbtai\.pages\.dev$/.test(location?.hostname||'');
  const testPreview=previewHost&&new URLSearchParams(location?.search||'').get('saveTest')==='1';
- const enabled=isTaiCloudHost(location?.hostname)&&!preview&&(!previewHost||testPreview);
- const cloud=new PlayerCloudSave(store,{key,validate,enabled,slot:testPreview?2:1,...options});store.cloud=cloud;
+ // The shareable friends test is the only review page with real cloud saves.
+ // Its distinct local save key and slot 2 keep it isolated from production slot 1.
+ const friendsTest=location?.hostname==='zn546612432-cloud.github.io'
+  &&/^\/BBBTAI\/review\/friends-test\/(?:index\.html)?$/.test(location?.pathname||'');
+ const enabled=isTaiCloudHost(location?.hostname)&&(!preview||friendsTest)&&(!previewHost||testPreview);
+ const cloud=new PlayerCloudSave(store,{key,validate,enabled,slot:friendsTest||testPreview?2:1,...options});store.cloud=cloud;
  if(!enabled)return cloud;
  let callback=false;try{callback=takeEmailCallback();}catch(error){cloud.publish({phase:'offline',message:error.message});return cloud;}
  const initial=cloud.start({switchAccount:callback});
