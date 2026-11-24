@@ -209,11 +209,26 @@ test('an unrelated account cannot silently upload existing local history; delete
  const own=memory();own.setItem('phone:cloud-owner','player-a');own.setItem('phone:cloud:player-a:1',JSON.stringify({id:'deleted',revision:3}));
  const b=client(t,backend,phone(33,{storage:own}));await b.start();await b.flush();assert.equal(backend.writes,0);
 });
-test('preview saves are disabled by default; explicit preview QA uses an isolated slot',async t=>{
+test('friends-test cloud backup uses slot 2 while formal and other preview saves keep their existing policy',async t=>{
  const backend=server();
- for(const [hostname,search,preview,enabled,slot] of [['bbbtai.pages.dev','',false,true,1],['abc.bbbtai.pages.dev','',false,false,1],['abc.bbbtai.pages.dev','?saveTest=1',false,true,2],['bbbtai.pages.dev','',true,false,1],['other.pages.dev','',false,false,1]]){
-  const cloud=await connectPlayerSave(phone(),{key:'phone',validate,api:backend.api,factory:null,location:{hostname,search},preview});
-  t.after(()=>cloud.close());assert.equal(cloud.enabled,enabled);assert.equal(cloud.slot,slot);
+ const cases=[
+  ['bbbtai.pages.dev','/','',false,true,1],
+  ['zn546612432-cloud.github.io','/BBBTAI/','',false,true,1],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/','',true,true,2],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/index.html','',true,true,2],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/55-20261101/','',true,false,1],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/tai-vision-20261105/','',true,false,1],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test-copy/','',true,false,1],
+  ['abc.bbbtai.pages.dev','/','',false,false,1],
+  ['abc.bbbtai.pages.dev','/','?saveTest=1',false,true,2],
+  ['bbbtai.pages.dev','/','',true,false,1],
+  ['other.pages.dev','/','',false,false,1],
+ ];
+ for(const [hostname,pathname,search,preview,enabled,slot] of cases){
+  const cloud=await connectPlayerSave(phone(),{key:'phone',validate,api:backend.api,factory:null,location:{hostname,pathname,search},preview});
+  t.after(()=>cloud.close());
+  assert.equal(cloud.enabled,enabled,hostname+pathname);
+  assert.equal(cloud.slot,slot,hostname+pathname);
  }
 });
 test('anonymous cloud identity survives localStorage eviction using the existing IndexedDB journal',async()=>{
