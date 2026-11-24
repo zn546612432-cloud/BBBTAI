@@ -52,6 +52,13 @@ export const saveTaiCloudSession=session=>{
  void checkpointSession(value);
  return value;
 };
+// A verified account must not be overwritten by an older in-flight refresh.
+export async function commitTaiCloudSession(session){
+ if(flight)try{await flight;}catch{}
+ const value=saveTaiCloudSession(session);
+ await sessionCheckpoint;
+ return value;
+}
 const fetchAuth=async(url,body)=>{
  const response=await fetch(TAI_CLOUD_URL+url,{method:'POST',
   headers:{apikey:TAI_PUBLIC_KEY,'Content-Type':'application/json'},
