@@ -79,6 +79,7 @@ test('D05 live group is not blocked by an old D04 queue',()=>{
 });
 test('native preset replies wait for Send, preserve consecutive me lines, and all private threads can finish',()=>{
  const s=fresh('08:00'),st=store(s);let now=Date.now();
+ s.clock='08:05';for(let n=0;n<25;n++,now+=2100)tickD05Chats(s,now);
  for(const scene of D05_PRIVATE){
  s.clock=scene.at;
  for(let n=0;n<70;n++,now+=2100){
@@ -188,4 +189,18 @@ test('D05 fills diary and a once-only editable note, preserving all existing tim
  assert.equal(worldMinuteRate(s),5/60000);s.nav.current={appId:'wechat',route:'/chat/wang'};
  assert.equal(worldMinuteRate(s),5/60000);
  assert.equal(PHONE_CHAT_TRACKS.filter(t=>t.day===5).length,1);
+});
+
+test('D05 breakfast group precedes private opening even if clock reaches 08:15 early',()=>{
+ const s=fresh('08:04');let now=Date.now();
+ tickD05Chats(s,now);assert.equal(d05messages(s,'group').length,0);
+ s.clock='08:05';tickD05Chats(s,now+=2100);tickD05Chats(s,now+=2100);
+ assert.ok(d05messages(s,'group').some(m=>m.text==='誰還沒吃早飯'));
+ assert.equal(d05messages(s,'wang').length,0);
+ s.clock='08:15';tickD05Chats(s,now+=2100);
+ assert.equal(d05messages(s,'wang').length,0);
+ for(let n=0;n<25;n++)tickD05Chats(s,now+=2100);
+ assert.equal(d05messages(s,'group').at(-1).text,'我問問他');
+ assert.equal(d05messages(s,'wang')[0].text,'阿蒙，醒了？');
+ assert.equal(D05_PRIVATE[0].lines.at(-1).text,'😘');
 });
