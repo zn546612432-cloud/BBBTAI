@@ -77,8 +77,11 @@ export async function replyToOuroboros(ctx,contactId,sourceId,{wait=ms=>new Prom
    // bubble or authored scene still cancels the remaining model segments.
    if(inserted>0){
     const now=ctx.store.get(),chat=findContact(now,contactId);
-    if(!chat||!mirageAIEnabled(now)||!anonymousPresence55(now).online||
+    const postgame=d23MiragePostgame(now,contactId);
+    if(!chat||now.day!==initial.day||!isMirageAuthenticated()||
+      mirageAIRevision(now)!==revision||!mirageAIEnabled(now)||!anonymousPresence55(now).online||
       currentScript55(now,'mirage',contactId)||isOuroborosScriptActive(now,contactId)||
+      postgame&&!postgame.closed||
       chat.messages.filter(m=>m.from==='me').at(-1)?.id!==sourceId)break;
    }
    const msgId=uid();
