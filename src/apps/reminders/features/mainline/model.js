@@ -8,6 +8,7 @@ import {d02Track,d02WangReminder} from '../../../../story/d02/wechat.js';
 import {D14_D24_TRACKS} from '../../../../story/d14-d24/wechat.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {D06_ORDER_ID,D06_FLOW_AT} from '../../../../story/d06/commission.js';
+import {d06CelebrationDraft,d06DinnerDraft,getWish} from '../../../../services/wishes/index.js';
 import {STORY55_WALLET_MAIL_ID} from '../../../mirage/data.js';
 import {FLOW_CONTACT,flowState} from '../../../../services/story55/flow-d03.js';
 import {agent,agentFiles,storyFileStage,stageReady} from '../../../ghost/deployment/tear-agent/state.js';
@@ -44,6 +45,16 @@ function proactiveDailyTasks(s){
  }
  const build=d02Track.reminderState(s,'newpc');
  if(build&&(!build.done||s.day===2))add('d02-newpc-chat','告訴大家電腦裝好了',build.conversationId,build.done,build.at);
+ if(s.day===6){
+  const story=s.story55.wishes?.story;
+  const sent=!!story?.started;
+  const delivered=story?.delivered||[];
+  if(d06CelebrationDraft(s,'group')||sent)
+   add('d06-celebration-chat','回群裡發消息','group',sent&&delivered.includes('d06-celebrate-11'));
+  const dinner=getWish(s,'d06-dinner');
+  if(d06DinnerDraft(s,'group')||dinner?.confirmedByXimeng)
+   add('d06-dinner-chat','回群裡確認聚餐','group',!!dinner?.confirmedByXimeng&&delivered.includes('wish-dinner-booking-01'));
+ }
  const monitoring=d20Track?.reminderState(s,'monitoring');
  if(monitoring&&s.day===20)add('d20-monitoring-chat','確認人員安排',monitoring.conversationId,monitoring.done,monitoring.at);
  return out;
@@ -192,7 +203,7 @@ export function mainlineTasks(s){
  items.push(...researchTasks(s));
  const unique=[...new Map(items.map(t=>[t.id,t])).values()];
  const today=new Set(story55Config(s).nodes.filter(n=>n.day===s.day).map(n=>'mainline:'+n.id));
- const rank=t=>t.id==='mainline:daily-mirage'?4:today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')||s.day===2&&t.id==='mainline:d02-wang-chat'?0:
+ const rank=t=>t.id==='mainline:daily-mirage'?4:today.has(t.id)||s.day===1&&t.id.startsWith('mainline:d01-')||s.day===2&&t.id==='mainline:d02-wang-chat'||s.day===6&&['mainline:d06-celebration-chat','mainline:d06-dinner-chat'].includes(t.id)?0:
    t.id.startsWith('mainline:research-')?1:t.id==='mainline:workstation'?2:3;
  return unique.sort((a,b)=>Number(a.done)-Number(b.done)||rank(a)-rank(b)||
   ((a.at||'00:00').localeCompare(b.at||'00:00')));
