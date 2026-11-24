@@ -38,7 +38,7 @@ export function syncD13(s){
   s.story55.d13SilentAvatarRevision=1;
  };
  if(s.story55.d13Revision===3){
-  if(s.story55.d13SilentAvatarRevision!==1)clearVoiceAvatars();
+  clearVoiceAvatars();
   return;
  }
  // Previously authored spoken turns become avatar-only call records.
