@@ -124,6 +124,7 @@ test('spoiler gate respects recognition and only targets the anonymous MIRAGE co
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我哥今晚回來'),false);
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','我是你哥'),true);
  assert.equal(blocksAnonymousMirageInput(s,'other-contact','我是你哥'),false);
+ assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','西太平洋'),false,'ordinary geography is not the Xi Tai name');
  s.story55.completed.recognition={day:30,clock:'20:00'};
  assert.equal(blocksAnonymousMirageInput(s,'s55-ouroboros','熙泰，我是你哥'),false);
 });
@@ -383,4 +384,29 @@ test('pre-recognition nickname and Xi Tai homophones never submit or request AI'
    assert.deepEqual({messages:chat(s).messages,events:s.events,notifications:s.notifications},originalState);
   }
  }finally{globalThis.FormData=original;globalThis.fetch=oldFetch;setMirageAuthenticated(false);}
+});
+
+test('identity guessing stays silent even while a fixed GHOST-share player line is waiting',()=>{
+ const s=fixture(16,'08:20');
+ const result=shareGhostToTai(s,{projectId:'identity'},{random:()=>0,now:10000});
+ assert.equal(result.script,'first');
+ deliverNpc(s);
+ s.story55.completed.photo={day:30,clock:'20:00'};
+ const expected=scriptedDraft55(s,'mirage','s55-ouroboros');
+ assert.equal(expected?.kind,'me');
+ const oldFormData=globalThis.FormData,oldFetch=globalThis.fetch;
+ s.drafts={'s55-ouroboros':'希泰'};
+ const input={value:'希泰'};
+ const saved=structuredClone({messages:chat(s).messages,events:s.events,notifications:s.notifications,index:s.story55.ghostShare.index});
+ setMirageAuthenticated(true);
+ globalThis.FormData=class{get(name){return name==='text'?'希泰':'';}};
+ globalThis.fetch=()=>assert.fail('an identity guess cannot invoke AI');
+ try{
+  submitMirage({dataset:{form:'mc-send',id:'s55-ouroboros'},elements:{text:input}},
+   {store:store(s),toast:()=>assert.fail('identity guess must be silent, even during preset')},s.nav.current);
+  assert.equal(input.value,'');
+  assert.equal(s.drafts['s55-ouroboros'],undefined);
+  assert.deepEqual({messages:chat(s).messages,events:s.events,notifications:s.notifications,index:s.story55.ghostShare.index},saved);
+  assert.equal(scriptedDraft55(s,'mirage','s55-ouroboros')?.text,expected.text,'the real preset is still pending');
+ }finally{globalThis.FormData=oldFormData;globalThis.fetch=oldFetch;setMirageAuthenticated(false);}
 });
