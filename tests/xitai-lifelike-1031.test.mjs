@@ -70,7 +70,7 @@ test('Relationship scene includes canon and only genuine older NoApp statements'
  const context=xitaiRelationshipContext(s,{mode:'text'});
  assert.match(context,/熙蒙/);
  assert.match(context,/不是陌生人/);
- assert.match(context,/D57 熙蒙：我喜欢圣诞惊魂夜/);
+ assert.match(context,/D57 19:00（5 天前） 熙蒙：我喜欢圣诞惊魂夜/);
  assert.match(context,/不要以陌生人口吻/);
  assert.doesNotMatch(context,/私人微信中的密码/);
 });
@@ -90,8 +90,8 @@ test('Call silence gently nudges once and closes only after prolonged silence',(
  assert.equal(nextCallIdleEvent(call,19999),'');
  assert.equal(nextCallIdleEvent(call,20000),'nudge');
  call.nudgeCount=1;call.lastTaiEndAt=55000;
- assert.equal(nextCallIdleEvent(call,177000),'');
- assert.equal(nextCallIdleEvent(call,180000),'closing');
+ assert.equal(nextCallIdleEvent(call,104999),'');
+ assert.equal(nextCallIdleEvent(call,105000),'closing');
  call.nudgeCount=2;assert.equal(nextCallIdleEvent(call,190000),'');
  call.state='ended';assert.equal(nextCallIdleEvent(call,200000),'');
 });

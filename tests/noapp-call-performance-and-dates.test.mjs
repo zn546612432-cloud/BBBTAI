@@ -76,7 +76,7 @@ test('previous-day phone recollection is sourced by the real call date',()=>{
  const current={day:45,clock:'08:22'};
  assert.equal(shouldRecallTaiCall(record,current,'昨天電話裡你說可以幫忙'),true);
  assert.equal(shouldRecallTaiCall(record,current,'昨天那個安排還算數嗎？'),true);
- assert.match(callBridgeNote(record,current),/D44 22:40 發生的一通真實語音電話/);
+ assert.match(callBridgeNote(record,current),/D44 22:40 [發发]生的一通真[實实]語音電話|D44 22:40 发生的一通真实语音电话/);
  assert.doesNotMatch(callBridgeNote(record,current),/剛剛結束的一通/);
  assert.equal(shouldRecallTaiCall(record,current,'今天天氣不錯'),false);
 });
