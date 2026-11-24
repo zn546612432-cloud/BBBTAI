@@ -43,21 +43,17 @@ export function applyD13Definition(c){
  c.voiceAssets??={};c.voiceAssets.intrusion??={};
  if(replace){
   delete c.voiceAssets.intrusion[7];delete c.voiceAssets.intrusion[9];
-  const prior=c.voiceAssets.intrusion[20];
-  // Original call-20.mp3 remains identical; its spoken turn moves to index 19.
-  // In 21-line saves index 20 held the original farewell instead.
-  if(!reversed)c.voiceAssets.intrusion[21]??=prior&&prior!=='/assets/story55/d13/call-20.mp3'
-   ?prior:'/assets/story55/d13/call-21.mp3';
-  c.voiceAssets.intrusion[19]??=reversed&&prior?prior:'/assets/story55/d13/call-20.mp3';
-  delete c.voiceAssets.intrusion[20]; // Status message is silent.
   for(const key of ['voiceSettings','voiceClipIds']){
-   const values=c[key]?.intrusion;
-   if(values&&Object.hasOwn(values,20)){
-    const target=reversed?19:21;
-    values[target]??=values[20];
-    delete values[20];
-   }
+   const values=c[key]?.intrusion;if(values)delete values[20];
   }
  }
  for(const i of D13_VOICE_INDICES)c.voiceAssets.intrusion[i]??=`/assets/story55/d13/call-${i===19?20:i}.mp3`;
+ if(JSON.stringify(c.scenes.intrusion)===JSON.stringify(D13_LINES)){
+  // Distinct recordings for the promise and the farewell; no old clip aliases.
+  c.voiceAssets.intrusion[19]='/assets/story55/d13/call-20.mp3';
+  c.voiceAssets.intrusion[21]='/assets/story55/d13/call-21.mp3';
+  delete c.voiceAssets.intrusion[20];
+  const clips=c.voiceClipIds?.intrusion;
+  if(clips){delete clips[19];delete clips[20];delete clips[21];}
+ }
 }

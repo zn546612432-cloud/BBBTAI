@@ -28,6 +28,14 @@ export function syncD13(s){
   }
   s.story55.d13TrackingOrderRevision=1;
  }
+ // No empty avatar rows for spoken phone lines, including older saved chats.
+ if(s.story55.d13SilentAvatarRevision!==1){
+  const thread=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');
+  const spoken=/^s55-intrusion-v2-(8|10|12|14|16|18|19|21)$/;
+  if(thread?.messages)thread.messages=thread.messages.filter(m=>
+   !(spoken.test(m.id||'')&&m.from!=='me'&&(m.kind==='call-avatar'||m.text==='')));
+  s.story55.d13SilentAvatarRevision=1;
+ }
  if(s.story55.d13Revision===3)return;
  // Previously authored spoken turns become avatar-only call records.
  const chat=s.content?.conversations?.mirage?.find(c=>c.id==='s55-ouroboros');

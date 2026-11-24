@@ -98,6 +98,11 @@ function correctD10Pickup(s){
 export function syncD10D13Content(s){
  if(s.story55?.version!==1)return false;
  let changed=false;
+ // Purge exactly the three rejected D10 message IDs from saved group history.
+ const retired=new Set(['d10-shopping-list-4','d10-shopping-list-5','d10-heat-0']);
+ const group=s.content?.conversations?.wechat?.find(x=>x.id==='group');
+ if(group?.messages?.some(m=>retired.has(m.id))){group.messages=group.messages.filter(m=>!retired.has(m.id));changed=true;}
+ if(s.notifications?.some(n=>retired.has(n.messageId))){s.notifications=s.notifications.filter(n=>!retired.has(n.messageId));changed=true;}
  // Keep D11 family reunion and D12 arrival independent of D06 and reply gates.
  for(const [id,old] of [['return','invitation'],['move','return']]){
   const node=s.story55.config?.nodes?.find(n=>n.id===id);

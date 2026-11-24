@@ -66,6 +66,7 @@ export function createConversationTrack(config){
   return map;
  }
  function sendLine(s,d,q,i,line,{history=false,branch=null,at=null}={}){
+  if(line.suppressed)return false;
   const id=branch?config.prefix+'-'+d.id+'-late-'+branch+'-'+i:messageId(s,d,i);
   let when=at||{day:history?d.day:s.day,clock:history?(plannedClock(s,d,i)||d.historyClock?.(i,s,q)||starts(s,d,q)):s.clock};
   // Reconciled replies cannot precede a player message that was really sent.
