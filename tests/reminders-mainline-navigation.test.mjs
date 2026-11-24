@@ -191,3 +191,30 @@ test('old unlinked operation reminders are removed on D41 and later days without
   assert.equal(s.content.reminders.some(r=>r.id==='s55-d41-operation-reminder'),false);
  }
 });
+
+test('D02 Wang reminder follows the authored start, opens WeChat and completes only with the scene',()=>{
+ const s=at(2,'12:15');seedD02(s);
+ assert.equal(find(s,'d02-wang-chat'),undefined);
+ s.clock='12:16';
+ const item=find(s,'d02-wang-chat');
+ assert.equal(item.title,'給熙旺發消息');
+ assert.deepEqual(item.link,{appId:'wechat',route:'/chat/wang',params:{}});
+ const opened=[],store={get:()=>s,update:fn=>fn(s)};
+ assert.equal(openReminderTask(item.id,{store,router:{open:link=>opened.push(link)}}),true);
+ assert.deepEqual(opened,[item.link]);
+ const q=s.story55.d02.wechat.wang;
+ q.started=true;q.index=1;
+ assert.equal(find(s,'d02-wang-chat').done,false);
+ q.completed=true;
+ assert.equal(find(s,'d02-wang-chat').done,true);
+ s.day=3;assert.equal(find(s,'d02-wang-chat'),undefined);
+});
+test('D02 Wang reminder follows early settlement and author-edited opening time',()=>{
+ const s=at(2,'09:30');seedD02(s);
+ assert.equal(find(s,'d02-wang-chat'),undefined);
+ s.story55.d02.wechat.earlyAt=2*1440+570;
+ assert.equal(find(s,'d02-wang-chat').done,false);
+ s.story55.chatSceneEdits={'d02:wang':{at:'10:00'}};
+ assert.equal(find(s,'d02-wang-chat'),undefined);
+ s.clock='10:00';assert.ok(find(s,'d02-wang-chat'));
+});
