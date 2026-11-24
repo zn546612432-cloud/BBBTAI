@@ -13,6 +13,8 @@ import {acceptD04Contract,D04_MAIL,D04_STEP,submitD04Contract} from '../src/stor
 import {D06_ORDER_ID,D06_CONTRACT} from '../src/story/d06/commission.js';
 import {openCommissionWithGhost} from '../src/services/commissions/attachment-flow.js';
 import {begin,finish} from '../src/apps/ghost/state.js';
+import {sendD06Celebration,tickWishes} from '../src/services/wishes/index.js';
+import {d06CelebrationHold} from '../src/services/story55/state.js';
 import {currentScript55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {bindD13Wallet,transferD13Wallet,enterD13Chat} from '../src/story/d13/runtime.js';
 
@@ -124,6 +126,15 @@ test('D01 → D14 follows actual charge / KIRA / MIRAGE / GHOST / message intera
  tickStory55(s);
  completeQueued(s,'invitation','mirage','s55-ouroboros');
  assert.equal(s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.filter(m=>m.from==='me').length,6);
+ // Wallet payout is the mandatory D06 checkpoint; the actual player Send
+ // and all eleven NPC bubbles must finish before charging into D07.
+ assert.equal(d06CelebrationHold(s),true);
+ assert.equal(advanceGameMinutes(s,10).minutes,0);
+ assert.equal(sendD06Celebration(store(s),'group','兄弟们！我真的拿到 10 BTC 了！',5000).handled,true);
+ assert.equal(d06CelebrationHold(s),true,'sending alone does not unlock the clock');
+ for(let i=0;i<11;i++)tickWishes(s,7000+i*2500);
+ assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-11'));
+ assert.equal(d06CelebrationHold(s),false);
  nextDay(s,7);
  nextDay(s,8);
  nextDay(s,9);

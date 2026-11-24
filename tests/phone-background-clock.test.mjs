@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState,PhoneStore,KEY} from '../src/services/storage.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
-import {story55Config} from '../src/services/story55/state.js';
+import {story55Config,timedStoryPaused,d06CelebrationHold,d06WalletSettled,story55ChargeGate,story55ShortChargeGate} from '../src/services/story55/state.js';
+import {settleStory55Wallet} from '../src/services/story55/projects.js';
+import {beginD06Celebration,tickWishes} from '../src/services/wishes/index.js';
 import {settlePhoneBackground,backgroundStoryBlocked} from '../src/system/runtime/controller.js';
-import {tickWorld,setStory55MinutesPerSecond} from '../src/system/time/clock.js';
+import {tickWorld,setStory55MinutesPerSecond,setSleeping,advanceGameMinutes} from '../src/system/time/clock.js';
 import {beginShortCharge} from '../src/system/power/battery.js';
 import {deliverMissedScheduled} from '../src/story/presets/engine.js';
 import {MessageDelivery} from '../src/services/messaging/delivery.js';
@@ -108,4 +110,63 @@ test('invalid intervals and finale states never fast-forward',()=>{
  for(const configure of [s=>s.story55.secondView=true,s=>s.story55.finalTransition={phase:'accelerating'},s=>{s.day=55;s.story55.scenes.ending={index:5};}]){
   const s=start();configure(s);assert.equal(resume(s,60000).minutes,0);
  }
+});
+
+test('D06 victory pauses at the real 10 BTC credit, never at GHOST completion alone',()=>{
+ const s=start(6,'15:16');
+ assert.equal(d06CelebrationHold(s),false);
+ s.story55.completed.wallet={day:6,clock:'15:16'};
+ assert.equal(d06WalletSettled(s),false);
+ assert.equal(d06CelebrationHold(s),false,'GHOST completion without payout is not the trigger');
+ assert.equal(timedStoryPaused(s),false);
+ assert.equal(settleStory55Wallet(s),true);
+ assert.equal(settleStory55Wallet(s),false,'the existing ledger prevents duplicate 10 BTC rewards');
+ assert.equal(s.content.mirage.transactions.filter(t=>t.id==='s55-wallet-10btc').length,1);
+ assert.equal(d06WalletSettled(s),true);
+ assert.equal(d06CelebrationHold(s),true);
+ assert.equal(timedStoryPaused(s),true);
+ assert.equal(story55ChargeGate(s),'plot');
+ assert.equal(story55ShortChargeGate(s),'plot');
+ assert.equal(backgroundStoryBlocked(s),true);
+ assert.equal(tickWorld(s,60000).minutes,0);
+ assert.equal(resume(s,60000).minutes,0);
+ assert.equal(advanceGameMinutes(s,90).minutes,0);
+ assert.equal(s.clock,'15:16');
+ s.powerMode='charging';
+ assert.equal(setSleeping(s),false,'sleep must not lock the player out of the frozen chat');
+ s.powerMode='idle';
+});
+test('D06 freeze stays through the player send and ends only after all eleven real group bubbles',()=>{
+ const s=start(6,'15:16');
+ s.story55.completed.wallet={day:6,clock:'15:16'};
+ assert.equal(settleStory55Wallet(s),true);
+ assert.equal(beginD06Celebration(s,1000),true);
+ assert.equal(d06CelebrationHold(s),true);
+ assert.equal(s.content.conversations.wechat.find(c=>c.id==='group').messages.filter(m=>m.id==='d06-celebration-player').length,1);
+ for(let i=0;i<10;i++){
+  const st=s.story55.wishes.story;
+  st.nextAt=0;
+  tickWishes(s,4000+i*2500);
+  assert.equal(d06CelebrationHold(s),true,'do not resume before the final group reply');
+  assert.equal(tickWorld(s,12000).minutes,0);
+ }
+ s.story55.wishes.story.nextAt=0;
+ tickWishes(s,30000);
+ assert.ok(s.story55.wishes.story.delivered.includes('d06-celebrate-11'));
+ assert.equal(d06CelebrationHold(s),false);
+ assert.equal(timedStoryPaused(s),false);
+ assert.equal(d06WalletSettled(s),true,'resuming the clock must not undo the payout');
+ const prev=s.clock;
+ assert.ok(tickWorld(s,12000,{focused:true}).minutes>0);
+ assert.notEqual(s.clock,prev);
+ const restored=structuredClone(s);
+ assert.equal(d06CelebrationHold(restored),false,'reload does not replay a finished celebration');
+ assert.equal(beginD06Celebration(restored,50000),false,'the fixed scene cannot send twice');
+});
+test('D06 checkpoint never retroactively freezes legacy D07 saves',()=>{
+ const s=start(7,'09:00');
+ s.story55.completed.wallet={day:6,clock:'15:16'};
+ assert.equal(settleStory55Wallet(s),true);
+ assert.equal(d06WalletSettled(s),true);
+ assert.equal(d06CelebrationHold(s),false);
 });
