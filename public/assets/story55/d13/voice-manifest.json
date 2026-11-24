@@ -7,43 +7,57 @@
       "index": 8,
       "path": "/assets/story55/d13/call-8.mp3",
       "textHash": "a6357e33ae8e7c8116c1a3f482d3f351aa7bd3c266fa423bc5c77628f116057b",
-      "size": 100212
+      "audioSha256": "fcfed2d9358d92ff9045fe9e6de1e75b877cdd772eca0c0c94858df0a5901a3c",
+      "size": 108852
     },
     {
       "index": 10,
       "path": "/assets/story55/d13/call-10.mp3",
       "textHash": "366466d7e36e9c1fccfaf5227b1e78b681b2922d7d79ac65c9e356a9a60506fd",
-      "size": 84084
+      "audioSha256": "50e60a9e7acb15de3e4c22a7cf3878d70a5b274c4147a310146b659390c53925",
+      "size": 84660
     },
     {
       "index": 12,
       "path": "/assets/story55/d13/call-12.mp3",
       "textHash": "fa37d0116093ce826ddd44d68b64053463832afb9a8c47de6ab580d45ae0521b",
-      "size": 100788
+      "audioSha256": "785ac3462a4e92cb12c9a0ca5bc5b3ad6a78c6c813ce42c5a7f900bdd3b79df4",
+      "size": 88116
     },
     {
       "index": 14,
       "path": "/assets/story55/d13/call-14.mp3",
       "textHash": "7a0d09b176b23dfa97259853da574e641b3861c09e4e7acc388dac9cdf75fa4c",
+      "audioSha256": "49fa9017c66a21b7c5f62ee29dd4aac121ddcc92f00a7bace8ca1e23000f7deb",
       "size": 48948
     },
     {
       "index": 16,
       "path": "/assets/story55/d13/call-16.mp3",
       "textHash": "334584d81862ad59a33d6d1839903985dc1b2073e4d3bb8e0e192c19d6fa64a1",
+      "audioSha256": "93fc5e533e06375668a1ef25a3ac1c5ac38ac99ebef0a2ca918b9dd1795030b7",
       "size": 115188
     },
     {
       "index": 18,
       "path": "/assets/story55/d13/call-18.mp3",
       "textHash": "5a15ead645749a823172d28b81876f0469b7a8c8f4cffab10a6248a9391f5622",
+      "audioSha256": "615ff6f90d6dc603cb34d5a8fe1f14ab634d5b580aae7e1ddc35d4f324cfd5a8",
       "size": 63924
     },
     {
       "index": 20,
       "path": "/assets/story55/d13/call-20.mp3",
+      "textHash": "b8daf61e2f48dc8bb1866366cff2571908026de4744b934f98cd82b78286ae36",
+      "audioSha256": "4f7f46904a6782c67a85ce796577a2e10e08ac495c5af8d99a835e9621ebc630",
+      "size": 70836
+    },
+    {
+      "index": 21,
+      "path": "/assets/story55/d13/call-21.mp3",
       "textHash": "20e8bd027044110d393a5cf0aada40aa9b720d326dc263f4072c1d3c8e4cb5b1",
-      "size": 159540
+      "audioSha256": "5a95d5755b067ff17fe69cd3e64da3c9e5bf584898428753cc87dcf93041eca4",
+      "size": 145716
     }
   ]
 }
