@@ -32,6 +32,7 @@ function migrateNPC(s){
  const wang=s.content.conversations.wechat?.find(x=>x.id==='wang');
  if(group){
   for(const scene of D10_GROUP)for(let i=0;i<scene.lines.length;i++){
+   if(scene.lines[i].suppressed)continue; // Rejected lines were already removed from saved messages.
    const m=group.messages.find(x=>x.id==='d10-'+scene.id+'-'+i);
    if(!m||m.from==='me'||m.from==='熙蒙'||m.text!==OLD_D10[scene.id]?.[i])continue;
    replaceNPCText(s,m,scene.lines[i].text,scene.lines[i].who,'group');changed=true;
