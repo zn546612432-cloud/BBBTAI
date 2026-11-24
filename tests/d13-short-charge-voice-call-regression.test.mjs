@@ -310,7 +310,8 @@ test('saved D13 22-line call reorders only two authored turns and migrates appro
  tickStory55(s);assert.equal(s.story55.config.voiceClipIds.intrusion[19],'approved-recording');
 });
 test('previously delivered D13 system/voice messages reorder without touching players or duplicating statuses',()=>{
- const s=day13('22:26'),chat=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ const s=day13('22:26'),chat={id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};
+ s.content.conversations.mirage.push(chat);
  const correct=structuredClone(sceneLines(s,'intrusion'));
  s.story55.config.scenes.intrusion=[...correct.slice(0,19),correct[20],correct[19],correct[21]];
  s.story55.d13TrackingOrderRevision=undefined;
@@ -325,7 +326,8 @@ test('previously delivered D13 system/voice messages reorder without touching pl
  assert.equal(chat.messages.at(-1).text,'還在嗎');
  const snapshot=structuredClone(chat.messages);
  tickStory55(s);assert.deepEqual(chat.messages,snapshot);
- const partial=day13('22:26'),c=partial.content.conversations.mirage.find(x=>x.id==='s55-ouroboros');
+ const partial=day13('22:26'),c={id:'s55-ouroboros',name:'Dr Ouroboros',messages:[],unread:0};
+ partial.content.conversations.mirage.push(c);
  partial.story55.d13TrackingOrderRevision=undefined;
  partial.story55.scenes.intrusion={index:20,accepted:true};
  c.messages.push({id:'s55-intrusion-v2-19',from:'system',kind:'terminal-status',text:'（追蹤失敗！錯誤代碼：ERR-4037）'});
