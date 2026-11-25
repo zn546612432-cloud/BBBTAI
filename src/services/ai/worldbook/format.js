@@ -1,6 +1,7 @@
 // SillyTavern World Info interoperability. Original BBBTAI implementation.
 import {TAI_WORLDBOOK} from './entries.js';
 import {XITAI_SITUATIONAL_LORE} from './xitai.js';
+import {TAI_COMPUTER_WORLDBOOK} from './interests/computer.js';
 
 export const WORLD_INFO_VERSION=2;
 export const POSITIONS=['before','after','an-top','an-bottom','depth','example-before','example-after','outlet'];
@@ -37,7 +38,14 @@ export function normalizeSettings(s={}){
  const r=obj(s);return {...DEFAULT_WORLD_SETTINGS,...r,scanDepth:num(r.scanDepth,4,0,100),budgetTokens:num(r.budgetTokens,1800,128,10000),budgetPercent:num(r.budgetPercent,15,1,100),contextTokens:num(r.contextTokens,32000,1024,128000),maxRecursion:num(r.maxRecursion,4,0,16),minActivations:num(r.minActivations,0,0,100),maxScanDepth:num(r.maxScanDepth,24,0,100),vectorMax:num(r.vectorMax,5,0,30),vectorThreshold:Math.max(0,Math.min(1,r.vectorThreshold!==''&&r.vectorThreshold!=null&&Number.isFinite(Number(r.vectorThreshold))?Number(r.vectorThreshold):0.65))};
 }
 
-export function defaultWorldbook(){return {version:WORLD_INFO_VERSION,settings:{...DEFAULT_WORLD_SETTINGS},books:[{id:'xitai',name:'陳熙泰 · 專屬世界書',enabled:true,scope:'character',entries:[...TAI_WORLDBOOK.map(e=>normalizeEntry({...e,comment:e.comment||e.id,protected:!!e.constant,scanDepth:e.key?e.sticky||1:null,sticky:e.key?0:e.sticky},e.id,'xitai')),...XITAI_SITUATIONAL_LORE.map(e=>normalizeEntry(e.id==='xi-relationship-boundary'?{...e,recognized:true,channels:['noapp','chess']}:e,e.id,'xitai'))]}],runtime:{}};}
+// Keep each interest in its own character World Info book. Players may disable
+// it in the existing worldbook editor; old saves gain it without resetting any
+// previously authored entries, custom settings or active runtime snapshots.
+const computerInterestBook=()=>({
+ id:'tai-computer',name:'熙泰 · 計算機興趣語料庫',enabled:true,scope:'character',
+ entries:TAI_COMPUTER_WORLDBOOK.map(e=>normalizeEntry(e,e.id,'tai-computer'))
+});
+export function defaultWorldbook(){return {version:WORLD_INFO_VERSION,settings:{...DEFAULT_WORLD_SETTINGS},books:[{id:'xitai',name:'陳熙泰 · 專屬世界書',enabled:true,scope:'character',entries:[...TAI_WORLDBOOK.map(e=>normalizeEntry({...e,comment:e.comment||e.id,protected:!!e.constant,scanDepth:e.key?e.sticky||1:null,sticky:e.key?0:e.sticky},e.id,'xitai')),...XITAI_SITUATIONAL_LORE.map(e=>normalizeEntry(e.id==='xi-relationship-boundary'?{...e,recognized:true,channels:['noapp','chess']}:e,e.id,'xitai'))]},computerInterestBook()],runtime:{}};}
 
 // Retire the shipped older tone guidance, without replacing custom entries or settings.
 const retiredToneFragments={
@@ -63,7 +71,7 @@ function migrateTone(world){
 }
 export function readWorldbook(s){const w=s?.aiDraft?.worldbook;if(w?.version!==WORLD_INFO_VERSION||!Array.isArray(w.books))return defaultWorldbook();
  const migrated=migrateTone(w),entries=defaultWorldbook().books[0].entries.filter(e=>['incoming-message-batch','private-social-energy'].includes(e.id));
- return {...migrated,books:migrated.books.map(b=>b.id==='xitai'?{...b,entries:[...b.entries,...entries.filter(entry=>!b.entries.some(e=>e.id===entry.id))]}:b)};
+ return {...migrated,books:[...migrated.books.map(b=>b.id==='xitai'?{...b,entries:[...b.entries,...entries.filter(entry=>!b.entries.some(e=>e.id===entry.id))]}:b),...(!migrated.books.some(b=>b.id==='tai-computer')?[computerInterestBook()]:[])]};
 }
 export function ensureWorldbook(s){s.aiDraft??={};s.aiDraft.worldbook=readWorldbook(s);return s.aiDraft.worldbook;}
 
