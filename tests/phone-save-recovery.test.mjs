@@ -255,8 +255,14 @@ test('latest primary wins even when the player restores the previous state durin
  assert.equal((await journal.read()).raw,'original');journal.close();
 });
 
+async function cleanD01Checkpoint(store){
+ // Node legacy fixtures start at D56; browser games begin at D01.
+ store.update(s=>{s.day=1;s.clock='08:00';});
+ await store.journal.reset(JSON.stringify(store.get()));
+}
+
 test('saved D01 activity survives an accidental blank D01 at the same clock',async()=>{
- const {storage,idb,store}=await setup();
+ const {storage,idb,store}=await setup();await cleanD01Checkpoint(store);
  store.update(s=>{s.day=1;s.clock='08:00';s.content.notes.push({id:'d01-draft',title:'計畫',text:'我已經寫好了'});});
  await store.journal.flush();store.journal.close();
  const blank={...initialState(),day:1,clock:'08:00'};
@@ -269,7 +275,7 @@ test('saved D01 activity survives an accidental blank D01 at the same clock',asy
 });
 
 test('three accidental D01 journal writes cannot evict a real later checkpoint',async()=>{
- const {storage,idb,store}=await setup();changeProgress(store);
+ const {storage,idb,store}=await setup();await cleanD01Checkpoint(store);changeProgress(store);
  await store.journal.flush();
  const real=JSON.stringify(store.get());
  for(let i=1;i<=3;i++){
@@ -300,7 +306,7 @@ test('a stale browser tab cannot overwrite a more recent saved game',async()=>{
 });
 
 test('confirmed 0000 clears even the protected advanced checkpoint',async()=>{
- const {storage,idb,store}=await setup();changeProgress(store);
+ const {storage,idb,store}=await setup();await cleanD01Checkpoint(store);changeProgress(store);
  await store.journal.flush();
  store.journal.schedule(JSON.stringify({...initialState(),day:1,clock:'08:00'}));
  await store.journal.flush();
