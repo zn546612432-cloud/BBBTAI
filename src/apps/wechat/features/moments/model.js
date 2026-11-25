@@ -25,6 +25,16 @@ export function allMoments(s){
     return {...post,text:post.text==='和阿蒙出來吃飯。終於肯離開工房了。'?p.text:post.text,
      comments:(post.comments||[]).map(c=>c.by==='小辛'&&c.text==='哥你說的是菜還是你自己？'?{...c,text:'好啊你們，偷偷吃好的'}:c)};
    }
+   if(post.id==='xw-d23'&&post!==p){
+    // Old editor saves may preserve the retired authored caption/comments.
+    // Migrate only exact legacy defaults and keep player-added replies,
+    // custom captions, media, time, reactions and independently edited text.
+    const comments=post.comments||[];
+    const legacy=comments[0]?.by==='熙蒙'&&comments[0]?.text==='你不是说只喝杯茶？'&&!comments[0]?.to
+     &&comments[1]?.by==='阿威'&&comments[1]?.text==='风景真好'&&!comments[1]?.to;
+    return {...post,text:post.text==='窗边这个位置，能坐一下午。'?p.text:post.text,
+     comments:legacy?[...p.comments,...comments.slice(2)]:post.comments};
+   }
    if(post.id==='zz-d15'&&post!==p){
     // An older saved editor snapshot can retain the retired default comments.
     // Replace that exact authored prefix only; preserve player-added comments
