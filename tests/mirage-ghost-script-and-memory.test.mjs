@@ -100,7 +100,7 @@ test('native message delivery runs before independent story heartbeat jobs',()=>
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.ok(main.indexOf('try{delivery.tick(')>=0);
  assert.ok(main.indexOf('try{delivery.tick(')<main.indexOf('try{presets.tick('));
- assert.equal(main.match(/delivery\\.tick\\(/g)?.length,1);
+ assert.equal(main.match(/delivery\.tick\(/g)?.length,1);
 });
 
 test('shared-work worldbook ignores unsent, forged and future-dated cards',()=>{
