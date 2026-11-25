@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
 import {scriptedDraft55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
@@ -34,10 +35,11 @@ test('D19 after 那正好 delivers its authored response even when the delivery 
   send('忙嗎？',10000);
   const coffee=c.messages.find(m=>m.text==='在喝咖啡。');
   assert.equal(coffee?.schedule?.queuedAt,10000);
+  // Old saves have no anchored timestamp; the original in-chat wait still works.
+  delete coffee.schedule.queuedAt;
   let delivery=new MessageDelivery(store(s));
   delivery.tick(10000,true);
   assert.equal(coffee.delivery,undefined);
-  delivery=new MessageDelivery(store(s)); // Safari re-created the timer
   delivery.tick(14500,true);
   assert.ok(coffee.delivery);
   send('那正好。',20000);
@@ -92,6 +94,13 @@ test('NoApp recalls an earlier genuinely shared work card only after recognition
  assert.equal(projectTaiSharedWorkKnowledge(s,{channel:'noapp',query:'今天想吃什麼'}).length,0);
  assert.ok(projectTaiPlotGlossary(s,{channel:'noapp',recognized:true,messages:[{role:'user',content:'之前分享的GHOST呢？'}]})
   .some(x=>x.content.includes('45%')));
+});
+
+test('native message delivery runs before independent story heartbeat jobs',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.ok(main.indexOf('try{delivery.tick(')>=0);
+ assert.ok(main.indexOf('try{delivery.tick(')<main.indexOf('try{presets.tick('));
+ assert.equal(main.match(/delivery\\.tick\\(/g)?.length,1);
 });
 
 test('shared-work worldbook ignores unsent, forged and future-dated cards',()=>{
