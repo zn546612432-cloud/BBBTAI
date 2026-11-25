@@ -161,7 +161,8 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
 test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
  assert.equal(authoredMoments.length,38);
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
+ // D23 Xiwang has five user-approved threaded replies; all other limits remain unchanged.
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d23'?p.comments.length===5: ['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
