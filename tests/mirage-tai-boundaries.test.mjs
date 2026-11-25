@@ -47,6 +47,8 @@ test('MIRAGE shares the existing R0 relationship verdict and the revised anonymi
 
 test('an ignored player source is persisted and never retried on chat reopen',async()=>{
  const s=activateStory55(initialState());s.day=16;s.clock='22:45';s.story55.activeScene=null;
+ // Isolate the free-chat path from unfinished authored day-one scenes in the fixture.
+ s.story55.config.nodes=[];
  const contactId='s55-ouroboros',sourceId='forced-address-test-source';
  const chat=s.content.conversations.mirage.find(c=>c.id===contactId)||
   (()=>{const c={id:contactId,name:'Dr Ouroboros',messages:[]};s.content.conversations.mirage.push(c);return c;})();
