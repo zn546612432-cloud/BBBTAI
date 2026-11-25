@@ -22,10 +22,19 @@ export function syncOuroborosDossier(s,windows){
  const hours=ouroborosDossierHours(windows);
  if(existing){
   if(!ledger.includes(OUROBOROS_DOSSIER_ID))ledger.push(OUROBOROS_DOSSIER_ID);
-  if(String(existing.text||'').includes(OUROBOROS_DOSSIER_HEADING))return false;
-  // The player's existing dossier survives untouched except for this appended
-  // requested observation. Never erase research, player edits or other notes.
-  existing.text=[String(existing.text||'').trim(),hours].filter(Boolean).join('\n\n');
+  // Remove the two game-like day markers even from previously saved notes.
+  // Leave all other observations and player edits unchanged.
+  const previousText=String(existing.text||'');
+  const cleanedText=previousText.split('\n').filter(line=>![
+   'D13 曾入侵手機。反追蹤失敗。',
+   'D14 收到他寄來的框架。'
+  ].includes(line.trim())).join('\n');
+  if(cleanedText.includes(OUROBOROS_DOSSIER_HEADING)){
+   if(cleanedText===previousText)return false;
+   existing.text=cleanedText;
+   return true;
+  }
+  existing.text=[cleanedText.trim(),hours].filter(Boolean).join('\n\n');
   return true;
  }
  if(ledger.includes(OUROBOROS_DOSSIER_ID))return false; // Player deleted it.
@@ -35,8 +44,6 @@ export function syncOuroborosDossier(s,windows){
    'Dr Ouroboros',
    'MIRAGE 匿名聯絡人',
    '真名：未知',
-   'D13 曾入侵手機。反追蹤失敗。',
-   'D14 收到他寄來的框架。',
    '',
    hours
   ].join('\n')
