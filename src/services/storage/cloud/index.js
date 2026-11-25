@@ -137,7 +137,7 @@ export class PlayerCloudSave{
     const preferLegacy=legacy&&snapshot(legacy).day>1
      &&(!row||progressOf(snapshot(legacy))>progressOf(snapshot(row)));
     if(owner&&owner!==player.id){
-     if(switchAccount&&preferLegacy)return await this.adoptLegacy(legacy,row,JSON.stringify(this.store.get()));
+     if(switchAccount&&preferLegacy)return await this.adoptLegacy(legacy,row,raw);
      if(switchAccount&&row)return await this.restore(row,{expectedRaw:raw});
      // Only a verified guest handoff may initialize an empty email slot.
      if(!row&&switchAccount&&handoff?.owner===owner&&handoff.target===player.id
@@ -159,7 +159,7 @@ export class PlayerCloudSave{
      }
      this.conflict(row);return false;
     }
-    if(preferLegacy)return await this.adoptLegacy(legacy,row,JSON.stringify(this.store.get()));
+    if(preferLegacy)return await this.adoptLegacy(legacy,row,raw);
     if(row){
      this.validate(snapshot(row));this.rowId=row.id;this.remoteProgress=progressOf(snapshot(row));this.remoteRow=row;
      this.media=row.game_state._cloudMedia||{};this.api.useMedia(player.id,this.media);
