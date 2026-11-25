@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState,PhoneStore} from '../src/services/storage.js';
+import {initialState,PhoneStore,KEY} from '../src/services/storage.js';
 import {activateStory55,tickStory55,advanceScene55,markMail55,readEvidence55,sendQuestion55,payNode55,anonymousPresence55} from '../src/services/story55/runtime.js';
 import {story55Config,completed,nodeStatus,date55,taiRecognized,story55ChargeGate,observeIdentityMirageSend} from '../src/services/story55/state.js';
 import {authorizeProject,startDeploymentStep,deploymentPercent,upgradeHardware,upgradeBaseFramework} from '../src/services/story55/projects.js';
@@ -61,7 +61,7 @@ test('D14 Kira authorization installs five LINK checks without hardware purchase
  const final=startDeploymentStep(s,'base');solveRun(s,final);assert.equal(deploymentPercent(s,'base'),9);assert.equal(Object.keys(s.story55.reports).filter(id=>id.startsWith('base-')).length,1);assert.ok(s.story55.reports['wallet-0']);
  finish(s,final,true);assert.equal(deploymentPercent(s,'base'),9);assert.equal(s.story55.projects.base.batches[0].runFailed,true);assert.throws(()=>startDeploymentStep(s,'base'),/等待D15/);
  assert.equal(s.story55.projects.base.baseRunNoticePending,true);
- const payload=JSON.stringify(s),memory=new Map();const store=new PhoneStore({getItem:()=>payload,setItem:(k,v)=>memory.set(k,v)});
+ const payload=JSON.stringify(s),memory=new Map([[KEY,payload]]);const store=new PhoneStore({getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,v)});
  assert.equal(deploymentPercent(store.get(),'base'),9);assert.equal(store.get().story55.projects.base.batches[0].steps.filter(Boolean).length,5);
 });
 test('the first D14 failure and ten paid daily upgrades reach exactly 100% on D24',()=>{
