@@ -5,6 +5,7 @@ import {taiMoodPrompt,readTaiMood} from './mood.js';
 import {selectTaiLongMemories,taiLongMemoryPrompt} from '../memory.js';
 import {taiCanonicalMilestones} from './plot-memory.js';
 import {projectTaiPlotGlossary,projectMirageTaiGlossary} from './plot-glossary.js';
+import {computerInterestEvents} from './interests/computer.js';
 
 export const TAI_WORLDBOOK_BUDGET=1800;
 // Legacy diagnostic signature still uses the same engine.
@@ -26,7 +27,11 @@ export function captureTaiWorldbook(store,context={}){
  if(id&&existing?.lastId===id&&existing.snapshot)return existing.snapshot;
  const cursor=Math.max((existing?.cursor??0)+1,Number(context.messageIndex)||0);
  const state=store.get(),privateContext=scope==='noapp'&&context.recognized===true;
- const base=previewTaiWorldbook(world,{...context,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}});
+ // Computer-interest entries are activated only by the player's actual text.
+ // The existing World Info event engine selects the matching CS entry; no
+ // global prompt injection or second conversation state is introduced.
+ const worldbookEvents=[...new Set([...(context.worldbookEvents||[]),...computerInterestEvents(context.messages)])];
+ const base=previewTaiWorldbook(world,{...context,worldbookEvents,messageIndex:cursor,turnId:id||`${scope}:${cursor}`,effects:existing?.effects||{}});
  // Canonical plot lexicon is a read-only projection on this same snapshot:
  // no extra store, no stale default book migration and no second scheduler.
  const glossary=scope==='mirage'?projectMirageTaiGlossary(state,{...context,channel:scope}):projectTaiPlotGlossary(state,{...context,channel:scope});
