@@ -58,7 +58,7 @@ export function sendScriptedDraft55(s,channel,conversationId,text,now=Date.now()
  const line=currentScript55(s,channel,conversationId,now);
  if(!line||line.kind!=='me'||s.phoneCall?.speaking||s.phoneCall?.resumeRequired)throw Error('当前没有等待熙蒙发送的预设消息');
  if(String(text||'').trim()!==line.text.trim())throw Error('訊息未發送');
- if(line.id==='ghost-share')sendGhostShareDraft(s,text);
+ if(line.id==='ghost-share')sendGhostShareDraft(s,text,now);
  else if(line.id==='flow-d03')sendFlowReply(s,text);
  else if(line.id==='questions')sendQuestion55(s);
  else advanceScene55(s,line.id,{now});
