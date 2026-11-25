@@ -254,3 +254,63 @@ test('latest primary wins even when the player restores the previous state durin
  await writing;await journal.flush();
  assert.equal((await journal.read()).raw,'original');journal.close();
 });
+
+test('saved D01 activity survives an accidental blank D01 at the same clock',async()=>{
+ const {storage,idb,store}=await setup();
+ store.update(s=>{s.day=1;s.clock='08:00';s.content.notes.push({id:'d01-draft',title:'計畫',text:'我已經寫好了'});});
+ await store.journal.flush();store.journal.close();
+ const blank={...initialState(),day:1,clock:'08:00'};
+ storage.setItem(KEY,JSON.stringify(blank));
+ const resumed=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(resumed.get().day,1);assert.equal(resumed.get().clock,'08:00');
+ assert.ok(resumed.get().content.notes.some(n=>n.id==='d01-draft'));
+ assert.ok(resumed.get()._localSaveRevision>0);
+ await resumed.journal.flush();resumed.journal.close();
+});
+
+test('three accidental D01 journal writes cannot evict a real later checkpoint',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();
+ const real=JSON.stringify(store.get());
+ for(let i=1;i<=3;i++){
+  store.journal.schedule(JSON.stringify({...initialState(),day:1,clock:'08:00',_localSaveRevision:i}));
+  await store.journal.flush();
+ }
+ const entry=await store.journal.read();
+ assert.equal(JSON.parse(entry.raw).day,1);
+ assert.equal(JSON.parse(entry.guardedRaw).day,24);
+ store.journal.close();
+ storage.setItem(KEY,JSON.stringify({...initialState(),day:1,clock:'08:00'}));
+ const resumed=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(resumed.get().day,24);
+ assert.ok(resumed.get().content.notes.some(n=>n.id==='player-note'));
+ assert.equal(JSON.parse(real).bankData.balance,resumed.get().bankData.balance);
+ await resumed.journal.flush();resumed.journal.close();
+});
+
+test('a stale browser tab cannot overwrite a more recent saved game',async()=>{
+ const {storage,idb,store}=await setup();
+ const newer=new PhoneStore(storage);
+ newer.update(s=>{s.day=34;s.clock='20:20';});
+ const current=storage.getItem(KEY);
+ assert.throws(()=>store.update(s=>{s.day=1;s.clock='08:00';}),/已保留原資料/);
+ assert.equal(storage.getItem(KEY),current);
+ assert.equal(JSON.parse(storage.getItem(KEY)).day,34);
+ store.journal.close();
+});
+
+test('confirmed 0000 clears even the protected advanced checkpoint',async()=>{
+ const {storage,idb,store}=await setup();changeProgress(store);
+ await store.journal.flush();
+ store.journal.schedule(JSON.stringify({...initialState(),day:1,clock:'08:00'}));
+ await store.journal.flush();
+ assert.equal(JSON.parse((await store.journal.read()).guardedRaw).day,24);
+ storage.setItem(KEY+':explicit-restart','1');
+ store.replace({...initialState(),day:1,clock:'08:00'});
+ await store.journal.reset(JSON.stringify(store.get()));
+ assert.equal((await store.journal.read()).guardedRaw,null);
+ store.journal.close();
+ const resumed=await openPhoneStore({storage,factory:idb.factory});
+ assert.equal(resumed.get().day,1);
+ await resumed.journal.flush();resumed.journal.close();
+});

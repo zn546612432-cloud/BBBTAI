@@ -1,4 +1,4 @@
-import {readPhoneSave,openSaveJournal,saveReadError} from './storage/recovery.js';
+import {readPhoneSave,openSaveJournal,saveReadError,compareSavedProgress} from './storage/recovery.js';
 import {interruptTaiRemoteSession} from '../system/remote-control/session.js';
 import {isStory55} from './story55/state.js';
 import {activateStory55,tickStory55} from './story55/runtime.js';
@@ -162,7 +162,22 @@ function importPreD01WechatHistory(storage,state){
  }
  return changed;
 }
-export class PhoneStore{constructor(storage=globalThis.localStorage,{recoveredState,journal}={}){if(D13_PREVIEW){const entries=new Map();storage={getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v),removeItem:k=>entries.delete(k)};}this.storage=storage;this.journal=journal;this.listeners=new Set();this.state=recoveredState||readPhoneSave(storage,KEY,validatePhoneSave)||(!story55Preview&&!isPreview&&migrateLegacy(storage))||initialState();if(story55Preview&&isStory55(this.state)&&!this.state.story55.legacyHistoryImported){importPreD01WechatHistory(storage,this.state);this.state.story55.legacyHistoryImported=true;}if(story55Preview&&isStory55(this.state))restoreLegacyHistoricalContent(storage,this.state);if(story55Preview&&isStory55(this.state))restorePreviousSMSHistory(storage,this.state);interruptTaiRemoteSession(this.state);normalizeTimeline(this.state);this.persist();if(repairLegacyWechatDates(this.state))this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(globalThis.document&&removeInfiniteChessFixture(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay||isStory55(this.state)&&this.state.editor.presetDay>55){this.state.editor.presetDay=isStory55(this.state)?1:57;this.persist();}if(ensureTaiDraft(this.state))this.persist();if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(restoreRecordedPhoneCalls(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();restoreSavedMediaPaths(this.state);this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){const raw=JSON.stringify(this.state);try{this.storage.setItem(KEY,raw);}catch(e){throw Error('本机空间不足，请导出备份后清理图片。');}this.journal?.schedule(raw);this.cloud?.schedule(raw);}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);const previous=this.state;this.state=next;try{this.persist();}catch(error){this.state=previous;throw error;}for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);interruptTaiRemoteSession(restored);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureTaiDraft(restored);ensureBank(restored);ensurePhoneData(restored);restoreRecordedPhoneCalls(restored);removeObsoleteChatDemos(restored);if(globalThis.document)removeInfiniteChessFixture(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);repairLegacyWechatDates(restored);restoreSavedMediaPaths(restored);const validated=validateState(restored),previous=this.state;this.state=validated;try{this.persist();}catch(error){this.state=previous;throw error;}for(const fn of this.listeners)fn(validated);}}
+export class PhoneStore{constructor(storage=globalThis.localStorage,{recoveredState,journal,expectedRaw}={}){if(D13_PREVIEW){const entries=new Map();storage={getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v),removeItem:k=>entries.delete(k)};}this.storage=storage;this.journal=journal;this.listeners=new Set();this.lastSavedRaw=expectedRaw===undefined?storage.getItem(KEY):expectedRaw;this.state=recoveredState||readPhoneSave(storage,KEY,validatePhoneSave)||(!story55Preview&&!isPreview&&migrateLegacy(storage))||initialState();if(story55Preview&&isStory55(this.state)&&!this.state.story55.legacyHistoryImported){importPreD01WechatHistory(storage,this.state);this.state.story55.legacyHistoryImported=true;}if(story55Preview&&isStory55(this.state))restoreLegacyHistoricalContent(storage,this.state);if(story55Preview&&isStory55(this.state))restorePreviousSMSHistory(storage,this.state);interruptTaiRemoteSession(this.state);normalizeTimeline(this.state);this.persist();if(repairLegacyWechatDates(this.state))this.persist();if(removeObsoleteChatDemos(this.state))this.persist();if(globalThis.document&&removeInfiniteChessFixture(this.state))this.persist();if(ensureWeChatRoster(this.state))this.persist();if(clearIncognitoHistory(this.state))this.persist();if(!this.state.storyPresets){this.state.storyPresets=starterPresetState();this.persist();}if(!this.state.editor.presetDay||isStory55(this.state)&&this.state.editor.presetDay>55){this.state.editor.presetDay=isStory55(this.state)?1:57;this.persist();}if(ensureTaiDraft(this.state))this.persist();if(ensureBank(this.state))this.persist();if(ensurePhoneData(this.state))this.persist();if(restoreRecordedPhoneCalls(this.state))this.persist();if(ensureAuthoredNotes(this.state))this.persist();if(discardOldMorningNotices(this.state))this.persist();if(restoreUnreadPresetNotices(this.state))this.persist();restoreSavedMediaPaths(this.state);this.persist();}get(){return this.state;}subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn);}persist(){
+ const previous=this.state._localSaveRevision;
+ this.state._localSaveRevision=Number.isSafeInteger(previous)&&previous>=0?previous+1:1;
+ const raw=JSON.stringify(this.state);
+ try{
+  // Prevent an older tab from overwriting another tab's already saved state.
+  if(this.storage.getItem(KEY)!==this.lastSavedRaw)throw saveReadError();
+  this.storage.setItem(KEY,raw);
+ }catch(error){
+  if(previous===undefined)delete this.state._localSaveRevision;
+  else this.state._localSaveRevision=previous;
+  if(error?.message===saveReadError().message)throw error;
+  throw Error('本机空间不足，请导出备份后清理图片。');
+ }
+ this.lastSavedRaw=raw;this.journal?.schedule(raw);this.cloud?.schedule(raw);
+}update(fn){const next=clone(this.state);fn(next);normalizeTimeline(next);validateState(next);const previous=this.state;this.state=next;try{this.persist();}catch(error){this.state=previous;throw error;}for(const fn of this.listeners)fn(next);return next;}replace(next){const restored=clone(next);interruptTaiRemoteSession(restored);normalizeTimeline(restored);if(!restored.calendar)restored.calendar=calendarAnchor(restored.day);if(!restored.storyPresets)restored.storyPresets=starterPresetState();ensureTaiDraft(restored);ensureBank(restored);ensurePhoneData(restored);restoreRecordedPhoneCalls(restored);removeObsoleteChatDemos(restored);if(globalThis.document)removeInfiniteChessFixture(restored);ensureWeChatRoster(restored);clearIncognitoHistory(restored);ensureAuthoredNotes(restored);discardOldMorningNotices(restored);restoreUnreadPresetNotices(restored);repairLegacyWechatDates(restored);restoreSavedMediaPaths(restored);const validated=validateState(restored),previous=this.state;this.state=validated;try{this.persist();}catch(error){this.state=previous;throw error;}for(const fn of this.listeners)fn(validated);}}
 
 function validatePhoneSave(state){
  validateState(state);
@@ -171,11 +186,11 @@ function validatePhoneSave(state){
 }
 
 // Finish recovery BEFORE any constructor migrations or fresh D01 writes.
-export async function openPhoneStore({storage=globalThis.localStorage,factory=globalThis.indexedDB}={}){
+export async function openPhoneStore({storage=globalThis.localStorage,factory=globalThis.indexedDB,attempt=0}={}){
  if(RECOGNITION_PREVIEW){const entries=new Map();return new PhoneStore({getItem:k=>entries.get(k)||null,setItem:(k,v)=>entries.set(k,v),removeItem:k=>entries.delete(k)});}
  if(D13_PREVIEW)return new PhoneStore(storage);
- let state,readError,journal,entry;
- try{state=readPhoneSave(storage,KEY,validatePhoneSave);}catch(error){readError=error;}
+ let state,readError,journal,entry,expectedRaw;
+ try{expectedRaw=storage.getItem(KEY);state=readPhoneSave(storage,KEY,validatePhoneSave);}catch(error){readError=error;}
  try{journal=await openSaveJournal(factory,KEY);entry=await journal?.read();}
  catch(error){
   journal?.close();journal=null;
@@ -187,33 +202,36 @@ export async function openPhoneStore({storage=globalThis.localStorage,factory=gl
  const restartMarker=KEY+':explicit-restart';
  let explicitRestart=false;
  try{explicitRestart=storage.getItem(restartMarker)==='1';}catch{}
+ const parseCheckpoint=raw=>{
+  try{return raw?validatePhoneSave(JSON.parse(raw)):null;}catch{return null;}
+ };
+ // Compare all protected checkpoints before constructing a new phone.
+ let bestRaw=null;
+ for(const raw of [entry?.raw,entry?.previous,entry?.guardedRaw])
+  if(parseCheckpoint(raw)&&(!bestRaw||compareSavedProgress(raw,bestRaw)>0))bestRaw=raw;
  if(!state&&entry){
-  for(const raw of [entry.raw,entry.previous]){
-   if(!raw)continue;
-   try{state=validatePhoneSave(JSON.parse(raw));break;}catch{}
-  }
+  state=parseCheckpoint(explicitRestart?entry.raw:bestRaw);
   if(!state){journal?.close();throw saveReadError();}
  }
- // A stale D01 primary must not conceal a newer durable checkpoint. Save
- // the D01 copy before restoring so no player's local edits are discarded.
- if(state?.day===1&&entry?.raw&&!explicitRestart){
-  const parseCheckpoint=raw=>{try{return validatePhoneSave(JSON.parse(raw));}catch{return null;}};
-  let checkpoint=parseCheckpoint(entry.raw);
-  // A previous crash may have already journaled the accidental D01
-  // placeholder. The older valid checkpoint remains in the previous slot.
-  if(!checkpoint||checkpoint.day===1){
-   const previous=parseCheckpoint(entry.previous);
-   if(previous?.day>1)checkpoint=previous;
-  }
-  if(checkpoint?.day>1){
-   try{storage.setItem(KEY+':before-checkpoint-recovery',JSON.stringify(state));}
-   catch{journal?.close();throw saveReadError();}
-   state=checkpoint;
-  }
+ if(state?.day===1&&bestRaw&&!explicitRestart&&
+    compareSavedProgress(bestRaw,JSON.stringify(state))>0){
+  // Keep the boot placeholder for diagnostics; do not lose actual D01 work.
+  try{storage.setItem(KEY+':before-checkpoint-recovery',JSON.stringify(state));}
+  catch{journal?.close();throw saveReadError();}
+  state=parseCheckpoint(bestRaw);
  }
  if(!state&&readError){journal?.close();throw readError;}
+ // Another tab may have saved while IndexedDB was loading. Retry reading
+ // instead of writing this now-stale boot state back onto its progress.
  try{
-  const store=new PhoneStore(storage,{recoveredState:state,journal});
+  if(storage.getItem(KEY)!==expectedRaw){
+   journal?.close();
+   if(attempt<2)return openPhoneStore({storage,factory,attempt:attempt+1});
+   throw saveReadError();
+  }
+ }catch(error){journal?.close();throw error;}
+ try{
+  const store=new PhoneStore(storage,{recoveredState:state,journal,expectedRaw});
   store.hasExistingSave=!!state;
   // Explicit 0000 reset replaces both the current and previous checkpoints,
   // whereas ordinary recovery still keeps the previous version available.
