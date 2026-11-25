@@ -76,8 +76,9 @@ globalThis.__xmBootStarted?.();
 let store;
 try{store=await openPhoneStore();}
 catch(error){window.__xmBootError?.(error.message);throw error;}
-await connectPlayerSave(store,{key:phoneSaveKey,validate:validateState,preview:isPreview||D13_PREVIEW||!!reviewNamespace||RECOGNITION_PREVIEW||!!D45D46_PREVIEW});
+// Save local progress on pagehide even if optional cloud login is still pending.
 mountSaveLifecycle(store);
+await connectPlayerSave(store,{key:phoneSaveKey,validate:validateState,preview:isPreview||D13_PREVIEW||!!reviewNamespace||RECOGNITION_PREVIEW||!!D45D46_PREVIEW});
 // Telephone sessions are not persisted. Remove abandoned call routes on boot.
 if(isNoAppCallRoute(store.get().nav.current)||store.get().nav.stack?.some(isNoAppCallRoute))
  store.update(dismissNoAppCallRoute);

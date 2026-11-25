@@ -1,6 +1,24 @@
 // The existing PhoneStore remains the only state owner. This journal mirrors
 // successful saves outside localStorage's small quota, in the same namespace.
 const DATABASE='ximeng-phone-autosave-v1',TABLE='saves',TIMEOUT=3000;
+
+// A D01 scene can hold the clock while the player makes real progress.
+// The revision breaks same-day/same-clock ties without inspecting user text.
+const checkpointInfo=raw=>{
+ try{
+  const s=JSON.parse(raw);
+  if(s?.version!==2||!Number.isSafeInteger(s.day)||s.day<1||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(s.clock))return null;
+  const [hour,minute]=s.clock.split(':').map(Number);
+  return [s.day,hour*60+minute,
+   Number.isSafeInteger(s._localSaveRevision)&&s._localSaveRevision>0?s._localSaveRevision:0];
+ }catch{return null;}
+};
+export function compareSavedProgress(left,right){
+ const a=checkpointInfo(left),b=checkpointInfo(right);
+ if(!a||!b)return a?1:b?-1:0;
+ return a[0]-b[0]||a[1]-b[1]||a[2]-b[2];
+}
 export const saveReadError=()=>Error('無法安全讀取存檔，已保留原資料。請重新載入重試，勿清除網站資料。');
 
 export function readPhoneSave(storage,key,validate){
@@ -54,7 +72,7 @@ function createJournal(db,key){
   schedule(raw){
    if(closed||raw===lastRaw&&!pending&&!active)return;
    pending=raw;
-   if(!timer)timer=setTimeout(()=>{timer=null;journal.flush().catch(()=>{});},1000);
+   if(!timer)timer=setTimeout(()=>{timer=null;journal.flush().catch(()=>{});},200);
   },
   flush(){
    clearTimeout(timer);timer=null;
@@ -65,7 +83,14 @@ function createJournal(db,key){
     const req=table.get(key);
     req.onsuccess=()=>{
      const old=req.result;
-     table.put({key,raw,previous:old?.raw!==raw?old?.raw:old?.previous,savedAt:Date.now()});
+     let guardedRaw=old?.guardedRaw||null;
+     // A replayed D01 must not evict a later checkpoint after repeated writes.
+     if(checkpointInfo(raw)?.[0]===1&&compareSavedProgress(old?.raw,raw)>0
+       &&compareSavedProgress(old.raw,guardedRaw)>0)
+      guardedRaw=old.raw;
+     if(guardedRaw&&compareSavedProgress(raw,guardedRaw)>=0)guardedRaw=null;
+     table.put({key,raw,previous:old?.raw!==raw?old?.raw:old?.previous,
+      guardedRaw,savedAt:Date.now()});
     };
    }).then(()=>{lastRaw=raw;},error=>{if(!pending)pending=raw;throw error;}).finally(()=>{active=null;});
    return active;
@@ -77,7 +102,7 @@ function createJournal(db,key){
    clearTimeout(timer);timer=null;
    if(active)try{await active;}catch{}
    pending=null;
-   await transact('readwrite',table=>{table.put({key,raw,previous:null,savedAt:Date.now()});});
+   await transact('readwrite',table=>{table.put({key,raw,previous:null,guardedRaw:null,savedAt:Date.now()});});
    lastRaw=raw;
   },
   async clear(){
