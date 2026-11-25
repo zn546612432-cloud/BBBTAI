@@ -221,7 +221,7 @@ export function ghostShareScriptLine(s){
   return {id:'ghost-share',kind:'me',index:p.index,text:lines[p.index][1]};
  return {id:'ghost-share',kind:'wait',index:p.index,text:''};
 }
-export function sendGhostShareDraft(s,text){
+export function sendGhostShareDraft(s,text,now=Date.now()){
  const line=ghostShareScriptLine(s),p=s.story55?.ghostShare;
  if(line?.kind!=='me'||String(text||'').trim()!==line.text.trim())
   throw Error('請先發送輸入框內的預設訊息');
@@ -231,7 +231,7 @@ export function sendGhostShareDraft(s,text){
  p.index++;
  // Anchor the scripted follow-up to the actual player SEND, not the next
  // eligible heartbeat. Safari can suspend/recreate its transient timer.
- queueNpc(s,p,{queuedAt:Date.now()});
+ queueNpc(s,p,{queuedAt:now});
  if(s.drafts)delete s.drafts[TAI_GHOST_THREAD];
  return 'ghost-share';
 }
