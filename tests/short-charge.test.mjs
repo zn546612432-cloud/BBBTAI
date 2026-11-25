@@ -131,8 +131,8 @@ test('original plot gate blocks BOTH long and short charging',()=>{
  s.story55.completed.intro={day:1,clock:'12:00',test:true};
  assert.equal(beginShortCharge(s),true);
  tickShortChargeBattery(s,20_000);
- assert.equal(tickWorld(s,20_000).minutes,75);
- assert.equal(s.day,2);assert.equal(s.clock,'10:45');
+ assert.equal(tickWorld(s,20_000).minutes,100);
+ assert.equal(s.day,2);assert.equal(s.clock,'11:10');
  assert.equal(endShortCharge(s),true);
 });
 
