@@ -21,12 +21,10 @@ const button=(action,label,attrs='')=>`<button type="button" class="settings-row
 export function cloudSaveView(store){
  const cloud=store.cloud,state=local(store),status=cloud?.status||{phase:'local'},conflict=status.conflict;
  const player=status.player,email=player?.email_confirmed_at&&!player?.is_anonymous?player.email:null;
- const guestWarning=cloud?.enabled&&player&&!email?'目前是匿名臨時存檔。關閉網頁通常可以繼續，但清除瀏覽器資料、換裝置或換網址後可能無法找回。請先綁定郵箱並確認「已同步」。':'';
  const message=status.phase==='offline'&&status.message?status.message:state.message==='已確認同步至雲端。'&&status.phase!=='synced'?'':state.message;
  const header='<button class="settings-back" data-action="settings-back">‹ 设置</button><h1>存檔與備份</h1>';
  const emailForm=(recover=false)=>`<form data-form="cloud-email" data-view-key="${recover?'cloud-recover-form':'cloud-bind-form'}" class="cloud-save-form"><input type="hidden" name="recover" value="${recover?'1':'0'}"><label>郵箱<input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="你的郵箱" value="${esc(state[recover?'recoverEmail':'bindEmail']||'')}"></label><button class="button-primary" ${state.busy?'disabled':''}>${recover?'發送找回郵件':'綁定郵箱'}</button></form>`;
  return `<div class="settings-page settings-detail cloud-save-page">${header}<section><div class="settings-row"><strong>${esc(stamp(store.get()))}</strong><small role="status">${esc(labels[status.phase]||labels.offline)}</small></div>${email?`<div class="settings-row"><strong>已綁定</strong><small>${esc(email)}</small></div>`:''}${cloud?.enabled?button('sync','立即同步'):''}</section>
- ${guestWarning?`<p class="settings-caption" role="status">${esc(guestWarning)}</p>`:''}
  <p data-view-key="cloud-message" class="settings-caption" role="status" ${message?'':'hidden style="display:none"'}>${esc(message||'')}</p>
  ${!cloud?.enabled?'<p class="settings-caption">此預覽的進度只保存在本機。</p>':`
  ${status.lastSaved?'<p class="settings-caption">最後同步：'+esc(new Date(status.lastSaved).toLocaleString('zh-Hant',{hour12:false}))+'</p>':''}
