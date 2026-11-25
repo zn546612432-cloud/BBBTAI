@@ -127,7 +127,7 @@ export function ghostShareSource(s,{projectId,orderId}={}){
  return null;
 }
 
-function queueNpc(s,p){
+function queueNpc(s,p,{queuedAt=null}={}){
  const lines=ghostShareDialogue(s,p.script);
  p.pendingIds=[];
  let pause=0;
@@ -138,7 +138,7 @@ function queueNpc(s,p){
   const message=appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:TAI_GHOST_THREAD,
    messageId,from:TAI_GHOST_THREAD,text:lines[index][1],storyTag:'story55',
    day:s.day,clock:s.clock,sentDate:shareSentDate(s),
-   schedule:{mode:'chat-delay',seconds:pause}});
+   schedule:{mode:'chat-delay',seconds:pause,...(Number.isFinite(queuedAt)?{queuedAt}:{})}});
   if(message)message.ghostShareScript=p.script;
   p.pendingIds.push(messageId);pause+=WAIT_MS/1000;
  }
@@ -221,7 +221,7 @@ export function ghostShareScriptLine(s){
   return {id:'ghost-share',kind:'me',index:p.index,text:lines[p.index][1]};
  return {id:'ghost-share',kind:'wait',index:p.index,text:''};
 }
-export function sendGhostShareDraft(s,text){
+export function sendGhostShareDraft(s,text,now=Date.now()){
  const line=ghostShareScriptLine(s),p=s.story55?.ghostShare;
  if(line?.kind!=='me'||String(text||'').trim()!==line.text.trim())
   throw Error('請先發送輸入框內的預設訊息');
@@ -229,7 +229,9 @@ export function sendGhostShareDraft(s,text){
   messageId:`${p.cardId}-me-${p.index}`,from:'me',text:line.text,storyTag:'story55',
   day:s.day,clock:s.clock,sentDate:shareSentDate(s),notify:false});
  p.index++;
- queueNpc(s,p);
+ // Anchor the scripted follow-up to the actual player SEND, not the next
+ // eligible heartbeat. Safari can suspend/recreate its transient timer.
+ queueNpc(s,p,{queuedAt:now});
  if(s.drafts)delete s.drafts[TAI_GHOST_THREAD];
  return 'ghost-share';
 }
