@@ -13,8 +13,8 @@ const progressOf=s=>{
  return day*1440+(match?Number(match[1])*60+Number(match[2]):0);
 };
 export class PlayerCloudSave{
- constructor(store,{key,validate,slot=1,enabled=true,api={},factory=globalThis.indexedDB,delay=15000,now=Date.now}={}){
-  this.store=store;this.key=key;this.validate=validate;this.slot=slot;this.enabled=enabled;this.factory=factory;this.delay=delay;this.now=now;
+ constructor(store,{key,validate,slot=1,legacySlot=null,enabled=true,api={},factory=globalThis.indexedDB,delay=15000,now=Date.now}={}){
+  this.store=store;this.key=key;this.validate=validate;this.slot=slot;this.legacySlot=legacySlot;this.enabled=enabled;this.factory=factory;this.delay=delay;this.now=now;
   this.api={player:currentCloudPlayer,read:readCloudSave,write:writeCloudSave,erase:eraseCloudSave,backups:cloudBackups,media:snapshotVoiceMedia,useMedia:useCloudVoiceMedia,...api};
   this.status={phase:enabled?'connecting':'local',player:null,lastSaved:null,conflict:null};this.meta={};this.revision=null;this.media={};this.listeners=new Set();
  }
@@ -58,6 +58,24 @@ export class PlayerCloudSave{
   this.publish({phase:'synced',lastSaved:row.updated_at,conflict:null});
   return true;
  }
+ // One-time, non-destructive migration from the friends-test cloud slot.
+ // Keep the old slot intact until the slot-1 CAS upload has succeeded.
+ async adoptLegacy(row,primary,expectedRaw){
+  if(this.erasing)return false;
+  const next=this.validate(snapshot(row));
+  await this.backupLocal();
+  if(this.erasing||JSON.stringify(this.store.get())!==expectedRaw){this.conflict(row);return false;}
+  this.applying=true;try{this.store.replace(next);}finally{this.applying=false;}
+  this.media=row.game_state._cloudMedia||{};this.api.useMedia(this.player.id,this.media);
+  this.pending=JSON.stringify(this.store.get());
+  this.revision=primary?.revision||0;this.rowId=primary?.id||null;
+  this.remoteProgress=primary?progressOf(snapshot(primary)):0;this.remoteRow=primary||null;
+  this.store.storage.setItem(this.ownerKey,this.player.id);
+  this.saveMeta({id:this.rowId,revision:this.revision,hash:null,pending:null,lastSaved:primary?.updated_at||null,missingMedia:0});
+  this.store.hasExistingSave=true;
+  this.publish({phase:'pending',conflict:null,lastSaved:primary?.updated_at||null,message:''});
+  this.timerAfter(0);return true;
+ }
  conflict(row){this.publish({phase:'conflict',conflict:{remote:row,local:JSON.parse(this.pending||JSON.stringify(this.store.get()))}});}
  async start({switchAccount=false,handoff=null}={}){
   if(!this.enabled)return false;
@@ -91,6 +109,13 @@ export class PlayerCloudSave{
       const result=await this.api.erase({slot:this.slot,player:player.id,id:row.id});
       if(result?.status!=='deleted')throw Error('雲端存檔已變更，未清除其他進度。請重試。');
      }
+     if(this.legacySlot){
+      const legacy=await this.api.read(this.legacySlot,player.id);
+      if(legacy){
+       const result=await this.api.erase({slot:this.legacySlot,player:player.id,id:legacy.id});
+       if(result?.status!=='deleted')throw Error('舊測試版存檔未刪除，請重新連線後再試。');
+      }
+     }
      this.revision=0;this.rowId=null;this.remoteProgress=0;this.remoteRow=null;this.media={};
      this.meta={};this.saveMeta({id:null,revision:0,hash:null,pending:null,lastSaved:null,missingMedia:0});
      this.store.storage.setItem(this.ownerKey,player.id);
@@ -98,7 +123,21 @@ export class PlayerCloudSave{
      this.publish({phase:'pending',conflict:null,lastSaved:null,message:''});
      this.timerAfter(0);return true;
     }
+    // An email identity may have been used in the older friends-test build,
+    // which stored its progress in slot 2 rather than the production slot 1.
+    // Import ONLY for the same verified player, a D01 local placeholder and
+    // no explicit reset. Keep both source and overwritten slot-1 backups.
+    let legacy=null;
+    if(this.legacySlot&&!intentionalRestart&&player.email_confirmed_at&&!player.is_anonymous
+      &&this.store.get().day===1&&!this.store.get()._legacyCloudRetired&&(!row||snapshot(row).day===1)
+      &&!row?.game_state?._legacyCloudRetired){
+     legacy=await this.api.read(this.legacySlot,player.id);
+     if(legacy)this.validate(snapshot(legacy));
+    }
+    const preferLegacy=legacy&&snapshot(legacy).day>1
+     &&(!row||progressOf(snapshot(legacy))>progressOf(snapshot(row)));
     if(owner&&owner!==player.id){
+     if(switchAccount&&preferLegacy)return await this.adoptLegacy(legacy,row,raw);
      if(switchAccount&&row)return await this.restore(row,{expectedRaw:raw});
      // Only a verified guest handoff may initialize an empty email slot.
      if(!row&&switchAccount&&handoff?.owner===owner&&handoff.target===player.id
@@ -120,6 +159,7 @@ export class PlayerCloudSave{
      }
      this.conflict(row);return false;
     }
+    if(preferLegacy)return await this.adoptLegacy(legacy,row,raw);
     if(row){
      this.validate(snapshot(row));this.rowId=row.id;this.remoteProgress=progressOf(snapshot(row));this.remoteRow=row;
      this.media=row.game_state._cloudMedia||{};this.api.useMedia(player.id,this.media);
@@ -267,7 +307,7 @@ export async function connectPlayerSave(store,{key,validate,preview=false,locati
   ||(location?.hostname==='bbbtai.pages.dev'
   &&/^\/review\/friends-test\/(?:index\.html)?$/.test(location?.pathname||''));
  const enabled=isTaiCloudHost(location?.hostname)&&(!preview||friendsTest)&&(!previewHost||testPreview);
- const cloud=new PlayerCloudSave(store,{key,validate,enabled,slot:friendsTest||testPreview?2:1,...options});store.cloud=cloud;
+ const cloud=new PlayerCloudSave(store,{key,validate,enabled,slot:testPreview?2:1,legacySlot:testPreview?null:2,...options});store.cloud=cloud;
  if(!enabled)return cloud;
  let callback=false;try{callback=takeEmailCallback(location,globalThis.history,{persist:false});}catch(error){cloud.publish({phase:'offline',message:error.message});return cloud;}
  const initial=callback?cloud.acceptSession(callback).catch(error=>{cloud.publish({phase:'offline',message:error.message});return false;}):cloud.start();

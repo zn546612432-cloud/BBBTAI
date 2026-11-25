@@ -6,7 +6,7 @@ import {initialState,repairLegacyWechatDates} from '../src/services/storage.js';
 import {timestampGroups} from '../src/services/messaging/timestamps.js';
 import {authoredMoments,visibleMoments} from '../src/apps/wechat/features/moments/data.js';
 import {renderMoments,momentImage,avatarUrl,handleMoment,submitMoment} from '../src/apps/wechat/features/moments/index.js';
-import {momentProfiles,findMoment,allMoments} from '../src/apps/wechat/features/moments/model.js';
+import {momentProfiles,findMoment,allMoments,editableMoments} from '../src/apps/wechat/features/moments/model.js';
 import {stablePublicAssetBase} from '../src/services/public-assets.js';
 import {wechatAvatars} from '../src/apps/wechat/avatars.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
@@ -87,7 +87,7 @@ test('D15 Zaizai pinned photo teases Xiao Xin only, including legacy saved comme
   {by:'小辛',text:'这题我不敢答'},
   {by:'胡枫',text:'玩家自訂留言'}
  ]};
- s.content.moments.editedPosts['zz-d15']=original;
+ editableMoments(s); s.content.moments.editedPosts['zz-d15']=original;
  const migrated=findMoment(s,'zz-d15');
  assert.deepEqual(migrated.comments,[...approved,{by:'胡枫',text:'玩家自訂留言'}]);
  assert.equal(migrated.publishedAt,post.publishedAt);

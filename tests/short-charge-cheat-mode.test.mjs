@@ -19,12 +19,12 @@ test('lockscreen secret codes leave restart and terminal recovery unchanged',()=
  lock.open();for(const digit of '1234')lock.key(digit,'6180');assert.equal(lock.stage,'error');
  lock.open();for(const digit of '0000')lock.key(digit,['0816','0119'],{allowCheat:true});assert.equal(lock.stage,'restart');
 });
-test('App time stays slow while short charging, home switches from 3 to 5',()=>{
+test('App remains at 5 minutes per minute; short charging runs 225x and normal home 150x',()=>{
  const s=phone();s.nav.current={appId:'wechat',route:'/chat/group',params:{}};
  assert.equal(worldMinuteRate(s),5/60000);
  assert.equal(beginShortCharge(s),true);assert.equal(worldMinuteRate(s),5/60000);
- s.nav.current={appId:'home',route:'/',params:{}};assert.equal(worldMinuteRate(s),5/1000);
- endShortCharge(s);assert.equal(worldMinuteRate(s),3/1000);
+ s.nav.current={appId:'home',route:'/',params:{}};assert.equal(worldMinuteRate(s),3.75/1000);
+ endShortCharge(s);assert.equal(worldMinuteRate(s),2.5/1000);
 });
 test('cheat event jump finds the next same-day clock but cannot run in normal mode',()=>{
  const s=phone();s.day=41;s.clock='08:00';

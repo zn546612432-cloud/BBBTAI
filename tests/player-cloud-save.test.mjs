@@ -209,17 +209,17 @@ test('an unrelated account cannot silently upload existing local history; delete
  const own=memory();own.setItem('phone:cloud-owner','player-a');own.setItem('phone:cloud:player-a:1',JSON.stringify({id:'deleted',revision:3}));
  const b=client(t,backend,phone(33,{storage:own}));await b.start();await b.flush();assert.equal(backend.writes,0);
 });
-test('friends-test cloud backup uses slot 2 while formal and other preview saves keep their existing policy',async t=>{
+test('friends-test and formal share slot 1 while ephemeral preview keeps slot 2',async t=>{
  const backend=server();
  const cases=[
   ['bbbtai.pages.dev','/','',false,true,1],
-  ['bbbtai.pages.dev','/review/friends-test/','',true,true,2],
-  ['bbbtai.pages.dev','/review/friends-test/index.html','',true,true,2],
+  ['bbbtai.pages.dev','/review/friends-test/','',true,true,1],
+  ['bbbtai.pages.dev','/review/friends-test/index.html','',true,true,1],
   ['bbbtai.pages.dev','/review/friends-test-copy/','',true,false,1],
   ['bbbtai.pages.dev','/review/55-20261101/','',true,false,1],
   ['zn546612432-cloud.github.io','/BBBTAI/','',false,true,1],
-  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/','',true,true,2],
-  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/index.html','',true,true,2],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/','',true,true,1],
+  ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test/index.html','',true,true,1],
   ['zn546612432-cloud.github.io','/BBBTAI/review/55-20261101/','',true,false,1],
   ['zn546612432-cloud.github.io','/BBBTAI/review/tai-vision-20261105/','',true,false,1],
   ['zn546612432-cloud.github.io','/BBBTAI/review/friends-test-copy/','',true,false,1],
@@ -420,4 +420,69 @@ test('an empty conflict cannot overwrite a save that appeared after the conflict
  assert.equal(await cloud.resolve('local'),false);
  assert.equal(backend.row.game_state.day,6);
  assert.equal(cloud.status.conflict.remote.game_state.day,6);
+});
+
+
+test('a verified email account safely promotes its advanced friends-test save into the formal slot',async t=>{
+ const rows=new Map([
+  [1,{id:'formal-one',revision:3,game_state:state(1),updated_at:'2026-11-23T12:00:00Z'}],
+  [2,{id:'legacy-two',revision:9,game_state:state(19),updated_at:'2026-11-23T12:00:00Z'}]
+ ]);
+ const reads=[],writes=[];
+ const api={
+  player:async()=>({id:'player-a',email:'confirmed@example.com',email_confirmed_at:'2026-11-23',is_anonymous:false}),
+  read:async slot=>{reads.push(slot);return structuredClone(rows.get(slot)||null);},
+  write:async({slot,revision,state:next,writeId})=>{
+   const old=rows.get(slot);if((old?.revision||0)!==revision)return {status:'conflict'};
+   writes.push(slot);
+   const updated={id:old?.id||'formal-one',revision:revision+1,game_state:structuredClone(next),client_write_id:writeId,updated_at:'2026-11-25T12:00:00Z'};
+   rows.set(slot,updated);return {...updated,status:'saved'};
+  },
+  erase:async({slot,id})=>{if(rows.get(slot)?.id!==id)return {status:'conflict'};rows.delete(slot);return {status:'deleted'};},
+  media:async()=>({media:{},missing:0}),useMedia(){},backups:async()=>[]
+ };
+ const local=phone(1),cloud=new PlayerCloudSave(local,{key:'phone',validate,slot:1,legacySlot:2,api,factory:null,delay:60000});
+ local.cloud=cloud;t.after(()=>cloud.close());
+ assert.equal(await cloud.start(),true);
+ assert.equal(local.get().day,19);
+ assert.equal(rows.get(1).game_state.day,1,'no overwrite before confirmed cloud upload');
+ assert.equal(rows.get(2).game_state.day,19,'legacy source stays untouched');
+ assert.equal(await cloud.flush(),true);
+ assert.equal(rows.get(1).game_state.day,19);
+ assert.deepEqual(writes,[1]);
+ assert.equal(rows.get(2).game_state.day,19);
+ const reopened=phone(19,{storage:local.storage});
+ const resumed=new PlayerCloudSave(reopened,{key:'phone',validate,slot:1,legacySlot:2,api,factory:null,delay:60000});
+ reopened.cloud=resumed;t.after(()=>resumed.close());
+ const before=reads.filter(slot=>slot===2).length;
+ assert.equal(await resumed.start(),true);
+ assert.equal(reads.filter(slot=>slot===2).length,before,'later sessions use formal slot directly');
+ assert.equal(reopened.get().day,19);
+ cloud.markExplicitRestart();
+ local.replace({...state(1),_legacyCloudRetired:true});
+ const reset=new PlayerCloudSave(local,{key:'phone',validate,slot:1,legacySlot:2,api,factory:null,delay:60000});
+ local.cloud=reset;t.after(()=>reset.close());cloud.close();
+ assert.equal(await reset.start(),true);
+ assert.equal(rows.size,0,'explicit 0000 clears both owned slots');
+ assert.equal(await reset.flush(),true);
+ assert.equal(rows.get(1).game_state._legacyCloudRetired,true);
+ const after=phone(1,{storage:local.storage}),next=new PlayerCloudSave(after,{key:'phone',validate,slot:1,legacySlot:2,api,factory:null,delay:60000});
+ after.cloud=next;t.after(()=>next.close());
+ assert.equal(await next.start(),true);
+ assert.equal(after.get().day,1,'explicit restart cannot resurrect an old test save');
+});
+
+test('legacy migration does not replace play begun during a slow secondary read',async t=>{
+ const base=server(),local=phone(1),row={id:'legacy',revision:2,game_state:state(23),updated_at:'2026-11-25T12:00:00Z'};
+ let releaseRead;
+ const api={...base.api,player:async()=>({id:'player-a',email_confirmed_at:'2026-11-23',is_anonymous:false}),
+  read:async slot=>slot===2?await new Promise(resolve=>{releaseRead=()=>resolve(row);}):null};
+ const cloud=new PlayerCloudSave(local,{key:'phone',validate,legacySlot:2,api,factory:null,delay:60000});
+ local.cloud=cloud;t.after(()=>cloud.close());
+ const start=cloud.start();
+ while(!releaseRead)await new Promise(resolve=>setImmediate(resolve));
+ local.advance(2);releaseRead();
+ assert.equal(await start,false);
+ assert.equal(local.get().day,2);
+ assert.equal(cloud.status.phase,'conflict');
 });
