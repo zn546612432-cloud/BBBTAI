@@ -37,7 +37,13 @@ export class MessageDelivery {
      m.from===c.id&&s.nav?.current?.appId==='home'&&s.unlocked;
     if(schedule.mode==='chat-delay'&&pageVisible&&
        (isConversationOpen(s,channel,c.id)||taiHomeReply)){
-     const key=JSON.stringify([channel,c.id,m.id,schedule,m.deliveryRevision||0]),start=this.waiting.get(key)??now;
+     const key=JSON.stringify([channel,c.id,m.id,schedule,m.deliveryRevision||0]);
+     // GHOST's authored follow-up is measured from the player's actual Send.
+     // Keep this timestamp in the existing scheduled message so an iOS
+     // background/foreground cycle cannot restart its 2.5-5s wait forever.
+     const anchored=channel==='mirage'&&c.id==='s55-ouroboros'&&m.ghostShareScript&&
+      Number.isFinite(schedule.queuedAt)?schedule.queuedAt:null;
+     const start=anchored??this.waiting.get(key)??now;
      waiting.set(key,start);ready=now-start>=schedule.seconds*1000;
     }
     if(ready)due.push({channel,conversationId:c.id,id:m.id,title:(c.id==='group'||c.group)?`${c.name} · ${actorName(c,m.from)}`:c.name,body:m.kind==='image'?'[图片]':m.kind==='app_invitation'?'[国际象棋邀请]':m.text,from:m.from});
