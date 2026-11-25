@@ -129,7 +129,7 @@ export class PlayerCloudSave{
     // no explicit reset. Keep both source and overwritten slot-1 backups.
     let legacy=null;
     if(this.legacySlot&&!intentionalRestart&&player.email_confirmed_at&&!player.is_anonymous
-      &&this.store.get().day===1&&(!row||snapshot(row).day===1)
+      &&this.store.get().day===1&&!this.store.get()._legacyCloudRetired&&(!row||snapshot(row).day===1)
       &&!row?.game_state?._legacyCloudRetired){
      legacy=await this.api.read(this.legacySlot,player.id);
      if(legacy)this.validate(snapshot(legacy));
