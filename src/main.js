@@ -509,7 +509,11 @@ setInterval(()=>{
 mountTelephony(ctx);
 mountInteractions($('#root'),ctx());
 mountWeatherSwipe($('#root'),ctx);
-setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
+setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||store.get().poweredOff||deathLocked(store.get())||secondView55(store.get()))return;
+ // The native message queue must run even when an unrelated story heartbeat fails.
+ // This also resumes legacy saved GHOST replies that predate persisted send anchors.
+ try{delivery.tick(Date.now(),true);}catch(error){toast(error?.message||'訊息投遞暫時不可用');}
+ try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get())||identityRevealDue55(store.get())||pacedStorySceneDue55(store.get()))store.update(s=>tickStory55(s));
   if(d53DealReminderDue(store.get()))store.update(s=>syncD53DealReminder(s));
@@ -517,7 +521,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  if(duePlayerInviteReply(store.get()))processDemoReply(store);
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
- if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));delivery.tick(Date.now(),!document.hidden);if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const d55Handled=tickD55NoApp(ctx());const callCandidate=store.get();
+ if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const d55Handled=tickD55NoApp(ctx());const callCandidate=store.get();
  if(!d55Handled&&!maybeStartRecognitionCall(ctx())&&!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
