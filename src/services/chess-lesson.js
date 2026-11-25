@@ -20,25 +20,25 @@ export function sendD29ChessDraft(match,clock,now=Date.now()){
 }
 export const d23ChessBoardReadyToExit=match=>!!(isD23ChessLesson(match)&&match.status==='finished'&&match.lesson?.finishedNotified&&!(match.lesson?.outbox?.length));
 const OPENING=[
- '先講規矩。你執白，我執黑，白棋先走，之後輪流各走一步。自己的王不能留在被攻擊的位置。',
- '王受到攻擊叫「將軍」；如果沒有任何合法的辦法化解，就是「將死」。想在棋盤上贏我，就得把我的王將死。',
- '還有「逼和」：王沒有被將軍，卻一枚合法的棋都走不了，算平局。現在，挑枚棋子試試。'
+ "按惯例白棋先走。国际象棋赢法很简单，把对方的王将死即可。",
+ "和中国象棋不同的点在于，如果没有将死对方，却让对方无子可走，这叫逼和，算平局。",
+ "好了，你走一步试试。"
 ];
 const PIECE_LESSONS={
- p:'兵通常只能向前走一格，第一次可以走兩格；吃子卻要斜前方。走到底線還能升變，別小看它。',
- n:'馬走「日」字：先兩格，再轉一格。它還能跳過其他棋子，不像你，繞個彎都要問我。',
- b:'象只走斜線，路上不能有其他棋子擋著。它永遠留在同一種顏色的格子上。',
- r:'車沿著橫線或直線走，走多少格都可以，但不能越過擋路的棋子。明白？',
- q:'后既能直走，也能斜走，威力最大。但如果你只靠它橫衝直撞，我很快就能收下。',
- k:'王平時每次只能走一格，不能走進受攻擊的位置。有條件時可以和車一起「王車易位」，把王藏得安全一點。'
+ p:"这是兵，第一次走可以走两格，之后只能直走一格。吃子是吃斜前方的子，当兵走到底后能生变，所以别小看它。",
+ n:"马走日字，而且没有压马脚一说。",
+ b:"象只能走斜线，路径上不能有其他棋子遮挡。它永远踩着同一种颜色。",
+ r:"車走直線。橫著、豎著，幾格都行；有人棋子挡著就不能穿過去。",
+ q:"后能橫走、豎走，也能斜走。不能跳子。虽然很厲害，但也經不起你亂送。",
+ k:"王平時每次只能走一格，不能走進受攻擊的位置。有條件時可以和車一起「王車易位」，把王藏得安全一點。"
 };
 const PIECE_VARIANTS={
- p:[PIECE_LESSONS.p,'兵往前走一格，剛出發時可以走兩格。吃子得斜著來，別把這兩件事弄反了。走到底還能升變。','這是兵。平常向前一格，第一次可走兩格；要吃子就斜前方一格，到底線可以升變。'],
- n:[PIECE_LESSONS.n,'馬先走兩格再拐一格，也就是「日」字。中間擋著棋子也能跳過去。這回記住了？','馬走「日」字，兩格再轉一格，可以跳子。不是只能往前，別自己給它加規矩。'],
- b:[PIECE_LESSONS.b,'象走斜線，幾格都行，但不能越過別的棋子。你看，它始終踩著同一種顏色。','看斜線。象只能沿它走，路上有棋子就過不去，一輩子也換不了格子的顏色。'],
- r:[PIECE_LESSONS.r,'車走直線。橫著、豎著，幾格都行；有人擋著就不能穿過去。','這枚車只能橫走或豎走，距離不限。路得空著，別把它當馬用。'],
- q:[PIECE_LESSONS.q,'后能橫走、豎走，也能斜走。不能跳子。是很厲害，但也經不起你亂送。','后走直線和斜線，格數不限，路上不能擋子。先護好它，再想著吃我的。'],
- k:[PIECE_LESSONS.k,'王每次走一格，周圍哪個方向都行，但不能走到受攻擊的格子裡。王車易位另有條件，別急。','王只能挪一格，還不能挪進別人的攻擊範圍。想王車易位也得滿足條件，這枚最要緊，護好了。']
+ p:[PIECE_LESSONS.p],
+ n:[PIECE_LESSONS.n],
+ b:[PIECE_LESSONS.b],
+ r:[PIECE_LESSONS.r],
+ q:[PIECE_LESSONS.q],
+ k:[PIECE_LESSONS.k]
 };
 const pieceRule=(match,piece)=>chessReaction(match,'rule-'+piece,{},PIECE_VARIANTS[piece]);
 const CHESS_WORDS=/棋|對局|对局|棋盤|棋盘|走法|走哪|怎麼走|怎么走|下一步|這步|这步|落子|開局|开局|棄兵|弃兵|吃子|升變|升变|過路兵|过路兵|易位|將軍|将军|將死|将死|逼和|和棋|認輸|认输|國王|国王|皇后|后翼|棋子|[兵馬马象車车后王]|[a-h][1-8]|checkmate|stalemate|castle|bishop|knight|queen|rook|pawn/i;
@@ -59,6 +59,8 @@ export function enqueueChessTaiReply(match,text,clock,key,{source='preset',board
  return true;
 }
 export function appendChessTutorLine(match,text,clock,key){
+ // An authored silent reaction consumes its shuffle slot without a blank bubble.
+ if(text==='')return false;
  if(isD23ChessLesson(match)&&!String(key).startsWith('opening-'))return enqueueChessTaiReply(match,text,clock,key);
  const id=stableId(match,key);
  if((match.chat||[]).some(m=>m.id===id))return false;
