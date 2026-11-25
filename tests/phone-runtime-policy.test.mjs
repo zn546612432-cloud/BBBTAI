@@ -15,6 +15,14 @@ const start=(day=2,appId='home')=>{
  s.story55.completed.intro={day:1,clock:'12:00'};
  s.nav.current={appId,route:'/',params:{}};return s;
 };
+// The story creates the native MIRAGE contact on demand; these tests simulate
+// queued replies, so they explicitly seed that contact without changing gameplay.
+const taiMirageThread=s=>{
+ const list=s.content.conversations.mirage;
+ let thread=list.find(c=>c.id==='s55-ouroboros');
+ if(!thread){thread={id:'s55-ouroboros',name:'Dr. Ouroboros',messages:[],unread:0};list.push(thread);}
+ return thread;
+};
 test('every registered App on every story day uses 1 real minute = 5 game minutes',()=>{
  for(let day=1;day<=55;day++)for(const appId of [...registry.keys(),'future-app']){
   if(appId==='editor')continue;
@@ -114,7 +122,7 @@ test('unified clock: home 150x, background 10x and short charging 225x overrides
 });
 
 test('Tai online alone does not slow HOME; queued, real AI and unread replies do',()=>{
- const s=start(),rate=()=>phoneSceneMinuteRate(s),c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ const s=start(),rate=()=>phoneSceneMinuteRate(s),c=taiMirageThread(s);
  assert.ok(c);
  assert.equal(taiReplyTriggered(s),false);
  assert.equal(rate(),2.5/1000,'mere presence is not a reply');
@@ -151,7 +159,7 @@ test('Tai online alone does not slow HOME; queued, real AI and unread replies do
 });
 
 test('native Tai reply continues while waiting on HOME and uses original unread notification service',()=>{
- const s=start(),c=s.content.conversations.mirage.find(c=>c.id==='s55-ouroboros');
+ const s=start(),c=taiMirageThread(s);
  const id='queued-home-tai-test',m={id,from:'s55-ouroboros',kind:'text',text:'在這裡',day:s.day,time:s.clock,
   schedule:{mode:'chat-delay',seconds:2},story55:true};
  c.messages.push(m);s.story55.ghostShare={phase:'dialogue',pendingIds:[id]};
