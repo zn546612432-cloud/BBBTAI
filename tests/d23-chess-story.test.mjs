@@ -13,6 +13,7 @@ import {completed,nodeStatus} from '../src/services/story55/state.js';
 import {dateParts} from '../src/services/calendar.js';
 import {chronologicalMessages} from '../src/services/messaging/timestamps.js';
 import {tickStory55} from '../src/services/story55/runtime.js';
+import {syncD14D24Content} from '../src/story/d14-d24/migrate.js';
 
 const D20_APPROVED_DIALOGUE=[
  ['me','人員安排都做好了嗎？'],
@@ -37,6 +38,34 @@ const D20_APPROVED_DIALOGUE=[
  ['胡楓','是。'],
  ['阿威','是。']
 ];
+
+test('D23 approved MIRAGE exchange updates only unsent exact old copy in existing saves',()=>{
+ const old=[["聽起來你沒少挨訓。","一下午？那你应该没少挨训",4],["你能不能好好說話？","你真是嘴里吐不出好话",5],["我正在好好說話。","想听漂亮话，那是另外的价钱",6]];
+ const make=()=>{const s=activateStory55(initialState());s.day=23;delete s.story55.d23ChessDialogueRevision;
+  const script=s.story55.config.scenes['d23-chess'];for(const [previous,_approved,index] of old)script[index][1]=previous;
+  return s;};
+ const fresh=make();
+ assert.equal(syncD14D24Content(fresh),true);
+ for(const [_old,newText,index] of old)assert.equal(fresh.story55.config.scenes['d23-chess'][index][1],newText);
+ const partial=make(),script=partial.story55.config.scenes['d23-chess'];
+ partial.story55.scenes['d23-chess']={index:5};
+ const conversations=partial.content.conversations.mirage;
+ let thread=conversations.find(c=>c.id==='s55-ouroboros');
+ if(!thread){thread={id:'s55-ouroboros',messages:[],unread:0};conversations.push(thread);}
+ thread.messages.push({id:'s55-d23-chess-4',from:'s55-ouroboros',text:old[0][0],kind:'text',actual:true});
+ const priorBubble=structuredClone(thread.messages.at(-1));
+ syncD14D24Content(partial);
+ assert.equal(script[4][1],old[0][0],'already-sent NPC script stays old');
+ assert.equal(script[5][1],old[1][1],'unsent player draft is updated');
+ assert.equal(script[6][1],old[2][1],'unsent NPC line is updated');
+ assert.deepEqual(thread.messages.at(-1),priorBubble,'delivered message history is preserved');
+ const authored=make();authored.story55.config.scenes['d23-chess'][5][1]='玩家自己修订的原文';
+ syncD14D24Content(authored);
+ assert.equal(authored.story55.config.scenes['d23-chess'][5][1],'玩家自己修订的原文');
+ const finished=make();finished.story55.completed['d23-chess']={day:23,clock:'23:00'};
+ syncD14D24Content(finished);
+ assert.equal(finished.story55.config.scenes['d23-chess'][4][1],old[0][0]);
+});
 
 test('D20 restores the user-authored original and deduplicates AI monitor exchange in the existing 10:45 scene',()=>{
  const content=JSON.parse(fs.readFileSync(new URL('../src/story/d14-d24/content.json',import.meta.url)));

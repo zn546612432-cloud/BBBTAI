@@ -88,6 +88,19 @@ export function syncD14D24Content(s){
  if(Array.isArray(currentD23)&&/若能打通 f 線，車就有機會直指黑方的 f7。/.test(currentD23[13]?.[1]||'')){
   currentD23[13][1]=v4Line;changed=true;
  }
+ // D23 dialogue revision: update only unsent lines that still match the exact
+ // previous release. Keep player-edited scripts and already-delivered history.
+ if(s.story55.d23ChessDialogueRevision!==1){
+  const script=s.story55.config?.scenes?.['d23-chess'];
+  const next=D14_D24_CONTENT.scenes['d23-chess'];
+  const cursor=s.story55.scenes?.['d23-chess']?.index||0;
+  if(Array.isArray(script)&&!s.story55.completed?.['d23-chess']){
+   for(const [index,old] of [[4,"聽起來你沒少挨訓。"],[5,"你能不能好好說話？"],[6,"我正在好好說話。"]]){
+    if(index>=cursor&&script[index]?.[1]===old){script[index]=[script[index][0],next[index][1]];changed=true;}
+   }
+  }
+  s.story55.d23ChessDialogueRevision=1;changed=true;
+ }
  // Exact-match migration. An in-progress D15 conversation keeps its old
  // script and current index; all prior real Send messages remain untouched.
  // A not-yet-started scene adopts the newly approved sequence.
