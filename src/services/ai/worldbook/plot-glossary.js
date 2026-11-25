@@ -6,6 +6,7 @@
 // Never grant a role access to private WeChat or unopened future dialogue.
 import {taiCanonicalMilestones} from './plot-memory.js';
 import {selectTaiDeliveredPresetKnowledge} from './preset-knowledge.js';
+import {projectTaiSharedWorkKnowledge} from './shared-work-knowledge.js';
 
 const actual=m=>m&&m.actual!==false&&!m.demo&&!m.authoredPending&&!m.testOnly;
 const played=(s,id)=>{const x=s.story55?.completed?.[id];return !!x&&!x.test&&!x.legacySkipped;};
@@ -133,7 +134,8 @@ export function projectTaiPlotGlossary(s,context={}){
  // Newly authored scenes become indexed automatically; only actually
  // delivered, actor-visible lines can be promoted to Xi Tai's memory.
  const delivered=selectTaiDeliveredPresetKnowledge(s,query);
- return [...canonical,...delivered.map(e=>entry(e.id,e.content))];
+ const shared=projectTaiSharedWorkKnowledge(s,{channel:'noapp',query});
+ return [...canonical,...shared.map(e=>entry(e.id,e.content)),...delivered.map(e=>entry(e.id,e.content))];
 }
 
 
@@ -176,7 +178,8 @@ export function projectMirageTaiGlossary(s,context={}){
   specifics.push(entry('mirage-job',
    '熙蒙參與高額電子貨幣相關計劃，正在進行技術準備。熙泰知道計劃有風險，暫時選擇支持而不是替他下決定。不能把銀行、監控、撤離或資金事項寫成已經成功，也不要突然引述熙蒙尚未公開給你的群聊原話'));
  const delivered=selectTaiDeliveredPresetKnowledge(s,query,{maxScenes:2,maxLines:3,maxChars:520});
- return [...lore,...specifics.slice(0,3),...delivered.map(e=>entry(e.id,e.content))];
+ const shared=projectTaiSharedWorkKnowledge(s,{channel:'mirage',query});
+ return [...lore,...specifics.slice(0,3),...shared.map(e=>entry(e.id,e.content)),...delivered.map(e=>entry(e.id,e.content))];
 }
 
 // Only an ordinary, explicit "what is this program?" question gets one
