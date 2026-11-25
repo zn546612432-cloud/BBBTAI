@@ -105,7 +105,9 @@ test('a genuinely hanging major piece triggers a concrete one-time Tai warning',
   m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
  });
  playMove(store,matchId,'f2','f4');
- assert.equal(match().lesson.outbox.filter(x=>x.id.includes('exposed-')&&x.text.includes('后')&&!x.text.includes('h5')).length,1);
+ const warnings=match().lesson.outbox.filter(x=>x.id.includes('exposed-')&&!x.text.includes('h5'));
+ assert.equal(warnings.length,1);
+ assert.ok(CHESS_REACTIONS.danger.map(line=>line.replace('{piece}','后')).includes(warnings[0].text),'hanging-piece warning uses an approved variant');
  assert.equal(match().lesson.warnedThreats.filter(x=>x==='h5:q').length,1);
 });
 
@@ -346,13 +348,13 @@ test('AI prompt contains style examples and board facts; multiple answers are pa
 test('a real final capture is named before the individually queued checkmate recap',()=>{
  const {store,matchId,match}=d23Store();playOpening(store,matchId);
  const game=new Chess();game.loadPgn('1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6');
- store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));});
+ store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));(m.lesson.reactionBags??={}).captureWhite={remaining:[0],last:-1};});
  const outcome=playMove(store,matchId,'h5','f7');
  assert.equal(outcome.finished,true);assert.equal(match().result,'player-win');
- assert.match(match().lesson.outbox[0].text,/兵/);assert.equal(match().lesson.outbox.length,3);
+ assert.equal(match().lesson.outbox[0].text,'有意思，吃我的兵');assert.equal(match().lesson.outbox.length,3);
  assert.deepEqual(match().feedbackEvents.map(x=>x.kind),['capture','win']);
  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
- assert.equal(match().lesson.outbox.length,2);assert.match(match().chat.at(-1).text,/兵/);
+ assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).text,'有意思，吃我的兵');
 });
 test('capture and terminal feedback are attached once to actual moves, and resign is a terminal effect',()=>{
  const {store,matchId,match}=d23Store();
