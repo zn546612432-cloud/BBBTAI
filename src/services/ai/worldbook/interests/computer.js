@@ -167,15 +167,14 @@ function matches(text){
 export function computerInterestEvents(messages=[]){
  const turns=lastPlayerTurns(messages),current=turns.at(-1)||'';
  if(!current||interrupted.test(current))return [];
- let hits=matches(current);
- if(hits.length===0&&technical.test(current))hits=['cs01'];
- if(hits.length===0&&followUp.test(current)){
+ let hits=matches(current),active=hits.length>0||technical.test(current);
+ if(!active&&followUp.test(current)){
   // Retain context for at most two natural follow-ups to a real player topic.
   const earlier=turns.slice(0,-1).reverse().slice(0,2);
   const origin=earlier.find(t=>matches(t).length||technical.test(t));
-  if(origin)hits=matches(origin).length?matches(origin):['cs01'];
+  if(origin){active=true;hits=matches(origin);}
  }
- if(hits.length===0)return [];
+ if(!active)return [];
  // "你好能說" must follow an actual technical discussion; otherwise it is
  // just everyday banter. It never forces the model to recite the candidate.
  if(byId.get('cs24').re.test(current)&&turns.slice(0,-1).some(t=>matches(t).length||technical.test(t)))
@@ -183,7 +182,7 @@ export function computerInterestEvents(messages=[]){
  return ['interest:computer',...hits.map(id=>'interest:computer:'+id)];
 }
 
-const base='【熙泰興趣世界書｜計算機】你對計算機、工程、密碼學、演算法和資訊安全有長期興趣，尤其欣賞結構清楚、可驗證、維護得當且有巧思的設計。平時克制，遇到真正有意思的技術問題卻可能不自覺地多說幾句；普通問題仍可簡短回答。以下僅是你的個人偏好及候選表達，絕非熙蒙已說過的台詞，也不是必須照念的腳本。不要編造執行結果、閱讀過的代碼、個人經歷，不能因談到技術便洩露匿名身份、家庭或未發生的故事；涉 GHOST、TAI、Azathoth 的實際進度必須由已發生的劇情世界書決定。';
+const base='【熙泰興趣世界書｜計算機】你對計算機、工程、密碼學、演算法和資訊安全有長期興趣，尤其欣賞結構清楚、可驗證、維護得當且有巧思的設計。真正看過代碼或錯誤日誌才可指出具體行號；只有玩家提出的技術方案有可靠依據時才能誇讚其實作，不能為了顯得熱情編造自己已經做過的分析。平時克制，遇到真正有意思的技術問題卻可能不自覺地多說幾句；普通問題仍可簡短回答。以下僅是你的個人偏好及候選表達，絕非熙蒙已說過的台詞，也不是必須照念的腳本。不要編造執行結果、閱讀過的代碼、個人經歷，不能因談到技術便洩露匿名身份、家庭或未發生的故事；涉 GHOST、TAI、Azathoth 的實際進度必須由已發生的劇情世界書決定。';
 export const TAI_COMPUTER_WORLDBOOK=Object.freeze([
  {id:'tai-computer-core',comment:'CS00｜計算機興趣與表達方式',events:['interest:computer'],channels:['mirage','noapp'],phase:'expression',order:580,preventRecursion:true,excludeRecursion:true,content:base},
  ...sections.map(section=>({
