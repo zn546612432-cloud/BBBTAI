@@ -60,6 +60,28 @@ test('Dossier appears at D16, never at D15, and respects player deletion',()=>{
  assert.deepEqual(s.content.notes,[]);
 });
 
+test('Ouroboros dossier omits game-day labels in new and existing saves',()=>{
+ const s=makeState(16);
+ assert.equal(syncOuroborosDossier(s,ANONYMOUS_MIRAGE_WINDOWS_55),true);
+ const note=s.content.notes.find(n=>n.id===OUROBOROS_DOSSIER_ID);
+ assert.doesNotMatch(note.text,/D13|D14/);
+ assert.match(note.text,/真名：未知\n\n疑似上線時間/);
+ const old=makeState(18);
+ old.content.notes=[{
+  id:OUROBOROS_DOSSIER_ID,title:OUROBOROS_DOSSIER_TITLE,
+  text:[
+   'Dr Ouroboros','MIRAGE 匿名聯絡人','真名：未知',
+   'D13 曾入侵手機。反追蹤失敗。','D14 收到他寄來的框架。',
+   '',OUROBOROS_DOSSIER_HEADING,'08:00－09:25','玩家自己補充的線索'
+  ].join('\n')
+ }];
+ assert.equal(syncOuroborosDossier(old,ANONYMOUS_MIRAGE_WINDOWS_55),true);
+ assert.doesNotMatch(old.content.notes[0].text,/D13|D14/);
+ assert.match(old.content.notes[0].text,/玩家自己補充的線索/);
+ assert.match(old.content.notes[0].text,/08:00－09:25/);
+ assert.equal(syncOuroborosDossier(old,ANONYMOUS_MIRAGE_WINDOWS_55),false);
+});
+
 test('pre-existing player-written Ouroboros dossier only receives an appended observation',()=>{
  const s=makeState(18);
  s.content.notes=[{id:'custom-note',title:'衔尾蛇资料',text:'私人線索：先不公開',actual:true}];
