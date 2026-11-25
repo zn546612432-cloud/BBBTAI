@@ -47,10 +47,29 @@ test('D14 report once; all ten offline-guaranteed Tear dialogue scripts settle f
   const result=shareGhostToTai(s,{projectId:'base'},{random:()=>assert.fail('Tear must not roll'),now:day*10000});
   assert.equal(result.script,'tear-'+day);assert.ok(result.accepted);
   drain(s);assert.ok(ghostShareReadyForControl(s));assert.ok(beginGhostShareControl(s));
+  // D23: the six confirmed lines happen before the real GHOST takeover.
+  // The last reply is not authored/queued until the five LINK checks succeed.
+  if(day===23){
+   const pre=messages(s).filter(m=>m.id.startsWith(result.cardId+'-')&&/-((me)|(tai))-\d+$/.test(m.id));
+   assert.deepEqual(pre.map(m=>m.text),[
+    '我又來了。','放那吧，一會給你處理。','昨天不是說讓我今天自己做嗎？',
+    '那你還來？','想看你是不是真的忍心。','嘖。'
+   ]);
+   assert.equal(pre.some(m=>m.text==='滿意了？'),false);
+  }
   assert.equal(s.story55.ghostShareTakeovers,2);
   win(s,day===15?3:5);
   s.story55.ghostShare.remote={outcome:'success'};
-  assert.ok(finishGhostShareControl(s));drain(s);
+  if(day===23)assert.equal(messages(s).some(m=>m.id.startsWith(result.cardId+'-')&&m.text==='滿意了？'),false);
+  assert.ok(finishGhostShareControl(s));
+  if(day===23){
+   const post=messages(s).filter(m=>m.id.startsWith(result.cardId+'-')&&m.text==='滿意了？');
+   assert.equal(post.length,1,'successful GHOST control may queue the line once');
+   assert.ok(post[0].schedule,'keep the native chat-delay mechanism');
+   assert.equal(!!post[0].delivery,false,'completion reply should be naturally delayed');
+   assert.equal(finishGhostShareControl(s),false,'cannot replay final line');
+  }
+  drain(s);
   const card=result.cardId;
   const actual=messages(s).filter(m=>m.id.startsWith(card+'-')&&/-((me)|(tai))-\d+$/.test(m.id)).sort((a,b)=>Number(a.id.split('-').at(-1))-Number(b.id.split('-').at(-1))).map(m=>[m.from==='me'?'me':'tai',m.text]);
   assert.deepEqual(actual,TEAR_DIALOGUES[result.script].filter(([from])=>from!=='control'));
