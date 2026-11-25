@@ -169,7 +169,7 @@ test('offline chess question always has a correct local tutorial answer without 
  try{
   postMatchMessage(store,matchId,'馬怎麼走？');
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().lesson.outbox.at(-1).text,/馬.*日|馬.*兩格/);
+  assert.match(match().lesson.outbox.at(-1).text,/[馬马].*日|[馬马].*兩格/);
   assert.equal(match().lesson.outbox.at(-1).mode,'text');
  }finally{globalThis.fetch=prior;}
 });
