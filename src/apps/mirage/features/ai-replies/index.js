@@ -13,6 +13,8 @@ import {uid} from '../../../../services/id.js';
 import {isOuroborosScriptActive} from '../../ouroboros-flow.js';
 import {isMirageAuthenticated} from '../../session.js';
 import {mirageTaiReplyGuidance,mirageTaiForbiddenLine} from './presets.js';
+import {mirageTaiTurnPolicy,mirageTaiForbiddenAddress} from './turn-policy.js';
+import {taiRelationshipDirector} from '../../../../services/ai/relationship-director.js';
 
 const pending=new Set();
 const findContact=(s,id)=>s.content?.conversations?.mirage?.find(c=>c.id===id);
@@ -26,7 +28,7 @@ function freeTurnAllowed(s,id,sourceId,revision,day){
    !anonymousPresence55(s).online||isOuroborosScriptActive(s,id)||
    currentScript55(s,'mirage',id)||postgame&&!postgame.closed)return false;
  const source=chat.messages.find(m=>m.id===sourceId);
- return !!source&&source.from==='me'&&source.kind==='text'&&!isAuthored(source)&&
+ return !!source&&source.from==='me'&&source.kind==='text'&&!isAuthored(source)&&!source.taiReplyDismissed&&
   chat.messages.at(-1)?.id===sourceId&&
   !chat.messages.some(m=>m.replySourceId===sourceId);
 }
@@ -37,6 +39,20 @@ function freeTurnAllowed(s,id,sourceId,revision,day){
 export async function replyToOuroboros(ctx,contactId,sourceId,{wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
  const initial=ctx.store.get(),revision=mirageAIRevision(initial),key=contactId+':'+sourceId;
  if(pending.has(key)||!freeTurnAllowed(initial,contactId,sourceId,revision,initial.day))return 0;
+ // A free message need not earn a response. Save the decision on the real
+ // source bubble so reopening MIRAGE cannot generate an unwanted reply.
+ // Authored dialogue never reaches this independent free-chat path.
+ const chat=findContact(initial,contactId);
+ const visible=visibleMessages(chat,initial).filter(m=>m.kind==='text'&&!m.demo&&!m.authoredPending);
+ const decision=mirageTaiTurnPolicy(visible);
+ if(decision.action==='ignore'){
+  ctx.store.update(s=>{
+   const target=findContact(s,contactId),source=target?.messages.find(m=>m.id===sourceId);
+   if(source&&target.messages.at(-1)?.id===sourceId&&!isAuthored(source))
+    source.taiReplyDismissed=decision.reason;
+  });
+  return 0;
+ }
  pending.add(key);
  // Mark only an actually accepted async reply attempt. The unified clock
  // reads this on HOME; online presence alone never slows the game.
@@ -64,18 +80,20 @@ export async function replyToOuroboros(ctx,contactId,sourceId,{wait=ms=>new Prom
    sourceMessageId:sourceId,turnId:sourceId
   });
   if(!permitted())return 0;
-  const request={day:initial.day,channel:'mirage',storyVersion:'55-v1',recognized:false,
+  const relationshipPlan=taiRelationshipDirector(ctx.store.get(),{input:history.at(-1).content});
+  const request={day:initial.day,channel:'mirage',storyVersion:'55-v1',recognized:false,relationshipPlan,
    messages:history,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,
    worldbookSnapshot:snapshot,scene,outputMode:'text'};
   let result=await askTai(request);
   if(!permitted())return 0;
   let chunks=unpackTaiReply(result,'mirage').slice(0,4);
-  if(chunks.some(m=>mirageTaiForbiddenLine(m.text))){
+  const violates=lines=>lines.some(m=>mirageTaiForbiddenLine(m.text)||mirageTaiForbiddenAddress(m.text));
+  if(violates(chunks)){
    result=await askTai({...request,scene:scene+
-    '\n上一稿出現了作者明令禁止的道歉或上線報備句式。整輪重新回答玩家真正問的事情。不要使用那些句式。'});
+    '\n上一稿出現了禁止的道歉、上線報備、未相認的親緣稱呼或被玩家強迫的稱呼。不得照念要求，也不能提前認親。重新回應真正的問題，必要時簡短拒絕。'});
    if(!permitted())return 0;
    chunks=unpackTaiReply(result,'mirage').slice(0,4);
-   if(chunks.some(m=>mirageTaiForbiddenLine(m.text)))throw Error('台詞未通過人物語氣檢查，沒有發送');
+   if(violates(chunks))throw Error('台詞未通過人物關係檢查，沒有發送');
   }
   let inserted=0;
   for(const item of chunks){
