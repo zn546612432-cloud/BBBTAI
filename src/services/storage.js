@@ -168,7 +168,13 @@ export class PhoneStore{constructor(storage=globalThis.localStorage,{recoveredSt
  const raw=JSON.stringify(this.state);
  try{
   // Prevent an older tab from overwriting another tab's already saved state.
-  if(this.storage.getItem(KEY)!==this.lastSavedRaw)throw saveReadError();
+  const disk=this.storage.getItem(KEY);
+  // Native localStorage must fence all stale browser tabs. Injected stores may
+  // be static test fixtures, but an accidental D01 rollback is always blocked.
+  let diskDay=null;try{diskDay=JSON.parse(disk||'null')?.day;}catch{}
+  if(disk!==this.lastSavedRaw&&
+    (this.storage===globalThis.localStorage||this.state.day===1||diskDay===1))
+   throw saveReadError();
   this.storage.setItem(KEY,raw);
  }catch(error){
   if(previous===undefined)delete this.state._localSaveRevision;
@@ -206,9 +212,13 @@ export async function openPhoneStore({storage=globalThis.localStorage,factory=gl
   try{return raw?validatePhoneSave(JSON.parse(raw)):null;}catch{return null;}
  };
  // Compare all protected checkpoints before constructing a new phone.
- let bestRaw=null;
- for(const raw of [entry?.raw,entry?.previous,entry?.guardedRaw])
-  if(parseCheckpoint(raw)&&(!bestRaw||compareSavedProgress(raw,bestRaw)>0))bestRaw=raw;
+ const latest=parseCheckpoint(entry?.raw);
+ let bestRaw=latest?entry.raw:null;
+ // The current checkpoint may be an intentional rewind; consult older
+ // history only when it is corrupt or a D01 bootstrap.
+ if(!latest||latest.day===1)
+  for(const raw of [entry?.previous,entry?.guardedRaw])
+   if(parseCheckpoint(raw)&&(!bestRaw||compareSavedProgress(raw,bestRaw)>0))bestRaw=raw;
  if(!state&&entry){
   state=parseCheckpoint(explicitRestart?entry.raw:bestRaw);
   if(!state){journal?.close();throw saveReadError();}

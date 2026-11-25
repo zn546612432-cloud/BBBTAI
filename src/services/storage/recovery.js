@@ -85,7 +85,8 @@ function createJournal(db,key){
      const old=req.result;
      let guardedRaw=old?.guardedRaw||null;
      // A replayed D01 must not evict a later checkpoint after repeated writes.
-     if(compareSavedProgress(old?.raw,raw)>0&&compareSavedProgress(old.raw,guardedRaw)>0)
+     if(checkpointInfo(raw)?.[0]===1&&compareSavedProgress(old?.raw,raw)>0
+       &&compareSavedProgress(old.raw,guardedRaw)>0)
       guardedRaw=old.raw;
      if(guardedRaw&&compareSavedProgress(raw,guardedRaw)>=0)guardedRaw=null;
      table.put({key,raw,previous:old?.raw!==raw?old?.raw:old?.previous,
