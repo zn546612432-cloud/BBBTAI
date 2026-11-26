@@ -585,7 +585,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "胡枫",
+      "actor": "仔仔",
       "trigger": {
         "type": "day-time",
         "ref": "10:22"
@@ -599,8 +599,9 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "明天找個人跟我換裝走一遍永利的路線，誰來？",
-      "thread": "group"
+      "text": "服裝設計稿_V1.pdf",
+      "thread": "group",
+      "messageKind": "file"
     },
     {
       "id": "d15-costumes-1",
@@ -608,7 +609,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "小辛",
+      "actor": "仔仔",
       "trigger": {
         "type": "previous-event",
         "ref": "d15-costumes-0"
@@ -624,7 +625,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "me",
+      "text": "第一版做出來了，你們看看。",
       "thread": "group"
     },
     {
@@ -649,7 +650,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "只有我們三個",
+      "text": "這是我的？",
       "thread": "group"
     },
     {
@@ -674,7 +675,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "衣服我今晚給你們送過去，你們看看好不好脫",
+      "text": "對，按照你上次給我的尺寸做的。",
       "thread": "group"
     },
     {
@@ -683,7 +684,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "胡枫",
+      "actor": "阿威",
       "trigger": {
         "type": "previous-event",
         "ref": "d15-costumes-3"
@@ -699,7 +700,357 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "好",
+      "text": "肩膀可能要再改一下。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-4"
+      },
+      "requires": [
+        "d15-costumes-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你又胖了？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-5"
+      },
+      "requires": [
+        "d15-costumes-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那叫肌肉。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-6"
+      },
+      "requires": [
+        "d15-costumes-6"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我的呢？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-7"
+      },
+      "requires": [
+        "d15-costumes-7"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "還沒做好，你明天過來試。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-8"
+      },
+      "requires": [
+        "d15-costumes-8"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "永利那幾張照片你看過了嗎？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-9"
+      },
+      "requires": [
+        "d15-costumes-9"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "看了。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-10"
+      },
+      "requires": [
+        "d15-costumes-10"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我另外存了一些今年的品牌服裝照片，原先的設計有點過時。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-11"
+      },
+      "requires": [
+        "d15-costumes-11"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "所以我們這次可以穿得很帥？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-12"
+      },
+      "requires": [
+        "d15-costumes-12"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你先別對我的設計指手畫腳。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-14",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-costumes-13"
+      },
+      "requires": [
+        "d15-costumes-13"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我的衣服不用做吧？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-15",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-14"
+      },
+      "requires": [
+        "d15-costumes-14"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "順便給你做了一套。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-16",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-costumes-15"
+      },
+      "requires": [
+        "d15-costumes-15"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "什麼樣的？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-17",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-16"
+      },
+      "requires": [
+        "d15-costumes-16"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "等做好你就知道了。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-costumes-18",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-costumes-17"
+      },
+      "requires": [
+        "d15-costumes-17"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "10:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "明天都過去試一下，有不合適的地方早點改。",
       "thread": "group"
     },
     {
@@ -711,12 +1062,14 @@
       "actor": "熙旺",
       "trigger": {
         "type": "day-time",
-        "ref": "23:01"
+        "ref": "16:30"
       },
-      "requires": [],
+      "requires": [
+        "node:loan"
+      ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
@@ -741,7 +1094,7 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
@@ -766,7 +1119,7 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
@@ -791,7 +1144,7 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
@@ -816,13 +1169,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "silent"
       },
-      "text": "沒有竊取你的信息造成損失吧？",
+      "text": "電腦裡的東西沒事吧？",
       "thread": "wang"
     },
     {
@@ -841,13 +1194,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "skip"
       },
-      "text": "沒有，被我趕出去了。",
+      "text": "沒事，被我趕出去了。",
       "thread": "wang"
     },
     {
@@ -866,13 +1219,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "silent"
       },
-      "text": "那就好。你的電腦真要換就換吧，哥給你報銷",
+      "text": "那就好。你的電腦真要換就換吧，哥給你報銷。",
       "thread": "wang"
     },
     {
@@ -891,13 +1244,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "skip"
       },
-      "text": "不用，有人給我買單了",
+      "text": "不用，他剛給我轉了一百萬。",
       "thread": "wang"
     },
     {
@@ -916,13 +1269,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "silent"
       },
-      "text": "誰呀？",
+      "text": "多少？",
       "thread": "wang"
     },
     {
@@ -941,13 +1294,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "skip"
       },
-      "text": "那個神經病",
+      "text": "一百萬。",
       "thread": "wang"
     },
     {
@@ -966,13 +1319,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "silent"
       },
-      "text": "神經病給你買單？你們認識？還是你和你朋友開玩笑的？",
+      "text": "為什麼突然給你這麼多錢？",
       "thread": "wang"
     },
     {
@@ -991,24 +1344,24 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "skip"
       },
-      "text": "⋯⋯⋯⋯⋯⋯⋯嗯⋯⋯⋯",
+      "text": "借我的，嫌我的電腦跑不動他的程序。",
       "thread": "wang"
     },
     {
       "id": "d15-room-12",
-      "kind": "player-send",
+      "kind": "incoming-text",
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "me",
+      "actor": "熙旺",
       "trigger": {
-        "type": "user-send",
+        "type": "previous-event",
         "ref": "d15-room-11"
       },
       "requires": [
@@ -1016,13 +1369,13 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
-        "late": "skip"
+        "late": "silent"
       },
-      "text": "一言難盡",
+      "text": "你們認識多久了？",
       "thread": "wang"
     },
     {
@@ -1041,14 +1394,838 @@
       ],
       "timing": {
         "day": 15,
-        "at": "23:01"
+        "at": "16:30"
       },
       "once": true,
       "delivery": {
         "late": "skip"
       },
-      "text": "有機會再跟你解釋",
+      "text": "也沒多久。",
       "thread": "wang"
+    },
+    {
+      "id": "d15-room-14",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-13"
+      },
+      "requires": [
+        "d15-room-13"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "連人家是誰都不知道，就敢收他的錢？",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-15",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-14"
+      },
+      "requires": [
+        "d15-room-14"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "放心啦，我有錢還他。",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-16",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-room-15"
+      },
+      "requires": [
+        "d15-room-15"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "有什麼事記得跟哥說。",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-room-17",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d15-room-16"
+      },
+      "requires": [
+        "d15-room-16"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "知道啦。",
+      "thread": "wang"
+    },
+    {
+      "id": "d15-racing-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:06"
+      },
+      "requires": [],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "有沒有人上號",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-0"
+      },
+      "requires": [
+        "d15-racing-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "地平線！",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-1"
+      },
+      "requires": [
+        "d15-racing-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "來。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-2"
+      },
+      "requires": [
+        "d15-racing-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "今天跑公路賽？",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-3"
+      },
+      "requires": [
+        "d15-racing-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "可以啊",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-4"
+      },
+      "requires": [
+        "d15-racing-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "等我更新遊戲。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-result-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:43"
+      },
+      "requires": [],
+      "timing": {
+        "day": 15,
+        "at": "22:43"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "第一！",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-result-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-result-0"
+      },
+      "requires": [
+        "d15-racing-result-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:43"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你看看你撞了多少次牆。",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-result-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-result-1"
+      },
+      "requires": [
+        "d15-racing-result-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:43"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那我也是第一",
+      "thread": "group"
+    },
+    {
+      "id": "d15-racing-result-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d15-racing-result-2"
+      },
+      "requires": [
+        "d15-racing-result-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "22:43"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "再來一把。",
+      "thread": "group"
+    },
+    {
+      "id": "s55-loan-v2-0",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "day-time",
+        "ref": "15:36"
+      },
+      "requires": [
+        "fact:base-authorized"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "部署得怎麼樣，nya？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-1",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-0"
+      },
+      "requires": [
+        "s55-loan-v2-0"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "部署是成功了，但運行不了。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-2",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-1"
+      },
+      "requires": [
+        "s55-loan-v2-1"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "還在用你那台舊電腦？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-3",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-2"
+      },
+      "requires": [
+        "s55-loan-v2-2"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "不然呢？你給我的東西到底要多高的配置？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-4",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-3"
+      },
+      "requires": [
+        "s55-loan-v2-3"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "等等。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-5",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "camera",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-4"
+      },
+      "requires": [
+        "s55-loan-v2-4"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "相機權限異常／遠端畫面連線",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-6",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-5"
+      },
+      "requires": [
+        "s55-loan-v2-5"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你那是自己搭的機房？我還以為你住在貨車車廂裡。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-7",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-6"
+      },
+      "requires": [
+        "s55-loan-v2-6"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "熙蒙，你怎麼住在這種鬼地方？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-8",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-7"
+      },
+      "requires": [
+        "s55-loan-v2-7"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "……你開我攝像頭了？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-9",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-8"
+      },
+      "requires": [
+        "s55-loan-v2-8"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "看了一眼。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-10",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-9"
+      },
+      "requires": [
+        "s55-loan-v2-9"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "誰准你看的？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-11",
+      "kind": "system-notice",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "disconnect",
+      "trigger": {
+        "type": "user-action",
+        "ref": "s55-disconnect-session"
+      },
+      "requires": [
+        "s55-loan-v2-10"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "切斷連線",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-12",
+      "kind": "player-send",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "s55-loan-v2-11"
+      },
+      "requires": [
+        "s55-loan-v2-11"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "我們只是合作關係。你別太過分了。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-13",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-12"
+      },
+      "requires": [
+        "s55-loan-v2-12"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "合作關係？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-14",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-13"
+      },
+      "requires": [
+        "s55-loan-v2-13"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "nya，你是不是搞錯了什麼？",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-15",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-14"
+      },
+      "requires": [
+        "s55-loan-v2-14"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我是你的老闆。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-16",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-15"
+      },
+      "requires": [
+        "s55-loan-v2-15"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "一百萬，借你的。",
+      "thread": "s55-ouroboros"
+    },
+    {
+      "id": "s55-loan-v2-17",
+      "kind": "reward",
+      "surface": "bank",
+      "capability": "story.scene-loan",
+      "owner": "bank",
+      "actor": "credit",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-16"
+      },
+      "requires": [
+        "s55-loan-v2-16"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "太平洋銀行：入帳 1,000,000",
+      "thread": "s55-ouroboros",
+      "transactionId": "s55-loan",
+      "creditAmount": 1000000,
+      "liabilityAmount": 1000000
+    },
+    {
+      "id": "s55-loan-v2-18",
+      "kind": "incoming-text",
+      "surface": "mirage",
+      "capability": "story.d14-d24-dialogue",
+      "owner": "story55",
+      "actor": "ouroboros",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "s55-loan-v2-17"
+      },
+      "requires": [
+        "s55-loan-v2-17"
+      ],
+      "timing": {
+        "day": 15,
+        "at": "15:36"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "去換套像樣的設備，別再折磨你那台破電腦了。",
+      "thread": "s55-ouroboros"
     },
     {
       "id": "d16-briefing-0",
@@ -4090,659 +5267,6 @@
       },
       "text": "知道啦。",
       "thread": "wang"
-    },
-    {
-      "id": "s55-loan-v2-0",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "day-time",
-        "ref": "15:36"
-      },
-      "requires": [
-        "fact:base-authorized"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "部署得怎麼樣，nya？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-1",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-0"
-      },
-      "requires": [
-        "s55-loan-v2-0"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "能跑，就是慢得要命。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-2",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-1"
-      },
-      "requires": [
-        "s55-loan-v2-1"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "你的問題，還是我的問題？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-3",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-2"
-      },
-      "requires": [
-        "s55-loan-v2-2"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "配置問題",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-4",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-3"
-      },
-      "requires": [
-        "s55-loan-v2-3"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "配置？你幹黑客這麼多年，連台像樣的工作站都沒攢出來？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-5",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-4"
-      },
-      "requires": [
-        "s55-loan-v2-4"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "關你什麼事？能跑就行。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-6",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-5"
-      },
-      "requires": [
-        "s55-loan-v2-5"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "我倒想看看你拿什麼跑。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-7",
-      "kind": "system-notice",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "camera",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-6"
-      },
-      "requires": [
-        "s55-loan-v2-6"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "相機權限異常／遠端畫面連線",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-8",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-7"
-      },
-      "requires": [
-        "s55-loan-v2-7"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "……",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-9",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-8"
-      },
-      "requires": [
-        "s55-loan-v2-8"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "這是機房？我還以為你把伺服器塞進儲物間了。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-10",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-9"
-      },
-      "requires": [
-        "s55-loan-v2-9"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "？？？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-11",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-10"
-      },
-      "requires": [
-        "s55-loan-v2-10"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "你他媽誰准你開我攝像頭的？！",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-12",
-      "kind": "system-notice",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "disconnect",
-      "trigger": {
-        "type": "user-action",
-        "ref": "s55-disconnect-session"
-      },
-      "requires": [
-        "s55-loan-v2-11"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "切斷連線",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-13",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-12"
-      },
-      "requires": [
-        "s55-loan-v2-12"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "你再碰我設備試試。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-14",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-13"
-      },
-      "requires": [
-        "s55-loan-v2-13"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "呵，反應還挺快。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-15",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-14"
-      },
-      "requires": [
-        "s55-loan-v2-14"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "少在這兒陰陽怪氣，有本事你自己來做！",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-16",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-15"
-      },
-      "requires": [
-        "s55-loan-v2-15"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "行。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-17",
-      "kind": "reward",
-      "surface": "bank",
-      "capability": "story.scene-loan",
-      "owner": "bank",
-      "actor": "credit",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-16"
-      },
-      "requires": [
-        "s55-loan-v2-16"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "太平洋銀行：入帳 1,000,000",
-      "thread": "s55-ouroboros",
-      "transactionId": "s55-loan",
-      "creditAmount": 1000000,
-      "liabilityAmount": 1000000
-    },
-    {
-      "id": "s55-loan-v2-18",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-17"
-      },
-      "requires": [
-        "s55-loan-v2-17"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "？？？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-19",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-18"
-      },
-      "requires": [
-        "s55-loan-v2-18"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "你又幹什麼了？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-20",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-19"
-      },
-      "requires": [
-        "s55-loan-v2-19"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "換設備。算我借你的。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-21",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-20"
-      },
-      "requires": [
-        "s55-loan-v2-20"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "誰跟你借錢了？我答應了嗎？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-22",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-21"
-      },
-      "requires": [
-        "s55-loan-v2-21"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "不想要就還。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-23",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-22"
-      },
-      "requires": [
-        "s55-loan-v2-22"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "你以為我不敢？",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-24",
-      "kind": "incoming-text",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "ouroboros",
-      "trigger": {
-        "type": "previous-event",
-        "ref": "s55-loan-v2-23"
-      },
-      "requires": [
-        "s55-loan-v2-23"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "silent"
-      },
-      "text": "沒說你不敢。等你那台古董跑完程式，隨時。",
-      "thread": "s55-ouroboros"
-    },
-    {
-      "id": "s55-loan-v2-25",
-      "kind": "player-send",
-      "surface": "mirage",
-      "capability": "story.d14-d24-dialogue",
-      "owner": "story55",
-      "actor": "me",
-      "trigger": {
-        "type": "user-send",
-        "ref": "s55-loan-v2-24"
-      },
-      "requires": [
-        "s55-loan-v2-24"
-      ],
-      "timing": {
-        "day": 15,
-        "at": "15:36"
-      },
-      "once": true,
-      "delivery": {
-        "late": "skip"
-      },
-      "text": "……你真有病。",
-      "thread": "s55-ouroboros"
     },
     {
       "id": "s55-lead-v2-0",

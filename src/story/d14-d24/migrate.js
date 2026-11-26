@@ -131,5 +131,15 @@ export function syncD14D24Content(s){
   }
   s.story55.d15ApprovedLoanRevision=1;changed=true;
  }
+ // The D15 farewell is a status change, not a visible message. Keep the
+ // original payment, camera, cursor and offline timestamp intact.
+ const loan=s.story55.config?.scenes?.loan;
+ if(Array.isArray(loan)&&loan.at(-1)?.[0]==='offline'&&/^(?:衔尾蛇|銜尾蛇)已下[線线]$/.test(loan.at(-1)[1])){
+  loan.pop();changed=true;
+ }
+ for(const chat of s.content?.conversations?.mirage||[])if(chat.id==='s55-ouroboros'){
+  const before=chat.messages?.length||0;
+  if(before){chat.messages=chat.messages.filter(m=>!(m.from==='system'&&m.day===15&&/^(?:衔尾蛇|銜尾蛇)已下[線线][。.]?$/.test(m.text||'')));if(chat.messages.length!==before)changed=true;}
+ }
  return seedAuthoredNotes(s,D14_D24_CONTENT.notes)||changed;
 }
