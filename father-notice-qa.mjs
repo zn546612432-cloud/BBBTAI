@@ -12,7 +12,7 @@ try{
  const page=await context.newPage();page.setDefaultTimeout(15000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- const next=page.locator('#xm-boot-next');await next.waitFor({state:'visible',timeout:45000});await next.click();await page.locator('#xm-boot').waitFor({state:'hidden',timeout:10000});
+ const next=page.locator('#xm-boot-next');await next.waitFor({state:'visible',timeout:45000});await page.waitForFunction(()=>document.querySelector('#xm-boot-next')?.textContent.includes('點擊進入'),null,{timeout:45000});await next.click();await page.locator('#xm-boot').waitFor({state:'hidden',timeout:10000});
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.locator('.wx-conversation').waitFor();await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});

@@ -15,8 +15,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test tests/wechat-group-eggs.test.mjs tests/wechat-conversation.test.mjs
-      - run: npm run build:pages
+      - run: npm run build
       - run: npm install --no-save playwright@1.55.0
       - name: Use preinstalled browser
         run: |
