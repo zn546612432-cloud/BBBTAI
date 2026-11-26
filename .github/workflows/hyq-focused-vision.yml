@@ -1,48 +1,23 @@
-name: Read-only Cloudflare live source check
+name: HYQ album and reaction focused validation
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 8
     steps:
-      - name: Check deployed HTML and source modules
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Focused Moments and Photos regressions
+        run: node --test tests/wechat-moments-player.test.mjs tests/photos-ui.test.mjs
+      - name: Changed module syntax
         run: |
-          python3 - <<'PY'
-          import urllib.request,urllib.parse,json,re,concurrent.futures
-          base='https://bbbtai.pages.dev/'
-          def get(path):
-              url=urllib.parse.urljoin(base,path)
-              req=urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0'})
-              with urllib.request.urlopen(req,timeout=10) as r:
-                  s=r.read().decode('utf-8','replace')
-                  print('HTTP',r.status,r.headers.get('Content-Type'),r.url,'bytes',len(s),flush=True)
-                  return s
-          prod=get('?check=93ce8e63')
-          friends=get('review/friends-test/?check=93ce8e63')
-          release=get('release.json?check=93ce8e63')
-          for label,html in [('prod',prod),('friends',friends)]:
-              print('ENTRY',label,'title',re.findall(r'<title>(.*?)</title>',html,re.I|re.S),'meta',re.findall(r'<meta[^>]+(?:ximeng-release|phone-friends-test|phone-preview)[^>]+>',html),'scripts',re.findall(r'<script[^>]+src=["\']([^"\']+)["\']',html)[:8],flush=True)
-              print('HTML_PREFIX',label,html[:240].replace('\n',' '),flush=True)
-          print('RELEASE_PREFIX',release[:240].replace('\n',' '),flush=True)
-          try:
-              info=json.loads(release); print('LIVE_RELEASE',info,flush=True)
-          except Exception: info={}
-          script=re.findall(r'<script[^>]+src=["\']([^"\']+src/main\.js[^"\']*)["\']',prod)
-          prefix=info.get('url') or (script[0].split('src/main.js')[0] if script else '/')
-          tasks=[
-            ('src/apps/wechat/features/moments/index.js',['deletePlayerMoment','wx-moment-change-avatar','wx-moment-interactions']),
-            ('src/apps/wechat/features/moments/reactions.js',['photoDescription','requestMomentVision']),
-            ('src/apps/music/features/shared/catalog.js',['coverFormat']),
-            ('src/apps/music/index.js',['music-share-hyq'])]
-          def check(task):
-              path,markers=task
-              try:
-                  src=get(prefix+path+'?check=93ce8e63')
-                  print('FEATURE',path, json.dumps({m:m in src for m in markers}), 'html_fallback',src.lstrip().lower().startswith('<!doctype html'),flush=True)
-              except Exception as e: print('FEATURE_ERROR',path,str(e),flush=True)
-          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool: list(pool.map(check,tasks))
-          PY
+          for f in src/apps/photos/features/picker/index.js src/apps/wechat/index.js src/apps/wechat/features/moments/{index,reactions}.js; do node --check "$f"; done
+      - run: npm run build:pages

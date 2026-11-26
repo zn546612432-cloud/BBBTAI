@@ -19,10 +19,12 @@ const queue=(s,p,by,kind,{delay,replyId='',to='熙蒙'}={})=>{
 export function scheduleMomentReactions(s,p,{random=Math.random}={}){
  if(!permitted(s,p))return false;
  const names=shuffle(MOMENTS_PEOPLE.filter(n=>allowed(s,n)),random);
- for(const name of names.slice(0,Math.floor(random()*(names.length+1))))queue(s,p,name,'like',{delay:3+Math.floor(random()*38)});
+ p.reactionPolicy=2;
+ const likers=names.slice(0,1+Math.floor(random()*names.length));
+ for(const [i,name] of likers.entries())queue(s,p,name,'like',{delay:i===0?1+Math.floor(random()*3):3+Math.floor(random()*28)});
  // Photos are recognized lazily only when a comment has actually been selected.
  if(p.text||p.music||momentPhoto(p)){
-  const count=Math.min(3,Math.floor(random()*4)),commenters=shuffle(names,random).slice(0,count);
+  const count=1+Math.floor(random()*3),commenters=shuffle(names,random).slice(0,count);
   for(const by of commenters)queue(s,p,by,'comment',{delay:5+Math.floor(random()*36)});
  }
  return true;
@@ -40,7 +42,20 @@ export function scheduleMomentReply(s,id,comment,{random=Math.random}={}){
 }
 const flight=new WeakMap();
 function dueJob(s){return (s.content?.moments?.reactionJobs||[]).filter(j=>j.due<=minute(s)).sort((a,b)=>a.due-b.due)[0];}
-export const momentReactionsDue=s=>!!dueJob(s);
+const needsLikeRepair=s=>(s.content?.moments?.posts||[]).some(p=>permitted(s,p)&&p.storyDay===s.day&&p.reactionPolicy!==2);
+function repairTodayLikes(s,random=Math.random){
+ const m=editableMoments(s),now=minute(s);
+ for(const p of m.posts){
+  if(!permitted(s,p)||p.storyDay!==s.day||p.reactionPolicy===2)continue;
+  p.reactionPolicy=2;
+  if(p.likes?.length)continue;
+  const pending=(m.reactionJobs||[]).filter(j=>j.postId===p.id&&j.kind==='like'&&allowed(s,j.by)).sort((a,b)=>a.due-b.due);
+  if(pending.length){pending[0].due=Math.min(pending[0].due,now+1+Math.floor(random()*3));continue;}
+  const names=MOMENTS_PEOPLE.filter(n=>allowed(s,n));
+  if(names.length)queue(s,p,names[Math.floor(random()*names.length)],'like',{delay:1+Math.floor(random()*3)});
+ }
+}
+export const momentReactionsDue=s=>needsLikeRepair(s)||!!dueJob(s);
 function removeJob(s,id){const m=editableMoments(s);m.reactionJobs=(m.reactionJobs||[]).filter(j=>j.id!==id);}
 function commentInput(s,p,j,photoDescription=''){
  const now=dateParts(s).iso+'T'+s.clock;
@@ -78,6 +93,7 @@ async function photoDescription(store,job,p,recognize){
  return description;
 }
 export async function tickMomentReactions(store,{request=requestMomentComment,recognize=requestMomentVision}={}){
+ if(needsLikeRepair(store.get()))store.update(s=>repairTodayLikes(s));
  const s=store.get(),job=flight.has(store)?(s.content?.moments?.reactionJobs||[]).filter(j=>j.kind==='like'&&j.due<=minute(s)).sort((a,b)=>a.due-b.due)[0]:dueJob(s);
  if(!job)return false;
  const p=findMoment(s,job.postId);
