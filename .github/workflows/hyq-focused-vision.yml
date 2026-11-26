@@ -1,0 +1,28 @@
+name: HYQ focused photo-comment validation
+on:
+  push:
+    branches: ['verify/hyq-vision-20261126']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Focused Moments and music regressions
+        run: node --test tests/wechat-moments-player.test.mjs tests/music-playback.test.mjs
+      - name: Syntax check changed modules
+        run: |
+          node --check src/apps/wechat/features/moments/reactions.js
+          node --check src/apps/wechat/features/moments/vision.js
+          node --check src/services/ai/moments-comments.js
+          node --check supabase/functions/tai-provider-gateway/moments-vision.js
+          node --check server/ai-gateway.mjs
+      - name: Build release
+        run: npm run build:pages
