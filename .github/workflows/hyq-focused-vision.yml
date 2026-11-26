@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
+      - run: npm run build
       - name: Start local phone
         run: |
           node server/dev.mjs >/tmp/bbbtai-wechat-qa.log 2>&1 &
