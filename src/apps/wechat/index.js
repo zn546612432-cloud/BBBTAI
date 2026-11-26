@@ -1,4 +1,6 @@
-import {sendChat,attachChat} from '../../components/chat.js';
+import {sendChat} from '../../components/chat.js';
+import {sendMessage} from '../../services/messaging/index.js';
+import {openGamePhotoPicker,renderGamePhotoPicker,handleGamePhotoPicker,snapshotGamePhoto} from '../photos/features/picker/index.js';
 import {createConversation} from '../../editor/conversations/model.js';
 import {renderWeChatHome,routeForTab} from './components/views.js';
 import {renderWeChatChat,wechatConversation,smileIcon,keyboardIcon} from './components/chat-view.js';
@@ -21,7 +23,7 @@ export const render=({store},location)=>{
     :location.route.startsWith('/chat-info/')||location.route.startsWith('/settings')?renderWeChatPreferences(state,location.route)
     :renderWeChatHome(state,location.route);
   const w=pendingWish&&wishDefinition(pendingWish);
-  return body+(w?'<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="加入提醒事项"><div class="wx-wish-panel"><strong>加入提醒事项？</strong><p>'+esc(w.title)+'</p><div class="wx-wish-actions"><button type="button" data-action="wx-wish-cancel">取消</button><button type="button" data-action="wx-wish-confirm">添加</button></div></div></div>':'');
+  return body+renderGamePhotoPicker(state)+(w?'<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="加入提醒事项"><div class="wx-wish-panel"><strong>加入提醒事项？</strong><p>'+esc(w.title)+'</p><div class="wx-wish-actions"><button type="button" data-action="wx-wish-cancel">取消</button><button type="button" data-action="wx-wish-confirm">添加</button></div></div></div>':'');
 };
 
 export function openMessageMenu(bubble){
@@ -65,6 +67,7 @@ export function dismissEmojiForKeyboard(input){
 }
 
 export function handle(action,target,ctx){
+  if(handleGamePhotoPicker(action,target,ctx))return;
   if(handleWeChatPreferences(action,target,ctx))return;
   if(action==='wx-wish-open'){
     const id=target.dataset.wishId;
@@ -152,7 +155,16 @@ export function handle(action,target,ctx){
     return;
   }
   if(action==='open-chat')ctx.router.open({appId:'wechat',route:'/chat/'+target.dataset.id});
-  if(action==='attach-chat')attachChat(target.dataset.id,'wechat',ctx);
+  if(action==='attach-chat'){
+    const id=target.dataset.id,s=ctx.store.get();
+    if(s.story55?.version===1&&s.day===1)throw Error('D01 暫不支援傳送圖片');
+    if(s.nav.current.route!=='/chat/'+id)return;
+    openGamePhotoPicker(ctx,async photo=>{
+      const src=await snapshotGamePhoto(photo),live=ctx.store.get();
+      if(live.nav.current.appId!=='wechat'||live.nav.current.route!=='/chat/'+id||live.story55?.version===1&&live.day===1)return;
+      sendMessage(ctx.store,{channel:'wechat',conversationId:id,text:src,kind:'image'});
+    });
+  }
 }
 export function input(target){
   if(!target.matches('[data-wx-search]'))return;

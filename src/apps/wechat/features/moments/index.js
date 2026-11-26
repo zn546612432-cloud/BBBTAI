@@ -10,7 +10,8 @@ import {wxIcon} from '../../components/icons.js';
 import {handle as handleMusic} from '../../../music/index.js';
 import {tracks} from '../../../music/features/shared/catalog.js';
 import {openAvatarCropper} from '../../../../features/avatar-cropper/index.js';
-let openActions=null,replyTo=null,replyToName=null,replyDraft='',pendingDelete=null,imageField=null;
+import {openGamePhotoPicker,snapshotGamePhoto} from '../../../photos/features/picker/index.js';
+let openActions=null,replyTo=null,replyToName=null,replyDraft='',pendingDelete=null;
 const heart=momentIcons.heart;
 const trash='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg>';
 
@@ -174,8 +175,7 @@ function renderMomentPage(s,route){
 export function renderMoments(s,route){
  const body=renderMomentPage(s,route);
  const post=pendingDelete&&playerMoment(s,pendingDelete);
- const imageSheet=imageField?'<div class="wx-moment-modal" role="dialog" aria-modal="true" aria-label="选择照片"><div class="wx-moment-photo-sheet"><strong>选择照片</strong><button type="button" data-action="wx-moment-image-native">从手机相册选择</button><div class="wx-moment-photo-grid">'+(s.content.photos||[]).filter(p=>p.src&&/^data:image\/(?:jpeg|png|webp);base64,/i.test(p.src)).map(p=>'<button type="button" data-action="wx-moment-image-game" data-id="'+esc(p.id)+'" aria-label="'+esc(p.title||'照片')+'"><img src="'+esc(p.src)+'" alt=""></button>').join('')+'</div><button type="button" data-action="wx-moment-image-cancel">取消</button></div></div>':'';
- return body+imageSheet+(post?'<div class="wx-moment-modal" role="dialog" aria-modal="true" aria-label="删除朋友圈"><div class="wx-moment-dialog"><strong>确定删除这条朋友圈？</strong><p>删除后无法恢复。</p><div><button type="button" data-action="wx-moment-delete-cancel">取消</button><button type="button" class="danger" data-action="wx-moment-delete-confirm">删除</button></div></div></div>':'');
+ return body+(post?'<div class="wx-moment-modal" role="dialog" aria-modal="true" aria-label="删除朋友圈"><div class="wx-moment-dialog"><strong>确定删除这条朋友圈？</strong><p>删除后无法恢复。</p><div><button type="button" data-action="wx-moment-delete-cancel">取消</button><button type="button" class="danger" data-action="wx-moment-delete-confirm">删除</button></div></div></div>':'');
 }
 export function handleMoment(action,target,ctx){
  const id=target.dataset.id,route=path=>{openActions=null;replyTo=null;replyToName=null;replyDraft='';ctx.router.open({appId:'wechat',route:'/moments'+path});};
@@ -190,11 +190,14 @@ export function handleMoment(action,target,ctx){
  if(action==='wx-moment-delete'){if(playerMoment(ctx.store.get(),id)){pendingDelete=id;ctx.refresh();}return true;}
  if(action==='wx-moment-delete-cancel'){pendingDelete=null;ctx.refresh();return true;}
  if(action==='wx-moment-delete-confirm'){const selected=pendingDelete;pendingDelete=null;const detail=ctx.store.get().nav.current.route==='/moments/comment/'+selected;ctx.store.update(s=>deletePlayerMoment(s,selected));if(detail)ctx.router.back();else ctx.refresh();return true;}
- if(action==='wx-moment-change-avatar'||action==='wx-moment-change-cover'){imageField=action.endsWith('avatar')?'avatar':'cover';ctx.refresh();return true;}
- if(action==='wx-moment-image-cancel'){imageField=null;ctx.refresh();return true;}
- if(action==='wx-moment-image-native'&&imageField){const field=imageField;imageField=null;ctx.refresh();ctx.pickImage(image=>ctx.store.update(s=>updatePlayerMomentImage(s,field,image)),{cropAspect:field==='avatar'?1:1.5,maxEdge:field==='avatar'?512:1000});return true;}
- if(action==='wx-moment-image-game'&&imageField){const field=imageField,photo=ctx.store.get().content.photos?.find(p=>p.id===id);imageField=null;ctx.refresh();if(!photo?.src)return true;
-  void (async()=>{try{const bitmap=await createImageBitmap(await (await fetch(photo.src)).blob());openAvatarCropper({bitmap,aspect:field==='avatar'?1:1.5,size:field==='avatar'?512:1000,quality:.82,onSave:image=>ctx.store.update(s=>updatePlayerMomentImage(s,field,image))});}catch{ctx.toast('无法打开这张照片');}})();return true;
+ if(action==='wx-moment-change-avatar'||action==='wx-moment-change-cover'){
+  const field=action.endsWith('avatar')?'avatar':'cover',routeAtOpen=ctx.store.get().nav.current.route;
+  if(routeAtOpen!=='/moments/profile/'+encodeURIComponent('熙蒙')&&routeAtOpen!=='/moments/profile/熙蒙')return true;
+  openGamePhotoPicker(ctx,async photo=>{
+   const bitmap=await createImageBitmap(await (await fetch(photo.src)).blob());
+   if(ctx.store.get().nav.current.route!==routeAtOpen){bitmap.close?.();return;}
+   openAvatarCropper({bitmap,aspect:field==='avatar'?1:1.5,size:field==='avatar'?512:1000,quality:.82,onSave:image=>ctx.store.update(s=>updatePlayerMomentImage(s,field,image))});
+  });return true;
  }
  if(action==='wx-moment-focus'){const post=allPosts(ctx.store.get()).find(p=>p.id===id);if(post)route('/comment/'+post.id);return true;}
  if(action==='wx-moment-actions'){openActions=openActions===id?null:id;replyTo=null;ctx.refresh();return true;}
@@ -222,7 +225,12 @@ export function handleMoment(action,target,ctx){
  }
  if(action==='wx-moment-add-image'){
   const form=document.querySelector('.wx-moments-compose-form'),text=form?.querySelector('textarea')?.value||'',privacy=form?.querySelector('select')?.value||'public';
-  ctx.pickImage(image=>ctx.store.update(s=>{const m=editableMoments(s);m.draft={...(m.draft||{}),text,image,privacy};}));
+  ctx.store.update(s=>{const m=editableMoments(s);m.draft={...(m.draft||{}),text,privacy};});
+  openGamePhotoPicker(ctx,async photo=>{
+   const image=await snapshotGamePhoto(photo);
+   if(ctx.store.get().nav.current.appId!=='wechat'||ctx.store.get().nav.current.route!=='/moments/compose')return;
+   ctx.store.update(s=>{const m=editableMoments(s);m.draft={...(m.draft||{}),image};});
+  });
   return true;
  }
  return false;
