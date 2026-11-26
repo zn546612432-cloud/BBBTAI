@@ -27,8 +27,10 @@ export async function tickGroupClassification(store,{request=requestGroupClassif
  running.set(store,q.id);
  let result={type:'generic',target:''};
  try{
-  // No additional timer engine: a bounded request uses the existing AI gateway.
-  result=await request(q);
+  // Only classification is sent to the existing protected AI gateway.
+  let timer;
+  try{result=await Promise.race([request(q),new Promise(resolve=>{timer=setTimeout(()=>resolve({type:'generic',target:''}),15000);})]);}
+  finally{clearTimeout(timer);}
  }catch{}finally{running.delete(store);}
  if(!Object.values(store.get().wechatGroupEggs?.classifications||{}).some(x=>x.id===q.id))return false;
  store.update(s=>completeClassification(s,q.id,result,{now:Date.now()}));return true;

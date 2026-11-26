@@ -73,7 +73,7 @@ function historicalMediaBubble(asset,m,s){
 function messageRow(m,s,c){
   if(m.wechatEgg&&m.kind==='system')return '<div class="wx-recall-notice wx-group-system" data-key="message-'+esc(m.id)+'" role="status">'+esc(m.text)+'</div>';
   if(m.kind==='recalled')return '<div class="wx-recall-notice" data-key="message-'+esc(m.id)+'" role="status">'+(m.recalledBy==='me'?'你':'对方')+'撤回了一条消息</div>';
-  const mine=m.from==='me',name=mine?'熙蒙':actorName(c,m.from);
+  const mine=m.from==='me',name=mine?'熙蒙':m.wechatEgg&&m.from==='fulongsheng'?'傅隆生':actorName(c,m.from);
   const media=m.assetId?historyMediaById.get(m.assetId):null;
   const stickerSize=String(m.text).endsWith('/whitecat.webp')?' width="199" height="170"':
     String(m.text).endsWith('/dog.svg')?' width="88" height="88"':'';
@@ -108,7 +108,7 @@ export function renderWeChatChat(s,id){
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
 
-    '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(chatTitle(s,c))+'的聊天消息"'+(background&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(background)?' style="background-image:url('+esc(background)+');background-size:cover;background-position:center"':'')+'>'+
+    '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(chatTitle(s,c))+'的聊天消息"'+(background&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(background)?' style="--wx-chat-background:url('+esc(background)+');background-size:cover;background-position:center"':'')+'>'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+

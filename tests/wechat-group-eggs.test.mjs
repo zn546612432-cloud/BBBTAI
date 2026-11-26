@@ -44,6 +44,8 @@ test('father joins once, eight private bubbles, smile at real 30 seconds and exa
  for(let t=31000;t<90000;t+=1000)tickGroupEggs(s,now+t);
  assert.deepEqual(groupThread(s).messages.filter(m=>m.wechatEgg&&m.kind==='text'&&m.from!=='fulongsheng').map(m=>m.text),FATHER_AFTER.map(x=>x[1]));
  assert.match(renderWeChatChat(s,'group'),/傅隆生退出了群聊/);
+ assert.match(renderWeChatChat(s,'group'),/fulongsheng\.jpeg/);
+ assert.match(renderWeChatChat(s,'group'),/wx-message-sender[^>]*>傅隆生</);
 });
 test('group rename survives reload without changing canonical ID or actor names; restore corpus omits rejected line',()=>{
  let s=idle();const old=groupThread(s).name;
@@ -84,3 +86,5 @@ test('pat back is a system action, not dialogue text, and excluded roles cannot 
  const s=idle();assert.equal(patBrother(s,'熙泰'),false);assert.equal(patBrother(s,'小辛',{now:10000,random:()=>.3}),true);
  tickGroupEggs(s,15000);assert.ok(groupThread(s).messages.some(m=>m.wechatEgg&&m.kind==='system'&&m.text==='小辛拍了拍「熙蒙」'));
 });
+
+test('D02 allows the invitation at idle morning before a mandatory group scene',()=>{const s=setup(2);s.clock='08:00';assert.equal(canGroupEgg(s),true);assert.equal(inviteFather(s,{now:10000}),true);});
