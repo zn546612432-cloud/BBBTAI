@@ -11,6 +11,7 @@ import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
 import {rebaseBundledPublicAsset} from '../../../services/public-assets.js';
 import {renderEmojiPanel} from '../features/emoji/index.js';
+import {chatSettings,chatTitle,groupAway,groupEggsOpen,BROTHERS} from '../features/group/state.js';
 
 import historyMedia from '../../../story/assets/history-2024-mar-jun.media.json' with {type:'json'};
 
@@ -40,11 +41,11 @@ export function chatImageUrls(s,id){
 
 // Messages are frequently patched in place and live in an inner scroll area.
 // Safari can leave lazy images there unrequested, showing only the gray tile.
-const portrait=(name,s)=>{
+const portrait=(name,s,pat=false)=>{
  const normalized=name==='哥'?'熙旺':name;
  const source=resolveWeChatAvatar(normalized,s.characterAvatars?.[name]||s.characterAvatars?.[normalized]);
  const image=/^(?:https?:\/\/|\/|blob:|data:image\/)/i.test(source);
- return '<span class="wx-message-avatar">'+(image
+ return '<span class="wx-message-avatar"'+(pat?' data-action="wx-group-pat" data-name="'+esc(name)+'" aria-label="雙擊拍一拍'+esc(name)+'"':'')+'>'+(image
    ?'<img src="'+esc(source)+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async">'
    :'<span class="wx-avatar-fallback" aria-label="'+esc(name)+'">'+esc(String(name||'?').slice(0,1))+'</span>')+'</span>';
 };
@@ -70,6 +71,7 @@ function historicalMediaBubble(asset,m,s){
 }
 
 function messageRow(m,s,c){
+  if(m.wechatEgg&&m.kind==='system')return '<div class="wx-recall-notice wx-group-system" data-key="message-'+esc(m.id)+'" role="status">'+esc(m.text)+'</div>';
   if(m.kind==='recalled')return '<div class="wx-recall-notice" data-key="message-'+esc(m.id)+'" role="status">'+(m.recalledBy==='me'?'你':'对方')+'撤回了一条消息</div>';
   const mine=m.from==='me',name=mine?'熙蒙':actorName(c,m.from);
   const media=m.assetId?historyMediaById.get(m.assetId):null;
@@ -86,7 +88,7 @@ function messageRow(m,s,c){
     m.kind==='app_invitation'?invite(m,s,c):highlightedWish;
   const isText=!media&&(!m.kind||m.kind==='text');
   return '<div class="message-row wx-message-row '+(mine?'mine':'theirs')+'" data-key="message-'+esc(m.id)+'">'+
-    portrait(name,s)+'<div class="wx-message-body">'+
+    portrait(name,s,c.id==='group'&&groupEggsOpen(s)&&BROTHERS.includes(name))+'<div class="wx-message-body">'+
     (isGroup(c)&&!mine?'<span class="wx-message-sender">'+esc(name)+'</span>':'')+
     (media?historicalMediaBubble(media,m,s):zipCard?zipCard:wishId
       ?'<div class="wx-bubble wx-wish-bubble" title="'+esc(timestampLabel(m,s))+'">'+body+'</div>'
@@ -98,13 +100,15 @@ function messageRow(m,s,c){
 export function renderWeChatChat(s,id){
   const c=wechatConversation(s,id);
   if(!c)return empty('对话不存在');
+  if(id==='group'&&groupAway(s))return empty('你已退出群聊');
+  const background=chatSettings(s,id).background;
   const composer=nativeWeChatComposer(s,id);
   const scriptedAttributes=composer.text!==null
     ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
 
-    '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(c.name)+'的聊天消息">'+
+    '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(chatTitle(s,c))+'的聊天消息"'+(background&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(background)?' style="background-image:url('+esc(background)+');background-size:cover;background-position:center"':'')+'>'+
     timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+

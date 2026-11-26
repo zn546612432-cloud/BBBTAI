@@ -4,6 +4,7 @@ import {tickD01WeChat,d01WeChatDue} from '../../story/d01/wechat.js';
 import {AUTHORED_CHAT_TRACKS} from './lifecycle/registry.js';
 import {tickGenericMissedReplies,genericMissedRepliesDue} from './lifecycle/missed-replies.js';
 import {reviseDeliveredStoryCopy,reviseMissedComputerCopy,reviseD13GroupCopy} from './lifecycle/copy-revision.js';
+import {groupEggsDue,tickGroupEggs} from '../../apps/wechat/features/group/runtime.js';
 
 const tracks=[
  {name:'D01',day:1,tick:tickD01WeChat,due:d01WeChatDue,carryForward:true},
@@ -53,6 +54,7 @@ export function tickPhoneStoryMessages(s,now=Date.now(),{dueOnly=false}={}){
  }
  if(!dueOnly||genericMissedRepliesDue(s,now))
   changed=!!tickGenericMissedReplies(s,now)||changed;
+ if(groupEggsDue(s,now))changed=tickGroupEggs(s,now)||changed;
  return changed;
 }
 
@@ -60,5 +62,5 @@ export function phoneStoryMessagesDue(s,now=Date.now()){
  if(s.story55?.version!==1)return false;
  return tracks.some(track=>
   (s.day===track.day||(track.carryForward&&s.day>track.day))&&track.due(s,now)
- )||genericMissedRepliesDue(s,now);
+ )||genericMissedRepliesDue(s,now)||groupEggsDue(s,now);
 }

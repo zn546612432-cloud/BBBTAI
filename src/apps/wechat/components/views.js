@@ -7,6 +7,7 @@ import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
 import {groupAvatar} from './group-avatar.js';
 import {wechatChatMuted} from '../../../services/messaging/wechat-notifications.js';
 import {unreadMomentInteractions} from '../features/moments/model.js';
+import {groupAway,chatTitle} from '../features/group/state.js';
 
 const tabs=[
   {id:'chats',label:'微信',icon:'chats',route:'/'},
@@ -31,7 +32,7 @@ function featureIcon(id){
 function item(id,title,detail='',opts={}){
   return '<button type="button" class="wx-entry" data-action="'+(opts.action||'wx-open-entry')+'" data-label="'+esc(title)+'"'+(opts.id?' data-id="'+esc(opts.id)+'"':'')+'>'+
     featureIcon(id)+'<span class="wx-entry-main"><span class="wx-entry-name">'+esc(title)+'</span>'+
-    (detail?'<span class="wx-entry-detail">'+esc(detail)+'</span>':'')+'</span>'+
+    (detail?'<span class="wx-entry-detail">'+esc(detail)+'</span>':'')+'</span>'+(opts.dot?'<i class="wx-red-dot" aria-label="有新消息"></i>':'')+
     wxIcon('chevron',19)+'</button>';
 }
 function nav(active,s){
@@ -39,7 +40,7 @@ function nav(active,s){
   return '<nav class="wx-tabs" data-view-key="wechat-tab-bar" aria-label="微信底部导航">'+tabs.map(t=>
     '<button type="button" class="wx-tab '+(active===t.id?'selected':'')+'" data-action="wx-tab" data-tab="'+t.id+'"'+(active===t.id?' aria-current="page"':'')+'>'+ 
     '<span class="wx-tab-icon">'+wxIcon(active===t.id&&['chats','contacts','me'].includes(t.id)?({chats:'chatsFilled',contacts:'contactsFilled',me:'meFilled'}[t.id]):t.icon,27)+
-    (t.id==='chats'&&unread?'<span class="wx-unread-badge" aria-label="'+unread+'条未读消息">'+(unread>99?'99+':unread)+'</span>':'')+'</span><span class="wx-tab-title">'+t.label+'</span></button>').join('')+'</nav>';
+    (t.id==='chats'&&unread?'<span class="wx-unread-badge" aria-label="'+unread+'条未读消息">'+(unread>99?'99+':unread)+'</span>':'')+(t.id==='discover'&&unreadMomentInteractions(s)?'<i class="wx-discover-dot" aria-label="朋友圈有新消息"></i>':'')+'</span><span class="wx-tab-title">'+t.label+'</span></button>').join('')+'</nav>';
 }
 function header(title,right){
   return '<header class="wx-header"><h1>'+title+'</h1><div class="wx-head-actions">'+
@@ -67,7 +68,7 @@ function chats(s){
       const messages=visibleMessages(c,s);
       return {c,index,last:chronologicalMessages(messages,s).at(-1),hasMessages:messages.length>0};
     })
-    .filter(({c,hasMessages})=>hasMessages||c.unread||c.authored||['wang','group'].includes(c.id))
+    .filter(({c,hasMessages})=>!(c.id==='group'&&groupAway(s))&&(hasMessages||c.unread||c.authored||['wang','group'].includes(c.id)))
     .sort((a,b)=>{
       if(Boolean(a.c.pinned)!==Boolean(b.c.pinned))return a.c.pinned?-1:1;
       if(!a.last||!b.last)return a.last?-1:b.last?1:a.index-b.index;
@@ -78,9 +79,9 @@ function chats(s){
     const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':last.text||''):'暂无消息';
     const time=last?timestampLabel(last,s):'';
     const unread=Math.max(0,Number(c.unread)||0);
-    return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(c.name+' '+preview)+'">'+
-      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c):avatar(c.name,resolveWeChatAvatar(c.name,s.characterAvatars?.[c.name]||c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread'+(wechatChatMuted(s,c.id)?' wx-muted-dot':'')+'" aria-label="'+unread+'條未讀消息">'+(wechatChatMuted(s,c.id)?'':unread>99?'99+':unread)+'</span>':'')+'</span>'+
-      '<span class="wx-chat-main"><span class="wx-chat-top"><strong>'+esc(c.name)+'</strong><time>'+esc(time)+'</time></span>'+
+    return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(chatTitle(s,c)+' '+preview)+'">'+
+      '<span class="wx-chat-avatar-wrap">'+(isGroup(c)?groupAvatar(c,s):avatar(c.name,resolveWeChatAvatar(c.name,s.characterAvatars?.[c.name]||c.avatar),'wx-avatar-'+(i%5)))+(unread?'<span class="wx-chat-unread'+(wechatChatMuted(s,c.id)?' wx-muted-dot':'')+'" aria-label="'+unread+'條未讀消息">'+(wechatChatMuted(s,c.id)?'':unread>99?'99+':unread)+'</span>':'')+'</span>'+
+      '<span class="wx-chat-main"><span class="wx-chat-top"><strong>'+esc(chatTitle(s,c))+'</strong><time>'+esc(time)+'</time></span>'+
       '<span class="wx-chat-preview-line"><span class="wx-chat-preview">'+esc(preview)+'</span>'+(wechatChatMuted(s,c.id)?'<svg class="wx-mute-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="消息免打擾"><path d="M10 19h4m-2-17a6 6 0 0 1 6 6v3m-13 4 2-3V8a5 5 0 0 1 1-3m-4-3 16 18M4 16h13"/></svg>':'')+'</span></span></button>';
   }).join('');
   return frame('chats',title+'<div class="wx-search-region">'+searchBox()+'</div><div class="wx-scroll wx-chat-list">'+(rows||'<p class="wx-empty">暂无聊天，新的对话会显示在这里。</p>')+'</div>',s);
@@ -115,7 +116,7 @@ function contacts(s){
 }
 function discover(s){
   const groups=[
-    [item('moments','朋友圈',unreadMomentInteractions(s)?String(unreadMomentInteractions(s))+' 条新消息':'')],
+    [item('moments','朋友圈','',{dot:unreadMomentInteractions(s)>0})],
     [item('live','直播')],
     [item('scan','扫一扫'),item('mini','小程序')]
   ];

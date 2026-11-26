@@ -12,6 +12,8 @@ import {canAddWish,addWish,getWish,wishExpired} from '../../services/wishes/inde
 import {wishDefinition} from '../../services/wishes/catalog.js';
 import {renderMoments,handleMoment,submitMoment} from './features/moments/index.js';
 import {renderWeChatPreferences,handleWeChatPreferences} from './features/notifications/index.js';
+import {renderSavedGroups,handleGroupAction,submitGroup} from './features/group/index.js';
+import {groupAway} from './features/group/state.js';
 
 export const manifest={id:'wechat',name:'微信',icon:0,defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
 let pendingWish=null;
@@ -21,7 +23,7 @@ export const render=({store},location)=>{
     ?renderWeChatChat(state,location.route.slice(6))
     :location.route.startsWith('/moments')?renderMoments(state,location.route)
     :location.route.startsWith('/chat-info/')||location.route.startsWith('/settings')?renderWeChatPreferences(state,location.route)
-    :renderWeChatHome(state,location.route);
+    :location.route==='/groups'?renderSavedGroups(state):renderWeChatHome(state,location.route);
   const w=pendingWish&&wishDefinition(pendingWish);
   return body+renderGamePhotoPicker(state)+(w?'<div class="wx-wish-overlay" role="dialog" aria-modal="true" aria-label="加入提醒事项"><div class="wx-wish-panel"><strong>加入提醒事项？</strong><p>'+esc(w.title)+'</p><div class="wx-wish-actions"><button type="button" data-action="wx-wish-cancel">取消</button><button type="button" data-action="wx-wish-confirm">添加</button></div></div></div>':'');
 };
@@ -68,6 +70,7 @@ export function dismissEmojiForKeyboard(input){
 
 export function handle(action,target,ctx){
   if(handleGamePhotoPicker(action,target,ctx))return;
+  if(handleGroupAction(action,target,ctx))return;
   if(handleWeChatPreferences(action,target,ctx))return;
   if(action==='wx-wish-open'){
     const id=target.dataset.wishId;
@@ -145,8 +148,7 @@ export function handle(action,target,ctx){
     return;
   }
   if(action==='wx-open-groups'){
-    const group=ctx.store.get().content.conversations.wechat?.find(c=>c.group||c.id==='group');
-    if(group)ctx.router.open({appId:'wechat',route:'/chat/'+group.id});
+    ctx.router.open({appId:'wechat',route:'/groups'});
     return;
   }
   if(action==='wx-index'){
@@ -154,11 +156,11 @@ export function handle(action,target,ctx){
     section?.scrollIntoView({block:'start',behavior:'smooth'});
     return;
   }
-  if(action==='open-chat')ctx.router.open({appId:'wechat',route:'/chat/'+target.dataset.id});
+  if(action==='open-chat'){if(target.dataset.id==='group'&&groupAway(ctx.store.get()))return;ctx.router.open({appId:'wechat',route:'/chat/'+target.dataset.id});}
   if(action==='attach-chat'){
     const id=target.dataset.id,s=ctx.store.get();
     if(s.story55?.version===1&&s.day===1)throw Error('D01 暫不支援傳送圖片');
-    if(s.nav.current.route!=='/chat/'+id)return;
+    if(s.nav.current.route!=='/chat/'+id||id==='group'&&groupAway(s))return;
     openGamePhotoPicker(ctx,async photo=>{
       const src=await snapshotGamePhoto(photo),live=ctx.store.get();
       if(live.nav.current.appId!=='wechat'||live.nav.current.route!=='/chat/'+id||live.story55?.version===1&&live.day===1)return;
@@ -174,4 +176,4 @@ export function input(target){
     row.hidden=Boolean(term)&&!String(row.dataset.wxFilter||'').toLocaleLowerCase().includes(term);
   });
 }
-export const submit=(form,ctx)=>{if(submitMoment(form,ctx))return;if(form.dataset.form==='send-chat')sendChat(form,ctx);};
+export const submit=(form,ctx)=>{if(submitGroup(form,ctx)||submitMoment(form,ctx))return;if(form.dataset.form==='send-chat'){if(form.dataset.id==='group'&&groupAway(ctx.store.get()))return;sendChat(form,ctx);}};

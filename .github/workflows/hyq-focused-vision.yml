@@ -1,36 +1,23 @@
-name: Verify HYQ album release on Cloudflare
+name: WeChat group eggs focused verification
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 10
     steps:
-      - name: Verify public production and friends entrypoints and updated modules
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Focused group, UI, notification, Moments and native delivery tests
+        run: node --test tests/wechat-group-eggs.test.mjs tests/wechat-conversation.test.mjs tests/wechat-ui.test.mjs tests/wechat-notifications.test.mjs tests/wechat-moments-player.test.mjs tests/d46-group.test.mjs tests/linked-contract-delivery.test.mjs
+      - name: Check changed source syntax
         run: |
-          python3 - <<'PY'
-          import urllib.request, concurrent.futures, json, time
-          root='https://bbbtai.pages.dev/'
-          paths={
-            '':['/src/main.js'],
-            'review/friends-test/':['phone-friends-test'],
-            'src/apps/photos/features/picker/index.js':['openGamePhotoPicker','暫無照片'],
-            'src/apps/wechat/index.js':['openGamePhotoPicker','renderGamePhotoPicker'],
-            'src/apps/wechat/features/moments/index.js':['openGamePhotoPicker'],
-            'src/apps/wechat/features/moments/reactions.js':['reactionPolicy=2','repairTodayLikes','1+Math.floor(random()*names.length)']}
-          def probe(item):
-            path,markers=item
-            try:
-              req=urllib.request.Request(root+path+'?verify=390-'+str(int(time.time())),headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0'})
-              with urllib.request.urlopen(req,timeout=10) as r:
-                body=r.read().decode('utf-8','replace')
-                return path, r.status, all(x in body for x in markers), r.headers.get('Content-Type')
-            except Exception as e:return path,0,False,str(e)
-          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
-            result=list(pool.map(probe,paths.items()))
-          print('LIVE_RESULTS',json.dumps(result,ensure_ascii=False))
-          assert all(x[1]==200 and x[2] for x in result),'Cloudflare release not yet confirmed'
-          PY
+          for f in src/apps/wechat/features/group/*.js src/apps/wechat/index.js src/apps/wechat/components/{chat-view,views,group-avatar}.js src/main.js src/services/messaging/{delivery,phone-story-scheduler,authored-incoming}.js src/services/story55/runtime.js src/system/shell.js; do node --check "$f"; done
+      - run: npm run build:pages
