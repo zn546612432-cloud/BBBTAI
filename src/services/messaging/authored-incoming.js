@@ -2,6 +2,7 @@
 // Each delivered NPC bubble is one real unread message, not one "scene".
 // The visual notification banner is queued separately by the phone shell.
 import {isConversationOpen} from './conversation-open.js';
+import {groupName} from '../../apps/wechat/features/group/state.js';
 
 export function deliverAuthoredIncoming(s,{
  channel='wechat',conversationId,from,text,kind='text',messageId,day=s.day,clock=s.clock,
@@ -14,11 +15,11 @@ export function deliverAuthoredIncoming(s,{
  // Replays and restored timeline ticks never count twice.
  if(s.notifications.some(n=>n.id===id))return false;
  c.unread=Math.max(0,Number(c.unread)||0)+1;
- const who=String(from||c.name||'');
+ const who=from==='fulongsheng'?'傅隆生':String(from||c.name||'');
  s.notifications.unshift({
   id,messageId,conversationId,day,clock,storyMessage:true,...(silent?{silent:true}:{}),...(lifecycleId?{lifecycleId}:{}),
   title:title|| (channel==='wechat'&&(c.group||conversationId==='group')
-   ?(c.name||'狼崽團')+' · '+who:(c.name||who)),
+   ?(groupName(s,c)||'狼崽團')+' · '+who:(c.name||who)),
   body:body??(kind==='image'?'[圖片]':String(text||'')),
   ...(demo!==null?{demo:!!demo}:{}),
   link:{appId:channel,route:'/chat/'+conversationId,params:{}}
