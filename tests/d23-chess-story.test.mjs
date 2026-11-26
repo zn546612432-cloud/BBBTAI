@@ -39,32 +39,35 @@ const D20_APPROVED_DIALOGUE=[
  ['阿威','是。']
 ];
 
-test('D23 approved MIRAGE exchange updates only unsent exact old copy in existing saves',()=>{
- const old=[["聽起來你沒少挨訓。","一下午？那你应该没少挨训",4],["你能不能好好說話？","你真是嘴里吐不出好话",5],["我正在好好說話。","想听漂亮话，那是另外的价钱",6]];
- const make=()=>{const s=activateStory55(initialState());s.day=23;delete s.story55.d23ChessDialogueRevision;
-  const script=s.story55.config.scenes['d23-chess'];for(const [previous,_approved,index] of old)script[index][1]=previous;
-  return s;};
- const fresh=make();
- assert.equal(syncD14D24Content(fresh),true);
- for(const [_old,newText,index] of old)assert.equal(fresh.story55.config.scenes['d23-chess'][index][1],newText);
+test('D23 polished MIRAGE exchange migrates only unplayed official or draft lines',()=>{
+ const variants=[[4,"聽起來你沒少挨訓。","一下午？那你应该没少挨训"],[5,"你能不能好好說話？","你真是嘴里吐不出好话"],[6,"我正在好好說話。","想听漂亮话，那是另外的价钱"]],approved=["一下午？那你應該沒少挨訓。","你嘴裡就吐不出一句好話？","想聽漂亮話？那是另外的價錢。"];
+ const make=()=>{
+  const s=activateStory55(initialState());s.day=23;delete s.story55.d23ChessDialogueRevision;
+  for(const [index,old] of variants)s.story55.config.scenes['d23-chess'][index][1]=old;
+  return s;
+ };
+ const fresh=make();syncD14D24Content(fresh);
+ for(const [i,[index]] of variants.entries())assert.equal(fresh.story55.config.scenes['d23-chess'][index][1],approved[i]);
+ assert.equal(fresh.story55.d23ChessDialogueRevision,2);
+ const draft=make();draft.story55.d23ChessDialogueRevision=1;
+ for(const [index,_old,interim] of variants)draft.story55.config.scenes['d23-chess'][index][1]=interim;
+ syncD14D24Content(draft);
+ for(const [i,[index]] of variants.entries())assert.equal(draft.story55.config.scenes['d23-chess'][index][1],approved[i],'draft updated');
  const partial=make(),script=partial.story55.config.scenes['d23-chess'];
  partial.story55.scenes['d23-chess']={index:5};
  const conversations=partial.content.conversations.mirage;
  let thread=conversations.find(c=>c.id==='s55-ouroboros');
  if(!thread){thread={id:'s55-ouroboros',messages:[],unread:0};conversations.push(thread);}
- thread.messages.push({id:'s55-d23-chess-4',from:'s55-ouroboros',text:old[0][0],kind:'text',actual:true});
- const priorBubble=structuredClone(thread.messages.at(-1));
- syncD14D24Content(partial);
- assert.equal(script[4][1],old[0][0],'already-sent NPC script stays old');
- assert.equal(script[5][1],old[1][1],'unsent player draft is updated');
- assert.equal(script[6][1],old[2][1],'unsent NPC line is updated');
- assert.deepEqual(thread.messages.at(-1),priorBubble,'delivered message history is preserved');
- const authored=make();authored.story55.config.scenes['d23-chess'][5][1]='玩家自己修订的原文';
- syncD14D24Content(authored);
- assert.equal(authored.story55.config.scenes['d23-chess'][5][1],'玩家自己修订的原文');
- const finished=make();finished.story55.completed['d23-chess']={day:23,clock:'23:00'};
- syncD14D24Content(finished);
- assert.equal(finished.story55.config.scenes['d23-chess'][4][1],old[0][0]);
+ thread.messages.push({id:'s55-d23-chess-4',from:'s55-ouroboros',text:variants[0][1],kind:'text',actual:true});
+ const bubble=structuredClone(thread.messages.at(-1));syncD14D24Content(partial);
+ assert.equal(script[4][1],variants[0][1],'already-sent NPC script remains unchanged');
+ assert.equal(script[5][1],approved[1],'unsent player draft uses polished copy');
+ assert.equal(script[6][1],approved[2],'unsent NPC line uses polished copy');
+ assert.deepEqual(thread.messages.at(-1),bubble,'history bubble untouched');
+ const authored=make();authored.story55.config.scenes['d23-chess'][5][1]='玩家自訂發言';syncD14D24Content(authored);
+ assert.equal(authored.story55.config.scenes['d23-chess'][5][1],'玩家自訂發言');
+ const completed=make();completed.story55.completed['d23-chess']={day:23,clock:'23:00'};syncD14D24Content(completed);
+ assert.equal(completed.story55.config.scenes['d23-chess'][4][1],variants[0][1]);
 });
 
 test('D20 restores the user-authored original and deduplicates AI monitor exchange in the existing 10:45 scene',()=>{

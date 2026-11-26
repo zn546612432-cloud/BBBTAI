@@ -47,7 +47,7 @@ test('D23 rules appear only inside the entered chess board and are paced one at 
  store.update(s=>tickD23ChessLesson(s,8600));
  assert.equal(match().chat.length,3);
  assert.equal(match().lesson.openingDone,true);
- assert.ok(match().chat.some(m=>m.text.includes('将死')));
+ assert.ok(match().chat.some(m=>m.text.includes('將死')));
  assert.ok(match().chat.some(m=>m.text.includes('逼和')));
  assert.equal(chessFacts(match()).legalMoves.length,20);
  assert.equal(startAcceptedInvitation(store,'s55-d23-chess-invite'),matchId);
@@ -113,9 +113,9 @@ test('a genuinely hanging major piece triggers a concrete one-time Tai warning',
 
 test('first actual move of each of the six piece types has a one-time authored tutorial',()=>{
  const cases=[
-  ['p','','e2','e4','这是兵，第一次走可以走两格'],
-  ['n','','g1','f3','马走日字'],
-  ['b','1. e4 e5','f1','c4','象只能走斜线'],
+  ['p','','e2','e4','這是兵。從起點出發'],
+  ['n','','g1','f3','馬走「日」字'],
+  ['b','1. e4 e5','f1','c4','象只能走斜線'],
   ['r','1. a4 a5','a1','a3','車走直線'],
   ['q','1. e4 e5','d1','h5','后能橫走'],
   ['k','1. e4 e5','e1','e2','王平時每次']
@@ -294,7 +294,7 @@ test('reaction variants exhaust a saved bag before repetition and ordinary repli
 test('D23 approved opening and silent reactions do not produce empty messages',async()=>{
  const {store,matchId,match}=d23Store();
  playOpening(store,matchId);
- assert.deepEqual(match().chat.map(m=>m.text),["按惯例白棋先走。国际象棋赢法很简单，把对方的王将死即可。","和中国象棋不同的点在于，如果没有将死对方，却让对方无子可走，这叫逼和，算平局。","好了，你走一步试试。"]);
+ assert.deepEqual(match().chat.map(m=>m.text),["按慣例，白棋先走。國際象棋要贏很簡單，把對方的王將死就行。","跟中國象棋不一樣。如果對方的王沒有被將軍，輪到他卻一步合法的棋都走不了，這叫逼和，算平局。","好了，你先走一步試試。"]);
  store.update(s=>{
   const m=s.matches.find(m=>m.id===matchId);
   m.lesson.reactionBags={captureWhite:{remaining:[3],last:-1},checkWhite:{remaining:[3],last:-1},other:{remaining:[3],last:-1}};
@@ -304,6 +304,8 @@ test('D23 approved opening and silent reactions do not produce empty messages',a
  const count=match().chat.length,queued=match().lesson.outbox.length;
  assert.equal(postMatchMessage(store,matchId,'今天天氣很好'),true);
  assert.equal(await replyToMatch(store,matchId),false);
+ assert.equal(await replyToMatch(store,matchId),false,'the silent response is not rerolled');
+ assert.equal(match().chat.at(-1).chessSilentReaction,true);
  assert.equal(match().lesson.outbox.length,queued);
  assert.equal(match().chat.length,count+1,'only the real player message is committed');
  assert.ok(!match().chat.some(m=>m.from==='tai'&&m.text===''));
@@ -351,10 +353,10 @@ test('a real final capture is named before the individually queued checkmate rec
  store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));(m.lesson.reactionBags??={}).captureWhite={remaining:[0],last:-1};});
  const outcome=playMove(store,matchId,'h5','f7');
  assert.equal(outcome.finished,true);assert.equal(match().result,'player-win');
- assert.equal(match().lesson.outbox[0].text,'有意思，吃我的兵');assert.equal(match().lesson.outbox.length,3);
+ assert.equal(match().lesson.outbox[0].text,'有意思，我的兵都敢吃了。');assert.equal(match().lesson.outbox.length,3);
  assert.deepEqual(match().feedbackEvents.map(x=>x.kind),['capture','win']);
  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
- assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).text,'有意思，吃我的兵');
+ assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).text,'有意思，我的兵都敢吃了。');
 });
 test('capture and terminal feedback are attached once to actual moves, and resign is a terminal effect',()=>{
  const {store,matchId,match}=d23Store();
