@@ -1,38 +1,43 @@
-name: WeChat group final targeted tests and mobile browser
+name: Verify WeChat group Cloudflare release
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  verify:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 12
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: npm install --no-save playwright@1.55.0
-      - name: Use the preinstalled Chrome or download Chromium
+      - name: Inspect public production and friends code
         run: |
-          if command -v google-chrome >/dev/null; then echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"; else npx playwright install --with-deps chromium; fi
-      - run: npm run build
-      - name: Start local phone
-        run: |
-          node server/dev.mjs >/tmp/bbbtai-wechat-qa.log 2>&1 &
-          for i in {1..25}; do
-            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/bbbtai-wechat-qa.log
-          exit 1
-      - run: node group-qa.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: wechat-group-mobile-evidence
-          path: wechat-group-browser-results/
-          if-no-files-found: warn
+          python3 - <<'PY'
+          import urllib.request, concurrent.futures, json, time
+          root='https://bbbtai.pages.dev/'
+          paths={
+             '':['/src/main.js'],
+             'review/friends-test/':['phone-friends-test'],
+             'src/apps/wechat/features/group/index.js':['renderGroupInfo','該用戶暫時無法拉入群聊'],
+             'src/apps/wechat/features/group/runtime.js':['inviteFather','leaveGroup','groupEggsDue'],
+             'src/apps/wechat/features/group/lines.js':['蒙哥的中二病還沒好嗎','是誰在打我'],
+             'src/apps/wechat/components/views.js':['wx-discover-dot','wx-red-dot'],
+             'src/apps/wechat/features/group/classifier.js':['deepseek-flash','語義分類器'],
+             'src/apps/photos/features/picker/index.js':['openGamePhotoPicker'],
+             'src/apps/wechat/features/moments/reactions.js':['repairTodayLikes']
+          }
+          def probe(item):
+            path,markers=item
+            try:
+              req=urllib.request.Request(root+path+'?verify=391-'+str(int(time.time())),headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=10) as r:
+                body=r.read().decode('utf-8','replace')
+                return path,r.status,all(x in body for x in markers),r.headers.get('Content-Type')
+            except Exception as e:return path,0,False,str(e)
+          for attempt in range(3):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=9) as pool:
+              result=list(pool.map(probe,paths.items()))
+            print('LIVE_RESULTS',json.dumps(result,ensure_ascii=False),flush=True)
+            if all(x[1]==200 and x[2] for x in result): break
+            if attempt<2: time.sleep(8)
+          assert all(x[1]==200 and x[2] for x in result),'Cloudflare release not yet confirmed'
+          PY
