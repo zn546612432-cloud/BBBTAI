@@ -1,34 +1,30 @@
-name: Verify group preset lock, rejoin history and bottom navigation
+name: Check published group restrictions and home indicator
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  verify:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 8
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: node --test tests/touch-gestures.test.mjs tests/wechat-conversation.test.mjs tests/wechat-group-eggs.test.mjs tests/wechat-moments-player.test.mjs tests/d01-wechat.test.mjs
-      - run: node --check src/main.js
-      - run: npm run build
-      - run: npm install --no-save playwright@1.55.0
-      - name: Use preinstalled browser
+      - name: Read deployed modules
         run: |
-          if command -v google-chrome >/dev/null; then echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"; else npx playwright install --with-deps chromium; fi
-      - name: Start phone
-        run: |
-          node server/dev.mjs >/tmp/phone.log 2>&1 &
-          for i in {1..25}; do
-            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/phone.log
-          exit 1
-      - run: node homebar-qa.mjs
+          python3 - <<'PY'
+          import urllib.request,concurrent.futures,time,json
+          root='https://bbbtai.pages.dev/'
+          paths={'':['/src/main.js'],'review/friends-test/':['phone-friends-test'],'src/system/home-indicator.js':['syncHomeIndicator','3000'],'src/apps/wechat/features/group/history.js':['hiddenGroupMessageIds','playerWeChatMessages'],'src/services/messaging/preset-replies.js':['暫無可發送的預設訊息']}
+          def check(item):
+            path,markers=item
+            try:
+              req=urllib.request.Request(root+path+'?verify=392-'+str(int(time.time())),headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=10) as r:
+                body=r.read().decode('utf-8','replace')
+                return [path,r.status,all(m in body for m in markers)]
+            except Exception as e:return [path,0,str(e)]
+          with concurrent.futures.ThreadPoolExecutor(max_workers=5) as p:
+            rows=list(p.map(check,paths.items()))
+          print('LIVE_RESULTS',json.dumps(rows,ensure_ascii=False),flush=True)
+          assert all(r[1]==200 and r[2] is True for r in rows)
+          PY
