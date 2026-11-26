@@ -45,12 +45,12 @@
       "lines": [
         {
           "who": "胡枫",
-          "text": "/apps/wechat/story/d14/wang-jie-film.jpg",
+          "text": "/apps/wechat/story/d14/wang-jie-film.webp",
           "kind": "image"
         },
         {
           "who": "胡枫",
-          "text": "/apps/wechat/story/d14/business-dinner.jpg",
+          "text": "/apps/wechat/story/d14/business-dinner.webp",
           "kind": "image"
         },
         {
@@ -1409,11 +1409,11 @@
       "attachmentsFirst": true,
       "attachments": [
         {
-          "src": "/apps/wechat/story/d14/wang-jie-film.jpg",
+          "src": "/apps/wechat/story/d14/wang-jie-film.webp",
           "title": "汪傑"
         },
         {
-          "src": "/apps/wechat/story/d14/business-dinner.jpg",
+          "src": "/apps/wechat/story/d14/business-dinner.webp",
           "title": "商務宴會"
         }
       ]

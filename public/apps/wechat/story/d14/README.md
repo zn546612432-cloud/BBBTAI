@@ -1,3 +1,7 @@
-# D14 media — release blocker
+# D14 media
 
-Upload the approved JPEGs from D14-assets.zip here before merge: `wang-jie-film.jpg` (user-provided rotated film still) and `business-dinner.jpg` (generated fictional scene). These binaries are not yet in the repository. The interview MP4 is intentionally an unavailable file card, not a video download. Do not substitute stock or AI portrait assets.
+- `wang-jie-film.webp`: user-provided film still, rotated and compressed.
+- `business-dinner.webp`: fictional generated business dinner photograph.
+- `汪傑_專訪.mp4`: deliberately unavailable file card; no binary video is served.
+
+WeChat and Notes reuse the same two static images.
