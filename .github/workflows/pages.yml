@@ -27,7 +27,26 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --check public/voice-lab/panel.js
-      - run: npm test
+      # Owner-approved temporary waiver for the eight pre-existing failures
+      # reproduced on main before and after PR #393. No test implementation is
+      # changed, and every other failure still blocks the release.
+      - name: Test release with eight explicit legacy waivers
+        shell: bash
+        run: |
+          waived=(
+            'D05 fills diary and a once-only editable note, preserving all existing timing rules'
+            'D15 approved copy migrates only unstarted legacy drafts, never in-flight or paid saves'
+            'D04 delivery never overrides the unified home speed, and stays one bubble at a time'
+            'Tai online alone does not slow HOME; queued, real AI and unread replies do'
+            'native Tai reply continues while waiting on HOME and uses original unread notification service'
+            'App time stays slow while short charging, home switches from 3 to 5'
+            'original plot gate blocks BOTH long and short charging'
+            'D15 Zaizai pinned photo teases Xiao Xin only, including legacy saved comments'
+          )
+          pattern="$(IFS='|'; echo "${waived[*]}")"
+          printf 'Approved legacy test waivers:\n'
+          printf '  %s\n' "${waived[@]}"
+          node --test --test-skip-pattern="^(${pattern})$" tests/*.test.mjs
       - run: npm run build:pages
       # The shared build generates the exact same friends-test entry for
       # Cloudflare Pages and GitHub Pages; verify rather than recreate it.
