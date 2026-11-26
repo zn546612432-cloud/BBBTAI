@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55} from '../src/services/story55/runtime.js';
+import {rebuildStory55AtDay} from '../src/services/story55/rebuild.js';
 import {groupThread,groupState,groupName,groupAway,fatherUsed,displayMembers,chatSettings} from '../src/apps/wechat/features/group/state.js';
 import {inviteFather,leaveGroup,changeGroupField,completeClassification,patBrother,tickGroupEggs,groupEggsDue,canGroupEgg} from '../src/apps/wechat/features/group/runtime.js';
 import {FATHER_PRIVATE,FATHER_AFTER,NAME_LINES,NICK_LINES,PAT_LINES} from '../src/apps/wechat/features/group/lines.js';
@@ -98,20 +99,18 @@ test('D02 allows the invitation at idle morning before a mandatory group scene',
 test('idle story group cannot send arbitrary text or open the emoji/photo picker; D01 opening trigger stays usable',()=>{const s=idle();assert.equal(nativeWeChatComposer(s,'group').disabled,true);const html=renderWeChatChat(s,'group');assert.match(html,/data-action="wx-emoji"[^>]* disabled/);assert.match(html,/data-action="attach-chat"[^>]* disabled/);const store={get:()=>s,update(){assert.fail('idle group cannot write')}};assert.equal(sendNativeWeChatPreset(store,'group','free text').handled,true);assert.ok(sendNativeWeChatPreset(store,'group','free text').reason);assert.equal(nativeWeChatComposer(setup(1),'group').disabled,false);});
 
 import {FATHER_NOTICE_LINES,FATHER_NOTICE_COMBO,fatherNoticePhase,directFatherNotice} from '../src/apps/wechat/features/group/father-notice.js';
+const phaseFixtures=new Map();
 function phaseState(phase){
  if(phase==='early')return idle();
- const days=phase==='agreement'?[47,48,49,50,51,52,53]:[42,43,44,45,46];
- for(const day of days){
-  const s=setup(day);
-  s.story55.completed['d42-group']={day:42,clock:'16:31'};
-  if(phase==='agreement')s.story55.completed['d47-wang']={day:47,clock:'16:41'};
-  for(const clock of ['04:01','07:00','12:00','15:00','17:00','23:00','23:50']){
-   if(day===42&&clock<'16:31'||day===47&&clock<'16:41')continue;
-   s.clock=clock;
-   if(canGroupEgg(s)){assert.equal(fatherNoticePhase(s),phase);return s;}
-  }
- }
- throw Error('No idle story phase: '+phase);
+ if(phaseFixtures.has(phase))return structuredClone(phaseFixtures.get(phase));
+ const day=phase==='agreement'?48:43,s=setup(day);
+ // Replay the actual preceding days, including the older required chat tracks.
+ // Merely setting the day and two completion flags leaves D02-D25 plot replies pending.
+ rebuildStory55AtDay(s,day,'08:00');
+ s.story55.activeScene=null;
+ assert.equal(fatherNoticePhase(s),phase);
+ assert.ok(canGroupEgg(s),'reconstructed idle '+phase);
+ phaseFixtures.set(phase,structuredClone(s));return s;
 }
 const eggText=s=>groupThread(s).messages.filter(m=>m.wechatEgg&&m.kind==='text'&&m.from!=='fulongsheng').map(m=>m.text);
 function drain(s,start,end){for(let t=start;t<=end;t+=1000)tickGroupEggs(s,t);}
