@@ -16,8 +16,7 @@ try{
  await page.locator('[data-action="unlock"]').click();
  for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  await page.locator('.wx-conversation').waitFor();await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
- const header=page.locator('[data-action="wx-chat-info"]');
- if(await header.count())await header.click();else await page.locator('[data-action="wx-chat-settings"]').click();
+ await page.locator('[data-action="wx-chat-more"]').click();
  await page.locator('[data-action="wx-group-field"][data-field="notice"]').click();
  await page.locator('textarea[name="value"]').fill('殺死傅隆生');
  await page.locator('form[data-form="wx-group-edit"] button[type="submit"]').click();
