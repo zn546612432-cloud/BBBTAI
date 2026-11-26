@@ -91,7 +91,7 @@ export function handle(action,target,ctx){
   if(action==='wx-file-preview'){
     const {id,message}=currentMessage(ctx,target.dataset.id);
     if(message?.kind==='file'&&message.attachment?.localFileId){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(message.attachment.localFileId)});return;}
-    if(message.kind==='file'&&/\.mp4$/i.test(String(message.fileName||message.text||''))){ctx.toast?.('無法預覽此檔案');return;}
+    if(message.kind==='file'&&/\.(?:mp4|pdf)$/i.test(String(message.fileName||message.text||''))){ctx.toast?.('無法預覽此檔案');return;}
     if(message.kind!=='file'||!(/\.zip$/i).test(String(message.fileName||message.text||'')))return;
     ctx.router.open({appId:'files',route:'/incoming/wechat/'+encodeURIComponent(id)+'/'+encodeURIComponent(message.id)});
     return;

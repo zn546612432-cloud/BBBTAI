@@ -1,0 +1,35 @@
+{
+  "day": 15,
+  "sources": [
+    {
+      "scene": "d15:costumes",
+      "visibility": "private-wechat",
+      "facts": [
+        "仔仔完成第一版服裝設計；約明天試衣，尚未試穿。"
+      ]
+    },
+    {
+      "scene": "loan",
+      "visibility": "tai-mirage",
+      "facts": [
+        "Dr Ouroboros 借給熙蒙一百萬美元用於更換工作站；借款不是贈與，不能宣稱已還清。",
+        "熙蒙抗議攝像頭被打開並切斷連線。"
+      ]
+    },
+    {
+      "scene": "d15:room",
+      "visibility": "private-wechat",
+      "facts": [
+        "熙蒙向哥哥提起一百萬借款；熙旺擔心來歷不明的人，讓熙蒙有事告訴自己。"
+      ]
+    },
+    {
+      "scene": "d15:racing",
+      "visibility": "private-wechat",
+      "facts": [
+        "兄弟們相約玩地平線。"
+      ]
+    }
+  ],
+  "rule": "只在相應消息實際送達、角色有權知道時取用。私人微信不直接注入熙泰。"
+}
