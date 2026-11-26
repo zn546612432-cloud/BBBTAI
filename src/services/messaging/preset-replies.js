@@ -52,7 +52,7 @@ export function nativeWeChatComposer(s,id){
  };
  return {
   text:null,stage:null,source:null,
-  disabled:!!line||busy||(!(id==='wang'&&s.day>=7)&&providers.some(p=>p.disabled(s,id)))
+  disabled:!!line||busy||(id==='group'&&s.story55?.version===1&&(s.day!==1||!!s.story55.d01?.group))||(!(id==='wang'&&s.day>=7)&&providers.some(p=>p.disabled(s,id)))
  };
 }
 
@@ -74,6 +74,8 @@ export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  if(!line&&!busy&&genericMissedReplyDraft(s,id))
   return sendGenericMissedReply(store,id,text,now);
  if(chosen&&!line)return chosen.provider.send(store,id,text,now);
+ // D01 initial group greeting is an authored trigger. All other story group sends require a preset.
+ if(id==='group'&&s.story55?.version===1&&(s.day!==1||!!s.story55.d01?.group))return {handled:true,reason:'暫無可發送的預設訊息'};
  // Wang's idle private thread permits the approved free-message exchange.
  // Any current preset, missed reply or plot turn has already taken precedence.
  if(id==='wang'&&s.day>=7&&!line&&!busy)return {handled:false};

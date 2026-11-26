@@ -1,7 +1,7 @@
 import {esc} from '../../../../system/ui.js';
 import {resolveWeChatAvatar} from '../../avatars.js';
 import {wechatChatMuted,setWeChatChatMuted} from '../../../../services/messaging/wechat-notifications.js';
-import {visibleMessages} from '../../../../services/messaging/delivery.js';
+import {playerWeChatMessages} from './history.js';
 import {actorName} from '../../../../editor/conversations/model.js';
 import {openGamePhotoPicker,snapshotGamePhoto} from '../../../photos/features/picker/index.js';
 import {GROUP_ID,FATHER_ID,BROTHERS,groupThread,chatSettings,editChatSettings,groupEggsOpen,groupAway,fatherPresent,fatherUsed,groupName,displayMembers} from './state.js';
@@ -26,7 +26,7 @@ export function renderGroupInfo(s,routePath){
  if(sub==='invite-confirm')return wrap('添加成員',section('<div class="wx-group-contact">'+img('傅隆生',s)+'<span>傅隆生</span></div>','<button type="button" class="wx-group-save" data-action="wx-group-invite-confirm"'+(!canGroupEgg(s)||fatherUsed(s)?' disabled':'')+'>完成</button>'));
  if(sub==='leave')return wrap('退出群聊',section('<p class="wx-group-description">退出後將不再接收此群聊的消息。</p>','<button class="wx-group-exit" type="button" data-action="wx-group-leave-confirm">退出群聊</button>'));
  if(sub==='search'){
-  const msgs=visibleMessages(c,s).filter(m=>m.kind!=='image'&&m.kind!=='recalled').slice().reverse();
+  const msgs=playerWeChatMessages(c,s).filter(m=>m.kind!=='image'&&m.kind!=='recalled').slice().reverse();
   return wrap('查找聊天內容','<div class="wx-group-search"><input type="search" data-wx-search placeholder="搜索" autocomplete="off"></div>'+section(...msgs.map(m=>'<button type="button" class="wx-group-result" data-action="wx-group-search-result" data-id="'+esc(m.id)+'" data-wx-filter="'+esc(m.text)+'"><small>'+esc((m.wechatEgg&&m.from===FATHER_ID?'傅隆生':actorName(c,m.from)))+' · '+esc(m.time||'')+'</small><span>'+esc(m.text)+'</span></button>')));
  }
  const fields={name:['群聊名稱',groupName(s,c),60],notice:['群公告',p.notice||'',500],nickname:['我在本群的暱稱',p.nickname||'',60],remark:['備註',p.remark||'',60]};
@@ -72,7 +72,7 @@ export function handleGroupAction(action,target,ctx){
   return true;
  }
  if(action==='wx-group-search'){route(ctx,'/chat-info/group/search');return true;}
- if(action==='wx-group-search-result'){if(!groupAway(s)){route(ctx,'/chat/group');globalThis.document?.querySelectorAll('[data-key]').forEach(el=>{if(el.dataset.key==='message-'+id)el.scrollIntoView?.({block:'center'});});}return true;}
+ if(action==='wx-group-search-result'){if(!groupAway(s)&&playerWeChatMessages(groupThread(s),s).some(m=>m.id===id)){route(ctx,'/chat/group');globalThis.document?.querySelectorAll('[data-key]').forEach(el=>{if(el.dataset.key==='message-'+id)el.scrollIntoView?.({block:'center'});});}return true;}
  if(action==='wx-group-member'){
   const c=s.content.conversations.wechat.find(c=>c.name===target.dataset.name);
   if(c)route(ctx,'/chat/'+c.id);return true;

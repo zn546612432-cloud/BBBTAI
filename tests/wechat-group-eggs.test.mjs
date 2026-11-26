@@ -9,6 +9,8 @@ import {parseClassification,classificationMessages} from '../src/apps/wechat/fea
 import {renderGroupInfo} from '../src/apps/wechat/features/group/index.js';
 import {renderWeChatChat} from '../src/apps/wechat/components/chat-view.js';
 import {visibleMessages} from '../src/services/messaging/delivery.js';
+import {playerWeChatMessages} from '../src/apps/wechat/features/group/history.js';
+import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
 import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
 import {recordMomentInteraction,publishPlayerMoment,markMomentInteractionsRead} from '../src/apps/wechat/features/moments/model.js';
 import {appFrame} from '../src/system/shell.js';
@@ -64,8 +66,8 @@ test('group rename survives reload without changing canonical ID or actor names;
  assert.deepEqual(parseClassification({text:'{"type":"unknown","target":"熙泰"}'}),{type:'generic',target:''});
  assert.equal(classificationMessages(request).length,2);
 });
-test('leave hides the existing group, uses game minutes then real seconds, and restores original history without rewriting it',()=>{
- let s=idle();const old=groupThread(s).messages.map(m=>m.id),now=100000;
+test('leave hides previous history on rejoin without rewriting underlying story',()=>{
+ let s=idle();const now=100000;groupThread(s).messages.push({id:'old-history',from:'wang',kind:'text',text:'OLD_PRIVATE_HISTORY_ABC',day:s.day,time:s.clock});const old=groupThread(s).messages.map(m=>m.id);
  assert.equal(leaveGroup(s,{now,random:()=>0}),true);assert.ok(groupAway(s));assert.doesNotMatch(renderWeChatHome(s,'/'),/data-id="group"/);
  s=structuredClone(s);
  const mins=Number(s.clock.slice(0,2))*60+Number(s.clock.slice(3))+2;
@@ -74,6 +76,10 @@ test('leave hides the existing group, uses game minutes then real seconds, and r
  tickGroupEggs(s,now+6800);tickGroupEggs(s,now+11000);assert.equal(groupAway(s),false);
  assert.deepEqual(groupThread(s).messages.filter(m=>!m.wechatEgg).map(m=>m.id),old);
  assert.match(renderWeChatHome(s,'/'),/data-id="group"/);
+ assert.doesNotMatch(renderWeChatChat(s,'group'),/OLD_PRIVATE_HISTORY_ABC/);
+ assert.doesNotMatch(renderGroupInfo(s,'/chat-info/group/search'),/OLD_PRIVATE_HISTORY_ABC/);
+ assert.ok(playerWeChatMessages(groupThread(s),s).every(m=>!old.includes(m.id)));
+ s=structuredClone(s);assert.doesNotMatch(renderWeChatChat(s,'group'),/OLD_PRIVATE_HISTORY_ABC/);
 });
 test('D01 and D54 prohibit eggs, and D54 automatically restores membership',()=>{
  for(const day of [1,54,55]){const s=setup(day);assert.equal(inviteFather(s),false);assert.equal(leaveGroup(s),false);assert.equal(patBrother(s,'小辛'),false);}
@@ -88,3 +94,5 @@ test('pat back is a system action, not dialogue text, and excluded roles cannot 
 });
 
 test('D02 allows the invitation at idle morning before a mandatory group scene',()=>{const s=setup(2);s.clock='08:00';assert.equal(canGroupEgg(s),true);assert.equal(inviteFather(s,{now:10000}),true);});
+
+test('idle story group cannot send arbitrary text or open the emoji/photo picker; D01 opening trigger stays usable',()=>{const s=idle();assert.equal(nativeWeChatComposer(s,'group').disabled,true);const html=renderWeChatChat(s,'group');assert.match(html,/data-action="wx-emoji"[^>]* disabled/);assert.match(html,/data-action="attach-chat"[^>]* disabled/);const store={get:()=>s,update(){assert.fail('idle group cannot write')}};assert.equal(sendNativeWeChatPreset(store,'group','free text').handled,true);assert.ok(sendNativeWeChatPreset(store,'group','free text').reason);assert.equal(nativeWeChatComposer(setup(1),'group').disabled,false);});

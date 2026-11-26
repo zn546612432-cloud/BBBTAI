@@ -120,3 +120,20 @@ test('mouse press suppresses native dragging on system surfaces while a plain ta
  const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
  assert.match(css,/\.home-screen,\.lock-screen,#status-layer[^}]*user-select:none/);
 });
+
+
+test('app home indicator fades after three seconds without hiding its interactive bottom target',()=>{
+ const css=readFileSync(new URL('../src/styles/motion.css',import.meta.url),'utf8');
+ const wx=readFileSync(new URL('../src/apps/wechat/styles.css',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/syncHomeIndicator\(/);
+ assert.match(css,/#homebar\{[^}]*bottom:0;[^}]*height:20px/);
+ assert.match(css,/#phone\.home-indicator-hidden #homebar span\{opacity:0\}/);
+ const timer=readFileSync(new URL('../src/system/home-indicator.js',import.meta.url),'utf8');assert.match(timer,/setTimeout\(.*3000\)/);
+ assert.doesNotMatch(wx,/#phone:has\(\.app-wechat:not\(\.has-chat\)\) #homebar\{[^}]*pointer-events:none/);
+ const {touch,out,root}=phoneHarness({locked:false,home:false,shade:false,page:0});
+ touch('touchstart',190,790,0);
+ touch('touchmove',190,650,100);
+ touch('touchend',190,590,140);
+ assert.equal(out.homes.at(-1).complete,true);
+});

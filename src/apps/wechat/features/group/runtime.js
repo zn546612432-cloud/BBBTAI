@@ -1,5 +1,6 @@
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
+import {hiddenGroupMessageIds} from './history.js';
 import {nativeWeChatComposer} from '../../../../services/messaging/preset-replies.js';
 import {AUTHORED_CHAT_TRACKS} from '../../../../services/messaging/lifecycle/registry.js';
 import {currentScript55} from '../../../../services/story55/scripted-chat.js';
@@ -52,11 +53,16 @@ function fatherExit(s,now){
 export function leaveGroup(s,{now=Date.now(),random=Math.random}={}){
  if(!canGroupEgg(s))return false;
  const g=editGroupState(s);g.leaveCount=(g.leaveCount||0)+1;
+ g.hiddenMessageIds=[...new Set([...hiddenGroupMessageIds(s,groupThread(s)),...visibleMessages(groupThread(s),s).map(m=>m.id)])];
  g.leave={by:choose(BROTHERS,random),stage:'waiting',dueMinute:gameMinute(s)+2+Math.floor(random()*49),baseline:plotMessages(s),returnDelay:3000+Math.floor(random()*2001),returnLine:random()<.5};
  system(s,'你退出了群聊');return true;
 }
 function returnGroup(s,now,{plot=false}={}){
  const g=editGroupState(s),q=g.leave;if(!q)return;
+ const hidden=hiddenGroupMessageIds(s,groupThread(s));
+ // A plot-triggered early rejoin must retain the new story messages that brought the player back.
+ for(const m of visibleMessages(groupThread(s),s))if(!plot||m.wechatEgg||q.baseline.includes(m.id))hidden.add(m.id);
+ g.hiddenMessageIds=[...hidden];
  delete g.leave;
  if(plot)g.jobs=g.jobs.filter(j=>j.family!=='leave-private');
  // The invitation should surface the existing group even if no optional

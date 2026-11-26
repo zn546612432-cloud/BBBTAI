@@ -14,6 +14,8 @@ import {renderMoments,handleMoment,submitMoment} from './features/moments/index.
 import {renderWeChatPreferences,handleWeChatPreferences} from './features/notifications/index.js';
 import {renderSavedGroups,handleGroupAction,submitGroup} from './features/group/index.js';
 import {groupAway} from './features/group/state.js';
+import {playerWeChatMessages} from './features/group/history.js';
+const groupPresetOnly=s=>s.story55?.version===1&&s.nav.current.route==='/chat/group';
 
 export const manifest={id:'wechat',name:'微信',icon:0,defaultRoute:'/',supportsDeepLink:true,kicker:'MESSAGES'};
 let pendingWish=null;
@@ -45,7 +47,7 @@ export function openMessageMenu(bubble){
 
 function currentMessage(ctx,messageId){
   const route=ctx.store.get().nav.current.route,id=route.startsWith('/chat/')?route.slice(6):'';
-  const conversation=wechatConversation(ctx.store.get(),id),message=conversation?.messages.find(m=>m.id===messageId);
+  const conversation=wechatConversation(ctx.store.get(),id),message=playerWeChatMessages(conversation,ctx.store.get()).find(m=>m.id===messageId);
   if(!message)throw Error('消息不存在');
   return {id,message};
 }
@@ -112,6 +114,7 @@ export function handle(action,target,ctx){
     speakWeChatText(draft);
     return;
   }
+  if(groupPresetOnly(ctx.store.get())&&['wx-emoji','wx-emoji-category','wx-emoji-insert','wx-emoji-delete','attach-chat'].includes(action))return;
   if(action==='wx-emoji'){
     const conversation=target.closest('.wx-conversation'),panel=emojiPanelFor(target);
     if(panel)showEmojiPanel(conversation,panel.hidden,{focusKeyboard:!panel.hidden});
@@ -163,7 +166,7 @@ export function handle(action,target,ctx){
     if(s.nav.current.route!=='/chat/'+id||id==='group'&&groupAway(s))return;
     openGamePhotoPicker(ctx,async photo=>{
       const src=await snapshotGamePhoto(photo),live=ctx.store.get();
-      if(live.nav.current.appId!=='wechat'||live.nav.current.route!=='/chat/'+id||live.story55?.version===1&&live.day===1)return;
+      if(live.nav.current.appId!=='wechat'||live.nav.current.route!=='/chat/'+id||live.story55?.version===1&&(live.day===1||id==='group'))return;
       sendMessage(ctx.store,{channel:'wechat',conversationId:id,text:src,kind:'image'});
     });
   }
