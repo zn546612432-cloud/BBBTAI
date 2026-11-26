@@ -105,7 +105,7 @@
 .wx-me .wx-settings-group:first-of-type{margin-top:12px}
 .wx-me .wx-settings-group .wx-entry{height:61px}
 .wx-me .wx-settings-group .wx-entry-main{gap:4px}
-#phone:has(.app-wechat:not(.has-chat)) #homebar{opacity:0;pointer-events:none}
+#phone:has(.app-wechat:not(.has-chat)) #homebar span{background:#171717}
 #phone:has(.app-wechat:not(.has-chat)) #status-layer{background:#ededed;color:#171717}
 #phone:has(.app-wechat:has(.wx-me)) #status-layer{background:#fff}
 .app-view.app-wechat:has(.wx-me){background:#fff}
