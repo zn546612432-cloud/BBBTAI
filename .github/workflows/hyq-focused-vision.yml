@@ -1,28 +1,40 @@
-name: HYQ focused photo-comment validation
+name: HYQ real Flash and Pro smoke
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  verify:
+  smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
-      - name: Focused Moments and music regressions
-        run: node --test tests/wechat-moments-player.test.mjs tests/music-playback.test.mjs
-      - name: Syntax check changed modules
+      - name: Generate a synthetic picture, never a player photo
         run: |
-          node --check src/apps/wechat/features/moments/reactions.js
-          node --check src/apps/wechat/features/moments/vision.js
-          node --check src/services/ai/moments-comments.js
-          node --check supabase/functions/tai-provider-gateway/moments-vision.js
-          node --check server/ai-gateway.mjs
-      - name: Build release
-        run: npm run build:pages
+          python - <<'PY'
+          import struct,zlib
+          w=h=128
+          def chunk(t,b): return struct.pack('>I',len(b))+t+b+struct.pack('>I',zlib.crc32(t+b)&0xffffffff)
+          rows=b''.join(b'\0'+b''.join(bytes((230,20,30) if x<64 else (20,70,220)) for x in range(w)) for y in range(h))
+          open('/tmp/hyq-test.png','wb').write(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(rows))+chunk(b'IEND',b''))
+          PY
+      - name: Live authenticated image and comment request
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {taiCloudSession,taiCloudCall} from './src/services/ai/supabase-gateway.js';
+          import {momentsCommentMessages,parseMomentComment} from './src/services/ai/moments-comments.js';
+          const m=new Map();globalThis.localStorage={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,String(v))};
+          await taiCloudSession();
+          const result=await taiCloudCall('moments_vision',{image:'data:image/png;base64,'+readFileSync('/tmp/hyq-test.png').toString('base64')});
+          if(typeof result.description!=='string'||!result.description.trim()||!(/红|紅|red/i.test(result.description)&&/蓝|藍|blue/i.test(result.description)))throw Error('Flash did not describe both test colors: '+JSON.stringify(result));
+          console.log('Flash actual description:',result.description);
+          const response=await taiCloudCall('chat',{model:'deepseek-v4-pro',temperature:.7,top_p:.8,max_tokens:160,messages:momentsCommentMessages({by:'小辛',day:23,clock:'12:00',post:{text:'我做的配色，哪個顏色好看？',hasPhoto:true,photoDescription:result.description}})});
+          const comment=parseMomentComment(response);
+          if(!comment)throw Error('Pro returned no usable comment');
+          console.log('Pro actual comment:',comment);
+          JS
