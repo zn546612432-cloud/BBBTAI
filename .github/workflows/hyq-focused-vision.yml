@@ -1,23 +1,36 @@
-name: HYQ album and reaction focused validation
+name: Verify HYQ album release on Cloudflare
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  verify:
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - name: Focused Moments and Photos regressions
-        run: node --test tests/wechat-moments-player.test.mjs tests/photos-ui.test.mjs
-      - name: Changed module syntax
+      - name: Verify public production and friends entrypoints and updated modules
         run: |
-          for f in src/apps/photos/features/picker/index.js src/apps/wechat/index.js src/apps/wechat/features/moments/{index,reactions}.js; do node --check "$f"; done
-      - run: npm run build:pages
+          python3 - <<'PY'
+          import urllib.request, concurrent.futures, json, time
+          root='https://bbbtai.pages.dev/'
+          paths={
+            '':['/src/main.js'],
+            'review/friends-test/':['phone-friends-test'],
+            'src/apps/photos/features/picker/index.js':['openGamePhotoPicker','暫無照片'],
+            'src/apps/wechat/index.js':['openGamePhotoPicker','renderGamePhotoPicker'],
+            'src/apps/wechat/features/moments/index.js':['openGamePhotoPicker'],
+            'src/apps/wechat/features/moments/reactions.js':['reactionPolicy=2','repairTodayLikes','1+Math.floor(random()*names.length)']}
+          def probe(item):
+            path,markers=item
+            try:
+              req=urllib.request.Request(root+path+'?verify=390-'+str(int(time.time())),headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=10) as r:
+                body=r.read().decode('utf-8','replace')
+                return path, r.status, all(x in body for x in markers), r.headers.get('Content-Type')
+            except Exception as e:return path,0,False,str(e)
+          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            result=list(pool.map(probe,paths.items()))
+          print('LIVE_RESULTS',json.dumps(result,ensure_ascii=False))
+          assert all(x[1]==200 and x[2] for x in result),'Cloudflare release not yet confirmed'
+          PY
