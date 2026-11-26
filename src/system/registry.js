@@ -4,7 +4,8 @@ import * as wechat from '../apps/wechat/index.js';import * as noapp from '../app
 import * as phoneReplica from '../apps/phone/replica.js';
 
 import * as weatherReplica from '../apps/weather/replica.js';
-const modules=[wechat,noapp,chess,mirage,ghost,kira,bank,schedule,messages,phone,mail,photos,camera,files,notes,maps,browser,music,calendar,clock,weather,aomi,settings,reminders,editor].filter(m=>!isFriendsTest||m.manifest.id!=='editor');
+import * as board from '../apps/board/index.js';
+const modules=[board,wechat,noapp,chess,mirage,ghost,kira,bank,schedule,messages,phone,mail,photos,camera,files,notes,maps,browser,music,calendar,clock,weather,aomi,settings,reminders,editor].filter(m=>!isFriendsTest||m.manifest.id!=='editor');
 export const registry=new Map(modules.map(m=>[m.manifest.id,m]));
 // Native-style UI replicas are isolated within their app folders; retained
 // implementations remain available for legacy fixtures and migrations.
@@ -13,5 +14,5 @@ for(const module of [phoneReplica,weatherReplica])registry.set(module.manifest.i
 export const appUnlocked=(id,s)=>isStory55(s)&&id==='noapp'?!!s.story55.noappInstalled||taiRecognized(s):!registry.get(id)?.manifest.unlockDay||s.day>=registry.get(id).manifest.unlockDay;
 export const installed=s=>[...registry.values()].filter(m=>!m.manifest.hidden&&appUnlocked(m.manifest.id,s)).map(m=>m.manifest);
 export const appById=id=>registry.get(id);
-export const homePages=[['wechat','photos','camera','notes','calendar','weather','maps','clock'],['mirage','ghost','kira','bank','chess','files','music','schedule'],['reminders','aomi','browser','noapp','settings']];
+export const homePages=[['wechat','photos','camera','notes','calendar','weather','maps','clock'],['mirage','ghost','kira','bank','chess','files','music','schedule'],['reminders','aomi','browser','noapp','settings','board']];
 export const dockApps=['phone','messages'];
