@@ -27,7 +27,7 @@ export function renderGroupInfo(s,routePath){
  if(sub==='leave')return wrap('退出群聊',section('<p class="wx-group-description">退出後將不再接收此群聊的消息。</p>','<button class="wx-group-exit" type="button" data-action="wx-group-leave-confirm">退出群聊</button>'));
  if(sub==='search'){
   const msgs=visibleMessages(c,s).filter(m=>m.kind!=='image'&&m.kind!=='recalled').slice().reverse();
-  return wrap('查找聊天內容','<div class="wx-group-search"><input type="search" data-wx-search placeholder="搜索" autocomplete="off"></div>'+section(...msgs.map(m=>'<button type="button" class="wx-group-result" data-action="wx-group-search-result" data-id="'+esc(m.id)+'" data-wx-filter="'+esc(m.text)+'"><small>'+esc(actorName(c,m.from))+' · '+esc(m.time||'')+'</small><span>'+esc(m.text)+'</span></button>')));
+  return wrap('查找聊天內容','<div class="wx-group-search"><input type="search" data-wx-search placeholder="搜索" autocomplete="off"></div>'+section(...msgs.map(m=>'<button type="button" class="wx-group-result" data-action="wx-group-search-result" data-id="'+esc(m.id)+'" data-wx-filter="'+esc(m.text)+'"><small>'+esc((m.wechatEgg&&m.from===FATHER_ID?'傅隆生':actorName(c,m.from)))+' · '+esc(m.time||'')+'</small><span>'+esc(m.text)+'</span></button>')));
  }
  const fields={name:['群聊名稱',groupName(s,c),60],notice:['群公告',p.notice||'',500],nickname:['我在本群的暱稱',p.nickname||'',60],remark:['備註',p.remark||'',60]};
  if(fields[sub])return edit(sub,...fields[sub]);
@@ -80,8 +80,8 @@ export function handleGroupAction(action,target,ctx){
  if(action==='wx-group-pat'){
   if(s.nav.current.route!=='/chat/group')return true;
   const by=target.dataset.name,now=Date.now();
-  if(lastPat?.by===by&&now-lastPat.at<=450){lastPat=null;if(canGroupEgg(s))ctx.store.update(x=>patBrother(x,by,{now}));}
-  else lastPat={by,at:now};
+  if(lastPat?.store===ctx.store&&lastPat.by===by&&now-lastPat.at<=450){lastPat=null;if(canGroupEgg(s))ctx.store.update(x=>patBrother(x,by,{now}));}
+  else lastPat={store:ctx.store,by,at:now};
   return true;
  }
  return false;

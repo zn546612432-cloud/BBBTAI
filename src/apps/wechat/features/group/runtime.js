@@ -1,6 +1,8 @@
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {nativeWeChatComposer} from '../../../../services/messaging/preset-replies.js';
+import {AUTHORED_CHAT_TRACKS} from '../../../../services/messaging/lifecycle/registry.js';
+import {currentScript55} from '../../../../services/story55/scripted-chat.js';
 import {dateParts} from '../../../../services/calendar.js';
 import {GROUP_ID,FATHER_ID,BROTHERS,PRIVATE_IDS,ACTOR_IDS,groupThread,groupState,editGroupState,chatSettings,editChatSettings,groupEggsOpen,groupAway,fatherPresent,fatherUsed,groupName,gameMinute} from './state.js';
 import {FATHER_PRIVATE,FATHER_AFTER,NAME_LINES,NOTICE_LINES,NICK_LINES,LEAVE_LINES,RETURN_LINES,PAT_LINES} from './lines.js';
@@ -11,7 +13,7 @@ const plotMessages=s=>visibleMessages(groupThread(s),s).filter(m=>!m.wechatEgg).
 export function groupPlotBusy(s){
  if(!groupThread(s))return true;
  const q=nativeWeChatComposer(s,GROUP_ID);
- return q.text!==null||q.disabled||!!s.story55?.activeScene;
+ return q.text!==null||!!currentScript55(s,'wechat',GROUP_ID)||AUTHORED_CHAT_TRACKS.some(({track})=>track.busy?.(s,GROUP_ID))||!!s.story55?.activeScene;
 }
 export const canGroupEgg=s=>groupEggsOpen(s)&&!!groupThread(s)&&!groupAway(s)&&!fatherPresent(s)&&!groupPlotBusy(s);
 function ensureDM(s,by){
@@ -37,6 +39,12 @@ export function inviteFather(s,{now=Date.now()}={}){
 }
 function fatherExit(s,now){
  const g=editGroupState(s);if(g.father?.stage!=='present')return;
+ // After a suspended tab resumes past 30s, finish already-due private messages before the smile, without replaying any of them.
+ if(groupEggsOpen(s)){
+  const pending=g.jobs.filter(j=>j.family==='father-private'&&j.due<=now).sort((a,b)=>a.due-b.due);
+  for(const j of pending)write(s,j.by,j.text,{id:j.id,conversationId:j.conversationId});
+  g.jobs=g.jobs.filter(j=>!pending.some(p=>p.id===j.id));
+ }
  write(s,'傅隆生','🙂');system(s,'傅隆生退出了群聊');
  g.father.stage='done';
  if(groupEggsOpen(s))FATHER_AFTER.forEach(([by,text],i)=>queue(s,by,text,now+1500+i*2400,{family:'father-after'}));
@@ -50,6 +58,7 @@ export function leaveGroup(s,{now=Date.now(),random=Math.random}={}){
 function returnGroup(s,now,{plot=false}={}){
  const g=editGroupState(s),q=g.leave;if(!q)return;
  delete g.leave;
+ if(plot)g.jobs=g.jobs.filter(j=>j.family!=='leave-private');
  // The invitation should surface the existing group even if no optional
  // follow-up is selected. It is not a story task or mandatory player reply.
  write(s,q.by,q.by+'邀請你加入了群聊',{kind:'system',notify:true});
@@ -72,7 +81,7 @@ export function changeGroupField(s,field,value,{now=Date.now()}={}){
  if(field==='notice')system(s,value?'你發布了群公告：'+value:'你清除了群公告');
  if(field==='nickname')system(s,'你修改了本群暱稱為「'+(value||'熙蒙')+'」');
  if(!groupEggsOpen(s)||!value)return true;
- const g=editGroupState(s),previous=g.classifications[field],revision=(g.revisions??={});
+ const g=editGroupState(s),revision=(g.revisions??={});
  revision[field]=(revision[field]||0)+1;
  g.jobs=g.jobs.filter(j=>j.family!==field);
  const at=Math.max(now,field==='name'?(g.lastNameClassification||0)+60000:now);
@@ -100,7 +109,11 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
   const source=NOTICE_LINES[result?.type==='food'?'food':'command'];
   rows=shuffle(source,random).slice(0,2+Math.floor(random()*2));
  }else if(q.field==='nickname'){
-  if(random()<.7)rows=shuffle(NICK_LINES,random).slice(0,1+Math.floor(random()*2));
+  if(random()<.7){
+   const preferred=result?.type==='vanity'||result?.type==='abstract'?['小辛','胡枫']:result?.type==='warm'?['仔仔','熙旺']:BROTHERS;
+   const choices=NICK_LINES.filter(([by])=>preferred.includes(by));
+   rows=shuffle(choices.length?choices:NICK_LINES,random).slice(0,1+Math.floor(random()*2));
+  }
  }
  rows.forEach(([by,text],i)=>queue(s,by,text,now+2000+i*2600,{family:q.field,revision:q.revision}));
  return true;

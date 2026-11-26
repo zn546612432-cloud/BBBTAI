@@ -16,7 +16,7 @@ export function groupMembersForAvatar(conversation,s){
 
 export function groupAvatar(conversation,s){
   const members=groupMembersForAvatar(conversation,s);
-  return '<span class="wx-avatar wx-group-avatar" aria-label="群聊头像：'+esc(members.map(a=>a.name).join('、'))+'">'+
+  return '<span class="wx-avatar wx-group-avatar'+(members.length>6?' wx-group-avatar-extended':'')+'" aria-label="群聊头像：'+esc(members.map(a=>a.name).join('、'))+'">'+
     members.map(member=>{
       const src=resolveWeChatAvatar(member.name,s?.characterAvatars?.[member.name]);
       return '<span class="wx-group-cell">'+(/^(?:\/|data:image\/|https:\/\/)/i.test(src)?'<img src="'+esc(src)+'" alt="'+esc(member.name)+'" loading="eager" decoding="async" width="40" height="40">':'<span>'+esc(member.name.slice(0,1))+'</span>')+'</span>';

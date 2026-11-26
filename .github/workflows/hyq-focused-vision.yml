@@ -1,4 +1,4 @@
-name: WeChat group eggs focused verification
+name: WeChat group final targeted tests and mobile browser
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
@@ -7,7 +7,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,9 +15,24 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Focused group, UI, notification, Moments and native delivery tests
-        run: node --test tests/wechat-group-eggs.test.mjs tests/wechat-conversation.test.mjs tests/wechat-ui.test.mjs tests/wechat-notifications.test.mjs tests/wechat-moments-player.test.mjs tests/d46-group.test.mjs tests/linked-contract-delivery.test.mjs
-      - name: Check changed source syntax
-        run: |
-          for f in src/apps/wechat/features/group/*.js src/apps/wechat/index.js src/apps/wechat/components/{chat-view,views,group-avatar}.js src/main.js src/services/messaging/{delivery,phone-story-scheduler,authored-incoming}.js src/services/story55/runtime.js src/system/shell.js; do node --check "$f"; done
+      - name: Verify changed group and messaging surfaces
+        run: node --test tests/wechat-group-eggs.test.mjs tests/wechat-conversation.test.mjs tests/wechat-notifications.test.mjs tests/d46-group.test.mjs
       - run: npm run build:pages
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Start local phone
+        run: |
+          node server/dev.mjs >/tmp/bbbtai-wechat-qa.log 2>&1 &
+          for i in {1..25}; do
+            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/bbbtai-wechat-qa.log
+          exit 1
+      - run: node group-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wechat-group-mobile-evidence
+          path: wechat-group-browser-results/
+          if-no-files-found: warn

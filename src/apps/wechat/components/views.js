@@ -36,7 +36,7 @@ function item(id,title,detail='',opts={}){
     wxIcon('chevron',19)+'</button>';
 }
 function nav(active,s){
-  const unread=(s.content.conversations.wechat||[]).reduce((total,c)=>total+Math.max(0,Number(c.unread)||0),0);
+  const unread=(s.content.conversations.wechat||[]).filter(c=>!(c.id==='group'&&groupAway(s))).reduce((total,c)=>total+Math.max(0,Number(c.unread)||0),0);
   return '<nav class="wx-tabs" data-view-key="wechat-tab-bar" aria-label="微信底部导航">'+tabs.map(t=>
     '<button type="button" class="wx-tab '+(active===t.id?'selected':'')+'" data-action="wx-tab" data-tab="'+t.id+'"'+(active===t.id?' aria-current="page"':'')+'>'+ 
     '<span class="wx-tab-icon">'+wxIcon(active===t.id&&['chats','contacts','me'].includes(t.id)?({chats:'chatsFilled',contacts:'contactsFilled',me:'meFilled'}[t.id]):t.icon,27)+

@@ -15,7 +15,7 @@ export function deliverAuthoredIncoming(s,{
  // Replays and restored timeline ticks never count twice.
  if(s.notifications.some(n=>n.id===id))return false;
  c.unread=Math.max(0,Number(c.unread)||0)+1;
- const who=String(from||c.name||'');
+ const who=from==='fulongsheng'?'傅隆生':String(from||c.name||'');
  s.notifications.unshift({
   id,messageId,conversationId,day,clock,storyMessage:true,...(silent?{silent:true}:{}),...(lifecycleId?{lifecycleId}:{}),
   title:title|| (channel==='wechat'&&(c.group||conversationId==='group')
