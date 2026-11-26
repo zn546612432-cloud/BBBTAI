@@ -51,7 +51,12 @@
 .status-battery{width:32px;height:16px;border-radius:5px;background:#171717;color:#fff;display:inline-grid;place-items:center;font-size:11px;font-weight:700;line-height:1;position:relative;margin-right:2px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
 .status-battery::after{content:"";position:absolute;right:-3px;top:5px;width:2px;height:6px;background:#8b8b8b;border-radius:0 2px 2px 0}
 .avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
-#homebar{z-index:46;transition:opacity .18s;touch-action:none}
+#homebar{z-index:46;transition:opacity .18s;touch-action:none;bottom:0;height:20px;background:transparent;box-shadow:none}
+#homebar span{pointer-events:none}
+/* Fade the visual indicator only. Its bottom gesture/button target stays live. */
+#phone.home-indicator-autohide #homebar span{animation:home-indicator-hide .18s linear 3s forwards}
+@keyframes home-indicator-hide{to{opacity:0}}
+
 #phone.notification-open #homebar span{background:#ffffffeb;box-shadow:0 1px 9px #0b213e7a}
 #phone.keyboard-open #homebar{opacity:0;pointer-events:none}
 .keyboard-open .composer,.keyboard-open .app-noapp .composer{padding-bottom:10px}
