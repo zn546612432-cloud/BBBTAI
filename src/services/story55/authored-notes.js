@@ -8,7 +8,8 @@ export function seedAuthoredNotes(s,definitions){
   if(ledger.includes(note.id))continue;
   const notes=s.content.notes??=[];
   if(!notes.some(n=>n.id===note.id))notes.unshift({id:note.id,title:note.title,text:note.text,
-   authored:true,storyContent:true,createdDay:note.day,updatedDay:note.day,updatedClock:note.at});
+   authored:true,storyContent:true,createdDay:note.day,updatedDay:note.day,updatedClock:note.at,
+   ...(note.attachments?{attachments:structuredClone(note.attachments)}:{}),...(note.attachmentsFirst?{attachmentsFirst:true}:{})});
   ledger.push(note.id);changed=true;
  }
  return changed;
