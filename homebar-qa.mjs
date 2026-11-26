@@ -18,6 +18,7 @@ try{
  await page.locator('.wx-conversation').waitFor();await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
  const bar=page.locator('#homebar'),span=bar.locator('span');
  assert.equal(await bar.evaluate(el=>getComputedStyle(el).pointerEvents),'auto');
+ assert.equal(await page.locator('.wx-composer input').isDisabled(),true);assert.equal(await page.locator('[data-action="wx-emoji"]').isDisabled(),true);
  const input=await page.locator('.wx-composer input').boundingBox(),hit=await bar.boundingBox();
  assert.ok(input.y+input.height<=hit.y,'home target must not overlap chat input');
  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#homebar span')).opacity)<.01,null,{timeout:6000});

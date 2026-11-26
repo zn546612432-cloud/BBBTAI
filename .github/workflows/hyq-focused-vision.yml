@@ -1,4 +1,4 @@
-name: Verify home indicator fade and bottom navigation
+name: Verify group preset lock, rejoin history and bottom navigation
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
@@ -15,7 +15,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test tests/touch-gestures.test.mjs tests/wechat-conversation.test.mjs
+      - run: node --test tests/touch-gestures.test.mjs tests/wechat-conversation.test.mjs tests/wechat-group-eggs.test.mjs tests/wechat-moments-player.test.mjs tests/d01-wechat.test.mjs
       - run: node --check src/main.js
       - run: npm run build
       - run: npm install --no-save playwright@1.55.0
