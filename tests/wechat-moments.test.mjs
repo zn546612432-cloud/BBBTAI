@@ -140,7 +140,8 @@ test('avatar paths are base-aware strings and privacy is shown only once on a pr
  for(const [name,path] of Object.entries(wechatAvatars))assert.equal(avatarUrl(name),path);
  const s=initialState();s.day=1;s.clock='13:00';
  const profile=renderMoments(s,'/moments/profile/熙蒙');
- assert.equal((profile.match(/仅展示最近三天的朋友圈/g)||[]).length,1);
+ assert.doesNotMatch(profile,/仅展示最近三天的朋友圈/,'own profile keeps full history');
+ assert.equal((renderMoments(s,'/moments/profile/小辛').match(/仅展示最近三天的朋友圈/g)||[]).length,1,'other profiles keep the three-day limit');
  assert.doesNotMatch(renderMoments(s,'/moments'),/仅三天可见|仅展示最近三天/);
 });
 

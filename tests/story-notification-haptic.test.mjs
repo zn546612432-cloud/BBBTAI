@@ -32,7 +32,7 @@ test('physical vibration only; unsupported browsers never shake or flash the scr
 });
 test('music uses actual track and shared Apple account, with working action targets',()=>{
  const home=musicLibrary({playing:false,tab:'listen',query:''});
- assert.match(home,/tonight-rain-cover.svg/);
+ assert.match(home,/tonight-rain-cover\.jpg/);
  assert.match(home,/data-action="music-play-track"/);
  assert.match(home,/data-action="music-account"/);
  assert.match(musicAccount(),/<h1>Jack<\/h1>/);
