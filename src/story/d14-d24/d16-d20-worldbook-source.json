@@ -1,0 +1,72 @@
+{
+  "scope": "D16-D20",
+  "sources": [
+    {
+      "day": 16,
+      "scene": "d16:briefing",
+      "visibility": "private-wechat",
+      "facts": [
+        "仔仔完成胡楓、阿威的第一版衣服；胡楓把企業資料交給熙蒙；七點半在大屋碰面。"
+      ]
+    },
+    {
+      "day": 16,
+      "scene": "d16:hardware",
+      "visibility": "private-wechat",
+      "facts": [
+        "熙蒙打算更換工作站；將自己用過的鍵盤送給熙旺。"
+      ]
+    },
+    {
+      "day": 17,
+      "scene": "d17:rain",
+      "visibility": "private-wechat",
+      "facts": [
+        "因雨暫停訓練，大家聚在家裡吃燒烤。"
+      ]
+    },
+    {
+      "day": 17,
+      "scene": "xs-d17-rain-shoes",
+      "visibility": "friends-moments",
+      "facts": [
+        "小辛的新鞋被雨淋濕。"
+      ]
+    },
+    {
+      "day": 18,
+      "scene": "d18:wallet-halves",
+      "visibility": "private-wechat",
+      "facts": [
+        "汪傑的電子錢包約五億美元；兩部分密鑰缺一不可；一部分在澳亞銀行手寫記錄，一部分在澳興大廈金輝資金中心服務器。",
+        "不能混淆後續段志鴻的錢包。"
+      ]
+    },
+    {
+      "day": 19,
+      "scene": "d19:future-home",
+      "visibility": "private-wechat",
+      "facts": [
+        "阿威想開拳館；仔仔想去巴黎學服裝設計；胡楓可能回韓國讀完書。",
+        "熙旺想買夠六兄弟同住的大房子，只希望大家幸福開心。"
+      ]
+    },
+    {
+      "day": 19,
+      "scene": "xs-d19-retire",
+      "visibility": "friends-moments",
+      "facts": [
+        "小辛開玩笑說想退休。"
+      ]
+    },
+    {
+      "day": 20,
+      "scene": "xm-note-d20-programme",
+      "visibility": "private-note",
+      "facts": [
+        "新設備、框架部署及兩項測試均列為未完成待辦，不代表完成。"
+      ]
+    }
+  ],
+  "rule": "僅角色實際知悉的已發生內容可注入；私人微信、私人備忘錄不直接提供給熙泰。"
+}
