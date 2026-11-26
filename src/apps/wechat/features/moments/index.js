@@ -196,7 +196,7 @@ export function handleMoment(action,target,ctx){
  if(action==='wx-moment-image-game'&&imageField){const field=imageField,photo=ctx.store.get().content.photos?.find(p=>p.id===id);imageField=null;ctx.refresh();if(!photo?.src)return true;
   void (async()=>{try{const bitmap=await createImageBitmap(await (await fetch(photo.src)).blob());openAvatarCropper({bitmap,aspect:field==='avatar'?1:1.5,size:field==='avatar'?512:1000,quality:.82,onSave:image=>ctx.store.update(s=>updatePlayerMomentImage(s,field,image))});}catch{ctx.toast('无法打开这张照片');}})();return true;
  }
- if(action==='wx-moment-focus'){const post=allPosts(ctx.store.get()).find(p=>p.id===id);if(post){ctx.store.update(s=>markMomentInteractionsRead(s,id));route('/comment/'+post.id);}return true;}
+ if(action==='wx-moment-focus'){const post=allPosts(ctx.store.get()).find(p=>p.id===id);if(post)route('/comment/'+post.id);return true;}
  if(action==='wx-moment-actions'){openActions=openActions===id?null:id;replyTo=null;ctx.refresh();return true;}
  if(action==='wx-moment-reply'||action==='wx-moment-reply-comment'){
   openActions=null;replyTo=id;replyToName=action==='wx-moment-reply-comment'?target.dataset.to:null;
