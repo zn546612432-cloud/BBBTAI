@@ -6,6 +6,7 @@ import {wishEventsDue,tickWishes,syncWishReminders} from './services/wishes/inde
 import {openWishPurchase} from './apps/reminders/index.js';
 import {deliverD01Opening,tickD01,d01ContactDue,tickD01ContactReply} from './story/d01/runtime.js';
 import {phoneStoryMessagesDue,tickPhoneStoryMessages} from './services/messaging/phone-story-scheduler.js';
+import {momentReactionsDue,tickMomentReactions} from './apps/wechat/features/moments/reactions.js';
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
@@ -514,6 +515,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  // The native message queue must run even when an unrelated story heartbeat fails.
  // This also resumes legacy saved GHOST replies that predate persisted send anchors.
  try{delivery.tick(Date.now(),true);}catch(error){toast(error?.message||'訊息投遞暫時不可用');}
+ if(momentReactionsDue(store.get()))void tickMomentReactions(store).catch(error=>console.warn('朋友圈互动暂未保存',error));
  try{presets.tick();if(d01ContactDue(store.get()))store.update(s=>tickD01ContactReply(s));if(phoneStoryMessagesDue(store.get()))store.update(s=>tickPhoneStoryMessages(s,Date.now(),{dueOnly:true}));
  if(chessLessonDue(store.get()))store.update(s=>tickD23ChessLesson(s));
  if(d23MiragePostgameDue(store.get())||identityRevealDue55(store.get())||pacedStorySceneDue55(store.get()))store.update(s=>tickStory55(s));

@@ -6,6 +6,7 @@ import {wxIcon} from './icons.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
 import {groupAvatar} from './group-avatar.js';
 import {wechatChatMuted} from '../../../services/messaging/wechat-notifications.js';
+import {unreadMomentInteractions} from '../features/moments/model.js';
 
 const tabs=[
   {id:'chats',label:'微信',icon:'chats',route:'/'},
@@ -114,7 +115,7 @@ function contacts(s){
 }
 function discover(s){
   const groups=[
-    [item('moments','朋友圈')],
+    [item('moments','朋友圈',unreadMomentInteractions(s)?String(unreadMomentInteractions(s))+' 条新消息':'')],
     [item('live','直播')],
     [item('scan','扫一扫'),item('mini','小程序')]
   ];
@@ -122,7 +123,7 @@ function discover(s){
 }
 function me(s){
   const profile='<button type="button" class="wx-profile" data-action="wx-open-entry" data-label="个人信息">'+
-    '<img class="wx-profile-avatar" src="'+wechatAvatars['熙蒙']+'" alt="熙蒙的微信头像">'+
+    '<img class="wx-profile-avatar" src="'+esc(resolveWeChatAvatar('熙蒙',s.characterAvatars?.['熙蒙']))+'" alt="熙蒙的微信头像">'+
     '<span class="wx-profile-copy"><strong>熙蒙</strong><span>微信号：未设置</span><small><span class="wx-state">＋ 状态</span></small></span>'+
     '<span class="wx-profile-qr">'+wxIcon('qr',20)+wxIcon('chevron',20)+'</span></button>';
   const groups=[

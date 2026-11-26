@@ -2,7 +2,8 @@ import {markMail55} from './story55/runtime.js';
 import {isMirageAuthenticated} from '../apps/mirage/session.js';
 import {normalizeAppLink} from './deep-links/index.js';
 import {readConversationInState} from './messaging/read.js';
-const acknowledgeOpenChat=(s,previousApp)=>{const {appId,route}=s.nav.current;if(appId==='kira'&&route?.startsWith('/mail/')){const mail=s.content.mail?.find(m=>m.id===route.slice(6));if(mail){mail.read=true;if(mail.story55)markMail55(s,mail.id);}}if(route?.startsWith('/chat/')&&!(appId==='mirage'&&(previousApp!=='mirage'||!isMirageAuthenticated())))readConversationInState(s,appId,route.slice(6));};
+import {markMomentInteractionsRead} from '../apps/wechat/features/moments/model.js';
+const acknowledgeOpenChat=(s,previousApp)=>{const {appId,route}=s.nav.current;if(appId==='wechat'&&route?.startsWith('/moments/comment/'))markMomentInteractionsRead(s,route.slice('/moments/comment/'.length));if(appId==='kira'&&route?.startsWith('/mail/')){const mail=s.content.mail?.find(m=>m.id===route.slice(6));if(mail){mail.read=true;if(mail.story55)markMail55(s,mail.id);}}if(route?.startsWith('/chat/')&&!(appId==='mirage'&&(previousApp!=='mirage'||!isMirageAuthenticated())))readConversationInState(s,appId,route.slice(6));};
 // A live call is a transient screen, never a historical destination.
 export const isNoAppCallRoute=loc=>loc?.appId==='noapp'&&loc.route==='/call';
 export function dismissNoAppCallRoute(s){

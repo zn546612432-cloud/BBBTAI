@@ -4,12 +4,13 @@ import {musicPlayer,modeLabels,formatMusicTime} from './features/player/index.js
 import {tracks,trackById} from './features/shared/catalog.js';
 import {playlistTracks,addPlaylistTrack} from './features/library/playlist.js';
 import {sendMessage} from '../../services/messaging/index.js';
+import {taiRecognized} from '../../services/story55/state.js';
 export const manifest={id:'music',name:'音乐',icon:14,defaultRoute:'/',supportsDeepLink:true,kicker:'MUSIC'};
-let audio=null,progress=0,view='library',tab='listen',query='',category='歌曲',playRequest=0;
+let audio=null,progress=0,view='library',tab='listen',query='',category='歌曲',playRequest=0,shareOpen=false;
 const modes=Object.keys(modeLabels);
 export const isPlaying=()=>!!audio&&!audio.paused;
 const format=formatMusicTime;
-export const render=({store})=>{const s=store.get(),current=trackById(s.musicTrack);return `<div class="ios-music${view==='player'?' music-full-player':''}">${view==='player'?musicPlayer(s.musicPlaying,progress,s.musicMode||'sequence',current,s.musicPlaylist?.includes(current.id),{currentTime:audio?.currentTime,duration:audio?.duration}):view==='account'?musicAccount():view==='browse'?musicBrowse(category,category==='我的歌单'?playlistTracks(s):tracks):musicLibrary({playing:s.musicPlaying,tab,query,current})}</div>`;};
+export const render=({store})=>{const s=store.get(),current=trackById(s.musicTrack);return `<div class="ios-music${view==='player'?' music-full-player':''}">${view==='player'?musicPlayer(s.musicPlaying,progress,s.musicMode||'sequence',current,s.musicPlaylist?.includes(current.id),{currentTime:audio?.currentTime,duration:audio?.duration}):view==='account'?musicAccount():view==='browse'?musicBrowse(category,category==='我的歌单'?playlistTracks(s):tracks):musicLibrary({playing:s.musicPlaying,tab,query,current})}${view==='player'&&shareOpen?'<div class="music-share-overlay" role="dialog" aria-modal="true" aria-label="分享音乐"><div class="music-share-sheet"><div class="music-share-handle"></div><strong>分享至</strong><button type="button" data-action="music-share-hyq">朋友圈 <span>›</span></button>'+(taiRecognized(s)&&s.content?.conversations?.noapp?.some(c=>c.id==='tai')?'<button type="button" data-action="music-share-tai">发送给 T. <span>›</span></button>':'')+'<button type="button" data-action="music-share-cancel">取消</button></div></div>':''}</div>`;};
 const sync=()=>{if(!audio)return;progress=audio.duration?audio.currentTime/audio.duration*100:0;const seek=document.querySelector('#screen-layer .music-seek-input');if(seek&&document.activeElement!==seek)seek.value=String(progress);const current=document.querySelector('[data-music-current]'),duration=document.querySelector('[data-music-duration]');if(current)current.textContent=format(audio.currentTime);if(duration)duration.textContent=format(audio.duration||0);};
 function adjacent(s,step){const i=tracks.findIndex(t=>t.id===trackById(s.musicTrack).id);if(s.musicMode==='shuffle'&&tracks.length>1)return tracks[(i+1+Math.floor(Math.random()*(tracks.length-1)))%tracks.length];return tracks[(i+step+tracks.length)%tracks.length];}
 function loadTrack(t,c){
@@ -40,12 +41,15 @@ export function handle(a,t,c){
  if(a==='music-account'){view='account';c.refresh();}
  if(a==='music-browse'){category=t.dataset.category;view='browse';c.refresh();}
  if(a==='music-play-track'){view='player';playTrack(t.dataset.track,c);c.refresh();sync();}
- if(a==='music-library'){view='library';c.refresh();}
+ if(a==='music-library'){shareOpen=false;view='library';c.refresh();}
  if(a==='music-restart'){if(audio)audio.currentTime=0;sync();}
  if(a==='music-previous'||a==='music-next'){const s=c.store.get();if(a==='music-previous'&&audio?.currentTime>3){audio.currentTime=0;sync();return;}const next=adjacent(s,a==='music-next'?1:-1);if(isPlaying())playTrack(next.id,c);else{loadTrack(next,c);c.store.update(s=>{s.musicTrack=next.id;s.musicPlaying=false;});}sync();}
  if(a==='music-mode'){const mode=modes[(modes.indexOf(c.store.get().musicMode||'sequence')+1)%modes.length];if(audio)audio.loop=mode==='single';c.store.update(s=>s.musicMode=mode);}
  if(a==='music-toggle'){if(isPlaying()){playRequest++;audio.pause();c.store.update(s=>s.musicPlaying=false);}else playTrack(trackById(c.store.get().musicTrack).id,c);}
- if(a==='music-share'){const track=trackById(c.store.get().musicTrack);const messageId=sendMessage(c.store,{channel:'noapp',conversationId:'tai',text:'分享音乐：'+track.title,kind:'music',attachment:{trackId:track.id}});c.router.open({appId:'noapp',route:'/chat/tai'});window.dispatchEvent(new CustomEvent('ximeng:noapp-music-sent',{detail:{messageId}}));}
+ if(a==='music-share'){shareOpen=true;c.refresh();return;}
+ if(a==='music-share-cancel'){shareOpen=false;c.refresh();return;}
+ if(a==='music-share-hyq'){const track=trackById(c.store.get().musicTrack);shareOpen=false;c.store.update(s=>{const m=s.content.moments??={};m.draft={text:'',privacy:'public',musicTrackId:track.id};});c.router.open({appId:'wechat',route:'/moments/compose'});return;}
+ if(a==='music-share-tai'){if(!taiRecognized(c.store.get())||!c.store.get().content?.conversations?.noapp?.some(x=>x.id==='tai'))return;shareOpen=false;const track=trackById(c.store.get().musicTrack);const messageId=sendMessage(c.store,{channel:'noapp',conversationId:'tai',text:'分享音乐：'+track.title,kind:'music',attachment:{trackId:track.id}});c.router.open({appId:'noapp',route:'/chat/tai'});window.dispatchEvent(new CustomEvent('ximeng:noapp-music-sent',{detail:{messageId}}));}
 }
 export function input(el){if(el.name==='music-search'){query=el.value;const html=trackRows(query);const list=el.closest('.music-library')?.querySelector('.music-tracks'),empty=el.closest('.music-library')?.querySelector('.music-no-results');if(list){list.innerHTML=html;list.hidden=!html;}if(empty)empty.hidden=!!html;}}
 export function change(el){if(el.name==='music-seek'&&audio&&audio.duration){audio.currentTime=Number(el.value)/100*audio.duration;sync();}}
