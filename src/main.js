@@ -54,6 +54,7 @@ import {renderPhoneScreen,activePhoneScreen} from './system/screen.js';
 import {beginLockscreenPreload} from './system/preload.js';
 import {rebaseBundledPublicAsset} from './services/public-assets.js';
 import {mountGestures} from './system/gestures.js';
+import {syncHomeIndicator} from './system/home-indicator.js';
 import {mountViewport} from './system/viewport.js';
 import {dragOffset,nearestPage,pageTarget} from './system/pager.js';
 import {isNativeTabSwitch} from './system/navigation.js';
@@ -230,7 +231,7 @@ function render(){
  const messagePane=$('#screen-layer .chat-messages'),nearBottom=!messagePane||messagePane.scrollHeight-messagePane.clientHeight-messagePane.scrollTop<85;
  const oldKeys=new Set([...screen.querySelectorAll('.message-row[data-key]')].map(el=>el.dataset.key));
  $('#phone').classList.toggle('is-locked',!s.unlocked);$('#phone').classList.toggle('show-passcode',!s.unlocked&&lockscreen.stage!=='cover');
- $('#phone').classList.toggle('home-indicator-autohide',s.unlocked&&current.appId!=='home');
+ syncHomeIndicator($('#phone'),s.unlocked&&current.appId!=='home'?current.appId:null);
  $('#phone').classList.toggle('app-light-active',s.unlocked&&current.appId!=='home'&&!['mirage','ghost','noapp','weather','camera'].includes(current.appId));
  const wallpaper=`url("${rebaseBundledPublicAsset(s.wallpaper)}")`;if($('#wallpaper').style.backgroundImage!==wallpaper)$('#wallpaper').style.backgroundImage=wallpaper;
  patchHTML($('#status-layer'),status(s,{islandExpanded,islandPage}));

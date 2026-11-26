@@ -121,9 +121,9 @@ test('WeChat composer and chat select photos through the same album picker, neve
  assert.equal(c.store.get().content.moments.draft.image,photo);publish(c,'');
  const p=c.store.get().content.moments.posts.at(-1);c.store.update(s=>{s.content.photos=[];});
  assert.equal(findMoment(c.store.get(),p.id).media[0],photo);
- c.store.update(s=>{s.nav.current=loc('/chat/group');s.content.photos=[{id:'real',src:photo}];});
- handle('attach-chat',{dataset:{id:'group'}},c);
+ c.store.update(s=>{s.nav.current=loc('/chat/wang');s.content.photos=[{id:'real',src:photo}];});
+ handle('attach-chat',{dataset:{id:'wang'}},c);
  assert.match(render(c,c.store.get().nav.current),/game-photo-select/);
  handle('game-photo-select',{dataset:{id:'real'}},c);await Promise.resolve();await Promise.resolve();
- assert.equal(c.store.get().content.conversations.wechat.find(x=>x.id==='group').messages.at(-1).text,photo);
+ assert.equal(c.store.get().content.conversations.wechat.find(x=>x.id==='wang').messages.at(-1).text,photo);
 });

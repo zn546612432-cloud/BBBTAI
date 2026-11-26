@@ -1,5 +1,5 @@
 import {esc} from '../../../system/ui.js';
-import {visibleMessages} from '../../../services/messaging/delivery.js';
+import {playerWeChatMessages} from '../features/group/history.js';
 import {timestampLabel,chronologicalMessages,compareMessageChronology} from '../../../services/messaging/timestamps.js';
 import {actors,isGroup} from '../../../editor/conversations/model.js';
 import {wxIcon} from './icons.js';
@@ -65,7 +65,7 @@ function chats(s){
   // message even when saved/imported bubbles were appended out of date order.
   const conversations=(s.content.conversations.wechat||[])
     .map((c,index)=>{
-      const messages=visibleMessages(c,s);
+      const messages=playerWeChatMessages(c,s);
       return {c,index,last:chronologicalMessages(messages,s).at(-1),hasMessages:messages.length>0};
     })
     .filter(({c,hasMessages})=>!(c.id==='group'&&groupAway(s))&&(hasMessages||c.unread||c.authored||['wang','group'].includes(c.id)))

@@ -5,7 +5,7 @@ import {wishDefinition,wishIdForMessage} from '../../../services/wishes/catalog.
 
 
 import {esc,empty} from '../../../system/ui.js';
-import {visibleMessages} from '../../../services/messaging/delivery.js';
+import {playerWeChatMessages} from '../features/group/history.js';
 import {timestampGroups,timestampLabel} from '../../../services/messaging/timestamps.js';
 import {actorName,isGroup} from '../../../editor/conversations/model.js';
 import {resolveWeChatAvatar} from '../avatars.js';
@@ -32,7 +32,7 @@ export function pictureSrc(source,moduleUrl=import.meta.url){
 export function chatImageUrls(s,id){
  const c=wechatConversation(s,id);
  if(!c)return [];
- return visibleMessages(c,s).slice(-24).flatMap(m=>{
+ return playerWeChatMessages(c,s).slice(-24).flatMap(m=>{
   const asset=m.assetId?historyMediaById.get(m.assetId):null;
   const source=asset?(asset.kind==='video'?asset.posterUrl:asset.directUrl):m.kind==='image'?m.text:'';
   return source?[pictureSrc(source)]:[];
@@ -49,7 +49,7 @@ const portrait=(name,s,pat=false)=>{
    ?'<img src="'+esc(source)+'" alt="'+esc(name)+'" width="40" height="40" loading="eager" decoding="async">'
    :'<span class="wx-avatar-fallback" aria-label="'+esc(name)+'">'+esc(String(name||'?').slice(0,1))+'</span>')+'</span>';
 };
-const action=(name,title,icon)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'">'+icon+'</button>';
+const action=(name,title,icon,disabled=false)=>'<button type="button" class="wx-composer-icon" data-action="'+name+'" aria-label="'+title+'"'+(disabled?' disabled':'')+'>'+icon+'</button>';
 const voiceIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M9 11v6m3-8c3 2.6 3 7.4 0 10m3-13c4.8 4.5 4.8 11.5 0 16"/></svg>';
 const plusIcon='<svg width="29" height="29" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 8v12M8 14h12"/></svg>';
 export const smileIcon='<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11"/><circle cx="10" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="11" r="1" fill="currentColor" stroke="none"/><path d="M9 17c2.6 3 7.4 3 10 0"/></svg>';
@@ -102,22 +102,22 @@ export function renderWeChatChat(s,id){
   if(!c)return empty('对话不存在');
   if(id==='group'&&groupAway(s))return empty('你已退出群聊');
   const background=chatSettings(s,id).background;
-  const composer=nativeWeChatComposer(s,id);
+  const composer=nativeWeChatComposer(s,id),groupPresetOnly=id==='group'&&s.story55?.version===1;
   const scriptedAttributes=composer.text!==null
     ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
 
     '<div class="chat-messages wx-chat-messages" role="log" aria-label="'+esc(chatTitle(s,c))+'的聊天消息"'+(background&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(background)?' style="--wx-chat-background:url('+esc(background)+');background-size:cover;background-position:center"':'')+'>'+
-    timestampGroups(visibleMessages(c,s),s).map(({m,separator})=>
+    timestampGroups(playerWeChatMessages(c,s),s).map(({m,separator})=>
       (separator?'<div class="chat-time-divider wx-time-divider" data-key="time-'+esc(m.id)+'">'+esc(separator)+'</div>':'')+
       messageRow(m,s,c)).join('')+'</div>'+
     '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'">'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(composer.text??s.drafts?.[id]??'')+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
-      action('wx-emoji','表情',smileIcon)+
-      action('attach-chat','发送图片',plusIcon).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
-      '<button type="submit" class="wx-composer-send" aria-label="发送消息">发送</button></form>'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(composer.text??(groupPresetOnly&&composer.disabled?'':s.drafts?.[id]??''))+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
+      action('wx-emoji','表情',smileIcon,groupPresetOnly)+
+      action('attach-chat','发送图片',plusIcon,groupPresetOnly).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
+      '<button type="submit" class="wx-composer-send" aria-label="发送消息"'+(groupPresetOnly&&composer.disabled?' disabled':'')+'>发送</button></form>'+
     renderEmojiPanel()+
     '<div class="wx-message-menu" hidden role="group" aria-label="消息操作"></div>'+ 
     '</section>';
