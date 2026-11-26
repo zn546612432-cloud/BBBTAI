@@ -7,20 +7,20 @@ const GROUP_ID='group',BROTHER_ID='wang';
 const beforeNoon=s=>s.clock<'12:00';
 const defaultGroupSteps=branch=>[
  {after:3000,from:'小辛',text:branch==='morning'?'嗯？蒙蒙哥怎麼今天起得那麼早？':'蒙蒙哥，你不會現在才起吧？'},
- {after:1000,from:'小辛',text:branch==='morning'?'昨天和我打遊戲打到那麼晚…今天不到12點居然就醒了。':'昨天和我打遊戲打得那麼晚，果然起不來床了，哈哈'},
- {after:3000,from:'熙旺',text:'怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙。'},
- {after:2000,from:'熙旺',text:'今天不忙的話，就再去睡會，我中午收車回來給你帶午餐。'},
+ {after:1000,from:'小辛',text:branch==='morning'?'昨天和我打遊戲打到那麼晚…今天不到12點居然就醒了':'昨天和我打遊戲打得那麼晚，果然起不來床了，哈哈'},
+ {after:3000,from:'熙旺',text:'怎麼又熬夜打遊戲？你的眼睛度數已經很深了，阿蒙'},
+ {after:2000,from:'熙旺',text:'今天不忙的話，就再去睡會，我中午收車回來給你帶午餐'},
  {after:2000,from:'me',text:'不知道怎麼就醒了'},
  {after:2000,from:'me',text:'還不是小辛說打贏boss才睡覺'},
  {after:2000,from:'me',text:'謝謝哥，我要吃牛腩飯'},
- {after:2000,from:'小辛',text:'還不是我們太菜了，哈哈。'},
+ {after:2000,from:'小辛',text:'還不是我們太菜了，哈哈'},
  {after:2000,from:'熙旺',text:'好'}
 ];
 export const D01_GROUP_BRANCHES=['morning','afternoon'];
 export const D01_BROTHER_LINES=[
  {who:'熙旺',text:'嗯？',at:'玩家喊哥後約 0.85 秒'},
  {who:'熙旺',text:'剛才在開車',at:'玩家連發 3 條後 2 遊戲分鐘'},
- {who:'熙旺',text:'怎麼發了那麼多消息？現在看不及時，不重要的話，有什麼話等我回家當面跟我講吧。',at:'上一句約 1.5 秒後'}
+ {who:'熙旺',text:'怎麼發了那麼多消息？現在看不及時，不重要的話，有什麼話等我回家當面跟我講吧',at:'上一句約 1.5 秒後'}
 ];
 export function d01BrotherLines(s){
  const revision=s.story55?.chatSceneEdits?.['d01:brother'];
