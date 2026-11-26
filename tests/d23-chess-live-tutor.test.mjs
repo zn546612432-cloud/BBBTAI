@@ -118,7 +118,7 @@ test('first actual move of each of the six piece types has a one-time authored t
   ['b','1. e4 e5','f1','c4','象只能走斜線'],
   ['r','1. a4 a5','a1','a3','車走直線'],
   ['q','1. e4 e5','d1','h5','后能橫走'],
-  ['k','1. e4 e5','e1','e2','王平時每次']
+  ['k','1. e4 e5','e1','e2','王平時一次']
  ];
  for(const [type,pgn,from,to,expected] of cases){
   const {store,matchId,match}=d23Store();
