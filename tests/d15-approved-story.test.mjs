@@ -13,7 +13,8 @@ test('D15 approved copy, file bubble, racing boundaries and loan tail',()=>{
  assert.equal(scenes[2].lines.at(-1).text,'等我更新遊戲。');
  assert.equal(scenes[3].lines.at(-1).text,'再來一把。');
  assert.ok(scenes.slice(2).every(s=>s.optional&&s.lines.every(l=>!l.kind&&l.who!=='me')));
- assert.equal(D14_D24_CONTENT.scenes.loan.at(-1)[1],'去換套像樣的設備，別再折磨你那台破電腦了。');
+ assert.equal(D14_D24_CONTENT.scenes.loan.at(-2)[1],'去換套像樣的設備，別再折磨你那台破電腦了。');
+ assert.deepEqual(D14_D24_CONTENT.scenes.loan.at(-1),['offline','']);
  const s=state('10:22');track.tick(s,1000);track.tick(s,4000);
  const m=s.content.conversations.wechat[0].messages[0];
  assert.equal(m.kind,'file');assert.equal(m.text,'服裝設計稿_V1.pdf');

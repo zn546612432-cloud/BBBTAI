@@ -135,7 +135,7 @@ export function syncD14D24Content(s){
  // original payment, camera, cursor and offline timestamp intact.
  const loan=s.story55.config?.scenes?.loan;
  if(Array.isArray(loan)&&loan.at(-1)?.[0]==='offline'&&/^(?:衔尾蛇|銜尾蛇)已下[線线]$/.test(loan.at(-1)[1])){
-  loan.pop();changed=true;
+  loan[loan.length-1]=['offline',''];changed=true;
  }
  for(const chat of s.content?.conversations?.mirage||[])if(chat.id==='s55-ouroboros'){
   const before=chat.messages?.length||0;
