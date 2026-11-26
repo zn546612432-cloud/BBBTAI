@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import {initialState} from './src/services/storage.js';
+import {activateStory55} from './src/services/story55/runtime.js';
+const key='ximeng-phone-story55-v1',s=activateStory55(initialState());
+s.day=2;s.clock='08:00';s.story55.minutesPerSecond=0;s.story55.completed.intro={day:1,clock:'12:00'};s.story55.activeScene=null;s.unlocked=true;
+s.nav.current={appId:'wechat',route:'/chat/group',params:{}};s.nav.stack=[{appId:'wechat',route:'/',params:{}}];
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
+try{
+ const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+ await context.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,value);},{key,value:JSON.stringify(s)});
+ const page=await context.newPage();page.setDefaultTimeout(15000);
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ const next=page.locator('#xm-boot-next');await next.waitFor({state:'visible',timeout:45000});await next.click();await page.locator('#xm-boot').waitFor({state:'hidden',timeout:10000});
+ await page.locator('[data-action="unlock"]').click();
+ for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
+ await page.locator('.wx-conversation').waitFor();await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
+ const header=page.locator('[data-action="wx-chat-info"]');
+ if(await header.count())await header.click();else await page.locator('[data-action="wx-chat-settings"]').click();
+ await page.locator('[data-action="wx-group-field"][data-field="notice"]').click();
+ await page.locator('textarea[name="value"]').fill('殺死傅隆生');
+ await page.locator('form[data-form="wx-group-edit"] button[type="submit"]').click();
+ await page.locator('[data-action="wx-group-invite"]').click();
+ await page.locator('[data-action="wx-group-select-father"]').click();
+ await page.locator('[data-action="wx-group-invite-confirm"]').click();
+ await page.locator('.wx-conversation').waitFor();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).wechatGroupEggs?.father?.combo==='early');
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).wechatGroupEggs?.father?.stage==='done',null,{timeout:40000});
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')).wechatChatSettings?.group?.notice==='',null,{timeout:22000});
+ await page.getByText('熙旺清除了群公告',{exact:true}).waitFor();
+ assert.equal(await page.getByText('再給哥哥一點時間。',{exact:true}).count(),0);
+ assert.deepEqual(errors,[]);
+ console.log('PASS mobile publish notice, immediate invite, 30-second exit and actual announcement clearing');
+}finally{await browser.close();}
