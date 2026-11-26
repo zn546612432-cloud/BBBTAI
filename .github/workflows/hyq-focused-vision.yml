@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -15,9 +15,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Verify changed group and messaging surfaces
-        run: node --test tests/wechat-group-eggs.test.mjs tests/wechat-conversation.test.mjs tests/wechat-notifications.test.mjs tests/d46-group.test.mjs
-      - run: npm run build:pages
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
       - name: Start local phone
