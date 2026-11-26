@@ -81,6 +81,7 @@ export function activateStory55(s){
  for(const [channel,list] of Object.entries(s.content.conversations))for(const chat of list){chat.messages=channel==='wechat'?chat.messages.filter(m=>m.sentDate&&m.sentDate<c.startDate&&!m.demo):[];chat.unread=0;}
  s.content.orders=[];s.content.mail=[];s.content.missionFiles=[];s.content.reminders=[];s.content.calendarEvents=[];
  s.content.photos=[];
+ delete s.wechatGroupEggs;delete s.wechatChatSettings;
  // Preserve authored notes; reset only player-created runtime notes.
  s.content.notes=(s.content.notes||[]).filter(n=>n.authored===true).map(n=>structuredClone(n));
  s.content.notesSeedVersion=0;

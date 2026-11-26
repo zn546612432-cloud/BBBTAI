@@ -10,7 +10,7 @@ const excludedBrotherSenders=new Set(['father','fulongsheng','傅隆生','tai','
 export function visibleMessages(c,s){
  const today=s?.calendar?.anchorDate&&Number.isInteger(s.day)?dateParts(s).iso:null;
  return (c?.messages||[]).filter(m=>{
-  if(c?.id==='group'&&excludedBrotherSenders.has(String(m.from||'').toLowerCase()))return false;
+  if(c?.id==='group'&&excludedBrotherSenders.has(String(m.from||'').toLowerCase())&&!(m.wechatEgg===true&&m.from==='fulongsheng'&&m.kind==='text'&&m.text==='🙂'))return false;
   if(m.schedule&&m.schedule.mode!=='immediate'&&!m.delivery)return false;
   if(!s||!today||(!m.sentDate&&!Number.isInteger(m.day)))return true;
   const date=messageDate(m,s),clock=m.schedule?.mode==='chat-delay'&&m.delivery?messageClock(m,s):m.time;
