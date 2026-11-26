@@ -1,5 +1,6 @@
 // Consistent line art for every installed app; the glass tile is drawn by CSS.
 const art={
+board:'<rect x="5" y="6" width="22" height="21" rx="2"/><path d="m8 10 9-1 1 10-9 1zM17 13l7 2-2 9-7-2M12 12l8 5"/><circle cx="12" cy="11" r="1.1"/><circle cx="21" cy="16" r="1.1"/>',
 wechat:'<path d="M5 11c0-4 4-7 9-7s9 3 9 7-4 7-9 7a13 13 0 0 1-4-.6L5 20l1-4a6 6 0 0 1-1-5Z"/><circle cx="11" cy="11" r=".8"/><circle cx="17" cy="11" r=".8"/>',
 noapp:'<path d="M5 7c0-2 2-4 5-4h10c3 0 5 2 5 5v7c0 3-2 5-5 5h-4l-5 4v-4h-1c-3 0-5-2-5-5Z"/><path d="M13 10h5m-5 4h3"/><path d="M20 5v4m-2-2h4"/>',
 chess:'<path d="M9 24h14M11 21h10l-2-5 2-3-5-9-7 7 4 3-2 7Z"/><path d="m11 11 4 2"/><circle cx="17" cy="9" r=".7"/>',

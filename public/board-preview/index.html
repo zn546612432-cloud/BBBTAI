@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#292d29"><title>BOARD · 獨立預覽</title>
+<link rel="stylesheet" href="/src/apps/board/styles.css"><style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#171a18;color:#e9e2d2;font:15px system-ui,sans-serif}body{display:flex;justify-content:center}.app-view{width:100%;max-width:760px;height:100dvh;display:flex;flex-direction:column;background:#292d29}.preview-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid #ffffff20}.preview-nav strong{letter-spacing:.12em}.preview-nav small{color:#a5a99d;font-size:11px}.preview-nav button{background:none;border:0;color:inherit;font:inherit;min-height:36px}.app-content{flex:1;min-height:0}.preview-toast{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);background:#272b26;color:#fff;padding:10px 18px;border-radius:10px;z-index:5}.preview-toast:empty{display:none}.preview-nav button[hidden]{display:none}
+</style></head><body><div class="app-view app-board"><nav class="preview-nav"><button id="back" hidden aria-label="返回">‹ 返回</button><strong>BOARD</strong><small>獨立預覽 · 不讀取遊戲存檔</small></nav><div class="app-content" id="screen"></div></div><div id="toast" class="preview-toast" role="status"></div>
+<script type="importmap">{"imports":{"chess.js":"/vendor/chess.js","opencc-js/cn2t":"/vendor/opencc-cn2t.js"}}</script>
+<script type="module">
+import * as board from '/src/apps/board/index.js';
+const screen=document.querySelector('#screen'),back=document.querySelector('#back'),notice=document.querySelector('#toast');
+let state={day:1,clock:'14:00',content:{},nav:{current:{appId:'board',route:'/',params:{}},stack:[]}};
+let scroll={x:0,y:0},timer;
+const store={get:()=>state,update(fn){const next=structuredClone(state);fn(next);state=next;render();return state;}};
+const router={open(loc){store.update(s=>{s.nav.stack.push(s.nav.current);s.nav.current=loc;});},back(){store.update(s=>{s.nav.current=s.nav.stack.pop()||{appId:'board',route:'/',params:{}};});}};
+const ctx={store,router,refresh:render,toast(text){notice.textContent=text;clearTimeout(timer);timer=setTimeout(()=>notice.textContent='',2600);}};
+function render(){const old=screen.querySelector('.board-viewport');if(old)scroll={x:old.scrollLeft,y:old.scrollTop};const loc=state.nav.current;screen.innerHTML=board.render(ctx,loc);back.hidden=loc.route==='/';const view=screen.querySelector('.board-viewport');if(view){view.scrollLeft=scroll.x;view.scrollTop=scroll.y;}}
+back.addEventListener('click',()=>router.back());screen.addEventListener('click',e=>{const target=e.target.closest('[data-action]');if(target)board.handle(target.dataset.action,target,ctx,state.nav.current);});screen.addEventListener('submit',e=>{e.preventDefault();board.submit(e.target,ctx,state.nav.current);});render();
+</script></body></html>
