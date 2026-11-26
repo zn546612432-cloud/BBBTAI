@@ -13,6 +13,7 @@ export function buildTearAgentScene(state){
 
 export function handleTearAgent(action,t,ctx){
  const key=action.replace(/^gh-tear-/,'');
+ if(key==='home'){ctx.router.home();return true;}
  if(!['picker','select','clear-file','prompt','artifact','collect','identity','archive-save','task','task-close','history','history-close','document-read'].includes(key))return false;
  if(key==='artifact'){ctx.router.open({appId:'files',route:'/item/'+encodeURIComponent(t.dataset.id)});return true;}
  if(key==='identity'){

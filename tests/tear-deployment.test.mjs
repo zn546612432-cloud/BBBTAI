@@ -144,7 +144,7 @@ test('native Tear canvas reflects canonical progress without advancing, charging
 
 test('completed base opens idle Tear and KIRA file preview is the only share entry',()=>{
  const s=fixture();win(s);
- const routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:loc=>{routes.push(loc);s.nav.current=loc;}},toast:()=>{},refresh:()=>{}};
+ const routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:loc=>{routes.push(loc);s.nav.current=loc;},home:()=>{const loc={appId:'home',route:'/',params:{}};routes.push(loc);s.nav.current=loc;s.nav.stack=[];}},toast:()=>{},refresh:()=>{}};
  assert.doesNotMatch(deploymentView(s,'base'),/gh-tear-open/);
  for(let day=15;day<=24;day++){s.day=day;win(s);assert.ok(upgradeBaseFramework(s));}
  const project={appId:'ghost',route:'/deployment',params:{project:'base'}};
@@ -152,9 +152,9 @@ test('completed base opens idle Tear and KIRA file preview is the only share ent
  const before=JSON.stringify(s.story55.tearRuns||{}),balance=s.bankData.balance;
  handleGhost('gh-tear-open',{dataset:{}},ctx,project);
  assert.equal(routes.at(-1).route,'/tear');
- const idle=renderGhost(ctx,routes.at(-1));assert.match(idle,/status="idle" progress="0"/);assert.match(idle,/gh-tear-back/);
+ const idle=renderGhost(ctx,routes.at(-1));assert.match(idle,/status="idle" progress="0"/);assert.match(idle,/gh-tear-home/);
  assert.equal(JSON.stringify(s.story55.tearRuns||{}),before);assert.equal(s.bankData.balance,balance);
- handleGhost('gh-tear-back',{dataset:{}},ctx,routes.at(-1));assert.deepEqual(routes.at(-1),project);
+ handleGhost('gh-tear-home',{dataset:{}},ctx,routes.at(-1));assert.deepEqual(routes.at(-1),{appId:'home',route:'/',params:{}});
  s.day=25;s.clock='08:00';seedD04Contracts(s);const id=DAILY_CONTRACTS.find(c=>c.marketDaily&&c.day===25).id,mailId=D04_MAIL(id);
  assert.ok(acceptD04Contract(s,id));
  setMirageAuthenticated(true);handleMirage('mc-tear-share',{dataset:{id}},ctx,{route:'/order/'+id,params:{}});setMirageAuthenticated(false);

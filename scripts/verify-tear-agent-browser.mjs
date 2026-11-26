@@ -25,6 +25,16 @@ async function unlock(page){
  for(const digit of '0816')await page.locator(`[data-action=passcode-key][data-key="${digit}"]`).click();
  await page.locator('.gh-agent-screen').waitFor();
 }
+async function reopenTearFromHome(live){
+ await live.locator('[data-action=gh-tear-home]').click();
+ await live.locator('.home-screen').waitFor();
+ await live.locator('[data-action=page][data-page="1"]').click();
+ await live.locator('[data-action=open-app][data-app=ghost]').click();
+ await live.locator('[data-action=gh-flow-projects]').click();
+ await live.locator('[data-action=gh-flow-base-project]').click();
+ await live.locator('[data-action=gh-tear-open]').click();
+ await live.locator('.gh-agent-screen').waitFor();
+}
 function seed(){
  const s=activateStory55(initialState());s.day=28;s.clock='10:00';s.unlocked=true;s.content.alarms=[];
  for(const n of story55Config(s).nodes)if(n.day<=28)s.story55.completed[n.id]={day:n.day,clock:'09:00'};
@@ -44,7 +54,7 @@ try{
  await page.locator('#xm-boot-next').click({timeout:45000});await page.locator('#xm-boot').waitFor({state:'detached',timeout:45000});await unlock(page);
  const live=page.locator('#screen-layer');
  await live.locator('.gh-agent-screen').waitFor();
- await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
+ await reopenTearFromHome(live);
  await live.locator('xm-tear-orbit').evaluate(el=>customElements.whenDefined(el.localName));
  await page.clock.install();await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  assert.match(await live.locator('.gh-agent-messages').innerText(),/你好，我是小TAI/);
@@ -132,7 +142,7 @@ try{
  assert.match(await receipts.first().evaluate(el=>getComputedStyle(el).backdropFilter),/blur/);
  await page.screenshot({path:`${out}/${width}-completed-glass.png`});
  const files=JSON.stringify(after.content.localFiles);
- await live.locator('[data-action=gh-tear-back]').click();await live.locator('[data-action=gh-tear-open]').click();
+ await reopenTearFromHome(live);
  assert.equal(await live.locator('xm-tear-orbit').getAttribute('progress'),'0');
  const reopened=await page.evaluate(()=>JSON.parse(localStorage.getItem('ximeng-phone-story55-v1')));
  assert.deepEqual(reopened.story55.tearAgent.jobs,after.story55.tearAgent.jobs);

@@ -5,6 +5,7 @@ import {activateStory55,tickStory55,sceneLines} from '../src/services/story55/ru
 import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob,IDENTITY_REVEAL_DELAY_MS,IDENTITY_REVEAL_INTERVAL_MS} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {renderAgentContent} from '../src/apps/ghost/deployment/tear-agent/view.js';
 import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
+import {PhoneRouter} from '../src/services/router.js';
 import {buildTearPrompt,cleanTearReply,redactTearNetworkIdentifiers,TEAR_NETWORK_PROFILE} from '../src/services/ai/tear-prompt.js';
 import {handleTearAgent,submitTearAgent,inputTearAgent,buildTearAgentScene} from '../src/apps/ghost/deployment/tear-agent/actions.js';
 import {absoluteMinute} from '../src/system/time/clock.js';
@@ -456,4 +457,19 @@ test('completed file receipts use a dedicated glass surface while regular chat r
  assert.match(html,/class="gh-agent-file-receipt" data-id="tear-artifact-staff"/);
  assert.match(html,/data-action="gh-tear-artifact"/);
  assert.match(renderTearAgent(s),/<xm-tear-stage/);
+});
+
+
+test('Ouroboros Tear chat back button returns directly to the phone home screen',async()=>{
+ const ghost=await import('../src/apps/ghost/index.js');
+ const s=fixture();
+ s.nav.current={appId:'ghost',route:'/tear',params:{}};
+ s.nav.stack=[{appId:'home',route:'/',params:{}},{appId:'ghost',route:'/deployment',params:{project:'base'}}];
+ const store={get:()=>s,update:fn=>fn(s)};
+ const router=new PhoneRouter(store,new Map());
+ const ctx={store,router};
+ assert.match(renderTearAgent(s),/data-action="gh-tear-home" aria-label="返回主屏幕"/);
+ ghost.handle('gh-tear-home',{dataset:{}},ctx,s.nav.current);
+ assert.deepEqual(s.nav.current,{appId:'home',route:'/',params:{}});
+ assert.deepEqual(s.nav.stack,[]);
 });
