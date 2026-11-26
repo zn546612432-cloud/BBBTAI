@@ -86,6 +86,17 @@ async function capture(page,name){
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
  await page.screenshot({path:out+'/'+name,fullPage:true});
 }
+async function sendThreeD23Rounds(page,lines){
+ assert.equal(await page.locator('[data-action="mc-d23-finish-conversation"]').count(),0,'manual early-exit button is removed');
+ for(let i=0;i<3;i++){
+  await page.locator('[data-form="mc-send"] input[name="text"]').fill(lines[i]);
+  await page.locator('[data-form="mc-send"] button[type="submit"]').click();
+  await page.waitForFunction(({key,round})=>{
+   const s=JSON.parse(localStorage.getItem(key)),pg=s.story55.d23Postgame;
+   return pg?.rounds===round&&pg.phase===(round===3?'closing':'chat');
+  },{key,round:i+1},{timeout:30000});
+ }
+}
 async function sendFarewell(page){
  await page.waitForFunction(k=>{
   const s=JSON.parse(localStorage.getItem(k));
@@ -264,24 +275,16 @@ try{
  // A pending earlier Story55 scene must not steal a genuine D23 free-chat Send.
  // CI has no real provider keys. Verify the native request and delivery with
  // a deterministic HTTP response, leaving the production gateway unchanged.
- let postgameRequestSeen=false;
+ const postgameRequests=[];
  await mobile.page.route('**/api/ai/chat',async route=>{
   const request=route.request().postDataJSON();
   assert.equal(request.channel,'mirage');assert.equal(request.day,23);
-  assert.equal(request.messages.at(-1).content,'你剛才是在欺負新手嗎？');
-  postgameRequestSeen=true;
+  postgameRequests.push(request.messages.at(-1).content);
+  if(postgameRequests.length===1)assert.equal(postgameRequests[0],'你剛才是在欺負新手嗎？');
   await route.fulfill({json:{text:'你下次贏回來就是了。'}});
  });
- const chatComposer=mobile.page.locator('[data-form="mc-send"] input[name="text"]');
- await chatComposer.fill('你剛才是在欺負新手嗎？');
- await mobile.page.locator('[data-form="mc-send"] button[type="submit"]').click();
- await mobile.page.waitForFunction(k=>{
-  const s=JSON.parse(localStorage.getItem(k)),pg=s.story55.d23Postgame;
-  return pg?.rounds===1&&pg.phase==='chat'&&s.content.conversations.mirage
-   .find(c=>c.id==='s55-ouroboros').messages.some(m=>m.id==='s55-d23-mirage-reply-1-0');
- },key,{timeout:27000});
- assert.equal(postgameRequestSeen,true,'postgame must reach the existing AI gateway');
- await mobile.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await sendThreeD23Rounds(mobile.page,['你剛才是在欺負新手嗎？','那你下次還教我嗎？','好，下次再下。']);
+ assert.equal(postgameRequests.length,3,'each of three real messages reaches the existing AI gateway');
  await mobile.page.waitForTimeout(3600);
  const afterD23Farewell=await mobile.page.evaluate(k=>{
   const s=JSON.parse(localStorage.getItem(k)),q=s.story55.scenes['d23-chess-finish'];
@@ -332,7 +335,7 @@ try{
  },key,{timeout:18000});
  const won=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).matches[0],key);
  assert.equal(won.result,'player-win');
- assert.ok(won.chat.some(m=>m.id.includes('capture-white-')&&m.text.includes('兵')));
+ assert.ok(won.lesson?.reactionBags?.captureWhite,'capture uses one of the approved replies, including silence');
  assert.ok(won.chat.some(m=>m.id.includes('ending-')),'original board endgame reply survives');
  assert.ok(won.feedbackEvents.every(x=>x.consumed));
  await capture(mate.page,'mobile-capture-checkmate.png');
@@ -341,7 +344,8 @@ try{
  await mate.page.waitForFunction(k=>JSON.parse(localStorage.getItem(k)).story55.d23Postgame?.phase==='chat',key,{timeout:30000});
  const phase=await mate.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).story55.d23Postgame,key);
  assert.equal(phase.rounds,0);assert.equal(phase.closed,false);
- await mate.page.locator('[data-action="mc-d23-finish-conversation"]').click();
+ await mate.page.route('**/api/ai/chat',route=>route.fulfill({json:{text:'下回再下。'}}));
+ await sendThreeD23Rounds(mate.page,['你剛才輸了。','要不要再下一局？','行，下次再玩。']);
  await sendFarewell(mate.page);
  await mate.page.waitForFunction(k=>!!JSON.parse(localStorage.getItem(k)).story55.completed['d23-chess-finish'],key,{timeout:15000});
  await mate.context.close();

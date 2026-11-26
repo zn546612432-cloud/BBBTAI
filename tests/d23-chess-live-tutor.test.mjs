@@ -105,18 +105,20 @@ test('a genuinely hanging major piece triggers a concrete one-time Tai warning',
   m.history=g.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));
  });
  playMove(store,matchId,'f2','f4');
- assert.equal(match().lesson.outbox.filter(x=>x.id.includes('exposed-')&&x.text.includes('后')&&!x.text.includes('h5')).length,1);
+ const warnings=match().lesson.outbox.filter(x=>x.id.includes('exposed-')&&!x.text.includes('h5'));
+ assert.equal(warnings.length,1);
+ assert.ok(CHESS_REACTIONS.danger.map(line=>line.replace('{piece}','后')).includes(warnings[0].text),'hanging-piece warning uses an approved variant');
  assert.equal(match().lesson.warnedThreats.filter(x=>x==='h5:q').length,1);
 });
 
 test('first actual move of each of the six piece types has a one-time authored tutorial',()=>{
  const cases=[
-  ['p','','e2','e4','兵通常只能向前'],
+  ['p','','e2','e4','這是兵。從起點出發'],
   ['n','','g1','f3','馬走「日」字'],
-  ['b','1. e4 e5','f1','c4','象只走斜線'],
-  ['r','1. a4 a5','a1','a3','車沿著橫線'],
-  ['q','1. e4 e5','d1','h5','后既能直走'],
-  ['k','1. e4 e5','e1','e2','王平時每次']
+  ['b','1. e4 e5','f1','c4','象只能走斜線'],
+  ['r','1. a4 a5','a1','a3','車走直線'],
+  ['q','1. e4 e5','d1','h5','后能橫走'],
+  ['k','1. e4 e5','e1','e2','王平時一次']
  ];
  for(const [type,pgn,from,to,expected] of cases){
   const {store,matchId,match}=d23Store();
@@ -128,6 +130,7 @@ test('first actual move of each of the six piece types has a one-time authored t
   playMove(store,matchId,from,to);
   assert.equal(match().lesson.seenPieces.includes(type),true,type);
   assert.equal(match().lesson.outbox.filter(m=>m.id.endsWith('piece-'+type)).length,1,type);
+   assert.ok(match().lesson.outbox.find(m=>m.id.endsWith('piece-'+type))?.text.includes(expected),'approved piece copy: '+type);
   assert.equal(match().history.at(-1).by,'player',type);
  }
 });
@@ -168,7 +171,7 @@ test('offline chess question always has a correct local tutorial answer without 
  try{
   postMatchMessage(store,matchId,'馬怎麼走？');
   assert.equal(await replyToMatch(store,matchId),true);
-  assert.match(match().lesson.outbox.at(-1).text,/馬.*日|馬.*兩格/);
+  assert.match(match().lesson.outbox.at(-1).text,/[馬马].*日|[馬马].*兩格/);
   assert.equal(match().lesson.outbox.at(-1).mode,'text');
  }finally{globalThis.fetch=prior;}
 });
@@ -288,6 +291,25 @@ test('reaction variants exhaust a saved bag before repetition and ordinary repli
   if(CHESS_REACTIONS[kind].length>1)assert.notEqual(JSON.stringify(chessReaction(restored,kind,{piece:'馬'})),variants.at(-1),'save/resume must not repeat the previous variant');
  }
 });
+test('D23 approved opening and silent reactions do not produce empty messages',async()=>{
+ const {store,matchId,match}=d23Store();
+ playOpening(store,matchId);
+ assert.deepEqual(match().chat.map(m=>m.text),["按慣例，白棋先走。國際象棋要贏很簡單，把對方的王將死就行。","跟中國象棋不一樣。如果對方的王沒有被將軍，輪到他卻一步合法的棋都走不了，這叫逼和，算平局。","好了，你先走一步試試。"]);
+ store.update(s=>{
+  const m=s.matches.find(m=>m.id===matchId);
+  m.lesson.reactionBags={captureWhite:{remaining:[3],last:-1},checkWhite:{remaining:[3],last:-1},other:{remaining:[3],last:-1}};
+  assert.equal(chessReaction(m,'captureWhite',{piece:'馬'}),'');
+  assert.equal(chessReaction(m,'checkWhite'),'');
+ });
+ const count=match().chat.length,queued=match().lesson.outbox.length;
+ assert.equal(postMatchMessage(store,matchId,'今天天氣很好'),true);
+ assert.equal(await replyToMatch(store,matchId),false);
+ assert.equal(await replyToMatch(store,matchId),false,'the silent response is not rerolled');
+ assert.equal(match().chat.at(-1).chessSilentReaction,true);
+ assert.equal(match().lesson.outbox.length,queued);
+ assert.equal(match().chat.length,count+1,'only the real player message is committed');
+ assert.ok(!match().chat.some(m=>m.from==='tai'&&m.text===''));
+});
 test('rule questions, greetings, affection and mercy stay preset; current-board explanations use AI',async()=>{
  const {store,matchId,match}=d23Store();playOpening(store,matchId);
  const prior=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('presets cannot fetch');};
@@ -328,13 +350,13 @@ test('AI prompt contains style examples and board facts; multiple answers are pa
 test('a real final capture is named before the individually queued checkmate recap',()=>{
  const {store,matchId,match}=d23Store();playOpening(store,matchId);
  const game=new Chess();game.loadPgn('1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6');
- store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));});
+ store.update(s=>{const m=s.matches.find(m=>m.id===matchId);m.pgn=game.pgn();m.history=game.history({verbose:true}).map((x,i)=>({from:x.from,to:x.to,san:x.san,by:i%2===0?'player':'stockfish'}));(m.lesson.reactionBags??={}).captureWhite={remaining:[0],last:-1};});
  const outcome=playMove(store,matchId,'h5','f7');
  assert.equal(outcome.finished,true);assert.equal(match().result,'player-win');
- assert.match(match().lesson.outbox[0].text,/兵/);assert.equal(match().lesson.outbox.length,3);
+ assert.equal(match().lesson.outbox[0].text,'有意思，我的兵都敢吃了。');assert.equal(match().lesson.outbox.length,3);
  assert.deepEqual(match().feedbackEvents.map(x=>x.kind),['capture','win']);
  store.update(s=>tickD23ChessLesson(s,10000));store.update(s=>tickD23ChessLesson(s,11200));
- assert.equal(match().lesson.outbox.length,2);assert.match(match().chat.at(-1).text,/兵/);
+ assert.equal(match().lesson.outbox.length,2);assert.equal(match().chat.at(-1).text,'有意思，我的兵都敢吃了。');
 });
 test('capture and terminal feedback are attached once to actual moves, and resign is a terminal effect',()=>{
  const {store,matchId,match}=d23Store();

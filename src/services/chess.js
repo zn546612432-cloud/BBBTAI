@@ -160,7 +160,7 @@ export function postMatchMessage(store,matchId,text){
 const pendingMatchReplies=new WeakMap();
 function playerAwaitingChessReply(match){
  const player=isD23ChessLesson(match)?match.chat?.filter(m=>m.from==='player').at(-1):match.chat?.at(-1);
- if(player?.from!=='player')return null;
+ if(player?.from!=='player'||player.chessSilentReaction===true)return null;
  if([...(match.chat||[]),...(match.lesson?.outbox||[])].some(m=>m.sourceMessageId===player.id))return null;
  return player;
 }
@@ -202,8 +202,17 @@ async function generateMatchReply(store,matchId){
   if(canned===null&&!needsChessAnalysis(lastText))return false;
  }
  let parts=[],fromModel=false;
- if(canned!==null)parts=canned?[{text:canned}]:[];
- else{
+ if(canned!==null){
+  if(canned===''){
+   // A deliberately silent reaction is complete and must not reroll on refresh.
+   store.update(s=>{
+    const m=s.matches.find(x=>x.id===matchId),message=m?.chat?.find(x=>x.id===lastId);
+    if(message?.from==='player')message.chessSilentReaction=true;
+   });
+   return false;
+  }
+  parts=[{text:canned}];
+ }else{
   try{
    {
     current=store.get();match=current.matches.find(m=>m.id===matchId);
