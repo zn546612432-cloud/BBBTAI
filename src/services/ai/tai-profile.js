@@ -157,8 +157,8 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   XITAI_BIOGRAPHY_PRIORITY,
   taiPrivateDisclosurePrompt(messages,{recognized:day>=30&&channel!=='mirage'&&(recognized===true||recognized===undefined&&(channel==='noapp'||channel==='chess'&&day>55))}),
   effectiveMode==='call'?'【最新作者電話執行規則】上面的一般文字格式「不強制補第二條」不適用於有實質內容、已收到通話 expression plan 的一輪。依當前計劃分段輸出 messages；可先用一句話直接回答，再主動說下一段有不同意圖的話，並不等待熙蒙再次輸入。若真的只需一句、保持私人界線、需要安靜或告別，才短答。熟悉後遇到真實好笑的上下文可以偶爾接梗，這不是恢復固定毒舌風格。不要每次只給反問；如果已無新內容，或忙，應有自己的主見並可真正結束電話。':'',
+  effectiveMode==='text'&&['noapp','mirage'].includes(channel)?'【作者最新文字標點規範】mode=text 的日常聊天不加中文或英文句末句號；同一氣泡多個短句偶爾用空格斷句。保留問號、感嘆號、省略號、網址、數字和技術符號。只有極嚴肅時才偶爾用句號。語音及電話台詞不受影響；不改變人物語氣、內容及氣泡節奏。':'',
   XITAI_EXPRESSION_STYLE,
-  effectiveMode==='text'&&['noapp','mirage'].includes(channel)?'【作者最新文字標點規範】mode=text 的日常聊天像手機打字：不加中文或英文句末句號；同一氣泡多個短句偶爾用一個空格隔開，不必每句都加標點。問號、感嘆號、省略號、網址、數字及技術符號按需要保留。NoApp 只有真正極嚴肅的時刻才偶爾用句號；MIRAGE 日常回覆同樣不加句號。不要因此改變角色語氣、內容或氣泡節奏。語音及電話台詞不受此規則影響。':'',
   taiStoryResponsePrompt(storyDirection)
  ].filter(Boolean).join('\n\n');
  return resolveWorldbookOutlets(result,sections?.outlets);

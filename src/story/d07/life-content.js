@@ -11,19 +11,19 @@ export const nextDay=[
  group('d07-chat-04','小辛','昨天玩到三点了，饶了我吧'),
  group('d07-chat-05','熙旺','你们下午要是出去，顺路帮我买点东西回来'),
  group('d07-chat-06','仔仔','买什么？'),
- group('d07-chat-07','熙旺','我晚点发你清单')
+ group('d07-chat-07','熙旺','我晚点发你清单。')
 ];
 // D07 13:30: close the morning grocery request through ordinary group chat.
 // It is background life, not a new shop order or a mandatory plot gate.
 export const afternoonDay=[
- group('d07-errand-01','熙旺','买袋米、洗洁精，还有盐 家里快用完了',{afterId:'d07-chat-07'}),
- group('d07-errand-02','仔仔','收到，我下午出去的時候順手帶',{afterId:'d07-errand-01'}),
+ group('d07-errand-01','熙旺','买袋米、洗洁精，还有盐。家里快用完了。',{afterId:'d07-chat-07'}),
+ group('d07-errand-02','仔仔','收到，我下午出去的時候順手帶。',{afterId:'d07-errand-01'}),
  group('d07-errand-03','胡枫','小辛你確定不去？',{afterId:'d07-errand-02'}),
- group('d07-errand-04','小辛','我負責精神支持，謝謝',{afterId:'d07-errand-03'})
+ group('d07-errand-04','小辛','我負責精神支持，謝謝。',{afterId:'d07-errand-03'})
 ];
 export const extraDay=[
  dm('d07-awei-01','awei','阿威','我那副耳機接觸不良，昨天開會又斷了。準備換副無線耳機。',{wishId:'d07-headphones',wishText:'無線耳機',dueClock:'11:12'}),
- dm('d07-wang-01','wang','熙旺','家裡吃飯的碗有幾隻都磕了口，過兩天我去添一套新餐具',{wishId:'d07-tableware',wishText:'新餐具',dueClock:'14:10'})
+ dm('d07-wang-01','wang','熙旺','家裡吃飯的碗有幾隻都磕了口，過兩天我去添一套新餐具。',{wishId:'d07-tableware',wishText:'新餐具',dueClock:'14:10'})
 ];
 export const dinnerAfter=group('d07-dinner-after','小辛',
  '昨天吃得太撑了，我今天真的不想看见肉了');
@@ -35,7 +35,7 @@ export const rewardSets={
   dm('wish-headphones-thanks-2','awei','阿威','试过了，声音没问题。谢谢。')
  ],
  'd07-tableware':[
-  dm('wish-tableware-thanks-1','wang','熙旺','碗到了，今晚給你們做西湖醋魚'),
+  dm('wish-tableware-thanks-1','wang','熙旺','碗到了，今晚給你們做西湖醋魚。'),
   dm('wish-tableware-photo','wang','熙旺',d06WishImage('tableware-received.jpg'),{kind:'image'}),
  ],
 };

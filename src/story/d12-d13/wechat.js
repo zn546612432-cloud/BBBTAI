@@ -6,9 +6,9 @@ const parse=t=>t.split('|').filter(Boolean).map(x=>{const i=x.indexOf('：');if(
 const restoreSkipped=(s,q)=>{if(q.skipped&&q.status==='skipped'){q.skipped=false;q.historySettled=false;q.status='pending';q.started=false;q.index=0;q.nextAt=null;q.dueAt=null;q.awaitingPlayer=false;}};
 const scene=(id,at,text,migrate=null)=>({id,chat:'group',at,lines:parse(text),...(migrate?{migrate}:{})});
 export const D12_GROUP=[
- scene('separate-work','13:40','仔仔：我已經分不清是過敏還是被灰塵嗆的了|阿威：你休息一下。|仔仔：我買了酒精噴霧，我要把這些地方全部消毒|小辛：我把那個紫色沙發帶過來了|仔仔：酒吧那個？|小辛：對，等一下幫我搬一下',restoreSkipped),
- scene('arrival','21:50','胡枫：澳門好熱|胡枫：@熙旺 我在拿行李了|熙旺：我在出站口|胡枫：好',restoreSkipped),
- scene('settling','23:02','胡枫：你們都收拾好了，我睡哪呀？|小辛：老樣子，我隔壁|胡枫：隔音不好？|小辛：我晚上那個你都可以聽得見|胡枫：我會用狗項圈掐死你|小辛：我說唱歌啦！！！',restoreSkipped)
+ scene('separate-work','13:40','仔仔：我已經分不清是過敏還是被灰塵嗆的了。|阿威：你休息一下。|仔仔：我買了酒精噴霧，我要把這些地方全部消毒。|小辛：我把那個紫色沙發帶過來了。|仔仔：酒吧那個？|小辛：對，等一下幫我搬一下。',restoreSkipped),
+ scene('arrival','21:50','胡枫：澳門好熱。|胡枫：@熙旺 我在拿行李了。|熙旺：我在出站口。|胡枫：好。',restoreSkipped),
+ scene('settling','23:02','胡枫：你們都收拾好了，我睡哪呀？|小辛：老樣子，我隔壁。|胡枫：隔音不好？|小辛：我晚上那個你都可以聽得見。|胡枫：我會用狗項圈掐死你。|小辛：我說唱歌啦！！！',restoreSkipped)
 ];
 export const D13_GROUP=[
  scene('seoul-jetlag','09:44','胡枫：昨晚到得太晚了，現在才醒|小辛：回澳門第一天就賴床啊|胡枫：你凌晨三點還在打遊戲，有資格說我？'),
