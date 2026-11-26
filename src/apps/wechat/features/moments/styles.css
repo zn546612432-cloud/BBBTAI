@@ -126,3 +126,24 @@
 .wx-moments-reply button{background:transparent;border:0;text-align:left;padding:0;color:inherit;font-size:inherit;line-height:inherit;max-width:100%;overflow-wrap:anywhere}
 .wx-moments-reply-choices{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .wx-moments-reply-choices button{border:1px solid #d8e4dc;background:#f5faf6;color:#4e7961;border-radius:5px;padding:5px 8px;font-size:11px;text-align:left;line-height:1.4}
+
+/* Player-owned Moments controls follow the existing WeChat layout. */
+.wx-moments-meta .wx-moments-delete{background:none;color:#576b95;display:grid;place-items:center;padding:0 4px;min-width:25px;min-height:25px}
+.wx-moments-meta .wx-moments-tools{margin-left:auto}
+.wx-moments-cover-edit{position:absolute;inset:0;width:100%;height:100%;background:transparent}
+.wx-moments-avatar-edit{padding:0;background:transparent;position:relative;z-index:1;line-height:0}
+.wx-moments-avatar-edit img{width:66px;height:66px;object-fit:cover;border:2px solid #fff;border-radius:5px}
+.wx-moments-new{align-self:center;display:block;margin:8px auto 16px;padding:9px 20px;border-radius:4px;background:#444;color:#fff;font-size:14px}
+.wx-moments-share-preview{width:100%;margin:8px 0}
+.wx-moments-interaction{display:flex;align-items:flex-start;text-align:left;gap:12px;padding:14px 16px;background:#fff;width:100%;border-bottom:1px solid #eee!important;color:#191919}
+.wx-moments-interaction>span{flex:1;display:grid;gap:6px;overflow-wrap:anywhere}
+.wx-moments-interaction strong{color:#576b95}.wx-moments-interaction small{color:#999}
+.wx-moment-modal{position:absolute;inset:0;background:#0006;z-index:40;display:grid;place-items:center}
+.wx-moment-dialog{width:min(80%,300px);border-radius:12px;overflow:hidden;background:#fff;color:#191919;text-align:center;padding:22px 0 0}
+.wx-moment-dialog strong{font-size:17px}.wx-moment-dialog p{margin:12px 20px 20px;color:#888;font-size:14px}
+.wx-moment-dialog>div{display:flex;border-top:1px solid #eee}
+.wx-moment-dialog button{width:50%;height:49px;background:#fff;font-size:16px;color:#576b95;border-radius:0}
+.wx-moment-dialog button+button{border-left:1px solid #eee}.wx-moment-dialog .danger{color:#e04444}
+.wx-moments-privacy-select{white-space:nowrap;display:flex;align-items:center;gap:12px}.wx-moments-privacy-select select{min-width:0;flex:1}
+
+.wx-moment-photo-sheet{width:min(92%,380px);max-height:80%;overflow-y:auto;background:white;border-radius:12px;padding:16px;display:grid;gap:12px;color:#222}.wx-moment-photo-sheet>button{padding:12px 10px;background:#f3f3f3;border-radius:6px;font-size:15px}.wx-moment-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.wx-moment-photo-grid button{padding:0;aspect-ratio:1;background:#eee;overflow:hidden}.wx-moment-photo-grid img{width:100%;height:100%;object-fit:cover}.wx-moments-detail>.wx-moments-comment-form{flex:none;margin:0;padding:10px 12px 16px;border-top:1px solid #eee;background:#f7f7f7;flex-wrap:nowrap;align-items:center}.wx-moments-detail>.wx-moments-comment-form input{flex-basis:auto;background:#fff;flex:1}

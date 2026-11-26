@@ -3,6 +3,7 @@
 // DEEPSEEK_API_KEY and MINIMAX_API_KEY stay only in Supabase Edge Secrets.
 import {createClient} from "npm:@supabase/supabase-js@2.95.0";
 import {deepseekReply} from "./deepseek-reply.js";
+import {MAX_VISION_BODY,momentsVisionRequest,momentsVisionDescription} from "./moments-vision.js";
 const URL=Deno.env.get('SUPABASE_URL')||'';
 function adminKey(){
  try{
@@ -134,12 +135,21 @@ Deno.serve(async(req)=>{
    if(!transcript)throw error(502,'asr_empty_transcript');
    return respond(req,200,{text:transcript.slice(0,6000)});
   }
+  if(Number(req.headers.get('content-length')||0)>MAX_VISION_BODY)throw error(413,'payload_too_large');
   const raw=await req.text();
-  if(raw.length>90000)throw error(413,'payload_too_large');
+  if(raw.length>MAX_VISION_BODY)throw error(413,'payload_too_large');
   let input;
   try{input=JSON.parse(raw);}catch{throw error(400,'invalid_json');}
   if(!input||typeof input!=='object'||Array.isArray(input))throw error(400,'invalid_body');
   const operation=input.op;
+  if(operation!=='moments_vision'&&raw.length>90000)throw error(413,'payload_too_large');
+  if(operation==='moments_vision'){
+   let request;try{request=momentsVisionRequest(input.payload?.image);}catch{throw error(400,'invalid_vision_image');}
+   const secret=Deno.env.get('DEEPSEEK_API_KEY')?.trim();
+   if(!secret)throw error(503,'deepseek_not_configured');
+   const result=await sendProvider(DEEPSEEK,secret,request,30000);
+   return respond(req,200,{description:momentsVisionDescription(result)});
+  }
   // The ordinary public gameplay phrase never grants provider privileges.
   // Only a random, server-issued, one-use token can enroll this verified UID.
   if(operation==='redeem_test_access'){

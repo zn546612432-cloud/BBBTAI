@@ -6,6 +6,8 @@ import {deepseekModelOptions,TEAR_DEEPSEEK_MODEL} from '../src/services/ai/model
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 import {assembleTaiMessages} from '../src/services/ai/worldbook/index.js';
 import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
+import {momentsCommentMessages} from '../src/services/ai/moments-comments.js';
+import {MAX_VISION_BODY,momentsVisionRequest,momentsVisionDescription} from '../supabase/functions/tai-provider-gateway/moments-vision.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
 const reply = (res, status, payload) => {
@@ -13,11 +15,11 @@ const reply = (res, status, payload) => {
   res.end(JSON.stringify(payload));
 };
 const fail = (status, message) => Object.assign(new Error(message), {status});
-async function bodyJSON(req) {
+async function bodyJSON(req,maxSize=48_000) {
   let size=0, chunks=[];
   for await (const part of req) {
     size+=part.length;
-    if(size>48_000)throw fail(413,'请求内容过大');
+    if(size>maxSize)throw fail(413,'请求内容过大');
     chunks.push(part);
   }
   try {return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(400,'无效 JSON');}
@@ -52,18 +54,32 @@ export async function handleAIGateway(req,res,pathname) {
     reply(res,200,{mode:'local-only',deepseek:!!process.env.DEEPSEEK_API_KEY,minimax:!!process.env.MINIMAX_API_KEY,ttsModels:['speech-2.8-turbo','speech-2.8-hd']});
     return true;
   }
-  if(req.method!=='POST'||!['/api/ai/chat','/api/voice/tts'].includes(pathname)){
+  if(req.method!=='POST'||!['/api/ai/chat','/api/ai/moments-vision','/api/voice/tts'].includes(pathname)){
     reply(res,404,{error:'接口不存在'});return true;
   }
   const host=req.headers.host||'';
   const origin=req.headers.origin;
   if(origin&&new URL(origin).host!==host){reply(res,403,{error:'只允许本机同源请求'});return true;}
   try {
-    const payload=await bodyJSON(req);
+    const payload=await bodyJSON(req,pathname==='/api/ai/moments-vision'?MAX_VISION_BODY:48_000);
+    if(pathname==='/api/ai/moments-vision'){
+      let request;try{request=momentsVisionRequest(payload.image);}catch{throw fail(400,'图片格式不支持');}
+      if(!process.env.DEEPSEEK_API_KEY)throw fail(503,'请先在本地环境配置 DEEPSEEK_API_KEY');
+      const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,request);
+      reply(res,200,{description:momentsVisionDescription(data)});return true;
+    }
     if(pathname==='/api/ai/chat'){
       if(!process.env.DEEPSEEK_API_KEY)throw fail(503,'请先在本地环境配置 DEEPSEEK_API_KEY');
       const day=Number(payload.day),channel=payload.channel;
       if(!Number.isInteger(day)||day<1||day>90)throw fail(400,'游戏天数不合法');
+      if(channel==='moments'){
+        let history;
+        try{if(payload.moment?.day!==day)throw Error();history=momentsCommentMessages(payload.moment);}catch{throw fail(400,'朋友圈评论参数不合法');}
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'disabled'},temperature:.7,top_p:.8,messages:history,stream:false,max_tokens:160,response_format:{type:'json_object'}});
+        const text=data.choices?.[0]?.message?.content;
+        if(typeof text!=='string'||!text.trim())throw fail(502,'模型没有返回有效文字');
+        reply(res,200,{text,channel,day});return true;
+      }
       if(!['mirage','noapp','chess','tear'].includes(channel)||channel==='tear'&&day<24||channel==='noapp'&&(payload.storyVersion==='55-v1'?day<30||day>55||payload.recognized!==true:day<56))throw fail(400,'当前频道或天数不可使用');
       if(!Array.isArray(payload.messages)||payload.messages.length<1||payload.messages.length>24)throw fail(400,'聊天消息数量不合法');
       const messages=payload.messages.map(m=>{
