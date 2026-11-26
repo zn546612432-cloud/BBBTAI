@@ -2,6 +2,7 @@ import {D14_D24_CONTENT} from './definition.js';
 import {createConversationTrack,CHAT_LIFECYCLE_POLICY} from '../../services/messaging/lifecycle/engine.js';
 import {trackKey} from './editor-overrides.js';
 import d15LegacyChats from './d15-legacy-chats.json' with {type:'json'};
+import d16D20LegacyChats from './d16-d20-legacy-chats.json' with {type:'json'};
 
 // Eleven content registrations, one existing conversation lifecycle/clock.
 export const D14_D24_TRACKS=Array.from({length:11},(_,i)=>{
@@ -10,7 +11,7 @@ export const D14_D24_TRACKS=Array.from({length:11},(_,i)=>{
   const key=trackKey(scene);
   const revisedD14=scene.day===14&&scene.id==='meeting';
   const oldD14=[{"who":"胡枫","text":"幹爹要的資料我先整理成一份。今晚到大屋再看"},{"who":"阿威","text":"幾點？"},{"who":"熙旺","text":"八點吧，乾爹也會去"},{"who":"小辛","text":"收到。"},{"who":"仔仔","text":"我帶樣板過去"}];
-  const oldLines=revisedD14?oldD14:scene.day===15?d15LegacyChats[scene.id]:null;
+  const oldLines=revisedD14?oldD14:scene.day===15?d15LegacyChats[scene.id]:d16D20LegacyChats[day+':'+scene.id];
   return {...scene,
    // The loan conversation can arrive late, but its old complaint must not
    // remain a mandatory composer draft weeks after the subject has passed.

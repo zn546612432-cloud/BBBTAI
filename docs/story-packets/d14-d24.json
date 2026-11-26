@@ -9,7 +9,8 @@
     "messaging",
     "story55",
     "bank",
-    "assets"
+    "assets",
+    "moments"
   ],
   "assets": [],
   "events": [
@@ -2233,7 +2234,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "胡枫",
+      "actor": "仔仔",
       "trigger": {
         "type": "day-time",
         "ref": "10:08"
@@ -2247,7 +2248,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "我把踩點過的撤離路線做好了，不過還有幾個點沒敲定，大家什麼時候有空來看一下，",
+      "text": "小辛，你起床了沒有？",
       "thread": "group"
     },
     {
@@ -2256,7 +2257,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "熙旺",
+      "actor": "小辛",
       "trigger": {
         "type": "previous-event",
         "ref": "d16-briefing-0"
@@ -2272,7 +2273,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "那就七點半，大屋，我去接乾爹",
+      "text": "醒了",
       "thread": "group"
     },
     {
@@ -2281,7 +2282,7 @@
       "surface": "wechat",
       "capability": "chat.d14-d24",
       "owner": "messaging",
-      "actor": "阿威",
+      "actor": "仔仔",
       "trigger": {
         "type": "previous-event",
         "ref": "d16-briefing-1"
@@ -2297,7 +2298,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "好。",
+      "text": "醒了就過來試衣服。",
       "thread": "group"
     },
     {
@@ -2322,7 +2323,182 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "我晚十分鐘來",
+      "text": "好嘛",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-3"
+      },
+      "requires": [
+        "d16-briefing-3"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我那套做好了？",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-4"
+      },
+      "requires": [
+        "d16-briefing-4"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "嗯，你和阿威的都做好了。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-5"
+      },
+      "requires": [
+        "d16-briefing-5"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我一會過去。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-6"
+      },
+      "requires": [
+        "d16-briefing-6"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "@熙蒙 昨天讓我查的那幾家公司，資料都發給你了。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-8",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-briefing-7"
+      },
+      "requires": [
+        "d16-briefing-7"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "收到了，晚上一起看吧。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-8"
+      },
+      "requires": [
+        "d16-briefing-8"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "七點半到大屋。",
+      "thread": "group"
+    },
+    {
+      "id": "d16-briefing-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-briefing-9"
+      },
+      "requires": [
+        "d16-briefing-9"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "10:08"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "好。",
       "thread": "group"
     },
     {
@@ -2336,7 +2512,9 @@
         "type": "day-time",
         "ref": "14:19"
       },
-      "requires": [],
+      "requires": [
+        "node:loan"
+      ],
       "timing": {
         "day": 16,
         "at": "14:19"
@@ -2420,7 +2598,7 @@
       "delivery": {
         "late": "skip"
       },
-      "text": "反正有人買單",
+      "text": "貴有貴的道理。",
       "thread": "wang"
     },
     {
@@ -2495,7 +2673,157 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "說不過你。你高興就好。",
+      "text": "是是是。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-7",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-6"
+      },
+      "requires": [
+        "d16-hardware-6"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "你上次打遊戲用的那個還是我的。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-7"
+      },
+      "requires": [
+        "d16-hardware-7"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那個確實挺好用的。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-9",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-8"
+      },
+      "requires": [
+        "d16-hardware-8"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "送你了。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-9"
+      },
+      "requires": [
+        "d16-hardware-9"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "這麼大方？",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d16-hardware-10"
+      },
+      "requires": [
+        "d16-hardware-10"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "因為我要買新的了。",
+      "thread": "wang"
+    },
+    {
+      "id": "d16-hardware-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d16-hardware-11"
+      },
+      "requires": [
+        "d16-hardware-11"
+      ],
+      "timing": {
+        "day": 16,
+        "at": "14:19"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "……",
       "thread": "wang"
     },
     {
@@ -2820,6 +3148,231 @@
       "thread": "group"
     },
     {
+      "id": "d17-rain-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-6"
+      },
+      "requires": [
+        "d17-rain-6"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "那你順路買點喝的。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-7"
+      },
+      "requires": [
+        "d17-rain-7"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "喝什麼？",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-8"
+      },
+      "requires": [
+        "d17-rain-8"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "可樂，要無糖的。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-9"
+      },
+      "requires": [
+        "d17-rain-9"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "啤酒。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-10"
+      },
+      "requires": [
+        "d17-rain-10"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "蒙哥呢",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-12",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-rain-11"
+      },
+      "requires": [
+        "d17-rain-11"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "冰可樂。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-12"
+      },
+      "requires": [
+        "d17-rain-12"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "給他買常溫的。",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-14",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d17-rain-13"
+      },
+      "requires": [
+        "d17-rain-13"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "……",
+      "thread": "group"
+    },
+    {
+      "id": "d17-rain-15",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d17-rain-14"
+      },
+      "requires": [
+        "d17-rain-14"
+      ],
+      "timing": {
+        "day": 17,
+        "at": "16:18"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "收到🫡",
+      "thread": "group"
+    },
+    {
       "id": "d17-laundry-0",
       "kind": "incoming-text",
       "surface": "wechat",
@@ -3039,7 +3592,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "我看你你屁股也癢了",
+      "text": "我看你屁股也癢了",
       "thread": "wang"
     },
     {
@@ -3708,7 +4261,7 @@
       "delivery": {
         "late": "skip"
       },
-      "text": "我服了，他看起來那裡需要被照顧了",
+      "text": "我服了，他看起來哪裡需要被照顧了",
       "thread": "wang"
     },
     {
@@ -5464,7 +6017,7 @@
       "delivery": {
         "late": "silent"
       },
-      "text": "暫定會議備忘\n胡楓：總體安排／文件統合\n熙旺：人員與訓練／與干爹接洽\n仔仔：服裝、外觀及出入場合需要的物件\n阿威：體能、裝備保養與訓練支援\n小辛：外圍人情線索與機動支援\n我：技術系統、資料整理、工具驗證"
+      "text": "6.3 會議記錄\n初步預算：HK$2,000,000\n\n胡楓 — 汪傑及相關企業資料\n\n熙旺 — 人員安排、預算統計\n\n仔仔 — 服裝設計及修改\n\n阿威 — 裝備採購、日常訓練\n\n小辛 — 協助阿楓整理資料\n\n我 — 程序開發、設備更新\n\n待辦\n\n□ 購置新工作站\n\n□ 完成 Ouroboros 給的框架部署\n\n□ 重新統計預算\n\n□ 找時間試衣服"
     },
     {
       "id": "xm-note-d22-framework",
@@ -5509,6 +6062,1029 @@
         "late": "silent"
       },
       "text": "Mirage / Ouroboros：零散舊論壇討論，不揭露真名或IP。"
+    },
+    {
+      "id": "d18-wallet-halves-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "day-time",
+        "ref": "14:35"
+      },
+      "requires": [],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "昨天跟你說的那家公司，查到了。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-0"
+      },
+      "requires": [
+        "d18-wallet-halves-0"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "金輝資金中心，在澳興大廈。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-2",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-wallet-halves-1"
+      },
+      "requires": [
+        "d18-wallet-halves-1"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "確定是金輝？",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-2"
+      },
+      "requires": [
+        "d18-wallet-halves-2"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "確定。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-4",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-wallet-halves-3"
+      },
+      "requires": [
+        "d18-wallet-halves-3"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "所以另外一半密鑰在金輝的服務器裡。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-4"
+      },
+      "requires": [
+        "d18-wallet-halves-4"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "銀行裡的只有一半？",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-6",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-wallet-halves-5"
+      },
+      "requires": [
+        "d18-wallet-halves-5"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "對，兩份缺一不可。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-6"
+      },
+      "requires": [
+        "d18-wallet-halves-6"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "啊？那豈不是要做兩次？",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-7"
+      },
+      "requires": [
+        "d18-wallet-halves-7"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "嗯。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-8"
+      },
+      "requires": [
+        "d18-wallet-halves-8"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "五億美金果然沒那麼好拿。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d18-wallet-halves-9"
+      },
+      "requires": [
+        "d18-wallet-halves-9"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "晚上跟乾爹說一下。",
+      "thread": "group"
+    },
+    {
+      "id": "d18-wallet-halves-11",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d18-wallet-halves-10"
+      },
+      "requires": [
+        "d18-wallet-halves-10"
+      ],
+      "timing": {
+        "day": 18,
+        "at": "14:35"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "好。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "20:46"
+      },
+      "requires": [],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你們有沒有想過以後有錢了要幹嘛？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-0"
+      },
+      "requires": [
+        "d19-future-home-0"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "開間拳館。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-1"
+      },
+      "requires": [
+        "d19-future-home-1"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我想去巴黎學服裝設計。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-2"
+      },
+      "requires": [
+        "d19-future-home-2"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你現在不就是設計師嗎？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-3"
+      },
+      "requires": [
+        "d19-future-home-3"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "還有很多東西想學啊。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-5",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-4"
+      },
+      "requires": [
+        "d19-future-home-4"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我可能會回韓國把書讀完。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-6",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-5"
+      },
+      "requires": [
+        "d19-future-home-5"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "啊？都有錢了你還讀書？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-7",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "胡枫",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-6"
+      },
+      "requires": [
+        "d19-future-home-6"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "你以為人人都跟你一樣不愛上學？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-8",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-7"
+      },
+      "requires": [
+        "d19-future-home-7"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "哼",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-9",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-8"
+      },
+      "requires": [
+        "d19-future-home-8"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "@熙旺 大哥呢？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-10",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-9"
+      },
+      "requires": [
+        "d19-future-home-9"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "買個大點的房子吧，夠我們六個人住。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-11",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "仔仔",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-10"
+      },
+      "requires": [
+        "d19-future-home-10"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我要帶衣帽間的！",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-12",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-11"
+      },
+      "requires": [
+        "d19-future-home-11"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "留間房給我放器材。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-13",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-12"
+      },
+      "requires": [
+        "d19-future-home-12"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我要游泳池！",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-14",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-future-home-13"
+      },
+      "requires": [
+        "d19-future-home-13"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "哥，你直接買個莊園算了。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-15",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-14"
+      },
+      "requires": [
+        "d19-future-home-14"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "也行，你們喜歡就好。",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-16",
+      "kind": "player-send",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "me",
+      "trigger": {
+        "type": "user-send",
+        "ref": "d19-future-home-15"
+      },
+      "requires": [
+        "d19-future-home-15"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "skip"
+      },
+      "text": "那你的錢豈不是都給弟弟們花了，你自己想要什麼呢？",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-17",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-16"
+      },
+      "requires": [
+        "d19-future-home-16"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "嗯……",
+      "thread": "group"
+    },
+    {
+      "id": "d19-future-home-18",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "熙旺",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d19-future-home-17"
+      },
+      "requires": [
+        "d19-future-home-17"
+      ],
+      "timing": {
+        "day": 19,
+        "at": "20:46"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "大家幸福開心就好。",
+      "thread": "group"
+    },
+    {
+      "id": "d20-awake-0",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "09:06"
+      },
+      "requires": [],
+      "timing": {
+        "day": 20,
+        "at": "09:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我才剛醒⋯",
+      "thread": "group"
+    },
+    {
+      "id": "d20-awake-1",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-awake-0"
+      },
+      "requires": [
+        "d20-awake-0"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "09:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "給你十分鐘。",
+      "thread": "group"
+    },
+    {
+      "id": "d20-awake-2",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-awake-1"
+      },
+      "requires": [
+        "d20-awake-1"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "09:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "早餐還沒吃",
+      "thread": "group"
+    },
+    {
+      "id": "d20-awake-3",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "阿威",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-awake-2"
+      },
+      "requires": [
+        "d20-awake-2"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "09:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "過來吃，我買了。",
+      "thread": "group"
+    },
+    {
+      "id": "d20-awake-4",
+      "kind": "incoming-text",
+      "surface": "wechat",
+      "capability": "chat.d14-d24",
+      "owner": "messaging",
+      "actor": "小辛",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "d20-awake-3"
+      },
+      "requires": [
+        "d20-awake-3"
+      ],
+      "timing": {
+        "day": 20,
+        "at": "09:06"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "威威我愛你",
+      "thread": "group"
+    },
+    {
+      "id": "xm-note-d18-wallet-halves",
+      "kind": "system-notice",
+      "surface": "notes",
+      "capability": "story.d14-d24-notes",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "day-time",
+        "ref": "16:30"
+      },
+      "requires": [],
+      "timing": {
+        "day": 18,
+        "at": "16:30"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "汪傑 · 電子錢包\n資產：約 US$500,000,000\n\n密鑰 A\n澳亞銀行／手寫記錄\n\n密鑰 B\n澳興大廈／金輝資金中心／服務器\n\n兩份缺一不可。"
+    },
+    {
+      "id": "xm-note-d20-programme",
+      "kind": "system-notice",
+      "surface": "notes",
+      "capability": "story.d14-d24-notes",
+      "owner": "story55",
+      "actor": "me",
+      "trigger": {
+        "type": "day-time",
+        "ref": "22:15"
+      },
+      "requires": [],
+      "timing": {
+        "day": 20,
+        "at": "22:15"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "程序進度\n□ 新設備安裝\n\n□ 框架部署\n\n□ 影像生成測試\n\n□ 程序穩定性測試"
+    },
+    {
+      "id": "xs-d17-rain-shoes",
+      "kind": "moment",
+      "surface": "wechat",
+      "capability": "moments.d16-d20-life",
+      "owner": "moments",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "17:02"
+      },
+      "requires": [],
+      "timing": {
+        "day": 17,
+        "at": "17:02"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "我的新鞋🥲",
+      "comments": [
+        {
+          "by": "胡枫",
+          "text": "下次穿拖鞋"
+        },
+        {
+          "by": "仔仔",
+          "text": "我有吹風機"
+        },
+        {
+          "by": "小辛",
+          "to": "仔仔",
+          "text": "救救我"
+        }
+      ],
+      "likes": [
+        "胡枫",
+        "仔仔",
+        "阿威"
+      ]
+    },
+    {
+      "id": "xs-d19-retire",
+      "kind": "moment",
+      "surface": "wechat",
+      "capability": "moments.d16-d20-life",
+      "owner": "moments",
+      "actor": "小辛",
+      "trigger": {
+        "type": "day-time",
+        "ref": "21:22"
+      },
+      "requires": [],
+      "timing": {
+        "day": 19,
+        "at": "21:22"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent"
+      },
+      "text": "好想退休",
+      "comments": [
+        {
+          "by": "胡枫",
+          "text": "你上過班嗎"
+        },
+        {
+          "by": "小辛",
+          "to": "胡枫",
+          "text": "經營酒吧不算嗎？"
+        },
+        {
+          "by": "仔仔",
+          "text": "老闆辛苦了"
+        },
+        {
+          "by": "小辛",
+          "to": "仔仔",
+          "text": "還是你好"
+        }
+      ],
+      "likes": []
     }
   ],
   "acceptance": [
