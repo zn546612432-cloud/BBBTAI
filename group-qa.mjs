@@ -17,7 +17,7 @@ assert.equal(canGroupEgg(s),true,'D02 idle group is eligible');
 const p=publishPlayerMoment(s,{text:'test'});recordMomentInteraction(s,p,{id:'browser-like',by:'小辛',kind:'like'});
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
 try{
- const c=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+ const c=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
  await c.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,value);},{key,value:JSON.stringify(s)});
  const page=await c.newPage();page.setDefaultTimeout(20000);
  const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.log('PAGE_ERROR',e.stack||e.message);});page.on('console',m=>{if(m.type()==='error')console.log('BROWSER_CONSOLE',m.text().slice(0,400));});page.on('requestfailed',r=>console.log('REQUEST_FAILED',r.url(),r.failure()?.errorText));let classified=0;
@@ -31,12 +31,13 @@ try{
  await page.waitForTimeout(4000);
  console.log('BOOT',await page.evaluate(()=>({title:document.title,root:document.querySelector('#root')?.innerText?.slice(0,400),boot:document.querySelector('#xm-boot-message')?.textContent,bootNext:document.querySelector('#xm-boot-next')?.textContent,phone:!!document.querySelector('#phone'),actions:[...document.querySelectorAll('[data-action]')].slice(0,10).map(x=>x.dataset.action)})));
  await page.screenshot({path:dir+'/00-startup.png',fullPage:true});
- for(let i=0;i<20;i++){
-  if(await page.locator('.wx-conversation[data-wx-conversation="group"]').isVisible())break;
-  const next=page.locator('#xm-boot-next');if(await next.isVisible()){const text=await next.innerText();if(/重新|重載|reload/.test(text)){throw Error('Phone boot error: '+await page.locator('#xm-boot-message').innerText());}await next.click();}
-  const unlock=page.locator('[data-action="unlock"]');if(await unlock.isVisible()){await unlock.click({timeout:5000});for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();break;}
-  await page.waitForTimeout(1000);
- }
+ const next=page.locator('#xm-boot-next');
+ await next.waitFor({state:'visible',timeout:45000});
+ assert.equal(await next.innerText(),'點擊進入');
+ await next.click();
+ await page.locator('#xm-boot').waitFor({state:'hidden',timeout:10000});
+ await page.locator('[data-action="unlock"]').click();
+ for(const digit of '0816')await page.locator('[data-action="passcode-key"][data-key="'+digit+'"]').click();
  console.log('STARTUP_DONE',errors);
  await page.locator('.wx-conversation[data-wx-conversation="group"]').waitFor();
  await page.addStyleTag({content:'#toast{visibility:hidden!important;pointer-events:none!important}'});
