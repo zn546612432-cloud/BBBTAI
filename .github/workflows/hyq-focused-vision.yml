@@ -1,20 +1,46 @@
-name: HYQ final affected tests only
+name: Read-only Cloudflare live release check
 on:
   push:
     branches: ['verify/hyq-vision-20261126']
 permissions:
   contents: read
 jobs:
-  verify:
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - name: Verify affected tests, no repeated full suite
-        run: node --test --test-name-pattern='music uses actual track|avatar paths are base-aware|D06 sunset video' tests/story-notification-haptic.test.mjs tests/wechat-moments.test.mjs
-      - run: node --check src/apps/wechat/features/moments/index.js
+      - name: Inspect public Cloudflare release, entrypoints and HYQ modules
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.parse, json, re
+          base='https://bbbtai.pages.dev/'
+          def get(path):
+              u=urllib.parse.urljoin(base,path)
+              req=urllib.request.Request(u,headers={'Cache-Control':'no-cache','User-Agent':'BBBTAI release verification'})
+              with urllib.request.urlopen(req,timeout=12) as r:
+                  s=r.read().decode('utf-8','replace')
+                  print('HTTP',r.status,u,flush=True)
+                  return s
+          try:
+              release=json.loads(get('release.json?verify=389'))
+              print('LIVE_RELEASE',json.dumps(release),flush=True)
+              prod=get('?verify=389')
+              friends=get('review/friends-test/?verify=389')
+              for label,html in [('production',prod),('friends',friends)]:
+                  print('ENTRY',label,re.findall(r'name="(?:ximeng-release|phone-friends-test|phone-preview)" content="[^"]+"',html),flush=True)
+              url=release.get('url','')
+              for path,markers in [
+                  ('src/apps/wechat/features/moments/index.js',['deletePlayerMoment','wx-moment-change-avatar','wx-moment-interactions']),
+                  ('src/apps/wechat/features/moments/reactions.js',['photoDescription','requestMomentVision']),
+                  ('src/apps/music/features/shared/catalog.js',['coverFormat']),
+                  ('src/apps/music/index.js',['music-share-hyq'])
+              ]:
+                  try:
+                      src=get(url+path)
+                      print('FEATURE',path,json.dumps({m:m in src for m in markers}),flush=True)
+                  except Exception as e:
+                      print('FEATURE_ERROR',path,str(e),flush=True)
+          except Exception as e:
+              print('LIVE_CHECK_ERROR',str(e),flush=True)
+              raise
+          PY
