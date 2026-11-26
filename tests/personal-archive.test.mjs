@@ -46,12 +46,23 @@ test('archive deployment returns to Tear, runs once, and is saved only by the go
  assert.match(renderLibrary(s,'/item/personal-files/tai'),/type="password"/);
  assert.match(renderLibrary(s,'/item/personal-files/account'),/>room404</);
  assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai/photo'),/triplets-baby-photo/);
+ assert.doesNotMatch(renderLibrary(s,'/item/personal-files/tai'),/resident-register\.webp/);
+ assert.match(renderLibrary(s,'/item/personal-files/tai/record/infant-admission'),/type="password"/);
  assert.equal(unlockPersonalFiles(s,'xitai'),false);
  assert.equal(unlockPersonalFiles(s,'XITAI'),false);
  completeNode(s,'questions',{test:true});
  assert.equal(unlockPersonalFiles(s,'XITAI'),true);
  const restored=structuredClone(s);tickStory55(restored);assert.match(renderLibrary(restored,'/item/personal-files/tai'),/IMG_0001.jpg/);
  assert.equal(nodeStatus(s,'photo').state,'ready');
+ for(const [id,name] of [['resident-register','兒童名冊'],['infant-admission','嬰兒收容登記表'],['xi-wang-record','熙旺個人檔案'],['xi-meng-record','熙蒙個人檔案']]){
+  assert.ok(renderLibrary(s,'/item/personal-files/tai').includes(name+'.webp'));
+  const route='/item/personal-files/tai/record/'+id;
+  assert.ok(renderLibrary(s,route).includes('/assets/story55/personal-files/tai/'+id+'.webp'));
+  assert.ok(existsSync(new URL('../public/assets/story55/personal-files/tai/'+id+'.webp',import.meta.url)));
+  handleLibraryAction('files-local-personal-open',{dataset:{route}},ctx);
+  assert.equal(s.nav.current.route,route);
+  assert.equal(nodeStatus(s,'photo').state,'ready');
+ }
  handleLibraryAction('files-local-personal-open',{dataset:{route:'/item/personal-files/tai/photo'}},ctx);
  assert.ok(completed(s,'photo'));assert.equal(nodeStatus(s,'invite').state,'locked');
  for(const name of ['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg']){

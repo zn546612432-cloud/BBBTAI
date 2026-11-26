@@ -33,6 +33,12 @@ export const localFileList=s=>[...library(s).filter(f=>!f.deleted),...storyArchi
 export const PERSONAL_FILES_ID='personal-files';
 const personalPath='/item/'+PERSONAL_FILES_ID;
 const personalImages=['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg'];
+const taiImages=Object.freeze([
+ {id:'resident-register',name:'兒童名冊.webp'},
+ {id:'infant-admission',name:'嬰兒收容登記表.webp'},
+ {id:'xi-wang-record',name:'熙旺個人檔案.webp'},
+ {id:'xi-meng-record',name:'熙蒙個人檔案.webp'}
+]);
 export function savePersonalFiles(s){
  if(s.day<33||!completed(s,'identity')||!s.story55?.tearAgent?.archiveRun?.done)return null;
  const files=s.content.localFiles??=[];
@@ -123,9 +129,11 @@ const folderIcon='<svg class="fl-folder-art" viewBox="0 0 32 28" aria-hidden="tr
 const folderRow=(route,name)=>'<button type="button" class="fl-folder-row" data-action="files-local-nav" data-route="'+esc(route)+'">'+folderIcon+'<span>'+esc(name)+'</span><span class="fl-chevron">›</span></button>';
 const personalRow=(path,name,detail,thumb='')=>'<button type="button" class="fl-row" data-action="files-local-personal-open" data-route="'+esc(path)+'">'+(thumb?'<img class="fl-personal-thumb" src="'+esc(thumb)+'" alt="">':'<span class="fl-archive-icon">TXT</span>')+'<span class="fl-row-copy"><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></span><span class="fl-chevron">›</span></button>';
 const personalImage=name=>'/assets/story55/personal-files/'+name;
+const taiImage=id=>personalImage('tai/'+id+'.webp');
+const taiImageRoute=id=>personalPath+'/tai/record/'+id;
 export function personalFileAttachments(s){
  const f=fileById(s,PERSONAL_FILES_ID);if(!f||f.deleted)return [];
- return [...[['account','account.txt'],['tai','TAI'],['photos','Photos'],...personalImages.map(name=>['photos/'+name,name]),...(f.unlocked?[['tai/photo','IMG_0001.jpg']]:[])].map(([path,name])=>({id:'personal-files/'+path,name,kind:'personal-evidence',path})),...storyArchives(s,{personal:true})];
+ return [...[['account','account.txt'],['tai','TAI'],['photos','Photos'],...personalImages.map(name=>['photos/'+name,name]),...(f.unlocked?[['tai/photo','IMG_0001.jpg'],...taiImages.map(({id,name})=>['tai/record/'+id,name])]:[])].map(([path,name])=>({id:'personal-files/'+path,name,kind:'personal-evidence',path})),...storyArchives(s,{personal:true})];
 }
 function personalView(s,route){
  const f=fileById(s,PERSONAL_FILES_ID),tail=route.slice(personalPath.length);
@@ -135,8 +143,12 @@ function personalView(s,route){
  if(tail==='/account')return shell('account.txt',personalPath,'<div class="fl-personal-text">room404</div>');
  if(tail==='/tai'||tail.startsWith('/tai/')){
   if(!f.unlocked)return shell('TAI',personalPath,'<section class="fl-preview-main">'+folderIcon+heading('TAI')+'<p>此檔案夾已加密</p></section><form class="fl-editor" data-form="files-local-personal-unlock"><input name="password" type="password" placeholder="輸入密碼" aria-label="密碼" autocomplete="off" required><button type="submit" class="fl-primary">解鎖</button></form>');
-  if(tail==='/tai')return shell('TAI',personalPath,'<div class="fl-section">'+personalRow(personalPath+'/tai/photo','IMG_0001.jpg','JPEG 影像','/assets/story55/triplets-baby-photo.jpg')+storyArchives(s,{personal:true}).map(row).join('')+'</div>');
+  if(tail==='/tai')return shell('TAI',personalPath,'<div class="fl-section">'+personalRow(personalPath+'/tai/photo','IMG_0001.jpg','JPEG 影像','/assets/story55/triplets-baby-photo.jpg')+taiImages.map(({id,name})=>personalRow(taiImageRoute(id),name,'WebP 影像',taiImage(id))).join('')+storyArchives(s,{personal:true}).map(row).join('')+'</div>');
   if(tail==='/tai/photo')return shell('IMG_0001.jpg',personalPath+'/tai','<img class="fl-personal-photo" src="/assets/story55/triplets-baby-photo.jpg" alt="三名嬰兒合照">');
+  if(tail.startsWith('/tai/record/')){
+   const record=taiImages.find(({id})=>tail==='/tai/record/'+id);
+   if(record)return shell(record.name,personalPath+'/tai','<img class="fl-personal-photo" src="'+esc(taiImage(record.id))+'" alt="'+esc(record.name)+'">');
+  }
  }
  if(tail==='/photos')return shell('Photos',personalPath,'<div class="fl-section">'+personalImages.map(name=>personalRow(personalPath+'/photos/'+name,name,'JPEG 影像',personalImage(name))).join('')+'</div><p class="fl-count">'+personalImages.length+' 個項目</p>');
  if(tail.startsWith('/photos/')){
