@@ -17,7 +17,10 @@ export function backgroundStoryBlocked(s){
   &&nodeStatus(s,n.id).state==='ready');
 }
 export function phoneRuntimePaused(s,{hidden=false,background=false,restarting=false,callActive=false}={}){
- return timedStoryPaused(s)||hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||s.dayChargeRemainingMs>0||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
+ // The long-charge animation is a foreground real-time transition, not game time.
+ // It must finish before the new day's plot gate can take control.
+ if(s.dayChargeRemainingMs>0)return hidden||background||restarting;
+ return timedStoryPaused(s)||hidden&&!background||restarting||background&&(backgroundStoryBlocked(s)||callActive)||endingAwaitingVoice55(s)||finaleInProgress55(s)||secondView55(s)
   ||['ringing','connected'].includes(s.phoneCall?.state)||s.story55?.d13?.phase==='green'
   ||['off','passcode'].includes(s.deathPhase)||!!s.alarmRinging||!!s.emergencyCharge||!!s.poweredOff
   ||s.nav.current.appId==='editor'&&!deathLocked(s)&&s.powerMode!=='short-charging';
@@ -26,6 +29,7 @@ export function phoneRuntimePaused(s,{hidden=false,background=false,restarting=f
 // animations and audio keep their real-time schedulers and never use this budget.
 export function tickPhoneRuntime(s,frame,options={}){
  if(!frame||phoneRuntimePaused(s,options))return {minutes:0};
+ if(s.dayChargeRemainingMs>0)return tickWorld(s,frame.elapsedMs,{...options,elapsedGameMinutes:0});
  // Background settlement credits real charging once, including blocked time.
  if(s.powerMode==='short-charging'&&!options.background)tickShortChargeBattery(s,frame.elapsedMs);
  const outcome=tickWorld(s,frame.elapsedMs,{...options,elapsedGameMinutes:frame.gameMinutes});
