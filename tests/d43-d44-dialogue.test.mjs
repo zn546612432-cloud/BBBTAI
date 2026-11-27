@@ -7,7 +7,7 @@ import {completed,nodeStatus,timedStoryPaused} from '../src/services/story55/sta
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {currentScript55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {entryFor} from '../src/story/diary/entries.js';
-import {D43_PARIS_LINES,D44_CONFIDE_LINES,D44_DIARY,PARIS_PHOTO} from '../src/story/d43-d44/definition.js';
+import {D43_PARIS_LINES,D44_CONFIDE_LINES,D44_DIARY,PARIS_PHOTO,PARIS_VIDEO} from '../src/story/d43-d44/definition.js';
 import {render as renderNoApp} from '../src/apps/noapp/index.js';
 import {nativeWeChatComposer} from '../src/services/messaging/preset-replies.js';
 
@@ -48,12 +48,15 @@ test('D43 10:20 photo, exact message pacing and ten-second silence, manual sends
  advanceGameMinutes(s,100);assert.equal(s.clock,'10:20');assert.equal(timedStoryPaused(s),true);
  play(s,'paris','noapp','tai',D43_PARIS_LINES,Date.now());
  const list=messages(s,'noapp','tai','s55-d43-paris-');
- assert.equal(list.length,16);assert.equal(list[0].kind,'image');assert.equal(list[0].text,PARIS_PHOTO);
+ assert.equal(list.length,17);assert.equal(list[0].kind,'image');assert.equal(list[0].text,PARIS_PHOTO);
  assert.equal(list[0].time,'10:20');assert.equal(list[0].sentDate,'2025-06-30');
- assert.deepEqual(list.slice(1).map(m=>[m.from,m.text]),D43_PARIS_LINES.slice(1));
+ assert.equal(list[3].kind,'video');assert.equal(list[3].text,PARIS_VIDEO);
+ assert.deepEqual(list.slice(1).filter((_,i)=>i!==2).map(m=>[m.from,m.text]),D43_PARIS_LINES.slice(1).filter((_,i)=>i!==2));
+ assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/paris-original\.mp4/);
+ assert.equal(readFileSync(new URL('../public'+PARIS_VIDEO,import.meta.url)).subarray(4,8).toString(),'ftyp');
  assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-eiffel\.webp/);
  assert.equal(readFileSync(new URL('../public'+PARIS_PHOTO,import.meta.url)).subarray(8,12).toString(),'WEBP');
- assert.equal(timedStoryPaused(s),false);tickStory55(s);assert.equal(messages(s,'noapp','tai','s55-d43-paris-').length,16);
+ assert.equal(timedStoryPaused(s),false);tickStory55(s);assert.equal(messages(s,'noapp','tai','s55-d43-paris-').length,17);
 });
 test('D44 13:15 confide replaces D50, native WeChat and diary unlock only after final send',()=>{
  const s=phone(44,'13:14');assert.equal(entryFor(s,44),null);
@@ -76,4 +79,13 @@ test('legacy incomplete Paris line index is reset without deleting existing chat
  s.story55.completed.paris={day:43,clock:'10:30'};
  delete s.story55.config.d43D44Revision;
  tickStory55(s);assert.equal(completed(s,'paris'),true);
+});
+
+test('unstarted Paris saves receive the original video without resetting existing progress',()=>{
+ const s=phone(43,'09:00'),node=s.story55.config.nodes.find(n=>n.id==='paris');
+ const old=D43_PARIS_LINES.filter((_,i)=>i!==3);
+ s.story55.config.scenes.paris=structuredClone(old);delete node.videoLines;node.lineDelayMs={9:10000};
+ tickStory55(s);assert.deepEqual(s.story55.config.scenes.paris,D43_PARIS_LINES);assert.equal(node.videoLines[3],PARIS_VIDEO);
+ s.story55.config.scenes.paris=structuredClone(old);delete node.videoLines;node.lineDelayMs={9:10000};s.story55.scenes.paris={index:2};
+ tickStory55(s);assert.deepEqual(s.story55.config.scenes.paris,old);assert.equal(scene55(s,'paris').index,2);
 });
