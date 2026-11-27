@@ -26,7 +26,7 @@ const clockMinute=value=>Number(value.slice(0,2))*60+Number(value.slice(3,5));
 const hasReached=(s,n)=>n.day<s.day||!n.at||
  storyDayMinute(s)>=clockMinute(n.at)+(n.afterMidnight?1440:0);
 // Approved proactive chat reminders, including optional scenes.
-const proactiveTitles={"d23-chess":"問問銜尾蛇會不會下棋","lead":"向 Flow 打聽銜尾蛇","d26-procurement":"確認採購清單","d29-chess":"請教國際象棋","d37-workstation":"分享移動工作站照片","d39-wang":"給哥哥看看數字人","d42-wang":"給熙旺發消息","d47-group":"通知大家最新情況","d51-isolde-second":"聯繫 Isolde","d53-isolde-deal":"與 Isolde 確認委託","ready":"給傅隆生發信息","d55-briefing":"確認行動流程"};
+const proactiveTitles={"d23-chess":"問問銜尾蛇會不會下棋","lead":"向 Flow 打聽銜尾蛇","d26-procurement":"確認採購清單","d29-chess":"請教國際象棋","d32-group-plan":"回群裡確認計劃","d33-group-truck":"回群裡確認設備搬運","d34-group-rehearsal":"回群裡確認明日演練","d37-workstation":"分享移動工作站照片","d39-wang":"給哥哥看看數字人","d42-wang":"給熙旺發消息","d47-group":"通知大家最新情況","d51-isolde-second":"聯繫 Isolde","d53-isolde-deal":"與 Isolde 確認委託","ready":"給傅隆生發信息","d55-briefing":"確認行動流程"};
 const d20Track=D14_D24_TRACKS.find(x=>x.track.day===20)?.track;
 function dailyOrderTask(s){
  const orders=s.content.orders||[];
