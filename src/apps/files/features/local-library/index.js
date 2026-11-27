@@ -5,6 +5,7 @@ import {commissionAttachment,commissionPreviewAvailable} from '../../../../servi
 import {completed,projectById,completeNode,nodeStatus} from '../../../../services/story55/state.js';
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 import {storyArchives,archiveFile} from './story-archives.js';
+import {ORPHANAGE_IMAGE_RECORDS} from '../../../../story/d29/archives.js';
 
 const FOLDERS=Object.freeze([
  {id:'downloads',name:'已下載'},
@@ -33,12 +34,7 @@ export const localFileList=s=>[...library(s).filter(f=>!f.deleted),...storyArchi
 export const PERSONAL_FILES_ID='personal-files';
 const personalPath='/item/'+PERSONAL_FILES_ID;
 const personalImages=['IMG_4982.jpg','IMG_4985.jpg','IMG_4986.jpg','IMG_4989.jpg','Student_ID.jpg'];
-const taiImages=Object.freeze([
- {id:'resident-register',name:'兒童名冊.webp'},
- {id:'infant-admission',name:'嬰兒收容登記表.webp'},
- {id:'xi-wang-record',name:'熙旺個人檔案.webp'},
- {id:'xi-meng-record',name:'熙蒙個人檔案.webp'}
-]);
+const taiImages=ORPHANAGE_IMAGE_RECORDS;
 export function savePersonalFiles(s){
  if(s.day<33||!completed(s,'identity')||!s.story55?.tearAgent?.archiveRun?.done)return null;
  const files=s.content.localFiles??=[];
@@ -147,7 +143,7 @@ function personalView(s,route){
   if(tail==='/tai/photo')return shell('IMG_0001.jpg',personalPath+'/tai','<img class="fl-personal-photo" src="/assets/story55/triplets-baby-photo.jpg" alt="三名嬰兒合照">');
   if(tail.startsWith('/tai/record/')){
    const record=taiImages.find(({id})=>tail==='/tai/record/'+id);
-   if(record)return shell(record.name,personalPath+'/tai','<img class="fl-personal-photo" src="'+esc(taiImage(record.id))+'" alt="'+esc(record.name)+'">');
+   if(record){const id='personal-files/tai/record/'+record.id;return shell(record.name,personalPath+'/tai','<img class="fl-personal-photo" src="'+esc(taiImage(record.id))+'" alt="'+esc(record.name)+'">'+(archiveFile(s,id)?'<button type="button" class="fl-primary fl-share-archive" data-action="files-local-share-archive" data-id="'+esc(id)+'">分享至 Ouroboros’ Tear</button>':''));}
   }
  }
  if(tail==='/photos')return shell('Photos',personalPath,'<div class="fl-section">'+personalImages.map(name=>personalRow(personalPath+'/photos/'+name,name,'JPEG 影像',personalImage(name))).join('')+'</div><p class="fl-count">'+personalImages.length+' 個項目</p>');

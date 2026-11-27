@@ -34,7 +34,7 @@ async function unlock(page){
  await page.locator('#phone:not(.is-locked) .app-view').waitFor({timeout:10000});
 }
 try{
- for(const [width,personal,id,expected] of (process.env.GHOST_CAR_ONLY?[]:[[390,false,'story-archive-ghost-car-plan','行動目標'],[375,true,'story-archive-intake','陳熙泰']])){
+ for(const [width,personal,id,expected] of (process.env.GHOST_CAR_ONLY?[]:[[390,false,'story-archive-ghost-car-plan','行動目標'],[375,true,'story-archive-intake','027-C　熙泰']])){
   const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});await context.addInitScript(state=>{if(!localStorage.getItem('ximeng-phone-story55-v1'))localStorage.setItem('ximeng-phone-story55-v1',JSON.stringify(state));},seed(personal));
   const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/BBBTAI/`,{waitUntil:'domcontentloaded'});await unlock(page);
