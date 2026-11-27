@@ -47,10 +47,11 @@ test('original MIRAGE private channel shows the incoming message and the own rep
  assert.match(html,/mc-cipher-scroll/);
  assert.match(html,/mc-composer composer/);
  assert.match(html,/data-story-stage="invitation:2"/);
- assert.match(html,/data-story-type="谢谢老板，奖金已经收到了。"/);
+ assert.match(html,/data-story-type="谢谢老板，奖金已经收到了"/);
  assert.doesNotMatch(html,/s55-scene-next|s55-scene-lines/);
  assert.equal(chat.messages.filter(m=>m.from==='me').length,0);
- sendScriptedDraft55(s,'mirage','s55-ouroboros',step.text);
+ assert.throws(()=>sendScriptedDraft55(s,'mirage','s55-ouroboros','谢谢老板'));
+ sendScriptedDraft55(s,'mirage','s55-ouroboros','谢谢老板，奖金已经收到了');
  assert.equal(chat.messages.at(-1).text,step.text);
  setMirageAuthenticated(false);
 });

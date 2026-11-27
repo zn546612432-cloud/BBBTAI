@@ -112,7 +112,7 @@ test('MIRAGE displays the player reply through the standard story55 text input, 
  try{
   const html=registry.get('mirage').render({store:{get:()=>s}},{route:'/chat/s55-ouroboros',params:{}});
   assert.match(html,/data-story-scene="invitation"/);
-  assert.match(html,/data-story-type="谢谢老板，奖金已经收到了。"/);
+  assert.match(html,/data-story-type="谢谢老板，奖金已经收到了"/);
   assert.doesNotMatch(html,/mc-ourob-d05/);
  }finally{setMirageAuthenticated(false);}
 });
