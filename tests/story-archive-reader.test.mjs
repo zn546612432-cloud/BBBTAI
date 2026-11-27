@@ -46,6 +46,30 @@ test('same reader job supports work and private documents, persists across fresh
  sendAgent(s,'',plan);assert.equal(agent(s).jobs[plan],job);
  s.content.localFiles=[{id:'personal-files',kind:'personal-folder',unlocked:true,name:'Personal Files'}];s.story55.completed.photo={day:33,clock:'12:00'};
  sendAgent(s,'',intake);now+=DOCUMENT_READ_MS;tickTearAgent(s);handleTearAgent('gh-tear-document-read',{dataset:{id:intake}},ctx);
- assert.match(renderTearAgent(s),/陳熙泰/);s.content.localFiles[0].unlocked=false;
- assert.equal(tearTaskInfo(s,intake),null);assert.doesNotMatch(renderTearAgent(s),/陳熙泰/);
+ assert.match(renderTearAgent(s),/027-C　熙泰/);assert.doesNotMatch(renderTearAgent(s),/陳熙泰/);assert.match(renderTearAgent(s),/infant-admission\.webp/);s.content.localFiles[0].unlocked=false;
+ assert.equal(tearTaskInfo(s,intake),null);assert.doesNotMatch(renderTearAgent(s),/027-C　熙泰/);
+});
+
+test('all four original orphanage images use the existing reader and respect the photo gate',t=>{
+ let now=100000;t.mock.method(Date,'now',()=>now);
+ const s=fixture();s.day=35;s.content.localFiles=[{id:'personal-files',kind:'personal-folder',unlocked:true,name:'Personal Files'}];
+ const ctx=ctxFor(s);beginTearChatSession(s);
+ const cases=[['resident-register','031｜小辛'],['infant-admission','027-C　熙泰'],['xi-wang-record','新鞋'],['xi-meng-record','餅乾鐵盒']];
+ for(const [slug] of cases)assert.equal(archiveFile(s,'personal-files/tai/record/'+slug),null);
+ s.story55.completed.photo={day:33,clock:'12:00'};
+ for(const [slug,expected] of cases){
+  const id='personal-files/tai/record/'+slug;
+  assert.ok(personalFileAttachments(s).some(f=>f.id===id));
+  assert.ok(renderLibrary(s,'/item/'+id).includes('files-local-share-archive'));
+  assert.equal(sendAgent(s,'',id).kind,'preset');now+=DOCUMENT_READ_MS;tickTearAgent(s);
+  assert.equal(tearTaskInfo(s,id).percent,100);
+  handleTearAgent('gh-tear-document-read',{dataset:{id}},ctx);
+  assert.ok(renderTearAgent(s).includes(expected));assert.ok(renderTearAgent(s).includes('/tai/'+slug+'.webp'));
+  handleTearAgent('gh-tear-task-close',{dataset:{}},ctx);
+ }
+ const job=agent(s).jobs['personal-files/tai/record/infant-admission'];job.text='陳熙泰';
+ handleTearAgent('gh-tear-document-read',{dataset:{id:'personal-files/tai/record/infant-admission'}},ctx);
+ assert.match(renderTearAgent(s),/027-C　熙泰/);assert.doesNotMatch(renderTearAgent(s),/陳熙泰/);
+ s.content.localFiles[0].unlocked=false;assert.equal(tearTaskInfo(s,'personal-files/tai/record/infant-admission'),null);
+ assert.doesNotMatch(renderTearAgent(s),/027-C　熙泰/);
 });
