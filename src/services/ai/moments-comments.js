@@ -20,7 +20,7 @@ export function parseMomentComment(result){
  if(!raw)return '';
  try{const v=JSON.parse(raw);raw=typeof v?.text==='string'?v.text:'';}catch{return '';}
  raw=raw.trim();
- if(raw==='__SKIP__'||raw.length>100||/[\r\n]/.test(raw)||/作为AI|我是AI|系统提示|人工智能|熙泰|傅隆生|Dr Ouroboros|世界书/i.test(raw))return '';
+ if(raw==='__SKIP__'||raw.length>100||/[\r\n]/.test(raw)||/作为AI|我是AI|系统提示|人工智能|熙泰|Dr Ouroboros|世界书/i.test(raw))return '';
  return raw.replace(/^(熙旺|胡[枫楓]|阿威|小辛|仔仔)[：:]\s*/,'');
 }
 

@@ -7,6 +7,7 @@ const NOAPP_DEFAULT=new Set(['recognition','paris','ending']);
 const WECHAT_DEFAULT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const TOPICS=[
  ['father',/(傅隆生|干爹|乾爹|老頭子|老头子)/i],
+ ['housing',/(買房|买房|大房子|一起住)/i],
  ['brother',/(熙旺|大哥|我哥|哥哥|兄弟)/i],
  ['wynn',/(永利|撤展|撤離|撤离|離開澳門|离开澳门)/i],
  ['mercenary',/(僱傭兵|雇佣兵|傭兵|佣兵|打手|兩百個人|两百个人)/i],

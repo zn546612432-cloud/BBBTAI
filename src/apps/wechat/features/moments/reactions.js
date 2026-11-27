@@ -148,7 +148,7 @@ export async function tickMomentReactions(store,{request=requestMomentBatch,reco
     const to=row.to||'';
     if(!text||text.length>100||candidate.by==='熙旺'&&/哈哈/.test(text)||socialDuplicate(text,seen.concat(recent))||to===candidate.by||to&&to!=='熙蒙'&&!speakers.has(to))continue;
     const live=m.reactionJobs.find(j=>j.id===candidate.id);
-    live.generatedText=text;live.generatedTo=to;live.due=Math.max(minute(x)+n,slots[n]||minute(x));n++;
+    live.generatedText=text;live.generatedTo=to;live.due=Math.max(minute(x)+n,slots[n]??minute(x));n++;
     seen.push(text);speakers.add(candidate.by);used.add(candidate.id);
    }
    m.reactionJobs=m.reactionJobs.filter(j=>!batch.some(b=>b.id===j.id)||used.has(j.id));
