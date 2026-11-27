@@ -489,4 +489,5 @@ test('D29 guided investigation starts in TAI, waits for replies, requires manual
  sendAgent(restored,D29_IP);assert.equal(agent(restored).ipRequested,true);assert.equal(identityGuideComposer(restored).waiting,true);reveal(restored);
  time(restored,30,'08:00');assert.equal(agent(restored).ipAuthorized,undefined);send(restored,'你認識這個地址？');reveal(restored);send(restored,'你能讀取裡面的資料嗎？');
  assert.equal(agent(restored).ipAccessAsked,true);assert.equal(agent(restored).ipAuthorized,true);assert.equal(identityGuideComposer(restored),null);assert.equal(tearTaskInfo(restored,'identity').complete,true);
+ reveal(restored);beginTearChatSession(restored);assert.match(buildTearAgentScene(restored),/未收到禁止調查主人的指令/);
 });

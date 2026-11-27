@@ -8,7 +8,7 @@ import {startTearRun} from '../tear-run.js';
 export function buildTearAgentScene(state){
  const a=agent(state);
  return [...Object.keys(a.jobs).flatMap(id=>{const info=tearTaskInfo(state,id);return info?[info.title+': '+info.status+'，'+info.percent+'%，已運行 '+info.elapsedMinutes+' 分鐘']:[];}),
-  a.identityGuideStep>=2&&a.messages.some(m=>m.identityGuide&&m.role==='assistant'&&m.text==='沒有收到過這項指令。'&&m.visibleAt<=Date.now())?'本次已向 NYARLATHOTEP 說明：主人編寫了源代碼，私人資料不在知識庫內，未收到禁止調查主人的指令。':'',
+  a.identityGuideOwnerDiscussed&&!a.messages.some(m=>m.identityGuide&&m.role==='assistant'&&m.text==='沒有收到過這項指令。'&&m.visibleAt>Date.now())?'本次已向 NYARLATHOTEP 說明：主人編寫了源代碼，私人資料不在知識庫內，未收到禁止調查主人的指令。':'',
   a.ipRequested&&state.day>=29&&state.content.notes?.some(n=>n.id==='s55-d29-ip')?'既有調查入口已由本機核對；已取得的網絡線索（故事內資料）：'+TEAR_NETWORK_PROFILE:'調查入口尚未核對；沒有可供轉述的網絡線索。'].join('\n');
 }
 

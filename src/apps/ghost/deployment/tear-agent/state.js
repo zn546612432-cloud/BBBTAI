@@ -318,6 +318,7 @@ export function sendAgent(s,text,fileId){
   const [prompt,reply]=D29_TEAR_INTRO[guide.step];
   addMessage(s,'user',prompt,{ephemeral:false,identityGuide:true});
   a.identityGuideStep++;
+  if(guide.step===1)a.identityGuideOwnerDiscussed=true;
   if(reply)addIdentityReveal(s,reply,{ephemeral:false,identityGuide:true});
   return {kind:'preset'};
  }
