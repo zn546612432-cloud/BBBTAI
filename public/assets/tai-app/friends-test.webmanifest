@@ -1,0 +1,24 @@
+{
+  "name": "TAI",
+  "short_name": "TAI",
+  "id": "../../review/friends-test/",
+  "start_url": "../../review/friends-test/",
+  "scope": "../../review/friends-test/",
+  "display": "standalone",
+  "background_color": "#070e1b",
+  "theme_color": "#070e1b",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
