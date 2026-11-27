@@ -1,6 +1,6 @@
 import {D14_D24_CONTENT} from './definition.js';
 import {createConversationTrack,CHAT_LIFECYCLE_POLICY} from '../../services/messaging/lifecycle/engine.js';
-import {trackKey} from './editor-overrides.js';
+import {trackKey,restoreTrackLineMetadata} from './editor-overrides.js';
 import d15LegacyChats from './d15-legacy-chats.json' with {type:'json'};
 import d16D20LegacyChats from './d16-d20-legacy-chats.json' with {type:'json'};
 
@@ -19,7 +19,7 @@ export const D14_D24_TRACKS=Array.from({length:11},(_,i)=>{
    // Edit only the data consumed by the existing engine. Keep IDs, clock,
    // progress flags, player-Send gating and delivery infrastructure unchanged.
    ...(oldLines?{migrate:(s,q)=>{if(q.scriptVersion==null){const previous=s.story55?.chatSceneEdits?.[key]?.lines;q.scriptVersion=q.started||q.index>0||q.completed||q.historySettled||previous?.length===oldLines.length?1:2;}}}:{}),
-   lines:(s,q)=>s.story55?.chatSceneEdits?.[key]?.lines||(oldLines&&q?.scriptVersion===1?oldLines:scene.lines),
+   lines:(s,q)=>{const edited=s.story55?.chatSceneEdits?.[key]?.lines;return edited?restoreTrackLineMetadata(scene,edited):(oldLines&&q?.scriptVersion===1?oldLines:scene.lines);},
    at:s=>{const at=s.story55?.chatSceneEdits?.[key]?.at||scene.at,done=s.story55.completed?.[scene.requiresNode];return done?.day===scene.day&&done.clock>at?done.clock:at;},
    condition:s=>!scene.requiresNode||!!s.story55.completed?.[scene.requiresNode]
   };

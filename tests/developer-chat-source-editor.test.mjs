@@ -57,3 +57,32 @@ test('validation preserves fixed speakers/line counts and rejects duplicate scen
  assert.throws(()=>previewChatImport(s,duplicate),/重複/);
  assert.deepEqual(s.story55.chatSceneEdits,{});
 });
+
+test('D14 media survives unchanged imports, edited text, and legacy metadata-free overrides',()=>{
+ const s=s0(),scene=tracksForDay(14).find(x=>x.id==='meeting'),key=trackKey(scene);
+ const original=trackValues(s,scene);
+ const media=original.lines.map((line,i)=>({line,i})).filter(({line})=>line.kind==='image'||line.kind==='file');
+ assert.equal(media.filter(({line})=>line.kind==='image').length,2);
+ assert.equal(media.filter(({line})=>line.kind==='file').length,1);
+ const bundle=makeChatBundle(s,{scope:'date'});
+ applyChatImport(s,bundle,{mode:'replace-conflicts'});
+ assert.deepEqual(s.story55.chatSceneEdits,{});
+ const incoming=bundle.tracks.find(x=>x.key===key);
+ incoming.lines=incoming.lines.map(({who,text})=>({who,text}));
+ const index=scene.lines.findIndex(line=>!line.kind);
+ incoming.lines[index].text+=' · 校稿';
+ applyChatImport(s,bundle,{mode:'replace-conflicts'});
+ const d=D14_D24_TRACKS.find(x=>x.track.day===14).track.defs.find(x=>x.id==='meeting');
+ for(const {line,i} of media){
+  assert.deepEqual(d.lines(s)[i],line);
+  assert.deepEqual(trackValues(s,scene).lines[i],line);
+ }
+ assert.equal(d.lines(s)[index].text,incoming.lines[index].text);
+ s.story55.chatSceneEdits[key].lines=incoming.lines;
+ for(const {line,i} of media)assert.deepEqual(d.lines(s)[i],line);
+ const oldExport=makeChatBundle(s,{scope:'date'});
+ assert.deepEqual(oldExport.tracks.find(x=>x.key===key).lines,trackValues(s,scene).lines);
+ const invalid=structuredClone(original);
+ invalid.lines[media[0].i].kind='text';
+ assert.throws(()=>saveTrackValues(s,key,invalid),/消息類型/);
+});

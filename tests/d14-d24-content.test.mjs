@@ -120,7 +120,10 @@ test('D15 approved copy migrates only unstarted legacy drafts, never in-flight o
  const ongoing=at(15,'15:41'),oldLine={id:'s55-loan-v2-1',from:'me',text:'跑得動，就是慢。',actual:true};
  ongoing.story55.config.scenes.loan=structuredClone(previousLoanV2);
  ongoing.story55.scenes.loan={index:4,accepted:false};
- ongoing.content.conversations.mirage.find(c=>c.id==='s55-ouroboros').messages.push(oldLine);
+ const conversations=ongoing.content.conversations.mirage;
+ let thread=conversations.find(c=>c.id==='s55-ouroboros');
+ if(!thread){thread={id:'s55-ouroboros',messages:[],unread:0};conversations.push(thread);}
+ thread.messages.push(oldLine);
  delete ongoing.story55.d15ApprovedLoanRevision;
  syncD14D24Content(ongoing);
  assert.deepEqual(ongoing.story55.config.scenes.loan,previousLoanV2);

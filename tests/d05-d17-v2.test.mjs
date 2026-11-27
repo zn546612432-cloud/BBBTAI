@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import baseline from '../docs/chat-v2/main-baseline.json' with {type:'json'};
+import approvedSourceRevisions from './fixtures/approved-d14-d18-source-revisions.json' with {type:'json'};
 import previous from '../src/story/revisions/d05-d17-v2-previous.json' with {type:'json'};
 import {kiraInbox} from '../src/apps/kira/features/inbox/index.js';
 import {kiraDetail} from '../src/apps/kira/features/detail/index.js';
@@ -19,7 +20,7 @@ import {bindD13Wallet,D13_MAIL_ID,D13_WALLET_ID} from '../src/story/d13/runtime.
 import {exchange} from '../src/services/bank.js';
 import {D14_D24_TRACKS} from '../src/story/d14-d24/wechat.js';
 const store=s=>({get:()=>s,update:fn=>fn(s)});
-// Preserve the immutable baseline; only these two explicitly approved lines may differ.
+// Preserve the immutable baseline; independently freeze the subsequently shipped source revisions.
 const approvedBreakfast=[{"who":"熙旺","kind":"text","text":"誰還沒吃早飯"},{"who":"阿威","kind":"text","text":"我吃了"},{"who":"小辛","kind":"text","text":"我"},{"who":"小辛","kind":"text","text":"哥你在哪"},{"who":"熙旺","kind":"text","text":"買粥"},{"who":"小辛","kind":"text","text":"有油條嗎"},{"who":"熙旺","kind":"text","text":"有"},{"who":"小辛","kind":"text","text":"那我要兩根"},{"who":"仔仔","kind":"text","text":"你不是說今天開始減肥"},{"who":"小辛","kind":"text","text":"早上不算"},{"who":"胡枫","kind":"text","text":"一天才剛開始你就先排除一頓"},{"who":"小辛","kind":"text","text":"不吃飽哪有力氣減"},{"who":"阿威","kind":"text","text":"有道理"},{"who":"仔仔","kind":"text","text":"你別信他"},{"who":"熙旺","kind":"text","text":"阿蒙那份我也帶回去"},{"who":"小辛","kind":"text","text":"他還沒醒？"},{"who":"熙旺","kind":"text","text":"我問問他"}];
 const approvedMorning=[{"who":"熙旺","kind":"text","text":"阿蒙，醒了？"},{"who":"me","kind":"text","text":"嗯"},{"who":"熙旺","kind":"text","text":"一會給你帶粥跟油條"},{"who":"me","kind":"text","text":"哥你吃了沒"},{"who":"熙旺","kind":"text","text":"吃了，回去一趟就出車"},{"who":"me","kind":"text","text":"衣服還在洗衣機裡"},{"who":"熙旺","kind":"text","text":"看到了，我晚點幫你晾"},{"who":"me","kind":"text","text":"😘"}];
 const approvedDinner=[{"who":"小辛","text":"？？？","kind":"text"},{"who":"小辛","text":"哥你們出去吃飯不帶我","kind":"text"},{"who":"胡枫","text":"我也看見了","kind":"text"},{"who":"阿威","text":"有點過分","kind":"text"},{"who":"熙旺","text":"不是，你們不是都吃過了嗎😂","kind":"text"},{"who":"小辛","text":"吃過了又不是不能再吃","kind":"text"},{"who":"仔仔","text":"你今天下午剛說要減肥","kind":"text"},{"who":"小辛","text":"明天再減","kind":"text"},{"who":"胡枫","text":"你哪天不是這麼說的","kind":"text"},{"who":"熙旺","text":"哈哈哈哈 下次一起去","kind":"text"},{"who":"小辛","text":"截圖了","kind":"text"},{"who":"胡枫","text":"我也截了","kind":"text"},{"who":"熙旺","text":"🤣","kind":"text"}];
@@ -42,7 +43,7 @@ function drain(s,track,id,chatId){
 test('unlisted scenes and D13 remain frozen; D17 differs only by the withdrawn line',()=>{
  const s=phone(5,'08:00');const modified=new Set(previous.scenes.filter(x=>x.before).map(x=>x.before.source+':'+x.before.id));
  for(const key of ['d13:work','d13:evening','d10:shopping-list','d10:heat'])modified.add(key); // explicitly approved deletion and replacement
- for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;assert.deepEqual(lines,approvedCopy(old.source+':'+old.id,old.lines),old.source+':'+old.id);}
+ for(const old of baseline.scenes){if(modified.has(old.source+':'+old.id))continue;const track=AUTHORED_CHAT_TRACKS.find(x=>x.track.name===old.source)?.track;assert.ok(track,old.source);const d=track.defs.find(x=>x.id===old.id);s.day=d.day;const lines=typeof d.lines==='function'?d.lines(s):d.lines;const key=old.source+':'+old.id;assert.deepEqual(lines,approvedSourceRevisions[key]?.lines||approvedCopy(key,old.lines),key);}
  const originalD13=baseline.story.find(x=>x.node.id==='intrusion').lines;
  assert.deepEqual(s.story55.config.scenes.intrusion,[
   ...originalD13.slice(0,-2),['ouroboros','好了，今天不逗你了。明天有份東西給你，記得看郵箱。'],...originalD13.slice(-2)
@@ -172,5 +173,5 @@ test('every unmodified D01–D55 source remains byte-exact against the immutable
  // Author-approved D41/D42 replacement and deletion of the four unfinished
  // placeholders; every other frozen row remains subject to the byte check.
  for(const id of ['show','target','paris','confide','failure','ready','ending'])changed.add('node:'+id);
- const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},{...old,at:old.key==='d05:breakfast'?'08:05':old.key==='d05:wang-morning'?'08:15':old.at,lines:approvedStorySource(old.key,old.lines)},old.key);count++;}}assert.equal(count,allMain.rows.filter(r=>!changed.has(r.key)).length);
+ const s=phone(1,'08:00');let count=0;for(let day=1;day<=55;day++){s.day=day;const rows=readChatSources(s,day);for(const old of allMain.rows.filter(r=>r.day===day)){if(changed.has(old.key))continue;const r=rows.find(r=>r.key===old.key);assert.ok(r,old.key);assert.deepEqual({key:r.key,day:r.day,at:r.at,channel:r.channel,chat:r.chat,lines:r.lines.map(l=>({who:l.who,text:l.text,kind:l.kind}))},{...old,at:approvedSourceRevisions[old.key]?.at??(old.key==='d05:breakfast'?'08:05':old.key==='d05:wang-morning'?'08:15':old.at),lines:approvedSourceRevisions[old.key]?.lines.map(l=>({who:l.who,text:l.text,kind:l.kind||'text'}))||approvedStorySource(old.key,old.lines)},old.key);count++;}}assert.equal(count,allMain.rows.filter(r=>!changed.has(r.key)).length);
 });
