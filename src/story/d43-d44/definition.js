@@ -2,7 +2,7 @@
 export const PARIS_PHOTO='/assets/story55/d43-eiffel.webp';
 export const PARIS_VIDEO='/assets/story55/d43-paris-original.mp4';
 export const D43_PARIS_CALL={id:'d43-paris-video',triggerKey:'d43ParisVideoTriggered',day:43,at:'10:20',pauseTimeUntilComplete:true,video:PARIS_VIDEO,steps:[],memoryFact:'D43 熙泰在巴黎主動打視訊給熙蒙，展示了當時的畫面，之後由熙泰掛斷'};
-export const D43_PARIS_LINES=[
+export const D43_PARIS_LEGACY_LINES=[
  ['tai','〔巴黎鐵塔照片〕'],
  ['me','澳門也有巴黎鐵塔'],
  ['tai','想不想來看真的巴黎鐵塔？'],
@@ -21,6 +21,52 @@ export const D43_PARIS_LINES=[
  ['tai','段志鴻的帳戶我會替你找，入侵程序的源代碼我也會給你。'],
  ['tai','所以別讓我失望，熙蒙。我們巴黎見。'],
 ];
+export const D43_PARIS_LINES=[
+ ["tai","〔巴黎鐵塔照片〕"],
+ ["me","澳門也有巴黎鐵塔"],
+ ["tai","想不想來看真的巴黎鐵塔？"],
+ ["tai","〔巴黎影片〕"],
+ ["tai","…不小心按錯了"],
+ ["me","這也能不小心？你就是想跟我視訊"],
+ ["tai","本來想給你看一眼鐵塔，但這個視角看不到了"],
+ ["me","你換髮型了？原先的挑染呢？"],
+ ["tai","你關注點真奇特"],
+ ["tai","要開學術會議，總不能染著頭髮去吧"],
+ ["me","差點忘了，你還在讀博呢"],
+ ["tai","喜歡的話你也可以染個同款"],
+ ["me","不要，染了以後照鏡子看到的都是你的臉"],
+ ["tai","和我長一張臉是你的榮幸，nya"],
+ ["me","你能不能別老叫我網名了，還是所有你身邊的人都喊你那個中二的名字，Dr Ouroboros？所以你也這樣喊別人"],
+ ["tai","比起熙蒙這個身份，我更欣賞你作為nya時在MIRAGE的表現"],
+ ["me","行啊，那以後你找我都走MIRAGE，我技術諮詢一小時兩千港幣"],
+ ["tai","這樣算，你和我聊天還要倒貼我幾萬美元"],
+ ["me","……明明是你先找我的"],
+ ["me","說要給我看鐵塔，結果什麼都沒拍到"],
+ ["tai","等你來了，我親自帶你去看"],
+ ["me","其實我更想看金字塔，你要陪我去嗎？"],
+ ["tai","這有什麼難，那就去埃及"],
+ ["tai","逃出澳門，你會發現全世界都會為你展開"],
+ ["me","你要幫我？"],
+ ["tai","作為你的老闆，我有責任庇護你"],
+ ["me","哦？所以對於你而言，我只是一個員工？"],
+ ["me","你對所有的員工都這麼感興趣嗎？"],
+ ["tai","作為熙蒙，你是世界上另一個我，另一種可能"],
+ ["tai","至於nya，我想我已經充分見識過你的能力了"],
+ ["tai","你有資格站在我身邊，和我並肩而行"],
+ ["me","作為你哥"],
+ ["me","我希望你叫聲哥哥來聽聽"],
+ ["tai","我還以為，你會更想扮演弟弟的角色"],
+ ["tai","你被熙旺保護得太好，脾氣那麼差可當不了一個合格的哥哥"],
+ ["me","你脾氣就很好嗎？？"],
+ ["tai","不過也沒關係"],
+ ["tai","哥哥也好，弟弟也罷，你們只需要乖乖待在我身後就好"],
+ ["tai","段志鴻的電子錢包帳戶我會替你查"],
+ ["tai","入侵伺服器的程序源代碼我也會發給你"],
+ ["tai","你只需要執行我的意志。"],
+ ["tai","所以別讓我失望，熙蒙"],
+ ["tai","我們埃及見，或者巴黎見"],
+];
+export const D43_PARIS_REFLECTION_INDEX=28;
 export const D44_CONFIDE_LINES=[
  ['熙旺','臉還疼嗎？'],
  ['me','不疼了'],
@@ -81,7 +127,7 @@ export const D44_DIARY={title:'十天',afterNode:'confide',body:`不知道是不
 export function applyD43D44Definition(c){
  if(c.d43D44Revision===1)return;
  const entries=[
-  [{id:'paris',day:43,at:'10:20',title:'巴黎見',channel:'noapp',conversationId:'tai',requires:['target','d42-group','recognition'],gateDay:43,messagePrefix:'s55-d43-paris',initialDelayMs:0,pauseMs:3000,lineDelayMs:{10:10000},imageLines:{0:PARIS_PHOTO},videoCallLines:{3:D43_PARIS_CALL}},D43_PARIS_LINES],
+  [{id:'paris',day:43,at:'10:20',title:'巴黎見',channel:'noapp',conversationId:'tai',requires:['target','d42-group','recognition'],gateDay:43,messagePrefix:'s55-d43-paris',initialDelayMs:0,pauseMs:3000,lineDelayMs:{[D43_PARIS_REFLECTION_INDEX]:10000},imageLines:{0:PARIS_PHOTO},videoCallLines:{3:D43_PARIS_CALL}},D43_PARIS_LINES],
   [{id:'confide',day:44,at:'13:15',title:'告訴熙旺',channel:'wechat',conversationId:'wang',requires:['paris'],gateDay:44,messagePrefix:'s55-d44-confide',initialDelayMs:0,pauseMs:1900},D44_CONFIDE_LINES],
  ];
  for(const [node,lines] of entries){
@@ -95,20 +141,26 @@ export function applyD43D44Definition(c){
  c.d43D44Revision=1;
 }
 
-// Upgrade only an untouched copy of the previous approved Paris script.
-// Never shift the line index of an already-started or edited conversation.
+// Only upgrade stock scripts before the first post-call message is sent.
+// Retain the shared first four IDs (photo, reply, invitation, actual call).
+// Old video bubbles and any already-started old dialogue keep their history.
 export function syncD43ParisVideo(s,c){
  const node=c.nodes.find(n=>n.id==='paris');
- if(!node||node.videoCallLines?.[3]||s.story55.completed?.paris||s.story55.chatSceneEdits?.['node:paris'])return false;
+ if(!node||s.story55.completed?.paris||s.story55.chatSceneEdits?.['node:paris'])return false;
  const chat=s.content?.conversations?.noapp?.find(t=>t.id==='tai');
  const index=s.story55.scenes?.paris?.index||0;
- if(index>3||chat?.messages?.some(m=>m.id==='s55-d43-paris-3'))return false;
- const old=D43_PARIS_LINES.filter((_,i)=>i!==3);
- const current=JSON.stringify(c.scenes.paris);
- if(current===JSON.stringify(old)){if(index>0||chat?.messages?.some(m=>m.id?.startsWith('s55-d43-paris-')))return false;c.scenes.paris=structuredClone(D43_PARIS_LINES);}
- else if(current!==JSON.stringify(D43_PARIS_LINES))return false;
+ const current=JSON.stringify(c.scenes.paris),legacy=JSON.stringify(D43_PARIS_LEGACY_LINES),latest=JSON.stringify(D43_PARIS_LINES);
+ const beforeVideo=JSON.stringify(D43_PARIS_LEGACY_LINES.filter((_,i)=>i!==3));
+ if(current===latest&&node.videoCallLines?.[3])return false;
+ if(index>4||chat?.messages?.some(m=>/^s55-d43-paris-(?:[4-9]|[1-9]\\d+)$/.test(m.id||'')))return false;
+ if(current===beforeVideo){
+  if(index>0||chat?.messages?.some(m=>m.id?.startsWith('s55-d43-paris-')))return false;
+ }else if(current!==legacy&&current!==latest)return false;
+ const callRecord=chat?.messages?.find(m=>m.id==='s55-d43-paris-3');
+ if(!node.videoCallLines?.[3]&&(index>3||callRecord))return false;
+ c.scenes.paris=structuredClone(D43_PARIS_LINES);
  if(node.videoLines)delete node.videoLines[3];
  node.videoCallLines={...node.videoCallLines,3:structuredClone(D43_PARIS_CALL)};
- node.lineDelayMs={10:10000};
+ node.lineDelayMs={[D43_PARIS_REFLECTION_INDEX]:10000};
  return true;
 }

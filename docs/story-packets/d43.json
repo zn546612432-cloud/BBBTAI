@@ -16,6 +16,12 @@
       "source": "bundled-local",
       "path": "public/assets/story55/d43-eiffel.webp",
       "provenance": "OpenAI image generation; original generated for this fictional phone story; candid Paris street dawn Eiffel Tower smartphone photo; resized to 1000×1333 WebP."
+    },
+    {
+      "id": "paris-original-video",
+      "source": "bundled-local",
+      "path": "public/assets/story55/d43-paris-original.mp4",
+      "provenance": "User-supplied original MP4, byte-identical; existing NoApp scripted incoming video call."
     }
   ],
   "events": [
@@ -102,15 +108,16 @@
     },
     {
       "id": "line-03",
-      "kind": "player-send",
+      "kind": "system-notice",
       "surface": "noapp",
       "capability": "story.d43-paris",
       "owner": "story55",
-      "actor": "me",
+      "actor": "tai",
       "thread": "tai",
-      "text": "我更想看金字塔",
+      "assetId": "paris-original-video",
+      "text": "熙泰發起視訊，玩家接聽後播放原片，播完由熙泰掛斷；通話結束才允許下一條訊息。",
       "trigger": {
-        "type": "user-send",
+        "type": "previous-event",
         "ref": "line-02"
       },
       "requires": [
@@ -135,7 +142,7 @@
       "owner": "story55",
       "actor": "tai",
       "thread": "tai",
-      "text": "逃出來，全世界都會為你展開",
+      "text": "…不小心按錯了",
       "trigger": {
         "type": "previous-event",
         "ref": "line-03"
@@ -162,7 +169,7 @@
       "owner": "story55",
       "actor": "me",
       "thread": "tai",
-      "text": "你要幫我？",
+      "text": "這也能不小心？你就是想跟我視訊",
       "trigger": {
         "type": "user-send",
         "ref": "line-04"
@@ -189,7 +196,7 @@
       "owner": "story55",
       "actor": "tai",
       "thread": "tai",
-      "text": "作為 Azathoth 的管理員，我當然會庇護我的信徒。",
+      "text": "本來想給你看一眼鐵塔，但這個視角看不到了",
       "trigger": {
         "type": "previous-event",
         "ref": "line-05"
@@ -216,7 +223,7 @@
       "owner": "story55",
       "actor": "me",
       "thread": "tai",
-      "text": "哦？所以對於你而言，我只是一個信徒？",
+      "text": "你換髮型了？原先的挑染呢？",
       "trigger": {
         "type": "user-send",
         "ref": "line-06"
@@ -237,15 +244,15 @@
     },
     {
       "id": "line-08",
-      "kind": "player-send",
+      "kind": "incoming-text",
       "surface": "noapp",
       "capability": "story.d43-paris",
       "owner": "story55",
-      "actor": "me",
+      "actor": "tai",
       "thread": "tai",
-      "text": "你對所有的信徒都這麼感興趣嗎？",
+      "text": "你關注點真奇特",
       "trigger": {
-        "type": "user-send",
+        "type": "previous-event",
         "ref": "line-07"
       },
       "requires": [
@@ -270,7 +277,7 @@
       "owner": "story55",
       "actor": "tai",
       "thread": "tai",
-      "text": "你是世界上另一個我，另一種可能",
+      "text": "要開學術會議，總不能染著頭髮去吧",
       "trigger": {
         "type": "previous-event",
         "ref": "line-08"
@@ -286,7 +293,7 @@
       "once": true,
       "delivery": {
         "late": "silent",
-        "delaySeconds": 10
+        "delaySeconds": 3
       }
     },
     {
@@ -297,7 +304,7 @@
       "owner": "story55",
       "actor": "me",
       "thread": "tai",
-      "text": "我是你哥。",
+      "text": "差點忘了，你還在讀博呢",
       "trigger": {
         "type": "user-send",
         "ref": "line-09"
@@ -318,15 +325,15 @@
     },
     {
       "id": "line-11",
-      "kind": "player-send",
+      "kind": "incoming-text",
       "surface": "noapp",
       "capability": "story.d43-paris",
       "owner": "story55",
-      "actor": "me",
+      "actor": "tai",
       "thread": "tai",
-      "text": "叫聲哥哥來聽聽。",
+      "text": "喜歡的話你也可以染個同款",
       "trigger": {
-        "type": "user-send",
+        "type": "previous-event",
         "ref": "line-10"
       },
       "requires": [
@@ -345,15 +352,15 @@
     },
     {
       "id": "line-12",
-      "kind": "incoming-text",
+      "kind": "player-send",
       "surface": "noapp",
       "capability": "story.d43-paris",
       "owner": "story55",
-      "actor": "tai",
+      "actor": "me",
       "thread": "tai",
-      "text": "我還以為你會更想扮演弟弟的角色。你被熙旺保護得太好，當不了一個合格的哥哥。",
+      "text": "不要，染了以後照鏡子看到的都是你的臉",
       "trigger": {
-        "type": "previous-event",
+        "type": "user-send",
         "ref": "line-11"
       },
       "requires": [
@@ -378,7 +385,7 @@
       "owner": "story55",
       "actor": "tai",
       "thread": "tai",
-      "text": "不過也沒關係。哥哥也好，弟弟也罷，乖乖待在我身後就好。",
+      "text": "和我長一張臉是你的榮幸，nya",
       "trigger": {
         "type": "previous-event",
         "ref": "line-12"
@@ -399,15 +406,15 @@
     },
     {
       "id": "line-14",
-      "kind": "incoming-text",
+      "kind": "player-send",
       "surface": "noapp",
       "capability": "story.d43-paris",
       "owner": "story55",
-      "actor": "tai",
+      "actor": "me",
       "thread": "tai",
-      "text": "段志鴻的帳戶我會替你找，入侵程序的源代碼我也會給你。",
+      "text": "你能不能別老叫我網名了，還是所有你身邊的人都喊你那個中二的名字，Dr Ouroboros？所以你也這樣喊別人",
       "trigger": {
-        "type": "previous-event",
+        "type": "user-send",
         "ref": "line-13"
       },
       "requires": [
@@ -432,7 +439,7 @@
       "owner": "story55",
       "actor": "tai",
       "thread": "tai",
-      "text": "所以別讓我失望，熙蒙。我們巴黎見。",
+      "text": "比起熙蒙這個身份，我更欣賞你作為nya時在MIRAGE的表現",
       "trigger": {
         "type": "previous-event",
         "ref": "line-14"
@@ -440,6 +447,735 @@
       "requires": [
         "fact:tai-recognized",
         "line-14"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-16",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "行啊，那以後你找我都走MIRAGE，我技術諮詢一小時兩千港幣",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-15"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-15"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-17",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "這樣算，你和我聊天還要倒貼我幾萬美元",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-16"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-16"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-18",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "……明明是你先找我的",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-17"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-17"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-19",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "說要給我看鐵塔，結果什麼都沒拍到",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-18"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-18"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-20",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "等你來了，我親自帶你去看",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-19"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-19"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-21",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "其實我更想看金字塔，你要陪我去嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-20"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-20"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-22",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "這有什麼難，那就去埃及",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-21"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-21"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-23",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "逃出澳門，你會發現全世界都會為你展開",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-22"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-22"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-24",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "你要幫我？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-23"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-23"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-25",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "作為你的老闆，我有責任庇護你",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-24"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-24"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-26",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "哦？所以對於你而言，我只是一個員工？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-25"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-25"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-27",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "你對所有的員工都這麼感興趣嗎？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-26"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-26"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-28",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "作為熙蒙，你是世界上另一個我，另一種可能",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-27"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-27"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 10
+      }
+    },
+    {
+      "id": "line-29",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "至於nya，我想我已經充分見識過你的能力了",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-28"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-28"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-30",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "你有資格站在我身邊，和我並肩而行",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-29"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-29"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-31",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "作為你哥",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-30"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-30"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-32",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "我希望你叫聲哥哥來聽聽",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-31"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-31"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-33",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "我還以為，你會更想扮演弟弟的角色",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-32"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-32"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-34",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "你被熙旺保護得太好，脾氣那麼差可當不了一個合格的哥哥",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-33"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-33"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-35",
+      "kind": "player-send",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "me",
+      "thread": "tai",
+      "text": "你脾氣就很好嗎？？",
+      "trigger": {
+        "type": "user-send",
+        "ref": "line-34"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-34"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-36",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "不過也沒關係",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-35"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-35"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-37",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "哥哥也好，弟弟也罷，你們只需要乖乖待在我身後就好",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-36"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-36"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-38",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "段志鴻的電子錢包帳戶我會替你查",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-37"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-37"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-39",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "入侵伺服器的程序源代碼我也會發給你",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-38"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-38"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-40",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "你只需要執行我的意志。",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-39"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-39"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-41",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "所以別讓我失望，熙蒙",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-40"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-40"
+      ],
+      "timing": {
+        "day": 43,
+        "at": "10:20"
+      },
+      "once": true,
+      "delivery": {
+        "late": "silent",
+        "delaySeconds": 3
+      }
+    },
+    {
+      "id": "line-42",
+      "kind": "incoming-text",
+      "surface": "noapp",
+      "capability": "story.d43-paris",
+      "owner": "story55",
+      "actor": "tai",
+      "thread": "tai",
+      "text": "我們埃及見，或者巴黎見",
+      "trigger": {
+        "type": "previous-event",
+        "ref": "line-41"
+      },
+      "requires": [
+        "fact:tai-recognized",
+        "line-41"
       ],
       "timing": {
         "day": 43,
@@ -471,7 +1207,7 @@
     {
       "id": "check-save-restore",
       "type": "save-restore",
-      "verify": "旧存档保留已发送消息与已完成节点，新版未完节点从头接入。"
+      "verify": "保留舊存檔已送達消息及已完成節點；只升級尚未進入舊版視訊後對話的原始腳本。"
     },
     {
       "id": "check-cross-app",
@@ -486,7 +1222,7 @@
     {
       "id": "check-assets",
       "type": "assets",
-      "verify": "检查本地图片或纯文字内容的真实原生聊天显示。"
+      "verify": "檢查巴黎鐵塔圖片、原始 MP4、來電接聽、播放結束由熙泰掛斷，再接續新對話。"
     },
     {
       "id": "check-date-clock",

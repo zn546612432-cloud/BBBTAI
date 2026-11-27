@@ -11,12 +11,12 @@ export function taiCanonicalMilestones(s,history){
  if(s?.story55?.version!==1)return [];
  const messages=history||s?.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||[];
  const facts=[
-  {id:'story55-paris-promise',day:43,pattern:/^s55-(?:d43-)?paris-\d+$/,text:'所以別讓我失望，熙蒙。我們巴黎見。',topic:'巴黎約定'},
+  {id:'story55-paris-promise',day:43,pattern:/^s55-(?:d43-)?paris-\d+$/,text:'所以別讓我失望，熙蒙。我們巴黎見。',alternatives:['我們埃及見，或者巴黎見'],topic:'巴黎／埃及見面約定'},
   {id:'story55-rescue-promise',day:53,pattern:/^s55-d53-tai-night-\d+$/,text:'就算被抓了也沒關係，只要你還活著，我就有辦法把你救出來。',topic:'救援承諾'}
  ];
  return facts.flatMap(f=>{
   const m=messages.find(x=>actual(x)&&x.from==='tai'&&x.day===f.day&&x.day<=s.day&&
-    f.pattern.test(String(x.id||''))&&x.text===f.text);
+    f.pattern.test(String(x.id||''))&&(x.text===f.text||f.alternatives?.includes(x.text)));
   return m?[{id:f.id,kind:'milestone',category:'commitment',speaker:'tai',
    source:'NoApp 已送達的固定劇情',sourceId:m.id,day:m.day,visibility:'noapp',
    text:m.text,status:'unfulfilled',topic:f.topic,enabled:true}]:[];

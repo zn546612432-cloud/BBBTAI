@@ -35,7 +35,7 @@ const termPatterns={
  'ghost-deployment':/(?:^|[^a-z])ghost(?:$|[^a-z])|五(?:關|关)(?:部署|測試|测试)|link.{0,4}(?:檢查|检查)/i,
  'ghost-car':/鬼[車车]陷阱|ghost\s*car\s*trap|數字人.*數字車|数字人.*数字车/i,
  'room404':/room[._-]?404|room404|三胞胎照片|加密照(?:片)?/i,
- 'd43-paris':/巴黎(?:鐵塔|铁塔|見|见|約定|约定)|金字塔|(?:^|[^a-z])paris(?:$|[^a-z])/i,
+ 'd43-paris':/巴黎(?:鐵塔|铁塔|見|见|約定|约定)|埃及|金字塔|(?:^|[^a-z])paris(?:$|[^a-z])/i,
  'd53-gift':/傑克(?:手辦|手办)|杰克(?:手辦|手办)|伴手[禮礼]|jack(?:的)?(?:手辦|手办)/i,
  'd25-survey':/security_survey_0612|安保(?:設備|设备|清單|清单)|監控系統(?:高清圖|清單)|监控系统(?:高清图|清单)/i,
  'family':/三胞胎|熙旺.{0,7}(?:熙泰|[兄弟])|孤兒院(?:兄弟|三胞胎)|孤儿院(?:兄弟|三胞胎)/i,
@@ -75,9 +75,11 @@ function term(s,id){
  case 'room404':
   if(!played(s,'questions')&&!played(s,'photo'))return null;
   return entry(id,'room.404及相關照片／加密相片是銜尾蛇身份線中給熙蒙留下的線索。照片與孤兒院嬰兒合照有關，玩家需要親自解開線索；不能用這個詞條假裝玩家在找到文件前已看過全部內容');
- case 'd43-paris':
-  if(!taiCanonicalMilestones(s).some(x=>x.id==='story55-paris-promise'))return null;
-  return entry(id,'D43熙泰曾傳巴黎鐵塔照片，問熙蒙想不想看真正的巴黎鐵塔，熙蒙說更想看金字塔；熙泰真正說過：「所以別讓我失望，熙蒙。我們巴黎見。」這是尚未確認履行的見面約定，不代表兩人已在巴黎見面');
+ case 'd43-paris':{
+  const promise=taiCanonicalMilestones(s).find(x=>x.id==='story55-paris-promise');
+  if(!promise)return null;
+  return entry(id,'D43熙泰曾傳巴黎鐵塔照片，問熙蒙想不想看真正的巴黎鐵塔，熙蒙說更想看金字塔；熙泰真正說過：「'+promise.text+'」這是尚未確認履行的見面約定，不代表兩人已在巴黎或埃及見面');
+ }
  case 'd53-gift':
   if(!heard(s,'d53-tai-night','手辦已經包好了'))return null;
   return entry(id,'D53熙泰談到看到傑克的手辦想起熙蒙，買下了一套並說「手辦已經包好了，自己過來拿。」這件禮物已提及、已包好，但沒有證據說熙蒙真的拿到了');
