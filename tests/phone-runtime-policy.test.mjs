@@ -170,3 +170,38 @@ test('native Tai reply continues while waiting on HOME and uses original unread 
  engine.tick(4000,true);
  assert.equal(s.notifications.filter(n=>n.messageId===id).length,0,'no duplicated notification');
 });
+
+test('long charge transition releases a saved D06 plot hold without skipping the plot or draining the battery',()=>{
+ const s=start(6);
+ s.story55.completed.wallet={day:6,clock:'08:00'};
+ s.content.mirage??={};s.content.mirage.transactions??=[];
+ s.content.mirage.transactions.push({id:'s55-wallet-10btc'});
+ s.story55.wishes??={};s.story55.wishes.story??={};s.story55.wishes.story.delivered=[];
+ s.unlocked=false;s.batteryPercent=100;s.dayChargeRemainingMs=1200;
+ assert.equal(worldMinuteRate(s),0,'the real D06 celebration gate is active');
+ const saved=JSON.parse(JSON.stringify(s));
+ const batch=new WorldTickBatch();
+ for(const options of [{hidden:true},{background:true,hidden:true},{restarting:true}]){
+  assert.equal(phoneRuntimePaused(saved,options),true);
+  tickPhoneRuntime(saved,{elapsedMs:5000,gameMinutes:20},options);
+  assert.equal(saved.dayChargeRemainingMs,1200);
+ }
+ assert.equal(phoneRuntimePaused(saved),false);
+ tickPhoneRuntime(saved,batch.take(saved,800));
+ assert.equal(saved.dayChargeRemainingMs,400);
+ tickPhoneRuntime(saved,batch.take(saved,800));
+ assert.equal(saved.dayChargeRemainingMs,0);
+ assert.equal(saved.clock,'08:00');assert.equal(saved.day,6);assert.equal(saved.batteryPercent,100);
+ assert.equal(saved.unlocked,false);
+ assert.equal(phoneRuntimePaused(saved),true,'plot gate is still active after the animation');
+ tickPhoneRuntime(saved,{elapsedMs:60000,gameMinutes:5});
+ assert.equal(saved.clock,'08:00');assert.equal(saved.batteryPercent,100);
+ assert.deepEqual(saved.story55.wishes.story.delivered,[]);
+});
+test('long charge consumes only its animation even with a large foreground frame',()=>{
+ const s=start(2);
+ s.dayChargeRemainingMs=1200;s.unlocked=false;s.batteryPercent=100;
+ const before=s.clock;
+ tickPhoneRuntime(s,{elapsedMs:2500,gameMinutes:10});
+ assert.equal(s.dayChargeRemainingMs,0);assert.equal(s.clock,before);assert.equal(s.batteryPercent,100);
+});

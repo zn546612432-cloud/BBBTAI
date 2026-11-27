@@ -169,9 +169,13 @@ export function worldMinuteRate(s,options={}){
 }
 export function tickWorld(s,realMilliseconds,options={}){
  if(!Number.isFinite(realMilliseconds)||realMilliseconds<=0)return {minutes:0};
+ // Only consume the saved transition countdown; never advance the new day's clock.
+ if(s.dayChargeRemainingMs>0){
+  if(options.hidden||options.background||options.restarting)return {minutes:0};
+  s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};
+ }
  if(secondView55(s)||finaleInProgress55(s)||endingAwaitingVoice55(s))return {minutes:0};
  syncDeathNight(s);
- if(s.dayChargeRemainingMs>0){s.dayChargeRemainingMs=Math.max(0,s.dayChargeRemainingMs-realMilliseconds);return {minutes:0};}
  if(['off','passcode'].includes(s.deathPhase)||s.alarmRinging||s.emergencyCharge||s.poweredOff||options.hidden&&!options.background||options.restarting)return {minutes:0};
  const rate=worldMinuteRate(s,options);
  if(rate===0)return {minutes:0};
