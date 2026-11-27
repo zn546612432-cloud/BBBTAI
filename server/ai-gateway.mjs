@@ -6,6 +6,8 @@ import {deepseekModelOptions,TEAR_DEEPSEEK_MODEL} from '../src/services/ai/model
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 import {assembleTaiMessages} from '../src/services/ai/worldbook/index.js';
 import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
+import {socialRetryMessages} from '../src/services/ai/brother-social-intent.js';
+import {classificationMessages} from '../src/services/ai/brother-group-classification.js';
 import {groupSocialMessages} from '../src/services/ai/brother-social-worldbook.js';
 import {momentsBatchMessages,momentsCommentMessages} from '../src/services/ai/moments-comments.js';
 import {MAX_VISION_BODY,momentsVisionRequest,momentsVisionDescription} from '../supabase/functions/tai-provider-gateway/moments-vision.js';
@@ -75,12 +77,14 @@ export async function handleAIGateway(req,res,pathname) {
       if(!Number.isInteger(day)||day<1||day>90)throw fail(400,'游戏天数不合法');
       if(channel==='wechat-group'){
         const q=payload.group;if(!q||q.day!==day||!['name','notice','nickname'].includes(q.field)||typeof q.value!=='string'||q.value.length>500)throw fail(400,'群聊參數不合法');
-        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'disabled'},temperature:.8,messages:groupSocialMessages(q),stream:false,max_tokens:650,response_format:{type:'json_object'}});
+        const classify=payload.phase==='classify';let history=classify?classificationMessages(q):groupSocialMessages(q);if(payload.retry===true&&!classify)history=socialRetryMessages(history);
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:classify?'deepseek-flash':'deepseek-v4-pro',thinking:{type:classify?'disabled':'enabled'},...(classify?{temperature:.1}:{reasoning_effort:'low'}),messages:history,stream:false,max_tokens:classify?120:2800,response_format:{type:'json_object'}});
         const text=data.choices?.[0]?.message?.content;if(typeof text!=='string')throw fail(502,'模型沒有返回有效文字');reply(res,200,{text,channel,day});return true;
       }
       if(channel==='moments-batch'){
         let history;try{if(payload.moment?.day!==day)throw Error();history=momentsBatchMessages(payload.moment);}catch{throw fail(400,'朋友圈評論參數不合法');}
-        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'disabled'},temperature:.7,top_p:.8,messages:history,stream:false,max_tokens:450,response_format:{type:'json_object'}});
+        if(payload.retry===true)history=socialRetryMessages(history);
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'enabled'},reasoning_effort:'low',messages:history,stream:false,max_tokens:2800,response_format:{type:'json_object'}});
         const text=data.choices?.[0]?.message?.content;if(typeof text!=='string')throw fail(502,'模型沒有返回有效文字');reply(res,200,{text,channel,day});return true;
       }
       if(channel==='moments'){
