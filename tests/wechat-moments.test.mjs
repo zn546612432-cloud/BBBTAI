@@ -164,8 +164,8 @@ test('40 authored posts span D01–D90 with optional zero-comment posts and mixe
  assert.ok(authoredMoments.some(p=>p.id==='xs-d17-rain-shoes'&&p.storyDay===17));
  assert.ok(authoredMoments.some(p=>p.id==='xs-d19-retire'&&p.storyDay===19));
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
- // D23 Xiwang has five user-approved threaded replies; all other limits remain unchanged.
- assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d23'?p.comments.length===5: ['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
+ // D23 and D30 Xiwang have five user-approved threaded replies; all other limits remain unchanged.
+ assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(['xw-d23','xw-d30'].includes(p.id)?p.comments.length===5: ['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
  assert.ok(authoredMoments.some(p=>p.kind==='music'));
  assert.ok(authoredMoments.some(p=>p.kind==='video'));
  assert.ok(authoredMoments.some(p=>p.media.length===0));
@@ -297,4 +297,24 @@ test('D11 street without photo, D12 Hu Feng homecoming and D13 cleanup use exact
  assert.equal(find('xm-d13').text,xm.text);
  assert.deepEqual(find('xm-d13').comments,[...xm.comments,{by:'小辛',text:'哈哈'}]);
  assert.deepEqual(find('xm-d13').likes,xm.likes);
+});
+
+
+test('D30 Xiwang Londoner caption and threaded sushi comments replace only old defaults',()=>{
+ const s=initialState(),post=authoredMoments.find(p=>p.id==='xw-d30');
+ const approved=[{by:'熙蒙',text:'我要避雷倫敦人了'},{by:'小辛',text:'早讓你們跟我去吃壽司了嘛！'},{by:'熙旺',to:'小辛',text:'壽司好吃嗎？'},{by:'熙蒙',to:'小辛',text:'吃魚生拉肚子'},{by:'小辛',to:'熙旺',text:'超好吃！'}];
+ assert.equal(post.text,'沒有想像中的好吃');
+ assert.equal(post.publishedAt,'2025-06-17T12:08');
+ assert.deepEqual(post.media,['foodMenu','foodRice']);
+ assert.deepEqual(post.comments,approved);
+ const extra={by:'仔仔',text:'自訂留言'};
+ s.content.moments={editedPosts:{'xw-d30':{...post,text:'菜单翻了半天，最后还是先点了这盘。下次带你们吃烧腊。',comments:[{by:'熙蒙',text:'说好了'},{by:'小辛',text:'烧腊我要加饭'},extra]}},comments:{'xw-d30':[extra]}};
+ assert.equal(findMoment(s,'xw-d30').text,post.text);
+ assert.deepEqual(findMoment(s,'xw-d30').comments,[...approved,extra]);
+ assert.deepEqual(s.content.moments.comments['xw-d30'],[extra]);
+ s.content.moments.editedPosts['xw-d30']={...post,text:'自訂正文',comments:[extra]};
+ assert.equal(findMoment(s,'xw-d30').text,'自訂正文');
+ assert.deepEqual(findMoment(s,'xw-d30').comments,[extra]);
+ assert.ok(!visibleMoments(authoredMoments,'2025-06-17',{clock:'12:07'}).some(p=>p.id===post.id));
+ assert.ok(visibleMoments(authoredMoments,'2025-06-17',{clock:'12:08'}).some(p=>p.id===post.id));
 });

@@ -38,6 +38,14 @@ export function allMoments(s){
     return {...post,text:post.text==='窗边这个位置，能坐一下午。'?p.text:post.text,
      comments:legacy?[...p.comments,...comments.slice(2)]:post.comments};
    }
+   if(post.id==='xw-d30'&&post!==p){
+    const comments=post.comments||[];
+    const legacy=comments[0]?.by==='熙蒙'&&['说好了','說好了'].includes(comments[0]?.text)&&!comments[0]?.to
+     &&comments[1]?.by==='小辛'&&['烧腊我要加饭','燒臘我要加飯'].includes(comments[1]?.text)&&!comments[1]?.to;
+    const oldCaption=['菜单翻了半天，最后还是先点了这盘。下次带你们吃烧腊。','菜單翻了半天，最後還是先點了這盤。下次帶你們吃燒臘。'];
+    return {...post,text:oldCaption.includes(post.text)?p.text:post.text,
+     comments:legacy?[...p.comments,...comments.slice(2)]:post.comments};
+   }
    if(post.id==='zz-d15'&&post!==p){
     // An older saved editor snapshot can retain the retired default comments.
     // Replace that exact authored prefix only; preserve player-added comments
