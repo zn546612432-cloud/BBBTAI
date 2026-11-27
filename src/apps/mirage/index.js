@@ -20,7 +20,7 @@ import {STORY55_BOUNTY_ID,STORY55_WALLET_MAIL_ID,acceptStory55Wallet} from './da
 import {mirage55} from '../../services/story55/views.js';
 import {acceptOuroborosChallenge,ouroborosDraft,sendOuroborosPreset,isOuroborosScriptActive} from './ouroboros-flow.js';
 import {linkedMission,linkedMissionVisible,linkedMailId,acceptLinkedMission} from './linked-missions.js';
-import {isMirageAuthenticated,setMirageAuthenticated,consumeMirageGhostShareEntry,consumeMirageChessReturnEntry} from './session.js';
+import {isMirageAuthenticated,setMirageAuthenticated,consumeMirageGhostShareEntry,consumeMirageChessReturnEntry,isMirageChessReturn} from './session.js';
 import {authorize} from '../ghost/state.js';
 import {uid} from '../../services/id.js';
 import {timestampLabel,messageDate,chronologicalMessages} from '../../services/messaging/timestamps.js';
@@ -184,7 +184,7 @@ export function handle(action,t,ctx,loc){
  }
  if(action==='mc-flow-test'){ctx.store.update(state=>openFlowTest(state));ctx.router.open({appId:'ghost',route:'/flow-deploy',params:{}});return;}
  if(action==='mc-tab'){pendingDelete=null;goTab(ctx,t.dataset.route);}
- if(action==='mc-contacts'){if(loc.route.startsWith('/my-orders/')||loc.route==='/bounties/hall')goTab(ctx,'/bounties');else if(loc.route.startsWith('/chat/')||loc.route==='/manage')goTab(ctx,'/');else ctx.router.back();}
+ if(action==='mc-contacts'){if(isMirageChessReturn(s))return ctx.router.home();if(loc.route.startsWith('/my-orders/')||loc.route==='/bounties/hall')goTab(ctx,'/bounties');else if(loc.route.startsWith('/chat/')||loc.route==='/manage')goTab(ctx,'/');else ctx.router.back();}
  if(action==='mc-chat'){
   ctx.store.update(s=>{
    const list=s.content.conversations.mirage||[],c=list.find(c=>c.id===id);

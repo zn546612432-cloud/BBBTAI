@@ -18,3 +18,14 @@ export function prepareMirageChessReturnEntry(){chessReturn=true;}
 export function consumeMirageChessReturnEntry(){
  const result=chessReturn;chessReturn=false;return result;
 }
+
+// Finished chess returns are terminal navigation, including older saved stacks.
+export function isMirageChessReturn(s){
+ const nav=s.nav,current=nav?.current;
+ if(current?.appId!=='mirage')return false;
+ if(current.route==='/chat/s55-ouroboros'&&current.params?.fromChess==='finished')return true;
+ const previous=nav.stack?.at(-1);
+ if(previous?.appId!=='chess'||!previous.route?.startsWith('/match/'))return false;
+ const match=s.matches?.find(m=>m.id===previous.route.slice(7));
+ return match?.status==='finished'&&match.closedAt!=null;
+}
