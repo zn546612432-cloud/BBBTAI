@@ -327,8 +327,8 @@ export function sendAgent(s,text,fileId){
   if(!startAgentJob(s,'server-source'))addMessage(s,'assistant',a.jobs['server-source']?.done?'部署已完成，請查看工程結果。':'部署正在進行。');
   return {kind:'preset'};
  }
- if(file?.kind==='story-archive'){
-  const doc=archiveFile(s,file.id);if(!doc)return {kind:'empty'};
+ const doc=file?archiveFile(s,file.id):null;
+ if(doc){
   addMessage(s,'user',value||doc.name,{file:doc.name,job:doc.id});a.selected=null;
   const previous=a.jobs[doc.id];
   if(previous?.done&&previous.text===doc.text){addMessage(s,'assistant','解析成功。',{documentResult:doc.id,job:doc.id});return {kind:'preset'};}
@@ -349,6 +349,7 @@ export function sendAgent(s,text,fileId){
   else if(file.path==='photos/Student_ID.jpg')addMessage(s,'assistant','已識別證件中的學籍資料。');
   else if(file.path?.startsWith('photos'))addMessage(s,'assistant','這些應該是機主本人的照片。');
   else if(file.path==='tai/photo')addMessage(s,'assistant','這是一張保存已久的嬰兒合照。');
+  else if(file.path?.startsWith('tai/record/'))addMessage(s,'assistant','文件暫時無法響應。');
   else addMessage(s,'assistant','這個資料夾包含機主的個人檔案。');
   return {kind:'preset'};
  }
