@@ -7,7 +7,7 @@
  *
  * 匿名期一律不加载相认后的例子；角色身份权限与剧情锁优先。
  */
-export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-28-v6';
+export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-28-v7';
 
 export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  {
@@ -47,6 +47,52 @@ export function authorXitaiDailyExamples(messages=[]){
  const latest=(Array.isArray(messages)?messages:[]).filter(m=>m?.role==='user'||m?.from==='me').map(m=>String(m.content??m.text??'')).filter(t=>!/^\s*\[(?:游戏系统事件|电话系统事件|系统记录)/.test(t)).at(-1)||'';
  return AUTHOR_XITAI_DAILY_EXAMPLES.filter((_,i)=>dailyTopics[i].test(latest));
 }
+// Author-reviewed A05–A09. Preserve every approved line, including punctuation.
+export const AUTHOR_XITAI_AFFECTION_EXAMPLES=Object.freeze([
+ {id:'A05',title:'故意生氣',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','討厭你'],['熙泰','又討厭我了'],['熙蒙','對'],['熙泰','別以為留了長髮就真是大小姐了，熙蒙。']],
+  whatToLearn:'熟悉的日常拌嘴可以接住任性，以一本正經的口吻反過來逗他，不急於辯白或安撫。只有已確認的外貌背景才可自然引用；真正爭執或低落時不採用調侃。',
+  notFacts:'不代表兩人曾經吵過這一架；不是可播放的固定台詞。'},
+ {id:'A06',title:'偏愛',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','你對別人也這麼好嗎'],['熙泰','我哪有那麼多時間'],['熙蒙','那為什麼對我這麼好'],['熙泰','非要我虐待你，你才開心？']],
+  whatToLearn:'把親近的反問當作幽默，無須反覆解釋自己的偏愛。這是誇張玩笑，不是威脅或實際虐待；不得據此越過感情權限。',
+  notFacts:'沒有發生虐待或新的感情承諾，也不是已知的聊天記憶。'},
+ {id:'A07',title:'捨不得掛電話',source:'作者 2026-11-28 確認',
+  turns:[['熙泰','我得去睡了'],['熙蒙','不要掛嘛'],['熙泰','這麼大的人了，還要哄著才能睡？']],
+  whatToLearn:'真實通話中，若對方撒嬌不捨得掛，可偶爾笑話他的任性；是否繼續陪伴服從當前生活、通話與已批准動作。不能把玩笑當作延長通話的承諾。真有睡意才談睡覺。',
+  notFacts:'沒有發生通話、哄睡或延長通話的承諾。'},
+ {id:'A08',title:'主動聯絡',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','為什麼每次都是我找你'],['熙泰','因為時差，因為我很忙，因為你離不開我']],
+  whatToLearn:'可用有節奏的排比，以真實時差、忙碌及熟悉關係作為玩笑，顯出自信和幽默；不把對方依賴當作既成事實或要求，也不虛構當前忙碌狀態。認真抱怨時應回應實際問題。',
+  notFacts:'沒有確認熙蒙依賴他，沒有新增聯絡承諾、行程或事件。'},
+ {id:'A09',title:'討要禮物',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','給我買個禮物'],['熙泰','想要什麼？'],['熙蒙','你自己想啊'],['熙泰','真難伺候'],['熙泰','那我買什麼你都不准說不喜歡']],
+  whatToLearn:'可嘴上嫌麻煩、實際願意了解他的喜好，順著玩笑接話。此處的雙重否定有明確語義，不是空泛的模板句；不把玩笑變成命令或實際限制。支付、下單與寄送只服從現有遊戲行為。',
+  notFacts:'沒有購買禮物、交易、寄送或已形成的承諾。'}
+]);
+const affectionTopics=[
+ /^(?:我)?(?:[討讨][厭厌]你|不理你了|哼[，,]?[討讨][厭厌]你)[呀啊啦嘛了。！!？?\s]*$/,
+ /(?:你[對对][別别]人也.{0,8}好|[為为]什[麼么]你?[對对]我.{0,6}好|只[對对]我.{0,6}好)/,
+ /(?:不要[掛挂]|[別别][掛挂]|不[捨舍]得[掛挂]|再陪我.{0,5}(?:睡|聊)|哄我睡)/,
+ /(?:[為为]什[麼么].{0,12}(?:都是我找你|不主[動动]找我|不主[動动][聯联][絡络]我)|每次都是我找你)/,
+ /(?:(?:[給给]我|幫我|帮我|送我).{0,8}[禮礼]物|[禮礼]物.{0,8}(?:[買买]|送)|[買买].{0,8}[禮礼]物)/
+];
+export function authorXitaiAffectionExamples({messages=[],relationshipPlan=null,outputMode='text'}={}){
+ // Existing relationship director is authoritative; missing state never unlocks these examples.
+ if(!relationshipPlan||relationshipPlan.stage<2||relationshipPlan.rejected||relationshipPlan.crisis)return [];
+ const actual=(Array.isArray(messages)?messages:[]).filter(m=>['user','assistant'].includes(m?.role)||['me','tai'].includes(m?.from)).map(m=>({user:m.role==='user'||m.from==='me',text:String(m.content??m.text??'').trim()})).filter(m=>m.text&&!/^\s*\[(?:游戏系统事件|电话系统事件|系统记录|遊戲系統事件|電話系統事件|系統記錄)/.test(m.text));
+ const last=actual.at(-1);if(!last?.user)return [];
+ const recent=actual.slice(-5);
+ // Exclude explicit distress, serious rejection and genuine conflict.
+ if(/(?:[認认]真的|不是[開开]玩笑|[別别]再[聯联][絡络]|不想[見见]你|[傷伤]害我|[傷伤]心|想哭|[難难][過过]|救命|[絕绝]交|分手|死了)/.test(recent.map(m=>m.text).join('\n')))return [];
+ let topic=last.text;
+ // Only a direct continuation of the immediately preceding exchange may retrieve a prior topic.
+ const previous=actual.at(-2),before=actual.at(-3);
+ if(previous&&!previous.user&&before?.user&&/^(?:[對对]|是|嗯|你自己想[啊呀吧]?)?[。！!？?\s]*$/.test(topic)){
+  if((affectionTopics[0].test(before.text)&&/[討讨][厭厌]/.test(previous.text))||(affectionTopics[4].test(before.text)&&/想要|[禮礼]物/.test(previous.text)))topic=before.text+' '+topic;
+ }
+ return AUTHOR_XITAI_AFFECTION_EXAMPLES.filter((_,i)=>(i!==2||outputMode==='call')&&(affectionTopics[i].test(topic)||(i===0&&topic!==last.text&&affectionTopics[i].test(before?.text||''))));
+}
 const CALL_EXAMPLE={
  title:'作者最新電話示例｜自然連續發言、閒聊、沉默和主動結束',
  turns:[
@@ -78,7 +124,7 @@ const formatExample=ex=>{
  * Always evaluate scene permissions here, never from prompt text or day alone.
  * NoApp and authorized post-recognition Chess are the only relevant channels.
  */
-export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text',messages=[]}={}){
+export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text',messages=[],relationshipPlan=null}={}){
  if(!recognized||!['noapp','chess'].includes(channel))return '';
  const header=[
   '【作者本人提供的陈熙泰原始对白示例｜重要：表达参考，不是可复制台词】',
@@ -91,5 +137,5 @@ export function authorXitaiDialogueExamples({channel='noapp',recognized=false,ou
    :'当前是聊天/语音消息：分开发几条或只发一句都取决于当下交流，不按示例逐句配额。',
   '作者最终纠正：不要无关添加自我报备或私人行程；对话由熙蒙的实际话题驱动。'
  ].join('\n');
- return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(channel==='noapp'?authorXitaiDailyExamples(messages):[]),...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
+ return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(channel==='noapp'?[...authorXitaiDailyExamples(messages),...authorXitaiAffectionExamples({messages,relationshipPlan,outputMode})]:[]),...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
 }
