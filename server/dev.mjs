@@ -7,7 +7,7 @@ import {handleAIGateway} from './ai-gateway.mjs';
 
 // .env.local is gitignored; secrets never enter dist/ or the browser.
 if(existsSync('.env.local'))loadEnvFile('.env.local');
-const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.wav':'audio/wav','.mp3':'audio/mpeg','.mp4':'video/mp4','.jpg':'image/jpeg','.webp':'image/webp','.wasm':'application/wasm'};
+const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.webmanifest':'application/manifest+json','.wav':'audio/wav','.mp3':'audio/mpeg','.mp4':'video/mp4','.jpg':'image/jpeg','.webp':'image/webp','.wasm':'application/wasm'};
 const root=path.resolve('dist');
 http.createServer(async(req,res)=>{
   try{

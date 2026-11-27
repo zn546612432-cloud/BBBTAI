@@ -28,7 +28,8 @@ await cp('index.html','dist/index.html');
 // It reuses the production assets and runtime; the meta flag only hides
 // author/developer controls (no parallel build or duplicated game files).
 const friendsHtml=(await readFile('dist/index.html','utf8'))
- .replace('<head>','<head><meta name="phone-friends-test" content="true">');
+ .replace('<head>','<head><meta name="phone-friends-test" content="true">')
+ .replace('/assets/tai-app/manifest.webmanifest','/assets/tai-app/friends-test.webmanifest');
 if(!friendsHtml.includes('<meta name="phone-friends-test" content="true">'))
  throw Error('Friends test isolation flag missing');
 await mkdir('dist/review/friends-test',{recursive:true});
