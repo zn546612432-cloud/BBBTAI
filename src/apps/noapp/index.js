@@ -19,6 +19,7 @@ import {apiConfig,saveApiConfig,clearApiConfig,voicePreview,XITAI_VOICE_ID,XITAI
 import {DEEPSEEK_MODELS} from '../../services/ai/model-config.js';
 import {isTaiCloudHost} from '../../services/ai/supabase-gateway.js';
 import {taiPresence} from '../../services/presence.js';
+import {startGymScene} from '../../story/d34-d42/gym-chat.js';
 import {TAI_ID,taiDisplayName} from './contact.js';
 import {playTrack,isPlaying,handle as musicAction} from '../music/index.js';
 import {sendMessage} from '../../services/messaging/index.js';
@@ -212,7 +213,9 @@ export const submit=(form,ctx)=>{
   }
   const id=sendChat(form,ctx);
   if(id&&form.dataset.id==='tai'){
-   ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg)updateTaiBond(s,{messageId:id,text:msg.text});});
+   let gymStarted=false;
+   ctx.store.update(s=>{const msg=s.content.conversations.noapp?.find(c=>c.id==='tai')?.messages.find(m=>m.id===id);if(msg){updateTaiBond(s,{messageId:id,text:msg.text});gymStarted=startGymScene(s,msg,taiPresence(s));}});
+   if(gymStarted){++replyVersion;if(pendingTai)clearTimeout(pendingTai);pendingTai=null;showFeedback(ctx,'');return;}
    if(!maybeInviteFromTaiChat(ctx.store,id))queueTaiReply(ctx,id);
   }
   return;

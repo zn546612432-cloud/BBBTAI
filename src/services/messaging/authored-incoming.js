@@ -20,7 +20,7 @@ export function deliverAuthoredIncoming(s,{
   id,messageId,conversationId,day,clock,storyMessage:true,...(silent?{silent:true}:{}),...(lifecycleId?{lifecycleId}:{}),
   title:title|| (channel==='wechat'&&(c.group||conversationId==='group')
    ?(groupName(s,c)||'狼崽團')+' · '+who:(c.name||who)),
-  body:body??(kind==='image'?'[圖片]':String(text||'')),
+  body:body??(kind==='image'?'[圖片]':kind==='video'?'[影片]':String(text||'')),
   ...(demo!==null?{demo:!!demo}:{}),
   link:{appId:channel,route:'/chat/'+conversationId,params:{}}
  });
