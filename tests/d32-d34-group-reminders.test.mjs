@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,advanceScene55,scene55,sceneLines,tickStory55} from '../src/services/story55/runtime.js';
-import {nodeStatus,completed,timedStoryPaused} from '../src/services/story55/state.js';
+import {nodeStatus,completed} from '../src/services/story55/state.js';
 import {sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {mainlineTasks} from '../src/apps/reminders/features/mainline/model.js';
 import {openReminderTask} from '../src/apps/reminders/index.js';
@@ -16,7 +16,9 @@ const rows=[
 ];
 function fixture(day,clock){
  const s=activateStory55(initialState());s.day=day;s.clock=clock;s.story55.activeScene=null;
+ for(const n of s.story55.config.nodes)if(n.day<day&&!n.optional)s.story55.completed[n.id]={day:n.day,clock:n.at||'23:00'};
  s.story55.completed.plan={day:29,clock:'22:00'};
+ delete s.story55.completed.recognition;
  return s;
 }
 const find=(s,id)=>mainlineTasks(s).find(t=>t.id==='mainline:'+id);
