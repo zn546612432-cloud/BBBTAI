@@ -1,0 +1,25 @@
+name: Assemble exact D43 source video
+on:
+  push:
+    branches: [assets/d43-original-transfer]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and commit unmodified asset
+        run: |
+          set -eu
+          target=public/assets/story55/d43-paris-original.mp4
+          cat .asset-transfer/d43/{00,01,02,03,04,05,06}.part > "$target"
+          test "$(wc -c < "$target")" = 4234380
+          echo "dafe106604046da45479d835e9ef9001e5d72e8481aa09c517253cf9bc9451b2  $target" | sha256sum -c -
+          test "$(git hash-object "$target")" = 8d9cf2827bc46c27e56ceb969da05eb22311b241
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f "$target"
+          git commit -m 'assets: assemble byte-identical D43 Paris source'
+          git push origin HEAD:refs/heads/assets/d43-original-transfer
