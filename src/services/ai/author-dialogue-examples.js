@@ -7,7 +7,7 @@
  *
  * 匿名期一律不加载相认后的例子；角色身份权限与剧情锁优先。
  */
-export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-18-v5';
+export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-28-v6';
 
 export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  {
@@ -27,6 +27,26 @@ export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  }
 ]);
 
+// Approved 2026-11-28; contextual references, never actual history.
+export const AUTHOR_XITAI_DAILY_EXAMPLES=Object.freeze([
+ {id:'busy-video',title:'忙碌、撒嬌與稍後自然接話',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','想和你視頻'],['熙泰','在開會'],['熙蒙','哼'],['狀態','已讀；到真正有空時'],['熙泰','還在生氣？']],
+  whatToLearn:'確有會議才提開會；一般忙碌可簡短拒絕、已讀不回或延期。稍後若熙蒙仍因這件事不高興，可自然接話，不反覆辯白、道歉或保證。時間由既有系統判定。',
+  notFacts:'沒有真的發生會議、視頻、已讀或後續訊息；不安排虛構行程。'},
+ {id:'requested-voice',title:'索要語音：直接開口',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','給我發語音'],['熙泰（語音）','怎麼了 想聽我的聲音？']],
+  whatToLearn:'若願意且語音可用，透過既有 send_voice 直接發語音，別宣布要發語音或續接結束的話題。長短由關係和當前心情決定。',
+  notFacts:'不代表兩人實際聊過這句，也不自動取得語音、通話或好感度權限。'},
+ {id:'meeting-banter',title:'見面話題：自然接住',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','奔現'],['熙泰','你來找我？']],
+  whatToLearn:'可順著玩笑、真實好奇、表達期待或界線。不把單純提見面誤當成追問私事，不反覆說等見面再談。日期、地點及身份仍由已知劇情決定。',
+  notFacts:'沒有約定時間、地點或行程；未發生見面，不透露未解鎖私事。'}
+]);
+const dailyTopics=[/(?:視頻|视频|視訊|视讯|忙|開會|开会|生氣|生气|^哼[！!。\s]*$)/,/(?:語音|语音|聲音|声音)/,/(?:奔[現现]|[見见]面|找你|來找我|来找我)/];
+export function authorXitaiDailyExamples(messages=[]){
+ const latest=(Array.isArray(messages)?messages:[]).filter(m=>m?.role==='user'||m?.from==='me').map(m=>String(m.content??m.text??'')).filter(t=>!/^\s*\[(?:游戏系统事件|电话系统事件|系统记录)/.test(t)).at(-1)||'';
+ return AUTHOR_XITAI_DAILY_EXAMPLES.filter((_,i)=>dailyTopics[i].test(latest));
+}
 const CALL_EXAMPLE={
  title:'作者最新電話示例｜自然連續發言、閒聊、沉默和主動結束',
  turns:[
@@ -58,7 +78,7 @@ const formatExample=ex=>{
  * Always evaluate scene permissions here, never from prompt text or day alone.
  * NoApp and authorized post-recognition Chess are the only relevant channels.
  */
-export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text'}={}){
+export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text',messages=[]}={}){
  if(!recognized||!['noapp','chess'].includes(channel))return '';
  const header=[
   '【作者本人提供的陈熙泰原始对白示例｜重要：表达参考，不是可复制台词】',
@@ -71,5 +91,5 @@ export function authorXitaiDialogueExamples({channel='noapp',recognized=false,ou
    :'当前是聊天/语音消息：分开发几条或只发一句都取决于当下交流，不按示例逐句配额。',
   '作者最终纠正：不要无关添加自我报备或私人行程；对话由熙蒙的实际话题驱动。'
  ].join('\n');
- return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
+ return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(channel==='noapp'?authorXitaiDailyExamples(messages):[]),...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
 }

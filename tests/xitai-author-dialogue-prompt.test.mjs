@@ -86,3 +86,29 @@ test('example records are immutable authored references and never an event/real 
   assert.ok(record.turns.every(t=>t.length===2&&t[0]&&t[1]));
  }
 });
+
+import {AUTHOR_XITAI_DAILY_EXAMPLES,authorXitaiDailyExamples} from '../src/services/ai/author-dialogue-examples.js';
+import {hasTaiServiceFormula} from '../src/services/ai/expression-style.js';
+import {taiTimeContradiction} from '../src/services/ai/life-context.js';
+test('approved daily references match the latest topic, not old turns',()=>{
+ assert.equal(AUTHOR_XITAI_DAILY_EXAMPLES.length,3);
+ for(const [topic,line] of [['想和你視頻','在開會'],['給我發語音','怎麼了 想聽我的聲音？'],['奔現','你來找我？']]){
+  const messages=[{role:'user',content:topic}];
+  for(const mode of ['text','voice','call'])assert.ok(buildTaiPrompt(makeInput({messages,outputMode:mode})).includes(line));
+  assert.equal(authorXitaiDailyExamples(messages).length,1);
+  assert.ok(!buildTaiPrompt(makeInput({messages,recognized:false})).includes(line));
+ }
+ assert.equal(authorXitaiDailyExamples([{role:'user',content:'給我發語音'},{role:'user',content:'今天下雨了'}]).length,0);
+});
+test('reported service formulas are rejected; natural short replies are valid',()=>{
+ for(const t of ['剛才確實在忙，沒故意晾著你','不是故意冷著你，手頭的事還沒處理完','見面的事我沒想敷衍你','等我這邊的事處理完，我們再好好說','行，給你發一條。'])assert.ok(hasTaiServiceFormula([t]),t);
+ for(const t of ['在開會','還在生氣？','怎麼了 想聽我的聲音？','你來找我？','今天不方便'])assert.ok(!hasTaiServiceFormula([t]),t);
+});
+test('meal checks use Macau for Ximeng and allow explicit past meals',()=>{
+ const clocks={macauClock:'18:59',londonClock:'11:59'};
+ assert.ok(taiTimeContradiction(['你那邊早上，吃早飯了沒'],clocks));
+ assert.ok(taiTimeContradiction(['吃早飯了沒'],clocks));
+ assert.ok(!taiTimeContradiction(['吃晚飯了沒'],clocks));
+ assert.ok(!taiTimeContradiction(['你今天早上吃早飯了沒'],clocks));
+ assert.ok(!taiTimeContradiction(['我這邊快中午了'],clocks));
+});

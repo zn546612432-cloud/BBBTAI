@@ -163,7 +163,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const shortCallReply=requestedCall||taiCallAvailabilityQuestion(lastUser);
   const voiceRequested=!directAffection&&!requestedCall&&taiExplicitVoiceRequest(lastUser);
   const voiceEnergy=taiSocialEnergy(initial,'message'),callAllowed=canTaiCall(initial);
-  const socialRefusal=requestedCall&&!callAllowed?'現在不方便打電話，晚點再說。':voiceRequested&&voiceEnergy.stage==='rest'?'現在不方便發語音，打字說。':'';
+  const socialRefusal=requestedCall&&!callAllowed?'現在不方便打電話':voiceRequested&&voiceEnergy.stage==='rest'?'打字聊吧':'';
   const lastCallIndex=c.messages.findLastIndex(m=>m.kind==='call'&&m.callStatus==='ended');
   const lastEndedCall=lastCallIndex>=0?c.messages[lastCallIndex]:null;
   const messagesAfterCall=lastCallIndex<0?[]:c.messages.slice(lastCallIndex+1).filter(m=>m.from==='me'&&m.actual!==false);
@@ -234,7 +234,10 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   // a scripted message, an unheard voice, or an explicit call request.
   const rawTurnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
-  const turnPlan=tuneTaiStoryTurnPlan(rawTurnPlan,request.storyReplyDirection);
+  const storyPlan=tuneTaiStoryTurnPlan(rawTurnPlan,request.storyReplyDirection);
+  // Reuse optional beats; do not manufacture extra lines for a compact turn.
+  const compactDaily=!request.storyReplyDirection&&!romanceBeat&&(presence.status==='busy'||voiceRequested||/^(?:哼|哦|嗯|奔[現现]|想和你(?:視頻|视频|視訊|视讯)|想[見见]你)[。！!？?\s]*$/.test(String(lastUser).trim()));
+  const turnPlan=storyPlan&&compactDaily?{...storyPlan,target:Math.min(3,storyPlan.target),guide:false,semicolonBurst:false,optionalBeats:true}:storyPlan;
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.

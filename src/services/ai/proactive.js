@@ -12,6 +12,7 @@ import {isTaiReplyPending} from './live-chat.js';
 import {prepareTaiVoice} from './voice-delivery.js';
 import {taiSocialEnergy,canTaiCall,socialEnergyPrompt} from './social-energy.js';
 import {hasBannedTaiConstruction} from './expression-style.js';
+import {taiLife,taiLifeContext} from './life-context.js';
 import {taiDisplayName} from '../../apps/noapp/contact.js';
 import {startIncoming,callState} from '../../apps/noapp/voice-call.js';
 import {uid} from '../id.js';
@@ -110,7 +111,7 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
    random,now
   }):null;
   if(phoneEvidence&&eligible(store.get())&&store.get().day===initial.day)scene+='\\n'+phoneEvidence;
-  scene=[socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),scene].filter(Boolean).join('\n');
+  scene=[taiLifeContext(initial),socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),scene].filter(Boolean).join('\n');
   messages.push({role:'user',content:'[游戏系统事件，非熙蒙台词：'+scene+']'});
   const relationshipContext=xitaiRelationshipContext(initial,{mode:'text'});
   const relationshipPlan=taiRelationshipDirector(initial,{initiative:true});
@@ -136,23 +137,24 @@ export async function maybeSendProactive(store,{force='',postCall=null,wait=ms=>
   // An unsolicited follow-up stays compact to avoid hounding the player.
   // A substantive new outreach may use the full author-selected rhythm.
   const visibleHistory=messages.filter(m=>!String(m.content||'').startsWith('[游戏系统事件'));
-  const turnPlan=sampleTaiTurnPlan({random,maxMessages:afterCall?3:followup?2:c.maxMessages,messages:visibleHistory,
+  const sampled=sampleTaiTurnPlan({random,maxMessages:afterCall?3:followup?2:c.maxMessages,messages:visibleHistory,
    mode:approvedDecision?.action==='send_voice'?'voice':'text'});
-  const r=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
+  const turnPlan=followup?{...sampled,guide:false,semicolonBurst:false,optionalBeats:true}:sampled;
+  const r=await askTai({channel:'noapp',day:initial.day,macauClock:initial.clock,londonClock:taiLife(initial).local,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
    outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene,behavior:c,allowVoice,approvedDecision,turnPlan,worldbookEvents,worldbookSnapshot,
    relationshipContext,profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan});
   let items=dedupeTaiTurnEntries(unpackTaiReply(r,'noapp'),turnPlan.target);
   if(!afterCall&&taiTurnNeedsMore({plan:turnPlan,entries:items,messages:visibleHistory,
    action:approvedDecision?.action==='send_voice'?'send_voice':'send_text'})){
    const remaining=turnPlan.target-items.length;
-   const r2=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
+   const r2=await askTai({channel:'noapp',day:initial.day,macauClock:initial.clock,londonClock:taiLife(initial).local,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',scene:scene+' 已拟台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。请自然续'+remaining+'条具体内容，不重复，不自述行程。',
     behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:remaining,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,
     profile:initial.aiDraft?.profile,memories:initial.aiDraft?.memories,relationshipPlan});
    items=mergeTaiTurnEntries(items,unpackTaiReply(r2,'noapp'),turnPlan.target);
   }
   if(!afterCall&&taiGuidanceNeedsRepair({plan:turnPlan,entries:items,messages:visibleHistory})){
-   const r3=await askTai({channel:'noapp',day:initial.day,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
+   const r3=await askTai({channel:'noapp',day:initial.day,macauClock:initial.clock,londonClock:taiLife(initial).local,storyVersion:isStory55(initial)?'55-v1':undefined,recognized:taiRecognized(initial),messages,
     outputMode:approvedDecision?.action==='send_voice'?'voice':'text',
     scene:scene+' 【本轮引导已触发】现有台词：'+items.map(x=>x.text).join(' / ').slice(0,500)+'。只补一条对熙蒙已有事实具体好奇的自然问句，用问号结尾；不要空问“还在吗”“在干嘛”，不要突然谈棋局或自我报备。',
     behavior:c,allowVoice,approvedDecision,turnPlan:{...turnPlan,target:1,guide:true,semicolonBurst:false},relationshipContext,worldbookEvents,worldbookSnapshot,

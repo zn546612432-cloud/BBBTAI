@@ -64,7 +64,7 @@ export function sampleTaiTurnPlan({
 export function taiTurnShapePrompt(plan,{continued=false}={}){
  if(!plan||plan.target<1)return '';
  if(plan.privacyBoundary)return '【私事對話節奏】這一輪可以只說一句自然、完整的話；依照私事披露階段，不追加反問或連發來湊數。';
- if(plan.optionalBeats)return '【劇情對話優先於抽籤節奏】這是最多 '+plan.target+' 條訊息的空間，不是最低條數。可只寫一段完整、有分量的口語，也可長短交錯；不要強制分號、補充氣泡或追問來湊數，讓熙泰根據這件事真正回應。';
+ if(plan.optionalBeats)return '【內容優先於抽籤節奏】這是最多 '+plan.target+' 條訊息的空間，不是最低條數。可只寫一段完整、有分量的口語，也可長短交錯；不要強制分號、補充氣泡或追問來湊數，讓熙泰根據這件事真正回應。';
  const what=plan.mode==='call'?'段自然可朗读的连续话意（不是独立问答）':plan.mode==='voice'?'个自然说话意群（可合成为同一条语音）':'条独立聊天气泡';
  const parts=[
   '【v12｜本轮已抽签的表达节奏，优先于旧世界书“不设最低条数/不强制连发”的一般说明】',
@@ -159,7 +159,7 @@ export function taiContainsGroundedQuestion(entries=[]){
  });
 }
 export function taiGuidanceNeedsRepair({plan,entries=[],messages=[]}={}){
- if(!plan?.guide||!taiGuideEligible(messages,{mode:plan.mode})||!entries.length)return false;
+ if(!plan?.guide||plan.optionalBeats||!taiGuideEligible(messages,{mode:plan.mode})||!entries.length)return false;
  if(entries.some(x=>x.action==='phone'))return false;
  if(hasTaiDirectAffectionDeclaration(entries))return false;
  const text=entries.map(x=>String(x.text||'')).join(' ');

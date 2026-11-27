@@ -24,7 +24,7 @@ export function taiLifeContext(s){
  const life=taiLife(s);
  // Preserve the retired D64 preview's explicitly established trip context.
  const legacyTrip=!isStory55(s)&&[64,65].includes(s.day)?`舊預覽已設定巴黎酒店，当地 ${new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(`${dateParts(s).iso}T${s.clock}:00+08:00`))}。`:'';
- return `【當前生活狀態，隨遊戲時間更新】D${s.day} 澳門 ${s.clock}；英國 ${life.localDate} ${life.local}（Europe/London）。${legacyTrip}當前活動：${life.activity}；可用性：${life.status}。【時區歸屬】熙蒙在澳門，澳門時間是熙蒙當下的時鐘；你陳熙泰在英國，倫敦時間才是你當下的時鐘。即使你凌晨未睡，澳門也可能已是早上，絕不能因此說熙蒙「半夜不睡」。這些是背景事實，不要每輪報時；只有話題自然涉及作息、早晚或需要調侃時才帶入，措辭每次不同。空閒時可以即時回覆，忙時根據訊息重要程度決定延後、已讀不回或正常回覆；${isStory55(s)&&s.day===54?'今天對熙蒙承諾全天在線：不套用平常的休息、忙碌或睡眠限制；即使凌晨也可以接收並回覆他的訊息。':'睡眠 01:30–07:30 不收讀、不回覆、不接電話。'}不編造已發生的行程；只有熙蒙問及或確有必要時才透露一點近況。`;
+ return `【當前生活狀態，隨遊戲時間更新】D${s.day} 澳門 ${s.clock}；英國 ${life.localDate} ${life.local}（Europe/London）。${legacyTrip}當前活動：${life.activity}；可用性：${life.status}。【時區歸屬】熙蒙在澳門，澳門時間是熙蒙當下的時鐘；你陳熙泰在英國，倫敦時間才是你當下的時鐘。即使你凌晨未睡，澳門也可能已是早上，絕不能因此說熙蒙「半夜不睡」。熙蒙的早餐、午餐、晚餐及早晚問候只按澳門時間，你自己的作息只按倫敦時間。不要把自己的用餐時段套給熙蒙。這些是背景事實，不要每輪報時；只有話題自然涉及作息、早晚或需要調侃時才帶入，措辭每次不同。空閒時可以即時回覆，忙時根據訊息重要程度決定延後、已讀不回或正常回覆；${isStory55(s)&&s.day===54?'今天對熙蒙承諾全天在線：不套用平常的休息、忙碌或睡眠限制；即使凌晨也可以接收並回覆他的訊息。':'睡眠 01:30–07:30 不收讀、不回覆、不接電話。'}不編造已發生的行程；只有熙蒙問及或確有必要時才透露一點近況。`;
 }
 
 
@@ -37,6 +37,12 @@ export function taiTimeContradiction(texts,{macauClock='',londonClock=''}={}){
  const rows=Array.isArray(texts)?texts:[texts];
  return rows.some(value=>{
   const t=String(value||'').replace(/\s+/g,'');
+  // Only current-time attribution and unqualified immediate meal questions.
+  const mealPast=/(?:今天早上|今[早晨]|昨[天晚]|之前|剛才|刚才|明天|明早|還[沒没]|还[没沒]|一整天|到[現在现]|沒吃|没吃|補吃|补吃)/.test(t);
+  if(macauHour>=12&&/(?:你那[邊边]|你[這这][邊边]|澳[門门])(?:現在|现在|是|才|還是|还是)?(?:早上|上午|清晨)/.test(t)&&!mealPast)return true;
+  if(!mealPast&&macauHour>=16&&/(?:吃早[飯饭餐](?:了[沒没]|了[嗎吗]|[沒没])|早[飯饭餐]吃了[沒没嗎吗])/.test(t))return true;
+  if(!mealPast&&(macauHour<10||macauHour>=18)&&/(?:吃午[飯饭餐](?:了[沒没]|了[嗎吗]|[沒没])|午[飯饭餐]吃了[沒没嗎吗])/.test(t))return true;
+  if(!mealPast&&macauHour>=5&&macauHour<15&&/(?:吃晚[飯饭餐](?:了[沒没]|了[嗎吗]|[沒没])|晚[飯饭餐]吃了[沒没嗎吗])/.test(t))return true;
   if(macauHour>=6&&macauHour<19&&(
    /(?:你|熙蒙|nya).{0,12}(?:半夜不睡|凌晨不睡|半夜還不睡|半夜还不睡|熬夜|這麼晚還不睡|这么晚还不睡)/i.test(t)||
    /(?:你那邊|你那边).{0,10}(?:半夜|凌晨|深夜)/.test(t)||
