@@ -58,13 +58,13 @@ export function handle(action,target,ctx,loc){const id=target.dataset.id;unlockC
   let entered=false;ctx.store.update(s=>{entered=beginD23MiragePostgame(s,id);});
   if(!entered)return;
   selected=null;pendingPromotion=null;prepareMirageChessReturnEntry();
-  ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});return;
+  ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{fromChess:'finished'}},{resetHistory:true});return;
  }
  if(isD29ChessLesson(match)){
   if(!d29ChessDone(match))return;
   ctx.store.update(s=>{s.matches.find(m=>m.id===id).closedAt=Date.now();s.story55.d29ChessExited=true;});
   selected=null;pendingPromotion=null;prepareMirageChessReturnEntry();
-  ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{}});return;
+  ctx.router.open({appId:'mirage',route:'/chat/s55-ouroboros',params:{fromChess:'finished'}},{resetHistory:true});return;
  }
  ctx.store.update(s=>{s.matches.find(m=>m.id===id).closedAt=Date.now();});selected=null;pendingPromotion=null;ctx.router.open({appId:'chess',route:'/'});return;}if(action==='chess-home'){selected=null;pendingPromotion=null;ctx.router.open({appId:'chess',route:'/'});}if(action==='solo-match'){const matchId=createSoloMatch(ctx.store);ctx.router.open({appId:'chess',route:'/match/'+matchId});}if(action==='chess-history')ctx.router.open({appId:'chess',route:'/history'});if(action==='continue-match'){if(isD41Chess(ctx.store.get().matches.find(m=>m.id===id)))unlockD41Voice();selected=null;ctx.router.open({appId:'chess',route:'/match/'+id});}if(action==='invite-tai'){const invId=createPlayerInvitation(ctx.store);ctx.router.open({appId:'noapp',route:'/chat/tai'});setTimeout(()=>processDemoReply(ctx.store,invId),1200);}if(action==='open-invite-match'||action==='accept-bridge'){const inv=ctx.store.get().invitations.find(i=>i.id===id);if(id===D41_CHESS_INVITATION)unlockD41Voice();const matchId=inv.senderId==='tai'&&inv.status!=='accepted'?receiveInvitation(ctx.store,id):startAcceptedInvitation(ctx.store,id);ctx.router.open({appId:'chess',route:'/match/'+matchId});}if(action==='open-app-link')ctx.router.open({appId:target.dataset.app,route:target.dataset.route});if(action==='resign-match'){
   const resigned=resignChessMatch(ctx.store,id);
