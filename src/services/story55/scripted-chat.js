@@ -1,3 +1,4 @@
+import {canonicalPresetSubmission} from '../ai/chat-punctuation.js';
 // Scripted dialogue always belongs to the real messaging UI.
 // Player lines are offered in the native text composer and sent ONLY after
 // the player presses Send. Other characters deliver their own messages over time.
@@ -57,6 +58,7 @@ export function scriptedDraft55(s,channel,conversationId,now=Date.now()){
 export function sendScriptedDraft55(s,channel,conversationId,text,now=Date.now()){
  const line=currentScript55(s,channel,conversationId,now);
  if(!line||line.kind!=='me'||s.phoneCall?.speaking||s.phoneCall?.resumeRequired)throw Error('当前没有等待熙蒙发送的预设消息');
+ text=canonicalPresetSubmission(text,line.text,line.id);
  if(String(text||'').trim()!==line.text.trim())throw Error('訊息未發送');
  if(line.id==='ghost-share')sendGhostShareDraft(s,text,now);
  else if(line.id==='flow-d03')sendFlowReply(s,text);

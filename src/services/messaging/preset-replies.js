@@ -1,3 +1,4 @@
+import {canonicalPresetSubmission} from '../ai/chat-punctuation.js';
 // Single source of truth for every WeChat preset reply.
 // The Day 1–5 dialogue modules remain content/progress providers; UI and
 // Send never pick a different story rule independently.
@@ -59,6 +60,8 @@ export function nativeWeChatComposer(s,id){
 // Authored player messages are only written from this path on a real submit.
 export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  const s=store.get(),chosen=locate(s,id),line=currentScript55(s,'wechat',id);
+ const composer=nativeWeChatComposer(s,id);
+ if(composer.text!==null)text=canonicalPresetSubmission(text,composer.text,composer.stage);
  if(preferTrack(s,chosen,line))return chosen.provider.send(store,id,text,now);
  if(line?.kind==='me'){
   if(String(text||'').trim()!==line.text.trim())

@@ -1,3 +1,4 @@
+import {displayMomentText} from '../../../../services/ai/chat-punctuation.js';
 import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
 import {wechatAvatars,resolveWeChatAvatar} from '../../avatars.js';
@@ -83,14 +84,14 @@ function postCard(post,s){
  return '<article class="wx-moments-post" data-key="'+esc(post.id)+'">'+
   '<button type="button" class="wx-moments-post-avatar" data-action="wx-moment-profile" data-name="'+esc(post.author)+'" aria-label="查看'+esc(post.author)+'的相册">'+avatar(post.author,s)+'</button><div class="wx-moments-post-content">'+
   '<div class="wx-moments-poster">'+authorBtn(post.author)+(post.pinned?'<span class="wx-moments-pin-label">置顶</span>':'')+'</div>'+
-  (post.text?'<p class="wx-moments-post-text">'+esc(post.text)+'</p>':'')+
+  (post.text?'<p class="wx-moments-post-text">'+esc(displayMomentText(post.text,post.author,{player:post.playerPublished}))+'</p>':'')+
   postContent(post,s)+
   '<div class="wx-moments-meta"><span>'+esc(clockLabel(post.publishedAt,nowDate(s)))+'</span>'+(post.author==='熙蒙'?'<button type="button" class="wx-moments-delete" data-action="wx-moment-delete" data-id="'+esc(post.id)+'" aria-label="删除这条朋友圈">'+trash+'</button>':'')+'<div class="wx-moments-tools">'+
   (openActions===post.id?'<div class="wx-moments-action-menu" role="group" aria-label="动态操作"><button type="button" data-action="wx-moment-like" data-id="'+esc(post.id)+'">'+heart+(liked?'取消':'赞')+'</button><button type="button" data-action="wx-moment-reply" data-id="'+esc(post.id)+'">'+momentIcons['message-circle']+'评论</button></div>':'')+
   '<button type="button" class="wx-moments-more" data-action="wx-moment-actions" data-id="'+esc(post.id)+'" aria-label="点赞和评论" aria-expanded="'+(openActions===post.id)+'"><span></span><span></span></button></div></div>'+
   (likes.length||replies.length?'<div class="wx-moments-reactions">'+
    (likes.length?'<div class="wx-moments-likes">'+heart+' '+esc(likes.join('、'))+'</div>':'')+
-   replies.map(x=>'<div class="wx-moments-reply"><button type="button" data-action="wx-moment-reply-comment" data-id="'+esc(post.id)+'" data-to="'+esc(x.by)+'" aria-label="回复'+esc(x.by)+'"><strong>'+esc(x.by)+(x.to?' 回复 '+esc(x.to):'')+'：</strong>'+esc(x.text)+'</button></div>').join('')+'</div>':'')+
+   replies.map(x=>'<div class="wx-moments-reply"><button type="button" data-action="wx-moment-reply-comment" data-id="'+esc(post.id)+'" data-to="'+esc(x.by)+'" aria-label="回复'+esc(x.by)+'"><strong>'+esc(x.by)+(x.to?' 回复 '+esc(x.to):'')+'：</strong>'+esc(displayMomentText(x.text,x.by,{player:x.by==='熙蒙'&&!!x.id}))+'</button></div>').join('')+'</div>':'')+
   (replyTo===post.id?'<form data-form="wx-moment-comment" data-id="'+esc(post.id)+'" class="wx-moments-comment-form"><input name="text" required maxlength="300" autocomplete="off" value="'+esc(replyDraft)+'" placeholder="'+esc(replyToName?'回复'+replyToName+'…':'评论…')+'" aria-label="评论内容"><button type="submit">发送</button><button type="button" data-action="wx-moment-cancel-reply" aria-label="取消评论">取消</button></form>'+
    (post.replyOptions?.length?'<div class="wx-moments-reply-choices">'+post.replyOptions.map((item,i)=>'<button type="button" data-action="wx-moment-suggestion" data-id="'+esc(post.id)+'" data-index="'+i+'">'+esc(typeof item==='string'?item:item.text)+'</button>').join('')+'</div>':''):'')+
   '</div></article>';
@@ -107,7 +108,7 @@ function pinnedRow(posts){
  if(!posts.length)return '';
  return '<section class="wx-moments-pinned"><strong>置顶</strong><div class="wx-moments-pinned-list">'+posts.map(post=>
   '<button type="button" data-action="wx-moment-focus" data-id="'+esc(post.id)+'" aria-label="查看置顶动态">'+
-  (post.media?.[0]?im(post.media[0],post.author+'置顶动态'):'<span class="wx-moments-pinned-text">'+esc(post.text.slice(0,18))+'</span>')+'</button>').join('')+'</div></section>';
+  (post.media?.[0]?im(post.media[0],post.author+'置顶动态'):'<span class="wx-moments-pinned-text">'+esc(displayMomentText(post.text,post.author,{player:post.playerPublished}).slice(0,18))+'</span>')+'</button>').join('')+'</div></section>';
 }
 function profilePage(s,name){
  const posts=name==='熙蒙'?allPosts(s).filter(p=>p.author===name&&p.publishedAt<=nowDate(s)+'T'+s.clock).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)):visibleMoments(allPosts(s),nowDate(s),{author:name,clock:s.clock});
@@ -136,7 +137,7 @@ function composerPage(s){
 }
 function interactionsPage(s){
  const rows=momentInteractions(s).filter(x=>!!playerMoment(s,x.postId));
- return '<section class="wx-moments-screen">'+topBar('消息')+'<div class="wx-moments-scroll">'+rows.map(x=>'<button type="button" class="wx-moments-interaction" data-action="wx-moment-focus" data-id="'+esc(x.postId)+'">'+avatar(x.by,s)+'<span><strong>'+esc(x.by)+'</strong><span>'+esc(x.kind==='like'?'赞了你的朋友圈':x.text)+'</span><small>'+esc(x.time)+'</small></span></button>').join('')+(rows.length?'':'<p class="wx-moments-three-days">暂无互动</p>')+'</div></section>';
+ return '<section class="wx-moments-screen">'+topBar('消息')+'<div class="wx-moments-scroll">'+rows.map(x=>'<button type="button" class="wx-moments-interaction" data-action="wx-moment-focus" data-id="'+esc(x.postId)+'">'+avatar(x.by,s)+'<span><strong>'+esc(x.by)+'</strong><span>'+esc(x.kind==='like'?'赞了你的朋友圈':displayMomentText(x.text,x.by))+'</span><small>'+esc(x.time)+'</small></span></button>').join('')+(rows.length?'':'<p class="wx-moments-three-days">暂无互动</p>')+'</div></section>';
 }
 function commentPage(s,id){
  const post=allPosts(s).find(p=>p.id===id);

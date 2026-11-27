@@ -1,3 +1,4 @@
+import {displayChatText,displayPresetText} from '../../../services/ai/chat-punctuation.js';
 import {nativeWeChatComposer} from '../../../services/messaging/preset-replies.js';
 import {wishDefinition,wishIdForMessage} from '../../../services/wishes/catalog.js';
 
@@ -78,10 +79,11 @@ function messageRow(m,s,c){
   const stickerSize=String(m.text).endsWith('/whitecat.webp')?' width="199" height="170"':
     String(m.text).endsWith('/dog.svg')?' width="88" height="88"':'';
   const wishId=wishIdForMessage(m),wish=wishId&&wishDefinition(wishId);
-  const wishText=wish&&m.wishText&&String(m.text).includes(m.wishText)?String(m.text).split(m.wishText):null;
+  const displayText=displayChatText(m,{channel:'wechat',actor:name});
+  const wishText=wish&&m.wishText&&displayText.includes(m.wishText)?displayText.split(m.wishText):null;
   const highlightedWish=wishText&&wishText.length===2
     ?esc(wishText[0])+'<button type="button" class="wx-wish-link" data-action="wx-wish-open" data-wish-id="'+esc(wishId)+'" aria-label="加入提醒事项：'+esc(wish.title)+'">'+esc(m.wishText)+'</button>'+esc(wishText[1])
-    :esc(m.text);
+    :esc(displayText);
   const isZip=m.kind==='file'&&/\.zip$/i.test(String(m.fileName||m.text||''));
   const isMp4=m.kind==='file'&&/\.mp4$/i.test(String(m.fileName||m.text||''));
   const isPdf=m.kind==='file'&&/\.pdf$/i.test(String(m.fileName||m.text||''));
@@ -105,8 +107,9 @@ export function renderWeChatChat(s,id){
   if(id==='group'&&groupAway(s))return empty('你已退出群聊');
   const background=chatSettings(s,id).background;
   const composer=nativeWeChatComposer(s,id),groupPresetOnly=id==='group'&&s.story55?.version===1;
+  const displayDraft=composer.text===null?null:displayPresetText(composer.text,composer.stage);
   const scriptedAttributes=composer.text!==null
-    ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(composer.text)+'"'
+    ?' data-story-stage="'+esc(composer.stage)+'" data-story-type="'+esc(displayDraft)+'"'
     :'';
   return '<section class="chat-screen wx-conversation" data-wx-conversation="'+esc(id)+'">'+
 
@@ -116,7 +119,7 @@ export function renderWeChatChat(s,id){
       messageRow(m,s,c)).join('')+'</div>'+
     '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'">'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(composer.text??(groupPresetOnly&&composer.disabled?'':s.drafts?.[id]??''))+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(displayDraft??(groupPresetOnly&&composer.disabled?'':s.drafts?.[id]??''))+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
       action('wx-emoji','表情',smileIcon,groupPresetOnly)+
       action('attach-chat','发送图片',plusIcon,groupPresetOnly).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
       '<button type="submit" class="wx-composer-send" aria-label="发送消息"'+(groupPresetOnly&&composer.disabled?' disabled':'')+'>发送</button></form>'+

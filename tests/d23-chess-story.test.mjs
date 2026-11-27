@@ -74,7 +74,7 @@ test('D20 restores the user-authored original and deduplicates AI monitor exchan
  const content=JSON.parse(fs.readFileSync(new URL('../src/story/d14-d24/content.json',import.meta.url)));
  const scenes=content.wechat.filter(x=>x.day===20);
  assert.deepEqual(scenes.find(x=>x.id==='early').lines,[{who:'阿威',text:'今天練習提前半小時。'},{who:'熙旺',text:'收到。'}]);
- assert.deepEqual(scenes.find(x=>x.id==='awake'),{day:20,id:'awake',chat:'group',at:'09:06',lines:[{who:'小辛',text:'我才剛醒⋯'}]});
+ assert.deepEqual(scenes.find(x=>x.id==='awake'),{"day":20,"id":"awake","chat":"group","at":"09:06","lines":[{"who":"小辛","text":"我才剛醒⋯"},{"who":"阿威","text":"給你十分鐘。"},{"who":"小辛","text":"早餐還沒吃"},{"who":"阿威","text":"過來吃，我買了。"},{"who":"小辛","text":"威威我愛你"}]});
  const group=scenes.find(x=>x.id==='monitoring');
  assert.equal(group.at,'10:45');assert.equal(group.chat,'group');
  assert.equal(group.lines.length,21);

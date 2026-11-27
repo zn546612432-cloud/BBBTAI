@@ -198,9 +198,9 @@ test('38 authored posts span D01–D90 with optional zero-comment posts and mixe
 test('D41 Good Show photo appears at 23:35; four NPC likes and threaded comments appear on D42 at 02:00',()=>{
  const s=initialState();s.day=41;s.clock='23:34';
  const render=()=>renderMoments(s,'/moments');
- assert.doesNotMatch(render(),/good show\./);
+ assert.doesNotMatch(render(),/good show/);
  s.clock='23:35';
- assert.match(render(),/good show\./);
+ assert.match(render(),/good show<\/p>/);
  assert.match(render(),/d41-hufeng-good-show\.jpeg/);
  assert.doesNotMatch(render(),/帅气逼人组合|原地出道|小辛、仔仔、阿威、熙旺/);
  s.day=42;s.clock='01:59';
@@ -208,10 +208,10 @@ test('D41 Good Show photo appears at 23:35; four NPC likes and threaded comments
  s.clock='02:00';
  const html=render();assert.match(html,/小辛、仔仔、阿威、熙旺/);
  assert.match(html,/仔仔：<\/strong>帅气逼人组合/);
- assert.match(html,/小辛 回复 仔仔：<\/strong>原地出道。/);
+ assert.match(html,/小辛 回复 仔仔：<\/strong>原地出道<\/button>/);
  assert.equal((html.match(/帅气逼人组合/g)||[]).length,1);
  assert.equal(render(),html);
- assert.match(renderMoments(s,'/moments/profile/胡枫'),/原地出道。/);
+ assert.match(renderMoments(s,'/moments/profile/胡枫'),/原地出道<\/button>/);
  assert.match(renderMoments(s,'/moments/photo/hf-d41/0'),/d41-hufeng-good-show\.jpeg/);
  assert.doesNotMatch(render(),/把桌面收拾干净/);
  s.content.moments={posts:[{id:'xm-d41',author:'熙蒙',storyDay:41,publishedAt:'2025-06-28T23:40',text:'把桌面收拾干净，明天再继续。'}]};

@@ -7,9 +7,15 @@ const byKey=new Map(D14_D24_CONTENT.wechat.map(scene=>[trackKey(scene),scene]));
 export function trackKey(scene){return `d${String(scene.day).padStart(2,'0')}:${scene.id}`;}
 export const trackSource=key=>byKey.get(key)||null;
 export function tracksForDay(day){return D14_D24_CONTENT.wechat.filter(x=>x.day===day);}
+// Older editor exports stored only who/text. Recover shipped metadata
+// only for an override with the same line count and speaker order.
+export function restoreTrackLineMetadata(scene,lines){
+ if(!Array.isArray(lines)||lines.length!==scene.lines.length||lines.some((line,i)=>line?.who!==scene.lines[i].who))return lines;
+ return lines.map((line,i)=>({...scene.lines[i],text:line.text}));
+}
 export function trackValues(s,scene){
  const overridden=s.story55?.chatSceneEdits?.[trackKey(scene)];
- return overridden?structuredClone(overridden):{at:scene.at,lines:structuredClone(scene.lines)};
+ return overridden?{...structuredClone(overridden),lines:structuredClone(restoreTrackLineMetadata(scene,overridden.lines))}:{at:scene.at,lines:structuredClone(scene.lines)};
 }
 export function validateTrackValues(key,values){
  const original=trackSource(key);
@@ -20,6 +26,8 @@ export function validateTrackValues(key,values){
   const line=values.lines[i];
   if(!line||typeof line!=='object'||Array.isArray(line)||line.who!==original.lines[i].who||typeof line.text!=='string'||!line.text.trim()||line.text.length>3000)
    throw Error(`第 ${i+1} 條的發言人或正文格式不正確`);
+  if(line.kind!==undefined&&line.kind!==(original.lines[i].kind||'text'))
+   throw Error(`第 ${i+1} 條的消息類型不能修改`);
  }
  const lineTimes=values.lineTimes;
  if(lineTimes!==undefined){
@@ -32,7 +40,7 @@ export function validateTrackValues(key,values){
    previous=t;
   }
  }
- const answer={at:values.at,lines:values.lines.map(x=>({who:x.who,text:x.text}))};
+ const answer={at:values.at,lines:restoreTrackLineMetadata(original,values.lines)};
  if(lineTimes?.some(Boolean))answer.lineTimes=[...lineTimes];
  return answer;
 }

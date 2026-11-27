@@ -21,7 +21,7 @@ test('D49 moon image, 5 non-author likes, one comment and inline SEVENTEEN card'
  assert.match(html,/d49-xiwang-moon\.webp/);
  assert.match(html,/fuck-my-life-cover\.webp/);
  assert.match(html,/data-action="wx-moment-music" data-id="xw-d49"/);
- assert.match(html,/胡枫：<\/strong>好看好看。/);
+ assert.match(html,/胡枫：<\/strong>好看好看<\/button>/);
  assert.ok(existsSync('public'+momentImage('d49Moon')));
 });
 
