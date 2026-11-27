@@ -159,8 +159,10 @@ test('ellipsis toggles one menu in place; like and unlike preserve prewritten re
  const post=authoredMoments.find(p=>p.id==='xs-0519');assert.equal(post.comments.length,2);
 });
 
-test('38 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
- assert.equal(authoredMoments.length,38);
+test('40 authored posts span D01–D90 with optional zero-comment posts and mixed media',()=>{
+ assert.equal(authoredMoments.length,40);
+ assert.ok(authoredMoments.some(p=>p.id==='xs-d17-rain-shoes'&&p.storyDay===17));
+ assert.ok(authoredMoments.some(p=>p.id==='xs-d19-retire'&&p.storyDay===19));
  assert.equal(authoredMoments[0].storyDay,1);assert.equal(authoredMoments.at(-1).storyDay,90);
  // D23 Xiwang has five user-approved threaded replies; all other limits remain unchanged.
  assert.ok(authoredMoments.every(p=>p.storyDay>=1&&p.storyDay<=90&&(p.id==='xw-d23'?p.comments.length===5: ['xw-d03','aw-d29','xs-d51','hf-d12-homecoming'].includes(p.id)?p.comments.length===0:p.comments.length>=1&&p.comments.length<=4)));
