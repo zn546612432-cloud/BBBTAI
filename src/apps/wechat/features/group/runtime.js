@@ -177,7 +177,8 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
   const seen=visibleMessages(groupThread(s),s).filter(m=>m.kind==='text').slice(-18).map(m=>m.text),counts=new Map();
   rows=rows.filter(([by,text])=>{if(!BROTHERS.includes(by)||typeof text!=='string'||!text.trim()||socialDuplicate(text,seen)||(!counts.has(by)&&counts.size>=3)||(counts.get(by)||0)>=3)return false;seen.push(text);counts.set(by,(counts.get(by)||0)+1);return true;}).slice(0,5);
  }
- let delay=2000;rows.forEach(([by,text],i)=>{if(i)delay+=rows[i-1][0]===by?900+Math.floor(random()*600):1800+Math.floor(random()*1800);queue(s,by,text,now+delay,{family:q.field,revision:q.revision});});
+ const dynamic=q.field==='name'&&!q.restore||q.field==='notice'&&currentNoticeType(s)!==FATHER_NOTICE_TYPE;
+ let delay=2000;rows.forEach(([by,text],i)=>{if(i)delay+=!dynamic?2600:rows[i-1][0]===by?900+Math.floor(random()*600):1800+Math.floor(random()*1800);queue(s,by,text,now+delay,{family:q.field,revision:q.revision});});
  return true;
 }
 export function patBrother(s,by,{now=Date.now(),random=Math.random}={}){
