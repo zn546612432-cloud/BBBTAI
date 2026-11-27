@@ -75,7 +75,7 @@ export async function handleAIGateway(req,res,pathname) {
       if(!Number.isInteger(day)||day<1||day>90)throw fail(400,'游戏天数不合法');
       if(channel==='wechat-group'){
         const q=payload.group;if(!q||q.day!==day||!['name','notice','nickname'].includes(q.field)||typeof q.value!=='string'||q.value.length>500)throw fail(400,'群聊參數不合法');
-        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-flash',thinking:{type:'disabled'},temperature:.65,messages:groupSocialMessages(q),stream:false,max_tokens:420,response_format:{type:'json_object'}});
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'disabled'},temperature:.8,messages:groupSocialMessages(q),stream:false,max_tokens:650,response_format:{type:'json_object'}});
         const text=data.choices?.[0]?.message?.content;if(typeof text!=='string')throw fail(502,'模型沒有返回有效文字');reply(res,200,{text,channel,day});return true;
       }
       if(channel==='moments-batch'){

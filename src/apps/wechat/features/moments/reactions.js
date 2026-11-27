@@ -64,7 +64,7 @@ function commentInput(s,p,j,photoDescription=''){
  const now=dateParts(s).iso+'T'+s.clock;
  const examples=allMoments(s).filter(x=>x.privacy!=='private'&&x.publishedAt<=now).flatMap(x=>(momentReactionsAt(x,dateParts(s).iso,s.clock).comments||[]).filter(c=>MOMENTS_PEOPLE.includes(c.by)).map(c=>c.by+'：'+c.text)).slice(-12);
  return {by:j.by,day:s.day,clock:s.clock,to:j.to,post:{text:p.text||'',song:p.music?p.music.title+' - '+p.music.artist:'',hasPhoto:!!p.media?.length,photoDescription},
-  thread:[...(p.comments||[]),...(s.content.moments?.comments?.[p.id]||[])].slice(-12),examples,publicMemory:brotherPublicMemory(s,(p.text||'')+' '+(p.music?.title||''))};
+  latestReply:j.replyId?(s.content.moments?.comments?.[p.id]||[]).find(c=>c.id===j.replyId&&c.by==='熙蒙')?.text||'':'',thread:[...(p.comments||[]),...(s.content.moments?.comments?.[p.id]||[])].slice(-12),examples,publicMemory:brotherPublicMemory(s,(p.text||'')+' '+(p.music?.title||''))};
 }
 export async function requestMomentComment(input){
  const messages=momentsCommentMessages(input);
