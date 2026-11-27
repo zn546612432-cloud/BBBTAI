@@ -52,7 +52,7 @@ test('D43 10:20 photo, exact message pacing and ten-second silence, manual sends
  assert.equal(list[0].time,'10:20');assert.equal(list[0].sentDate,'2025-06-30');
  assert.equal(list[3].kind,'video');assert.equal(list[3].text,PARIS_VIDEO);
  assert.deepEqual(list.slice(1).filter((_,i)=>i!==2).map(m=>[m.from,m.text]),D43_PARIS_LINES.slice(1).filter((_,i)=>i!==2));
- assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/paris-original\.mp4/);
+ assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-paris-original\.mp4/);
  assert.equal(readFileSync(new URL('../public'+PARIS_VIDEO,import.meta.url)).subarray(4,8).toString(),'ftyp');
  assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-eiffel\.webp/);
  assert.equal(readFileSync(new URL('../public'+PARIS_PHOTO,import.meta.url)).subarray(8,12).toString(),'WEBP');
