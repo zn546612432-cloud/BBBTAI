@@ -13,7 +13,10 @@ const TOPICS=[
  ['mercenary',/(僱傭兵|雇佣兵|傭兵|佣兵|打手|兩百個人|两百个人)/i],
  ['police',/(警察|警方|特警|黃德忠|黄德忠|金庫|金库)/i],
  ['orphanage',/(孤兒院|孤儿院|童年|小時候|小时候)/i],
- ['paris',/(巴黎|paris|金字塔)/i],
+ ['paris',/(巴黎|paris|埃及|金字塔|鐵塔|铁塔)/i],
+ ['d43-appearance',/(髮型|发型|挑染|染髮|染发|染著頭髮|学术会议|學術會議|讀博|读博)/i],
+ ['d43-address',/(網名|网名|nya|稱呼|称呼|並肩|并肩|員工|员工|老闆|老板)/i],
+ ['d43-consultation',/(諮詢|咨询|港幣|港币|倒貼|倒贴|收費|收费)/i],
  ['wallet',/(比特幣|比特币|電子錢包|电子钱包|數字資產|数字资产)/i],
  ['ghost-car',/(鬼車|鬼车|數字人|数字人)/i],
  // D32–D34 approved public preparation facts: retrieved only from delivered lines.

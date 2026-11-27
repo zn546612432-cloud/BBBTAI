@@ -270,8 +270,7 @@
           "kinds": [
             "incoming-image",
             "incoming-text",
-            "player-send"
-          ],
+            "player-send", "system-notice"],
           "proof": "src/story/d43-d44/definition.js",
           "originDays": [
             43
