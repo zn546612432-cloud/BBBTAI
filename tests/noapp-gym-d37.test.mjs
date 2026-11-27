@@ -27,3 +27,13 @@ test('worldbook remembers the weight only once the real message was sent',()=>{
  assert.match(taiPlotMemory(s,[m]),/65kg/);
  assert.doesNotMatch(taiPlotMemory(s,[{...m,actual:false}]),/65kg/);
 });
+
+test('older gym facts are recalled from saved history instead of the recent prompt window',()=>{
+ const s=state();s.day=40;
+ s.content={conversations:{noapp:[{id:'tai',messages:[
+  {id:'s55-d37-noapp-gym-9',day:37,from:'me',kind:'text',text:'65kg啊'},
+  {id:'s55-d37-noapp-gym-2',day:37,from:'tai',kind:'video',text:GYM_SCENE.videoLines[2]}
+ ]}]}};
+ assert.match(taiPlotMemory(s,[{id:'new',from:'me',text:'在嗎',day:40,kind:'text'}]),/65kg/);
+ assert.match(taiPlotMemory(s),/健身影片/);
+});

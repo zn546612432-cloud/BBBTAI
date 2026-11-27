@@ -28,7 +28,7 @@ export function taiPlotMemory(s,history=[]){
  if(s?.story55?.version!==1)return '';
  const lines=[];
  // Facts are visible only after the corresponding messages were actually delivered.
- const gym=(history.length?history:s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||[]);
+ const gym=s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||history;
  const gymLine=(index,from,kind,text)=>gym.find(m=>actual(m)&&m.day<=s.day&&m.id==='s55-d37-noapp-gym-'+index&&m.from===from&&m.kind===kind&&(!text||m.text===text));
  const gymFacts=[];
  if(gymLine(2,'tai','video'))gymFacts.push('你曾經給熙蒙發過自己的健身影片');
@@ -70,7 +70,7 @@ const overlap=(a,b)=>[...a].filter(t=>b.has(t)).length;
 export function recallTaiOlderTalk(history=[],latestUser='',{recentCount=16,maxItems=7}={}){
  const query=terms(latestUser);
  if(!query.size)return '';
- const ordinary=history.filter(m=>actual(m)&&m.kind!=='call'&&m.kind!=='image'&&m.kind!=='app_invitation');
+ const ordinary=history.filter(m=>actual(m)&&m.kind!=='call'&&m.kind!=='image'&&m.kind!=='video'&&m.kind!=='app_invitation');
  const older=ordinary.slice(0,Math.max(0,ordinary.length-recentCount));
  const calls=history.filter(m=>m?.kind==='call'&&hasText(m.transcript));
  const candidates=older.map((m,i)=>({m,i,score:overlap(query,terms(m.voiceCaption||m.text)),text:(m.voiceCaption||m.text).slice(0,230)}));
