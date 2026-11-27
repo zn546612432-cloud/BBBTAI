@@ -201,6 +201,13 @@ function eligibleLine(s,line){
  }
  return true;
 }
+// Read the same eligible queue as tickWishes; future or silent historical
+// rewards must not prevent the player from replying now.
+export function wishIncomingPending(s,id){
+ if(!perDay(s))return false;
+ const st=s.story55?.wishes?.story;
+ return !!st?.lines?.some(line=>line.chat===id&&line.from!=='me'&&line.dueDay===s.day&&!st.delivered?.includes(line.id)&&eligibleLine(s,line));
+}
 export function wishEventsDue(s,now=Date.now()){
  if(!perDay(s))return false;
  const st=s.story55?.wishes?.story;

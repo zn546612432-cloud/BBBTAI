@@ -7,7 +7,7 @@ export function patchElement(old,fresh){
  const storyAnimating=old.hasAttribute('data-story-type')&&old.getAttribute('data-story-type')===fresh.getAttribute('data-story-type')&&old.getAttribute('data-story-stage')===fresh.getAttribute('data-story-stage');
  const incomingWechatStage=old.tagName==='INPUT'&&!!old.closest('.wx-conversation')
   &&old.getAttribute('data-story-stage')!==fresh.getAttribute('data-story-stage')
-  &&fresh.hasAttribute('data-story-type');
+  &&(fresh.hasAttribute('data-story-type')||fresh.hasAttribute('disabled'));
  // Opt-in details (e.g. a NoApp voice transcript) are initially opened by
  // the template; later toggles belong to the user, not the periodic clock.
  const preserveOpen=old.tagName==='DETAILS'&&old.hasAttribute('data-preserve-open')&&fresh.hasAttribute('data-preserve-open');

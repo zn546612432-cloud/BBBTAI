@@ -267,3 +267,32 @@ test('old saved computer-purchase late replies are repaired exactly once without
  tickPhoneStoryMessages(s,10000);
  assert.equal(JSON.stringify(c.messages),copy,'migration is idempotent');
 });
+
+
+test('a current WeChat preset waits for the last incoming message in its thread, including reload',()=>{
+ const s=fresh(5,'08:15');d05Track.ensure(s).breakfast.completed=true;
+ tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,1000);
+ assert.equal(nativeWeChatComposer(s,'wang').text,'嗯');
+ const pending={id:'test-queued-wang-last',from:'wang',kind:'text',text:'記得吃飯',schedule:{mode:'chat-delay',seconds:2}};
+ cv(s,'wang').messages.push(pending);
+ assert.equal(nativeWeChatComposer(s,'wang').text,null);
+ assert.equal(nativeWeChatComposer(s,'wang').disabled,true);
+ assert.ok(sendNativeWeChatPreset(store(s),'wang','嗯',1100).reason);
+ const restored=JSON.parse(JSON.stringify(s));
+ assert.equal(nativeWeChatComposer(restored,'wang').text,null);
+ cv(restored,'wang').messages.find(m=>m.id===pending.id).delivery={day:5,clock:'08:15'};
+ assert.equal(nativeWeChatComposer(restored,'wang').text,'嗯');
+ assert.ok(sendNativeWeChatPreset(store(restored),'wang','嗯',4000).messageId);
+});
+
+test('a missed-reply NPC tail cannot be bypassed by a higher-priority current preset',()=>{
+ const s=fresh(5,'08:15');d05Track.ensure(s).breakfast.completed=true;
+ tickPhoneStoryMessages(s,0);tickPhoneStoryMessages(s,1000);
+ assert.equal(nativeWeChatComposer(s,'wang').text,'嗯');
+ s.story55.genericMissedReplies??={episodes:{}};
+ s.story55.genericMissedReplies.episodes.wang={status:'waiting-npc',day:5};
+ assert.equal(nativeWeChatComposer(s,'wang').text,null);
+ assert.ok(sendNativeWeChatPreset(store(s),'wang','嗯',1100).reason);
+ s.story55.genericMissedReplies.episodes.wang.status='done';
+ assert.equal(nativeWeChatComposer(s,'wang').text,'嗯');
+});
