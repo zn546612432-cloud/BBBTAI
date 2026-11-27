@@ -46,7 +46,7 @@ import {tickD04Contracts} from '../../story/d04/contract.js';
 import {tickD03Contract} from '../../story/d03/contract.js';
 import {tickD03MomentReply} from '../../story/d03/moments.js';
 import {tickD02Diary} from '../../story/diary/entries.js';
-import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55,identityReplyMode55} from './state.js';
+import {isStory55,story55Config,completed,nodeById,nodeStatus,completeNode,date55,final55,overnightSceneNight55,identityReplyMode55,scriptedCallPlayed} from './state.js';
 import {syncTearReminders} from '../../apps/ghost/deployment/reminders.js';
 import {syncGhostCarProgress} from './ghost-car.js';
 import {defaultStory55Config,normalizeStory55AudioAssets} from './config.js';
@@ -195,6 +195,8 @@ function creditScene55(s,n){
   if(id==='ending'&&!endingReplyDue55(s))throw Error('等待熙泰回撥掛斷');
   return finishScene55(s,id);
  }
+ const videoCall=n.videoCallLines?.[r.index];
+ if(videoCall&&!scriptedCallPlayed(s,videoCall))throw Error('等待視訊通話結束');
  const planned=n.delivery==='queued'?plannedSceneLineClock55(s,id,r.index):null;
  if(planned&&s.clock<planned&&(!fixedSceneTimeline(n)||r.index===0&&!n.pauseTimeUntilComplete)&&!(id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))throw Error('這條消息預定於 '+planned+' 發送');
  const fixedTime=fixedSceneTimeline(n)?stampFixedLine(s,r,lines,r.index,{at:n.at,explicit:planned,afterMidnight:n.afterMidnight,day:n.day}):null;
@@ -235,7 +237,7 @@ function creditScene55(s,n){
 }
 export function appendSceneMessage55(s,id,index,{authoredTime=null}={}){
  if(id==='recognition')return; // Recognition is one call record, not chat bubbles.
- const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line)return;
+ const n=nodeById(s,id),line=sceneLines(s,id)[index];if(!n||!line||n.videoCallLines?.[index])return; // Actual call owns its history record.
  if(id==='intrusion'&&line[0]==='system'&&(index===15||index===20)){
   appendAuthoredPhoneMessage(s,{channel:'mirage',conversationId:'s55-ouroboros',messageId:`s55-intrusion-v2-${index}`,from:'system',text:line[1],kind:'terminal-status',notify:false,day:s.day,clock:s.clock,sentDate:date55(s.day),storyTag:'story55'});
   return;
@@ -320,7 +322,7 @@ export function tickQueuedStoryScenes55(s,now=Date.now()){
   if(next[0]==='me'&&explicitlyPacedScene55(s,n.id)&&Number.isFinite(q.nextAt)&&now>=q.nextAt){
    delete q.nextAt;return true; // release the native composer, never send for the player.
   }
-  if(['me','disconnect','call'].includes(next[0]))continue;
+  if(['me','disconnect','call'].includes(next[0])||n.videoCallLines?.[q.index])continue;
   if(n.id==='intrusion'&&(s.story55.d13?.phase!=='chat'||q.accepted))continue;
   const planned=plannedSceneLineClock55(s,n.id,q.index);
   if(planned&&s.clock<planned&&(!fixedSceneTimeline(n)||q.index===0&&!n.pauseTimeUntilComplete)&&!(n.id==='d23-chess'&&s.story55?.d23?.nightAfterMidnight)&&!(overnightSceneNight55(s)))continue;
@@ -344,7 +346,7 @@ export function pacedStorySceneDue55(s,now=Date.now()){
   const q=scene55(s,n.id),next=sceneLines(s,n.id)[q.index];
   const planned=plannedSceneLineClock55(s,n.id,q.index);
   if(q.index===0&&!n.pauseTimeUntilComplete&&planned&&s.clock<planned&&!overnightSceneNight55(s)&&!s.story55?.d23?.nightAfterMidnight)return false;
-  if(!next||['call','disconnect'].includes(next[0]))return false;
+  if(!next||['call','disconnect'].includes(next[0])||n.videoCallLines?.[q.index])return false;
   if(next[0]==='me')return explicitlyPacedScene55(s,n.id)&&Number.isFinite(q.nextAt)&&now>=q.nextAt;
   return !Number.isFinite(q.nextAt)||now>=q.nextAt;
  });
@@ -644,4 +646,14 @@ export function anonymousPresence55(s,now=Date.now()){
  if(s.story55.loanOfflineDay===s.day)return {online:false,reason:'已下线'};
  if(s.day>=25&&s.day<=29)return {online:true,reason:'在线'};
  return {online:false,reason:s.day>=30?'正在调查，等待剧情联络':'尚未开放自由聯絡'};
+}
+
+export function pendingSceneVideoCall55(s,now=Date.now()){
+ if(!isStory55(s)||s.story55.ended)return null;
+ for(const n of story55Config(s).nodes){
+  if(!n.videoCallLines||nodeStatus(s,n.id).state!=='ready'||s.story55.activeScene&&s.story55.activeScene!==n.id)continue;
+  const q=scene55(s,n.id),script=n.videoCallLines[q.index];
+  if(script&&!scriptedCallPlayed(s,script)&&(!Number.isFinite(q.nextAt)||now>=q.nextAt))return {...script,sceneId:n.id,sceneIndex:q.index,messageId:(n.messagePrefix||'s55-'+n.id)+'-'+q.index};
+ }
+ return null;
 }

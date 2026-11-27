@@ -31,6 +31,13 @@ description: 为《熙蒙的手机》任意 D01–D55 日期与已注册 App 编
 8. **证据驱动验收**：`npm run story:audit` → `npm run story:check -- --strict 文件.json` → `npm test` → `npm run build:pages` → 隔离站点的触屏浏览器完整流程 + 旧存档回归。不能靠预置中奖状态冒充真实通关。所有跨 App 效果必须在真实业务状态中出现，不能通过 UI 模拟状态顶替。
 9. **提交与复盘**：报告具体增加什么内容、每个 App 使用哪个 adapter、用户如何触发、负面分支、CI/真实预览 URL/版本 SHA、没解决的适配器；合并仅在用户**明确授权**、分支绿色、站点审查通过时进行，合并后再验证正式 Pages 成功。
 
+## 原始二进制素材上传（D37 / D43 已验证）
+
+- 用户给定图片、MP4、音频，默认保留原始字节；不为上传而压缩、裁剪、转码、重配音或改画面。先检查仓库是否已存在相同 Git Blob。
+- 参考 PR #412（健身视频）和 PR #427（巴黎视频）：本地读取原文件，记录字节数、SHA256 和 Git blob SHA1；用 Base64 无损传输，必要时分段为带连续序号的文本/CSV，在可访问文件的执行环境完整重组后调用 GitHub create_blob（encoding:base64），再将返回的 blob SHA 通过 Git Tree/Commit 加入当前分支。不要把文件路径或不完整的 Base64 当作 blob 内容。
+- 上传成功必须回读目标树核对 blob SHA、文件大小，确认无误后再接入代码并提交；传输临时文件不进入游戏。D43 原片已验证：4,234,380 bytes，SHA256 dafe106604046da45479d835e9ef9001e5d72e8481aa09c517253cf9bc9451b2，Git blob 8d9cf2827bc46c27e56ceb969da05eb22311b241，路径 public/assets/story55/d43-paris-original.mp4。
+- 若工具无法直接读取附件，先检查已连接的 GitHub、既有分段无损传输路径及原始文件是否已在仓库。不要要求用户为了上传而改变素材；仅在确实无法传输时报告具体阻塞，绝不宣称未验证的上传成功。
+
 ## v2 事件包合同
 
 事件最重要的字段：`id`、`kind`、`surface`（真实 App ID，如 messages、browser、aomi、wechat；不是笼统“短信”）、`capability`（必须列在该 App 能力表）、`owner`（真实副作用服务）、`actor`、`trigger`、`requires`、`timing.day/at`、`delivery.late`、`once:true`。支付额使用现有 `payBankPurchase` 合同与唯一交易号；图片使用唯一资源 ID。

@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55,scene55,scene55ReplyDelay,tickStory55,tickQueuedStoryScenes55,pacedStorySceneDue55} from '../src/services/story55/runtime.js';
+import {activateStory55,scene55,scene55ReplyDelay,tickStory55,tickQueuedStoryScenes55,pacedStorySceneDue55,pendingSceneVideoCall55,advanceScene55} from '../src/services/story55/runtime.js';
 import {completed,nodeStatus,timedStoryPaused} from '../src/services/story55/state.js';
 import {advanceGameMinutes} from '../src/system/time/clock.js';
 import {currentScript55,sendScriptedDraft55} from '../src/services/story55/scripted-chat.js';
 import {entryFor} from '../src/story/diary/entries.js';
-import {D43_PARIS_LINES,D44_CONFIDE_LINES,D44_DIARY,PARIS_PHOTO,PARIS_VIDEO} from '../src/story/d43-d44/definition.js';
+import {D43_PARIS_LINES,D44_CONFIDE_LINES,D44_DIARY,PARIS_PHOTO,PARIS_VIDEO,D43_PARIS_CALL} from '../src/story/d43-d44/definition.js';
 import {render as renderNoApp} from '../src/apps/noapp/index.js';
 import {nativeWeChatComposer} from '../src/services/messaging/preset-replies.js';
 
@@ -30,6 +30,13 @@ function play(s,id,channel,chat,lines,now){
    assert.throws(()=>sendScriptedDraft55(s,channel,chat,lines[i][1],now+delay-1));
   }
   now+=delay;
+  if(s.story55.config.nodes.find(n=>n.id===id)?.videoCallLines?.[i]){
+   const script=pendingSceneVideoCall55(s,now);assert.equal(script.id,D43_PARIS_CALL.id);assert.equal(pacedStorySceneDue55(s,now),false);
+   assert.throws(()=>advanceScene55(s,id,{now}));assert.equal(currentScript55(s,channel,chat,now).kind,'waiting');
+   s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[script.id]=true;
+   s.content.conversations.noapp.find(c=>c.id==='tai').messages.push({id:script.messageId,from:'tai',kind:'call',callType:'video',text:'視訊通話 · 00:07',callStatus:'ended',endedBy:'tai'});
+   advanceScene55(s,id,{now});continue;
+  }
   assert.equal(pacedStorySceneDue55(s,now),true);
   tickQueuedStoryScenes55(s,now);
   if(lines[i][0]==='me'){
@@ -50,9 +57,9 @@ test('D43 10:20 photo, exact message pacing and ten-second silence, manual sends
  const list=messages(s,'noapp','tai','s55-d43-paris-');
  assert.equal(list.length,17);assert.equal(list[0].kind,'image');assert.equal(list[0].text,PARIS_PHOTO);
  assert.equal(list[0].time,'10:20');assert.equal(list[0].sentDate,'2025-06-30');
- assert.equal(list[3].kind,'video');assert.equal(list[3].text,PARIS_VIDEO);
+ assert.equal(list[3].kind,'call');assert.equal(list[3].callType,'video');assert.equal(list[3].endedBy,'tai');
  assert.deepEqual(list.slice(1).filter((_,i)=>i!==2).map(m=>[m.from,m.text]),D43_PARIS_LINES.slice(1).filter((_,i)=>i!==2));
- assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-paris-original\.mp4/);
+ assert.doesNotMatch(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-paris-original\.mp4/);
  assert.equal(readFileSync(new URL('../public'+PARIS_VIDEO,import.meta.url)).subarray(4,8).toString(),'ftyp');
  assert.match(renderNoApp({store:{get:()=>s}},{route:'/chat/tai',params:{}}),/d43-eiffel\.webp/);
  assert.equal(readFileSync(new URL('../public'+PARIS_PHOTO,import.meta.url)).subarray(8,12).toString(),'WEBP');
@@ -84,8 +91,8 @@ test('legacy incomplete Paris line index is reset without deleting existing chat
 test('unstarted Paris saves receive the original video without resetting existing progress',()=>{
  const s=phone(43,'09:00'),node=s.story55.config.nodes.find(n=>n.id==='paris');
  const old=D43_PARIS_LINES.filter((_,i)=>i!==3);
- s.story55.config.scenes.paris=structuredClone(old);delete node.videoLines;node.lineDelayMs={9:10000};
- tickStory55(s);assert.deepEqual(s.story55.config.scenes.paris,D43_PARIS_LINES);assert.equal(node.videoLines[3],PARIS_VIDEO);
- s.story55.config.scenes.paris=structuredClone(old);delete node.videoLines;node.lineDelayMs={9:10000};s.story55.scenes.paris={index:2};
+ s.story55.config.scenes.paris=structuredClone(old);delete node.videoCallLines;delete node.videoLines;node.lineDelayMs={9:10000};
+ tickStory55(s);assert.deepEqual(s.story55.config.scenes.paris,D43_PARIS_LINES);assert.equal(node.videoCallLines[3].video,PARIS_VIDEO);
+ s.story55.config.scenes.paris=structuredClone(old);delete node.videoCallLines;delete node.videoLines;node.lineDelayMs={9:10000};s.story55.scenes.paris={index:2};
  tickStory55(s);assert.deepEqual(s.story55.config.scenes.paris,old);assert.equal(scene55(s,'paris').index,2);
 });
