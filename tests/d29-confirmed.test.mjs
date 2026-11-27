@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55,tickQueuedStoryScenes55,advanceScene55} from '../src/services/story55/runtime.js';
 import {nodeStatus,story55Config,story55ChargeGate} from '../src/services/story55/state.js';
@@ -50,4 +51,12 @@ test('older saves update the authored investigation token without altering unrel
  assert.equal(line[1],D29_IP);assert.equal(cfg.projects.find(p=>p.id==='identity').key,D29_IP);
  assert.equal(s.content.notes.find(n=>n.id==='s55-d29-ip').text,D29_IP);assert.equal(chat.messages.find(m=>m.id==='s55-plan-37').text,D29_IP);
  assert.equal(s.content.notes.find(n=>n.id==='unrelated-note').text,'192.0.2.29');assert.equal(chat.messages.find(m=>m.id==='unrelated').text,'192.0.2.29');
+});
+
+
+test('D29 Mirage chess invitation offers acceptance or resume, never a refusal button',()=>{
+ const source=readFileSync(new URL('../src/apps/mirage/index.js',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/mc-chess-refuse/);
+ assert.match(source,/btn\('mc-chess-invite'/);
+ assert.match(source,/accepted\?'繼續棋局':'接受邀請'/);
 });
