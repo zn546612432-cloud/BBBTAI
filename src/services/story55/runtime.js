@@ -403,7 +403,7 @@ export function tickStory55(s){
  syncApprovedChatV2(s);
  applyD17Definition(story55Config(s));
  applyD25Definition(story55Config(s));
- applyD26D28Definition(story55Config(s));
+ applyD26D28Definition(story55Config(s),s);
  applyD29Definition(story55Config(s));
  applyD34D42Definition(story55Config(s));
  // Repair only test-reconstructed D42 history, not real late-delivered

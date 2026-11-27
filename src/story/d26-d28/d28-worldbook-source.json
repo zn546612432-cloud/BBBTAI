@@ -1,0 +1,16 @@
+{
+  "day": 28,
+  "visibility": "private-wechat",
+  "source": [
+    "d28-meeting",
+    "tear:program"
+  ],
+  "facts": [
+    {
+      "topic": "TAI",
+      "status": "委託意向",
+      "text": "熙蒙表示會回頭請 TAI 完成胡楓所需的遊戲內程序。是否已提交及完成，仍以實際任務記錄為準。"
+    }
+  ],
+  "knowledgeRule": "只有實際發生或玩家告知的內容可作角色記憶；私人群聊不自動提供給熙泰。"
+}
