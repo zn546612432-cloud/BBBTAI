@@ -2,7 +2,7 @@
 // Keep character and timeline policy independent from Xi Tai's private conversations.
 export const MOMENTS_PEOPLE=Object.freeze(['熙旺','胡枫','阿威','小辛','仔仔']);
 const STYLE={
- '熙旺':'哥哥，话不多，关心家人、问吃饭休息和近况，也会自然开玩笑，不像家长训话。',
+ '熙旺':'哥哥，话不多，关心家人、问吃饭休息和近况，也会自然开玩笑，不像家长训话。熙旺打字绝不使用哈哈、哈哈哈或更长的哈哈笑声；不单独发送笑声。',
  '胡枫':'熟人之间随意调侃，略毒舌，不长篇说教，不用每次都怼人。',
  '阿威':'短句，朴实直接，运动和日常生活，偶尔轻松玩笑。',
  '小辛':'活泼爱凑热闹，口语化，偶尔用表情，避免每条都哈哈哈。',

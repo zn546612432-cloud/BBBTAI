@@ -1,3 +1,4 @@
+import {stripXiwangLaughter} from '../../../../services/ai/chat-punctuation.js';
 import {authoredMoments,profiles as originalProfiles} from './data.js';
 import {isStory55} from '../../../../services/story55/state.js';
 import {d04DinnerConfirmed} from '../../../../story/d04/wechat.js';
@@ -169,7 +170,7 @@ export function publishPlayerMoment(s,{text='',image='',privacy='public',trackId
   ...(track?{kind:'music',music:{trackId:track.id,title:track.title,artist:track.artist}}:{})};
  m.posts.push(post);m.draft=null;return post;
 }
-export const momentInteractions=s=>getMomentContent(s).interactions||[];
+export const momentInteractions=s=>(getMomentContent(s).interactions||[]).filter(x=>x.kind==='like'||!x.text||stripXiwangLaughter(x.text,x.by)!=='');
 export const unreadMomentInteractions=s=>momentInteractions(s).filter(x=>!x.read).length;
 export function markMomentInteractionsRead(s,postId=null){
  const m=editableMoments(s);
@@ -177,6 +178,7 @@ export function markMomentInteractionsRead(s,postId=null){
  if(Array.isArray(s.notifications))s.notifications=s.notifications.filter(n=>!(n.momentPostId&&(!postId||n.momentPostId===postId)));
 }
 export function recordMomentInteraction(s,post,job,text=''){
+ if(job.kind!=='like'&&text){text=stripXiwangLaughter(text,job.by);if(!text)return false;}
  const m=editableMoments(s);m.interactions??=[];
  if(m.interactions.some(x=>x.id===job.id))return false;
  const reading=s.nav?.current?.appId==='wechat'&&s.nav.current.route==='/moments/comment/'+post.id;

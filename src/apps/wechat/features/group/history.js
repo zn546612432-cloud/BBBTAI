@@ -1,3 +1,5 @@
+import {hideXiwangLaughMessage} from '../../../../services/ai/chat-punctuation.js';
+import {actorName} from '../../../../editor/conversations/model.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {groupState,groupAway} from './state.js';
 // Presentation-only history boundary. Never remove the messages used by plot and archive services.
@@ -10,7 +12,7 @@ export function hiddenGroupMessageIds(s,c){
  return new Set(rejoin<0?[]:msgs.slice(0,rejoin).map(m=>m.id));
 }
 export function playerWeChatMessages(c,s){
- const msgs=visibleMessages(c,s);
+ const msgs=visibleMessages(c,s).filter(m=>!hideXiwangLaughMessage(m,actorName(c,m.from)));
  if(c?.id!=='group')return msgs;
  if(groupAway(s))return [];
  const hidden=hiddenGroupMessageIds(s,c);
