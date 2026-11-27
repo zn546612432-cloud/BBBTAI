@@ -84,6 +84,7 @@ export function nodeStatus(s,id){
  if(completed(s,id))return {state:'done',reason:'已完成'};
  if(final55(s))return {state:'locked',reason:'第一视角已结束'};
  if(n.authoredPending)return {state:'locked',reason:'等待後續劇情'};
+ if(n.requiresPlayerTrigger&&!s.story55.scenes?.[id]?.triggerMessageId)return {state:'locked',reason:'等待玩家主動聊天'};
  if(s.day<n.day)return {state:'locked',reason:`等待D${n.day}`};
  if(n.optional&&(s.day>n.throughDay||s.day===n.throughDay&&overnightSceneNight55(s)))return {state:'locked',reason:'已過聊天時間'};
  // Optional author-authored relationship scenes use the existing verified

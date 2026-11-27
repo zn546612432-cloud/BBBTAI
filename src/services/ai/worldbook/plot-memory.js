@@ -27,6 +27,17 @@ export function taiCanonicalMilestones(s,history){
 export function taiPlotMemory(s,history=[]){
  if(s?.story55?.version!==1)return '';
  const lines=[];
+ // Facts are visible only after the corresponding messages were actually delivered.
+ const gym=s.content?.conversations?.noapp?.find(c=>c.id==='tai')?.messages||history;
+ const gymLine=(index,from,kind,text)=>gym.find(m=>actual(m)&&m.day<=s.day&&m.id==='s55-d37-noapp-gym-'+index&&m.from===from&&m.kind===kind&&(!text||m.text===text));
+ const gymFacts=[];
+ if(gymLine(2,'tai','video'))gymFacts.push('你曾經給熙蒙發過自己的健身影片');
+ if(gymLine(4,'me','image'))gymFacts.push('熙蒙給你看過熙旺健身的照片');
+ if(gymLine(7,'me','text','我哥單手就能把我抱起來'))gymFacts.push('熙蒙說熙旺單手就能把他抱起來');
+ if(gymLine(9,'me','text','65kg啊'))gymFacts.push('熙蒙親口說他體重65kg');
+ if(gymLine(12,'tai','text','下次見面試試'))gymFacts.push('你說下次見面試試');
+ if(gymLine(14,'tai','text','那可由不得你'))gymFacts.push('熙蒙說誰要你抱了，你回那可由不得你；只是當時的聊天，尚未見面或實際抱過');
+ if(gymFacts.length)lines.push('已發生的健身聊天：'+gymFacts.join('；')+'。');
  const canonical=taiCanonicalMilestones(s,history);
  if(canonical.length)lines.push('已說出口、尚未確認兌現的重要約定：\n'+
   canonical.map(m=>'D'+m.day+' '+m.topic+'（消息 '+m.sourceId+'）：「'+m.text+'」').join('\n'));
@@ -59,7 +70,7 @@ const overlap=(a,b)=>[...a].filter(t=>b.has(t)).length;
 export function recallTaiOlderTalk(history=[],latestUser='',{recentCount=16,maxItems=7}={}){
  const query=terms(latestUser);
  if(!query.size)return '';
- const ordinary=history.filter(m=>actual(m)&&m.kind!=='call'&&m.kind!=='image'&&m.kind!=='app_invitation');
+ const ordinary=history.filter(m=>actual(m)&&m.kind!=='call'&&m.kind!=='image'&&m.kind!=='video'&&m.kind!=='app_invitation');
  const older=ordinary.slice(0,Math.max(0,ordinary.length-recentCount));
  const calls=history.filter(m=>m?.kind==='call'&&hasText(m.transcript));
  const candidates=older.map((m,i)=>({m,i,score:overlap(query,terms(m.voiceCaption||m.text)),text:(m.voiceCaption||m.text).slice(0,230)}));

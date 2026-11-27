@@ -141,7 +141,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    return {status:'replied',count:1,text,presetId:fastPreset.id};
   }finally{pendingRequests.delete(store);}
  }
- const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day&&(m.kind!=='call'||shouldRecallTaiCall(m,initial,pendingSource?.voiceCaption||pendingSource?.text)))
+ const messages=visibleMessages(c).filter(m=>m.kind!=='image'&&m.kind!=='video'&&m.kind!=='app_invitation'&&!m.demo&&typeof m.text==='string'&&m.text.trim()&&m.day<=initial.day&&(m.kind!=='call'||shouldRecallTaiCall(m,initial,pendingSource?.voiceCaption||pendingSource?.text)))
   .slice(-20).map(m=>m.kind==='call'?{role:'user',content:callBridgeNote(m,initial)||m.text}:({role:m.from==='me'?'user':'assistant',content:m.kind==='voice'?m.voiceCaption||'[语音消息；未提供转写，无法识别内容]':m.text.slice(0,2000)})).filter(m=>m.content);
  if(messages.at(-1)?.role!=='user')return {status:'scripted'};
  pendingRequests.add(store);
