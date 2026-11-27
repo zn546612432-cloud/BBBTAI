@@ -22,11 +22,11 @@ const scenes=[
   ['胡枫','樣品到了，我放在工房門口了。'],['me','這麼快？'],['胡枫','昨天寄出的。'],['me','太好了，我讓 TAI 再跑一遍測試。'],['仔仔','衣服也拿到了，原來是現成的款式。'],['仔仔','我之前買的布白買了。'],['熙旺','花了多少？'],['仔仔','沒多少，留著以後用吧。'],['阿威','我的褲子改好了嗎？'],['仔仔','好了，掛在你房間門口。'],['小辛','仔仔，我的拉鏈有點卡。'],['仔仔','你昨天試的時候怎麼不說？'],['小辛','昨天沒發現嘛。'],['仔仔','今晚拿來。']]},
  {id:'d28-truck',day:28,at:'14:26',title:'貨車改裝',chat:'wang',lines:[
   ['熙旺','車裡的電路重新整理過了，你過來看看。'],['me','空調呢？'],['熙旺','裝了。'],['me','冰箱呢？'],['熙旺','也裝了。'],['me','哥你真是全世界最好的人。'],['熙旺','哈哈哈。'],['熙旺','先別高興，設備還沒搬上去。'],['me','等我測完這批東西。'],['熙旺','好，重的留著我搬。']]},
- {id:'d28-meeting',day:28,at:'19:12',title:'明天開會',chat:'group',imageLines:{14:xinDogSticker('xin-dog-024'),19:xinDogSticker('xin-dog-057')},lines:[
-  ['阿威','蒙哥，你在工房裡搞了一下午，測得怎麼樣？'],['me','漏洞找到了。'],['胡枫','之前的方案能用？'],['me','沒有我想的那麼簡單。'],['me','單看監控畫面沒問題，但其他數據對不上。'],['阿威','看得出來？'],['me','普通人應該看不出來。'],['me','但我不確定警方那邊能不能發現。'],['胡枫','那還得重新研究？'],['me','嗯。'],['胡枫','對了，蒙哥，爆破那個程序寫了沒？'],['me','啊！'],['me','你不說我都忘了。'],['胡枫','？？？'],['me','〔小狗心虛表情包〕'],['me','哈哈哈哈哈抱歉。'],['me','我回頭讓銜尾蛇之淚寫，正好看看它到底有多大本事。'],['胡枫','那我等你好消息。'],['me','放心吧弟弟❤️'],['胡枫','〔小狗比心表情包〕'],['熙旺','干爹說明天下午開會。'],['熙旺','主要談撤離的事。'],['小辛','又要開會啊。'],['阿威','你今天下午不還睡了兩個小時？'],['小辛','那不一樣。'],['熙旺','明天別遲到。'],['小辛','遵命🫡']]}
+ {id:'d28-meeting',day:28,at:'19:12',title:'明天開會',chat:'group',imageLines:{14:xinDogSticker('xin-dog-024'),18:xinDogSticker('xin-dog-057')},lines:[
+  ['阿威','蒙哥，你在工房裡搞了一下午，測得怎麼樣？'],['me','漏洞找到了。'],['胡枫','之前的方案能用？'],['me','沒有我想的那麼簡單。'],['me','單看監控畫面沒問題，但其他數據對不上。'],['阿威','看得出來？'],['me','普通人應該看不出來。'],['me','但我不確定警方那邊能不能發現。'],['胡枫','那還得重新研究？'],['me','嗯。'],['胡枫','對了，蒙哥，爆破那個程序寫了沒？'],['me','啊！'],['me','你不說我都忘了。'],['胡枫','？？？'],['me','〔小狗心虛表情包〕'],['me','哈哈哈哈哈抱歉。'],['me','回頭讓 TAI 寫'],['胡枫','那我等你好消息。'],['胡枫','〔小狗比心表情包〕'],['熙旺','干爹說明天下午開會。'],['熙旺','主要談撤離的事。'],['小辛','又要開會啊。'],['阿威','你今天下午不還睡了兩個小時？'],['小辛','那不一樣。'],['熙旺','明天別遲到。'],['小辛','遵命🫡']]}
 ];
 
-export function applyD26D28Definition(c){
+export function applyD26D28Definition(c,s=null){
  let previous='d25-ouroboros';
  for(const {id,day,at,title,chat,channel='wechat',fileLines,imageLines,lines} of scenes){
   const n={id,day,at,title,kind:'scene',requires:[previous],gateDay:day,holdAt03:true,delivery:'queued',channel,conversationId:chat,messagePrefix:'s55-'+id,...(channel==='mirage'?{requiresContact:true}:{}),...(fileLines?{fileLines}:{}),...(imageLines?{imageLines}:{})};
@@ -34,4 +34,33 @@ export function applyD26D28Definition(c){
   c.scenes[id]??=structuredClone(lines);
   previous=id;
  }
+ if(s)syncD28MeetingCopy(s,c);
+}
+
+ // D28 wording revision: only the exact shipped script qualifies, never
+ // user-authored source overrides. Started legacy scenes beyond the removed
+ // slot retain their original index and media mapping.
+export function syncD28MeetingCopy(s,c){
+ const id='d28-meeting',node=c.nodes.find(n=>n.id===id),lines=c.scenes[id];
+ if(!node||!Array.isArray(lines))return;
+ const approved=scenes.find(n=>n.id===id);
+ const legacy=structuredClone(approved.lines);
+ legacy[16]=['me',"我回頭讓銜尾蛇之淚寫，正好看看它到底有多大本事。"];
+ legacy.splice(18,0,['me',"放心吧弟弟❤️"]);
+ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ if(!same(lines,legacy))return;
+ if(s.story55.chatSceneEdits?.['node:'+id])return;
+ const progress=s.story55.scenes?.[id],index=progress?.index||0;
+ const thread=s.content?.conversations?.wechat?.find(x=>x.id===node.conversationId);
+ const archive=m=>(s.story55.contentArchives??=[]).push({revision:'d28-copy-20261127',channel:'wechat',conversationId:thread.id,original:structuredClone(m)});
+ const prefix=node.messagePrefix||'s55-'+id;
+ const changed=thread?.messages.find(m=>m.id===prefix+'-16'&&m.from==='me'&&m.text==="我回頭讓銜尾蛇之淚寫，正好看看它到底有多大本事。"&&!m.edited&&!m.authored);
+ if(changed){archive(changed);changed.text="回頭讓 TAI 寫";}
+ const retired=thread?.messages.find(m=>m.id===prefix+'-18'&&m.from==='me'&&m.text==="放心吧弟弟❤️"&&!m.edited&&!m.authored);
+ if(retired){archive(retired);thread.messages=thread.messages.filter(m=>m!==retired);s.notifications=(s.notifications||[]).filter(n=>n.messageId!==retired.id);if(s.events)s.events=s.events.filter(x=>x.messageId!==retired.id);}
+ if(s.story55.completed?.[id]||index>18)return;
+ c.scenes[id]=structuredClone(approved.lines);
+ node.imageLines=structuredClone(approved.imageLines);
+ if(s.drafts?.group==="放心吧弟弟❤️")delete s.drafts.group;
+ if(s.drafts?.group==="我回頭讓銜尾蛇之淚寫，正好看看它到底有多大本事。")s.drafts.group="回頭讓 TAI 寫";
 }

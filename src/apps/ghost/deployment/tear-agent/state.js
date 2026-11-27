@@ -53,6 +53,7 @@ export const ensureAgent=s=>{
   delete a.thinking;delete a.thinkingAt;
   a.displayRevision=4;
  }
+ if(a.draft==='幫我把阿楓要的爆破控制程序寫了。')a.draft=TEAR_STAGES.program.prompt;
  return a;
 };
 export const blockedTearText=(s,text)=>!taiRecognized(s)&&blocksAnonymousMirageInput(s,'s55-ouroboros',text);
@@ -60,7 +61,7 @@ const normalize=t=>String(t).normalize('NFKC').replace(/[\s\p{P}]/gu,'').toLower
 // Recognise only the existing authored, fictional engineering requests; never
 // forward these to a model or treat them as instructions to an external tool.
 const localCommandAliases={
- program:['爆破','爆破程序','爆破控制程序','爆破程式','爆破控制程式','帮我写爆破程序','幫我寫爆破程序','幫我寫爆破程式','写爆破程序','寫爆破程序','写个爆破程序','寫個爆破程序','写一下爆破程序','寫一下爆破程序','帮我写爆破控制程序','幫我寫爆破控制程序','帮我把阿枫要的爆破控制程序写了','阿枫要的程序写一下','阿楓要的程序寫一下','幫我把阿楓要的程序寫了','帮我把阿枫要的程序写了','炸弹程序','炸彈程序','幫我寫炸彈程序','帮我写炸弹程序','bc_01'],
+ program:['幫我把阿楓要的爆破控制程序寫了。','帮我写澳亚银行保险柜爆破程序','爆破','爆破程序','爆破控制程序','爆破程式','爆破控制程式','帮我写爆破程序','幫我寫爆破程序','幫我寫爆破程式','写爆破程序','寫爆破程序','写个爆破程序','寫個爆破程序','写一下爆破程序','寫一下爆破程序','帮我写爆破控制程序','幫我寫爆破控制程序','帮我把阿枫要的爆破控制程序写了','阿枫要的程序写一下','阿楓要的程序寫一下','幫我把阿楓要的程序寫了','帮我把阿枫要的程序写了','炸弹程序','炸彈程序','幫我寫炸彈程序','帮我写炸弹程序','bc_01'],
  validation:['驗證研究結果','验证研究结果','驗證之前的研究結果','验证之前的研究结果','設備已經接入測試環境，驗證之前的研究結果。','设备已经接入测试环境，验证之前的研究结果。']
 };
 export function matchLocalTearCommand(value){

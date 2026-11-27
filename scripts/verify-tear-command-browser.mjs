@@ -41,7 +41,7 @@ try{
   const live=page.locator('#screen-layer'),preset=live.locator('[data-action=gh-tear-prompt][data-id=program]'),plus=live.locator('.gh-agent-input [data-action=gh-tear-picker]'),input=live.locator('#tear-agent-input');
   await live.locator('.gh-agent-screen').waitFor();
   assert.equal(await preset.count(),0);await plus.click();await preset.waitFor();await page.screenshot({path:`${out}/${width}-menu.png`});
-  if(width===375){await preset.click();assert.match(await input.inputValue(),/爆破控制程序/);}
+  if(width===375){await preset.click();assert.equal(await input.inputValue(),'幫我寫澳亞銀行保險櫃爆破程序');}
   else {await plus.click();await input.fill('爆破程序');}
   await live.locator('button[type=submit]').click();
   await live.locator('.gh-agent-messages').getByText(/好的，已建立工程：BC_01/).waitFor();

@@ -57,3 +57,12 @@ test('D26–D28 fixed scenes deliver in order, require real Send, render media a
   if(!nodes.some(x=>x.day===n.day&&!completed(s,x.id)))assert.equal(story55ChargeGate(s),null);
  }
 });
+
+test('D28 approved text removes the extra player turn and retains both sticker slots',()=>{
+ const s=activateStory55(initialState()),c=story55Config(s),id='d28-meeting';
+ const node=c.nodes.find(n=>n.id===id),lines=c.scenes[id];
+ assert.equal(lines.length,26);
+ assert.deepEqual(lines[16],['me',"回頭讓 TAI 寫"]);
+ assert.equal(lines.some(l=>l[1]==="放心吧弟弟❤️"),false);
+ assert.ok(node.imageLines[14]);assert.ok(node.imageLines[18]);assert.equal(node.imageLines[19],undefined);
+});

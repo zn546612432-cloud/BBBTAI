@@ -168,7 +168,7 @@ test('TAI prompt includes engineering concepts but keeps execution and investiga
 });
 
 test('D28 free-form authored command routes locally, respects prerequisites and runs only once',()=>{
- for(const command of ['爆破','爆破程序','帮我写爆破程序','幫我寫爆破程式','阿楓要的程序寫一下','炸彈程序',TEAR_STAGES.program.prompt]){
+ for(const command of ['爆破','爆破程序','帮我写爆破程序','幫我寫爆破程式','阿楓要的程序寫一下','炸彈程序',TEAR_STAGES.program.prompt,'帮我写澳亚银行保险柜爆破程序','幫我把阿楓要的爆破控制程序寫了。']){
   const s=fixture();
   assert.equal(sendAgent(s,command).kind,'preset');
   assert.equal(agent(s).jobs.program,undefined);
