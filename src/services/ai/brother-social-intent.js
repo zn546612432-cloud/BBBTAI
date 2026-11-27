@@ -15,11 +15,17 @@ export function socialIntent(value){
  return 'share';
 }
 export function socialDirection(value){const intent=socialIntent(value);return {intent,direction:directions[intent]};}
+// First public disclosure is not evidence of earlier knowledge. Reject the observed false-history replies.
+export function socialKnowledgeIssues(rows,topic){
+ if(!/原[來来].{0,5}(?:我|熙蒙).{0,5}三胞胎/.test(String(topic||'')))return [];
+ const claims=/(?:早就|一直|本[來来]|之前|早都|早已).{0,8}(?:知道|知情|[發发][現现])|反射弧|後知後覺|后知后觉|才知道|早知道|知道[啊呀阿]|我知道/;
+ return (Array.isArray(rows)?rows:[]).some(r=>['胡枫','胡楓','阿威','小辛','仔仔'].includes(r?.by)&&claims.test(String(r.text||'')))?['把首次公開誤當成早已知情']:[];
+}
 export function socialQualityIssues(rows,topic){
  const intent=socialIntent(topic);
  const casual=intent!=='serious';
  if(!Array.isArray(rows))return ['格式錯誤'];
- const issues=[];
+ const issues=socialKnowledgeIssues(rows,topic);
  const patterns=[/不是.{0,24}[，。； ]*(?:而是|是規定|是命令|是強迫)/,/是.{1,22}出來的[。！？！？，、 ]*不是/,/不是.{0,18}點菜|點什麼來什麼/,/特地發.{0,18}(?:是想|想讓)|這話語氣像在發公告|這種話別在群裡說/,/先把.{0,12}收回去|明天.{0,8}(?:飯桌|吃飯).{0,8}當面/];
  for(const row of rows){const t=String(row?.text||'');if(casual&&patterns.some(r=>r.test(t)))issues.push('說教或模板句');if(casual&&intent==='affection'&&/喜歡.{0,18}(?:強求|強迫|規定|命令|相處出來|自由選擇)|(?:尊重|強迫|強求).{0,12}(?:感情|喜歡|愛)/.test(t))issues.push('把撒嬌誤作道德問題');}
  return [...new Set(issues)];

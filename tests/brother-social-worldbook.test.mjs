@@ -15,3 +15,13 @@ test('dialogue examples are source-linked historical group scenes and latest nam
 
 import {socialIntent,socialDirection,socialQualityIssues} from '../src/services/ai/brother-social-intent.js';
 test('social intent recognizes affectionate joking and rejects the observed lecture pattern',()=>{assert.equal(socialIntent('你們必須喜歡我'),'affection');assert.equal(socialIntent('你们是gay'),'banter');assert.equal(socialIntent('討厭乾爹'),'vent');assert.equal(socialIntent('救命 我受傷了'),'serious');assert.ok(socialQualityIssues([{text:'喜歡是相處出來的。不是規定出來的。'}],'你們必須喜歡我').length);assert.deepEqual(socialQualityIssues([{text:'我最喜歡蒙蒙哥！！！'}],'你們必須喜歡我'),[]);assert.match(groupSocialMessages({field:'notice',value:'你們必須喜歡我'})[0].content,/親兄弟之間撒嬌/);});
+
+import {socialKnowledgeIssues} from '../src/services/ai/brother-social-intent.js';
+test('first public triplet disclosure distinguishes new information from prior knowledge',()=>{
+ const post={text:'原來我是三胞胎'},input={day:34,clock:'08:24',post,candidates:['胡枫','小辛']};
+ assert.match(momentsBatchMessages(input)[0].content,/胡楓此前並不知情/);
+ assert.ok(socialKnowledgeIssues([{by:'胡枫',text:'你反射弧這麼長？'}],post.text).length);
+ assert.ok(socialKnowledgeIssues([{by:'胡枫',text:'知道啊，你以為我跟你一樣後知後覺？'}],post.text).length);
+ assert.deepEqual(socialKnowledgeIssues([{by:'胡枫',text:'三胞胎？？'},{by:'小辛',text:'所以我們還有一個哥哥？'}],post.text),[]);
+ assert.deepEqual(socialKnowledgeIssues([{by:'胡枫',text:'知道啊'}],'我剛吃飯'),[]);
+});

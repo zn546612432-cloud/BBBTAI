@@ -84,3 +84,16 @@ test('Awei HYQ contains only previously approved dates and no unapproved 2024 D1
  for(const post of p)for(const id of post.media)
   assert.ok(existsSync('public'+momentImage(id)),post.id+': '+id);
 });
+
+import {repairMomentDisclosure} from '../src/apps/wechat/features/moments/disclosure-repair.js';
+test('D35 removes only the retired comment, including old editor snapshots',()=>{
+ const p=by('xw-d35');assert.deepEqual(p.comments,[{by:'阿威',text:'下次我也去'}]);assert.ok(p.likes.includes('仔仔'));
+ const s=initialState();s.content.moments={editedPosts:{'xw-d35':{...p,comments:[{by:'熙蒙',text:'它剛才看我了'},...p.comments,{by:'仔仔',text:'想去'}]}}};
+ assert.deepEqual(allMoments(s).find(x=>x.id==='xw-d35').comments,[...p.comments,{by:'仔仔',text:'想去'}]);
+});
+test('repair only the exact saved erroneous disclosure chain and preserve other comments',()=>{
+ const p={id:'self-test',author:'熙蒙',text:'原來我是三胞胎',playerPublished:true};
+ const s={content:{moments:{posts:[p],comments:{[p.id]:[{id:'a',by:'胡枫',text:'你反射弧這麼長？'},{id:'b',by:'熙蒙',to:'胡枫',text:'你知道?'},{id:'c',by:'胡枫',to:'熙蒙',text:'知道啊，你以為我跟你一樣後知後覺？'},{by:'仔仔',text:'其他'}]}}}};
+ repairMomentDisclosure(s);repairMomentDisclosure(s);
+ assert.deepEqual(s.content.moments.comments[p.id].map(c=>[c.by,c.text]),[['胡枫','三胞胎？？'],['小辛','所以我們還有一個哥哥？'],['仔仔','其他']]);
+});
