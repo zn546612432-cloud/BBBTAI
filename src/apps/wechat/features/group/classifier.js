@@ -3,6 +3,7 @@ import {pendingClassification,completeClassification} from './runtime.js';
 import {BROTHERS,groupThread} from './state.js';
 import {playerWeChatMessages} from './history.js';
 import {groupSocialMessages} from '../../../../services/ai/brother-social-worldbook.js';
+import {brotherPublicMemory} from '../../../../services/ai/worldbook/brother-public-memory.js';
 import {traditionalTaiText} from '../../../../services/ai/traditional.js';
 const TYPES=new Set(['generic','vanity','tease','food','warm','abstract','restore','command','father_harm']);
 export function classificationMessages(q){
@@ -34,7 +35,7 @@ export async function tickGroupClassification(store,{request=requestGroupClassif
  try{
   // Only classification is sent to the existing protected AI gateway.
   let timer;
-  try{result=await Promise.race([request({...q,day:store.get().day,clock:store.get().clock,history:playerWeChatMessages(groupThread(store.get()),store.get()).filter(m=>m.kind==='text').slice(-8).map(m=>({by:m.from,text:m.text}))}),new Promise(resolve=>{timer=setTimeout(()=>resolve({type:'generic',target:''}),15000);})]);}
+  try{result=await Promise.race([request({...q,day:store.get().day,clock:store.get().clock,publicMemory:brotherPublicMemory(store.get(),q.value),history:playerWeChatMessages(groupThread(store.get()),store.get()).filter(m=>m.kind==='text').slice(-8).map(m=>({by:m.from,text:m.text}))}),new Promise(resolve=>{timer=setTimeout(()=>resolve({type:'generic',target:''}),15000);})]);}
   finally{clearTimeout(timer);}
  }catch{}finally{running.delete(store);}
  if(!Object.values(store.get().wechatGroupEggs?.classifications||{}).some(x=>x.id===q.id))return false;
