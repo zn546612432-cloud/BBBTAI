@@ -7,10 +7,11 @@ import {activateStory55,advanceScene55,nodeLink55,sceneLines,scene55} from '../s
 import {completed,story55Config} from '../src/services/story55/state.js';
 import {previewNode55,handleStory55Action} from '../src/services/story55/controller.js';
 import {installed,appUnlocked,registry} from '../src/system/registry.js';
-import {callAction,callState,callView,incomingCallBanner,scriptedCallDraft} from '../src/apps/noapp/voice-call.js';
-import {RECOGNITION_STEPS} from '../src/story/d29/recognition-call.js';
+import {callAction,callState,callView,incomingCallBanner,scriptedCallDraft,recognitionCallCaption} from '../src/apps/noapp/voice-call.js';
+import {RECOGNITION_STEPS,RECOGNITION_CALL} from '../src/story/d29/recognition-call.js';
 import {timedStoryPaused} from '../src/services/story55/state.js';
 
+import {PhoneRouter} from '../src/services/router.js';
 const make=()=>{const s=initialState();activateStory55(s);return s;};
 const show=(s,route='/chat/tai')=>registry.get('noapp').render({store:{get:()=>s}},{route,params:{}});
 
@@ -27,7 +28,10 @@ test('NoApp installation rings immediately; recognition is an automatic preset c
  assert.equal(completed(s,'recognition'),false);
  assert.equal(s.story55.noappInstalled,undefined);
  assert.match(show(s),/安装并打开 NoApp/);
- const ctx={store:{get:()=>s,update:fn=>fn(s)},refresh(){},router:{open:link=>{s.nav.current=link;}}};
+ s.nav.current={appId:'kira',route:'/mail/invite-mail',params:{}};
+ s.nav.stack=[{appId:'home',route:'/',params:{}}];
+ const store={get:()=>s,update:fn=>fn(s)};
+ const ctx={store,refresh(){},router:new PhoneRouter(store,registry)};
  const old={Audio:globalThis.Audio,fetch:globalThis.fetch,setTimeout:globalThis.setTimeout};let audio;
  class FakeAudio{constructor(){audio=this;this.src='';this.paused=true;this.listeners=new Map();}addEventListener(n,cb){const a=this.listeners.get(n)||new Set();a.add(cb);this.listeners.set(n,a);}removeEventListener(n,cb){this.listeners.get(n)?.delete(cb);}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}finish(){this.paused=true;for(const cb of [...(this.listeners.get('ended')||[])])cb();}}
  const waitFor=async pred=>{for(let i=0;i<500;i++){if(pred())return;await new Promise(r=>old.setTimeout(r,2));}throw Error('Recognition call timed out');};
@@ -38,6 +42,7 @@ test('NoApp installation rings immediately; recognition is an automatic preset c
  assert.equal(s.story55.noappInstalled,true);
  assert.equal(s.nav.current.appId,'noapp');
  assert.equal(s.nav.current.route,'/chat/tai');
+ assert.deepEqual(s.nav.stack,[]);
  assert.deepEqual(nodeLink55(s,'recognition'),{appId:'noapp',route:'/chat/tai',params:{node:'recognition'}});
  assert.doesNotMatch(show(s),/class="composer"/);
  assert.match(show(s),/tai-portrait\.webp/);
@@ -61,6 +66,7 @@ test('NoApp installation rings immediately; recognition is an automatic preset c
  assert.equal(messages.filter(m=>m.kind==='call').length,1);assert.equal(messages.filter(m=>m.id.startsWith('s55-recognition-')&&m.kind==='text').length,0);
  assert.deepEqual(messages.find(m=>m.kind==='call').transcript.split('\n').map(line=>line.slice(8)),RECOGNITION_STEPS.map(([role,text])=>(role==='me'?'熙蒙':'熙泰')+'：'+text));
  assert.match(show(s),/class="composer"/);
+ ctx.router.back();assert.equal(s.nav.current.appId,'home');
  }finally{callAction('tai-hangup',ctx);Object.assign(globalThis,old);}
 });
 test('D55 final recording is prompted at 22:46 and persisted inside NoApp, not Calendar',()=>{
@@ -119,4 +125,22 @@ test('a previously bookmarked Calendar scene no longer renders D55 dialogue',()=
  assert.match(html,/cl-screen/);
  assert.doesNotMatch(html,/s55-scene-next|剧情消息|前往 NoApp/);
  assert.doesNotMatch(html,/CALENDAR \/ D55/);
+});
+
+test('NoApp root back returns Home even for an old invitation history; nested screens still return to chat',()=>{
+ const s=make();s.story55.noappInstalled=true;
+ const chat={appId:'noapp',route:'/chat/tai',params:{}};
+ s.nav.current=chat;s.nav.stack=[{appId:'home',route:'/',params:{}},{appId:'kira',route:'/mail/invite-mail',params:{}}];
+ const router=new PhoneRouter({get:()=>s,update:fn=>fn(s)},registry);
+ router.open({appId:'noapp',route:'/contact/tai',params:{}});
+ router.back();assert.deepEqual(s.nav.current,chat);
+ router.back();assert.deepEqual(s.nav.current,{appId:'home',route:'/',params:{}});assert.deepEqual(s.nav.stack,[]);
+});
+test('recognition captions distinguish Ximeng without editing the script or other calls',()=>{
+ for(const [role,line] of RECOGNITION_STEPS){
+  const expected=role==='me'?'熙蒙：'+line:line.replace(/…+|\\.{3,}|．{3,}/g,'').trim();
+  assert.equal(recognitionCallCaption(line,role,RECOGNITION_CALL.id),expected);
+ }
+ assert.equal(recognitionCallCaption('', 'me',RECOGNITION_CALL.id),'');
+ assert.equal(recognitionCallCaption('那你為什麼不直接告訴我？','me','d55-final-cut'),'那你為什麼不直接告訴我？');
 });
