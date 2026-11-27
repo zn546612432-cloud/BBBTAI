@@ -10,9 +10,9 @@ import {brotherPublicMemory} from '../src/services/ai/worldbook/brother-public-m
 import {indexAuthoredPresetKnowledge} from '../src/services/ai/worldbook/preset-knowledge.js';
 import {D32_D34_GROUP_SCENES} from '../src/story/d32-d34/group.js';
 const rows=[
- ['d32-group-plan',32,'15:31','15:32','回群裡確認計劃',11],
- ['d33-group-truck',33,'18:41','18:42','回群裡確認設備搬運',13],
- ['d34-group-rehearsal',34,'19:27','19:28','回群裡確認明日演練',20]
+ ['d32-group-plan',32,'15:31','15:32','回覆群聊',11],
+ ['d33-group-truck',33,'18:41','18:42','回覆群聊',13],
+ ['d34-group-rehearsal',34,'19:27','19:28','回覆群聊',20]
 ];
 function fixture(day,clock){
  const s=activateStory55(initialState());s.day=day;s.clock=clock;s.story55.activeScene=null;
