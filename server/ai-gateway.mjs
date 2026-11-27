@@ -6,7 +6,8 @@ import {deepseekModelOptions,TEAR_DEEPSEEK_MODEL} from '../src/services/ai/model
 import {buildTaiPrompt,taiProfileFields} from '../src/services/ai/tai-profile.js';
 import {assembleTaiMessages} from '../src/services/ai/worldbook/index.js';
 import {buildTearPrompt} from '../src/services/ai/tear-prompt.js';
-import {momentsCommentMessages} from '../src/services/ai/moments-comments.js';
+import {groupSocialMessages} from '../src/services/ai/brother-social-worldbook.js';
+import {momentsBatchMessages,momentsCommentMessages} from '../src/services/ai/moments-comments.js';
 import {MAX_VISION_BODY,momentsVisionRequest,momentsVisionDescription} from '../supabase/functions/tai-provider-gateway/moments-vision.js';
 const DEEPSEEK = 'https://api.deepseek.com/chat/completions';
 const MINIMAX = 'https://api.minimax.io/v1/t2a_v2';
@@ -72,6 +73,16 @@ export async function handleAIGateway(req,res,pathname) {
       if(!process.env.DEEPSEEK_API_KEY)throw fail(503,'请先在本地环境配置 DEEPSEEK_API_KEY');
       const day=Number(payload.day),channel=payload.channel;
       if(!Number.isInteger(day)||day<1||day>90)throw fail(400,'游戏天数不合法');
+      if(channel==='wechat-group'){
+        const q=payload.group;if(!q||q.day!==day||!['name','notice','nickname'].includes(q.field)||typeof q.value!=='string'||q.value.length>500)throw fail(400,'群聊參數不合法');
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-flash',thinking:{type:'disabled'},temperature:.65,messages:groupSocialMessages(q),stream:false,max_tokens:420,response_format:{type:'json_object'}});
+        const text=data.choices?.[0]?.message?.content;if(typeof text!=='string')throw fail(502,'模型沒有返回有效文字');reply(res,200,{text,channel,day});return true;
+      }
+      if(channel==='moments-batch'){
+        let history;try{if(payload.moment?.day!==day)throw Error();history=momentsBatchMessages(payload.moment);}catch{throw fail(400,'朋友圈評論參數不合法');}
+        const data=await provider(DEEPSEEK,process.env.DEEPSEEK_API_KEY,{model:'deepseek-v4-pro',thinking:{type:'disabled'},temperature:.7,top_p:.8,messages:history,stream:false,max_tokens:450,response_format:{type:'json_object'}});
+        const text=data.choices?.[0]?.message?.content;if(typeof text!=='string')throw fail(502,'模型沒有返回有效文字');reply(res,200,{text,channel,day});return true;
+      }
       if(channel==='moments'){
         let history;
         try{if(payload.moment?.day!==day)throw Error();history=momentsCommentMessages(payload.moment);}catch{throw fail(400,'朋友圈评论参数不合法');}

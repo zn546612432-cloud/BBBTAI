@@ -28,8 +28,8 @@ test('delete is owner-only, cleans jobs and notifications; own history remains v
 test('own avatar and cover save to the existing shared profile',()=>{const c=setup(),src='data:image/png;base64,YWJj';c.store.update(s=>{assert.equal(updatePlayerMomentImage(s,'avatar',src),true);assert.equal(updatePlayerMomentImage(s,'cover',src),true);});assert.equal(momentProfiles(c.store.get())['熙蒙'].cover,src);assert.equal(c.store.get().characterAvatars['熙蒙'],src);assert.notEqual(momentProfiles(c.store.get())['小辛'].cover,src);});
 test('public reactions are whitelisted and unique; private posts remain private',async()=>{
  const c=setup();let post,secret;c.store.update(s=>{post=publishPlayerMoment(s,{text:'今天去玩。'});scheduleMomentReactions(s,post,{random:()=>.9});secret=publishPlayerMoment(s,{text:'private',privacy:'private'});assert.equal(scheduleMomentReactions(s,secret,{random:()=>.9}),false);});
- c.store.update(s=>{s.clock='13:00';});let calls=0;for(let i=0;i<12;i++)await tickMomentReactions(c.store,{request:async input=>{assert.ok(MOMENTS_PEOPLE.includes(input.by));calls++;return '走啊';}});
- const s=c.store.get(),m=s.content.moments;assert.equal(m.reactionJobs.length,0);assert.ok(findMoment(s,post.id).likes.length);assert.ok(m.comments[post.id].length);assert.equal(m.comments[secret.id],undefined);assert.equal(new Set(m.interactions.map(x=>x.id)).size,m.interactions.length);assert.ok(calls<=3&&calls>0);assert.ok(unreadMomentInteractions(s)>0);
+ c.store.update(s=>{s.clock='13:00';});let calls=0;for(let i=0;i<12;i++)await tickMomentReactions(c.store,{request:async input=>{assert.ok(MOMENTS_PEOPLE.includes(input.by));calls++;return [{by:input.candidates[0],text:'走啊'}];}});
+ const s=c.store.get(),m=s.content.moments;assert.equal(m.reactionJobs.length,0);assert.ok(findMoment(s,post.id).likes.length);assert.ok(m.comments[post.id].length);assert.equal(m.comments[secret.id],undefined);assert.equal(new Set(m.interactions.map(x=>x.id)).size,m.interactions.length);assert.equal(calls,1);assert.ok(unreadMomentInteractions(s)>0);
  c.store.update(x=>markMomentInteractionsRead(x,post.id));assert.equal(unreadMomentInteractions(c.store.get()),0);
 });
 test('late AI reply cannot resurrect a deleted post',async()=>{const c=setup();let id;c.store.update(s=>{const p=publishPlayerMoment(s,{text:'x'});id=p.id;p.reactionPolicy=2;editableMoments(s).reactionJobs=[{id:'late',postId:id,by:'熙旺',kind:'comment',due:0}];});let finish;const result=tickMomentReactions(c.store,{request:()=>new Promise(resolve=>{finish=resolve;})});c.store.update(s=>deletePlayerMoment(s,id));finish('嗯');await result;assert.equal(findMoment(c.store.get(),id),undefined);assert.equal(c.store.get().content.moments.comments[id],undefined);});
@@ -41,11 +41,11 @@ test('photo-only posts use one Flash description for all Pro commenters, includi
  const c=setup();let id;
  c.store.update(s=>{const p=publishPlayerMoment(s,{image:photo});id=p.id;scheduleMomentReactions(s,p,{random:()=>.9});s.clock='13:00';});
  let scans=0,replies=0;const recognize=async image=>{assert.equal(image,photo);scans++;return '一張白色的小圖片';};
- const request=async input=>{assert.equal(input.post.photoDescription,'一張白色的小圖片');assert.ok(!JSON.stringify(input).includes('base64,'));replies++;return '這是什麼';};
+ const request=async input=>{assert.equal(input.post.photoDescription,'一張白色的小圖片');assert.ok(!JSON.stringify(input).includes('base64,'));replies++;return [{by:input.candidates[0],text:'這是什麼'}];};
  for(let i=0;i<12;i++)await tickMomentReactions(c.store,{recognize,request});
- assert.equal(scans,1);assert.equal(replies,3);assert.equal(findMoment(c.store.get(),id).imageVision.status,'ready');
+ assert.equal(scans,1);assert.equal(replies,1);assert.equal(findMoment(c.store.get(),id).imageVision.status,'ready');
  c.store.update(s=>{const p=publishPlayerMoment(s,{image:photo});editableMoments(s).reactionJobs.push({id:'again',postId:p.id,by:'小辛',kind:'comment',due:0});});
- await tickMomentReactions(c.store,{recognize,request});assert.equal(scans,1);assert.equal(replies,4);
+ await tickMomentReactions(c.store,{recognize,request});assert.equal(scans,1);assert.equal(replies,2);
 });
 test('private images never reach Flash; failed vision never invents a photo comment',async()=>{
  const c=setup();let id;
@@ -126,4 +126,12 @@ test('WeChat composer and chat select photos through the same album picker, neve
  assert.match(render(c,c.store.get().nav.current),/game-photo-select/);
  handle('game-photo-select',{dataset:{id:'real'}},c);await Promise.resolve();await Promise.resolve();
  assert.equal(c.store.get().content.conversations.wechat.find(x=>x.id==='wang').messages.at(-1).text,photo);
+});
+
+test('one batch stages ordered sibling replies and survives a saved-state reload',async()=>{
+ const c=setup();let id;c.store.update(s=>{const p=publishPlayerMoment(s,{text:'今天好煩'});id=p.id;p.reactionPolicy=2;editableMoments(s).reactionJobs=[{id:'b1',postId:id,by:'胡枫',kind:'comment',due:0},{id:'b2',postId:id,by:'小辛',kind:'comment',due:0}];});
+ let calls=0;await tickMomentReactions(c.store,{request:async input=>{calls++;assert.deepEqual(input.candidates,['胡枫','小辛']);return [{by:'小辛',text:'出來玩不玩'},{by:'胡枫',to:'小辛',text:'你又想去哪'}];}});
+ assert.equal(c.store.get().content.moments.comments[id][0].by,'小辛');
+ c.store.update(s=>{s.clock='12:01';});await tickMomentReactions(c.store,{request:()=>assert.fail('second AI request')});
+ assert.equal(c.store.get().content.moments.comments[id][1].to,'小辛');assert.equal(calls,1);
 });

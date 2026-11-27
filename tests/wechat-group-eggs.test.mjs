@@ -57,7 +57,7 @@ test('group rename survives reload without changing canonical ID or actor names;
  const request=groupState(s).classifications.name;
  assert.equal(groupThread(s).name,old);assert.equal(groupName(s),'澳門第一男子天團');
  s=structuredClone(s);assert.match(appFrame(s,{manifest},renderWeChatChat(s,'group')),/澳門第一男子天團/);
- completeClassification(s,request.id,{type:'vanity'},{now:100000,random:()=>0});
+ completeClassification(s,request.id,{type:'vanity',replies:[{by:'胡枫',text:'你挺會起名'},{by:'小辛',text:'那我排第一'}]},{now:100000,random:()=>0});
  assert.ok(groupState(s).jobs.length>=2);
  assert.equal(changeGroupField(s,'name','狼崽團',{now:100001}),true);
  assert.ok(groupState(s).classifications.name.due>=160000);assert.equal(groupState(s).jobs.filter(j=>j.family==='name').length,0);

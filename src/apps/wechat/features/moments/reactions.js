@@ -1,4 +1,7 @@
-import {MOMENTS_PEOPLE,momentsCommentMessages,parseMomentComment} from '../../../../services/ai/moments-comments.js';
+import {brotherPublicMemory} from '../../../../services/ai/worldbook/brother-public-memory.js';
+import {socialDuplicate} from '../../../../services/ai/brother-social-worldbook.js';
+import {traditionalTaiText} from '../../../../services/ai/traditional.js';
+import {MOMENTS_PEOPLE,momentsCommentMessages,parseMomentComment,momentsBatchMessages,parseMomentBatch} from '../../../../services/ai/moments-comments.js';
 import {taiCloudCall,isTaiCloudHost} from '../../../../services/ai/supabase-gateway.js';
 import {editableMoments,findMoment,recordMomentInteraction,allMoments} from './model.js';
 import {dateParts} from '../../../../services/calendar.js';
@@ -59,15 +62,30 @@ export const momentReactionsDue=s=>needsLikeRepair(s)||!!dueJob(s);
 function removeJob(s,id){const m=editableMoments(s);m.reactionJobs=(m.reactionJobs||[]).filter(j=>j.id!==id);}
 function commentInput(s,p,j,photoDescription=''){
  const now=dateParts(s).iso+'T'+s.clock;
- const examples=allMoments(s).filter(x=>x.privacy!=='private'&&x.publishedAt<=now).flatMap(x=>(momentReactionsAt(x,dateParts(s).iso,s.clock).comments||[]).filter(c=>c.by===j.by).map(c=>c.text)).slice(-6);
+ const examples=allMoments(s).filter(x=>x.privacy!=='private'&&x.publishedAt<=now).flatMap(x=>(momentReactionsAt(x,dateParts(s).iso,s.clock).comments||[]).filter(c=>MOMENTS_PEOPLE.includes(c.by)).map(c=>c.by+'：'+c.text)).slice(-12);
  return {by:j.by,day:s.day,clock:s.clock,to:j.to,post:{text:p.text||'',song:p.music?p.music.title+' - '+p.music.artist:'',hasPhoto:!!p.media?.length,photoDescription},
-  thread:[...(p.comments||[]),...(s.content.moments?.comments?.[p.id]||[])].slice(-12),examples};
+  thread:[...(p.comments||[]),...(s.content.moments?.comments?.[p.id]||[])].slice(-12),examples,publicMemory:brotherPublicMemory(s,(p.text||'')+' '+(p.music?.title||''))};
 }
 export async function requestMomentComment(input){
  const messages=momentsCommentMessages(input);
  if(isTaiCloudHost())return parseMomentComment(await taiCloudCall('chat',{model:'deepseek-v4-pro',temperature:.7,top_p:.8,max_tokens:160,messages}));
  const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'moments',day:input.day,moment:input}),signal:AbortSignal.timeout(30000)});
  if(!r.ok)throw Error('Moments AI unavailable');return parseMomentComment(await r.json());
+}
+export async function requestMomentBatch(input){
+ const messages=momentsBatchMessages(input);
+ if(isTaiCloudHost())return parseMomentBatch(await taiCloudCall('decision',{model:'deepseek-v4-pro',temperature:.7,top_p:.8,max_tokens:450,messages}));
+ const response=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'moments-batch',day:input.day,moment:input}),signal:AbortSignal.timeout(30000)});
+ if(!response.ok)throw Error('Moments AI unavailable');return parseMomentBatch(await response.json());
+}
+function deliverGenerated(s,job){
+ const m=editableMoments(s),post=findMoment(s,job.postId);removeJob(s,job.id);
+ if(!permitted(s,post)||!allowed(s,job.by)||!job.generatedText)return;
+ const list=m.comments[post.id]??=[],thread=[...(post.comments||[]),...list];
+ if(job.generatedTo&&job.generatedTo!=='熙蒙'&&!thread.some(c=>c.by===job.generatedTo))return;
+ if(list.some(c=>c.id===job.id)||socialDuplicate(job.generatedText,thread.map(c=>c.text)))return;
+ list.push({id:job.id,by:job.by,to:job.generatedTo||undefined,text:job.generatedText,day:s.day,time:s.clock,aiGenerated:true});
+ recordMomentInteraction(s,post,job,job.generatedText);
 }
 // Store the recognition record on the actual saved post. The same uploaded
 // bytes can reuse a public sibling post's record in this save, not another
@@ -92,7 +110,7 @@ async function photoDescription(store,job,p,recognize){
  });
  return description;
 }
-export async function tickMomentReactions(store,{request=requestMomentComment,recognize=requestMomentVision}={}){
+export async function tickMomentReactions(store,{request=requestMomentBatch,recognize=requestMomentVision}={}){
  if(needsLikeRepair(store.get()))store.update(s=>repairTodayLikes(s));
  const s=store.get(),job=flight.has(store)?(s.content?.moments?.reactionJobs||[]).filter(j=>j.kind==='like'&&j.due<=minute(s)).sort((a,b)=>a.due-b.due)[0]:dueJob(s);
  if(!job)return false;
@@ -103,27 +121,39 @@ export async function tickMomentReactions(store,{request=requestMomentComment,re
    post.likes??=[];if(post.likes.includes(job.by))return;post.likes.push(job.by);recordMomentInteraction(x,post,job);});
   return true;
  }
- // A saved pending job is consumed at most once; a late response must still match the live post and player timeline.
- const key={id:job.id,day:s.day};
- flight.set(store,key);
+ if(job.generatedText){store.update(x=>deliverGenerated(x,job));return true;}
+ // Generate the selected speakers in one request, then reuse their existing persisted jobs.
+ const batch=(s.content.moments.reactionJobs||[]).filter(j=>j.kind==='comment'&&!j.generatedText&&j.postId===job.postId&&(j.replyId||'')===(job.replyId||'')&&allowed(s,j.by)).sort((a,b)=>a.due-b.due).slice(0,3);
+ const key={id:job.id,day:s.day};flight.set(store,key);
  try{
-  let text='',description='';
+  let rows=[],description='';
   try{
    if(momentPhoto(p))description=await photoDescription(store,job,p,recognize);
    const latest=store.get(),live=findMoment(latest,job.postId);
-   // Privacy or deletion may change while the image is being recognized.
    if(permitted(latest,live)&&allowed(latest,job.by)&&latest.day>=key.day&&(latest.content.moments.reactionJobs||[]).some(j=>j.id===job.id)&&(live.text||live.music||description)){
-    text=await request(commentInput(latest,live,job,description));
+    const result=await request({...commentInput(latest,live,job,description),candidates:batch.map(j=>j.by)});
+    rows=Array.isArray(result)?result:typeof result==='string'?[{by:job.by,text:result,to:job.replyId?job.to:''}]:[];
    }
   }catch{}
   store.update(x=>{
-   const m=editableMoments(x),live=(m.reactionJobs||[]).find(j=>j.id===job.id),post=findMoment(x,job.postId);
-   if(!live)return;removeJob(x,job.id);
-   if(!text||!permitted(x,post)||!allowed(x,job.by)||x.day<key.day)return;
-   const list=m.comments[post.id]??=[];
-   if(list.some(c=>c.id===job.id))return;
-   list.push({id:job.id,by:job.by,to:job.replyId?job.to:undefined,text,day:x.day,time:x.clock,aiGenerated:true});
-   recordMomentInteraction(x,post,job,text);
+   const m=editableMoments(x),post=findMoment(x,job.postId);
+   if(!permitted(x,post)||x.day<key.day||!m.reactionJobs.some(j=>j.id===job.id))return;
+   const thread=[...(post.comments||[]),...(m.comments[post.id]||[])],seen=thread.map(c=>c.text),speakers=new Set(thread.map(c=>c.by)),used=new Set();
+   const slots=batch.map(j=>j.due).sort((a,b)=>a-b);let n=0;
+   for(const row of rows.slice(0,3)){
+    const candidate=batch.find(j=>j.by===row.by&&!used.has(j.id)&&m.reactionJobs.some(l=>l.id===j.id));
+    if(!candidate||!allowed(x,candidate.by)||typeof row.text!=='string')continue;
+    let text=traditionalTaiText(row.text).trim();if(candidate.by!=='阿威')text=text.replace(/[。.]$/,'');
+    const recent=(m.interactions||[]).filter(c=>c.by===candidate.by).slice(0,12).map(c=>c.text);
+    const to=row.to||'';
+    if(!text||text.length>100||candidate.by==='熙旺'&&/哈哈/.test(text)||socialDuplicate(text,seen.concat(recent))||to===candidate.by||to&&to!=='熙蒙'&&!speakers.has(to))continue;
+    const live=m.reactionJobs.find(j=>j.id===candidate.id);
+    live.generatedText=text;live.generatedTo=to;live.due=Math.max(minute(x)+n,slots[n]??minute(x));n++;
+    seen.push(text);speakers.add(candidate.by);used.add(candidate.id);
+   }
+   m.reactionJobs=m.reactionJobs.filter(j=>!batch.some(b=>b.id===j.id)||used.has(j.id));
+   const first=m.reactionJobs.filter(j=>used.has(j.id)&&j.due<=minute(x)).sort((a,b)=>a.due-b.due)[0];
+   if(first)deliverGenerated(x,first);
   });
  }finally{flight.delete(store);}
  return true;

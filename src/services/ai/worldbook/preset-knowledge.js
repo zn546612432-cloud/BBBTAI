@@ -7,6 +7,7 @@ const NOAPP_DEFAULT=new Set(['recognition','paris','ending']);
 const WECHAT_DEFAULT=new Set(['intro','return','move','show','target','confide','failure','ready']);
 const TOPICS=[
  ['father',/(傅隆生|干爹|乾爹|老頭子|老头子)/i],
+ ['housing',/(買房|买房|大房子|一起住)/i],
  ['brother',/(熙旺|大哥|我哥|哥哥|兄弟)/i],
  ['wynn',/(永利|撤展|撤離|撤离|離開澳門|离开澳门)/i],
  ['mercenary',/(僱傭兵|雇佣兵|傭兵|佣兵|打手|兩百個人|两百个人)/i],
@@ -100,4 +101,16 @@ export function selectTaiDeliveredPresetKnowledge(s,query,{maxScenes=2,maxLines=
     '。只把這些話當作當時雙方已知的內容；說過不等於完成、成功或已經兌現。'
   };
  });
+}
+
+// Shared lexical retrieval over only the supplied, already delivered public evidence.
+// Callers must enforce audience and delivery boundaries before passing evidence.
+export function selectPublicPresetKnowledge(evidence,query,{maxLines=6,maxChars=720}={}){
+ const input=normal(query).slice(0,600),tokens=textTokens(input);
+ if(!tokens.size)return [];
+ const topics=TOPICS.filter(([,pattern])=>pattern.test(input)).map(([name])=>name);
+ const ranked=evidence.filter(actual).map((e,i)=>({e,i,score:similarity(tokens,e.text)*3+(TOPICS.some(([name,pattern])=>topics.includes(name)&&pattern.test(e.text))?18:0)})).filter(x=>x.score>=6).sort((a,b)=>b.score-a.score||b.i-a.i);
+ let chars=0;const picked=[];
+ for(const {e,i} of ranked){const text=e.text.slice(0,160);if(chars+text.length>maxChars)continue;chars+=text.length;picked.push({i,id:String(e.id||''),by:String(e.by||e.from||''),text});if(picked.length>=maxLines)break;}
+ return picked.sort((a,b)=>a.i-b.i).map(({i,...e})=>e);
 }

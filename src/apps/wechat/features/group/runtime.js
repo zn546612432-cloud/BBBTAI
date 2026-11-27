@@ -1,3 +1,4 @@
+import {socialDuplicate} from '../../../../services/ai/brother-social-worldbook.js';
 import {appendAuthoredPhoneMessage} from '../../../../services/messaging/phone-messages.js';
 import {visibleMessages} from '../../../../services/messaging/delivery.js';
 import {hiddenGroupMessageIds} from './history.js';
@@ -140,7 +141,9 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
  if(q.field==='name')g.lastNameClassification=now;
  let rows=[];
  if(q.field==='name'){
-  const type=q.restore?'restore':Object.hasOwn(NAME_LINES,result?.type)?result.type:'generic';
+  if(!q.restore){rows=(result?.replies||[]).map(r=>[r.by,r.text]);}
+  else {
+  const type='restore';
   if(type==='tease'&&BROTHERS.includes(result?.target)){
    rows=[[result.target,choose(NAME_LINES.tease.filter(x=>x[0]==='target'),random)[1]],[choose(BROTHERS.filter(x=>x!==result.target),random),'我覺得挺合適的']];
   }else{
@@ -149,6 +152,7 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
    rows=shuffle(source,random).slice(0,count);
   }
   rows=rows.map(([by,text])=>[by,text.replace('{群名}',q.value)]);
+  }
  }else if(q.field==='notice'){
   if(q.value!==(chatSettings(s,GROUP_ID).notice||'')||q.revision!==(g.revisions?.notice||0))return false;
   const type=directFatherNotice(q.value)||result?.type===FATHER_NOTICE_TYPE?FATHER_NOTICE_TYPE:result?.type||'generic';
@@ -160,8 +164,7 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
    if(g.noticePhases[phase])return true;
    g.noticePhases[phase]=true;rows=FATHER_NOTICE_LINES[phase];
   }else{
-   const source=NOTICE_LINES[type==='food'?'food':'command'];
-   rows=shuffle(source,random).slice(0,2+Math.floor(random()*2));
+   rows=(result?.replies||[]).map(r=>[r.by,r.text]);
   }
  }else if(q.field==='nickname'){
   if(random()<.7){
@@ -169,6 +172,10 @@ export function completeClassification(s,id,result,{now=Date.now(),random=Math.r
    const choices=NICK_LINES.filter(([by])=>preferred.includes(by));
    rows=shuffle(choices.length?choices:NICK_LINES,random).slice(0,1+Math.floor(random()*2));
   }
+ }
+ if((q.field==='name'&&!q.restore||q.field==='notice'&&currentNoticeType(s)!==FATHER_NOTICE_TYPE)){
+  const seen=visibleMessages(groupThread(s),s).filter(m=>m.kind==='text').slice(-18).map(m=>m.text);
+  rows=rows.filter(([by,text])=>{if(!BROTHERS.includes(by)||typeof text!=='string'||!text.trim()||socialDuplicate(text,seen))return false;seen.push(text);return true;}).slice(0,3);
  }
  rows.forEach(([by,text],i)=>queue(s,by,text,now+2000+i*2600,{family:q.field,revision:q.revision}));
  return true;
