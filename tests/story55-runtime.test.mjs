@@ -43,7 +43,7 @@ const runBatch=(s,id)=>{const p=story55Config(s).projects.find(x=>x.id===id);for
 test('55-day graph validates and isolates legacy progress without deleting historical authored chat',()=>{
  const s=initialState();s.content.conversations.wechat[0].messages.push({id:'kept',text:'换了手机',sentDate:'2024-03-10'});s.ghost={orders:{old:{}},history:[]};activateStory55(s);
  const nodes=validateStory55Config(story55Config(s)).nodes;
- assert.equal(nodes.length,97);assert.ok(nodes.some(n=>n.id==='d54-paris-future'&&n.optional), 'new node is relationship-gated optional content');assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
+ assert.equal(nodes.length,98);assert.ok(nodes.some(n=>n.id==='d37-noapp-gym'&&n.requiresPlayerTrigger),'D37 gym remains player-triggered');assert.ok(nodes.some(n=>n.id==='d54-paris-future'&&n.optional), 'new node is relationship-gated optional content');assert.deepEqual(nodes.filter(n=>n.day===29).map(n=>n.id),['d29-meeting','d29-after-meeting','d29-father','d29-chess','plan']);
  assert.equal(s.day,1);assert.deepEqual(Object.keys(s.ghost.orders),[]);
  assert.ok(s.content.conversations.wechat[0].messages.some(m=>m.id==='kept'));
  assert.equal(date55(11),'2025-05-29');assert.equal(date55(55),'2025-07-12');assert.equal(dateParts(s).iso,'2025-05-19');
