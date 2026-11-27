@@ -7,7 +7,7 @@
  *
  * 匿名期一律不加载相认后的例子；角色身份权限与剧情锁优先。
  */
-export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-28-v7';
+export const AUTHOR_XITAI_EXAMPLE_VERSION='2026-11-28-v8';
 
 export const AUTHOR_XITAI_RECOGNIZED_EXAMPLES=Object.freeze([
  {
@@ -93,6 +93,36 @@ export function authorXitaiAffectionExamples({messages=[],relationshipPlan=null,
  }
  return AUTHOR_XITAI_AFFECTION_EXAMPLES.filter((_,i)=>(i!==2||outputMode==='call')&&(affectionTopics[i].test(topic)||(i===0&&topic!==last.text&&affectionTopics[i].test(before?.text||''))));
 }
+// Author-confirmed B04/B05; fictional dialogue examples, not past messages.
+export const AUTHOR_XITAI_BANTER_EXAMPLES=Object.freeze([
+ {id:'B04',title:'熙蒙自戀',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','你不覺得我長得很好看嗎'],['熙泰','你是不是忘了我們長得一樣'],['熙蒙','我肯定比你好看'],['熙泰','……']],
+  whatToLearn:'熟悉的兄弟可用相似外貌接住自戀的玩笑；省略號本身可以是完整的反應，不必再補誇獎、追問或解釋。相認和現有關係權限優先。',
+  notFacts:'並未實際發生這段聊天；不憑空加入照片或新的外貌細節。'},
+ {id:'B05',title:'技術挑釁',source:'作者 2026-11-28 確認',
+  turns:[['熙蒙','我遲早有一天要黑進你的電腦'],['熙泰','TAI一直都有我電腦接口的權限，到現在都還沒黑進來，確實讓我有點失望'],['熙蒙','你等著'],['熙泰','行，我等著']],
+  whatToLearn:'對技術較量可以自信、期待對方追上自己，最後簡短收住。接口設定僅在正典詞條已解鎖時可談；這只是遊戲內虛構對白，不提供實際入侵方法、連線資料或新權限。',
+  notFacts:'未實際發生這段對話，不代表此刻已侵入任何設備，不新增可執行的操作或承諾。'}
+]);
+const appearanceBanter=/(?:長得|长得|[顏颜]值|比你).{0,12}(?:好看|帥|帅|漂亮)|(?:我|你).{0,6}(?:好看|最[帥帅])/;
+const computerBanter=/(?:黑[進进]?|[駭骇][進进]?|入侵).{0,12}(?:你(?:的)?(?:[電电][腦脑]|主[機机])|你的[電电][腦脑])|(?:你(?:的)?[電电][腦脑]).{0,12}(?:黑[進进]?|入侵)|TAI.{0,12}(?:接口|[權权]限)/i;
+export function taiBanterTopic(messages=[]){
+ const actual=(Array.isArray(messages)?messages:[]).filter(m=>['user','assistant'].includes(m?.role)||['me','tai'].includes(m?.from)).map(m=>({user:m.role==='user'||m.from==='me',text:String(m.content??m.text??'').trim()})).filter(m=>m.text&&!/^\s*\[(?:游戏系统事件|电话系统事件|系统记录|遊戲系統事件|電話系統事件|系統記錄)/.test(m.text));
+ const last=actual.at(-1);if(!last?.user)return '';
+ if(computerBanter.test(last.text))return 'B05';
+ if(appearanceBanter.test(last.text))return 'B04';
+ const prior=actual.at(-3),reply=actual.at(-2);
+ if(prior?.user&&reply&&!reply.user&&computerBanter.test(prior.text)&&/^(?:你)?等[著着][吧啊。！!？?\s]*$/.test(last.text))return 'B05';
+ return '';
+}
+export function authorXitaiBanterExamples({messages=[],relationshipPlan=null,worldbookSnapshot}={}){
+ if(!relationshipPlan||relationshipPlan.stage<2||relationshipPlan.rejected||relationshipPlan.crisis)return [];
+ const recent=(Array.isArray(messages)?messages:[]).slice(-5).map(m=>String(m?.content??m?.text??'')).join('\n');
+ if(/(?:[認认]真的|不是[開开]玩笑|[別别]再[聯联][絡络]|[傷伤]心|想哭|[難难][過过]|救命|[絕绝]交|分手|死了)/.test(recent))return [];
+ const topic=taiBanterTopic(messages);
+ if(topic==='B05'&&!worldbookSnapshot?.entries?.some(e=>e.id==='story-lore:tai-computer-interface'))return [];
+ return AUTHOR_XITAI_BANTER_EXAMPLES.filter(e=>e.id===topic);
+}
 const CALL_EXAMPLE={
  title:'作者最新電話示例｜自然連續發言、閒聊、沉默和主動結束',
  turns:[
@@ -124,7 +154,7 @@ const formatExample=ex=>{
  * Always evaluate scene permissions here, never from prompt text or day alone.
  * NoApp and authorized post-recognition Chess are the only relevant channels.
  */
-export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text',messages=[],relationshipPlan=null}={}){
+export function authorXitaiDialogueExamples({channel='noapp',recognized=false,outputMode='text',messages=[],relationshipPlan=null,worldbookSnapshot}={}){
  if(!recognized||!['noapp','chess'].includes(channel))return '';
  const header=[
   '【作者本人提供的陈熙泰原始对白示例｜重要：表达参考，不是可复制台词】',
@@ -137,5 +167,5 @@ export function authorXitaiDialogueExamples({channel='noapp',recognized=false,ou
    :'当前是聊天/语音消息：分开发几条或只发一句都取决于当下交流，不按示例逐句配额。',
   '作者最终纠正：不要无关添加自我报备或私人行程；对话由熙蒙的实际话题驱动。'
  ].join('\n');
- return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(channel==='noapp'?[...authorXitaiDailyExamples(messages),...authorXitaiAffectionExamples({messages,relationshipPlan,outputMode})]:[]),...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
+ return header+'\n\n'+[...AUTHOR_XITAI_RECOGNIZED_EXAMPLES,...(channel==='noapp'?[...authorXitaiDailyExamples(messages),...authorXitaiAffectionExamples({messages,relationshipPlan,outputMode}),...authorXitaiBanterExamples({messages,relationshipPlan,worldbookSnapshot})]:[]),...(outputMode==='call'&&channel==='noapp'?[CALL_EXAMPLE]:[])].map(formatExample).join('\n\n');
 }

@@ -4,6 +4,7 @@
 //
 // One read-only projection into the existing NoApp worldbook snapshot.
 // Never grant a role access to private WeChat or unopened future dialogue.
+import {taiBanterTopic} from '../author-dialogue-examples.js';
 import {taiCanonicalMilestones} from './plot-memory.js';
 import {selectTaiDeliveredPresetKnowledge} from './preset-knowledge.js';
 import {projectTaiSharedWorkKnowledge} from './shared-work-knowledge.js';
@@ -29,6 +30,7 @@ const tearName=/(?:[銜衔]尾蛇之[淚泪]|ouroboros[’']?\s*tear)/i;
 const doctor=/(?:[銜衔]尾蛇博士|dr\.?\s*ouroboros|[銜衔]尾蛇|ouroboros)/i;
 const termPatterns={
  'tear-program':program,
+ 'tai-computer-interface':/(?:TAI|[銜衔]尾蛇之[淚泪]).{0,18}(?:接口|[權权]限)|(?:接口|[權权]限).{0,18}(?:TAI|[銜衔]尾蛇之[淚泪])/i,
  'ouroboros-identity':doctor,
  'narrenschiff':/narrenschiff/i,
  'mirage':/mirage|幻象(?:平台|通訊|通讯)/i,
@@ -61,6 +63,11 @@ function term(s,id){
    (named?'熙蒙已在D25群聊說出程序名稱，並稱框架來自銜尾蛇；熙泰對這段命名及框架來歷不陌生。':'目前沒有可靠證據表明熙蒙已把完整部署及測試結果親口告訴你，不要假裝已驗收。')+
    '熙泰本人不是TAI，也不能把TAI誤認為Dr Ouroboros本人');
  }
+ case 'tai-computer-interface':
+  // D29 TAI identifies an existing connection and partial read access; use
+  // actual completed identity investigation, not merely the calendar day.
+  if(!played(s,'identity')||!played(s,'recognition'))return null;
+  return entry(id,'作者確認 B05：TAI（銜尾蛇之淚）原本具有熙泰電腦的接口權限。D29 調查對話已確認設備存在既有連線記錄、部分資料可讀取；熙泰知道這項安排。僅為遊戲內正典背景，不代表任意資料都已讀取或侵入成功，也不新增操作、憑證、網絡連線或實際權限');
  case 'ouroboros-identity':
   return entry(id,'Dr Ouroboros／銜尾蛇博士是MIRAGE匿名合作時使用的身份；實際上是熙泰本人。熙泰知道自己提供過框架、協助過熙蒙，但不因此知道熙蒙所有私下群聊、未做的事或未說的計劃。這個真名與三胞胎關係在相認前嚴禁向玩家揭露');
  case 'narrenschiff':
@@ -130,10 +137,11 @@ export function projectTaiPlotGlossary(s,context={}){
  const query=t(readQuery(context.messages));
  if(!query)return [];
  const matches=[];
+ if(taiBanterTopic(context.messages)==='B05')matches.push('tai-computer-interface');
  // Prioritize the exact program definition when "Ouroboros" also matches.
  if(termPatterns['tear-program'].test(query))matches.push('tear-program');
  for(const [id,pattern] of Object.entries(termPatterns)){
-  if(id==='tear-program'||id==='ouroboros-identity'&&tearName.test(query))continue;
+  if(matches.includes(id)||id==='tear-program'||id==='ouroboros-identity'&&tearName.test(query))continue;
   if(pattern.test(query))matches.push(id);
  }
  const canonical=matches.slice(0,3).map(id=>term(s,id)).filter(Boolean);
