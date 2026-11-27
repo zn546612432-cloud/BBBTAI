@@ -125,9 +125,15 @@ export function minimizedCallView(s){
 // Hide performance pauses in Tai's visible subtitles, not in the authored
 // script or the exact text used to retrieve prerecorded MP3s.
 const displayedCallText=(text,isTai)=>isTai?String(text||'').replace(/…+|\.{3,}|．{3,}/g,'').trim():String(text||'');
+// Label only the player's automatic captions during the recognition scene.
+// Audio asset lookup and persisted transcript continue to use the original text.
+export function recognitionCallCaption(text,role,scriptId){
+ const caption=displayedCallText(text,role!=='me');
+ return caption&&role==='me'&&scriptId===RECOGNITION_CALL.id?'熙蒙：'+caption:caption;
+}
 export function callView(s){
  const ring=call.state==='ringing',active=call.state==='connected',dial=call.state==='dialing';
- const caption=active?displayedCallText(call.caption,call.captionRole!=='me'):'';
+ const caption=active?recognitionCallCaption(call.caption,call.captionRole,call.scripted?.id):'';
  const replyStatus=taiCallReplyStatus(call,caption);
  const replying=!!replyStatus;
  const subtitle=call.connectionIssue?'連線不穩定':call.endedBy==='connection_error'?'通話失敗':ring?'NoApp 語音來電':dial?'正在呼叫…':active?(call.transcribing?'正在識別…':call.requestingMic?'正在開啟麥克風…':call.listening?'正在聆聽…':caption||(call.audioReady?'輕點繼續收聽':replyStatus||call.inlineNotice||'通話中')):'通話已結束';

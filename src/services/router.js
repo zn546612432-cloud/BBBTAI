@@ -31,7 +31,11 @@ export class PhoneRouter{
   });
  }
  back(){
-  if(isMirageChessReturn(this.store.get()))return this.home();
+  const state=this.store.get(),loc=state.nav.current;
+  // NoApp's sole conversation is its root screen; Back exits the App,
+  // including saves whose invitation mail remains in the old history.
+  if(loc.appId==='noapp'&&loc.route==='/chat/tai')return this.home();
+  if(isMirageChessReturn(state))return this.home();
   this.store.update(s=>{
    const current=s.nav.current,previous=current.appId;
    let raw,next;
