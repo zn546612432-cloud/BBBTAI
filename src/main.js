@@ -34,7 +34,7 @@ import {primeTestSnapshots} from './services/story55/test-snapshots.js';
 import {WorldTickBatch} from './system/time/tick-batch.js';
 import {phoneRuntimePaused,tickPhoneRuntime,settlePhoneBackground} from './system/runtime/controller.js';
 import {mountCallEvents} from './apps/noapp/index.js';
-import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartRecognitionCall,maybeStartD41Call,maybeStartD42Call,maybeStartD45Call,tickD55NoApp} from './apps/noapp/voice-call.js';
+import {mountHoldToTalk,startIncoming,callState,callAction,incomingCallBanner,minimizedCallView,maybeAdvanceCall,maybeStartRecognitionCall,maybeStartD41Call,maybeStartD42Call,maybeStartD45Call,maybeStartSceneVideoCall,tickD55NoApp} from './apps/noapp/voice-call.js';
 import {PhoneRouter,isNoAppCallRoute,dismissNoAppCallRoute} from './services/router.js';
 import {registry,appUnlocked} from './system/registry.js';
 import {home,lock,appFrame,status,notifications,mountShell,notificationCard} from './system/shell.js';
@@ -530,7 +530,7 @@ setInterval(()=>{if(bootActive||document.hidden||lockscreen.stage==='restart'||s
  const d01=store.get().story55?.d01;
  if(d01&&(d01.repairAccepted&&!store.get().content.mail.some(m=>m.id==='d01-mirage001-attachment')&&Date.now()>=Number(d01.acceptedAt||Infinity)+2000||d01.submitted&&!d01.rewardPaid&&Date.now()>=Number(d01.submittedAt||Infinity)+2000))store.update(s=>tickD01(s));
  if(needsWorldTick(store.get()))store.update(s=>advanceGhost(s));if(d02ContractDue(store.get()))store.update(s=>tickD02Contracts(s));const chessInvite=nextScheduledTaiInvite(store.get());if(chessInvite)store.update(s=>deliverTaiChessInvite(s,chessInvite));if(dueChessReminders(store.get()))store.update(s=>sendUnansweredChessReminders(s));const d55Handled=tickD55NoApp(ctx());const callCandidate=store.get();
- if(!d55Handled&&!maybeStartRecognitionCall(ctx())&&!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
+ if(!d55Handled&&!maybeStartRecognitionCall(ctx())&&!maybeStartD41Call(ctx())&&!maybeStartD42Call(ctx())&&!maybeStartSceneVideoCall(ctx())&&!maybeStartD45Call(ctx())&&isProactiveCallDue(callCandidate)&&!['ringing','dialing','connected'].includes(callState().state)
     &&callCandidate.nav.current.appId!=='editor'){
   if(startIncoming(ctx(),'熙泰邀请你语音通话'))
    store.update(s=>s.events.push({type:'tai_proactive_call',day:s.day,clock:s.clock}));
@@ -658,7 +658,7 @@ $('#root').addEventListener('click',async e=>{
     if(action==='power-shutdown'){collapseIsland();store.update(s=>{s.poweredOff=true;s.unlocked=false;});return;}
     if(action==='power-dismiss-alarm'||action==='power-snooze'){stopAlarmSound();collapseIsland();store.update(s=>{dismissAlarm(s,{continueSleep:action==='power-snooze'});});return;}
     if(action==='tai-banner-accept'){
-      if(callAction('tai-accept',ctx())){setShade({progress:0});router.open({appId:'noapp',route:'/call',params:{}});}
+      if(callAction('tai-accept',ctx())){setShade({progress:0});if(!isNoAppCallRoute(store.get().nav.current))router.open({appId:'noapp',route:'/call',params:{}});}
       return;
     }
     if(action==='tai-banner-decline'){callAction('tai-decline',ctx());return;}

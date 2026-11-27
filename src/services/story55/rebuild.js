@@ -245,6 +245,14 @@ function simulateScene(s,node){
  for(let i=s.story55.scenes[node.id]?.index||0;i<lines.length&&!completed(s,node.id);i++){
   const kind=lines[s.story55.scenes[node.id]?.index||0]?.[0];
   if(kind==='call')s.phoneCall={id:'story-call-'+node.id,node:node.id,source:'story55',direction:'incoming',forced:true,state:'connected',answeredAt:0,test:true};
+  // Developer-only reconstruction of prior days: mark the historical call
+  // without playing media or claiming that the player actually watched it.
+  const index=s.story55.scenes[node.id]?.index||0,video=node.videoCallLines?.[index];
+  if(video){
+   s.story55.scriptedCallCompleted??={};s.story55.scriptedCallCompleted[video.id]=true;
+   const chat=s.content.conversations.noapp?.find(c=>c.id==='tai'),id=(node.messagePrefix||'s55-'+node.id)+'-'+index;
+   if(chat&&!chat.messages.some(m=>m.id===id))chat.messages.push({id,from:'tai',kind:'call',callType:'video',callStatus:'ended',endedBy:'tai',text:'視訊通話',day:s.day,time:s.clock,story55:true,test:true,actual:false});
+  }
   advanceScene55(s,node.id,{disconnect:kind==='disconnect'});
  }
  if(s.phoneCall?.test)delete s.phoneCall;

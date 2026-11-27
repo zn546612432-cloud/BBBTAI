@@ -39,10 +39,11 @@ export function rememberTaiDelivered(s,text,{sourceId=''}={}){
  return addQuote(s,t,{speaker:'tai',category:'commitment',sourceId});
 }
 export function rememberTaiCall(s,record){
- if(!taiRecognized(s)||!record?.id||!clean(record.transcript)||!Array.isArray(list(s)))return false;
+ const evidence=record?.callType==='video'&&record?.callStatus==='ended'&&record?.story55&&record?.endedBy==='tai'?record.memoryFact:record?.transcript;
+ if(!taiRecognized(s)||!record?.id||!clean(evidence)||!Array.isArray(list(s)))return false;
  const items=list(s);
  if(items.some(m=>m.kind==='call'&&m.sourceId===record.id))return false;
- items.push({id:'call-'+hash(record.id),kind:'call',sourceId:record.id,day:s.day,clock:s.clock,visibility:'noapp',source:CALL_SOURCE,text:record.transcript.slice(0,900),enabled:true});
+ items.push({id:'call-'+hash(record.id),kind:'call',sourceId:record.id,day:s.day,clock:s.clock,visibility:'noapp',source:CALL_SOURCE,text:evidence.slice(0,900),enabled:true});
  // Only retire generated call transcripts; never truncate author lore.
  limitBy(items,m=>m.source===CALL_SOURCE,30);return true;
 }
