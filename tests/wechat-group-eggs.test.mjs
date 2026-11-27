@@ -16,6 +16,7 @@ import {renderWeChatHome} from '../src/apps/wechat/components/views.js';
 import {recordMomentInteraction,publishPlayerMoment,markMomentInteractionsRead} from '../src/apps/wechat/features/moments/model.js';
 import {appFrame} from '../src/system/shell.js';
 import {manifest} from '../src/apps/wechat/index.js';
+import {handleWeChatPreferences} from '../src/apps/wechat/features/notifications/index.js';
 function setup(day=2){
  const s=activateStory55(initialState());s.day=day;s.clock='12:00';s.unlocked=true;s.nav.current={appId:'wechat',route:'/chat/group',params:{}};
  s.story55.completed.intro={day:1,clock:'12:00'};s.story55.activeScene=null;return s;
@@ -67,6 +68,18 @@ test('group rename survives reload without changing canonical ID or actor names;
  assert.deepEqual(parseClassification({text:'{"type":"unknown","target":"熙泰"}'}),{type:'generic',target:''});
  assert.equal(classificationMessages(request).length,2);
 });
+function assertRejoinedChat(s){
+ s.nav.current={appId:'wechat',route:'/chat/group',params:{}};
+ const html=appFrame(s,{manifest},renderWeChatChat(s,'group'));
+ assert.match(html,/class="app-nav wx-native-nav"/);
+ assert.match(html,/data-action="back"/);
+ assert.match(html,/ \(6\)<\/strong>/);
+ assert.match(html,/data-action="wx-chat-more"/);
+ assert.match(html,/class="wx-recall-notice wx-group-system"[^>]*>[^<]+邀請你加入了群聊</);
+ let opened;
+ assert.equal(handleWeChatPreferences('wx-chat-more',{dataset:{}},{store:{get:()=>s},router:{open:link=>{opened=link;}}}),true);
+ assert.deepEqual(opened,{appId:'wechat',route:'/chat-info/group'});
+}
 test('leave hides previous history on rejoin without rewriting underlying story',()=>{
  let s=idle();const now=100000;groupThread(s).messages.push({id:'old-history',from:'wang',kind:'text',text:'OLD_PRIVATE_HISTORY_ABC',day:s.day,time:s.clock});const old=groupThread(s).messages.map(m=>m.id);
  assert.equal(leaveGroup(s,{now,random:()=>0}),true);assert.ok(groupAway(s));assert.doesNotMatch(renderWeChatHome(s,'/'),/data-id="group"/);
@@ -80,6 +93,7 @@ test('leave hides previous history on rejoin without rewriting underlying story'
  assert.doesNotMatch(renderWeChatChat(s,'group'),/OLD_PRIVATE_HISTORY_ABC/);
  assert.doesNotMatch(renderGroupInfo(s,'/chat-info/group/search'),/OLD_PRIVATE_HISTORY_ABC/);
  assert.ok(playerWeChatMessages(groupThread(s),s).every(m=>!old.includes(m.id)));
+ assertRejoinedChat(s);
  s=structuredClone(s);assert.doesNotMatch(renderWeChatChat(s,'group'),/OLD_PRIVATE_HISTORY_ABC/);
 });
 test('D01 and D54 prohibit eggs, and D54 automatically restores membership',()=>{
@@ -87,7 +101,7 @@ test('D01 and D54 prohibit eggs, and D54 automatically restores membership',()=>
  const s=idle();leaveGroup(s,{random:()=>0});s.day=54;assert.equal(groupEggsDue(s),true);tickGroupEggs(s);assert.equal(groupAway(s),false);
 });
 test('a new mandatory group message returns a player immediately; no new mandatory flags',()=>{
- const s=idle();leaveGroup(s,{random:()=>0});groupThread(s).messages.push({id:'test-plot',from:'wang',text:'主線',kind:'text',day:s.day,time:s.clock,story55:true});assert.equal(groupEggsDue(s),true);tickGroupEggs(s);assert.equal(groupAway(s),false);assert.ok(groupThread(s).messages.some(m=>m.id==='test-plot'));
+ const s=idle();leaveGroup(s,{random:()=>0});groupThread(s).messages.push({id:'test-plot',from:'wang',text:'主線',kind:'text',day:s.day,time:s.clock,story55:true});assert.equal(groupEggsDue(s),true);tickGroupEggs(s);assert.equal(groupAway(s),false);assert.ok(groupThread(s).messages.some(m=>m.id==='test-plot'));assertRejoinedChat(s);
 });
 test('pat back is a system action, not dialogue text, and excluded roles cannot participate',()=>{
  const s=idle();assert.equal(patBrother(s,'熙泰'),false);assert.equal(patBrother(s,'小辛',{now:10000,random:()=>.3}),true);

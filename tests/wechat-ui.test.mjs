@@ -113,3 +113,10 @@ test('WeChat inbox shows the same newest visible bubble as the dated conversatio
  assert.doesNotMatch(detail,/D13 未到时间/);
  assert.deepEqual(wang.messages.map(m=>m.id),original,'rendering cannot reorder saved messages');
 });
+
+
+test('WeChat chat chrome clears the iOS status bar and group notices center within the full message pane',()=>{
+ const css=readFileSync(new URL('../src/apps/wechat/styles.css',import.meta.url),'utf8');
+ assert.match(css,/\.app-view\.app-wechat\.has-chat\{padding-top:calc\(60px \+ env\(safe-area-inset-top,0px\)\)/);
+ assert.match(css,/\.wx-group-system\{[^}]*margin-inline:auto;[^}]*text-align:center/);
+});
