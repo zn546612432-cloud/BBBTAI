@@ -21,7 +21,7 @@ const shared=[['孤兒院|孤儿院|童年|小時候|小时候|修女|回家','�
 export function socialLore(names,topic){
  const text=String(topic||'').slice(0,4000);
  const matches=(rows)=>rows.filter(([pattern])=>new RegExp(pattern,'i').test(text)).map(x=>x[1]);
- return '熙蒙是玩家、二哥，暱稱固定寫作「蒙蒙」「蒙蒙哥」，禁止寫作「濛濛」「濛濛哥」。聰明自負，追求自由，對哥哥放鬆，對弟弟有哥哥身份。禁止替他發言。\n'+names.filter(n=>PEOPLE.includes(n)).map(n=>n+'：'+profiles[n]+'；匹配風格示例（勿照抄）：'+matches(corpus[n]).slice(0,4).join('／')).join('\n')+'\n兄弟關係：'+relations.filter(r=>names.some(n=>r.includes(n.replace('枫','楓')))).join('；')+'\n相關共同背景：'+matches(shared).join('；')+'\n只使用已知背景和當前公開對話；未提供的事件、私聊、NoApp秘密、未來劇情均不得猜測。日常繁體中文，阿威自然用句號，其他人通常不用。避免反覆問咋了、誰惹你了，避免照抄近期回覆。';
+ return '熙蒙是玩家、二哥，暱稱固定寫作「蒙蒙」「蒙蒙哥」，禁止寫作「濛濛」「濛濛哥」。聰明自負，追求自由，對哥哥放鬆，對弟弟有哥哥身份。禁止替他發言。\n'+names.filter(n=>PEOPLE.includes(n)).map(n=>n+'：'+profiles[n]+'；匹配風格示例（勿照抄）：'+matches(corpus[n]).slice(0,4).join('／')).join('\n')+'\n兄弟關係：'+relations.filter(r=>names.some(n=>r.includes(n.replace('枫','楓')))).join('；')+'\n相關共同背景：'+matches(shared).join('；')+(/三胞胎/.test(text)?'\n【知情界線】熙蒙第一次公開自己是三胞胎時，胡楓此前並不知情；其他弟弟也不可自行假定已知。可驚訝、確認或沉默（例如「三胞胎？？」、「所以我們還有一個哥哥？」），不可說早就知道或嘲笑熙蒙反應慢。只可根據此前已公開的具體證據更新知情範圍；不透露第三人的姓名、身份或 NoApp 私聊。':'')+'\n只使用已知背景和當前公開對話；未提供的事件、私聊、NoApp秘密、未來劇情均不得猜測。區分每個角色親歷或明確得知的事、共同記憶與玩家剛公開的新消息；玩家剛說出一件事並不證明其他兄弟早已知情。沒有該角色此前知情的明確公開證據，不可聲稱早就知道、暗示早已察覺或取笑玩家後知後覺。日常繁體中文，阿威自然用句號，其他人通常不用。避免反覆問咋了、誰惹你了，避免照抄近期回覆。';
 }
 export const socialKey=t=>String(t||'').normalize('NFKC').replace(/[\s\p{P}\p{S}]/gu,'').replace(/咋了|怎麼了|怎么了/g,'怎麼了');
 export function socialDuplicate(t,prior){const k=socialKey(t);return !!k&&prior.some(x=>socialKey(x)===k);}

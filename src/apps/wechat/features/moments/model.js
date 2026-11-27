@@ -67,8 +67,9 @@ export function allMoments(s){
      comments:oldReplies?[...p.comments,...comments.slice(2)]:post.comments,
      likes:post.likes?.length?post.likes:p.likes};
    }
-   if(post.id==='xw-d35'&&post.text==='石排湾看熊猫。阿蒙在馆里站得比熊猫还久。')
-    return {...post,text:p.text};
+   if(post.id==='xw-d35'&&post!==p)
+    return {...post,text:post.text==='石排湾看熊猫。阿蒙在馆里站得比熊猫还久。'?p.text:post.text,
+     comments:(post.comments||[]).filter(c=>!(c.by==='熙蒙'&&!c.to&&['它刚才看我了','它剛才看我了'].includes(c.text)))};
    if(post.id==='xs-d51'&&post.text==='爱上你 是命是病 是明知得不到的回应 我最亲爱的炸鸡')
     return {...post,text:p.text};
    if(post.id==='xw-d49'&&post.text==='路过公园，看见它们坐得很认真。')

@@ -1,4 +1,4 @@
-import {SOCIAL_THINKING,socialQualityIssues,socialRetryMessages} from '../../../../services/ai/brother-social-intent.js';
+import {SOCIAL_THINKING,socialQualityIssues,socialRetryMessages,socialKnowledgeIssues} from '../../../../services/ai/brother-social-intent.js';
 import {brotherPublicMemory} from '../../../../services/ai/worldbook/brother-public-memory.js';
 import {socialDuplicate} from '../../../../services/ai/brother-social-worldbook.js';
 import {traditionalTaiText} from '../../../../services/ai/traditional.js';
@@ -81,12 +81,13 @@ export async function requestMomentBatch(input){
   if(!response.ok)throw Error('Moments AI unavailable');return parseMomentBatch(await response.json());
  }
  let rows=await generate();
- if(socialQualityIssues(rows,topic).length)rows=await generate(true);
- return socialQualityIssues(rows,topic).length?[]:rows;
+ const issues=rows=>[...socialQualityIssues(rows,topic),...socialKnowledgeIssues(rows,input.post.text)];
+ if(issues(rows).length)rows=await generate(true);
+ return issues(rows).length?[]:rows;
 }
 function deliverGenerated(s,job){
  const m=editableMoments(s),post=findMoment(s,job.postId);removeJob(s,job.id);
- if(!permitted(s,post)||!allowed(s,job.by)||!job.generatedText)return;
+ if(!permitted(s,post)||!allowed(s,job.by)||!job.generatedText||socialKnowledgeIssues([{by:job.by,text:job.generatedText}],post.text).length)return;
  const list=m.comments[post.id]??=[],thread=[...(post.comments||[]),...list];
  if(job.generatedTo&&job.generatedTo!=='熙蒙'&&!thread.some(c=>c.by===job.generatedTo))return;
  if(list.some(c=>c.id===job.id)||socialDuplicate(job.generatedText,thread.map(c=>c.text)))return;
@@ -152,7 +153,7 @@ export async function tickMomentReactions(store,{request=requestMomentBatch,reco
     let text=traditionalTaiText(row.text).trim();if(candidate.by!=='阿威')text=text.replace(/[。.]$/,'');
     const recent=(m.interactions||[]).filter(c=>c.by===candidate.by).slice(0,12).map(c=>c.text);
     const to=row.to||'';
-    if(!text||text.length>100||candidate.by==='熙旺'&&/哈哈/.test(text)||socialDuplicate(text,seen.concat(recent))||to===candidate.by||to&&to!=='熙蒙'&&!speakers.has(to))continue;
+    if(!text||text.length>100||socialKnowledgeIssues([{by:candidate.by,text}],post.text).length||candidate.by==='熙旺'&&/哈哈/.test(text)||socialDuplicate(text,seen.concat(recent))||to===candidate.by||to&&to!=='熙蒙'&&!speakers.has(to))continue;
     const live=m.reactionJobs.find(j=>j.id===candidate.id);
     live.generatedText=text;live.generatedTo=to;live.due=Math.max(minute(x)+n,slots[n]??minute(x));n++;
     seen.push(text);speakers.add(candidate.by);used.add(candidate.id);

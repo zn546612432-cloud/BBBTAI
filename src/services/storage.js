@@ -14,6 +14,7 @@ import {ensureBank} from './bank.js';
 import {ensureAuthoredNotes} from '../apps/notes/data/seed.js';
 import {defaultTaiDraft,ensureTaiDraft} from './ai/tai-profile.js';
 import {restoreSavedMediaPaths} from './public-assets.js';
+import {repairMomentDisclosure} from '../apps/wechat/features/moments/disclosure-repair.js';
 export const isPreview=globalThis.document?.querySelector('meta[name=phone-preview]')?.content==='true';
 // Browser builds always run the 55-day campaign. Node-only legacy test fixtures
 // retain the old state format to verify backward compatibility.
@@ -117,6 +118,7 @@ function ensureWeChatRoster(s){
  return true;
 }
 function normalizeTimeline(s){
+ repairMomentDisclosure(s);
  if(isStory55(s)){if(!s.story55?.ended)accrueMining(s);tickStory55(s);syncDeathNight(s);return;}
  if(s.timelineVersion!==1||!s.calendar)s.calendar=calendarAnchor(s.day);
  s.timelineVersion=1;s.storyChargeGates??=[];
