@@ -112,3 +112,27 @@ test('meal checks use Macau for Ximeng and allow explicit past meals',()=>{
  assert.ok(!taiTimeContradiction(['你今天早上吃早飯了沒'],clocks));
  assert.ok(!taiTimeContradiction(['我這邊快中午了'],clocks));
 });
+
+import {AUTHOR_XITAI_AFFECTION_EXAMPLES,authorXitaiAffectionExamples} from '../src/services/ai/author-dialogue-examples.js';
+import {hasBannedTaiConstruction} from '../src/services/ai/expression-style.js';
+test('A05–A09 approved wording and contextual retrieval respect real relationship and channel',()=>{
+ const relationshipPlan={stage:2,rejected:false,crisis:false};
+ const cases=[['A05','討厭你','別以為留了長髮就真是大小姐了，熙蒙。'],['A06','那為什麼對我這麼好','非要我虐待你，你才開心？'],['A07','不要掛嘛','這麼大的人了，還要哄著才能睡？'],['A08','為什麼每次都是我找你','因為時差，因為我很忙，因為你離不開我'],['A09','給我買個禮物','那我買什麼你都不准說不喜歡']];
+ assert.equal(AUTHOR_XITAI_AFFECTION_EXAMPLES.length,5);
+ for(const [id,topic,line] of cases){
+  const messages=[{role:'user',content:topic}],outputMode=id==='A07'?'call':'text';
+  const args={messages,relationshipPlan,outputMode};
+  assert.deepEqual(authorXitaiAffectionExamples(args).map(x=>x.id),[id]);
+  assert.ok(buildTaiPrompt(makeInput(args)).includes(line));
+  assert.ok(!buildTaiPrompt(makeInput({...args,recognized:false})).includes(line));
+  assert.deepEqual(authorXitaiAffectionExamples({...args,relationshipPlan:{stage:1}}),[]);
+  assert.deepEqual(authorXitaiAffectionExamples({...args,relationshipPlan:{...relationshipPlan,crisis:true}}),[]);
+  assert.deepEqual(authorXitaiAffectionExamples({...args,relationshipPlan:{...relationshipPlan,rejected:true}}),[]);
+ }
+ assert.deepEqual(authorXitaiAffectionExamples({relationshipPlan,messages:[{role:'user',content:'討厭你'},{role:'assistant',content:'又討厭我了'},{role:'user',content:'對'}]}).map(x=>x.id),['A05']);
+ assert.deepEqual(authorXitaiAffectionExamples({relationshipPlan,messages:[{role:'user',content:'給我買個禮物'},{role:'assistant',content:'想要什麼？'},{role:'user',content:'你自己想啊'}]}).map(x=>x.id),['A09']);
+ assert.deepEqual(authorXitaiAffectionExamples({relationshipPlan,messages:[{role:'user',content:'討厭你'},{role:'user',content:'我很難過'}]}),[]);
+ assert.deepEqual(authorXitaiAffectionExamples({relationshipPlan,messages:[{role:'user',content:'不要掛嘛'}]}),[]);
+ assert.ok(!hasBannedTaiConstruction(['那我買什麼你都不准說不喜歡']));
+ assert.ok(hasBannedTaiConstruction(['我不想你，也不想見你']));
+});
