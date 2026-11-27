@@ -1,6 +1,8 @@
 // Shared incoming-event bookkeeping for hand-authored in-game conversations.
 // Each delivered NPC bubble is one real unread message, not one "scene".
 // The visual notification banner is queued separately by the phone shell.
+import {hideXiwangLaughMessage,xiwangMessageText} from '../ai/chat-punctuation.js';
+import {actorName} from '../../editor/conversations/model.js';
 import {isConversationOpen} from './conversation-open.js';
 import {groupName} from '../../apps/wechat/features/group/state.js';
 
@@ -11,6 +13,11 @@ export function deliverAuthoredIncoming(s,{
  if(from==='me'||!messageId)return false;
  const c=s.content?.conversations?.[channel]?.find(item=>item.id===conversationId);
  if(!c||isConversationOpen(s,channel,conversationId))return false;
+ if(channel==='wechat'){
+  const message={from,text,kind},actor=actorName(c,from);
+  if(hideXiwangLaughMessage(message,actor))return false;
+  if(kind==='text'&&xiwangMessageText(message,actor)!==text)body=xiwangMessageText(message,actor);
+ }
  const id=notificationId||'authored-'+channel+'-'+messageId;
  // Replays and restored timeline ticks never count twice.
  if(s.notifications.some(n=>n.id===id))return false;

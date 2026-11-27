@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {casualChatPunctuation,displayChatText,displayPresetText,canonicalPresetSubmission,displayMomentText} from '../src/services/ai/chat-punctuation.js';
+import {casualChatPunctuation,displayChatText,displayPresetText,canonicalPresetSubmission,displayMomentText,stripXiwangLaughter,hideXiwangLaughMessage} from '../src/services/ai/chat-punctuation.js';
 import {momentsCommentMessages} from '../src/services/ai/moments-comments.js';
 test('chat punctuation preserves questions, abbreviations, URLs and serious tone',()=>{
  assert.equal(casualChatPunctuation('剛忙完。怎麼了？'),'剛忙完 怎麼了？');
@@ -43,4 +43,19 @@ test('Moments retains Awei, actual player copy and distinct character prompt',()
  assert.equal(displayMomentText('好。','熙蒙',{player:true}),'好。');
  assert.match(momentsCommentMessages({...input,by:'阿威'})[0].content,/保留阿威自然使用句號/);
  assert.match(momentsCommentMessages({...input,by:'小辛'})[0].content,/日常手機評論不加/);
+});
+
+test('Xiwang never displays typed laughter; other characters and canonical data stay untouched',()=>{
+ const old={id:'d28-wang-6',from:'wang',text:'哈哈哈',kind:'text'};
+ assert.equal(hideXiwangLaughMessage(old),true);
+ assert.equal(displayChatText(old,{channel:'wechat'}),'');
+ assert.equal(old.text,'哈哈哈');
+ assert.equal(hideXiwangLaughMessage({...old,from:'熙旺',text:'哈哈哈哈！'}),true);
+ assert.equal(displayChatText({...old,text:'哈哈哈哈 下次一起去'},{channel:'wechat'}),'下次一起去');
+ assert.equal(stripXiwangLaughter('好，下次一起 哈哈哈','熙旺'),'好，下次一起');
+ for(const from of ['me','小辛','胡枫','阿威','仔仔'])assert.equal(hideXiwangLaughMessage({...old,from}),false);
+ assert.equal(hideXiwangLaughMessage({...old,kind:'image'}),false);
+ assert.equal(displayMomentText('哈哈哈 下次一起','熙旺'),'下次一起');
+ assert.equal(displayMomentText('哈哈哈','小辛'),'哈哈哈');
+ assert.match(momentsCommentMessages({by:'熙旺',day:1,clock:'12:00',post:{text:'午飯'}})[0].content,/绝不使用哈哈/);
 });

@@ -2,7 +2,7 @@ import {displayChatText} from '../../../services/ai/chat-punctuation.js';
 import {esc} from '../../../system/ui.js';
 import {playerWeChatMessages} from '../features/group/history.js';
 import {timestampLabel,chronologicalMessages,compareMessageChronology} from '../../../services/messaging/timestamps.js';
-import {actors,isGroup} from '../../../editor/conversations/model.js';
+import {actors,actorName,isGroup} from '../../../editor/conversations/model.js';
 import {wxIcon} from './icons.js';
 import {resolveWeChatAvatar,wechatAvatars} from '../avatars.js';
 import {groupAvatar} from './group-avatar.js';
@@ -77,7 +77,7 @@ function chats(s){
     });
   const title=header('微信',iconButton('wx-toggle-menu','plus','更多操作'))+menu();
   const rows=conversations.map(({c,last},i)=>{
-    const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':displayChatText(last,{channel:'wechat'})||''):'暂无消息';
+    const preview=last?(last.kind==='recalled'?'你撤回了一条消息':last.kind==='image'?'[图片]':last.kind==='app_invitation'?'[邀请]':displayChatText(last,{channel:'wechat',actor:actorName(c,last.from)})||''):'暂无消息';
     const time=last?timestampLabel(last,s):'';
     const unread=Math.max(0,Number(c.unread)||0);
     return '<button type="button" class="wx-chat-row" data-action="open-chat" data-id="'+esc(c.id)+'" data-wx-filter="'+esc(chatTitle(s,c)+' '+preview)+'">'+

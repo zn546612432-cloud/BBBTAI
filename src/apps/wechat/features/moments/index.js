@@ -1,4 +1,4 @@
-import {displayMomentText} from '../../../../services/ai/chat-punctuation.js';
+import {displayMomentText,stripXiwangLaughter} from '../../../../services/ai/chat-punctuation.js';
 import {esc} from '../../../../system/ui.js';
 import {dateParts} from '../../../../services/calendar.js';
 import {wechatAvatars,resolveWeChatAvatar} from '../../avatars.js';
@@ -79,7 +79,7 @@ function postCard(post,s){
  const reactions=momentReactionsAt(post,nowDate(s),s.clock);
  const override=s.content.moments?.likes?.[post.id];
  const likes=[...(reactions.likes||[]).filter(name=>name!=='熙蒙'||override!==false),...(override===true?['熙蒙']:[])].filter((name,i,arr)=>arr.indexOf(name)===i);
- const replies=[...(reactions.comments||[]),...(s.content.moments?.comments?.[post.id]||[])];
+ const replies=[...(reactions.comments||[]),...(s.content.moments?.comments?.[post.id]||[])].filter(x=>stripXiwangLaughter(x.text,x.by)!==''||!x.text);
  const liked=likes.includes('熙蒙');
  return '<article class="wx-moments-post" data-key="'+esc(post.id)+'">'+
   '<button type="button" class="wx-moments-post-avatar" data-action="wx-moment-profile" data-name="'+esc(post.author)+'" aria-label="查看'+esc(post.author)+'的相册">'+avatar(post.author,s)+'</button><div class="wx-moments-post-content">'+
