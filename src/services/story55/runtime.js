@@ -7,7 +7,7 @@ import {applyD25Definition} from '../../story/d25/definition.js';
 import {applyD26D28Definition} from '../../story/d26-d28/definition.js';
 import {applyD29Definition,D29_IP,D29_LEGACY_IPS,IDENTITY_DIALOGUE,IDENTITY_FALLBACK_OPENING,IDENTITY_TEAR_HINT} from '../../story/d29/definition.js';
 import {applyD34D42Definition,RETIRED_SCENES,D42_OPERATION_SCENE_IDS} from '../../story/d34-d42/definition.js';
-import {applyD43D44Definition} from '../../story/d43-d44/definition.js';
+import {applyD43D44Definition,syncD43ParisVideo} from '../../story/d43-d44/definition.js';
 import {applyD45Definition} from '../../story/d45/definition.js';
 import {applyD46Definition,D45_WALLET_SCENE,D45_PUBLISH,D46_ACCEPT,D46_CHAT,WALLET_GIFT_DAY,PRIVATE_ACCEPT_DAY} from '../../story/d46/definition.js';
 import {releaseD45Wallet,syncD46} from '../../story/d46/runtime.js';
@@ -428,6 +428,7 @@ export function tickStory55(s){
   }
   applyD43D44Definition(story55Config(s));
  }
+ syncD43ParisVideo(s,story55Config(s));
  if(!story55Config(s).d45Revision){
   applyD45Definition(story55Config(s));
   if(s.day>45)for(const id of ['d45-group','d45-tai','d45-wang'])s.story55.completed[id]??={day:45,clock:'23:00',legacySkipped:true};

@@ -1,9 +1,11 @@
 // Author-approved fixed dialogue. Runtime delivery remains in Story55.
 export const PARIS_PHOTO='/assets/story55/d43-eiffel.webp';
+export const PARIS_VIDEO='/assets/story55/d43-paris-original.mp4';
 export const D43_PARIS_LINES=[
  ['tai','〔巴黎鐵塔照片〕'],
  ['me','澳門也有巴黎鐵塔'],
  ['tai','想不想來看真的巴黎鐵塔？'],
+ ['tai','〔巴黎影片〕'],
  ['me','我更想看金字塔'],
  ['tai','逃出來，全世界都會為你展開'],
  ['me','你要幫我？'],
@@ -78,7 +80,7 @@ export const D44_DIARY={title:'十天',afterNode:'confide',body:`不知道是不
 export function applyD43D44Definition(c){
  if(c.d43D44Revision===1)return;
  const entries=[
-  [{id:'paris',day:43,at:'10:20',title:'巴黎見',channel:'noapp',conversationId:'tai',requires:['target','d42-group','recognition'],gateDay:43,messagePrefix:'s55-d43-paris',initialDelayMs:0,pauseMs:3000,lineDelayMs:{9:10000},imageLines:{0:PARIS_PHOTO}},D43_PARIS_LINES],
+  [{id:'paris',day:43,at:'10:20',title:'巴黎見',channel:'noapp',conversationId:'tai',requires:['target','d42-group','recognition'],gateDay:43,messagePrefix:'s55-d43-paris',initialDelayMs:0,pauseMs:3000,lineDelayMs:{10:10000},imageLines:{0:PARIS_PHOTO},videoLines:{3:PARIS_VIDEO}},D43_PARIS_LINES],
   [{id:'confide',day:44,at:'13:15',title:'告訴熙旺',channel:'wechat',conversationId:'wang',requires:['paris'],gateDay:44,messagePrefix:'s55-d44-confide',initialDelayMs:0,pauseMs:1900},D44_CONFIDE_LINES],
  ];
  for(const [node,lines] of entries){
@@ -90,4 +92,19 @@ export function applyD43D44Definition(c){
  // The earlier draft put this conversation on D50. Keep its stable
  // dependency ID for D53, but do not duplicate it or the relocation.
  c.d43D44Revision=1;
+}
+
+// Upgrade only an untouched copy of the previous approved Paris script.
+// Never shift the line index of an already-started or edited conversation.
+export function syncD43ParisVideo(s,c){
+ const node=c.nodes.find(n=>n.id==='paris');
+ if(!node||node.videoLines?.[3]===PARIS_VIDEO||s.story55.completed?.paris||s.story55.scenes?.paris?.index>0||s.story55.chatSceneEdits?.['node:paris'])return false;
+ const chat=s.content?.conversations?.noapp?.find(t=>t.id==='tai');
+ if(chat?.messages?.some(m=>m.id?.startsWith('s55-d43-paris-')))return false;
+ const old=D43_PARIS_LINES.filter((_,i)=>i!==3);
+ if(JSON.stringify(c.scenes.paris)!==JSON.stringify(old))return false;
+ c.scenes.paris=structuredClone(D43_PARIS_LINES);
+ node.videoLines={...node.videoLines,3:PARIS_VIDEO};
+ node.lineDelayMs={10:10000};
+ return true;
 }
