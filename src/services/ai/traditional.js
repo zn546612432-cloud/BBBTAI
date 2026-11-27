@@ -6,5 +6,6 @@ export function traditionalTaiText(value){
  const text=String(value??'');
  if(!/[\u3400-\u9fff]/u.test(text))return text;
  convert??=Converter({from:'cn',to:'tw'});
- return convert(text);
+ // Character nickname 蒙蒙 is a proper name, not the weather adjective 濛濛.
+ return convert(text).replace(/濛濛/g,'蒙蒙');
 }
