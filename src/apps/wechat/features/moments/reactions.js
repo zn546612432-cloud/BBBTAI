@@ -1,3 +1,5 @@
+import {socialDuplicate} from '../../../../services/ai/brother-social-worldbook.js';
+import {traditionalTaiText} from '../../../../services/ai/traditional.js';
 import {MOMENTS_PEOPLE,momentsCommentMessages,parseMomentComment} from '../../../../services/ai/moments-comments.js';
 import {taiCloudCall,isTaiCloudHost} from '../../../../services/ai/supabase-gateway.js';
 import {editableMoments,findMoment,recordMomentInteraction,allMoments} from './model.js';
@@ -120,7 +122,12 @@ export async function tickMomentReactions(store,{request=requestMomentComment,re
    const m=editableMoments(x),live=(m.reactionJobs||[]).find(j=>j.id===job.id),post=findMoment(x,job.postId);
    if(!live)return;removeJob(x,job.id);
    if(!text||!permitted(x,post)||!allowed(x,job.by)||x.day<key.day)return;
+   text=traditionalTaiText(text).trim();
+   if(job.by==='熙旺'&&/哈哈哈/.test(text))return;
+   if(job.by!=='阿威')text=text.replace(/[。.]$/,'');
    const list=m.comments[post.id]??=[];
+   const recent=(m.interactions||[]).filter(c=>c.by===job.by).slice(-12).map(c=>c.text);
+   if(socialDuplicate(text,[...(post.comments||[]),...list].map(c=>c.text).concat(recent)))return;
    if(list.some(c=>c.id===job.id))return;
    list.push({id:job.id,by:job.by,to:job.replyId?job.to:undefined,text,day:x.day,time:x.clock,aiGenerated:true});
    recordMomentInteraction(x,post,job,text);
