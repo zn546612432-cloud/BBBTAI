@@ -122,6 +122,7 @@ function nodeTask(s,n){
  if(n.id==='ready')title='給傅隆生發信息';
  if(n.id==='d53-isolde-deal')title='Isolde｜確認第二筆委託';
  if(n.kind==='project'){title=n.id==='prep'?'檢查鬼車行動準備':n.id==='identity'?'繼續調查線索':'繼續部署程序';}
+ if(n.id==='identity'&&!done)detail='GHOST · Ouroboros’ Tear';
  if(n.kind==='payment')title='支付委託訂金';
  if(n.kind==='private-contract')title='發佈私人委託';
  if(n.kind==='file')title='查看已取得的檔案';

@@ -1,4 +1,4 @@
-import {agent,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending,blockedTearText,acceptTearTask} from './state.js';
+import {agent,ensureAgent,sendAgent,agentFiles,storyFileStage,tearTaskInfo,stageReady,identityPrompts,startPersonalArchiveRun,identityRevealPending,blockedTearText,acceptTearTask,identityGuideComposer} from './state.js';
 import {completed} from '../../../../services/story55/state.js';
 import {savePersonalFiles,PERSONAL_FILES_ID} from '../../../files/features/local-library/index.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
@@ -8,6 +8,7 @@ import {startTearRun} from '../tear-run.js';
 export function buildTearAgentScene(state){
  const a=agent(state);
  return [...Object.keys(a.jobs).flatMap(id=>{const info=tearTaskInfo(state,id);return info?[info.title+': '+info.status+'，'+info.percent+'%，已運行 '+info.elapsedMinutes+' 分鐘']:[];}),
+  a.identityGuideOwnerDiscussed&&!a.messages.some(m=>m.identityGuide&&m.role==='assistant'&&m.text==='沒有收到過這項指令。'&&m.visibleAt>Date.now())?'本次已向 NYARLATHOTEP 說明：主人編寫了源代碼，私人資料不在知識庫內，未收到禁止調查主人的指令。':'',
   a.ipRequested&&state.day>=29&&state.content.notes?.some(n=>n.id==='s55-d29-ip')?'既有調查入口已由本機核對；已取得的網絡線索（故事內資料）：'+TEAR_NETWORK_PROFILE:'調查入口尚未核對；沒有可供轉述的網絡線索。'].join('\n');
 }
 
@@ -57,7 +58,8 @@ export function submitTearAgent(form,ctx){
   if(started)ctx.router.open({appId:'ghost',route:'/tear-run',params:{orderId:selected.orderId}});else ctx.toast?.('目前無法執行此委託');return true;
  }
  ctx.store.update(n=>{sendAgent(n,text,agent(n).selected);const a=ensureAgent(n);a.draft='';a.picking=false;delete a.thinking;delete a.thinkingAt;});
- input.value='';
+ const guide=identityGuideComposer(ctx.store.get());
+ input.value=guide?.text||'';
  return true;
 }
 

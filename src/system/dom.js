@@ -8,6 +8,7 @@ export function patchElement(old,fresh){
  const incomingWechatStage=old.tagName==='INPUT'&&!!old.closest('.wx-conversation')
   &&old.getAttribute('data-story-stage')!==fresh.getAttribute('data-story-stage')
   &&(fresh.hasAttribute('data-story-type')||fresh.hasAttribute('disabled'));
+ const incomingTearStage=old.id==='tear-agent-input'&&old.getAttribute('data-tear-guide-stage')!==fresh.getAttribute('data-tear-guide-stage');
  // Opt-in details (e.g. a NoApp voice transcript) are initially opened by
  // the template; later toggles belong to the user, not the periodic clock.
  const preserveOpen=old.tagName==='DETAILS'&&old.hasAttribute('data-preserve-open')&&fresh.hasAttribute('data-preserve-open');
@@ -15,7 +16,7 @@ export function patchElement(old,fresh){
  for(const a of fresh.attributes)if(!(preserveOpen&&a.name==='open')&&old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);
  const focused=old===old.ownerDocument.activeElement;
  if(old.tagName==='TEXTAREA'){if(!focused&&old.value!==fresh.value)old.value=fresh.value;return;}
- if(old.tagName==='INPUT'){const nativeWechat=!!old.closest('.wx-conversation');if((!focused||incomingWechatStage)&&(!storyAnimating||nativeWechat)&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
+ if(old.tagName==='INPUT'){const nativeWechat=!!old.closest('.wx-conversation');if((!focused||incomingWechatStage||incomingTearStage)&&(!storyAnimating||nativeWechat)&&old.value!==fresh.value)old.value=fresh.value;if(old.checked!==fresh.checked)old.checked=fresh.checked;return;}
  // Leaflet owns its descendants. Never replace map controls/markers on tick.
  // This guard MUST execute before patchChildren, not after it.
  if(old.tagName==='XM-LEAFLET-MAP')return;
