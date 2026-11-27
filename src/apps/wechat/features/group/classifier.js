@@ -14,14 +14,15 @@ export function parseClassification(response){
  try{const raw=JSON.parse(String(response?.text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''));
   const target=raw.target==='胡楓'?'胡枫':raw.target;
   const result={type:TYPES.has(raw.type)?raw.type:'generic',target:BROTHERS.includes(target)?target:''};
-  if(Array.isArray(raw.replies))result.replies=raw.replies.slice(0,3).map(r=>({by:r?.by==='胡楓'?'胡枫':r?.by,text:typeof r?.text==='string'?traditionalTaiText(r.text).trim():''})).filter(r=>BROTHERS.includes(r.by)&&r.text&&r.text.length<=100&&!/[\r\n]/.test(r.text)&&!/熙泰|世界書|世界书|系統提示|系统提示|作為AI|作为AI/.test(r.text)&&!(r.by==='熙旺'&&/哈哈哈/.test(r.text))).map(r=>({...r,text:r.by==='阿威'?r.text:r.text.replace(/[。.]$/,'')}));
+  if(Array.isArray(raw.replies))result.replies=raw.replies.slice(0,5).map(r=>({by:r?.by==='胡楓'?'胡枫':r?.by,text:typeof r?.text==='string'?traditionalTaiText(r.text).trim():''})).filter(r=>BROTHERS.includes(r.by)&&r.text&&r.text.length<=100&&!/[\r\n]/.test(r.text)&&!/熙泰|世界書|世界书|系統提示|系统提示|作為AI|作为AI/.test(r.text)&&!(r.by==='熙旺'&&/哈哈哈/.test(r.text))).map(r=>({...r,text:r.by==='阿威'?r.text:r.text.replace(/[。.]$/,'')}));
   return result;
  }catch{return {type:'generic',target:''};}
 }
 export async function requestGroupClassification(q){
- const payload={model:'deepseek-flash',temperature:.65,max_tokens:420,messages:groupSocialMessages(q)};
+ const classifyOnly=q.field==='nickname'||q.restore||q.inviteOnly;
+ const payload={model:classifyOnly?'deepseek-flash':'deepseek-v4-pro',temperature:classifyOnly?.1:.8,max_tokens:classifyOnly?120:650,messages:classifyOnly?classificationMessages(q):groupSocialMessages(q)};
  if(isTaiCloudHost())return parseClassification(await taiCloudCall('decision',payload));
- const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'wechat-group',day:q.day,group:q}),signal:AbortSignal.timeout(12000)});
+ const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'wechat-group',day:q.day,group:q}),signal:AbortSignal.timeout(30000)});
  if(!r.ok)throw Error('semantic classification unavailable');
  return parseClassification(await r.json());
 }
@@ -35,7 +36,7 @@ export async function tickGroupClassification(store,{request=requestGroupClassif
  try{
   // Only classification is sent to the existing protected AI gateway.
   let timer;
-  try{result=await Promise.race([request({...q,day:store.get().day,clock:store.get().clock,publicMemory:brotherPublicMemory(store.get(),q.value),history:playerWeChatMessages(groupThread(store.get()),store.get()).filter(m=>m.kind==='text').slice(-8).map(m=>({by:m.from,text:m.text}))}),new Promise(resolve=>{timer=setTimeout(()=>resolve({type:'generic',target:''}),15000);})]);}
+  try{result=await Promise.race([request({...q,day:store.get().day,clock:store.get().clock,publicMemory:brotherPublicMemory(store.get(),q.value),history:playerWeChatMessages(groupThread(store.get()),store.get()).filter(m=>m.kind==='text'&&!m.wechatEgg&&!m.demo&&!m.authoredPending).slice(-5).map(m=>({by:m.from,text:m.text}))}),new Promise(resolve=>{timer=setTimeout(()=>resolve({type:'generic',target:''}),35000);})]);}
   finally{clearTimeout(timer);}
  }catch{}finally{running.delete(store);}
  if(!Object.values(store.get().wechatGroupEggs?.classifications||{}).some(x=>x.id===q.id))return false;
