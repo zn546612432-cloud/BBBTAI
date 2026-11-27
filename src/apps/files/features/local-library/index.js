@@ -96,7 +96,7 @@ export function copyLocalFile(s,id){
  const copy={...f,id:f.id+'-copy-'+count,origin:{...f.origin},name:f.name.replace(/\.zip$/i,' 副本.zip'),createdAt:Date.now()};
  files.push(copy);return copy;
 }
-const nav=(label,back='')=>'<header class="fl-nav"><button type="button" data-action="files-local-nav" data-route="'+esc(back)+'" aria-label="返回">‹</button><strong>'+esc(label)+'</strong><span></span></header>';
+const nav=(label,back='')=>'<header class="fl-nav"><button type="button" data-action="files-local-nav" data-back="true" data-route="'+esc(back)+'" aria-label="返回">‹</button><strong>'+esc(label)+'</strong><span></span></header>';
 const archiveIcon='<span class="fl-archive-icon fl-encrypted-icon" aria-hidden="true">ENC</span>';
 const row=f=>f.kind==='personal-folder'?folderRow(personalPath,f.name):'<button type="button" class="fl-row" data-action="files-local-item" data-id="'+esc(f.id)+'">'+(f.kind==='story-archive'?archiveIcon:icon())+
  '<span class="fl-row-copy"><strong>'+nameFor(f)+'</strong><small>'+esc(f.kind==='story-archive'?'加密檔案':f.kind==='tear-artifact'?'Ouroboros’ Tear':sizeFor(f.size))+'</small></span><span class="fl-chevron">›</span></button>';
@@ -230,7 +230,10 @@ export function handleLibraryAction(a,t,c){
  if(!a.startsWith('files-local-'))return false;
  const id=t.dataset.id;
  if(a==='files-local-nav'){
-  if(t.dataset.route==='/back')c.router.back();else c.router.open({appId:'files',route:t.dataset.route||'/'});
+  // A preview opened from another app returns to that exact screen.
+  // Within Files, Back likewise follows the actual source, including Recents/Search.
+  if(t.dataset.route==='/back'||t.dataset.back==='true'&&c.store.get().nav?.stack?.length)c.router.back();
+  else c.router.open({appId:'files',route:t.dataset.route||'/'},t.dataset.back==='true'?{replaceCurrent:true}:undefined);
  }else if(a==='files-local-personal-open'){
   const route=t.dataset.route,f=fileById(c.store.get(),PERSONAL_FILES_ID);
   if(f&&!f.deleted&&route?.startsWith(personalPath+'/')){
