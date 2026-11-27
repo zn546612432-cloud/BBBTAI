@@ -16,6 +16,10 @@ const TOPICS=[
  ['paris',/(巴黎|paris|金字塔)/i],
  ['wallet',/(比特幣|比特币|電子錢包|电子钱包|數字資產|数字资产)/i],
  ['ghost-car',/(鬼車|鬼车|數字人|数字人)/i],
+ // D32–D34 approved public preparation facts: retrieved only from delivered lines.
+ ['prep-rehearsal',/(原計劃|原计划|演練|演练|對練|对练|走一遍流程)/i],
+ ['prep-truck',/(貨車|货车|車裡的設備|车里的设备|設備搬運|设备搬运|搬設備|搬设备|車上打遊戲|车上打游戏)/i],
+ ['prep-investigation',/(在查一些東西|在查一些东西|最近接了很多單|最近接了很多单)/i],
  ['tai',/(銜尾蛇|衔尾蛇|ouroboros|narrenschiff|mirage|ghost|\btai\b)/i]
 ];
 const IGNORE=new Set(['你知','知道','道嗎','道吗','什麼','什么','怎麼','怎么','這個','这个','那個','那个','你們','你们','我們','我们','他們','他们','是不是','有沒','没有','沒有','說過','说过','請問','请问','為什','为什','今天','現在','现在','事情','可以','所以','真的','就是']);

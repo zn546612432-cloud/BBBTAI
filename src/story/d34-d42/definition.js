@@ -1,8 +1,10 @@
 import {xinDogSticker} from '../../services/assets/xin-dog-stickers.js';
 import {GYM_SCENE} from './gym-chat.js';
+import {D32_D34_GROUP_SCENES} from '../d32-d34/group.js';
 
 // Confirmed copy only. All dialogue uses the existing native Send / reply cadence.
 const scenes=[
+ ...D32_D34_GROUP_SCENES,
  GYM_SCENE,
  {id:'d34-wang',day:34,at:'00:00',throughDay:38,title:'心事',chat:'wang',requires:['recognition'],lines:[
   ['熙旺','蒙蒙，你這兩天有心事？'],['me','沒有啊'],['熙旺','今天吃飯叫了你好幾聲都沒聽見。'],['me','在想事情。'],['熙旺','計劃的事？'],['me','算是吧。'],['熙旺','有什麼想不明白的，跟哥說說。'],['me','哥'],['me','算了，沒事。'],['熙旺','好。'],['熙旺','想說的時候再來找我。']]},
