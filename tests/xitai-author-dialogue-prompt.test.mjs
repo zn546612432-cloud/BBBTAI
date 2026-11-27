@@ -136,3 +136,25 @@ test('A05–A09 approved wording and contextual retrieval respect real relations
  assert.ok(!hasBannedTaiConstruction(['那我買什麼你都不准說不喜歡']));
  assert.ok(hasBannedTaiConstruction(['我不想你，也不想見你']));
 });
+
+import {AUTHOR_XITAI_BANTER_EXAMPLES,authorXitaiBanterExamples} from '../src/services/ai/author-dialogue-examples.js';
+import {projectTaiPlotGlossary} from '../src/services/ai/worldbook/plot-glossary.js';
+test('B04/B05 preserve approved wording and require source-gated interface knowledge',()=>{
+ const relationshipPlan={stage:2};
+ const b04={messages:[{role:'user',content:'我肯定比你好看'}],relationshipPlan};
+ assert.deepEqual(authorXitaiBanterExamples(b04).map(x=>x.id),['B04']);
+ assert.ok(buildTaiPrompt(makeInput(b04)).includes('熙泰：……'));
+ const messages=[{role:'user',content:'我遲早有一天要黑進你的電腦'}];
+ const context={channel:'noapp',recognized:true,messages};
+ const s={day:37,story55:{version:1,completed:{identity:{day:33},recognition:{day:34}}},content:{conversations:{noapp:[],mirage:[]}}};
+ const entries=projectTaiPlotGlossary(s,context);
+ assert.ok(entries.some(e=>e.id==='story-lore:tai-computer-interface'));
+ const args={messages,relationshipPlan,worldbookSnapshot:{entries}};
+ assert.deepEqual(authorXitaiBanterExamples(args).map(x=>x.id),['B05']);
+ assert.ok(buildTaiPrompt(makeInput(args)).includes('TAI一直都有我電腦接口的權限，到現在都還沒黑進來，確實讓我有點失望'));
+ assert.deepEqual(authorXitaiBanterExamples({messages,relationshipPlan}),[]);
+ assert.deepEqual(authorXitaiBanterExamples({...args,relationshipPlan:{stage:2,crisis:true}}),[]);
+ assert.ok(!projectTaiPlotGlossary({...s,story55:{version:1,completed:{recognition:{day:34}}}},context).some(e=>e.id==='story-lore:tai-computer-interface'));
+ assert.ok(!buildTaiPrompt(makeInput({...args,recognized:false})).includes('TAI一直都有我電腦接口的權限'));
+ assert.equal(AUTHOR_XITAI_BANTER_EXAMPLES.length,2);
+});
