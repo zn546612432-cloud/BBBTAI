@@ -5,8 +5,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initialState} from '../src/services/storage.js';
 import {activateStory55,tickStory55} from '../src/services/story55/runtime.js';
-import {D05_GROUP,D05_PRIVATE} from '../src/story/d05/dialogue.js';
-import {tickD05Chats,d05Draft} from '../src/story/d05/wechat.js';
+import {D05_GROUP,D05_PRIVATE,D05_ZAIZAI_PARIS_LEGACY} from '../src/story/d05/dialogue.js';
+import {tickD05Chats,d05Draft,d05Track} from '../src/story/d05/wechat.js';
 import {D05_CONTRACTS} from '../src/story/d05/commissions.js';
 import {D04_CONTRACTS,D04_MAIL,D04_STEP,acceptD04Contract,submitD04Contract,tickD04Contracts} from '../src/story/d04/contract.js';
 import {nativeWeChatComposer,sendNativeWeChatPreset} from '../src/services/messaging/preset-replies.js';
@@ -203,4 +203,27 @@ test('D05 breakfast group precedes private opening even if clock reaches 08:15 e
  assert.equal(d05messages(s,'group').at(-1).text,'我問問他');
  assert.equal(d05messages(s,'wang')[0].text,'阿蒙，醒了？');
  assert.equal(D05_PRIVATE[0].lines.at(-1).text,'😘');
+});
+
+test('D05 approved Zaizai Paris revision preserves old in-flight and completed scripts',()=>{
+ const source=D05_PRIVATE.find(x=>x.id==='zaizai-paris');
+ const def=d05Track.defs.find(x=>x.id===source.id);
+ assert.equal(source.at,'15:50');
+ assert.deepEqual(source.lines,[{"who":"仔仔","kind":"text","text":"哥"},{"who":"仔仔","kind":"text","text":"你說我要是去巴黎讀書怎麼樣"},{"who":"me","kind":"text","text":"怎麼突然想讀書了"},{"who":"仔仔","kind":"text","text":"我看了好久了好不好"},{"who":"仔仔","kind":"text","text":"有間服裝設計學校我特別喜歡"},{"who":"me","kind":"text","text":"學費多少"},{"who":"仔仔","kind":"text","text":"別問"},{"who":"me","kind":"text","text":"？"},{"who":"仔仔","kind":"text","text":"看完學費我就把網頁關了"},{"who":"me","kind":"text","text":"法語有要求嗎"},{"who":"仔仔","kind":"text","text":"有啊 我最近都在學"},{"who":"仔仔","kind":"text","text":"小辛還笑我發音像在漱口"},{"who":"me","kind":"text","text":"他連英文都說不明白"},{"who":"仔仔","kind":"text","text":"就是！！"},{"who":"me","kind":"text","text":"學費的事以後再說 你先學法語"},{"who":"仔仔","kind":"text","text":"嗯嗯"},{"who":"仔仔","kind":"text","text":"等我以後在巴黎辦秀 你們都要來哦"},{"who":"me","kind":"text","text":"給我留個好位置"},{"who":"仔仔","kind":"text","text":"第一排！"}]);
+ assert.equal(def.lateDays,7);
+ assert.equal(def.preserveLate,true);
+ const freshSave=fresh('15:49');
+ const q=d05Track.ensure(freshSave)[source.id];
+ assert.equal(q.parisCopyVersion,2);
+ assert.deepEqual(def.lines(freshSave,q),source.lines);
+ for(const state of [{started:true,index:1},{started:true,index:16,completed:true},{historySettled:true,index:1}]){
+  const legacy=fresh('15:49');
+  legacy.story55.d05Chats[source.id]={nextAt:null,...state};
+  const before=structuredClone(chat(legacy,'zaizai').messages);
+  const progress=d05Track.ensure(legacy)[source.id];
+  assert.equal(progress.parisCopyVersion,1);
+  assert.deepEqual(def.lines(legacy,progress),D05_ZAIZAI_PARIS_LEGACY);
+  assert.equal(progress.index,state.index);
+  assert.deepEqual(chat(legacy,'zaizai').messages,before);
+ }
 });

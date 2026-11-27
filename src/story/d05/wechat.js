@@ -1,4 +1,4 @@
-import {D05_GROUP,D05_PRIVATE} from './dialogue.js';
+import {D05_GROUP,D05_PRIVATE,D05_ZAIZAI_PARIS_LEGACY} from './dialogue.js';
 import {createConversationTrack} from '../../services/messaging/lifecycle/engine.js';
 import {LATE_REPLIES} from '../../services/messaging/lifecycle/replies.js';
 // Exact approved copy migration; free chat and custom edits remain untouched.
@@ -47,7 +47,16 @@ const scenes=[...D05_GROUP,...D05_PRIVATE].map(scene=>({...scene,
  replies:LATE_REPLIES.d05[scene.id],
  ...(scene.id==='wang-morning'?{until:'11:00',expireReply:true,enabled:s=>!!s.story55.d05Chats?.breakfast?.completed}:{}),
  ...(scene.id==='wang-evening'?{expireReply:true}:{}),
- ...(scene.id==='zaizai-paris'?{lateDays:7,preserveLate:true}:{}),
+ ...(scene.id==='zaizai-paris'?{
+  lateDays:7,preserveLate:true,
+  migrate:(s,q)=>{
+   if(q.parisCopyVersion!=null)return;
+   const edit=s.story55.chatSceneEdits?.['d05:zaizai-paris'];
+   const delivered=s.content?.conversations?.wechat?.find(c=>c.id===scene.chat)?.messages?.some(m=>/^d05-zaizai-paris-\d+$/.test(m.id||''));
+   q.parisCopyVersion=q.started||q.index>0||q.completed||q.historySettled||q.lateRun||delivered||edit?.lines?.length===D05_ZAIZAI_PARIS_LEGACY.length?1:2;
+  },
+  lines:(s,q)=>q?.parisCopyVersion===1?D05_ZAIZAI_PARIS_LEGACY:scene.lines
+ }:{}),
 }));
 export const d05Track=createConversationTrack({day:5,prefix:'d05',lockChats:'all',scenes,progress:s=>s.story55.d05Chats??={}});
 function seedNote(s){
