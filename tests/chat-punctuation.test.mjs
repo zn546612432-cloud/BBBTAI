@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {casualChatPunctuation,displayChatText,displayPresetText,canonicalPresetSubmission,displayMomentText} from '../src/services/ai/chat-punctuation.js';
 import {momentsCommentMessages} from '../src/services/ai/moments-comments.js';
 test('chat punctuation preserves questions, abbreviations, URLs and serious tone',()=>{
@@ -43,4 +44,13 @@ test('Moments retains Awei, actual player copy and distinct character prompt',()
  assert.equal(displayMomentText('好。','熙蒙',{player:true}),'好。');
  assert.match(momentsCommentMessages({...input,by:'阿威'})[0].content,/保留阿威自然使用句號/);
  assert.match(momentsCommentMessages({...input,by:'小辛'})[0].content,/日常手機評論不加/);
+});
+
+
+test('D29 Mirage global submit gate accepts displayed text but rejects a partial preset',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/canonicalPresetSubmission\(text,pending\.text,pending\.id\)!==pending\.text\.trim\(\)/);
+ const original='少自戀了。',stage='d29-chess';
+ assert.equal(canonicalPresetSubmission('少自戀了',original,stage),original);
+ assert.notEqual(canonicalPresetSubmission('少自戀',original,stage),original);
 });

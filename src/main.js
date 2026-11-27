@@ -11,6 +11,7 @@ import {groupClassificationDue,tickGroupClassification} from './apps/wechat/feat
 import {d02ContractDue,tickD02Contracts} from './story/d02/runtime.js';
 import {handleStory55Action,submitStory55Form} from './services/story55/controller.js';
 import {currentScript55,sendScriptedDraft55} from './services/story55/scripted-chat.js';
+import {canonicalPresetSubmission} from './services/ai/chat-punctuation.js';
 import {advanceScene55,chatNodeLink55,scene55ReplyDelay,tickStory55,identityRevealDue55,heartbeatPacedScene55,pacedStorySceneDue55} from './services/story55/runtime.js';
 import {chessLessonDue,tickD23ChessLesson} from './services/chess-lesson.js';
 import {d23MiragePostgameDue} from './services/story55/d23-postgame.js';
@@ -806,7 +807,7 @@ $('#root').addEventListener('submit',async e=>{if(!store.get().unlocked){e.preve
    const channel=e.target.dataset.channel||store.get().nav.current.appId,conversationId=e.target.dataset.id,text=String(new FormData(e.target).get('text')||'');
    if(!conversationId)throw Error('预设聊天尚未选中联系人');
    const pending=currentScript55(store.get(),channel,conversationId);
-   if(!pending||pending.kind!=='me'||text.trim()!==pending.text.trim())throw Error('请先发送输入框里的完整预设内容');
+   if(!pending||pending.kind!=='me'||canonicalPresetSubmission(text,pending.text,pending.id)!==pending.text.trim())throw Error('请先发送输入框里的完整预设内容');
    // Clear before state-driven DOM patch, so the next authored line can type
    // immediately even if iOS keeps focus on the same input element.
    e.target.elements.text.value='';

@@ -4,13 +4,13 @@ import {canonicalPresetSubmission} from '../ai/chat-punctuation.js';
 // Send never pick a different story rule independently.
 import {d01Draft,d01ComposerDisabled,sendD01WeChat} from '../../story/d01/wechat.js';
 import {AUTHORED_CHAT_TRACKS} from './lifecycle/registry.js';
-import {d06CelebrationDraft,sendD06Celebration,d06DinnerDraft,sendD06DinnerReply} from '../wishes/index.js';
+import {d06CelebrationDraft,sendD06Celebration,d06DinnerDraft,sendD06DinnerReply,wishIncomingPending} from '../wishes/index.js';
 import {currentScript55,sendScriptedDraft55} from '../story55/scripted-chat.js';
 import {genericMissedReplyDraft,genericMissedReplyBusy,sendGenericMissedReply} from './lifecycle/missed-replies.js';
 
 // Every new authored day registers its track only once in lifecycle/registry.
 const providers=[
- {name:'d01',day:1,draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat},
+ {name:'d01',day:1,draft:d01Draft,disabled:d01ComposerDisabled,send:sendD01WeChat,busy:(s,id)=>['group','wang'].includes(id)&&d01ComposerDisabled(s,id)},
  {name:'d06-wish',day:6,draft:d06CelebrationDraft,disabled:()=>false,send:sendD06Celebration},
  {name:'d06-dinner',day:6,draft:d06DinnerDraft,disabled:()=>false,send:sendD06DinnerReply},
  ...AUTHORED_CHAT_TRACKS.map(({name,track})=>({
@@ -22,18 +22,24 @@ const locate=(s,id)=>{
  const choices=providers.map(provider=>({provider,draft:provider.draft(s,id)})).filter(c=>c.draft?.text);
  choices.sort((a,b)=>(b.draft.priority??2)-(a.draft.priority??2)||(b.draft.day??0)-(a.draft.day??0));
  const chosen=choices[0];
- // A live NPC turn in today's thread takes precedence over an old late reply.
- if(chosen&&(chosen.draft.priority??2)===0&&providers.some(p=>p.busy?.(s,id)))return null;
  return chosen||null;
 };
 // Keep today's authored track priority, while an older mandatory reply must
 // yield to a currently available Story55 scene in the same thread.
 const preferTrack=(s,chosen,line)=>chosen&&(chosen.draft.priority??2)>0&&(!line||(chosen.draft.day??s.day)>=s.day);
+// The existing queues own delivery. Never offer a player turn while an NPC
+// turn in this same conversation is still being delivered.
+function waitingForIncoming(s,id,line){
+ if(line&&line.kind!=='me'||providers.some(p=>p.busy?.(s,id))||genericMissedReplyBusy(s,id)||wishIncomingPending(s,id))return true;
+ const chat=s.content?.conversations?.wechat?.find(c=>c.id===id);
+ return !!chat?.messages?.some(m=>m.from!=='me'&&!m.delivery&&(m.schedule?.mode==='chat-delay'||m.schedule?.mode==='game-time'&&(s.day>m.schedule.day||s.day===m.schedule.day&&s.clock>=m.schedule.clock)));
+}
 // Today's live script always outranks missed-message acknowledgements.
 // A multi-day backlog is acknowledged once, never by sending individual old
 // 'late' player lines from D03/D04/D05 in succession.
 export function nativeWeChatComposer(s,id){
  const chosen=locate(s,id),line=currentScript55(s,'wechat',id);
+ if(waitingForIncoming(s,id,line))return {text:null,stage:null,source:null,disabled:true,waiting:true};
  const isCurrent=preferTrack(s,chosen,line);
  if(isCurrent)return {
   text:chosen.draft.text,stage:chosen.draft.stage,
@@ -61,6 +67,7 @@ export function nativeWeChatComposer(s,id){
 export function sendNativeWeChatPreset(store,id,text,now=Date.now()){
  const s=store.get(),chosen=locate(s,id),line=currentScript55(s,'wechat',id);
  const composer=nativeWeChatComposer(s,id);
+ if(composer.waiting)return {handled:true,reason:'請等待對方回覆'};
  if(composer.text!==null)text=canonicalPresetSubmission(text,composer.text,composer.stage);
  if(preferTrack(s,chosen,line))return chosen.provider.send(store,id,text,now);
  if(line?.kind==='me'){

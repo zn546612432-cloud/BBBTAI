@@ -119,10 +119,10 @@ export function renderWeChatChat(s,id){
       messageRow(m,s,c)).join('')+'</div>'+
     '<form class="composer wx-composer" data-form="send-chat" data-channel="wechat" data-id="'+esc(id)+'">'+
       action('wx-speak-draft','朗读输入框文字',voiceIcon)+
-      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(displayDraft??(groupPresetOnly&&composer.disabled?'':s.drafts?.[id]??''))+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
+      '<input name="text" type="text" autocomplete="off" enterkeyhint="send" placeholder=" " aria-label="输入聊天内容" value="'+esc(displayDraft??(composer.waiting||groupPresetOnly&&composer.disabled?'':s.drafts?.[id]??''))+'"'+scriptedAttributes+(composer.disabled?' disabled':'')+'>'+
       action('wx-emoji','表情',smileIcon,groupPresetOnly)+
       action('attach-chat','发送图片',plusIcon,groupPresetOnly).replace('aria-label="发送图片"','data-id="'+esc(id)+'" aria-label="发送图片"')+
-      '<button type="submit" class="wx-composer-send" aria-label="发送消息"'+(groupPresetOnly&&composer.disabled?' disabled':'')+'>发送</button></form>'+
+      '<button type="submit" class="wx-composer-send" aria-label="发送消息"'+((composer.waiting||groupPresetOnly&&composer.disabled)?' disabled':'')+'>发送</button></form>'+
     renderEmojiPanel()+
     '<div class="wx-message-menu" hidden role="group" aria-label="消息操作"></div>'+ 
     '</section>';
