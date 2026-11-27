@@ -1,6 +1,6 @@
 // Author-approved fixed dialogue. Runtime delivery remains in Story55.
 export const PARIS_PHOTO='/assets/story55/d43-eiffel.webp';
-export const PARIS_VIDEO='/assets/story55/d43/paris-original.mp4';
+export const PARIS_VIDEO='/assets/story55/d43-paris-original.mp4';
 export const D43_PARIS_LINES=[
  ['tai','〔巴黎鐵塔照片〕'],
  ['me','澳門也有巴黎鐵塔'],
