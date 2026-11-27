@@ -142,7 +142,7 @@ export function buildTaiPrompt({day,channel,profile={},memories=[],outputMode='t
   // Author's own multi-turn examples belong in the LIVE generation prompt,
   // not solely in human-readable docs; only post-recognition NoApp/Chess.
   worldbookText(sections?.exampleBefore),
-  authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode}),
+  authorXitaiDialogueExamples({channel,recognized,outputMode:effectiveMode,messages}),
   noAppCinematicDirection({channel,recognized,relationshipPlan,messages,macauClock,londonClock}),
   worldbookText(sections?.exampleAfter),
   snapshot?.authorNote?resolveWorldbookOutlets(snapshot.authorNote,sections?.outlets):'',
