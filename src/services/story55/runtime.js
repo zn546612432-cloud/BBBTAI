@@ -288,7 +288,7 @@ export function chatNodeLink55(s,id){
 }
 export function nodeLink55(s,id){
  if(id==='mercenary')return {appId:'bank',route:'/transfer',params:{}};
- if(id==='second')return {appId:'ghost',route:'/tear',params:{}};
+ if(id==='second'||id==='identity')return {appId:'ghost',route:'/tear',params:{}};
  if(id===D45_PUBLISH)return {appId:'mirage',route:'/private-contract',params:{}};
  if(id===D46_ACCEPT)return {appId:'kira',route:'/mail/s55-d46-isolde-mail',params:{}};
  if(id==='prep')return {appId:'reminders',route:'/project/ghost-car-plan',params:{}};

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialState} from '../src/services/storage.js';
-import {activateStory55,tickStory55,sceneLines} from '../src/services/story55/runtime.js';
-import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob,IDENTITY_REVEAL_DELAY_MS,IDENTITY_REVEAL_INTERVAL_MS} from '../src/apps/ghost/deployment/tear-agent/state.js';
+import {activateStory55,tickStory55,sceneLines,nodeLink55} from '../src/services/story55/runtime.js';
+import {agent,ensureAgent,sendAgent,tickTearAgent,researchInfo,stageReady,presetReply,beginTearChatSession,tearTaskInfo,addMessage,startAgentJob,IDENTITY_REVEAL_DELAY_MS,IDENTITY_REVEAL_INTERVAL_MS,identityGuideComposer} from '../src/apps/ghost/deployment/tear-agent/state.js';
 import {renderAgentContent} from '../src/apps/ghost/deployment/tear-agent/view.js';
 import {renderTearAgent} from '../src/apps/ghost/deployment/tear-ui/view.js';
 import {PhoneRouter} from '../src/services/router.js';
@@ -69,7 +69,7 @@ test('D29 identity uses approved local dialogue and D30 opens the persistent dep
  const s=fixture(),routes=[],ctx={store:{get:()=>s,update:fn=>fn(s)},router:{open:route=>routes.push(route)}};
  time(s,29,'22:00');s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
  assert.equal(D29_IP,'195.22.28.198');assert.equal(sendAgent(s,D29_IP).kind,'preset');
- assert.deepEqual(agent(s).messages.slice(-4).map(m=>m.text),['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。']);
+ assert.deepEqual(agent(s).messages.slice(-4).map(m=>m.text),['正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','這個地址存在於我的內部記錄中。']);
  agent(s).messages.filter(m=>m.identityReveal).forEach(m=>{m.visibleAt=Date.now()-1;});
  assert.doesNotMatch(renderTearAgent(s),/data-id="identity"/);
  handleTearAgent('gh-tear-picker',{dataset:{}},ctx);assert.match(renderAgentContent(s).content,/你認識這個地址？/);
@@ -472,4 +472,21 @@ test('Ouroboros Tear chat back button returns directly to the phone home screen'
  ghost.handle('gh-tear-home',{dataset:{}},ctx,s.nav.current);
  assert.deepEqual(s.nav.current,{appId:'home',route:'/',params:{}});
  assert.deepEqual(s.nav.stack,[]);
+});
+
+
+test('D29 guided investigation starts in TAI, waits for replies, requires manual story IP and resumes after reload',()=>{
+ const s=fixture();time(s,29,'22:00');s.story55.completed.plan={day:29,clock:'22:00'};s.content.notes.push({id:'s55-d29-ip',text:D29_IP});
+ assert.deepEqual(nodeLink55(s,'identity'),{appId:'ghost',route:'/tear',params:{}});
+ beginTearChatSession(s);
+ const reveal=n=>agent(n).messages.filter(m=>m.identityReveal).forEach(m=>{m.visibleAt=Date.now()-1;});
+ const send=(n,expected)=>{assert.equal(identityGuideComposer(n).text,expected);assert.equal(sendAgent(n,expected).kind,'preset');};
+ send(s,'你對你的主人了解多少？');assert.equal(identityGuideComposer(s).waiting,true);assert.equal(identityGuideComposer(s).text,'');
+ const restored=JSON.parse(JSON.stringify(s));beginTearChatSession(restored);assert.equal(identityGuideComposer(restored).waiting,true);
+ reveal(restored);send(restored,'他有禁止你調查他嗎？');reveal(restored);send(restored,'那就好');send(restored,'幫我查個 IP');reveal(restored);
+ assert.equal(identityGuideComposer(restored).manual,true);assert.equal(identityGuideComposer(restored).text,'');assert.ok(!renderAgentContent(restored).content.includes(D29_IP));
+ sendAgent(restored,'203.0.113.40');assert.equal(agent(restored).ipRequested,undefined);assert.equal(identityGuideComposer(restored).manual,true);
+ sendAgent(restored,D29_IP);assert.equal(agent(restored).ipRequested,true);assert.equal(identityGuideComposer(restored).waiting,true);reveal(restored);
+ time(restored,30,'08:00');assert.equal(agent(restored).ipAuthorized,undefined);send(restored,'你認識這個地址？');reveal(restored);send(restored,'你能讀取裡面的資料嗎？');
+ assert.equal(agent(restored).ipAccessAsked,true);assert.equal(agent(restored).ipAuthorized,true);assert.equal(identityGuideComposer(restored),null);assert.equal(tearTaskInfo(restored,'identity').complete,true);
 });

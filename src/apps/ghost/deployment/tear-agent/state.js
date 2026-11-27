@@ -1,5 +1,6 @@
 import {TEAR_GREETING,TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {D29_IP} from '../../../../story/d29/definition.js';
+import {D29_TEAR_INTRO,D29_TEAR_IP_LINES,D29_TEAR_FOLLOWUPS} from '../../../../story/d29/tear-dialogue.js';
 import {completed,isStory55,nodeStatus,overnightSceneNight55,taiRecognized} from '../../../../services/story55/state.js';
 import {authorizeProject} from '../../../../services/story55/projects.js';
 import {absoluteMinute} from '../../../../system/time/clock.js';
@@ -35,8 +36,16 @@ export function startPersonalArchiveRun(s,at=Date.now()){
  registerTearVisualTask(s,'personal-files');
  return true;
 }
+// This guide is a persisted cursor in the existing agent, not a second job.
+const identityGuideEligible=s=>isStory55(s)&&s.day>=29&&completed(s,'plan')&&!completed(s,'identity')&&s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP);
+export function identityGuideComposer(s,at=Date.now()){
+ const step=agent(s).identityGuideStep;
+ if(!Number.isInteger(step)||step<0||step>=7||completed(s,'identity'))return null;
+ const waiting=identityRevealPending(s,at),manual=step===4;
+ return {step,waiting,manual,text:waiting||manual?'':(step<4?D29_TEAR_INTRO[step]?.[0]:D29_TEAR_FOLLOWUPS[step-5]?.[0])||''};
+}
 export const identityPrompts=s=>{
- const a=agent(s);if(!a.ipRequested||a.ipAuthorized||identityRevealPending(s))return [];
+ const a=agent(s);if(identityGuideComposer(s)||!a.ipRequested||a.ipAuthorized||identityRevealPending(s))return [];
  return !a.ipRecognized?[['identity-recognize','你認識這個地址？']]:!a.ipAccessAsked?[['identity-read','你能讀取裡面的資料嗎？']]:[];
 };
 export const ensureAgent=s=>{
@@ -217,6 +226,9 @@ export function registerTearVisualTask(s,id){
 }
 export function beginTearChatSession(s){
  const a=ensureAgent(s);
+ // Keep this plot exchange across app switches/reloads, including pending bubbles.
+ if(identityGuideComposer(s)||(a.identityGuideStep===7&&identityRevealPending(s))){a.history=false;a.picking=false;a.selected=null;a.selectedTask=null;a.documentReading=false;return a;}
+ if(identityGuideEligible(s)&&!a.ipAuthorized&&!a.ipAccessAsked&&a.identityGuideStep==null)a.identityGuideStep=a.ipRequested?(a.ipRecognized?6:5):0;
  a.chatSession=(a.chatSession||0)+1;a.messageSequence=0;
  a.messages=[];addMessage(s,'assistant',TEAR_GREETING);
  a.draft='';a.selected=null;a.selectedTask=null;a.documentReading=false;a.picking=false;
@@ -263,7 +275,7 @@ export function tickTearAgent(s){
    if(!['survey','maintenance'].includes(id)&&!s.notifications.some(n=>n.id==='tear-complete-'+id))s.notifications.unshift({id:'tear-complete-'+id,title:'Ouroboros’ Tear',body:'Execution complete.',link:{appId:'ghost',route:'/tear',params:{}}});
   }
  }
- if(a.ipRequested&&!a.ipAuthorized&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
+ if(a.ipRequested&&!a.ipAuthorized&&(a.identityGuideStep==null||a.ipAccessAsked)&&s.day>=30&&['ready','done'].includes(nodeStatus(s,'identity').state)){
   if(!completed(s,'identity')&&!s.story55.projects.identity?.authorized)authorizeProject(s,'identity',D29_IP);
   a.ipAuthorized=true;a.ipIndexedAt=now(s);changed=true;
   const text='已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。';
@@ -299,6 +311,16 @@ export function sendAgent(s,text,fileId){
  if(!value&&!file)return {kind:'empty'};
  if(identityRevealPending(s))return {kind:'busy'};
  if(blockedTearText(s,value))return invalidCommand(s);
+ const guide=!file?identityGuideComposer(s):null;
+ if(guide&&!guide.manual&&normalize(value)!==normalize(guide.text))return invalidCommand(s);
+ if(guide?.manual&&!/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value))return invalidCommand(s);
+ if(guide&&guide.step<4){
+  const [prompt,reply]=D29_TEAR_INTRO[guide.step];
+  addMessage(s,'user',prompt,{ephemeral:false,identityGuide:true});
+  a.identityGuideStep++;
+  if(reply)addIdentityReveal(s,reply,{ephemeral:false,identityGuide:true});
+  return {kind:'preset'};
+ }
  if(file?.id===SOURCE_FILE.id){
   addMessage(s,'user',value||file.name,{file:file.name,job:'server-source'});a.selected=null;
   if(!startAgentJob(s,'server-source'))addMessage(s,'assistant',a.jobs['server-source']?.done?'部署已完成，請查看工程結果。':'部署正在進行。');
@@ -316,7 +338,7 @@ export function sendAgent(s,text,fileId){
   addMessage(s,'assistant','正在解析檔案……',{job:doc.id});return {kind:'preset'};
  }
  const id=file?storyFileStage(file):matchLocalTearCommand(value);
- addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{})});a.selected=null;
+ addMessage(s,'user',value||TEAR_STAGES[id]?.prompt||file.name,{...(file?{file:file.name}:{}),...(id?{job:id}:{}),...(guide?{ephemeral:false,identityGuide:true}:{})});a.selected=null;
  if(id){if(!startAgentJob(s,id))addMessage(s,'assistant',id==='program'?programStatusReply(s):a.jobs[id]?'這個工程已經建立。':'目前仍有前置資料需要確認。');return {kind:'preset'};}
  if(file?.kind==='personal-evidence'||file?.kind==='personal-folder'){
   if(file.path==='tai'){
@@ -339,8 +361,9 @@ export function sendAgent(s,text,fileId){
   if(s.day<29||!s.content?.notes?.some(n=>n.id==='s55-d29-ip'&&n.text===D29_IP))addMessage(s,'assistant','目前沒有對應的調查資料。');
   else if(!a.ipRequested){
    a.ipRequested=true;a.ipRequestedAt=now(s);
+   if(guide?.step===4)a.identityGuideStep=5;
    const at=Date.now();
-   for(const line of ['已收到。正在核對網絡資訊……','網絡供應商：Claranet Portugal','時區：Europe/Lisbon','有意思。這個地址存在於我的內部記錄中。'])addIdentityReveal(s,line,{job:'identity'},at);
+   for(const line of D29_TEAR_IP_LINES)addIdentityReveal(s,line,{job:'identity',...(guide?{identityGuide:true}: {})},at);
    tickTearAgent(s);
   }else if(a.ipAuthorized)addIdentityReveal(s,'已完成資料索引。部分檔案仍處於加密狀態，需要進一步驗證。',{identity:true});
   else addIdentityReveal(s,'調查工程已建立。',{job:'identity'});
@@ -353,7 +376,8 @@ export function sendAgent(s,text,fileId){
   if(reply){
    if(reply.startsWith('這台'))a.ipRecognized=true;
    else{a.ipRecognized=true;if(!a.ipAccessAsked&&!a.ipAuthorized)a.ipRequestedAt=now(s);a.ipAccessAsked=true;registerTearVisualTask(s,'identity');}
-   addMessage(s,'assistant',reply);return {kind:'preset'};
+   if(guide&&guide.step>=5){a.identityGuideStep=guide.step+1;addIdentityReveal(s,D29_TEAR_FOLLOWUPS[guide.step-5][1],{ephemeral:false,identityGuide:true});tickTearAgent(s);}
+   else addMessage(s,'assistant',reply);return {kind:'preset'};
   }
  }
  const reply=contextualReply(s,value)||programFollowupReply(s,value)||presetReply(value);if(reply){addMessage(s,'assistant',reply);return {kind:'preset'};}
