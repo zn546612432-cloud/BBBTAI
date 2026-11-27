@@ -3,6 +3,7 @@ import {renderAgentContent} from '../tear-agent/view.js';
 import {agent,agentFiles,tearTaskInfo,identityRevealPending} from '../tear-agent/state.js';
 import {TEAR_STAGES} from '../../../../story/d25/tear-agent.js';
 import {completed} from '../../../../services/story55/state.js';
+import {archiveFile,documentResultText} from '../../../files/features/local-library/story-archives.js';
 let loading;
 function ensureTearOrbit(){
  if(typeof window==='undefined'||typeof customElements==='undefined'||customElements.get('xm-tear-orbit'))return;
@@ -62,7 +63,7 @@ function taskMarkers(s){
 function taskDetail(s){
  const id=agent(s).selectedTask,definition=TEAR_STAGES[id],info=id&&tearTaskInfo(s,id);
  if(!info)return '';
- if(info.document&&info.complete&&agent(s).documentReading)return `<section class="gh-agent-document" role="dialog" aria-modal="true" aria-label="完整解析結果" data-key="tear-document-result"><header><button type="button" data-action="gh-tear-task-close" aria-label="返回">${backIcon}</button><div><strong>${esc(info.title)}</strong><small>解析完成 · 100%</small></div><span aria-hidden="true">✓</span></header><article class="gh-agent-document-body" tabindex="0">${esc(agent(s).jobs[id].text)}</article><footer>END OF DOCUMENT</footer></section>`;
+ if(info.document&&info.complete&&agent(s).documentReading)return `<section class="gh-agent-document" role="dialog" aria-modal="true" aria-label="完整解析結果" data-key="tear-document-result"><header><button type="button" data-action="gh-tear-task-close" aria-label="返回">${backIcon}</button><div><strong>${esc(info.title)}</strong><small>解析完成 · 100%</small></div><span aria-hidden="true">✓</span></header><article class="gh-agent-document-body" tabindex="0">${esc(documentResultText(s,id,agent(s).jobs[id].text))}${archiveFile(s,id)?.image?`<details style="margin-top:20px;white-space:normal"><summary>查看原件</summary><a href="${esc(archiveFile(s,id).image)}" target="_blank" rel="noopener noreferrer" aria-label="放大原圖"><img style="display:block;width:100%;height:auto;margin-top:12px" loading="lazy" src="${esc(archiveFile(s,id).image)}" alt="${esc(info.title)} 原件"></a></details>`:''}</article><footer>END OF DOCUMENT</footer></section>`;
  const artifact=info.complete&&definition?.artifact?agentFiles(s).find(f=>f.id==='tear-artifact-'+id):null,collected=!!agent(s).collectedArtifacts?.[id];
  return `<div class="gh-agent-task-backdrop" data-key="tear-task-backdrop" data-action="gh-tear-task-close" aria-hidden="true"></div><aside class="gh-agent-task-detail" role="dialog" aria-modal="true" aria-label="任務詳情" data-key="tear-task-detail">
   <header><div><span>${esc(info.title)}</span><strong class="${info.running?'is-running':'is-complete'}">${esc(info.status)}</strong></div><button type="button" data-action="gh-tear-task-close" aria-label="關閉任務詳情">×</button></header>
