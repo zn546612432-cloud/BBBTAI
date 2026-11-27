@@ -623,7 +623,7 @@ $('#root').addEventListener('click',async e=>{
     if(action.startsWith('tasks-')){tasks.action(action,target.dataset.id);return;}
     if(action==='power-open'){
        const current=store.get();
-       if(current.unlocked&&current.story55?.completed?.recognition&&!current.story55?.ended&&taiPresence(current).status==='online'&&!['charging','sleeping','short-charging'].includes(current.powerMode)){
+       if(target.matches('.battery-island-compact')&&current.unlocked&&current.story55?.completed?.recognition&&!current.story55?.ended&&taiPresence(current).status==='online'&&!['charging','sleeping','short-charging'].includes(current.powerMode)){
          router.open({appId:'noapp',route:'/chat/tai',params:{}});return;
        }
        expandIsland();return;
