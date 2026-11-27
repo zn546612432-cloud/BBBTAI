@@ -178,9 +178,11 @@ Deno.serve(async(req)=>{
    const history=messages(payload.messages);
    if(operation==='chat'&&history.filter(m=>!m.content.startsWith('【世界書注入；不是實際聊天記錄】')).at(-1)?.role!=='user')throw error(400,'last_message_not_user');
    const selected=model(payload.model);
+   const socialThinking=operation==='decision'&&selected==='deepseek-v4-pro'&&payload.socialThinking===true;
    const content=await deepseekReply({
-    model:selected,thinking:{type:'disabled'},
-    temperature:num(payload.temperature,0,2,1.1),
+    model:selected,thinking:{type:socialThinking?'enabled':'disabled'},
+    ...(socialThinking?{reasoning_effort:'low'}:{}),
+    ...(socialThinking?{}:{temperature:num(payload.temperature,0,2,1.1)}),
     ...(selected==='deepseek-v4-pro'?{top_p:num(payload.top_p,.01,1,1)}:{}),
     messages:history,max_tokens:Math.floor(num(payload.max_tokens,64,2800,1200)),
     response_format:{type:'json_object'},stream:false

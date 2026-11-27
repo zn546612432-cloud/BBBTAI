@@ -1,3 +1,4 @@
+import {SOCIAL_THINKING,socialQualityIssues,socialRetryMessages} from '../../../../services/ai/brother-social-intent.js';
 import {brotherPublicMemory} from '../../../../services/ai/worldbook/brother-public-memory.js';
 import {socialDuplicate} from '../../../../services/ai/brother-social-worldbook.js';
 import {traditionalTaiText} from '../../../../services/ai/traditional.js';
@@ -73,10 +74,15 @@ export async function requestMomentComment(input){
  if(!r.ok)throw Error('Moments AI unavailable');return parseMomentComment(await r.json());
 }
 export async function requestMomentBatch(input){
- const messages=momentsBatchMessages(input);
- if(isTaiCloudHost())return parseMomentBatch(await taiCloudCall('decision',{model:'deepseek-v4-pro',temperature:.7,top_p:.8,max_tokens:450,messages}));
- const response=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'moments-batch',day:input.day,moment:input}),signal:AbortSignal.timeout(30000)});
- if(!response.ok)throw Error('Moments AI unavailable');return parseMomentBatch(await response.json());
+ const messages=momentsBatchMessages(input),topic=input.latestReply||input.post.text;
+ async function generate(retry=false){
+  if(isTaiCloudHost())return parseMomentBatch(await taiCloudCall('decision',{...SOCIAL_THINKING,messages:retry?socialRetryMessages(messages):messages}));
+  const response=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel:'moments-batch',day:input.day,moment:input,retry}),signal:AbortSignal.timeout(50000)});
+  if(!response.ok)throw Error('Moments AI unavailable');return parseMomentBatch(await response.json());
+ }
+ let rows=await generate();
+ if(socialQualityIssues(rows,topic).length)rows=await generate(true);
+ return socialQualityIssues(rows,topic).length?[]:rows;
 }
 function deliverGenerated(s,job){
  const m=editableMoments(s),post=findMoment(s,job.postId);removeJob(s,job.id);
