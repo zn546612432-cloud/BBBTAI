@@ -194,13 +194,15 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   request.scene=[taiLifeContext(initial),socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
-  if(textSituation)request.scene+='\n'+taiTextSituationPrompt(textSituation);
   if(romanceBeat?.mode==='continue')request.scene+='\n'+romanceBeat.prompt;
   if(approvedAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
   if(!unheard)request.worldbookSnapshot=captureTaiWorldbook(store,{...request,turnId:'text:'+sourceMessageId,messageIndex:visibleMessages(c).length,characterDescription:Object.entries(initial.aiDraft?.profile||{}).filter(([k])=>k!=='story').map(([,v])=>v).join('\n'),scenario:request.scene});
   // The shared worldbook decides which source facts have reached Xi Tai.
   request.storyReplyDirection=planTaiStoryResponse(request);
+  // The action director reads only the first 1200 scene characters. Keep
+  // the context hint first, after factual worldbook selection, not as a fact.
+  if(textSituation)request.scene=taiTextSituationPrompt(textSituation)+'\n'+request.scene;
   // After an authored opening, keep one human-scale conversational beat
   // instead of allowing the model to randomly switch to a call or silence.
   let decision=unheard||socialRefusal||romanceBeat?.mode==='continue'?null:await chooseTaiAction({...request,sourceMessageId,hasIncoming:true,
