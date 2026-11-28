@@ -13,7 +13,7 @@ export function classifyTaiTextSituation(messages=[],{text}={}){
  const out=(kind,compact=false)=>({kind,compact,continued:carryAccount});
  if(/(?:別再[聯联][絡络]|别再[聯联][絡络]|不想聊|[別别][煩烦]我|先[別别]回|[別别]再[說说]|不要再[說说])/u.test(latest))return out('boundary',true);
  if(/(?:救命|求救|想死|自[殺杀]|[傷伤]害我|好[難难][過过]|想哭|撐不住|撑不住|被威[脅胁])/u.test(latest))return out('distress');
- if(account.test(topic)&&seriousness.test(topic))return out('security');
+ if(account.test(topic)&&seriousness.test(topic))return out('security',true);
  if(account.test(topic))return out('account_claim',true);
  if(seriousness.test(latest))return out('serious');
  if(/(?:想你|[愛爱]我|[愛爱]你|喜[歡欢]我|喜[歡欢]你|抱抱|[親亲]我|[親亲]你|撒[嬌娇]|吃醋)/u.test(latest))return out('affection');
