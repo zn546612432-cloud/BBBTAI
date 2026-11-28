@@ -142,3 +142,11 @@ const cases=[
 ];
 test('classifies current and adjacent context without inventing facts',()=>{for(const [m,o,k] of cases)assert.equal(classifyTaiTextSituation(m,o).kind,k);});
 test('compact banter does not force questioning and keeps Chinese commas',()=>{const p=classifyTaiTextSituation([{role:'user',content:'我的號被盜了'}]);assert.equal(p.compact,true);assert.match(taiTextSituationPrompt(p),/不強制追問/);assert.equal(casualChatPunctuation('我還在忙，晚點陪你玩。'),'我還在忙，晚點陪你玩');});
+
+import {readFileSync} from 'node:fs';
+test('the context hint precedes the action director and compact turns skip expansion',()=>{
+ const live=readFileSync(new URL('../src/services/ai/live-chat.js',import.meta.url),'utf8');
+ assert.match(live,/request\.scene=taiTextSituationPrompt\(textSituation\)\+'\\n'\+request\.scene;[\s\S]*?await chooseTaiAction/);
+ assert.match(live,/!compactSituation[^\n]*\?sampleTaiTurnPlan/);
+ assert.match(live,/!compactSituation[^\n]*needsTaiMomentumRepair/);
+});
