@@ -14,6 +14,7 @@ import {aiStatus,askTai,chooseTaiAction,apiConfig} from './gateway.js';
 import {prepareTaiVoice,waitForTaiVoiceQueue,voiceFailureLine} from './voice-delivery.js';
 import {taiSocialEnergy,canTaiCall,socialEnergyPrompt} from './social-energy.js';
 import {unpackTaiReply} from './format.js';
+import {classifyTaiTextSituation,taiTextSituationPrompt} from './text-situation.js';
 import {callBridgeNote,isRecentTaiCall,shouldRecallTaiCall} from './humanize.js';
 import {captureTaiWorldbook} from './worldbook/index.js';
 import {rememberTaiMood} from './worldbook/mood.js';
@@ -152,6 +153,8 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   const unheard=source?.kind==='voice'&&!source?.voiceCaption;
   const status=unheard?{}:await aiStatus();if(!unheard&&!status.deepseek)throw Error('请在 NoApp 的 AI 设置中输入 DeepSeek Key');
   const lastUser=source?.voiceCaption||source?.text||'';
+  const textSituation=source?.kind==='voice'?null:classifyTaiTextSituation(messages,{text:lastUser});
+  const compactSituation=!!textSituation?.compact;
   const batchText=batch.map(m=>m.voiceCaption||m.text).filter(Boolean).join('\n')||lastUser;
   const musicContext=musicListeningContext(history,batchText);
   const consolidated=batch.length>1||!!musicContext;
@@ -191,6 +194,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   request.scene=[taiLifeContext(initial),socialEnergyPrompt(initial,'message'),socialEnergyPrompt(initial,'call'),request.scene].filter(Boolean).join('\n');
   if(batch.length>1)request.scene+='\n【本輪完整連發】\n'+batchText.slice(-4000);
   if(shortCallReply)request.scene+='\n'+taiShortCallBoundaryPrompt;
+  if(textSituation)request.scene+='\n'+taiTextSituationPrompt(textSituation);
   if(romanceBeat?.mode==='continue')request.scene+='\n'+romanceBeat.prompt;
   if(approvedAffection){request.scene=TAI_DIRECT_AFFECTION_PROMPT+'\n'+request.scene;request.directAffection=true;}
   const availableCall=!['ringing','dialing','connected'].includes(callState().state);
@@ -232,7 +236,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
    request.outputMode=actualDecision.action==='send_voice'?'voice':'text';}
   // V12 is sampled ONLY for an actual speaking action, never for read/no-reply,
   // a scripted message, an unheard voice, or an explicit call request.
-  const rawTurnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
+  const rawTurnPlan=romanceBeat?.mode==='continue'?{target:1,guide:false,mode:'text',eligible:false,semicolonBurst:false}:!compactSituation&&!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?sampleTaiTurnPlan({random,maxMessages:behavior.maxMessages,messages,
    mode:request.outputMode==='voice'?'voice':'text'}):null;
   const storyPlan=tuneTaiStoryTurnPlan(rawTurnPlan,request.storyReplyDirection);
   // Reuse optional beats; do not manufacture extra lines for a compact turn.
@@ -241,7 +245,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
   if(turnPlan)request.turnPlan=turnPlan;
   // A real but rare tool lookup, scoped to the user's CURRENT visible save.
   // It is not a background watcher and never reads schedule / future story data.
-  const observed=!romanceBeat&&!socialRefusal&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
+  const observed=!compactSituation&&textSituation?.kind!=='security'&&!romanceBeat&&!socialRefusal&&!directAffection&&!unheard&&!shortCallReply&&!firstTextAfterCall?await researchTaiPhone(store,{
    text:lastUser,sourceMessageId,random,now
   }):null;
   if(observed&&isCurrentTaiTurn(store.get(),sourceMessageId,initial.day)){
@@ -266,7 +270,7 @@ export async function replyToTaiMessage(store,sourceMessageId,{wait=ms=>new Prom
     const retry=await askTai({...request,scene:request.scene+' 上一稿只机械复述了对方的问候词，请按你当前生活和态度自然接话，仍可以短，不要机械复制。'});
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
   }
-  if(!romanceBeat&&!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
+  if(!compactSituation&&!romanceBeat&&!socialRefusal&&!consolidated&&!directAffection&&!unheard&&!shortCallReply&&needsTaiMomentumRepair({messages,entries:draftEntries,mode:'text'})){
     const retry=await askTai({...request,scene:request.scene+' 上一稿又把话题交还给熙蒙：'+draftEntries.map(x=>x.text).join(' ').slice(0,150)+'。只有在已连续多次追问的情况下才可简短透露一个相关事实，或平静表示希望在见面时再谈，不要机械反问。'});
     if(!isCurrentTaiTurn(store.get(),sourceMessageId,initial.day))return {status:'superseded'};
     draftEntries=dedupeTaiTurnEntries(unpackTaiReply(retry,'noapp'));
